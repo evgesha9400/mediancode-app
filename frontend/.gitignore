@@ -1,0 +1,49 @@
+# LLM and AI Assistant Files
+CLAUDE.md
+.claude/
+.cursor/
+.aider/
+.copilot/
+.chatgpt/
+.gpt/
+.ai/
+
+# IDE and Editor Files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS Files
+.DS_Store
+Thumbs.db
+
+# Temporary Files
+*.tmp
+*.temp
+*.log
+
+# Node.js (if used in future)
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Python (if used in future)
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+# Build and Distribution
+dist/
+build/
+*.tgz
+*.tar.gz
