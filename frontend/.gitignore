@@ -42,8 +42,18 @@ ENV/
 env.bak/
 venv.bak/
 
+# Environment Files
+.env
+.env.*
+
 # Build and Distribution
 dist/
 build/
 *.tgz
 *.tar.gz
+
+# SvelteKit
+.svelte-kit/
+.vercel/
+.netlify/
+.output/
