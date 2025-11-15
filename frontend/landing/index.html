@@ -307,10 +307,31 @@
 </footer>
 
 <script>
+// Environment-aware dashboard URL configuration
+(function() {
+    // Detect if we're running locally
+    const isLocal = window.location.hostname === 'localhost' ||
+                    window.location.hostname === '127.0.0.1' ||
+                    window.location.hostname.includes('192.168.');
+
+    // Set dashboard URL based on environment
+    const dashboardUrl = isLocal ? 'http://localhost:5173' : 'https://app.mediancode.com';
+
+    // Update all dashboard links
+    const dashboardLinks = document.querySelectorAll('a[href="https://app.mediancode.com"]');
+    dashboardLinks.forEach(link => {
+        link.href = dashboardUrl;
+    });
+
+    // Log for debugging (remove in production if needed)
+    console.log('Environment:', isLocal ? 'Local' : 'Production');
+    console.log('Dashboard URL:', dashboardUrl);
+})();
+
 window.addEventListener('load', function() {
     const mobileMenuBtn = document.getElementById('mobile-menu-btn');
     const mobileMenu = document.getElementById('mobile-menu');
-    
+
     mobileMenuBtn.addEventListener('click', function() {
         mobileMenu.classList.toggle('hidden');
         const icon = mobileMenuBtn.querySelector('i');
@@ -322,7 +343,7 @@ window.addEventListener('load', function() {
             icon.classList.add('fa-times');
         }
     });
-    
+
     const mobileMenuLinks = mobileMenu.querySelectorAll('a');
     mobileMenuLinks.forEach(link => {
         link.addEventListener('click', function() {
