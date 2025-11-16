@@ -42,12 +42,12 @@
 <header id="header" class="bg-white border-b border-mono-200 sticky top-0 z-50">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="flex items-center justify-between h-16">
-            <div class="flex items-center space-x-2">
+            <a href="#" id="logo-link" class="flex items-center space-x-2 cursor-pointer hover:opacity-80 transition-opacity">
                 <div class="w-8 h-8 bg-mono-900 rounded flex items-center justify-center">
                     <i class="fa-solid fa-code text-white text-sm"></i>
                 </div>
                 <span class="text-lg sm:text-xl font-bold text-mono-900">Median Code</span>
-            </div>
+            </a>
             <button id="mobile-menu-btn" class="md:hidden w-10 h-10 flex items-center justify-center">
                 <i class="fa-solid fa-bars text-mono-900 text-xl"></i>
             </button>
@@ -320,6 +320,27 @@
 
 <script>
 window.addEventListener('load', function() {
+    // Logo click handler
+    const logoLink = document.getElementById('logo-link');
+    logoLink.addEventListener('click', function(e) {
+        e.preventDefault();
+        
+        // Scroll to top
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+        
+        // Update URL to remove any hash
+        window.history.replaceState({}, document.title, window.location.pathname);
+        
+        // Close mobile menu if open
+        const mobileMenu = document.getElementById('mobile-menu');
+        if (!mobileMenu.classList.contains('hidden')) {
+            mobileMenu.classList.add('hidden');
+            const icon = document.getElementById('mobile-menu-btn').querySelector('i');
+            icon.classList.remove('fa-times');
+            icon.classList.add('fa-bars');
+        }
+    });
+    
     const mobileMenuBtn = document.getElementById('mobile-menu-btn');
     const mobileMenu = document.getElementById('mobile-menu');
     
