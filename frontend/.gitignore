@@ -47,3 +47,6 @@ dist/
 build/
 *.tgz
 *.tar.gz
+
+# Project Assets (at project root only)
+assets/
