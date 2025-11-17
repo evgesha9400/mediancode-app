@@ -57,3 +57,7 @@ build/
 .vercel/
 .netlify/
 .output/
+
+# Project Assets (at project root only)
+assets/
+wireframes/
