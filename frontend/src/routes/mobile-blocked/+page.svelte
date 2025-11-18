@@ -2,7 +2,7 @@
 	<div class="max-w-md text-center space-y-6">
 		<div class="flex items-center justify-center space-x-2 mb-8">
 			<div class="w-16 h-16 bg-mono-900 rounded flex items-center justify-center">
-				<span class="text-white text-3xl font-bold">&lt;/&gt;</span>
+				<i class="fa-solid fa-code text-white text-2xl"></i>
 			</div>
 		</div>
 

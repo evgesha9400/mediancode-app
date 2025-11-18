@@ -15,7 +15,7 @@
 			<div class="flex items-center justify-between h-16">
 				<div class="flex items-center space-x-2">
 					<div class="w-8 h-8 bg-mono-900 rounded flex items-center justify-center">
-						<span class="text-white text-sm font-bold">&lt;/&gt;</span>
+						<i class="fa-solid fa-code text-white text-sm"></i>
 					</div>
 					<span class="text-xl font-bold text-mono-900">Median Code</span>
 				</div>

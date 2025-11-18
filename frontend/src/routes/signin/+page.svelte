@@ -46,7 +46,7 @@
 		<div class="text-center space-y-4">
 			<div class="flex items-center justify-center space-x-2 mb-8">
 				<div class="w-12 h-12 bg-mono-900 rounded flex items-center justify-center">
-					<span class="text-white text-2xl font-bold">&lt;/&gt;</span>
+					<i class="fa-solid fa-code text-white text-xl"></i>
 				</div>
 				<h1 class="text-3xl font-bold text-mono-900">Median Code</h1>
 			</div>
@@ -56,7 +56,7 @@
 		<div class="text-center space-y-4">
 			<div class="flex items-center justify-center space-x-2 mb-8">
 				<div class="w-12 h-12 bg-mono-900 rounded flex items-center justify-center">
-					<span class="text-white text-2xl font-bold">&lt;/&gt;</span>
+					<i class="fa-solid fa-code text-white text-xl"></i>
 				</div>
 				<h1 class="text-3xl font-bold text-mono-900">Median Code</h1>
 			</div>
