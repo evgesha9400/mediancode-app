@@ -58,6 +58,6 @@ build/
 .netlify/
 .output/
 
-# Project Assets (at project root only)
-assets/
-wireframes/
+# Project Assets (at project root only, not in subdirectories)
+/assets/
+/wireframes/
