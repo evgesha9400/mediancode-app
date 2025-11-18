@@ -5,7 +5,7 @@
   "scripts": {
     "build:css": "tailwindcss -i ./styles/input.css -o ./assets/css/styles.css --minify",
     "watch:css": "tailwindcss -i ./styles/input.css -o ./assets/css/styles.css --watch",
-    "serve": "http-server . -p 8000 -c-1 -o index.html"
+    "serve": "http-server . -p 8000 -c-1"
   },
   "devDependencies": {
     "http-server": "^14.1.1",

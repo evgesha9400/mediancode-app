@@ -82,6 +82,10 @@ Visit `http://localhost:8000` in your browser.
 
 **To stop the server:**
 
+Simply press **`CTRL+C`** in the terminal where the server is running. The server will stop immediately and release port 8000.
+
+Alternatively, if you need to kill a stuck/orphaned process:
+
 ```bash
 make stop       # Kill any running server on port 8000
 ```
