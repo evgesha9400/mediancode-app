@@ -9,11 +9,15 @@
 
 	let { children, data } = $props();
 
+	// Define public routes that don't require authentication
+	const publicRoutes = ['/', '/mobile-blocked'];
+
 	// Check for mobile devices and redirect
 	$effect(() => {
 		if (browser) {
 			const currentPath = window.location.pathname;
 			const isMobile = isMobileDevice();
+			const isPublicRoute = publicRoutes.includes(currentPath);
 
 			// Redirect mobile users to blocked page (except if already on blocked page)
 			if (isMobile && currentPath !== '/mobile-blocked') {
@@ -25,10 +29,15 @@
 		}
 	});
 
-	// Initialize Clerk on client side
+	// Initialize Clerk only for non-public routes
 	$effect(() => {
 		if (browser && data.clerkPublishableKey) {
-			initializeClerk(data.clerkPublishableKey);
+			const currentPath = window.location.pathname;
+			const isPublicRoute = publicRoutes.includes(currentPath);
+
+			if (!isPublicRoute) {
+				initializeClerk(data.clerkPublishableKey);
+			}
 		}
 	});
 </script>

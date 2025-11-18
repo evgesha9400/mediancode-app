@@ -4,7 +4,7 @@
 
 	async function handleSignOut() {
 		await signOut();
-		goto('/');
+		goto('/auth');
 	}
 </script>
 
