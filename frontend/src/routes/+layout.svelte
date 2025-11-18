@@ -12,15 +12,15 @@
 	// Define public routes that don't require authentication
 	const publicRoutes = ['/', '/mobile-blocked'];
 
-	// Check for mobile devices and redirect
+	// Check for mobile devices and redirect (disabled for landing page)
 	$effect(() => {
 		if (browser) {
 			const currentPath = window.location.pathname;
 			const isMobile = isMobileDevice();
 			const isPublicRoute = publicRoutes.includes(currentPath);
 
-			// Redirect mobile users to blocked page (except if already on blocked page)
-			if (isMobile && currentPath !== '/mobile-blocked') {
+			// Only redirect for dashboard route, not landing page
+			if (isMobile && currentPath === '/dashboard') {
 				goto('/mobile-blocked');
 			} else if (!isMobile && currentPath === '/mobile-blocked') {
 				// Redirect desktop users away from blocked page

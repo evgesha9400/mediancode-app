@@ -110,7 +110,7 @@
 				</div>
 				<span class="text-lg sm:text-xl font-bold text-mono-900">Median Code</span>
 			</a>
-			<button on:click={toggleMobileMenu} class="md:hidden w-10 h-10 flex items-center justify-center">
+			<button on:click={toggleMobileMenu} aria-label="Toggle mobile menu" class="md:hidden w-10 h-10 flex items-center justify-center">
 				<i class="fa-solid {mobileMenuOpen ? 'fa-times' : 'fa-bars'} text-mono-900 text-xl"></i>
 			</button>
 			<nav class="hidden md:flex items-center space-x-6 lg:space-x-8">

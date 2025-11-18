@@ -4,12 +4,24 @@
 		<meta charset="utf-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1" />
 		<title>Median Code</title>
+		<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='4' fill='%23171717'/%3E%3Cpath d='M11.3 10.7c-.4-.4-1-.4-1.4 0l-4 4c-.4.4-.4 1 0 1.4l4 4c.4.4 1 .4 1.4 0s.4-1 0-1.4L8.4 16l3.3-3.3c.4-.4.4-1 0-1.4zm9.4 0c-.4-.4-1-.4-1.4 0s-.4 1 0 1.4L23.6 16l-3.3 3.3c-.4.4-.4 1 0 1.4s1 .4 1.4 0l4-4c.4-.4.4-1 0-1.4l-4-4z' fill='%23ffffff'/%3E%3Cline x1='18' y1='11' x2='14' y2='21' stroke='%23ffffff' stroke-width='1.5' stroke-linecap='round'/%3E%3C/svg%3E">
+
+		<!-- Google Fonts preconnect for performance -->
+		<link rel="preconnect" href="https://fonts.googleapis.com">
+		<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+
+		<!-- Local Font Awesome -->
 		<link rel="stylesheet" href="/font-awesome.min.css">
-		<script>window.FontAwesomeConfig = { autoReplaceSvg: 'nest'};</script>
-		<script src="/font-awesome.min.js"></script>
+
+		<!-- Hide scrollbar -->
+		<style>
+			::-webkit-scrollbar { display: none; }
+			html { scrollbar-width: none; -ms-overflow-style: none; }
+		</style>
+
 		%sveltekit.head%
 	</head>
-	<body data-sveltekit-preload-data="hover" class="bg-mono-50 text-mono-900">
+	<body data-sveltekit-preload-data="hover" class="bg-mono-50 text-mono-900 font-inter">
 		<div style="display: contents">%sveltekit.body%</div>
 	</body>
 </html>

@@ -67,3 +67,6 @@ vite.config.ts.timestamp-*
 # Project Assets (at project root only, not in subdirectories)
 /assets/
 /wireframes/
+
+# Playwright MCP
+/.playwright-mcp/
