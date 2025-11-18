@@ -18,7 +18,8 @@ median-code/
 │   │   ├── +layout.ts         # Server-side layout load
 │   │   ├── +page.svelte       # Landing page (public, root route)
 │   │   ├── (marketing)/       # Route group for public pages
-│   │   ├── auth/              # Authentication page
+│   │   ├── signin/            # Sign-in page
+│   │   ├── signup/            # Sign-up page
 │   │   ├── dashboard/         # Authenticated dashboard
 │   │   └── mobile-blocked/    # Mobile device blocking
 │   └── lib/
@@ -52,7 +53,8 @@ median-code/
 ## Route Structure
 
 - `/` - Public landing page (marketing)
-- `/auth` - Authentication page with Clerk sign-in
+- `/signin` - Sign-in page with Clerk authentication
+- `/signup` - Sign-up page for new users
 - `/dashboard` - Authenticated dashboard (requires sign-in)
 - `/mobile-blocked` - Mobile device blocking page
 
@@ -94,7 +96,7 @@ median-code/
 5. **Visit the application**
    - Open `http://localhost:5173` in your browser
    - Landing page loads at root (`/`)
-   - Navigate to `/auth` for authentication
+   - Navigate to `/signin` for sign-in or `/signup` for sign-up
    - Navigate to `/dashboard` for authenticated dashboard
 
 ### Development Commands
@@ -168,9 +170,9 @@ The dashboard uses Clerk for authentication with support for:
 
 **Authentication Flow:**
 1. User visits `/` (landing page - public)
-2. User navigates to `/auth` to sign in
+2. User navigates to `/signin` to sign in or `/signup` to create account
 3. After successful authentication, redirects to `/dashboard`
-4. Sign out redirects back to `/auth`
+4. Sign out redirects back to `/signin`
 
 **Public Routes** (no authentication required):
 - `/` - Landing page
@@ -195,7 +197,7 @@ The dashboard uses Clerk for authentication with support for:
 - **Sign Out**: Secure session termination
 
 ### Performance Optimizations
-- **Conditional Clerk Initialization**: Only loads Clerk on authenticated routes
+- **Clerk Initialization**: Loads on all routes to handle OAuth callbacks properly
 - **Local Font Awesome**: No external CDN dependencies for UI
 - **SvelteKit SSR**: Server-side rendering for faster initial loads
 - **Route Groups**: Clean separation of public vs authenticated routes
@@ -224,7 +226,7 @@ This project follows the conventional commits standard.
 **Example:**
 ```
 feat(landing): add email signup form validation
-fix(auth): resolve Clerk redirect issue
+fix(signin): resolve Clerk redirect issue
 style(dashboard): update header layout
 ```
 

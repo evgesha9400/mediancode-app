@@ -9,15 +9,14 @@
 
 	let { children, data } = $props();
 
-	// Define public routes that don't require authentication
-	const publicRoutes = ['/', '/mobile-blocked'];
+	// Define routes that don't need mobile redirect
+	const mobileAllowedRoutes = ['/', '/mobile-blocked'];
 
 	// Check for mobile devices and redirect (disabled for landing page)
 	$effect(() => {
 		if (browser) {
 			const currentPath = window.location.pathname;
 			const isMobile = isMobileDevice();
-			const isPublicRoute = publicRoutes.includes(currentPath);
 
 			// Only redirect for dashboard route, not landing page
 			if (isMobile && currentPath === '/dashboard') {
@@ -29,15 +28,10 @@
 		}
 	});
 
-	// Initialize Clerk only for non-public routes
+	// Initialize Clerk on all routes to handle OAuth callbacks
 	$effect(() => {
 		if (browser && data.clerkPublishableKey) {
-			const currentPath = window.location.pathname;
-			const isPublicRoute = publicRoutes.includes(currentPath);
-
-			if (!isPublicRoute) {
-				initializeClerk(data.clerkPublishableKey);
-			}
+			initializeClerk(data.clerkPublishableKey);
 		}
 	});
 </script>

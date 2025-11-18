@@ -14,8 +14,7 @@
 			if (clerk) {
 				clerk.mountSignIn(clerkMountDiv, {
 					afterSignInUrl: '/dashboard',
-					afterSignUpUrl: '/dashboard',
-					redirectUrl: '/dashboard',
+					signUpUrl: '/signup',
 					appearance: {
 						elements: {
 							rootBox: 'mx-auto',

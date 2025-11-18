@@ -23,7 +23,12 @@ export async function initializeClerk(publishableKey: string): Promise<any> {
   const { Clerk } = await import('@clerk/clerk-js');
 
   clerkInstance = new Clerk(publishableKey);
-  await clerkInstance.load();
+  await clerkInstance.load({
+    signInUrl: '/signin',
+    signUpUrl: '/signup',
+    afterSignInUrl: '/dashboard',
+    afterSignUpUrl: '/dashboard'
+  });
 
   // Update store with initial state
   clerkState.set({
