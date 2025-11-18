@@ -8,32 +8,58 @@ This is a monorepo containing two separate applications:
 
 ```
 median-code/
-├── landing/          # Static landing page (GitHub Pages)
-│   ├── index.html    # Main landing page
-│   └── CNAME         # Custom domain: mediancode.com
-├── dashboard/        # SvelteKit dashboard app (Vercel)
-│   ├── src/          # Application source code
-│   └── README.md     # Dashboard-specific documentation
+├── landing/                    # Static landing page (GitHub Pages)
+│   ├── index.html             # Main landing page
+│   ├── CNAME                  # Custom domain: mediancode.com
+│   ├── assets/                # Locally hosted assets
+│   │   ├── css/               # Tailwind CSS + Font Awesome
+│   │   ├── js/                # Font Awesome JS
+│   │   └── webfonts/          # Font Awesome fonts
+│   ├── styles/
+│   │   └── input.css          # Tailwind source
+│   ├── package.json           # Build dependencies
+│   ├── tailwind.config.js     # Tailwind config
+│   ├── postcss.config.js      # PostCSS config
+│   └── README.md              # Landing documentation
+├── dashboard/                 # SvelteKit dashboard app (Vercel)
+│   ├── src/                   # Application source code
+│   └── README.md              # Dashboard documentation
 ├── .github/
 │   └── workflows/
-│       └── landing.yml  # GitHub Pages deployment for landing page
-└── README.md         # This file
+│       └── landing.yml        # GitHub Pages deployment
+├── CLAUDE.md                  # AI assistant guidance
+└── README.md                  # This file
 ```
 
 ## Applications
 
 ### Landing Page (`/landing`)
 
-- **Tech**: Vanilla HTML, Tailwind CSS (CDN), minimal JavaScript
+- **Tech**: Vanilla HTML, Tailwind CSS (locally built), Font Awesome (locally hosted), minimal JavaScript
 - **Deployment**: GitHub Pages
 - **URL**: https://mediancode.com
 - **Purpose**: Marketing site and user acquisition
 
+**Asset Hosting:**
+- **Critical assets** (Tailwind CSS, Font Awesome) → Locally served for reliability
+- **Non-critical assets** (Google Fonts typography) → CDN for performance
+- See `landing/README.md` for detailed asset strategy
+
 **Local Development:**
 ```bash
 cd landing
-python3 -m http.server 8000
+make install             # Install build tools
+make build-css           # Build Tailwind CSS
+make serve               # Start local dev server
 # Visit http://localhost:8000
+```
+
+**Alternative commands (without make):**
+```bash
+npm install              # Install dependencies
+npm run build:css        # One-time rebuild
+npm run watch:css        # Watch for changes (auto-rebuild)
+npm run serve            # Start local server
 ```
 
 ### Dashboard (`/dashboard`)

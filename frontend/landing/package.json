@@ -1,0 +1,17 @@
+{
+  "name": "median-code-landing",
+  "version": "1.0.0",
+  "description": "Landing page for Median Code - FastAPI code generation platform",
+  "scripts": {
+    "build:css": "tailwindcss -i ./styles/input.css -o ./assets/css/styles.css --minify",
+    "watch:css": "tailwindcss -i ./styles/input.css -o ./assets/css/styles.css --watch",
+    "serve": "http-server . -p 8000 -c-1 -o index.html"
+  },
+  "devDependencies": {
+    "http-server": "^14.1.1",
+    "tailwindcss": "^3.4.17",
+    "autoprefixer": "^10.4.22",
+    "postcss": "^8.5.6"
+  }
+}
+
