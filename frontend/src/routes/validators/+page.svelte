@@ -4,22 +4,20 @@
   import { slide } from 'svelte/transition';
   import { page } from '$app/stores';
   import { goto } from '$app/navigation';
-  import { parseSortFromUrl, buildSortUrl, cycleSortDirection, sortData, getSortIcon, getSortAriaLabel, type SortDirection } from '$lib/utils/sorting';
+  import { parseMultiSortFromUrl, buildMultiSortUrl, handleSortClick, sortDataMultiColumn, getMultiSortIcon, getSortPriority, getMultiSortAriaLabel, type MultiSortState } from '$lib/utils/sorting';
 
   let searchQuery = '';
   let selectedValidator: Validator | null = null;
   let drawerOpen = false;
 
   // Sort state derived from URL parameters
-  $: sortState = parseSortFromUrl($page.url.searchParams);
-  $: sortBy = sortState.sortBy;
-  $: sortDir = sortState.sortDir;
+  $: sorts = parseMultiSortFromUrl($page.url.searchParams);
 
   // Apply search and then sorting
   $: filteredValidators = (() => {
     const searched = searchValidators(searchQuery);
-    const isNumericColumn = sortBy === 'usedInFields';
-    return sortData(searched, sortBy, sortDir, isNumericColumn);
+    const numericColumns = new Set(['usedInFields']);
+    return sortDataMultiColumn(searched, sorts, numericColumns);
   })();
 
   $: totalCount = getTotalValidatorCount();
@@ -40,10 +38,9 @@
     return selectedValidator?.name === validator.name;
   }
 
-  function handleSort(columnKey: string) {
-    const newDir = sortBy === columnKey ? cycleSortDirection(sortDir) : 'asc';
-    const newSortBy = newDir === null ? null : columnKey;
-    const urlParams = buildSortUrl(newSortBy, newDir);
+  function handleSort(columnKey: string, event: MouseEvent) {
+    const newSorts = handleSortClick(columnKey, sorts, event.shiftKey);
+    const urlParams = buildMultiSortUrl(newSorts);
     goto(`?${urlParams}`, { replaceState: false, keepFocus: true });
   }
 </script>
@@ -105,34 +102,52 @@
             <th scope="col" class="px-6 py-3 text-left text-xs text-mono-500 uppercase tracking-wider font-medium">
               <button
                 type="button"
-                on:click={() => handleSort('name')}
+                on:click={(e) => handleSort('name', e)}
                 class="flex items-center space-x-1 hover:text-mono-700 transition-colors"
-                aria-label={getSortAriaLabel('name', 'Validator Name', sortBy, sortDir)}
+                aria-label={getMultiSortAriaLabel('name', 'Validator Name', sorts)}
+                title="Click to sort, Shift+Click to add to sort"
               >
                 <span>Validator Name</span>
-                <i class="fa-solid {getSortIcon('name', sortBy, sortDir)}"></i>
+                <i class="fa-solid {getMultiSortIcon('name', sorts)}"></i>
+                {#if getSortPriority('name', sorts) !== null}
+                  <span class="inline-flex items-center justify-center w-4 h-4 text-xs font-semibold rounded-full bg-mono-800 text-white">
+                    {getSortPriority('name', sorts)}
+                  </span>
+                {/if}
               </button>
             </th>
             <th scope="col" class="px-6 py-3 text-left text-xs text-mono-500 uppercase tracking-wider font-medium">
               <button
                 type="button"
-                on:click={() => handleSort('type')}
+                on:click={(e) => handleSort('type', e)}
                 class="flex items-center space-x-1 hover:text-mono-700 transition-colors"
-                aria-label={getSortAriaLabel('type', 'Type', sortBy, sortDir)}
+                aria-label={getMultiSortAriaLabel('type', 'Type', sorts)}
+                title="Click to sort, Shift+Click to add to sort"
               >
                 <span>Type</span>
-                <i class="fa-solid {getSortIcon('type', sortBy, sortDir)}"></i>
+                <i class="fa-solid {getMultiSortIcon('type', sorts)}"></i>
+                {#if getSortPriority('type', sorts) !== null}
+                  <span class="inline-flex items-center justify-center w-4 h-4 text-xs font-semibold rounded-full bg-mono-800 text-white">
+                    {getSortPriority('type', sorts)}
+                  </span>
+                {/if}
               </button>
             </th>
             <th scope="col" class="px-6 py-3 text-left text-xs text-mono-500 uppercase tracking-wider font-medium">
               <button
                 type="button"
-                on:click={() => handleSort('category')}
+                on:click={(e) => handleSort('category', e)}
                 class="flex items-center space-x-1 hover:text-mono-700 transition-colors"
-                aria-label={getSortAriaLabel('category', 'Category', sortBy, sortDir)}
+                aria-label={getMultiSortAriaLabel('category', 'Category', sorts)}
+                title="Click to sort, Shift+Click to add to sort"
               >
                 <span>Category</span>
-                <i class="fa-solid {getSortIcon('category', sortBy, sortDir)}"></i>
+                <i class="fa-solid {getMultiSortIcon('category', sorts)}"></i>
+                {#if getSortPriority('category', sorts) !== null}
+                  <span class="inline-flex items-center justify-center w-4 h-4 text-xs font-semibold rounded-full bg-mono-800 text-white">
+                    {getSortPriority('category', sorts)}
+                  </span>
+                {/if}
               </button>
             </th>
             <th scope="col" class="px-6 py-3 text-left text-xs text-mono-500 uppercase tracking-wider font-medium">
@@ -143,12 +158,18 @@
             <th scope="col" class="px-6 py-3 text-left text-xs text-mono-500 uppercase tracking-wider font-medium">
               <button
                 type="button"
-                on:click={() => handleSort('usedInFields')}
+                on:click={(e) => handleSort('usedInFields', e)}
                 class="flex items-center space-x-1 hover:text-mono-700 transition-colors"
-                aria-label={getSortAriaLabel('usedInFields', 'Used In Fields', sortBy, sortDir)}
+                aria-label={getMultiSortAriaLabel('usedInFields', 'Used In Fields', sorts)}
+                title="Click to sort, Shift+Click to add to sort"
               >
                 <span>Used In Fields</span>
-                <i class="fa-solid {getSortIcon('usedInFields', sortBy, sortDir)}"></i>
+                <i class="fa-solid {getMultiSortIcon('usedInFields', sorts)}"></i>
+                {#if getSortPriority('usedInFields', sorts) !== null}
+                  <span class="inline-flex items-center justify-center w-4 h-4 text-xs font-semibold rounded-full bg-mono-800 text-white">
+                    {getSortPriority('usedInFields', sorts)}
+                  </span>
+                {/if}
               </button>
             </th>
           </tr>
