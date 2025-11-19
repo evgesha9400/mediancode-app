@@ -104,7 +104,7 @@
 <header id="header" class="bg-white border-b border-mono-200 sticky top-0 z-50">
 	<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
 		<div class="flex items-center justify-between h-16">
-			<a href="#" on:click={scrollToTop} class="flex items-center space-x-2 cursor-pointer hover:opacity-80 transition-opacity">
+			<a href="/" on:click={scrollToTop} class="flex items-center space-x-2 cursor-pointer hover:opacity-80 transition-opacity">
 				<div class="w-8 h-8 bg-mono-900 rounded flex items-center justify-center">
 					<i class="fa-solid fa-code text-white text-sm"></i>
 				</div>

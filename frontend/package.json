@@ -9,7 +9,8 @@
 		"preview": "vite preview",
 		"prepare": "svelte-kit sync || echo ''",
 		"check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
-		"check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch"
+		"check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch",
+		"kill-dev": "pkill -f 'vite dev' || echo 'No dev servers running'"
 	},
 	"devDependencies": {
 		"@sveltejs/adapter-auto": "^7.0.0",
@@ -30,5 +31,8 @@
 	"license": "ISC",
 	"dependencies": {
 		"@clerk/clerk-js": "^5.108.0"
+	},
+	"overrides": {
+		"cookie": "^0.7.2"
 	}
 }

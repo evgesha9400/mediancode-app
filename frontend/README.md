@@ -85,7 +85,7 @@ median-code/
 
    Add your Clerk publishable key to `.env`:
    ```
-   VITE_CLERK_PUBLISHABLE_KEY=your_clerk_publishable_key_here
+   PUBLIC_CLERK_PUBLISHABLE_KEY=your_clerk_publishable_key_here
    ```
 
 4. **Start development server**
@@ -115,10 +115,10 @@ npm run lint         # Run linter
 
 The application automatically deploys to Vercel when changes are pushed to the `main` branch.
 
-**Production URL**: https://app.mediancode.com
+**Production URL**: https://mediancode.com
 
 **Environment Variables** (set in Vercel dashboard):
-- `VITE_CLERK_PUBLISHABLE_KEY` - Your Clerk publishable key
+- `PUBLIC_CLERK_PUBLISHABLE_KEY` - Your Clerk publishable key
 
 ### Manual Deployment
 

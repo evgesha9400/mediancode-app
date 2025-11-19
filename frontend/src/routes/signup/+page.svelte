@@ -2,7 +2,7 @@
 	import { clerkState, getClerk } from '$lib/clerk';
 	import { goto } from '$app/navigation';
 
-	let clerkMountDiv: HTMLDivElement;
+	let clerkMountDiv = $state<HTMLDivElement>();
 	let hasAttemptedMount = $state(false);
 
 	// Mount Clerk sign-up form when ready
