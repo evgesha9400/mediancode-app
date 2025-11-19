@@ -230,19 +230,23 @@
           <h3 class="text-sm text-mono-500 mb-2 font-medium">
             Used In Fields ({selectedValidator.usedInFields})
           </h3>
-          <div class="space-y-2">
-            {#each selectedValidator.fieldsUsingValidator as field}
-              <div class="flex items-center justify-between p-3 bg-mono-50 rounded-md hover:bg-mono-100 cursor-pointer transition-colors">
-                <div class="flex items-center space-x-2">
-                  <i class="fa-solid fa-table-list text-mono-400"></i>
-                  <span class="text-sm text-mono-900">{field.name}</span>
+          {#if selectedValidator.fieldsUsingValidator.length > 0}
+            <div class="space-y-2">
+              {#each selectedValidator.fieldsUsingValidator as field}
+                <div class="flex items-center justify-between p-3 bg-mono-50 rounded-md hover:bg-mono-100 cursor-pointer transition-colors">
+                  <div class="flex items-center space-x-2">
+                    <i class="fa-solid fa-table-list text-mono-400"></i>
+                    <span class="text-sm text-mono-900">{field.name}</span>
+                  </div>
+                  <span class="text-xs text-mono-500 bg-mono-200 px-2 py-1 rounded">
+                    ID: {field.fieldId}
+                  </span>
                 </div>
-                <span class="text-xs text-mono-500 bg-mono-200 px-2 py-1 rounded">
-                  {field.model}
-                </span>
-              </div>
-            {/each}
-          </div>
+              {/each}
+            </div>
+          {:else}
+            <p class="text-sm text-mono-500 italic">Not used in any fields yet</p>
+          {/if}
         </div>
       </div>
     </div>

@@ -1,18 +1,23 @@
-import { writable } from 'svelte/store';
+import { writable, derived, get } from 'svelte/store';
+import { fieldsStore } from './fields';
+import type { Field } from './fields';
 
-export interface Validator {
+export interface ValidatorBase {
 	name: string;
-	category: 'string' | 'numeric' | 'collection' | 'custom';
+	category: 'string' | 'numeric' | 'collection';
 	description: string;
 	type: 'inline' | 'custom';
 	parameterType: string;
 	exampleUsage: string;
 	pydanticDocsUrl: string;
-	usedInFields: number;
-	fieldsUsingValidator: Array<{ name: string; model: string }>;
 }
 
-const inlineValidators: Validator[] = [
+export interface Validator extends ValidatorBase {
+	usedInFields: number;
+	fieldsUsingValidator: Array<{ name: string; fieldId: string }>;
+}
+
+const inlineValidators: ValidatorBase[] = [
 	{
 		name: 'min_length',
 		category: 'string',
@@ -20,22 +25,7 @@ const inlineValidators: Validator[] = [
 		type: 'inline',
 		parameterType: 'Integer',
 		exampleUsage: 'Field(..., min_length=3)',
-		pydanticDocsUrl: 'https://docs.pydantic.dev/latest/api/fields/#pydantic.fields.Field',
-		usedInFields: 12,
-		fieldsUsingValidator: [
-			{ name: 'username', model: 'User' },
-			{ name: 'first_name', model: 'User' },
-			{ name: 'last_name', model: 'User' },
-			{ name: 'product_name', model: 'Product' },
-			{ name: 'category_name', model: 'Category' },
-			{ name: 'title', model: 'Post' },
-			{ name: 'street_address', model: 'Address' },
-			{ name: 'city', model: 'Address' },
-			{ name: 'state', model: 'Address' },
-			{ name: 'company_name', model: 'Company' },
-			{ name: 'department', model: 'Employee' },
-			{ name: 'tag_name', model: 'Tag' }
-		]
+		pydanticDocsUrl: 'https://docs.pydantic.dev/latest/api/fields/#pydantic.fields.Field'
 	},
 	{
 		name: 'max_length',
@@ -44,28 +34,7 @@ const inlineValidators: Validator[] = [
 		type: 'inline',
 		parameterType: 'Integer',
 		exampleUsage: 'Field(..., max_length=100)',
-		pydanticDocsUrl: 'https://docs.pydantic.dev/latest/api/fields/#pydantic.fields.Field',
-		usedInFields: 18,
-		fieldsUsingValidator: [
-			{ name: 'username', model: 'User' },
-			{ name: 'email', model: 'User' },
-			{ name: 'first_name', model: 'User' },
-			{ name: 'last_name', model: 'User' },
-			{ name: 'bio', model: 'User' },
-			{ name: 'product_name', model: 'Product' },
-			{ name: 'description', model: 'Product' },
-			{ name: 'category_name', model: 'Category' },
-			{ name: 'title', model: 'Post' },
-			{ name: 'content', model: 'Post' },
-			{ name: 'street_address', model: 'Address' },
-			{ name: 'city', model: 'Address' },
-			{ name: 'state', model: 'Address' },
-			{ name: 'zip_code', model: 'Address' },
-			{ name: 'company_name', model: 'Company' },
-			{ name: 'department', model: 'Employee' },
-			{ name: 'position', model: 'Employee' },
-			{ name: 'tag_name', model: 'Tag' }
-		]
+		pydanticDocsUrl: 'https://docs.pydantic.dev/latest/api/fields/#pydantic.fields.Field'
 	},
 	{
 		name: 'regex',
@@ -74,18 +43,7 @@ const inlineValidators: Validator[] = [
 		type: 'inline',
 		parameterType: 'String (regex pattern)',
 		exampleUsage: 'Field(..., pattern=r"^[A-Za-z0-9]+$")',
-		pydanticDocsUrl: 'https://docs.pydantic.dev/latest/api/fields/#pydantic.fields.Field',
-		usedInFields: 8,
-		fieldsUsingValidator: [
-			{ name: 'username', model: 'User' },
-			{ name: 'slug', model: 'Post' },
-			{ name: 'sku', model: 'Product' },
-			{ name: 'zip_code', model: 'Address' },
-			{ name: 'license_plate', model: 'Vehicle' },
-			{ name: 'account_number', model: 'BankAccount' },
-			{ name: 'routing_number', model: 'BankAccount' },
-			{ name: 'tax_id', model: 'Company' }
-		]
+		pydanticDocsUrl: 'https://docs.pydantic.dev/latest/api/fields/#pydantic.fields.Field'
 	},
 	{
 		name: 'gt',
@@ -94,25 +52,7 @@ const inlineValidators: Validator[] = [
 		type: 'inline',
 		parameterType: 'Number',
 		exampleUsage: 'Field(..., gt=0)',
-		pydanticDocsUrl: 'https://docs.pydantic.dev/latest/api/fields/#pydantic.fields.Field',
-		usedInFields: 15,
-		fieldsUsingValidator: [
-			{ name: 'price', model: 'Product' },
-			{ name: 'quantity', model: 'OrderItem' },
-			{ name: 'age', model: 'User' },
-			{ name: 'rating', model: 'Review' },
-			{ name: 'stock_quantity', model: 'Inventory' },
-			{ name: 'discount_percentage', model: 'Promotion' },
-			{ name: 'tax_rate', model: 'TaxBracket' },
-			{ name: 'salary', model: 'Employee' },
-			{ name: 'account_balance', model: 'BankAccount' },
-			{ name: 'credit_limit', model: 'CreditCard' },
-			{ name: 'interest_rate', model: 'Loan' },
-			{ name: 'weight', model: 'Product' },
-			{ name: 'height', model: 'Product' },
-			{ name: 'width', model: 'Product' },
-			{ name: 'depth', model: 'Product' }
-		]
+		pydanticDocsUrl: 'https://docs.pydantic.dev/latest/api/fields/#pydantic.fields.Field'
 	},
 	{
 		name: 'ge',
@@ -121,32 +61,7 @@ const inlineValidators: Validator[] = [
 		type: 'inline',
 		parameterType: 'Number',
 		exampleUsage: 'Field(..., ge=0)',
-		pydanticDocsUrl: 'https://docs.pydantic.dev/latest/api/fields/#pydantic.fields.Field',
-		usedInFields: 22,
-		fieldsUsingValidator: [
-			{ name: 'price', model: 'Product' },
-			{ name: 'quantity', model: 'OrderItem' },
-			{ name: 'age', model: 'User' },
-			{ name: 'rating', model: 'Review' },
-			{ name: 'stock_quantity', model: 'Inventory' },
-			{ name: 'discount_percentage', model: 'Promotion' },
-			{ name: 'tax_rate', model: 'TaxBracket' },
-			{ name: 'salary', model: 'Employee' },
-			{ name: 'account_balance', model: 'BankAccount' },
-			{ name: 'credit_limit', model: 'CreditCard' },
-			{ name: 'interest_rate', model: 'Loan' },
-			{ name: 'weight', model: 'Product' },
-			{ name: 'height', model: 'Product' },
-			{ name: 'width', model: 'Product' },
-			{ name: 'depth', model: 'Product' },
-			{ name: 'commission_rate', model: 'Salesperson' },
-			{ name: 'bonus', model: 'Employee' },
-			{ name: 'overtime_hours', model: 'Timesheet' },
-			{ name: 'total_amount', model: 'Invoice' },
-			{ name: 'tax_amount', model: 'Invoice' },
-			{ name: 'shipping_cost', model: 'Order' },
-			{ name: 'distance', model: 'Shipment' }
-		]
+		pydanticDocsUrl: 'https://docs.pydantic.dev/latest/api/fields/#pydantic.fields.Field'
 	},
 	{
 		name: 'lt',
@@ -155,19 +70,7 @@ const inlineValidators: Validator[] = [
 		type: 'inline',
 		parameterType: 'Number',
 		exampleUsage: 'Field(..., lt=100)',
-		pydanticDocsUrl: 'https://docs.pydantic.dev/latest/api/fields/#pydantic.fields.Field',
-		usedInFields: 9,
-		fieldsUsingValidator: [
-			{ name: 'age', model: 'User' },
-			{ name: 'rating', model: 'Review' },
-			{ name: 'discount_percentage', model: 'Promotion' },
-			{ name: 'tax_rate', model: 'TaxBracket' },
-			{ name: 'commission_rate', model: 'Salesperson' },
-			{ name: 'completion_percentage', model: 'Project' },
-			{ name: 'battery_level', model: 'Device' },
-			{ name: 'capacity_percentage', model: 'Storage' },
-			{ name: 'humidity', model: 'WeatherData' }
-		]
+		pydanticDocsUrl: 'https://docs.pydantic.dev/latest/api/fields/#pydantic.fields.Field'
 	},
 	{
 		name: 'le',
@@ -176,21 +79,7 @@ const inlineValidators: Validator[] = [
 		type: 'inline',
 		parameterType: 'Number',
 		exampleUsage: 'Field(..., le=100)',
-		pydanticDocsUrl: 'https://docs.pydantic.dev/latest/api/fields/#pydantic.fields.Field',
-		usedInFields: 11,
-		fieldsUsingValidator: [
-			{ name: 'age', model: 'User' },
-			{ name: 'rating', model: 'Review' },
-			{ name: 'discount_percentage', model: 'Promotion' },
-			{ name: 'tax_rate', model: 'TaxBracket' },
-			{ name: 'commission_rate', model: 'Salesperson' },
-			{ name: 'completion_percentage', model: 'Project' },
-			{ name: 'battery_level', model: 'Device' },
-			{ name: 'capacity_percentage', model: 'Storage' },
-			{ name: 'humidity', model: 'WeatherData' },
-			{ name: 'progress', model: 'Task' },
-			{ name: 'score', model: 'Exam' }
-		]
+		pydanticDocsUrl: 'https://docs.pydantic.dev/latest/api/fields/#pydantic.fields.Field'
 	},
 	{
 		name: 'multiple_of',
@@ -199,13 +88,7 @@ const inlineValidators: Validator[] = [
 		type: 'inline',
 		parameterType: 'Number',
 		exampleUsage: 'Field(..., multiple_of=5)',
-		pydanticDocsUrl: 'https://docs.pydantic.dev/latest/api/fields/#pydantic.fields.Field',
-		usedInFields: 3,
-		fieldsUsingValidator: [
-			{ name: 'quantity', model: 'OrderItem' },
-			{ name: 'pack_size', model: 'Product' },
-			{ name: 'increment', model: 'StockLevel' }
-		]
+		pydanticDocsUrl: 'https://docs.pydantic.dev/latest/api/fields/#pydantic.fields.Field'
 	},
 	{
 		name: 'min_items',
@@ -214,16 +97,7 @@ const inlineValidators: Validator[] = [
 		type: 'inline',
 		parameterType: 'Integer',
 		exampleUsage: 'Field(..., min_length=1)',
-		pydanticDocsUrl: 'https://docs.pydantic.dev/latest/api/fields/#pydantic.fields.Field',
-		usedInFields: 6,
-		fieldsUsingValidator: [
-			{ name: 'tags', model: 'Post' },
-			{ name: 'categories', model: 'Product' },
-			{ name: 'images', model: 'Product' },
-			{ name: 'order_items', model: 'Order' },
-			{ name: 'permissions', model: 'Role' },
-			{ name: 'attachments', model: 'Email' }
-		]
+		pydanticDocsUrl: 'https://docs.pydantic.dev/latest/api/fields/#pydantic.fields.Field'
 	},
 	{
 		name: 'max_items',
@@ -232,18 +106,7 @@ const inlineValidators: Validator[] = [
 		type: 'inline',
 		parameterType: 'Integer',
 		exampleUsage: 'Field(..., max_length=10)',
-		pydanticDocsUrl: 'https://docs.pydantic.dev/latest/api/fields/#pydantic.fields.Field',
-		usedInFields: 8,
-		fieldsUsingValidator: [
-			{ name: 'tags', model: 'Post' },
-			{ name: 'categories', model: 'Product' },
-			{ name: 'images', model: 'Product' },
-			{ name: 'order_items', model: 'Order' },
-			{ name: 'permissions', model: 'Role' },
-			{ name: 'attachments', model: 'Email' },
-			{ name: 'options', model: 'Poll' },
-			{ name: 'favorites', model: 'User' }
-		]
+		pydanticDocsUrl: 'https://docs.pydantic.dev/latest/api/fields/#pydantic.fields.Field'
 	},
 	{
 		name: 'unique_items',
@@ -252,85 +115,117 @@ const inlineValidators: Validator[] = [
 		type: 'inline',
 		parameterType: 'Boolean',
 		exampleUsage: 'Field(..., unique_items=True)',
-		pydanticDocsUrl: 'https://docs.pydantic.dev/latest/api/fields/#pydantic.fields.Field',
-		usedInFields: 5,
-		fieldsUsingValidator: [
-			{ name: 'tags', model: 'Post' },
-			{ name: 'categories', model: 'Product' },
-			{ name: 'permissions', model: 'Role' },
-			{ name: 'email_recipients', model: 'Campaign' },
-			{ name: 'participant_ids', model: 'Meeting' }
-		]
+		pydanticDocsUrl: 'https://docs.pydantic.dev/latest/api/fields/#pydantic.fields.Field'
 	}
 ];
 
-const customValidators: Validator[] = [
+const customValidators: ValidatorBase[] = [
 	{
 		name: 'email_format',
-		category: 'custom',
+		category: 'string',
 		description: 'Validates email address format. Custom validator that ensures email addresses are properly formatted and valid.',
 		type: 'custom',
 		parameterType: 'String',
 		exampleUsage: '@field_validator("email")\ndef validate_email(cls, v):\n    if not re.match(r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$", v):\n        raise ValueError("Invalid email format")\n    return v',
-		pydanticDocsUrl: 'https://docs.pydantic.dev/latest/concepts/validators/',
-		usedInFields: 3,
-		fieldsUsingValidator: [
-			{ name: 'email', model: 'User' },
-			{ name: 'contact_email', model: 'Company' },
-			{ name: 'billing_email', model: 'Account' }
-		]
+		pydanticDocsUrl: 'https://docs.pydantic.dev/latest/concepts/validators/'
 	},
 	{
 		name: 'phone_number',
-		category: 'custom',
+		category: 'string',
 		description: 'Validates phone number format. Custom validator that ensures phone numbers match standard international formats.',
 		type: 'custom',
 		parameterType: 'String',
 		exampleUsage: '@field_validator("phone")\ndef validate_phone(cls, v):\n    if not re.match(r"^\\+?[1-9]\\d{1,14}$", v):\n        raise ValueError("Invalid phone number")\n    return v',
-		pydanticDocsUrl: 'https://docs.pydantic.dev/latest/concepts/validators/',
-		usedInFields: 2,
-		fieldsUsingValidator: [
-			{ name: 'phone', model: 'User' },
-			{ name: 'contact_number', model: 'Company' }
-		]
+		pydanticDocsUrl: 'https://docs.pydantic.dev/latest/concepts/validators/'
 	},
 	{
 		name: 'url_format',
-		category: 'custom',
+		category: 'string',
 		description: 'Validates URL format. Custom validator that ensures URLs are properly formatted and valid.',
 		type: 'custom',
 		parameterType: 'String',
 		exampleUsage: '@field_validator("website")\ndef validate_url(cls, v):\n    if not v.startswith(("http://", "https://")):\n        raise ValueError("Invalid URL format")\n    return v',
-		pydanticDocsUrl: 'https://docs.pydantic.dev/latest/concepts/validators/',
-		usedInFields: 4,
-		fieldsUsingValidator: [
-			{ name: 'website', model: 'Company' },
-			{ name: 'blog_url', model: 'User' },
-			{ name: 'source_url', model: 'Article' },
-			{ name: 'redirect_url', model: 'Link' }
-		]
+		pydanticDocsUrl: 'https://docs.pydantic.dev/latest/concepts/validators/'
 	}
 ];
 
-const allValidators = [...inlineValidators, ...customValidators];
+const allValidatorsBase: ValidatorBase[] = [...inlineValidators, ...customValidators];
 
-export const validatorsStore = writable<Validator[]>(allValidators);
+// Base store for validator definitions (without usage data)
+const validatorsBaseStore = writable<ValidatorBase[]>(allValidatorsBase);
+
+// Derived store that calculates validator usage dynamically based on fieldsStore
+export const validatorsStore = derived(
+	[validatorsBaseStore, fieldsStore],
+	([$validatorsBase, $fields]) => {
+		// Calculate usage for each validator
+		return $validatorsBase.map(validatorBase => {
+			const fieldsUsingValidator: Array<{ name: string; fieldId: string }> = [];
+
+			$fields.forEach(field => {
+				const usesValidator = field.validators.some(v => v.name === validatorBase.name);
+				if (usesValidator) {
+					fieldsUsingValidator.push({
+						name: field.name,
+						fieldId: field.id
+					});
+				}
+			});
+
+			return {
+				...validatorBase,
+				usedInFields: fieldsUsingValidator.length,
+				fieldsUsingValidator
+			} as Validator;
+		});
+	}
+);
 
 export function getValidatorsByType(type: 'inline' | 'custom'): Validator[] {
-	return allValidators.filter(v => v.type === type);
+	return get(validatorsStore).filter(v => v.type === type);
 }
 
 export function getTotalValidatorCount(): number {
-	return allValidators.length;
+	return allValidatorsBase.length;
 }
 
 export function searchValidators(query: string): Validator[] {
 	const lowerQuery = query.toLowerCase().trim();
-	if (!lowerQuery) return allValidators;
+	const validators = get(validatorsStore);
 
-	return allValidators.filter(validator =>
+	if (!lowerQuery) {
+		return validators;
+	}
+
+	return validators.filter(validator =>
 		validator.name.toLowerCase().includes(lowerQuery) ||
 		validator.description.toLowerCase().includes(lowerQuery) ||
 		validator.category.toLowerCase().includes(lowerQuery)
+	);
+}
+
+export function getValidatorsByFieldType(fieldType: string): Validator[] {
+	const validators = get(validatorsStore);
+
+	// Map field types to compatible validator categories
+	const typeToCategories: Record<string, string[]> = {
+		'str': ['string'],
+		'int': ['numeric'],
+		'float': ['numeric'],
+		'bool': [],
+		'datetime': [],
+		'uuid': []
+	};
+
+	const compatibleCategories = typeToCategories[fieldType] || [];
+
+	// If no compatible categories, return empty array
+	if (compatibleCategories.length === 0) {
+		return [];
+	}
+
+	// Filter validators by compatible categories
+	return validators.filter(validator =>
+		compatibleCategories.includes(validator.category)
 	);
 }

@@ -1,6 +1,6 @@
 <script lang="ts">
   import { fieldsStore, searchFields, getTotalFieldCount, updateField, deleteField, type Field, type FieldValidator } from '$lib/stores/fields';
-  import { validatorsStore, type Validator } from '$lib/stores/validators';
+  import { validatorsStore, getValidatorsByFieldType, type Validator } from '$lib/stores/validators';
   import DashboardLayout from '$lib/components/DashboardLayout.svelte';
   import { slide } from 'svelte/transition';
 
@@ -15,16 +15,30 @@
   let validationErrors: Record<string, string> = {};
   let saveSuccess = false;
   let showDeleteConfirm = false;
+  let previousFieldType: string | null = null;
 
   $: filteredFields = searchFields(searchQuery);
   $: totalCount = getTotalFieldCount();
   $: validators = $validatorsStore;
+  $: availableValidators = editedField ? getValidatorsByFieldType(editedField.type) : [];
   $: hasChanges = originalField && editedField ? JSON.stringify(originalField) !== JSON.stringify(editedField) : false;
+
+  // Reset validators and default value when field type changes
+  $: if (editedField && previousFieldType !== null && previousFieldType !== editedField.type) {
+    editedField.validators = [];
+    editedField.defaultValue = '';
+  }
+
+  // Track field type changes
+  $: if (editedField) {
+    previousFieldType = editedField.type;
+  }
 
   function selectField(field: Field) {
     selectedField = field;
     editedField = JSON.parse(JSON.stringify(field)); // Deep clone
     originalField = JSON.parse(JSON.stringify(field)); // Store original for comparison
+    previousFieldType = field.type; // Initialize type tracking
     drawerOpen = true;
     editMode = true;
     validationErrors = {};
@@ -38,6 +52,7 @@
       selectedField = null;
       editedField = null;
       originalField = null;
+      previousFieldType = null;
       editMode = false;
       validationErrors = {};
       saveSuccess = false;
@@ -97,7 +112,12 @@
 
   function addValidator() {
     if (!editedField) return;
-    editedField.validators = [...editedField.validators, { name: 'min_length', params: { value: 1 } }];
+    const available = getValidatorsByFieldType(editedField.type);
+    if (available.length === 0) return;
+
+    // Use the first available validator
+    const firstValidator = available[0];
+    editedField.validators = [...editedField.validators, { name: firstValidator.name, params: {} }];
   }
 
   function removeValidator(index: number) {
@@ -378,7 +398,8 @@
           <button
             type="button"
             on:click={addValidator}
-            class="text-sm text-mono-600 hover:text-mono-900 flex items-center transition-colors"
+            disabled={availableValidators.length === 0}
+            class="text-sm flex items-center transition-colors {availableValidators.length > 0 ? 'text-mono-600 hover:text-mono-900 cursor-pointer' : 'text-mono-400 cursor-not-allowed'}"
           >
             <i class="fa-solid fa-plus mr-1"></i>
             <span>Add</span>
@@ -395,7 +416,7 @@
                       on:change={(e) => updateValidatorName(index, e.currentTarget.value)}
                       class="w-full appearance-none px-3 py-1.5 border border-mono-300 rounded-md text-sm pr-8 focus:ring-2 focus:ring-mono-400 focus:border-transparent"
                     >
-                      {#each validators as v}
+                      {#each availableValidators as v}
                         <option value={v.name}>{v.name}</option>
                       {/each}
                     </select>
@@ -414,17 +435,23 @@
                 </div>
                 {#if validatorMeta}
                   <div class="flex items-center space-x-2 pl-3">
-                    <span class="px-2 py-0.5 text-xs rounded-full {source === 'custom' ? 'bg-purple-100 text-purple-700' : 'bg-blue-100 text-blue-700'}">
+                    <span class="px-2 py-0.5 text-xs rounded-full bg-mono-900 text-white capitalize">
+                      {validatorMeta.category}
+                    </span>
+                    <span class="px-2 py-0.5 text-xs rounded-full {source === 'inline' ? 'bg-mono-200 text-mono-700' : 'bg-mono-700 text-white'} capitalize">
                       {source}
                     </span>
-                    <span class="text-xs text-mono-500">{validatorMeta.category}</span>
                   </div>
                 {/if}
               </div>
             </div>
           {/each}
           {#if editedField.validators.length === 0}
-            <p class="text-sm text-mono-500 italic">No validators added</p>
+            {#if availableValidators.length === 0}
+              <p class="text-sm text-mono-500 italic">No validators available for {editedField.type} type</p>
+            {:else}
+              <p class="text-sm text-mono-500 italic">No validators added</p>
+            {/if}
           {/if}
         </div>
       </div>

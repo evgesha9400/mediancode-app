@@ -15,17 +15,6 @@ export interface Field {
 	usedInApis: string[];
 }
 
-const mockApiNames = [
-	'Authentication API',
-	'User Management API',
-	'Customer API',
-	'Product API',
-	'Order API',
-	'Payment API',
-	'Inventory API',
-	'Analytics API'
-];
-
 const initialFields: Field[] = [
 	{
 		id: 'field-1',
@@ -37,7 +26,7 @@ const initialFields: Field[] = [
 			{ name: 'max_length', params: { value: 255 } },
 			{ name: 'email_format' }
 		],
-		usedInApis: [mockApiNames[0], mockApiNames[1], mockApiNames[2]]
+		usedInApis: []
 	},
 	{
 		id: 'field-2',
@@ -49,7 +38,7 @@ const initialFields: Field[] = [
 			{ name: 'min_length', params: { value: 3 } },
 			{ name: 'max_length', params: { value: 50 } }
 		],
-		usedInApis: [mockApiNames[0], mockApiNames[1], mockApiNames[2], mockApiNames[3], mockApiNames[4]]
+		usedInApis: []
 	},
 	{
 		id: 'field-3',
@@ -61,7 +50,7 @@ const initialFields: Field[] = [
 			{ name: 'min_length', params: { value: 8 } },
 			{ name: 'max_length', params: { value: 128 } }
 		],
-		usedInApis: [mockApiNames[0], mockApiNames[1]]
+		usedInApis: []
 	},
 	{
 		id: 'field-4',
@@ -70,7 +59,7 @@ const initialFields: Field[] = [
 		description: 'Unique identifier for user',
 		defaultValue: 'uuid.uuid4()',
 		validators: [],
-		usedInApis: [mockApiNames[0], mockApiNames[1], mockApiNames[2], mockApiNames[3], mockApiNames[4], mockApiNames[5], mockApiNames[6], mockApiNames[7]]
+		usedInApis: []
 	},
 	{
 		id: 'field-5',
@@ -79,7 +68,7 @@ const initialFields: Field[] = [
 		description: 'Timestamp when the record was created',
 		defaultValue: 'datetime.now()',
 		validators: [],
-		usedInApis: [mockApiNames[0], mockApiNames[1], mockApiNames[2], mockApiNames[3], mockApiNames[4], mockApiNames[5], mockApiNames[6], mockApiNames[7], mockApiNames[0], mockApiNames[1], mockApiNames[2], mockApiNames[3]]
+		usedInApis: []
 	},
 	{
 		id: 'field-6',
@@ -88,7 +77,7 @@ const initialFields: Field[] = [
 		description: 'Timestamp when the record was last updated',
 		defaultValue: 'datetime.now()',
 		validators: [],
-		usedInApis: [mockApiNames[0], mockApiNames[1], mockApiNames[2], mockApiNames[3], mockApiNames[4], mockApiNames[5], mockApiNames[6], mockApiNames[7], mockApiNames[0], mockApiNames[1]]
+		usedInApis: []
 	},
 	{
 		id: 'field-7',
@@ -97,7 +86,7 @@ const initialFields: Field[] = [
 		description: 'Product or service price',
 		defaultValue: '0.0',
 		validators: [],
-		usedInApis: [mockApiNames[3], mockApiNames[4], mockApiNames[5], mockApiNames[6]]
+		usedInApis: []
 	},
 	{
 		id: 'field-8',
@@ -106,7 +95,7 @@ const initialFields: Field[] = [
 		description: 'Current status of the entity',
 		defaultValue: "'active'",
 		validators: [],
-		usedInApis: [mockApiNames[1], mockApiNames[2], mockApiNames[3], mockApiNames[4], mockApiNames[6], mockApiNames[7]]
+		usedInApis: []
 	},
 	{
 		id: 'field-9',
@@ -119,7 +108,7 @@ const initialFields: Field[] = [
 			{ name: 'max_length', params: { value: 255 } },
 			{ name: 'url_format' }
 		],
-		usedInApis: [mockApiNames[2]]
+		usedInApis: []
 	},
 	{
 		id: 'field-10',
@@ -130,7 +119,7 @@ const initialFields: Field[] = [
 		validators: [
 			{ name: 'phone_number' }
 		],
-		usedInApis: [mockApiNames[1], mockApiNames[2]]
+		usedInApis: []
 	}
 ];
 
@@ -150,6 +139,21 @@ export function getTotalFieldCount(): number {
 		count = fields.length;
 	})();
 	return count;
+}
+
+export function getTotalApiCount(): number {
+	let apiCount = 0;
+	fieldsStore.subscribe(fields => {
+		// Collect all unique API IDs from all fields
+		const uniqueApis = new Set<string>();
+		fields.forEach(field => {
+			field.usedInApis.forEach(apiId => {
+				uniqueApis.add(apiId);
+			});
+		});
+		apiCount = uniqueApis.size;
+	})();
+	return apiCount;
 }
 
 export function searchFields(query: string): Field[] {
