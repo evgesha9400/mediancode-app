@@ -15,7 +15,7 @@
 	// Check for mobile devices and redirect (disabled for landing page)
 	$effect(() => {
 		if (browser) {
-			const currentPath = window.location.pathname;
+			const currentPath = $page.url.pathname;
 			const isMobile = isMobileDevice();
 
 			// Only redirect for dashboard route, not landing page
