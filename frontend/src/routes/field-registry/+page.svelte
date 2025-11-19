@@ -153,7 +153,16 @@
 			<ul class="space-y-1">
 				<li>
 					<a
-						href="/dashboard/validators"
+						href="/dashboard"
+						class="flex items-center space-x-2 px-2 py-1.5 rounded-md hover:bg-mono-800 cursor-pointer"
+					>
+						<i class="fa-solid fa-house w-5"></i>
+						<span>Dashboard</span>
+					</a>
+				</li>
+				<li>
+					<a
+						href="/validators"
 						class="flex items-center space-x-2 px-2 py-1.5 rounded-md hover:bg-mono-800 cursor-pointer"
 					>
 						<i class="fa-solid fa-check-circle w-5"></i>
