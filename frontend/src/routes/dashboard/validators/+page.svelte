@@ -58,14 +58,13 @@
 					</a>
 				</li>
 				<li>
-					<button
-						type="button"
-						class="w-full flex items-center space-x-2 px-2 py-1.5 rounded-md hover:bg-mono-800 cursor-pointer text-left"
-						disabled
+					<a
+						href="/field-registry"
+						class="flex items-center space-x-2 px-2 py-1.5 rounded-md hover:bg-mono-800 cursor-pointer"
 					>
 						<i class="fa-solid fa-table-list w-5"></i>
-						<span class="opacity-60">Field Registry</span>
-					</button>
+						<span>Field Registry</span>
+					</a>
 				</li>
 				<li>
 					<button

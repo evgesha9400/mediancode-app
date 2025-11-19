@@ -1,0 +1,167 @@
+import { writable } from 'svelte/store';
+
+export interface FieldValidator {
+	name: string;
+	params?: Record<string, any>;
+}
+
+export interface Field {
+	id: string;
+	name: string;
+	type: 'str' | 'str (email)' | 'str (password)' | 'int' | 'float' | 'bool' | 'datetime' | 'uuid';
+	description?: string;
+	defaultValue?: string;
+	validators: FieldValidator[];
+	usedInApis: string[];
+}
+
+const mockApiNames = [
+	'Authentication API',
+	'User Management API',
+	'Customer API',
+	'Product API',
+	'Order API',
+	'Payment API',
+	'Inventory API',
+	'Analytics API'
+];
+
+const initialFields: Field[] = [
+	{
+		id: 'field-1',
+		name: 'email',
+		type: 'str (email)',
+		description: 'User email address',
+		defaultValue: '',
+		validators: [
+			{ name: 'email format' }
+		],
+		usedInApis: [mockApiNames[0], mockApiNames[1], mockApiNames[2]]
+	},
+	{
+		id: 'field-2',
+		name: 'username',
+		type: 'str',
+		description: 'Unique username for the user account',
+		defaultValue: '',
+		validators: [
+			{ name: 'min_length', params: { value: 3 } },
+			{ name: 'max_length', params: { value: 50 } }
+		],
+		usedInApis: [mockApiNames[0], mockApiNames[1], mockApiNames[2], mockApiNames[3], mockApiNames[4]]
+	},
+	{
+		id: 'field-3',
+		name: 'password',
+		type: 'str (password)',
+		description: 'Encrypted user password',
+		defaultValue: '',
+		validators: [
+			{ name: 'min_length', params: { value: 8 } }
+		],
+		usedInApis: [mockApiNames[0], mockApiNames[1]]
+	},
+	{
+		id: 'field-4',
+		name: 'user_id',
+		type: 'uuid',
+		description: 'Unique identifier for user',
+		defaultValue: 'uuid.uuid4()',
+		validators: [],
+		usedInApis: [mockApiNames[0], mockApiNames[1], mockApiNames[2], mockApiNames[3], mockApiNames[4], mockApiNames[5], mockApiNames[6], mockApiNames[7]]
+	},
+	{
+		id: 'field-5',
+		name: 'created_at',
+		type: 'datetime',
+		description: 'Timestamp when the record was created',
+		defaultValue: 'datetime.now()',
+		validators: [],
+		usedInApis: [mockApiNames[0], mockApiNames[1], mockApiNames[2], mockApiNames[3], mockApiNames[4], mockApiNames[5], mockApiNames[6], mockApiNames[7], mockApiNames[0], mockApiNames[1], mockApiNames[2], mockApiNames[3]]
+	},
+	{
+		id: 'field-6',
+		name: 'updated_at',
+		type: 'datetime',
+		description: 'Timestamp when the record was last updated',
+		defaultValue: 'datetime.now()',
+		validators: [],
+		usedInApis: [mockApiNames[0], mockApiNames[1], mockApiNames[2], mockApiNames[3], mockApiNames[4], mockApiNames[5], mockApiNames[6], mockApiNames[7], mockApiNames[0], mockApiNames[1]]
+	},
+	{
+		id: 'field-7',
+		name: 'price',
+		type: 'float',
+		description: 'Product or service price',
+		defaultValue: '0.0',
+		validators: [],
+		usedInApis: [mockApiNames[3], mockApiNames[4], mockApiNames[5], mockApiNames[6]]
+	},
+	{
+		id: 'field-8',
+		name: 'status',
+		type: 'str',
+		description: 'Current status of the entity',
+		defaultValue: "'active'",
+		validators: [],
+		usedInApis: [mockApiNames[1], mockApiNames[2], mockApiNames[3], mockApiNames[4], mockApiNames[6], mockApiNames[7]]
+	}
+];
+
+export const fieldsStore = writable<Field[]>(initialFields);
+
+export function getFieldById(id: string): Field | undefined {
+	let result: Field | undefined;
+	fieldsStore.subscribe(fields => {
+		result = fields.find(f => f.id === id);
+	})();
+	return result;
+}
+
+export function getTotalFieldCount(): number {
+	let count = 0;
+	fieldsStore.subscribe(fields => {
+		count = fields.length;
+	})();
+	return count;
+}
+
+export function searchFields(query: string): Field[] {
+	const lowerQuery = query.toLowerCase().trim();
+	let result: Field[] = [];
+
+	fieldsStore.subscribe(fields => {
+		if (!lowerQuery) {
+			result = fields;
+		} else {
+			result = fields.filter(field =>
+				field.name.toLowerCase().includes(lowerQuery) ||
+				field.type.toLowerCase().includes(lowerQuery) ||
+				field.description?.toLowerCase().includes(lowerQuery) ||
+				field.validators.some(v => v.name.toLowerCase().includes(lowerQuery))
+			);
+		}
+	})();
+
+	return result;
+}
+
+export function updateField(id: string, updates: Partial<Field>): void {
+	fieldsStore.update(fields => {
+		return fields.map(field =>
+			field.id === id ? { ...field, ...updates } : field
+		);
+	});
+}
+
+export function deleteField(id: string): void {
+	fieldsStore.update(fields => {
+		return fields.filter(field => field.id !== id);
+	});
+}
+
+export function addField(field: Field): void {
+	fieldsStore.update(fields => {
+		return [...fields, field];
+	});
+}
