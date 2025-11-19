@@ -8,7 +8,7 @@ export interface FieldValidator {
 export interface Field {
 	id: string;
 	name: string;
-	type: 'str' | 'str (email)' | 'str (password)' | 'int' | 'float' | 'bool' | 'datetime' | 'uuid';
+	type: 'str' | 'int' | 'float' | 'bool' | 'datetime' | 'uuid';
 	description?: string;
 	defaultValue?: string;
 	validators: FieldValidator[];
@@ -30,12 +30,12 @@ const initialFields: Field[] = [
 	{
 		id: 'field-1',
 		name: 'email',
-		type: 'str (email)',
+		type: 'str',
 		description: 'User email address',
 		defaultValue: '',
 		validators: [
 			{ name: 'max_length', params: { value: 255 } },
-			{ name: 'url_format' }
+			{ name: 'email_format' }
 		],
 		usedInApis: [mockApiNames[0], mockApiNames[1], mockApiNames[2]]
 	},
@@ -54,7 +54,7 @@ const initialFields: Field[] = [
 	{
 		id: 'field-3',
 		name: 'password',
-		type: 'str (password)',
+		type: 'str',
 		description: 'Encrypted user password',
 		defaultValue: '',
 		validators: [

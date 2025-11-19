@@ -266,6 +266,21 @@ const inlineValidators: Validator[] = [
 
 const customValidators: Validator[] = [
 	{
+		name: 'email_format',
+		category: 'custom',
+		description: 'Validates email address format. Custom validator that ensures email addresses are properly formatted and valid.',
+		type: 'custom',
+		parameterType: 'String',
+		exampleUsage: '@field_validator("email")\ndef validate_email(cls, v):\n    if not re.match(r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$", v):\n        raise ValueError("Invalid email format")\n    return v',
+		pydanticDocsUrl: 'https://docs.pydantic.dev/latest/concepts/validators/',
+		usedInFields: 3,
+		fieldsUsingValidator: [
+			{ name: 'email', model: 'User' },
+			{ name: 'contact_email', model: 'Company' },
+			{ name: 'billing_email', model: 'Account' }
+		]
+	},
+	{
 		name: 'phone_number',
 		category: 'custom',
 		description: 'Validates phone number format. Custom validator that ensures phone numbers match standard international formats.',
