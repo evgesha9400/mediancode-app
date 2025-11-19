@@ -3,6 +3,9 @@
   import { validatorsStore, getValidatorsByFieldType, type Validator } from '$lib/stores/validators';
   import DashboardLayout from '$lib/components/DashboardLayout.svelte';
   import { slide } from 'svelte/transition';
+  import { page } from '$app/stores';
+  import { goto } from '$app/navigation';
+  import { parseSortFromUrl, buildSortUrl, cycleSortDirection, sortData, getSortIcon, getSortAriaLabel, type SortDirection } from '$lib/utils/sorting';
 
   let searchQuery = '';
   let selectedField: Field | null = null;
@@ -17,7 +20,30 @@
   let showDeleteConfirm = false;
   let previousFieldType: string | null = null;
 
-  $: filteredFields = searchFields(searchQuery);
+  // Sort state derived from URL parameters
+  $: sortState = parseSortFromUrl($page.url.searchParams);
+  $: sortBy = sortState.sortBy;
+  $: sortDir = sortState.sortDir;
+
+  // Apply search and then sorting
+  $: filteredFields = (() => {
+    const searched = searchFields(searchQuery);
+
+    // Determine if this is a numeric column
+    let isNumericColumn = false;
+    if (sortBy === 'usedInApis') {
+      isNumericColumn = true;
+      // Sort by the length of usedInApis array
+      const withApiCount = searched.map(field => ({
+        ...field,
+        usedInApisCount: field.usedInApis.length
+      }));
+      return sortData(withApiCount as any[], sortBy === 'usedInApis' ? 'usedInApisCount' : sortBy, sortDir, isNumericColumn);
+    }
+
+    return sortData(searched, sortBy, sortDir, isNumericColumn);
+  })();
+
   $: totalCount = getTotalFieldCount();
   $: validators = $validatorsStore;
   $: availableValidators = editedField ? getValidatorsByFieldType(editedField.type) : [];
@@ -166,6 +192,13 @@
       };
     });
   }
+
+  function handleSort(columnKey: string) {
+    const newDir = sortBy === columnKey ? cycleSortDirection(sortDir) : 'asc';
+    const newSortBy = newDir === null ? null : columnKey;
+    const urlParams = buildSortUrl(newSortBy, newDir);
+    goto(`?${urlParams}`, { replaceState: false, keepFocus: true });
+  }
 </script>
 
 <DashboardLayout>
@@ -223,16 +256,26 @@
       <thead class="bg-mono-50 sticky top-0">
         <tr>
           <th scope="col" class="px-6 py-3 text-left text-xs text-mono-500 uppercase tracking-wider font-medium">
-            <div class="flex items-center space-x-1">
+            <button
+              type="button"
+              on:click={() => handleSort('name')}
+              class="flex items-center space-x-1 hover:text-mono-700 transition-colors"
+              aria-label={getSortAriaLabel('name', 'Field Name', sortBy, sortDir)}
+            >
               <span>Field Name</span>
-              <i class="fa-solid fa-sort"></i>
-            </div>
+              <i class="fa-solid {getSortIcon('name', sortBy, sortDir)}"></i>
+            </button>
           </th>
           <th scope="col" class="px-6 py-3 text-left text-xs text-mono-500 uppercase tracking-wider font-medium">
-            <div class="flex items-center space-x-1">
+            <button
+              type="button"
+              on:click={() => handleSort('type')}
+              class="flex items-center space-x-1 hover:text-mono-700 transition-colors"
+              aria-label={getSortAriaLabel('type', 'Type', sortBy, sortDir)}
+            >
               <span>Type</span>
-              <i class="fa-solid fa-sort"></i>
-            </div>
+              <i class="fa-solid {getSortIcon('type', sortBy, sortDir)}"></i>
+            </button>
           </th>
           <th scope="col" class="px-6 py-3 text-left text-xs text-mono-500 uppercase tracking-wider font-medium">
             <div class="flex items-center space-x-1">
@@ -240,16 +283,26 @@
             </div>
           </th>
           <th scope="col" class="px-6 py-3 text-left text-xs text-mono-500 uppercase tracking-wider font-medium">
-            <div class="flex items-center space-x-1">
+            <button
+              type="button"
+              on:click={() => handleSort('defaultValue')}
+              class="flex items-center space-x-1 hover:text-mono-700 transition-colors"
+              aria-label={getSortAriaLabel('defaultValue', 'Default Value', sortBy, sortDir)}
+            >
               <span>Default Value</span>
-              <i class="fa-solid fa-sort"></i>
-            </div>
+              <i class="fa-solid {getSortIcon('defaultValue', sortBy, sortDir)}"></i>
+            </button>
           </th>
           <th scope="col" class="px-6 py-3 text-left text-xs text-mono-500 uppercase tracking-wider font-medium">
-            <div class="flex items-center space-x-1">
+            <button
+              type="button"
+              on:click={() => handleSort('usedInApis')}
+              class="flex items-center space-x-1 hover:text-mono-700 transition-colors"
+              aria-label={getSortAriaLabel('usedInApis', 'Used In APIs', sortBy, sortDir)}
+            >
               <span>Used In APIs</span>
-              <i class="fa-solid fa-sort"></i>
-            </div>
+              <i class="fa-solid {getSortIcon('usedInApis', sortBy, sortDir)}"></i>
+            </button>
           </th>
         </tr>
       </thead>

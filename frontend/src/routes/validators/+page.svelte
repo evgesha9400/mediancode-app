@@ -2,12 +2,26 @@
   import { validatorsStore, searchValidators, getTotalValidatorCount, type Validator } from '$lib/stores/validators';
   import DashboardLayout from '$lib/components/DashboardLayout.svelte';
   import { slide } from 'svelte/transition';
+  import { page } from '$app/stores';
+  import { goto } from '$app/navigation';
+  import { parseSortFromUrl, buildSortUrl, cycleSortDirection, sortData, getSortIcon, getSortAriaLabel, type SortDirection } from '$lib/utils/sorting';
 
   let searchQuery = '';
   let selectedValidator: Validator | null = null;
   let drawerOpen = false;
 
-  $: filteredValidators = searchValidators(searchQuery);
+  // Sort state derived from URL parameters
+  $: sortState = parseSortFromUrl($page.url.searchParams);
+  $: sortBy = sortState.sortBy;
+  $: sortDir = sortState.sortDir;
+
+  // Apply search and then sorting
+  $: filteredValidators = (() => {
+    const searched = searchValidators(searchQuery);
+    const isNumericColumn = sortBy === 'usedInFields';
+    return sortData(searched, sortBy, sortDir, isNumericColumn);
+  })();
+
   $: totalCount = getTotalValidatorCount();
 
   function selectValidator(validator: Validator) {
@@ -24,6 +38,13 @@
 
   function isSelected(validator: Validator): boolean {
     return selectedValidator?.name === validator.name;
+  }
+
+  function handleSort(columnKey: string) {
+    const newDir = sortBy === columnKey ? cycleSortDirection(sortDir) : 'asc';
+    const newSortBy = newDir === null ? null : columnKey;
+    const urlParams = buildSortUrl(newSortBy, newDir);
+    goto(`?${urlParams}`, { replaceState: false, keepFocus: true });
   }
 </script>
 
@@ -82,22 +103,37 @@
         <thead class="bg-mono-50 sticky top-0">
           <tr>
             <th scope="col" class="px-6 py-3 text-left text-xs text-mono-500 uppercase tracking-wider font-medium">
-              <div class="flex items-center space-x-1">
+              <button
+                type="button"
+                on:click={() => handleSort('name')}
+                class="flex items-center space-x-1 hover:text-mono-700 transition-colors"
+                aria-label={getSortAriaLabel('name', 'Validator Name', sortBy, sortDir)}
+              >
                 <span>Validator Name</span>
-                <i class="fa-solid fa-sort"></i>
-              </div>
+                <i class="fa-solid {getSortIcon('name', sortBy, sortDir)}"></i>
+              </button>
             </th>
             <th scope="col" class="px-6 py-3 text-left text-xs text-mono-500 uppercase tracking-wider font-medium">
-              <div class="flex items-center space-x-1">
+              <button
+                type="button"
+                on:click={() => handleSort('type')}
+                class="flex items-center space-x-1 hover:text-mono-700 transition-colors"
+                aria-label={getSortAriaLabel('type', 'Type', sortBy, sortDir)}
+              >
                 <span>Type</span>
-                <i class="fa-solid fa-sort"></i>
-              </div>
+                <i class="fa-solid {getSortIcon('type', sortBy, sortDir)}"></i>
+              </button>
             </th>
             <th scope="col" class="px-6 py-3 text-left text-xs text-mono-500 uppercase tracking-wider font-medium">
-              <div class="flex items-center space-x-1">
+              <button
+                type="button"
+                on:click={() => handleSort('category')}
+                class="flex items-center space-x-1 hover:text-mono-700 transition-colors"
+                aria-label={getSortAriaLabel('category', 'Category', sortBy, sortDir)}
+              >
                 <span>Category</span>
-                <i class="fa-solid fa-sort"></i>
-              </div>
+                <i class="fa-solid {getSortIcon('category', sortBy, sortDir)}"></i>
+              </button>
             </th>
             <th scope="col" class="px-6 py-3 text-left text-xs text-mono-500 uppercase tracking-wider font-medium">
               <div class="flex items-center space-x-1">
@@ -105,10 +141,15 @@
               </div>
             </th>
             <th scope="col" class="px-6 py-3 text-left text-xs text-mono-500 uppercase tracking-wider font-medium">
-              <div class="flex items-center space-x-1">
+              <button
+                type="button"
+                on:click={() => handleSort('usedInFields')}
+                class="flex items-center space-x-1 hover:text-mono-700 transition-colors"
+                aria-label={getSortAriaLabel('usedInFields', 'Used In Fields', sortBy, sortDir)}
+              >
                 <span>Used In Fields</span>
-                <i class="fa-solid fa-sort"></i>
-              </div>
+                <i class="fa-solid {getSortIcon('usedInFields', sortBy, sortDir)}"></i>
+              </button>
             </th>
           </tr>
         </thead>
