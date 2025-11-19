@@ -34,7 +34,8 @@ const initialFields: Field[] = [
 		description: 'User email address',
 		defaultValue: '',
 		validators: [
-			{ name: 'email format' }
+			{ name: 'max_length', params: { value: 255 } },
+			{ name: 'url_format' }
 		],
 		usedInApis: [mockApiNames[0], mockApiNames[1], mockApiNames[2]]
 	},
@@ -57,7 +58,8 @@ const initialFields: Field[] = [
 		description: 'Encrypted user password',
 		defaultValue: '',
 		validators: [
-			{ name: 'min_length', params: { value: 8 } }
+			{ name: 'min_length', params: { value: 8 } },
+			{ name: 'max_length', params: { value: 128 } }
 		],
 		usedInApis: [mockApiNames[0], mockApiNames[1]]
 	},
@@ -105,6 +107,30 @@ const initialFields: Field[] = [
 		defaultValue: "'active'",
 		validators: [],
 		usedInApis: [mockApiNames[1], mockApiNames[2], mockApiNames[3], mockApiNames[4], mockApiNames[6], mockApiNames[7]]
+	},
+	{
+		id: 'field-9',
+		name: 'website',
+		type: 'str',
+		description: 'Company website URL',
+		defaultValue: '',
+		validators: [
+			{ name: 'min_length', params: { value: 5 } },
+			{ name: 'max_length', params: { value: 255 } },
+			{ name: 'url_format' }
+		],
+		usedInApis: [mockApiNames[2]]
+	},
+	{
+		id: 'field-10',
+		name: 'phone',
+		type: 'str',
+		description: 'Contact phone number',
+		defaultValue: '',
+		validators: [
+			{ name: 'phone_number' }
+		],
+		usedInApis: [mockApiNames[1], mockApiNames[2]]
 	}
 ];
 

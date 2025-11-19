@@ -12,6 +12,7 @@
 
 	// Form fields for editing
 	let editedField: Field | null = null;
+	let originalField: Field | null = null;
 	let validationErrors: Record<string, string> = {};
 	let saveSuccess = false;
 	let showDeleteConfirm = false;
@@ -19,10 +20,12 @@
 	$: filteredFields = searchFields(searchQuery);
 	$: totalCount = getTotalFieldCount();
 	$: validators = $validatorsStore;
+	$: hasChanges = originalField && editedField ? JSON.stringify(originalField) !== JSON.stringify(editedField) : false;
 
 	function selectField(field: Field) {
 		selectedField = field;
 		editedField = JSON.parse(JSON.stringify(field)); // Deep clone
+		originalField = JSON.parse(JSON.stringify(field)); // Store original for comparison
 		drawerOpen = true;
 		editMode = true;
 		validationErrors = {};
@@ -35,6 +38,7 @@
 		setTimeout(() => {
 			selectedField = null;
 			editedField = null;
+			originalField = null;
 			editMode = false;
 			validationErrors = {};
 			saveSuccess = false;
@@ -70,6 +74,7 @@
 
 		updateField(editedField.id, editedField);
 		selectedField = editedField;
+		originalField = JSON.parse(JSON.stringify(editedField)); // Update original to match saved state
 		saveSuccess = true;
 
 		setTimeout(() => {
@@ -77,9 +82,9 @@
 		}, 3000);
 	}
 
-	function handleCancel() {
-		if (selectedField) {
-			editedField = JSON.parse(JSON.stringify(selectedField));
+	function handleUndo() {
+		if (originalField) {
+			editedField = JSON.parse(JSON.stringify(originalField));
 			validationErrors = {};
 			saveSuccess = false;
 		}
@@ -130,6 +135,17 @@
 			return `${validator.name}: ${value}`;
 		}
 		return validator.name;
+	}
+
+	function getAllValidatorsForField(field: Field): Array<{ validator: FieldValidator; validatorMeta: Validator | undefined; source: 'inline' | 'custom' }> {
+		return field.validators.map(fv => {
+			const validatorMeta = validators.find(v => v.name === fv.name);
+			return {
+				validator: fv,
+				validatorMeta,
+				source: validatorMeta?.type || 'inline'
+			};
+		});
 	}
 
 	async function handleSignOut() {
@@ -414,8 +430,6 @@
 							class="w-full appearance-none px-3 py-2 border border-mono-300 rounded-md focus:ring-2 focus:ring-mono-400 focus:border-transparent pr-8 {validationErrors.type ? 'border-red-500' : ''}"
 						>
 							<option value="str">str</option>
-							<option value="str (email)">str (email)</option>
-							<option value="str (password)">str (password)</option>
 							<option value="int">int</option>
 							<option value="float">float</option>
 							<option value="bool">bool</option>
@@ -463,30 +477,42 @@
 						</button>
 					</div>
 					<div class="space-y-2">
-						{#each editedField.validators as validator, index}
+						{#each getAllValidatorsForField(editedField) as { validator, validatorMeta, source }, index}
 							<div class="flex items-center space-x-2 p-2 bg-mono-50 rounded-md">
-								<div class="relative flex-1">
-									<select
-										value={validator.name}
-										on:change={(e) => updateValidatorName(index, e.currentTarget.value)}
-										class="w-full appearance-none px-3 py-1.5 border border-mono-300 rounded-md text-sm pr-8 focus:ring-2 focus:ring-mono-400 focus:border-transparent"
-									>
-										{#each validators as v}
-											<option value={v.name}>{v.name}</option>
-										{/each}
-									</select>
-									<div class="absolute inset-y-0 right-0 flex items-center px-2 pointer-events-none">
-										<i class="fa-solid fa-chevron-down text-mono-400 text-xs"></i>
+								<div class="flex-1 space-y-1">
+									<div class="flex items-center space-x-2">
+										<div class="relative flex-1">
+											<select
+												value={validator.name}
+												on:change={(e) => updateValidatorName(index, e.currentTarget.value)}
+												class="w-full appearance-none px-3 py-1.5 border border-mono-300 rounded-md text-sm pr-8 focus:ring-2 focus:ring-mono-400 focus:border-transparent"
+											>
+												{#each validators as v}
+													<option value={v.name}>{v.name}</option>
+												{/each}
+											</select>
+											<div class="absolute inset-y-0 right-0 flex items-center px-2 pointer-events-none">
+												<i class="fa-solid fa-chevron-down text-mono-400 text-xs"></i>
+											</div>
+										</div>
+										<button
+											type="button"
+											on:click={() => removeValidator(index)}
+											class="text-mono-400 hover:text-mono-600 transition-colors"
+											aria-label="Remove validator"
+										>
+											<i class="fa-solid fa-trash"></i>
+										</button>
 									</div>
+									{#if validatorMeta}
+										<div class="flex items-center space-x-2 pl-3">
+											<span class="px-2 py-0.5 text-xs rounded-full {source === 'custom' ? 'bg-purple-100 text-purple-700' : 'bg-blue-100 text-blue-700'}">
+												{source}
+											</span>
+											<span class="text-xs text-mono-500">{validatorMeta.category}</span>
+										</div>
+									{/if}
 								</div>
-								<button
-									type="button"
-									on:click={() => removeValidator(index)}
-									class="text-mono-400 hover:text-mono-600 transition-colors"
-									aria-label="Remove validator"
-								>
-									<i class="fa-solid fa-trash"></i>
-								</button>
 							</div>
 						{/each}
 						{#if editedField.validators.length === 0}
@@ -515,16 +541,18 @@
 				<button
 					type="button"
 					on:click={handleSave}
-					class="w-full px-4 py-2 bg-mono-900 text-white rounded-md hover:bg-mono-800 transition-colors font-medium"
+					disabled={!hasChanges}
+					class="w-full px-4 py-2 rounded-md transition-colors font-medium {hasChanges ? 'bg-mono-900 text-white hover:bg-mono-800 cursor-pointer' : 'bg-mono-300 text-mono-500 cursor-not-allowed'}"
 				>
 					Save Changes
 				</button>
 				<button
 					type="button"
-					on:click={handleCancel}
-					class="w-full px-4 py-2 border border-mono-300 text-mono-700 rounded-md hover:bg-mono-50 transition-colors font-medium"
+					on:click={handleUndo}
+					disabled={!hasChanges}
+					class="w-full px-4 py-2 border rounded-md transition-colors font-medium {hasChanges ? 'border-mono-300 text-mono-700 hover:bg-mono-50 cursor-pointer' : 'border-mono-200 text-mono-400 cursor-not-allowed bg-mono-50'}"
 				>
-					Cancel
+					Undo
 				</button>
 				{#if !showDeleteConfirm}
 					<button

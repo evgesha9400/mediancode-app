@@ -9,8 +9,6 @@
 	let drawerOpen = false;
 
 	$: filteredValidators = searchValidators(searchQuery);
-	$: inlineValidators = filteredValidators.filter(v => v.type === 'inline');
-	$: customValidators = filteredValidators.filter(v => v.type === 'custom');
 	$: totalCount = getTotalValidatorCount();
 
 	function selectValidator(validator: Validator) {
@@ -171,18 +169,19 @@
 
 		<!-- Table Container -->
 		<div class="flex-1 overflow-auto">
-			<!-- Inline Validators Section -->
-			{#if inlineValidators.length > 0}
-				<div class="bg-white px-6 py-4 border-b border-mono-200">
-					<h2 class="text-sm text-mono-700 uppercase tracking-wider font-medium">Inline Validators</h2>
-				</div>
-
+			{#if filteredValidators.length > 0}
 				<table class="min-w-full bg-white">
 					<thead class="bg-mono-50 sticky top-0">
 						<tr>
 							<th scope="col" class="px-6 py-3 text-left text-xs text-mono-500 uppercase tracking-wider font-medium">
 								<div class="flex items-center space-x-1">
 									<span>Validator Name</span>
+									<i class="fa-solid fa-sort"></i>
+								</div>
+							</th>
+							<th scope="col" class="px-6 py-3 text-left text-xs text-mono-500 uppercase tracking-wider font-medium">
+								<div class="flex items-center space-x-1">
+									<span>Type</span>
 									<i class="fa-solid fa-sort"></i>
 								</div>
 							</th>
@@ -206,7 +205,7 @@
 						</tr>
 					</thead>
 					<tbody class="divide-y divide-mono-200">
-						{#each inlineValidators as validator}
+						{#each filteredValidators as validator}
 							<tr
 								on:click={() => selectValidator(validator)}
 								class="cursor-pointer transition-colors {isSelected(validator) ? 'bg-mono-100' : 'hover:bg-mono-50'}"
@@ -215,8 +214,13 @@
 									<div class="text-sm text-mono-900 font-medium">{validator.name}</div>
 								</td>
 								<td class="px-6 py-4 whitespace-nowrap">
-									<span class="px-2 py-1 text-xs rounded-full bg-mono-900 text-white">
+									<span class="px-2 py-1 text-xs rounded-full bg-mono-900 text-white capitalize">
 										{validator.category}
+									</span>
+								</td>
+								<td class="px-6 py-4 whitespace-nowrap">
+									<span class="px-2 py-1 text-xs rounded-full {validator.type === 'inline' ? 'bg-mono-200 text-mono-700' : 'bg-mono-700 text-white'} capitalize">
+										{validator.type}
 									</span>
 								</td>
 								<td class="px-6 py-4 text-sm text-mono-500">
@@ -234,48 +238,8 @@
 						{/each}
 					</tbody>
 				</table>
-			{/if}
-
-			<!-- Custom Validators Section -->
-			{#if customValidators.length > 0}
-				<div class="bg-white px-6 py-4 border-b border-mono-200 border-t">
-					<h2 class="text-sm text-mono-700 uppercase tracking-wider font-medium">Custom Validators</h2>
-				</div>
-
-				<table class="min-w-full bg-white">
-					<tbody class="divide-y divide-mono-200">
-						{#each customValidators as validator}
-							<tr
-								on:click={() => selectValidator(validator)}
-								class="cursor-pointer transition-colors {isSelected(validator) ? 'bg-mono-100' : 'hover:bg-mono-50'}"
-							>
-								<td class="px-6 py-4 whitespace-nowrap">
-									<div class="text-sm text-mono-900 font-medium">{validator.name}</div>
-								</td>
-								<td class="px-6 py-4 whitespace-nowrap">
-									<span class="px-2 py-1 text-xs rounded-full bg-mono-900 text-white">
-										{validator.category}
-									</span>
-								</td>
-								<td class="px-6 py-4 text-sm text-mono-500">
-									{validator.description.split('.')[0]}.
-								</td>
-								<td class="px-6 py-4 whitespace-nowrap">
-									<div class="flex items-center space-x-2">
-										<span class="px-2 py-1 text-xs rounded-full bg-mono-200 text-mono-700">
-											{validator.usedInFields}
-										</span>
-										<span class="text-sm text-mono-600">fields</span>
-									</div>
-								</td>
-							</tr>
-						{/each}
-					</tbody>
-				</table>
-			{/if}
-
-			<!-- Empty State -->
-			{#if filteredValidators.length === 0}
+			{:else}
+				<!-- Empty State -->
 				<div class="flex flex-col items-center justify-center py-12 px-6">
 					<i class="fa-solid fa-search text-4xl text-mono-300 mb-4"></i>
 					<h3 class="text-lg font-medium text-mono-900 mb-2">No validators found</h3>
@@ -311,14 +275,16 @@
 
 					<div>
 						<h3 class="text-sm text-mono-500 mb-1 font-medium">Type</h3>
-						<span class="px-2 py-1 text-xs rounded-full bg-mono-900 text-white">
-							{selectedValidator.type === 'inline' ? 'Inline Validator' : 'Custom Validator'}
+						<span class="px-2 py-1 text-xs rounded-full bg-mono-900 text-white capitalize">
+							{selectedValidator.category}
 						</span>
 					</div>
 
 					<div>
 						<h3 class="text-sm text-mono-500 mb-1 font-medium">Category</h3>
-						<p class="text-mono-900">{selectedValidator.category}</p>
+						<span class="px-2 py-1 text-xs rounded-full {selectedValidator.type === 'inline' ? 'bg-mono-200 text-mono-700' : 'bg-mono-700 text-white'} capitalize">
+							{selectedValidator.type}
+						</span>
 					</div>
 
 					<div>
