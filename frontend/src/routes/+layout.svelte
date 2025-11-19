@@ -1,6 +1,5 @@
 <script lang="ts">
 	import '../app.css';
-	import favicon from '$lib/assets/favicon.svg';
 	import { initializeClerk } from '$lib/clerk';
 	import { browser } from '$app/environment';
 	import { isMobileDevice } from '$lib/deviceDetection';
@@ -35,9 +34,5 @@
 		}
 	});
 </script>
-
-<svelte:head>
-	<link rel="icon" href={favicon} />
-</svelte:head>
 
 {@render children()}
