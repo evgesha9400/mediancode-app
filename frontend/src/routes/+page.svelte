@@ -1,4 +1,6 @@
 <script lang="ts">
+	import { clerkState } from '$lib/clerk';
+
 	let mobileMenuOpen = false;
 	let heroFormSuccess = false;
 	let ctaFormSuccess = false;
@@ -117,6 +119,23 @@
 				<a href="#features" class="text-mono-600 hover:text-mono-900 font-medium transition-colors text-sm lg:text-base">Features</a>
 				<a href="#how-it-works" class="text-mono-600 hover:text-mono-900 font-medium transition-colors text-sm lg:text-base">How It Works</a>
 				<a href="#benefits" class="text-mono-600 hover:text-mono-900 font-medium transition-colors text-sm lg:text-base">Benefits</a>
+
+				{#if $clerkState.isLoaded}
+					<div class="h-6 w-px bg-mono-300"></div>
+
+					{#if $clerkState.isSignedIn}
+						<a href="/dashboard" class="px-4 py-2 bg-mono-900 text-white rounded-lg hover:bg-mono-800 transition-colors font-medium text-sm lg:text-base whitespace-nowrap">
+							Go to Dashboard
+						</a>
+					{:else}
+						<a href="/signin" class="text-mono-600 hover:text-mono-900 font-medium transition-colors text-sm lg:text-base">
+							Login
+						</a>
+						<a href="/signup" class="px-4 py-2 bg-mono-900 text-white rounded-lg hover:bg-mono-800 transition-colors font-medium text-sm lg:text-base whitespace-nowrap">
+							Sign Up
+						</a>
+					{/if}
+				{/if}
 			</nav>
 		</div>
 	</div>
