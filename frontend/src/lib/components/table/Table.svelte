@@ -12,6 +12,7 @@
         <slot name="body" />
       </tbody>
     </table>
+  {:else}
+    <slot name="empty" />
   {/if}
-  <slot name="empty" />
 </div>
