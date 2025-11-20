@@ -334,10 +334,11 @@
       <div class="space-y-4">
         <!-- Field Name -->
         <div>
-          <label class="block text-sm text-mono-700 mb-1 font-medium">
+          <label for="field-name" class="block text-sm text-mono-700 mb-1 font-medium">
             Field Name <span class="text-red-500">*</span>
           </label>
           <input
+            id="field-name"
             type="text"
             bind:value={editedField.name}
             class="w-full px-3 py-2 border border-mono-300 rounded-md focus:ring-2 focus:ring-mono-400 focus:border-transparent {validationErrors.name ? 'border-red-500' : ''}"
@@ -349,11 +350,12 @@
 
         <!-- Type -->
         <div>
-          <label class="block text-sm text-mono-700 mb-1 font-medium">
+          <label for="field-type" class="block text-sm text-mono-700 mb-1 font-medium">
             Type <span class="text-red-500">*</span>
           </label>
           <div class="relative">
             <select
+              id="field-type"
               bind:value={editedField.type}
               class="w-full appearance-none px-3 py-2 border border-mono-300 rounded-md focus:ring-2 focus:ring-mono-400 focus:border-transparent pr-8 {validationErrors.type ? 'border-red-500' : ''}"
             >
@@ -375,8 +377,9 @@
 
         <!-- Description -->
         <div>
-          <label class="block text-sm text-mono-700 mb-1 font-medium">Description</label>
+          <label for="field-description" class="block text-sm text-mono-700 mb-1 font-medium">Description</label>
           <textarea
+            id="field-description"
             bind:value={editedField.description}
             rows="3"
             class="w-full px-3 py-2 border border-mono-300 rounded-md focus:ring-2 focus:ring-mono-400 focus:border-transparent"
@@ -385,8 +388,9 @@
 
         <!-- Default Value -->
         <div>
-          <label class="block text-sm text-mono-700 mb-1 font-medium">Default Value</label>
+          <label for="field-default-value" class="block text-sm text-mono-700 mb-1 font-medium">Default Value</label>
           <input
+            id="field-default-value"
             type="text"
             bind:value={editedField.defaultValue}
             placeholder="None"
@@ -397,7 +401,7 @@
         <!-- Validators -->
         <div>
           <div class="flex justify-between items-center mb-2">
-            <label class="block text-sm text-mono-700 font-medium">Validators</label>
+            <div class="block text-sm text-mono-700 font-medium">Validators</div>
             <button
               type="button"
               on:click={addValidator}
