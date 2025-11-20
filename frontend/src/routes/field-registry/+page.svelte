@@ -2,10 +2,18 @@
   import { fieldsStore, searchFields, getTotalFieldCount, updateField, deleteField, type Field, type FieldValidator } from '$lib/stores/fields';
   import { validatorsStore, getValidatorsByFieldType, type Validator } from '$lib/stores/validators';
   import DashboardLayout from '$lib/components/DashboardLayout.svelte';
-  import { slide } from 'svelte/transition';
+  import PageHeader from '$lib/components/layout/PageHeader.svelte';
+  import SearchBar from '$lib/components/search/SearchBar.svelte';
+  import Table from '$lib/components/table/Table.svelte';
+  import SortableColumn from '$lib/components/table/SortableColumn.svelte';
+  import EmptyState from '$lib/components/table/EmptyState.svelte';
+  import Drawer from '$lib/components/drawer/Drawer.svelte';
+  import DrawerHeader from '$lib/components/drawer/DrawerHeader.svelte';
+  import DrawerContent from '$lib/components/drawer/DrawerContent.svelte';
+  import DrawerFooter from '$lib/components/drawer/DrawerFooter.svelte';
   import { page } from '$app/stores';
   import { goto } from '$app/navigation';
-  import { parseMultiSortFromUrl, buildMultiSortUrl, handleSortClick, sortDataMultiColumn, getMultiSortIcon, getSortPriority, getMultiSortAriaLabel, type MultiSortState } from '$lib/utils/sorting';
+  import { parseMultiSortFromUrl, buildMultiSortUrl, handleSortClick, sortDataMultiColumn, type MultiSortState } from '$lib/utils/sorting';
 
   let searchQuery = '';
   let selectedField: Field | null = null;
@@ -195,362 +203,283 @@
     });
   }
 
-  function handleSort(columnKey: string, event: MouseEvent) {
-    const newSorts = handleSortClick(columnKey, sorts, event.shiftKey);
+  function handleSort(columnKey: string, shiftKey: boolean) {
+    const newSorts = handleSortClick(columnKey, sorts, shiftKey);
     const urlParams = buildMultiSortUrl(newSorts);
     goto(`?${urlParams}`, { replaceState: false, keepFocus: true });
   }
 </script>
 
 <DashboardLayout>
-  <!-- Header -->
-  <div class="bg-white border-b border-mono-200 py-4 px-6">
-    <div class="flex justify-between items-center">
-      <h1 class="text-xl text-mono-800 font-semibold">Unified Field Registry</h1>
-      <div class="flex items-center space-x-4">
-        <button
-          type="button"
-          disabled
-          class="px-4 py-2 bg-mono-400 text-white rounded-md flex items-center space-x-2 cursor-not-allowed opacity-60"
-          title="Coming soon"
+  <PageHeader title="Unified Field Registry">
+    <svelte:fragment slot="actions">
+      <button
+        type="button"
+        disabled
+        class="px-4 py-2 bg-mono-400 text-white rounded-md flex items-center space-x-2 cursor-not-allowed opacity-60"
+        title="Coming soon"
+      >
+        <i class="fa-solid fa-plus"></i>
+        <span>Add Field</span>
+      </button>
+    </svelte:fragment>
+  </PageHeader>
+
+  <SearchBar
+    bind:searchQuery
+    placeholder="Search fields..."
+    resultsCount={filteredFields.length}
+    resultLabel="field"
+    showFilter={true}
+  />
+
+  <Table isEmpty={filteredFields.length === 0}>
+    <svelte:fragment slot="header">
+      <tr>
+        <SortableColumn
+          column="name"
+          label="Field Name"
+          {sorts}
+          onSort={handleSort}
+        />
+        <SortableColumn
+          column="type"
+          label="Type"
+          {sorts}
+          onSort={handleSort}
+        />
+        <th scope="col" class="px-6 py-3 text-left text-xs text-mono-500 uppercase tracking-wider font-medium">
+          <div class="flex items-center space-x-1">
+            <span>Validators</span>
+          </div>
+        </th>
+        <SortableColumn
+          column="defaultValue"
+          label="Default Value"
+          {sorts}
+          onSort={handleSort}
+        />
+        <SortableColumn
+          column="usedInApis"
+          label="Used In APIs"
+          {sorts}
+          onSort={handleSort}
+        />
+      </tr>
+    </svelte:fragment>
+
+    <svelte:fragment slot="body">
+      {#each filteredFields as field}
+        <tr
+          on:click={() => selectField(field)}
+          class="cursor-pointer transition-colors {isSelected(field) ? 'bg-mono-100' : 'hover:bg-mono-50'}"
         >
-          <i class="fa-solid fa-plus"></i>
-          <span>Add Field</span>
-        </button>
-      </div>
-    </div>
-  </div>
-
-  <!-- Search and Filter Bar -->
-  <div class="bg-white border-b border-mono-200 py-3 px-6">
-    <div class="flex items-center justify-between">
-      <div class="flex items-center space-x-4 flex-1">
-        <div class="relative flex-1 max-w-md">
-          <input
-            type="text"
-            placeholder="Search fields..."
-            bind:value={searchQuery}
-            class="w-full pl-10 pr-4 py-2 border border-mono-300 rounded-md focus:ring-2 focus:ring-mono-400 focus:border-transparent"
-          />
-          <i class="fa-solid fa-search absolute left-3 top-1/2 transform -translate-y-1/2 text-mono-400"></i>
-        </div>
-        <div class="flex items-center space-x-2">
-          <button
-            type="button"
-            disabled
-            class="flex items-center space-x-2 px-3 py-2 border border-mono-300 rounded-md cursor-not-allowed opacity-60"
-          >
-            <i class="fa-solid fa-filter text-mono-500"></i>
-            <span>Filter</span>
-          </button>
-        </div>
-      </div>
-      <div class="flex items-center text-sm text-mono-500">
-        <span>{filteredFields.length} field{filteredFields.length !== 1 ? 's' : ''}</span>
-      </div>
-    </div>
-  </div>
-
-  <!-- Table Container -->
-  <div class="flex-1 overflow-auto">
-    <table class="min-w-full bg-white">
-      <thead class="bg-mono-50 sticky top-0">
-        <tr>
-          <th scope="col" class="px-6 py-3 text-left text-xs text-mono-500 uppercase tracking-wider font-medium">
-            <button
-              type="button"
-              on:click={(e) => handleSort('name', e)}
-              class="flex items-center space-x-1 hover:text-mono-700 transition-colors"
-              aria-label={getMultiSortAriaLabel('name', 'Field Name', sorts)}
-              title="Click to sort, Shift+Click to add to sort"
-            >
-              <span>Field Name</span>
-              <i class="fa-solid {getMultiSortIcon('name', sorts)}"></i>
-              {#if getSortPriority('name', sorts) !== null}
-                <span class="inline-flex items-center justify-center w-4 h-4 text-xs font-semibold rounded-full bg-mono-800 text-white">
-                  {getSortPriority('name', sorts)}
-                </span>
-              {/if}
-            </button>
-          </th>
-          <th scope="col" class="px-6 py-3 text-left text-xs text-mono-500 uppercase tracking-wider font-medium">
-            <button
-              type="button"
-              on:click={(e) => handleSort('type', e)}
-              class="flex items-center space-x-1 hover:text-mono-700 transition-colors"
-              aria-label={getMultiSortAriaLabel('type', 'Type', sorts)}
-              title="Click to sort, Shift+Click to add to sort"
-            >
-              <span>Type</span>
-              <i class="fa-solid {getMultiSortIcon('type', sorts)}"></i>
-              {#if getSortPriority('type', sorts) !== null}
-                <span class="inline-flex items-center justify-center w-4 h-4 text-xs font-semibold rounded-full bg-mono-800 text-white">
-                  {getSortPriority('type', sorts)}
-                </span>
-              {/if}
-            </button>
-          </th>
-          <th scope="col" class="px-6 py-3 text-left text-xs text-mono-500 uppercase tracking-wider font-medium">
-            <div class="flex items-center space-x-1">
-              <span>Validators</span>
-            </div>
-          </th>
-          <th scope="col" class="px-6 py-3 text-left text-xs text-mono-500 uppercase tracking-wider font-medium">
-            <button
-              type="button"
-              on:click={(e) => handleSort('defaultValue', e)}
-              class="flex items-center space-x-1 hover:text-mono-700 transition-colors"
-              aria-label={getMultiSortAriaLabel('defaultValue', 'Default Value', sorts)}
-              title="Click to sort, Shift+Click to add to sort"
-            >
-              <span>Default Value</span>
-              <i class="fa-solid {getMultiSortIcon('defaultValue', sorts)}"></i>
-              {#if getSortPriority('defaultValue', sorts) !== null}
-                <span class="inline-flex items-center justify-center w-4 h-4 text-xs font-semibold rounded-full bg-mono-800 text-white">
-                  {getSortPriority('defaultValue', sorts)}
-                </span>
-              {/if}
-            </button>
-          </th>
-          <th scope="col" class="px-6 py-3 text-left text-xs text-mono-500 uppercase tracking-wider font-medium">
-            <button
-              type="button"
-              on:click={(e) => handleSort('usedInApis', e)}
-              class="flex items-center space-x-1 hover:text-mono-700 transition-colors"
-              aria-label={getMultiSortAriaLabel('usedInApis', 'Used In APIs', sorts)}
-              title="Click to sort, Shift+Click to add to sort"
-            >
-              <span>Used In APIs</span>
-              <i class="fa-solid {getMultiSortIcon('usedInApis', sorts)}"></i>
-              {#if getSortPriority('usedInApis', sorts) !== null}
-                <span class="inline-flex items-center justify-center w-4 h-4 text-xs font-semibold rounded-full bg-mono-800 text-white">
-                  {getSortPriority('usedInApis', sorts)}
-                </span>
-              {/if}
-            </button>
-          </th>
-        </tr>
-      </thead>
-      <tbody class="divide-y divide-mono-200">
-        {#each filteredFields as field}
-          <tr
-            on:click={() => selectField(field)}
-            class="cursor-pointer transition-colors {isSelected(field) ? 'bg-mono-100' : 'hover:bg-mono-50'}"
-          >
-            <td class="px-6 py-4 whitespace-nowrap">
-              <div class="text-sm text-mono-900 font-medium">{field.name}</div>
-            </td>
-            <td class="px-6 py-4 whitespace-nowrap">
-              <span class="px-2 py-1 text-xs rounded-full bg-mono-900 text-white">
-                {field.type}
-              </span>
-            </td>
-            <td class="px-6 py-4 text-sm text-mono-500">
-              {#if field.validators.length > 0}
-                <div class="flex flex-wrap gap-1">
-                  {#each field.validators as validator}
-                    <span class="px-2 py-0.5 text-xs rounded-full bg-mono-100">
-                      {formatValidatorPill(validator)}
-                    </span>
-                  {/each}
-                </div>
-              {:else}
-                <span>-</span>
-              {/if}
-            </td>
-            <td class="px-6 py-4 whitespace-nowrap text-sm text-mono-500">
-              {field.defaultValue || '-'}
-            </td>
-            <td class="px-6 py-4 whitespace-nowrap">
-              <div class="flex items-center space-x-2">
-                <span class="px-2 py-1 text-xs rounded-full bg-mono-200 text-mono-700">
-                  {field.usedInApis.length}
-                </span>
-                <span class="text-sm text-mono-600">APIs</span>
+          <td class="px-6 py-4 whitespace-nowrap">
+            <div class="text-sm text-mono-900 font-medium">{field.name}</div>
+          </td>
+          <td class="px-6 py-4 whitespace-nowrap">
+            <span class="px-2 py-1 text-xs rounded-full bg-mono-900 text-white">
+              {field.type}
+            </span>
+          </td>
+          <td class="px-6 py-4 text-sm text-mono-500">
+            {#if field.validators.length > 0}
+              <div class="flex flex-wrap gap-1">
+                {#each field.validators as validator}
+                  <span class="px-2 py-0.5 text-xs rounded-full bg-mono-100">
+                    {formatValidatorPill(validator)}
+                  </span>
+                {/each}
               </div>
-            </td>
-          </tr>
-        {/each}
-      </tbody>
-    </table>
+            {:else}
+              <span>-</span>
+            {/if}
+          </td>
+          <td class="px-6 py-4 whitespace-nowrap text-sm text-mono-500">
+            {field.defaultValue || '-'}
+          </td>
+          <td class="px-6 py-4 whitespace-nowrap">
+            <div class="flex items-center space-x-2">
+              <span class="px-2 py-1 text-xs rounded-full bg-mono-200 text-mono-700">
+                {field.usedInApis.length}
+              </span>
+              <span class="text-sm text-mono-600">APIs</span>
+            </div>
+          </td>
+        </tr>
+      {/each}
+    </svelte:fragment>
 
-    <!-- Empty State -->
-    {#if filteredFields.length === 0}
-      <div class="flex flex-col items-center justify-center py-12 px-6">
-        <i class="fa-solid fa-search text-4xl text-mono-300 mb-4"></i>
-        <h3 class="text-lg font-medium text-mono-900 mb-2">No fields found</h3>
-        <p class="text-sm text-mono-500">Try adjusting your search query</p>
-      </div>
-    {/if}
-  </div>
+    <svelte:fragment slot="empty">
+      <EmptyState
+        title="No fields found"
+        message="Try adjusting your search query"
+      />
+    </svelte:fragment>
+  </Table>
 </DashboardLayout>
 
-<!-- Edit Field Drawer -->
-{#if drawerOpen && editedField}
-  <div
-    transition:slide={{ duration: 300, axis: 'x' }}
-    class="fixed right-0 top-0 h-screen w-96 bg-white border-l border-mono-200 flex flex-col overflow-hidden z-50"
-  >
-    <div class="p-6 border-b border-mono-200">
-      <div class="flex justify-between items-center">
-        <h2 class="text-lg text-mono-800 font-semibold">Edit Field</h2>
-        <button
-          on:click={closeDrawer}
-          class="text-mono-500 hover:text-mono-700 transition-colors"
-          aria-label="Close drawer"
-        >
-          <i class="fa-solid fa-xmark"></i>
-        </button>
-      </div>
-    </div>
+<Drawer open={drawerOpen}>
+  <DrawerHeader title="Edit Field" onClose={closeDrawer} />
 
-    <div class="flex-1 overflow-auto p-6 space-y-4">
+  <DrawerContent>
+    {#if editedField}
       {#if saveSuccess}
-        <div class="bg-green-50 border border-green-200 rounded-md p-3 flex items-center space-x-2">
+        <div class="bg-green-50 border border-green-200 rounded-md p-3 flex items-center space-x-2 mb-4">
           <i class="fa-solid fa-check-circle text-green-600"></i>
           <span class="text-sm text-green-800">Changes saved successfully</span>
         </div>
       {/if}
 
-      <div>
-        <label class="block text-sm text-mono-700 mb-1 font-medium">
-          Field Name <span class="text-red-500">*</span>
-        </label>
-        <input
-          type="text"
-          bind:value={editedField.name}
-          class="w-full px-3 py-2 border border-mono-300 rounded-md focus:ring-2 focus:ring-mono-400 focus:border-transparent {validationErrors.name ? 'border-red-500' : ''}"
-        />
-        {#if validationErrors.name}
-          <p class="text-xs text-red-500 mt-1">{validationErrors.name}</p>
-        {/if}
-      </div>
+      <div class="space-y-4">
+        <!-- Field Name -->
+        <div>
+          <label class="block text-sm text-mono-700 mb-1 font-medium">
+            Field Name <span class="text-red-500">*</span>
+          </label>
+          <input
+            type="text"
+            bind:value={editedField.name}
+            class="w-full px-3 py-2 border border-mono-300 rounded-md focus:ring-2 focus:ring-mono-400 focus:border-transparent {validationErrors.name ? 'border-red-500' : ''}"
+          />
+          {#if validationErrors.name}
+            <p class="text-xs text-red-500 mt-1">{validationErrors.name}</p>
+          {/if}
+        </div>
 
-      <div>
-        <label class="block text-sm text-mono-700 mb-1 font-medium">
-          Type <span class="text-red-500">*</span>
-        </label>
-        <div class="relative">
-          <select
-            bind:value={editedField.type}
-            class="w-full appearance-none px-3 py-2 border border-mono-300 rounded-md focus:ring-2 focus:ring-mono-400 focus:border-transparent pr-8 {validationErrors.type ? 'border-red-500' : ''}"
-          >
-            <option value="str">str</option>
-            <option value="int">int</option>
-            <option value="float">float</option>
-            <option value="bool">bool</option>
-            <option value="datetime">datetime</option>
-            <option value="uuid">uuid</option>
-          </select>
-          <div class="absolute inset-y-0 right-0 flex items-center px-2 pointer-events-none">
-            <i class="fa-solid fa-chevron-down text-mono-400"></i>
+        <!-- Type -->
+        <div>
+          <label class="block text-sm text-mono-700 mb-1 font-medium">
+            Type <span class="text-red-500">*</span>
+          </label>
+          <div class="relative">
+            <select
+              bind:value={editedField.type}
+              class="w-full appearance-none px-3 py-2 border border-mono-300 rounded-md focus:ring-2 focus:ring-mono-400 focus:border-transparent pr-8 {validationErrors.type ? 'border-red-500' : ''}"
+            >
+              <option value="str">str</option>
+              <option value="int">int</option>
+              <option value="float">float</option>
+              <option value="bool">bool</option>
+              <option value="datetime">datetime</option>
+              <option value="uuid">uuid</option>
+            </select>
+            <div class="absolute inset-y-0 right-0 flex items-center px-2 pointer-events-none">
+              <i class="fa-solid fa-chevron-down text-mono-400"></i>
+            </div>
+          </div>
+          {#if validationErrors.type}
+            <p class="text-xs text-red-500 mt-1">{validationErrors.type}</p>
+          {/if}
+        </div>
+
+        <!-- Description -->
+        <div>
+          <label class="block text-sm text-mono-700 mb-1 font-medium">Description</label>
+          <textarea
+            bind:value={editedField.description}
+            rows="3"
+            class="w-full px-3 py-2 border border-mono-300 rounded-md focus:ring-2 focus:ring-mono-400 focus:border-transparent"
+          ></textarea>
+        </div>
+
+        <!-- Default Value -->
+        <div>
+          <label class="block text-sm text-mono-700 mb-1 font-medium">Default Value</label>
+          <input
+            type="text"
+            bind:value={editedField.defaultValue}
+            placeholder="None"
+            class="w-full px-3 py-2 border border-mono-300 rounded-md focus:ring-2 focus:ring-mono-400 focus:border-transparent"
+          />
+        </div>
+
+        <!-- Validators -->
+        <div>
+          <div class="flex justify-between items-center mb-2">
+            <label class="block text-sm text-mono-700 font-medium">Validators</label>
+            <button
+              type="button"
+              on:click={addValidator}
+              disabled={availableValidators.length === 0}
+              class="text-sm flex items-center transition-colors {availableValidators.length > 0 ? 'text-mono-600 hover:text-mono-900 cursor-pointer' : 'text-mono-400 cursor-not-allowed'}"
+            >
+              <i class="fa-solid fa-plus mr-1"></i>
+              <span>Add</span>
+            </button>
+          </div>
+          <div class="space-y-2">
+            {#each getAllValidatorsForField(editedField) as { validator, validatorMeta, source }, index}
+              <div class="flex items-center space-x-2 p-2 bg-mono-50 rounded-md">
+                <div class="flex-1 space-y-1">
+                  <div class="flex items-center space-x-2">
+                    <div class="relative flex-1">
+                      <select
+                        value={validator.name}
+                        on:change={(e) => updateValidatorName(index, e.currentTarget.value)}
+                        class="w-full appearance-none px-3 py-1.5 border border-mono-300 rounded-md text-sm pr-8 focus:ring-2 focus:ring-mono-400 focus:border-transparent"
+                      >
+                        {#each availableValidators as v}
+                          <option value={v.name}>{v.name}</option>
+                        {/each}
+                      </select>
+                      <div class="absolute inset-y-0 right-0 flex items-center px-2 pointer-events-none">
+                        <i class="fa-solid fa-chevron-down text-mono-400 text-xs"></i>
+                      </div>
+                    </div>
+                    <button
+                      type="button"
+                      on:click={() => removeValidator(index)}
+                      class="text-mono-400 hover:text-mono-600 transition-colors"
+                      aria-label="Remove validator"
+                    >
+                      <i class="fa-solid fa-trash"></i>
+                    </button>
+                  </div>
+                  {#if validatorMeta}
+                    <div class="flex items-center space-x-2 pl-3">
+                      <span class="px-2 py-0.5 text-xs rounded-full bg-mono-900 text-white capitalize">
+                        {validatorMeta.category}
+                      </span>
+                      <span class="px-2 py-0.5 text-xs rounded-full {source === 'inline' ? 'bg-mono-200 text-mono-700' : 'bg-mono-700 text-white'} capitalize">
+                        {source}
+                      </span>
+                    </div>
+                  {/if}
+                </div>
+              </div>
+            {/each}
+            {#if editedField.validators.length === 0}
+              {#if availableValidators.length === 0}
+                <p class="text-sm text-mono-500 italic">No validators available for {editedField.type} type</p>
+              {:else}
+                <p class="text-sm text-mono-500 italic">No validators added</p>
+              {/if}
+            {/if}
           </div>
         </div>
-        {#if validationErrors.type}
-          <p class="text-xs text-red-500 mt-1">{validationErrors.type}</p>
-        {/if}
-      </div>
 
-      <div>
-        <label class="block text-sm text-mono-700 mb-1 font-medium">Description</label>
-        <textarea
-          bind:value={editedField.description}
-          rows="3"
-          class="w-full px-3 py-2 border border-mono-300 rounded-md focus:ring-2 focus:ring-mono-400 focus:border-transparent"
-        ></textarea>
-      </div>
-
-      <div>
-        <label class="block text-sm text-mono-700 mb-1 font-medium">Default Value</label>
-        <input
-          type="text"
-          bind:value={editedField.defaultValue}
-          placeholder="None"
-          class="w-full px-3 py-2 border border-mono-300 rounded-md focus:ring-2 focus:ring-mono-400 focus:border-transparent"
-        />
-      </div>
-
-      <div>
-        <div class="flex justify-between items-center mb-2">
-          <label class="block text-sm text-mono-700 font-medium">Validators</label>
-          <button
-            type="button"
-            on:click={addValidator}
-            disabled={availableValidators.length === 0}
-            class="text-sm flex items-center transition-colors {availableValidators.length > 0 ? 'text-mono-600 hover:text-mono-900 cursor-pointer' : 'text-mono-400 cursor-not-allowed'}"
-          >
-            <i class="fa-solid fa-plus mr-1"></i>
-            <span>Add</span>
-          </button>
-        </div>
-        <div class="space-y-2">
-          {#each getAllValidatorsForField(editedField) as { validator, validatorMeta, source }, index}
-            <div class="flex items-center space-x-2 p-2 bg-mono-50 rounded-md">
-              <div class="flex-1 space-y-1">
-                <div class="flex items-center space-x-2">
-                  <div class="relative flex-1">
-                    <select
-                      value={validator.name}
-                      on:change={(e) => updateValidatorName(index, e.currentTarget.value)}
-                      class="w-full appearance-none px-3 py-1.5 border border-mono-300 rounded-md text-sm pr-8 focus:ring-2 focus:ring-mono-400 focus:border-transparent"
-                    >
-                      {#each availableValidators as v}
-                        <option value={v.name}>{v.name}</option>
-                      {/each}
-                    </select>
-                    <div class="absolute inset-y-0 right-0 flex items-center px-2 pointer-events-none">
-                      <i class="fa-solid fa-chevron-down text-mono-400 text-xs"></i>
-                    </div>
-                  </div>
-                  <button
-                    type="button"
-                    on:click={() => removeValidator(index)}
-                    class="text-mono-400 hover:text-mono-600 transition-colors"
-                    aria-label="Remove validator"
-                  >
-                    <i class="fa-solid fa-trash"></i>
-                  </button>
-                </div>
-                {#if validatorMeta}
-                  <div class="flex items-center space-x-2 pl-3">
-                    <span class="px-2 py-0.5 text-xs rounded-full bg-mono-900 text-white capitalize">
-                      {validatorMeta.category}
-                    </span>
-                    <span class="px-2 py-0.5 text-xs rounded-full {source === 'inline' ? 'bg-mono-200 text-mono-700' : 'bg-mono-700 text-white'} capitalize">
-                      {source}
-                    </span>
-                  </div>
-                {/if}
+        <!-- Used In APIs -->
+        <div>
+          <h3 class="text-sm text-mono-700 mb-2 font-medium">Used In APIs</h3>
+          <div class="space-y-2">
+            {#each editedField.usedInApis as api}
+              <div class="flex items-center space-x-2 p-2 bg-mono-50 rounded-md">
+                <i class="fa-solid fa-code text-mono-400"></i>
+                <span class="text-sm text-mono-900">{api}</span>
               </div>
-            </div>
-          {/each}
-          {#if editedField.validators.length === 0}
-            {#if availableValidators.length === 0}
-              <p class="text-sm text-mono-500 italic">No validators available for {editedField.type} type</p>
-            {:else}
-              <p class="text-sm text-mono-500 italic">No validators added</p>
+            {/each}
+            {#if editedField.usedInApis.length === 0}
+              <p class="text-sm text-mono-500 italic">Not used in any APIs</p>
             {/if}
-          {/if}
+          </div>
         </div>
       </div>
+    {/if}
+  </DrawerContent>
 
-      <div>
-        <h3 class="text-sm text-mono-700 mb-2 font-medium">Used In APIs</h3>
-        <div class="space-y-2">
-          {#each editedField.usedInApis as api}
-            <div class="flex items-center space-x-2 p-2 bg-mono-50 rounded-md">
-              <i class="fa-solid fa-code text-mono-400"></i>
-              <span class="text-sm text-mono-900">{api}</span>
-            </div>
-          {/each}
-          {#if editedField.usedInApis.length === 0}
-            <p class="text-sm text-mono-500 italic">Not used in any APIs</p>
-          {/if}
-        </div>
-      </div>
-    </div>
-
-    <div class="p-6 border-t border-mono-200 space-y-2">
+  <DrawerFooter>
+    {#if editedField}
       <button
         type="button"
         on:click={handleSave}
@@ -597,6 +526,6 @@
           </div>
         </div>
       {/if}
-    </div>
-  </div>
-{/if}
+    {/if}
+  </DrawerFooter>
+</Drawer>

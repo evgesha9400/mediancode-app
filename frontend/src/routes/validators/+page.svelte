@@ -1,10 +1,17 @@
 <script lang="ts">
   import { validatorsStore, searchValidators, getTotalValidatorCount, type Validator } from '$lib/stores/validators';
   import DashboardLayout from '$lib/components/DashboardLayout.svelte';
-  import { slide } from 'svelte/transition';
+  import PageHeader from '$lib/components/layout/PageHeader.svelte';
+  import SearchBar from '$lib/components/search/SearchBar.svelte';
+  import Table from '$lib/components/table/Table.svelte';
+  import SortableColumn from '$lib/components/table/SortableColumn.svelte';
+  import EmptyState from '$lib/components/table/EmptyState.svelte';
+  import Drawer from '$lib/components/drawer/Drawer.svelte';
+  import DrawerHeader from '$lib/components/drawer/DrawerHeader.svelte';
+  import DrawerContent from '$lib/components/drawer/DrawerContent.svelte';
   import { page } from '$app/stores';
   import { goto } from '$app/navigation';
-  import { parseMultiSortFromUrl, buildMultiSortUrl, handleSortClick, sortDataMultiColumn, getMultiSortIcon, getSortPriority, getMultiSortAriaLabel, type MultiSortState } from '$lib/utils/sorting';
+  import { parseMultiSortFromUrl, buildMultiSortUrl, handleSortClick, sortDataMultiColumn, type MultiSortState } from '$lib/utils/sorting';
 
   let searchQuery = '';
   let selectedValidator: Validator | null = null;
@@ -38,205 +45,118 @@
     return selectedValidator?.name === validator.name;
   }
 
-  function handleSort(columnKey: string, event: MouseEvent) {
-    const newSorts = handleSortClick(columnKey, sorts, event.shiftKey);
+  function handleSort(columnKey: string, shiftKey: boolean) {
+    const newSorts = handleSortClick(columnKey, sorts, shiftKey);
     const urlParams = buildMultiSortUrl(newSorts);
     goto(`?${urlParams}`, { replaceState: false, keepFocus: true });
   }
 </script>
 
 <DashboardLayout>
-  <!-- Header -->
-  <div class="bg-white border-b border-mono-200 py-4 px-6">
-    <div class="flex justify-between items-center">
-      <h1 class="text-xl text-mono-800 font-semibold">Validators Library</h1>
-      <div class="flex items-center space-x-4">
-        <button
-          type="button"
-          disabled
-          class="px-4 py-2 bg-mono-400 text-white rounded-md flex items-center space-x-2 cursor-not-allowed opacity-60"
+  <PageHeader title="Validators Library">
+    <svelte:fragment slot="actions">
+      <button
+        type="button"
+        disabled
+        class="px-4 py-2 bg-mono-400 text-white rounded-md flex items-center space-x-2 cursor-not-allowed opacity-60"
+      >
+        <i class="fa-solid fa-plus"></i>
+        <span>Add Validator</span>
+      </button>
+    </svelte:fragment>
+  </PageHeader>
+
+  <SearchBar
+    bind:searchQuery
+    placeholder="Search validators..."
+    resultsCount={filteredValidators.length}
+    resultLabel="validator"
+    showFilter={true}
+  />
+
+  <Table isEmpty={filteredValidators.length === 0}>
+    <svelte:fragment slot="header">
+      <tr>
+        <SortableColumn
+          column="name"
+          label="Validator Name"
+          {sorts}
+          onSort={handleSort}
+        />
+        <SortableColumn
+          column="type"
+          label="Type"
+          {sorts}
+          onSort={handleSort}
+        />
+        <SortableColumn
+          column="category"
+          label="Category"
+          {sorts}
+          onSort={handleSort}
+        />
+        <th scope="col" class="px-6 py-3 text-left text-xs text-mono-500 uppercase tracking-wider font-medium">
+          <div class="flex items-center space-x-1">
+            <span>Description</span>
+          </div>
+        </th>
+        <SortableColumn
+          column="usedInFields"
+          label="Used In Fields"
+          {sorts}
+          onSort={handleSort}
+        />
+      </tr>
+    </svelte:fragment>
+
+    <svelte:fragment slot="body">
+      {#each filteredValidators as validator}
+        <tr
+          on:click={() => selectValidator(validator)}
+          class="cursor-pointer transition-colors {isSelected(validator) ? 'bg-mono-100' : 'hover:bg-mono-50'}"
         >
-          <i class="fa-solid fa-plus"></i>
-          <span>Add Validator</span>
-        </button>
-      </div>
-    </div>
-  </div>
+          <td class="px-6 py-4 whitespace-nowrap">
+            <div class="text-sm text-mono-900 font-medium">{validator.name}</div>
+          </td>
+          <td class="px-6 py-4 whitespace-nowrap">
+            <span class="px-2 py-1 text-xs rounded-full bg-mono-900 text-white capitalize">
+              {validator.category}
+            </span>
+          </td>
+          <td class="px-6 py-4 whitespace-nowrap">
+            <span class="px-2 py-1 text-xs rounded-full {validator.type === 'inline' ? 'bg-mono-200 text-mono-700' : 'bg-mono-700 text-white'} capitalize">
+              {validator.type}
+            </span>
+          </td>
+          <td class="px-6 py-4 text-sm text-mono-500">
+            {validator.description.split('.')[0]}.
+          </td>
+          <td class="px-6 py-4 whitespace-nowrap">
+            <div class="flex items-center space-x-2">
+              <span class="px-2 py-1 text-xs rounded-full bg-mono-200 text-mono-700">
+                {validator.usedInFields}
+              </span>
+              <span class="text-sm text-mono-600">fields</span>
+            </div>
+          </td>
+        </tr>
+      {/each}
+    </svelte:fragment>
 
-  <!-- Search and Filter Bar -->
-  <div class="bg-white border-b border-mono-200 py-3 px-6">
-    <div class="flex items-center justify-between">
-      <div class="flex items-center space-x-4 flex-1">
-        <div class="relative flex-1 max-w-md">
-          <input
-            type="text"
-            placeholder="Search validators..."
-            bind:value={searchQuery}
-            class="w-full pl-10 pr-4 py-2 border border-mono-300 rounded-md focus:ring-2 focus:ring-mono-400 focus:border-transparent"
-          />
-          <i class="fa-solid fa-search absolute left-3 top-1/2 transform -translate-y-1/2 text-mono-400"></i>
-        </div>
-        <div class="flex items-center space-x-2">
-          <button
-            type="button"
-            disabled
-            class="flex items-center space-x-2 px-3 py-2 border border-mono-300 rounded-md cursor-not-allowed opacity-60"
-          >
-            <i class="fa-solid fa-filter text-mono-500"></i>
-            <span>Filter</span>
-          </button>
-        </div>
-      </div>
-      <div class="flex items-center text-sm text-mono-500">
-        <span>{filteredValidators.length} validator{filteredValidators.length !== 1 ? 's' : ''}</span>
-      </div>
-    </div>
-  </div>
-
-  <!-- Table Container -->
-  <div class="flex-1 overflow-auto">
-    {#if filteredValidators.length > 0}
-      <table class="min-w-full bg-white">
-        <thead class="bg-mono-50 sticky top-0">
-          <tr>
-            <th scope="col" class="px-6 py-3 text-left text-xs text-mono-500 uppercase tracking-wider font-medium">
-              <button
-                type="button"
-                on:click={(e) => handleSort('name', e)}
-                class="flex items-center space-x-1 hover:text-mono-700 transition-colors"
-                aria-label={getMultiSortAriaLabel('name', 'Validator Name', sorts)}
-                title="Click to sort, Shift+Click to add to sort"
-              >
-                <span>Validator Name</span>
-                <i class="fa-solid {getMultiSortIcon('name', sorts)}"></i>
-                {#if getSortPriority('name', sorts) !== null}
-                  <span class="inline-flex items-center justify-center w-4 h-4 text-xs font-semibold rounded-full bg-mono-800 text-white">
-                    {getSortPriority('name', sorts)}
-                  </span>
-                {/if}
-              </button>
-            </th>
-            <th scope="col" class="px-6 py-3 text-left text-xs text-mono-500 uppercase tracking-wider font-medium">
-              <button
-                type="button"
-                on:click={(e) => handleSort('type', e)}
-                class="flex items-center space-x-1 hover:text-mono-700 transition-colors"
-                aria-label={getMultiSortAriaLabel('type', 'Type', sorts)}
-                title="Click to sort, Shift+Click to add to sort"
-              >
-                <span>Type</span>
-                <i class="fa-solid {getMultiSortIcon('type', sorts)}"></i>
-                {#if getSortPriority('type', sorts) !== null}
-                  <span class="inline-flex items-center justify-center w-4 h-4 text-xs font-semibold rounded-full bg-mono-800 text-white">
-                    {getSortPriority('type', sorts)}
-                  </span>
-                {/if}
-              </button>
-            </th>
-            <th scope="col" class="px-6 py-3 text-left text-xs text-mono-500 uppercase tracking-wider font-medium">
-              <button
-                type="button"
-                on:click={(e) => handleSort('category', e)}
-                class="flex items-center space-x-1 hover:text-mono-700 transition-colors"
-                aria-label={getMultiSortAriaLabel('category', 'Category', sorts)}
-                title="Click to sort, Shift+Click to add to sort"
-              >
-                <span>Category</span>
-                <i class="fa-solid {getMultiSortIcon('category', sorts)}"></i>
-                {#if getSortPriority('category', sorts) !== null}
-                  <span class="inline-flex items-center justify-center w-4 h-4 text-xs font-semibold rounded-full bg-mono-800 text-white">
-                    {getSortPriority('category', sorts)}
-                  </span>
-                {/if}
-              </button>
-            </th>
-            <th scope="col" class="px-6 py-3 text-left text-xs text-mono-500 uppercase tracking-wider font-medium">
-              <div class="flex items-center space-x-1">
-                <span>Description</span>
-              </div>
-            </th>
-            <th scope="col" class="px-6 py-3 text-left text-xs text-mono-500 uppercase tracking-wider font-medium">
-              <button
-                type="button"
-                on:click={(e) => handleSort('usedInFields', e)}
-                class="flex items-center space-x-1 hover:text-mono-700 transition-colors"
-                aria-label={getMultiSortAriaLabel('usedInFields', 'Used In Fields', sorts)}
-                title="Click to sort, Shift+Click to add to sort"
-              >
-                <span>Used In Fields</span>
-                <i class="fa-solid {getMultiSortIcon('usedInFields', sorts)}"></i>
-                {#if getSortPriority('usedInFields', sorts) !== null}
-                  <span class="inline-flex items-center justify-center w-4 h-4 text-xs font-semibold rounded-full bg-mono-800 text-white">
-                    {getSortPriority('usedInFields', sorts)}
-                  </span>
-                {/if}
-              </button>
-            </th>
-          </tr>
-        </thead>
-        <tbody class="divide-y divide-mono-200">
-          {#each filteredValidators as validator}
-            <tr
-              on:click={() => selectValidator(validator)}
-              class="cursor-pointer transition-colors {isSelected(validator) ? 'bg-mono-100' : 'hover:bg-mono-50'}"
-            >
-              <td class="px-6 py-4 whitespace-nowrap">
-                <div class="text-sm text-mono-900 font-medium">{validator.name}</div>
-              </td>
-              <td class="px-6 py-4 whitespace-nowrap">
-                <span class="px-2 py-1 text-xs rounded-full bg-mono-900 text-white capitalize">
-                  {validator.category}
-                </span>
-              </td>
-              <td class="px-6 py-4 whitespace-nowrap">
-                <span class="px-2 py-1 text-xs rounded-full {validator.type === 'inline' ? 'bg-mono-200 text-mono-700' : 'bg-mono-700 text-white'} capitalize">
-                  {validator.type}
-                </span>
-              </td>
-              <td class="px-6 py-4 text-sm text-mono-500">
-                {validator.description.split('.')[0]}.
-              </td>
-              <td class="px-6 py-4 whitespace-nowrap">
-                <div class="flex items-center space-x-2">
-                  <span class="px-2 py-1 text-xs rounded-full bg-mono-200 text-mono-700">
-                    {validator.usedInFields}
-                  </span>
-                  <span class="text-sm text-mono-600">fields</span>
-                </div>
-              </td>
-            </tr>
-          {/each}
-        </tbody>
-      </table>
-    {:else}
-      <!-- Empty State -->
-      <div class="flex flex-col items-center justify-center py-12 px-6">
-        <i class="fa-solid fa-search text-4xl text-mono-300 mb-4"></i>
-        <h3 class="text-lg font-medium text-mono-900 mb-2">No validators found</h3>
-        <p class="text-sm text-mono-500">Try adjusting your search query</p>
-      </div>
-    {/if}
-  </div>
+    <svelte:fragment slot="empty">
+      <EmptyState
+        title="No validators found"
+        message="Try adjusting your search query"
+      />
+    </svelte:fragment>
+  </Table>
 </DashboardLayout>
 
-<!-- Validator Details Drawer -->
-{#if drawerOpen && selectedValidator}
-  <div
-    transition:slide={{ duration: 300, axis: 'x' }}
-    class="fixed right-0 top-0 h-screen w-96 bg-white border-l border-mono-200 overflow-auto flex flex-col z-50"
-  >
-    <div class="p-6 border-b border-mono-200 flex items-center justify-between">
-      <h2 class="text-lg text-mono-800 font-semibold">Validator Details</h2>
-      <button
-        on:click={closeDrawer}
-        class="text-mono-500 hover:text-mono-700 transition-colors"
-        aria-label="Close drawer"
-      >
-        <i class="fa-solid fa-xmark"></i>
-      </button>
-    </div>
+<Drawer open={drawerOpen}>
+  <DrawerHeader title="Validator Details" onClose={closeDrawer} />
 
-    <div class="flex-1 overflow-auto p-6">
+  <DrawerContent>
+    {#if selectedValidator}
       <div class="space-y-6">
         <div>
           <h3 class="text-sm text-mono-500 mb-1 font-medium">Validator Name</h3>
@@ -311,6 +231,6 @@
           {/if}
         </div>
       </div>
-    </div>
-  </div>
-{/if}
+    {/if}
+  </DrawerContent>
+</Drawer>
