@@ -14,8 +14,13 @@
     goto('/signin');
   }
 
-  const navItems: NavItem[] = [
-    { href: '/dashboard', label: 'Dashboard', icon: 'fa-house' },
+  const dashboardItem: NavItem = {
+    href: '/dashboard',
+    label: 'Dashboard',
+    icon: 'fa-house'
+  };
+
+  const coreComponentItems: NavItem[] = [
     { href: '/validators', label: 'Validators', icon: 'fa-check-circle' },
     { href: '/field-registry', label: 'Field Registry', icon: 'fa-table-list' },
     { href: '/api-designer', label: 'API Designer', icon: 'fa-code', disabled: true }
@@ -28,16 +33,28 @@
 
 <div class="w-64 bg-mono-900 text-white flex flex-col">
   <div class="p-4 border-b border-mono-800">
-    <div class="flex items-center space-x-2">
+    <a href="/" class="flex items-center space-x-2 hover:opacity-80 transition-opacity cursor-pointer">
       <i class="fa-solid fa-code text-xl"></i>
       <h1 class="text-lg font-semibold">Median Code</h1>
-    </div>
+    </a>
   </div>
 
   <div class="p-4">
+    <ul class="space-y-1 mb-6">
+      <li>
+        <a
+          href={dashboardItem.href}
+          class="flex items-center space-x-2 px-2 py-1.5 rounded-md cursor-pointer {isActive(dashboardItem.href) ? 'bg-mono-800' : 'hover:bg-mono-800'}"
+        >
+          <i class="fa-solid {dashboardItem.icon} w-5"></i>
+          <span>{dashboardItem.label}</span>
+        </a>
+      </li>
+    </ul>
+
     <h2 class="text-xs uppercase tracking-wider text-mono-400 mb-3 font-medium">Core Components</h2>
     <ul class="space-y-1">
-      {#each navItems as item}
+      {#each coreComponentItems as item}
         <li>
           {#if item.disabled}
             <button
