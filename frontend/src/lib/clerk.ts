@@ -26,8 +26,7 @@ export async function initializeClerk(publishableKey: string): Promise<any> {
   await clerkInstance.load({
     signInUrl: '/signin',
     signUpUrl: '/signup',
-    afterSignInUrl: '/dashboard',
-    afterSignUpUrl: '/dashboard'
+    fallbackRedirectUrl: '/dashboard'
   });
 
   // Update store with initial state

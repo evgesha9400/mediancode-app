@@ -13,7 +13,7 @@
 			console.log('Mounting sign-in form...');
 			if (clerk) {
 				clerk.mountSignIn(clerkMountDiv, {
-					afterSignInUrl: '/dashboard',
+					fallbackRedirectUrl: '/dashboard',
 					signUpUrl: '/signup',
 					appearance: {
 						elements: {
