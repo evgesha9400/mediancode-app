@@ -1,4 +1,5 @@
 import { writable } from 'svelte/store';
+import type { PrimitiveTypeName } from './types';
 
 export interface FieldValidator {
 	name: string;
@@ -8,7 +9,7 @@ export interface FieldValidator {
 export interface Field {
 	id: string;
 	name: string;
-	type: 'str' | 'int' | 'float' | 'bool' | 'datetime' | 'uuid';
+	type: PrimitiveTypeName;
 	description?: string;
 	defaultValue?: string;
 	validators: FieldValidator[];

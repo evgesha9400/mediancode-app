@@ -1,6 +1,7 @@
 <script lang="ts">
   import { fieldsStore, searchFields, getTotalFieldCount, updateField, deleteField, type Field, type FieldValidator } from '$lib/stores/fields';
   import { validatorsStore, getValidatorsByFieldType, type Validator } from '$lib/stores/validators';
+  import { getPrimitiveTypes, type FieldType } from '$lib/stores/types';
   import DashboardLayout from '$lib/components/DashboardLayout.svelte';
   import PageHeader from '$lib/components/layout/PageHeader.svelte';
   import SearchBar from '$lib/components/search/SearchBar.svelte';
@@ -58,6 +59,7 @@
   $: validators = $validatorsStore;
   $: availableValidators = editedField ? getValidatorsByFieldType(editedField.type) : [];
   $: hasChanges = originalField && editedField ? JSON.stringify(originalField) !== JSON.stringify(editedField) : false;
+  $: primitiveTypes = getPrimitiveTypes();
 
   // Reset validators and default value when field type changes
   $: if (editedField && previousFieldType !== null && previousFieldType !== editedField.type) {
@@ -359,12 +361,9 @@
               bind:value={editedField.type}
               class="w-full appearance-none px-3 py-2 border border-mono-300 rounded-md focus:ring-2 focus:ring-mono-400 focus:border-transparent pr-8 {validationErrors.type ? 'border-red-500' : ''}"
             >
-              <option value="str">str</option>
-              <option value="int">int</option>
-              <option value="float">float</option>
-              <option value="bool">bool</option>
-              <option value="datetime">datetime</option>
-              <option value="uuid">uuid</option>
+              {#each primitiveTypes as type}
+                <option value={type.name}>{type.name}</option>
+              {/each}
             </select>
             <div class="absolute inset-y-0 right-0 flex items-center px-2 pointer-events-none">
               <i class="fa-solid fa-chevron-down text-mono-400"></i>

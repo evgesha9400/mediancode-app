@@ -1,6 +1,8 @@
 import { writable, derived, get } from 'svelte/store';
 import { fieldsStore } from './fields';
 import type { Field } from './fields';
+import { getValidatorCategoriesForType } from './types';
+import type { PrimitiveTypeName } from './types';
 
 export interface ValidatorBase {
 	name: string;
@@ -204,20 +206,11 @@ export function searchValidators(query: string): Validator[] {
 	);
 }
 
-export function getValidatorsByFieldType(fieldType: string): Validator[] {
+export function getValidatorsByFieldType(fieldType: PrimitiveTypeName): Validator[] {
 	const validators = get(validatorsStore);
 
-	// Map field types to compatible validator categories
-	const typeToCategories: Record<string, string[]> = {
-		'str': ['string'],
-		'int': ['numeric'],
-		'float': ['numeric'],
-		'bool': [],
-		'datetime': [],
-		'uuid': []
-	};
-
-	const compatibleCategories = typeToCategories[fieldType] || [];
+	// Get compatible validator categories from the centralized types store
+	const compatibleCategories = getValidatorCategoriesForType(fieldType);
 
 	// If no compatible categories, return empty array
 	if (compatibleCategories.length === 0) {
