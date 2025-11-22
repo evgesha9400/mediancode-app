@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { validatorsStore, searchValidators, getTotalValidatorCount, type Validator } from '$lib/stores/validators';
+  import { validatorsStore, getTotalValidatorCount, deleteValidator, type Validator } from '$lib/stores/validators';
   import DashboardLayout from '$lib/components/DashboardLayout.svelte';
   import PageHeader from '$lib/components/layout/PageHeader.svelte';
   import SearchBar from '$lib/components/search/SearchBar.svelte';
@@ -9,7 +9,8 @@
   import Drawer from '$lib/components/drawer/Drawer.svelte';
   import DrawerHeader from '$lib/components/drawer/DrawerHeader.svelte';
   import DrawerContent from '$lib/components/drawer/DrawerContent.svelte';
-  import { page } from '$app/stores';
+  import DrawerFooter from '$lib/components/drawer/DrawerFooter.svelte';
+  import { page } from '$app/state';
   import { goto } from '$app/navigation';
   import FilterPanel from '$lib/components/search/FilterPanel.svelte';
   import type { FilterConfig } from '$lib/types';
@@ -19,6 +20,7 @@
   let selectedValidator: Validator | null = null;
   let drawerOpen = false;
   let filtersOpen = false;
+  let showDeleteConfirm = false;
   let filters = {
     selectedCategories: [] as string[],
     selectedTypes: [] as string[],
@@ -52,11 +54,22 @@
   ] as FilterConfig;
 
   // Sort state derived from URL parameters
-  $: sorts = parseMultiSortFromUrl($page.url.searchParams);
+  $: sorts = parseMultiSortFromUrl(page.url.searchParams);
 
   // Apply search and then sorting
   $: filteredValidators = (() => {
-    let result = searchValidators(searchQuery);
+    // Directly depend on $validatorsStore to trigger reactivity when validators change
+    let result = $validatorsStore;
+
+    // Apply search filter
+    if (searchQuery) {
+      const lowerQuery = searchQuery.toLowerCase().trim();
+      result = result.filter(validator =>
+        validator.name.toLowerCase().includes(lowerQuery) ||
+        validator.description.toLowerCase().includes(lowerQuery) ||
+        validator.category.toLowerCase().includes(lowerQuery)
+      );
+    }
 
     // Apply filters
     if (filters.selectedCategories.length > 0) {
@@ -86,6 +99,7 @@
     drawerOpen = false;
     setTimeout(() => {
       selectedValidator = null;
+      showDeleteConfirm = false;
     }, 300);
   }
 
@@ -103,9 +117,20 @@
     filtersOpen = !filtersOpen;
   }
 
-  $: activeFiltersCount = (filters.selectedCategories.length > 0 ? 1 : 0) + 
-                          (filters.selectedTypes.length > 0 ? 1 : 0) + 
+  $: activeFiltersCount = (filters.selectedCategories.length > 0 ? 1 : 0) +
+                          (filters.selectedTypes.length > 0 ? 1 : 0) +
                           (filters.onlyUsedInFields ? 1 : 0);
+
+  function handleDelete() {
+    if (!selectedValidator) return;
+
+    const success = deleteValidator(selectedValidator.name);
+    if (success) {
+      closeDrawer();
+    }
+  }
+
+  $: isCustomValidator = selectedValidator?.type === 'custom';
 </script>
 
 <DashboardLayout>
@@ -301,4 +326,39 @@
       </div>
     {/if}
   </DrawerContent>
+
+  {#if selectedValidator && isCustomValidator}
+    <DrawerFooter>
+      {#if !showDeleteConfirm}
+        <button
+          type="button"
+          on:click={() => showDeleteConfirm = true}
+          class="w-full px-4 py-2 bg-mono-100 text-mono-600 rounded-md hover:bg-mono-200 flex items-center justify-center transition-colors font-medium"
+        >
+          <i class="fa-solid fa-trash mr-2"></i>
+          <span>Delete Validator</span>
+        </button>
+      {:else}
+        <div class="bg-red-50 border border-red-200 rounded-md p-3">
+          <p class="text-sm text-red-800 mb-2">Are you sure you want to delete this custom validator?</p>
+          <div class="flex space-x-2">
+            <button
+              type="button"
+              on:click={handleDelete}
+              class="flex-1 px-3 py-1.5 bg-red-600 text-white rounded-md hover:bg-red-700 text-sm font-medium"
+            >
+              Yes, Delete
+            </button>
+            <button
+              type="button"
+              on:click={() => showDeleteConfirm = false}
+              class="flex-1 px-3 py-1.5 border border-mono-300 text-mono-700 rounded-md hover:bg-mono-50 text-sm font-medium"
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      {/if}
+    </DrawerFooter>
+  {/if}
 </Drawer>

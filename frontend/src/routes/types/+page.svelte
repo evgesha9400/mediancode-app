@@ -6,7 +6,7 @@
   import Table from '$lib/components/table/Table.svelte';
   import SortableColumn from '$lib/components/table/SortableColumn.svelte';
   import EmptyState from '$lib/components/table/EmptyState.svelte';
-  import { page } from '$app/stores';
+  import { page } from '$app/state';
   import { goto } from '$app/navigation';
   import FilterPanel from '$lib/components/search/FilterPanel.svelte';
   import type { FilterConfig } from '$lib/types';
@@ -49,7 +49,7 @@
   ] as FilterConfig;
 
   // Sort state derived from URL parameters
-  $: sorts = parseMultiSortFromUrl($page.url.searchParams);
+  $: sorts = parseMultiSortFromUrl(page.url.searchParams);
 
   // Apply search and then sorting
   $: filteredTypes = (() => {

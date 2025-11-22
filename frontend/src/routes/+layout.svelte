@@ -4,7 +4,7 @@
 	import { browser } from '$app/environment';
 	import { isMobileDevice } from '$lib/deviceDetection';
 	import { goto } from '$app/navigation';
-	import { page } from '$app/stores';
+	import { page } from '$app/state';
 
 	let { children, data } = $props();
 
@@ -14,7 +14,7 @@
 	// Check for mobile devices and redirect (disabled for landing page)
 	$effect(() => {
 		if (browser) {
-			const currentPath = $page.url.pathname;
+			const currentPath = page.url.pathname;
 			const isMobile = isMobileDevice();
 
 			// Only redirect for dashboard route, not landing page

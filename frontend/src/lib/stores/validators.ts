@@ -121,7 +121,8 @@ const inlineValidators: ValidatorBase[] = [
 	}
 ];
 
-const customValidators: ValidatorBase[] = [
+// Writable store for custom validators (can be modified)
+const customValidatorsStore = writable<ValidatorBase[]>([
 	{
 		name: 'email_format',
 		category: 'string',
@@ -149,12 +150,13 @@ const customValidators: ValidatorBase[] = [
 		exampleUsage: '@field_validator("website")\ndef validate_url(cls, v):\n    if not v.startswith(("http://", "https://")):\n        raise ValueError("Invalid URL format")\n    return v',
 		pydanticDocsUrl: 'https://docs.pydantic.dev/latest/concepts/validators/'
 	}
-];
+]);
 
-const allValidatorsBase: ValidatorBase[] = [...inlineValidators, ...customValidators];
-
-// Base store for validator definitions (without usage data)
-const validatorsBaseStore = writable<ValidatorBase[]>(allValidatorsBase);
+// Base store that combines inline validators and custom validators
+const validatorsBaseStore = derived(
+	customValidatorsStore,
+	($customValidators) => [...inlineValidators, ...$customValidators]
+);
 
 // Derived store that calculates validator usage dynamically based on fieldsStore
 export const validatorsStore = derived(
@@ -188,7 +190,7 @@ export function getValidatorsByType(type: 'inline' | 'custom'): Validator[] {
 }
 
 export function getTotalValidatorCount(): number {
-	return allValidatorsBase.length;
+	return get(validatorsBaseStore).length;
 }
 
 export function searchValidators(query: string): Validator[] {
@@ -221,4 +223,33 @@ export function getValidatorsByFieldType(fieldType: PrimitiveTypeName): Validato
 	return validators.filter(validator =>
 		compatibleCategories.includes(validator.category)
 	);
+}
+
+/**
+ * Delete a custom validator by name
+ * Only custom validators can be deleted, inline validators are protected
+ * @param validatorName - The name of the validator to delete
+ * @returns boolean - true if deleted successfully, false if validator is inline or not found
+ */
+export function deleteValidator(validatorName: string): boolean {
+	const currentCustom = get(customValidatorsStore);
+	console.log('Current custom validators:', currentCustom.map(v => v.name));
+	console.log('Attempting to delete:', validatorName);
+
+	const validator = currentCustom.find(v => v.name === validatorName);
+
+	// Prevent deletion if validator not found in custom validators
+	if (!validator) {
+		console.log('Validator not found in custom validators');
+		return false;
+	}
+
+	// Remove the custom validator from the custom validators store
+	customValidatorsStore.update(validators => {
+		const updated = validators.filter(v => v.name !== validatorName);
+		console.log('Updated custom validators:', updated.map(v => v.name));
+		return updated;
+	});
+
+	return true;
 }

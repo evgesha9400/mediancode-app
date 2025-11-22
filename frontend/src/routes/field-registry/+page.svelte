@@ -14,7 +14,7 @@
   import DrawerHeader from '$lib/components/drawer/DrawerHeader.svelte';
   import DrawerContent from '$lib/components/drawer/DrawerContent.svelte';
   import DrawerFooter from '$lib/components/drawer/DrawerFooter.svelte';
-  import { page } from '$app/stores';
+  import { page } from '$app/state';
   import { goto } from '$app/navigation';
   import { parseMultiSortFromUrl, buildMultiSortUrl, handleSortClick, sortDataMultiColumn, type MultiSortState } from '$lib/utils/sorting';
 
@@ -48,7 +48,7 @@
   let previousFieldType: string | null = null;
 
   // Sort state derived from URL parameters
-  $: sorts = parseMultiSortFromUrl($page.url.searchParams);
+  $: sorts = parseMultiSortFromUrl(page.url.searchParams);
 
   // Apply search and then sorting
   $: filteredFields = (() => {

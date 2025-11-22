@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { page } from '$app/stores';
+  import { page } from '$app/state';
   import Sidebar from './Sidebar.svelte';
 
   interface Props {
@@ -8,7 +8,7 @@
 
   let { children }: Props = $props();
 
-  let currentPath = $derived($page.url.pathname);
+  let currentPath = $derived(page.url.pathname);
 </script>
 
 <div class="flex h-screen bg-mono-50">
