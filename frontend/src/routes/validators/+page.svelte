@@ -11,20 +11,68 @@
   import DrawerContent from '$lib/components/drawer/DrawerContent.svelte';
   import { page } from '$app/stores';
   import { goto } from '$app/navigation';
+  import FilterPanel from '$lib/components/search/FilterPanel.svelte';
+  import type { FilterConfig } from '$lib/types';
   import { parseMultiSortFromUrl, buildMultiSortUrl, handleSortClick, sortDataMultiColumn, type MultiSortState } from '$lib/utils/sorting';
 
   let searchQuery = '';
   let selectedValidator: Validator | null = null;
   let drawerOpen = false;
+  let filtersOpen = false;
+  let filters = {
+    selectedCategories: [] as string[],
+    selectedTypes: [] as string[],
+    onlyUsedInFields: false
+  };
+
+  $: uniqueCategories = Array.from(new Set($validatorsStore.map(v => v.category))).sort();
+
+  $: filterConfig = [
+    {
+      type: 'checkbox-group',
+      key: 'selectedCategories',
+      label: 'Category',
+      options: uniqueCategories.map(c => ({ label: c.charAt(0).toUpperCase() + c.slice(1), value: c }))
+    },
+    {
+      type: 'checkbox-group',
+      key: 'selectedTypes',
+      label: 'Type',
+      options: [
+        { label: 'Inline', value: 'inline' },
+        { label: 'Custom', value: 'custom' }
+      ]
+    },
+    {
+      type: 'toggle',
+      key: 'onlyUsedInFields',
+      label: 'Usage',
+      toggleLabel: 'Used in fields only'
+    }
+  ] as FilterConfig;
 
   // Sort state derived from URL parameters
   $: sorts = parseMultiSortFromUrl($page.url.searchParams);
 
   // Apply search and then sorting
   $: filteredValidators = (() => {
-    const searched = searchValidators(searchQuery);
+    let result = searchValidators(searchQuery);
+
+    // Apply filters
+    if (filters.selectedCategories.length > 0) {
+      result = result.filter(v => filters.selectedCategories.includes(v.category));
+    }
+
+    if (filters.selectedTypes.length > 0) {
+      result = result.filter(v => filters.selectedTypes.includes(v.type));
+    }
+
+    if (filters.onlyUsedInFields) {
+      result = result.filter(v => v.usedInFields > 0);
+    }
+
     const numericColumns = new Set(['usedInFields']);
-    return sortDataMultiColumn(searched, sorts, numericColumns);
+    return sortDataMultiColumn(result, sorts, numericColumns);
   })();
 
   $: totalCount = getTotalValidatorCount();
@@ -50,6 +98,14 @@
     const urlParams = buildMultiSortUrl(newSorts);
     goto(`?${urlParams}`, { replaceState: false, keepFocus: true });
   }
+
+  function toggleFilters() {
+    filtersOpen = !filtersOpen;
+  }
+
+  $: activeFiltersCount = (filters.selectedCategories.length > 0 ? 1 : 0) + 
+                          (filters.selectedTypes.length > 0 ? 1 : 0) + 
+                          (filters.onlyUsedInFields ? 1 : 0);
 </script>
 
 <DashboardLayout>
@@ -71,8 +127,20 @@
     placeholder="Search validators..."
     resultsCount={filteredValidators.length}
     resultLabel="validator"
-    showFilter={false}
-  />
+    showFilter={true}
+    active={filtersOpen || activeFiltersCount > 0}
+    on:filterClick={toggleFilters}
+  >
+    <svelte:fragment slot="filter-panel">
+      <FilterPanel
+        visible={filtersOpen}
+        config={filterConfig}
+        bind:state={filters}
+        on:close={() => filtersOpen = false}
+        on:clear={() => filtersOpen = false}
+      />
+    </svelte:fragment>
+  </SearchBar>
 
   <Table isEmpty={filteredValidators.length === 0}>
     <svelte:fragment slot="header">

@@ -8,18 +8,70 @@
   import EmptyState from '$lib/components/table/EmptyState.svelte';
   import { page } from '$app/stores';
   import { goto } from '$app/navigation';
+  import FilterPanel from '$lib/components/search/FilterPanel.svelte';
+  import type { FilterConfig } from '$lib/types';
   import { parseMultiSortFromUrl, buildMultiSortUrl, handleSortClick, sortDataMultiColumn } from '$lib/utils/sorting';
 
   let searchQuery = '';
+  let filtersOpen = false;
+  let filters = {
+    selectedCategories: [] as string[],
+    selectedValidatorCategories: [] as string[],
+    onlyUsedInFields: false
+  };
+
+  $: filterConfig = [
+    {
+      type: 'checkbox-group',
+      key: 'selectedCategories',
+      label: 'Category',
+      options: [
+        { label: 'Primitive', value: 'primitive' },
+        { label: 'Abstract', value: 'abstract' }
+      ]
+    },
+    {
+      type: 'checkbox-group',
+      key: 'selectedValidatorCategories',
+      label: 'Validator Categories',
+      options: [
+        { label: 'String', value: 'string' },
+        { label: 'Numeric', value: 'numeric' },
+        { label: 'Collection', value: 'collection' }
+      ]
+    },
+    {
+      type: 'toggle',
+      key: 'onlyUsedInFields',
+      label: 'Usage',
+      toggleLabel: 'Used in fields only'
+    }
+  ] as FilterConfig;
 
   // Sort state derived from URL parameters
   $: sorts = parseMultiSortFromUrl($page.url.searchParams);
 
   // Apply search and then sorting
   $: filteredTypes = (() => {
-    const searched = searchTypes(searchQuery);
+    let result = searchTypes(searchQuery);
+
+    // Apply filters
+    if (filters.selectedCategories.length > 0) {
+      result = result.filter(type => filters.selectedCategories.includes(type.category));
+    }
+
+    if (filters.selectedValidatorCategories.length > 0) {
+      result = result.filter(type => 
+        type.validatorCategories.some(cat => filters.selectedValidatorCategories.includes(cat))
+      );
+    }
+
+    if (filters.onlyUsedInFields) {
+      result = result.filter(type => type.usedInFields > 0);
+    }
+
     const numericColumns = new Set(['usedInFields']);
-    return sortDataMultiColumn(searched, sorts, numericColumns);
+    return sortDataMultiColumn(result, sorts, numericColumns);
   })();
 
   $: totalCount = getTotalTypeCount();
@@ -29,6 +81,14 @@
     const urlParams = buildMultiSortUrl(newSorts);
     goto(`?${urlParams}`, { replaceState: false, keepFocus: true });
   }
+
+  function toggleFilters() {
+    filtersOpen = !filtersOpen;
+  }
+
+  $: activeFiltersCount = (filters.selectedCategories.length > 0 ? 1 : 0) + 
+                          (filters.selectedValidatorCategories.length > 0 ? 1 : 0) + 
+                          (filters.onlyUsedInFields ? 1 : 0);
 
   function getCategoryBadgeClass(category: 'primitive' | 'abstract'): string {
     return category === 'primitive'
@@ -45,8 +105,20 @@
     placeholder="Search types..."
     resultsCount={filteredTypes.length}
     resultLabel="type"
-    showFilter={false}
-  />
+    showFilter={true}
+    active={filtersOpen || activeFiltersCount > 0}
+    on:filterClick={toggleFilters}
+  >
+    <svelte:fragment slot="filter-panel">
+      <FilterPanel
+        visible={filtersOpen}
+        config={filterConfig}
+        bind:state={filters}
+        on:close={() => filtersOpen = false}
+        on:clear={() => filtersOpen = false}
+      />
+    </svelte:fragment>
+  </SearchBar>
 
   <Table isEmpty={filteredTypes.length === 0}>
     <svelte:fragment slot="header">

@@ -36,3 +36,30 @@ export interface NavItem {
   active?: boolean;
   disabled?: boolean;
 }
+
+// Filter types for search components
+export type FilterType = 'checkbox-group' | 'toggle';
+
+export interface FilterOption {
+  label: string;
+  value: string;
+}
+
+interface FilterSectionBase {
+  key: string;
+  label: string;
+}
+
+export interface CheckboxGroupSection extends FilterSectionBase {
+  type: 'checkbox-group';
+  options: FilterOption[];
+}
+
+export interface ToggleSection extends FilterSectionBase {
+  type: 'toggle';
+  toggleLabel?: string;
+}
+
+export type FilterSection = CheckboxGroupSection | ToggleSection;
+
+export type FilterConfig = FilterSection[];

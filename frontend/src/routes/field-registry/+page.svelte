@@ -6,6 +6,7 @@
   import PageHeader from '$lib/components/layout/PageHeader.svelte';
   import SearchBar from '$lib/components/search/SearchBar.svelte';
   import FilterPanel from '$lib/components/search/FilterPanel.svelte';
+  import type { FilterConfig } from '$lib/types';
   import Table from '$lib/components/table/Table.svelte';
   import SortableColumn from '$lib/components/table/SortableColumn.svelte';
   import EmptyState from '$lib/components/table/EmptyState.svelte';
@@ -23,10 +24,20 @@
   let editMode = false;
 
   // Filter state
+  type FieldFilterState = {
+    selectedTypes: string[];
+    onlyUsedInApis: boolean;
+    onlyHasValidators: boolean;
+  };
+
+  const createFieldFilterState = (): FieldFilterState => ({
+    selectedTypes: [],
+    onlyUsedInApis: false,
+    onlyHasValidators: false
+  });
+
   let filtersOpen = false;
-  let selectedTypes: string[] = [];
-  let filterUsedInApis = false;
-  let filterHasValidators = false;
+  let filters: FieldFilterState = createFieldFilterState();
 
   // Form fields for editing
   let editedField: Field | null = null;
@@ -42,17 +53,17 @@
   // Apply search and then sorting
   $: filteredFields = (() => {
     let result = searchFields(searchQuery);
+    const { selectedTypes, onlyUsedInApis, onlyHasValidators } = filters;
 
-    // Apply filters
     if (selectedTypes.length > 0) {
       result = result.filter(field => selectedTypes.includes(field.type));
     }
 
-    if (filterUsedInApis) {
+    if (onlyUsedInApis) {
       result = result.filter(field => field.usedInApis.length > 0);
     }
 
-    if (filterHasValidators) {
+    if (onlyHasValidators) {
       result = result.filter(field => field.validators.length > 0);
     }
 
@@ -80,6 +91,27 @@
   $: availableValidators = editedField ? getValidatorsByFieldType(editedField.type) : [];
   $: hasChanges = originalField && editedField ? JSON.stringify(originalField) !== JSON.stringify(editedField) : false;
   $: primitiveTypes = getPrimitiveTypes();
+
+  $: fieldFilterConfig = [
+    {
+      type: 'checkbox-group',
+      key: 'selectedTypes',
+      label: 'Field Type',
+      options: primitiveTypes.map(type => ({ label: type.name, value: type.name }))
+    },
+    {
+      type: 'toggle',
+      key: 'onlyUsedInApis',
+      label: 'Usage',
+      toggleLabel: 'Used in APIs only'
+    },
+    {
+      type: 'toggle',
+      key: 'onlyHasValidators',
+      label: 'Validation',
+      toggleLabel: 'Has validators only'
+    }
+  ] as FilterConfig;
 
   // Reset validators and default value when field type changes
   $: if (editedField && previousFieldType !== null && previousFieldType !== editedField.type) {
@@ -235,7 +267,9 @@
     filtersOpen = !filtersOpen;
   }
 
-  $: activeFiltersCount = (selectedTypes.length > 0 ? 1 : 0) + (filterUsedInApis ? 1 : 0) + (filterHasValidators ? 1 : 0);
+  $: activeFiltersCount = (filters.selectedTypes.length > 0 ? 1 : 0) +
+    (filters.onlyUsedInApis ? 1 : 0) +
+    (filters.onlyHasValidators ? 1 : 0);
 </script>
 
 <DashboardLayout>
@@ -265,11 +299,10 @@
     <svelte:fragment slot="filter-panel">
       <FilterPanel
         visible={filtersOpen}
-        types={primitiveTypes}
-        bind:selectedTypes
-        bind:showUsedInApisOnly={filterUsedInApis}
-        bind:showHasValidatorsOnly={filterHasValidators}
+        config={fieldFilterConfig}
+        bind:state={filters}
         on:close={() => filtersOpen = false}
+        on:clear={() => filtersOpen = false}
       />
     </svelte:fragment>
   </SearchBar>

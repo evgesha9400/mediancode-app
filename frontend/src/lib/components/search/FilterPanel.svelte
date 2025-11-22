@@ -1,37 +1,51 @@
 <script lang="ts">
   import { createEventDispatcher } from 'svelte';
-  import type { FieldType } from '$lib/stores/types';
+  import type { FilterConfig } from '$lib/types';
 
   export let visible = false;
-  export let types: FieldType[] = [];
-  export let selectedTypes: string[] = [];
-  export let showUsedInApisOnly = false;
-  export let showHasValidatorsOnly = false;
+  export let config: FilterConfig = [];
+  export let state: Record<string, unknown> = {};
 
   const dispatch = createEventDispatcher<{
     close: void;
+    clear: void;
   }>();
 
-  function toggleType(typeName: string) {
-    if (selectedTypes.includes(typeName)) {
-      selectedTypes = selectedTypes.filter(t => t !== typeName);
-    } else {
-      selectedTypes = [...selectedTypes, typeName];
-    }
+  function ensureArray(value: unknown): string[] {
+    return Array.isArray(value) ? value : [];
   }
 
-  function toggleUsedInApis() {
-    showUsedInApisOnly = !showUsedInApisOnly;
+  function updateState(key: string, value: unknown) {
+    state = { ...state, [key]: value };
   }
 
-  function toggleHasValidators() {
-    showHasValidatorsOnly = !showHasValidatorsOnly;
+  function toggleCheckbox(key: string, value: string) {
+    const current = ensureArray(state[key]);
+    const next = current.includes(value)
+      ? current.filter(v => v !== value)
+      : [...current, value];
+    updateState(key, next);
+  }
+
+  function setToggle(key: string, checked: boolean) {
+    updateState(key, checked);
+  }
+
+  function buildClearedState(): Record<string, unknown> {
+    const next = { ...state };
+    config.forEach(section => {
+      if (section.type === 'checkbox-group') {
+        next[section.key] = [];
+      } else if (section.type === 'toggle') {
+        next[section.key] = false;
+      }
+    });
+    return next;
   }
 
   function clearFilters() {
-    selectedTypes = [];
-    showUsedInApisOnly = false;
-    showHasValidatorsOnly = false;
+    state = buildClearedState();
+    dispatch('clear');
   }
 </script>
 
@@ -57,57 +71,43 @@
     </div>
 
     <div class="p-4 space-y-6 max-h-[60vh] overflow-y-auto">
-      <!-- Field Type Section -->
-      <div>
-        <h4 class="text-xs font-semibold text-mono-500 uppercase tracking-wider mb-3">Field Type</h4>
-        <div class="space-y-2">
-          {#each types as type}
+      {#each config as section, i}
+        {#if i > 0}
+          <div class="h-px bg-mono-100"></div>
+        {/if}
+
+        <div>
+          <h4 class="text-xs font-semibold text-mono-500 uppercase tracking-wider mb-3">{section.label}</h4>
+          
+          {#if section.type === 'checkbox-group' && section.options}
+            <div class="space-y-2">
+              {#each section.options as option}
+                <label class="flex items-center space-x-2 cursor-pointer group">
+                  <div class="relative flex items-center">
+                    <input 
+                      type="checkbox" 
+                      checked={ensureArray(state[section.key]).includes(option.value)}
+                      on:change={() => toggleCheckbox(section.key, option.value)}
+                      class="peer h-4 w-4 rounded border-mono-300 text-mono-900 focus:ring-mono-500"
+                    />
+                  </div>
+                  <span class="text-sm text-mono-700 group-hover:text-mono-900">{option.label}</span>
+                </label>
+              {/each}
+            </div>
+          {:else if section.type === 'toggle'}
             <label class="flex items-center space-x-2 cursor-pointer group">
-              <div class="relative flex items-center">
-                <input 
-                  type="checkbox" 
-                  checked={selectedTypes.includes(type.name)}
-                  on:change={() => toggleType(type.name)}
-                  class="peer h-4 w-4 rounded border-mono-300 text-mono-900 focus:ring-mono-500"
-                />
-              </div>
-              <span class="text-sm text-mono-700 group-hover:text-mono-900">{type.name}</span>
+              <input 
+                type="checkbox" 
+                checked={Boolean(state[section.key])}
+                on:change={(event) => setToggle(section.key, (event.currentTarget as HTMLInputElement).checked)}
+                class="h-4 w-4 rounded border-mono-300 text-mono-900 focus:ring-mono-500"
+              />
+              <span class="text-sm text-mono-700 group-hover:text-mono-900">{section.toggleLabel ?? section.label}</span>
             </label>
-          {/each}
+          {/if}
         </div>
-      </div>
-
-      <div class="h-px bg-mono-100"></div>
-
-      <!-- Usage Section -->
-      <div>
-        <h4 class="text-xs font-semibold text-mono-500 uppercase tracking-wider mb-3">Usage</h4>
-        <label class="flex items-center space-x-2 cursor-pointer group">
-          <input 
-            type="checkbox" 
-            checked={showUsedInApisOnly}
-            on:change={toggleUsedInApis}
-            class="h-4 w-4 rounded border-mono-300 text-mono-900 focus:ring-mono-500"
-          />
-          <span class="text-sm text-mono-700 group-hover:text-mono-900">Used in APIs only</span>
-        </label>
-      </div>
-
-      <div class="h-px bg-mono-100"></div>
-
-      <!-- Validation Section -->
-      <div>
-        <h4 class="text-xs font-semibold text-mono-500 uppercase tracking-wider mb-3">Validation</h4>
-        <label class="flex items-center space-x-2 cursor-pointer group">
-          <input 
-            type="checkbox" 
-            checked={showHasValidatorsOnly}
-            on:change={toggleHasValidators}
-            class="h-4 w-4 rounded border-mono-300 text-mono-900 focus:ring-mono-500"
-          />
-          <span class="text-sm text-mono-700 group-hover:text-mono-900">Has validators only</span>
-        </label>
-      </div>
+      {/each}
     </div>
   </div>
 {/if}
