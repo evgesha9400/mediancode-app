@@ -5,6 +5,7 @@
   import DashboardLayout from '$lib/components/DashboardLayout.svelte';
   import PageHeader from '$lib/components/layout/PageHeader.svelte';
   import SearchBar from '$lib/components/search/SearchBar.svelte';
+  import FilterPanel from '$lib/components/search/FilterPanel.svelte';
   import Table from '$lib/components/table/Table.svelte';
   import SortableColumn from '$lib/components/table/SortableColumn.svelte';
   import EmptyState from '$lib/components/table/EmptyState.svelte';
@@ -21,6 +22,12 @@
   let drawerOpen = false;
   let editMode = false;
 
+  // Filter state
+  let filtersOpen = false;
+  let selectedTypes: string[] = [];
+  let filterUsedInApis = false;
+  let filterHasValidators = false;
+
   // Form fields for editing
   let editedField: Field | null = null;
   let originalField: Field | null = null;
@@ -34,10 +41,23 @@
 
   // Apply search and then sorting
   $: filteredFields = (() => {
-    const searched = searchFields(searchQuery);
+    let result = searchFields(searchQuery);
+
+    // Apply filters
+    if (selectedTypes.length > 0) {
+      result = result.filter(field => selectedTypes.includes(field.type));
+    }
+
+    if (filterUsedInApis) {
+      result = result.filter(field => field.usedInApis.length > 0);
+    }
+
+    if (filterHasValidators) {
+      result = result.filter(field => field.validators.length > 0);
+    }
 
     // Add computed field for usedInApis count
-    const withApiCount = searched.map(field => ({
+    const withApiCount = result.map(field => ({
       ...field,
       usedInApisCount: field.usedInApis.length
     }));
@@ -210,6 +230,12 @@
     const urlParams = buildMultiSortUrl(newSorts);
     goto(`?${urlParams}`, { replaceState: false, keepFocus: true });
   }
+
+  function toggleFilters() {
+    filtersOpen = !filtersOpen;
+  }
+
+  $: activeFiltersCount = (selectedTypes.length > 0 ? 1 : 0) + (filterUsedInApis ? 1 : 0) + (filterHasValidators ? 1 : 0);
 </script>
 
 <DashboardLayout>
@@ -233,7 +259,20 @@
     resultsCount={filteredFields.length}
     resultLabel="field"
     showFilter={true}
-  />
+    active={filtersOpen || activeFiltersCount > 0}
+    on:filterClick={toggleFilters}
+  >
+    <svelte:fragment slot="filter-panel">
+      <FilterPanel
+        visible={filtersOpen}
+        types={primitiveTypes}
+        bind:selectedTypes
+        bind:showUsedInApisOnly={filterUsedInApis}
+        bind:showHasValidatorsOnly={filterHasValidators}
+        on:close={() => filtersOpen = false}
+      />
+    </svelte:fragment>
+  </SearchBar>
 
   <Table isEmpty={filteredFields.length === 0}>
     <svelte:fragment slot="header">

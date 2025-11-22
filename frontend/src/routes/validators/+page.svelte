@@ -71,7 +71,7 @@
     placeholder="Search validators..."
     resultsCount={filteredValidators.length}
     resultLabel="validator"
-    showFilter={true}
+    showFilter={false}
   />
 
   <Table isEmpty={filteredValidators.length === 0}>

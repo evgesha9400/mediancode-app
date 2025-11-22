@@ -45,7 +45,7 @@
     placeholder="Search types..."
     resultsCount={filteredTypes.length}
     resultLabel="type"
-    showFilter={true}
+    showFilter={false}
   />
 
   <Table isEmpty={filteredTypes.length === 0}>
