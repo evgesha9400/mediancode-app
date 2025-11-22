@@ -10,7 +10,7 @@
 		"prepare": "svelte-kit sync || echo ''",
 		"check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
 		"check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch",
-		"kill-dev": "pkill -f 'vite dev' || echo 'No dev servers running'"
+		"kill-dev": "./scripts/kill-dev.sh"
 	},
 	"devDependencies": {
 		"@sveltejs/adapter-auto": "^7.0.0",
