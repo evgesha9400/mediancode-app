@@ -1,6 +1,7 @@
 <script lang="ts">
   import { page } from '$app/state';
   import Sidebar from './Sidebar.svelte';
+  import ToastContainer from './toast/ToastContainer.svelte';
 
   interface Props {
     children: import('svelte').Snippet;
@@ -17,4 +18,6 @@
   <div class="flex-1 flex flex-col overflow-hidden">
     {@render children()}
   </div>
+
+  <ToastContainer />
 </div>

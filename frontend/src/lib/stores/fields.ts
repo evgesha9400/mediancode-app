@@ -1,5 +1,7 @@
 import { writable } from 'svelte/store';
 import type { PrimitiveTypeName } from './types';
+import { checkFieldDeletion } from '$lib/utils/references';
+import type { DeletionResult } from '$lib/types';
 
 export interface FieldValidator {
 	name: string;
@@ -185,10 +187,40 @@ export function updateField(id: string, updates: Partial<Field>): void {
 	});
 }
 
-export function deleteField(id: string): void {
+/**
+ * Delete a field by ID
+ * Checks for API references before deletion to prevent breaking API dependencies
+ *
+ * @param id - The ID of the field to delete
+ * @returns DeletionResult - Contains success status and error message if blocked by references
+ */
+export function deleteField(id: string): DeletionResult {
+	// Find the field to get its data
+	let fieldToDelete: Field | undefined;
+	fieldsStore.subscribe(fields => {
+		fieldToDelete = fields.find(f => f.id === id);
+	})();
+
+	if (!fieldToDelete) {
+		return {
+			success: false,
+			error: `Field with ID "${id}" not found.`
+		};
+	}
+
+	// Check if field can be safely deleted
+	const deletionCheck = checkFieldDeletion(fieldToDelete.name, fieldToDelete.usedInApis);
+
+	if (!deletionCheck.success) {
+		return deletionCheck;
+	}
+
+	// Remove the field from the store
 	fieldsStore.update(fields => {
 		return fields.filter(field => field.id !== id);
 	});
+
+	return { success: true };
 }
 
 export function addField(field: Field): void {

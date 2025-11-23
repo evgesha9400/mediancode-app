@@ -1,5 +1,7 @@
 <script lang="ts">
   import { validatorsStore, getTotalValidatorCount, deleteValidator, type Validator } from '$lib/stores/validators';
+  import { showToast } from '$lib/stores/toasts';
+  import { buildDeletionTooltip } from '$lib/utils/references';
   import DashboardLayout from '$lib/components/DashboardLayout.svelte';
   import PageHeader from '$lib/components/layout/PageHeader.svelte';
   import SearchBar from '$lib/components/search/SearchBar.svelte';
@@ -10,6 +12,7 @@
   import DrawerHeader from '$lib/components/drawer/DrawerHeader.svelte';
   import DrawerContent from '$lib/components/drawer/DrawerContent.svelte';
   import DrawerFooter from '$lib/components/drawer/DrawerFooter.svelte';
+  import Tooltip from '$lib/components/tooltip/Tooltip.svelte';
   import { page } from '$app/state';
   import { goto } from '$app/navigation';
   import FilterPanel from '$lib/components/search/FilterPanel.svelte';
@@ -56,12 +59,12 @@
   // Sort state derived from URL parameters
   $: sorts = parseMultiSortFromUrl(page.url.searchParams);
 
-  // Apply search and then sorting
+  // Apply filtering and sorting
   $: filteredValidators = (() => {
-    // Directly depend on $validatorsStore to trigger reactivity when validators change
+    // Start with all validators from store
     let result = $validatorsStore;
 
-    // Apply search filter
+    // Apply search filtering
     if (searchQuery) {
       const lowerQuery = searchQuery.toLowerCase().trim();
       result = result.filter(validator =>
@@ -71,7 +74,7 @@
       );
     }
 
-    // Apply filters
+    // Apply advanced filters
     if (filters.selectedCategories.length > 0) {
       result = result.filter(v => filters.selectedCategories.includes(v.category));
     }
@@ -84,6 +87,7 @@
       result = result.filter(v => v.usedInFields > 0);
     }
 
+    // Determine numeric columns for proper sorting
     const numericColumns = new Set(['usedInFields']);
     return sortDataMultiColumn(result, sorts, numericColumns);
   })();
@@ -124,13 +128,26 @@
   function handleDelete() {
     if (!selectedValidator) return;
 
-    const success = deleteValidator(selectedValidator.name);
-    if (success) {
+    const validatorName = selectedValidator.name;
+    const result = deleteValidator(selectedValidator.name);
+    if (result.success) {
       closeDrawer();
+      showToast(`Validator "${validatorName}" deleted successfully`, 'success', 3000);
+    } else {
+      // Surface error to user via toast notification
+      showToast(result.error || 'Failed to delete validator', 'error', 5000);
     }
   }
 
+  function navigateToField(fieldId: string) {
+    goto(`/field-registry?highlight=${fieldId}`);
+  }
+
   $: isCustomValidator = selectedValidator?.type === 'custom';
+  $: hasReferences = selectedValidator ? selectedValidator.fieldsUsingValidator.length > 0 : false;
+  $: deleteTooltip = selectedValidator && hasReferences
+    ? buildDeletionTooltip('validator', 'field', selectedValidator.fieldsUsingValidator)
+    : '';
 </script>
 
 <DashboardLayout>
@@ -205,7 +222,7 @@
     <svelte:fragment slot="body">
       {#each filteredValidators as validator}
         <tr
-          on:click={() => selectValidator(validator)}
+          onclick={() => selectValidator(validator)}
           class="cursor-pointer transition-colors {isSelected(validator) ? 'bg-mono-100' : 'hover:bg-mono-50'}"
         >
           <td class="px-6 py-4 whitespace-nowrap">
@@ -308,15 +325,22 @@
           {#if selectedValidator.fieldsUsingValidator.length > 0}
             <div class="space-y-2">
               {#each selectedValidator.fieldsUsingValidator as field}
-                <div class="flex items-center justify-between p-3 bg-mono-50 rounded-md hover:bg-mono-100 cursor-pointer transition-colors">
+                <button
+                  type="button"
+                  onclick={() => navigateToField(field.fieldId)}
+                  class="w-full flex items-center justify-between p-3 bg-mono-50 rounded-md hover:bg-mono-100 cursor-pointer transition-colors group"
+                >
                   <div class="flex items-center space-x-2">
-                    <i class="fa-solid fa-table-list text-mono-400"></i>
-                    <span class="text-sm text-mono-900">{field.name}</span>
+                    <i class="fa-solid fa-table-list text-mono-400 group-hover:text-mono-600 transition-colors"></i>
+                    <span class="text-sm text-mono-900 group-hover:text-mono-700 transition-colors">{field.name}</span>
                   </div>
-                  <span class="text-xs text-mono-500 bg-mono-200 px-2 py-1 rounded">
-                    ID: {field.fieldId}
-                  </span>
-                </div>
+                  <div class="flex items-center space-x-2">
+                    <span class="text-xs text-mono-500 bg-mono-200 px-2 py-1 rounded">
+                      ID: {field.fieldId}
+                    </span>
+                    <i class="fa-solid fa-arrow-right text-mono-400 group-hover:text-mono-600 transition-colors text-xs"></i>
+                  </div>
+                </button>
               {/each}
             </div>
           {:else}
@@ -330,28 +354,31 @@
   {#if selectedValidator && isCustomValidator}
     <DrawerFooter>
       {#if !showDeleteConfirm}
-        <button
-          type="button"
-          on:click={() => showDeleteConfirm = true}
-          class="w-full px-4 py-2 bg-mono-100 text-mono-600 rounded-md hover:bg-mono-200 flex items-center justify-center transition-colors font-medium"
-        >
-          <i class="fa-solid fa-trash mr-2"></i>
-          <span>Delete Validator</span>
-        </button>
+        <Tooltip text={deleteTooltip} position="top">
+          <button
+            type="button"
+            onclick={() => showDeleteConfirm = true}
+            disabled={hasReferences}
+            class="w-full px-4 py-2 rounded-md flex items-center justify-center transition-colors font-medium {hasReferences ? 'bg-mono-200 text-mono-400 cursor-not-allowed' : 'bg-mono-100 text-mono-600 hover:bg-mono-200 cursor-pointer'}"
+          >
+            <i class="fa-solid fa-trash mr-2"></i>
+            <span>Delete Validator</span>
+          </button>
+        </Tooltip>
       {:else}
         <div class="bg-red-50 border border-red-200 rounded-md p-3">
           <p class="text-sm text-red-800 mb-2">Are you sure you want to delete this custom validator?</p>
           <div class="flex space-x-2">
             <button
               type="button"
-              on:click={handleDelete}
+              onclick={handleDelete}
               class="flex-1 px-3 py-1.5 bg-red-600 text-white rounded-md hover:bg-red-700 text-sm font-medium"
             >
               Yes, Delete
             </button>
             <button
               type="button"
-              on:click={() => showDeleteConfirm = false}
+              onclick={() => showDeleteConfirm = false}
               class="flex-1 px-3 py-1.5 border border-mono-300 text-mono-700 rounded-md hover:bg-mono-50 text-sm font-medium"
             >
               Cancel

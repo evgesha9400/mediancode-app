@@ -1,7 +1,9 @@
 <script lang="ts">
-  import { fieldsStore, searchFields, getTotalFieldCount, updateField, deleteField, type Field, type FieldValidator } from '$lib/stores/fields';
+  import { fieldsStore, getTotalFieldCount, updateField, deleteField, type Field, type FieldValidator } from '$lib/stores/fields';
   import { validatorsStore, getValidatorsByFieldType, type Validator } from '$lib/stores/validators';
   import { getPrimitiveTypes, type FieldType } from '$lib/stores/types';
+  import { showToast } from '$lib/stores/toasts';
+  import { buildDeletionTooltip } from '$lib/utils/references';
   import DashboardLayout from '$lib/components/DashboardLayout.svelte';
   import PageHeader from '$lib/components/layout/PageHeader.svelte';
   import SearchBar from '$lib/components/search/SearchBar.svelte';
@@ -14,9 +16,11 @@
   import DrawerHeader from '$lib/components/drawer/DrawerHeader.svelte';
   import DrawerContent from '$lib/components/drawer/DrawerContent.svelte';
   import DrawerFooter from '$lib/components/drawer/DrawerFooter.svelte';
+  import Tooltip from '$lib/components/tooltip/Tooltip.svelte';
   import { page } from '$app/state';
   import { goto } from '$app/navigation';
   import { parseMultiSortFromUrl, buildMultiSortUrl, handleSortClick, sortDataMultiColumn, type MultiSortState } from '$lib/utils/sorting';
+  import { browser } from '$app/environment';
 
   let searchQuery = '';
   let selectedField: Field | null = null;
@@ -43,16 +47,42 @@
   let editedField: Field | null = null;
   let originalField: Field | null = null;
   let validationErrors: Record<string, string> = {};
-  let saveSuccess = false;
   let showDeleteConfirm = false;
   let previousFieldType: string | null = null;
 
   // Sort state derived from URL parameters
   $: sorts = parseMultiSortFromUrl(page.url.searchParams);
 
-  // Apply search and then sorting
+  // Handle highlight parameter from URL (for navigation from validators)
+  $: highlightFieldId = page.url.searchParams.get('highlight');
+  $: if (browser && highlightFieldId && $fieldsStore.length > 0) {
+    const field = $fieldsStore.find(f => f.id === highlightFieldId);
+    if (field && !drawerOpen) {
+      selectField(field);
+      // Clear the highlight parameter after opening (use history.replaceState to avoid navigation)
+      const newUrl = new URL(window.location.href);
+      newUrl.searchParams.delete('highlight');
+      window.history.replaceState({}, '', newUrl.pathname + newUrl.search);
+    }
+  }
+
+  // Apply filtering and sorting
   $: filteredFields = (() => {
-    let result = searchFields(searchQuery);
+    // Start with all fields from store
+    let result = $fieldsStore;
+
+    // Apply search filtering
+    if (searchQuery) {
+      const lowerQuery = searchQuery.toLowerCase().trim();
+      result = result.filter(field =>
+        field.name.toLowerCase().includes(lowerQuery) ||
+        field.type.toLowerCase().includes(lowerQuery) ||
+        field.description?.toLowerCase().includes(lowerQuery) ||
+        field.validators.some(v => v.name.toLowerCase().includes(lowerQuery))
+      );
+    }
+
+    // Apply advanced filters
     const { selectedTypes, onlyUsedInApis, onlyHasValidators } = filters;
 
     if (selectedTypes.length > 0) {
@@ -73,7 +103,7 @@
       usedInApisCount: field.usedInApis.length
     }));
 
-    // Determine numeric columns
+    // Determine numeric columns for proper sorting
     const numericColumns = new Set(['usedInApisCount']);
 
     // Transform sorts to use usedInApisCount instead of usedInApis
@@ -132,7 +162,6 @@
     drawerOpen = true;
     editMode = true;
     validationErrors = {};
-    saveSuccess = false;
     showDeleteConfirm = false;
   }
 
@@ -145,7 +174,6 @@
       previousFieldType = null;
       editMode = false;
       validationErrors = {};
-      saveSuccess = false;
       showDeleteConfirm = false;
     }, 300);
   }
@@ -176,28 +204,32 @@
   function handleSave() {
     if (!editedField || !validateForm()) return;
 
+    const fieldName = editedField.name;
     updateField(editedField.id, editedField);
     selectedField = editedField;
     originalField = JSON.parse(JSON.stringify(editedField)); // Update original to match saved state
-    saveSuccess = true;
-
-    setTimeout(() => {
-      saveSuccess = false;
-    }, 3000);
+    showToast(`Field "${fieldName}" updated successfully`, 'success', 3000);
   }
 
   function handleUndo() {
     if (originalField) {
       editedField = JSON.parse(JSON.stringify(originalField));
       validationErrors = {};
-      saveSuccess = false;
     }
   }
 
   function handleDelete() {
     if (!editedField) return;
-    deleteField(editedField.id);
-    closeDrawer();
+
+    const fieldName = editedField.name;
+    const result = deleteField(editedField.id);
+    if (result.success) {
+      closeDrawer();
+      showToast(`Field "${fieldName}" deleted successfully`, 'success', 3000);
+    } else {
+      // Surface error to user via toast notification
+      showToast(result.error || 'Failed to delete field', 'error', 5000);
+    }
   }
 
   function addValidator() {
@@ -270,6 +302,11 @@
   $: activeFiltersCount = (filters.selectedTypes.length > 0 ? 1 : 0) +
     (filters.onlyUsedInApis ? 1 : 0) +
     (filters.onlyHasValidators ? 1 : 0);
+
+  $: hasReferences = editedField ? editedField.usedInApis.length > 0 : false;
+  $: deleteTooltip = editedField && hasReferences
+    ? buildDeletionTooltip('field', 'API', editedField.usedInApis.map(api => ({ name: api })))
+    : '';
 </script>
 
 <DashboardLayout>
@@ -345,7 +382,7 @@
     <svelte:fragment slot="body">
       {#each filteredFields as field}
         <tr
-          on:click={() => selectField(field)}
+          onclick={() => selectField(field)}
           class="cursor-pointer transition-colors {isSelected(field) ? 'bg-mono-100' : 'hover:bg-mono-50'}"
         >
           <td class="px-6 py-4 whitespace-nowrap">
@@ -398,13 +435,6 @@
 
   <DrawerContent>
     {#if editedField}
-      {#if saveSuccess}
-        <div class="bg-green-50 border border-green-200 rounded-md p-3 flex items-center space-x-2 mb-4">
-          <i class="fa-solid fa-check-circle text-green-600"></i>
-          <span class="text-sm text-green-800">Changes saved successfully</span>
-        </div>
-      {/if}
-
       <div class="space-y-4">
         <!-- Field Name -->
         <div>
@@ -475,7 +505,7 @@
             <div class="block text-sm text-mono-700 font-medium">Validators</div>
             <button
               type="button"
-              on:click={addValidator}
+              onclick={addValidator}
               disabled={availableValidators.length === 0}
               class="text-sm flex items-center transition-colors {availableValidators.length > 0 ? 'text-mono-600 hover:text-mono-900 cursor-pointer' : 'text-mono-400 cursor-not-allowed'}"
             >
@@ -491,7 +521,7 @@
                     <div class="relative flex-1">
                       <select
                         value={validator.name}
-                        on:change={(e) => updateValidatorName(index, e.currentTarget.value)}
+                        onchange={(e) => updateValidatorName(index, e.currentTarget.value)}
                         class="w-full appearance-none px-3 py-1.5 border border-mono-300 rounded-md text-sm pr-8 focus:ring-2 focus:ring-mono-400 focus:border-transparent"
                       >
                         {#each availableValidators as v}
@@ -504,7 +534,7 @@
                     </div>
                     <button
                       type="button"
-                      on:click={() => removeValidator(index)}
+                      onclick={() => removeValidator(index)}
                       class="text-mono-400 hover:text-mono-600 transition-colors"
                       aria-label="Remove validator"
                     >
@@ -536,12 +566,14 @@
 
         <!-- Used In APIs -->
         <div>
-          <h3 class="text-sm text-mono-700 mb-2 font-medium">Used In APIs</h3>
+          <h3 class="text-sm text-mono-700 mb-2 font-medium">Used In APIs ({editedField.usedInApis.length})</h3>
           <div class="space-y-2">
             {#each editedField.usedInApis as api}
-              <div class="flex items-center space-x-2 p-2 bg-mono-50 rounded-md">
-                <i class="fa-solid fa-code text-mono-400"></i>
-                <span class="text-sm text-mono-900">{api}</span>
+              <div class="flex items-center justify-between p-3 bg-mono-50 rounded-md">
+                <div class="flex items-center space-x-2">
+                  <i class="fa-solid fa-code text-mono-400"></i>
+                  <span class="text-sm text-mono-900">{api}</span>
+                </div>
               </div>
             {/each}
             {#if editedField.usedInApis.length === 0}
@@ -557,7 +589,7 @@
     {#if editedField}
       <button
         type="button"
-        on:click={handleSave}
+        onclick={handleSave}
         disabled={!hasChanges}
         class="w-full px-4 py-2 rounded-md transition-colors font-medium {hasChanges ? 'bg-mono-900 text-white hover:bg-mono-800 cursor-pointer' : 'bg-mono-300 text-mono-500 cursor-not-allowed'}"
       >
@@ -565,35 +597,38 @@
       </button>
       <button
         type="button"
-        on:click={handleUndo}
+        onclick={handleUndo}
         disabled={!hasChanges}
         class="w-full px-4 py-2 border rounded-md transition-colors font-medium {hasChanges ? 'border-mono-300 text-mono-700 hover:bg-mono-50 cursor-pointer' : 'border-mono-200 text-mono-400 cursor-not-allowed bg-mono-50'}"
       >
         Undo
       </button>
       {#if !showDeleteConfirm}
-        <button
-          type="button"
-          on:click={() => showDeleteConfirm = true}
-          class="w-full px-4 py-2 bg-mono-100 text-mono-600 rounded-md hover:bg-mono-200 flex items-center justify-center transition-colors font-medium"
-        >
-          <i class="fa-solid fa-trash mr-2"></i>
-          <span>Delete Field</span>
-        </button>
+        <Tooltip text={deleteTooltip} position="top">
+          <button
+            type="button"
+            onclick={() => showDeleteConfirm = true}
+            disabled={hasReferences}
+            class="w-full px-4 py-2 rounded-md flex items-center justify-center transition-colors font-medium {hasReferences ? 'bg-mono-200 text-mono-400 cursor-not-allowed' : 'bg-mono-100 text-mono-600 hover:bg-mono-200 cursor-pointer'}"
+          >
+            <i class="fa-solid fa-trash mr-2"></i>
+            <span>Delete Field</span>
+          </button>
+        </Tooltip>
       {:else}
         <div class="bg-red-50 border border-red-200 rounded-md p-3">
           <p class="text-sm text-red-800 mb-2">Are you sure you want to delete this field?</p>
           <div class="flex space-x-2">
             <button
               type="button"
-              on:click={handleDelete}
+              onclick={handleDelete}
               class="flex-1 px-3 py-1.5 bg-red-600 text-white rounded-md hover:bg-red-700 text-sm font-medium"
             >
               Yes, Delete
             </button>
             <button
               type="button"
-              on:click={() => showDeleteConfirm = false}
+              onclick={() => showDeleteConfirm = false}
               class="flex-1 px-3 py-1.5 border border-mono-300 text-mono-700 rounded-md hover:bg-mono-50 text-sm font-medium"
             >
               Cancel

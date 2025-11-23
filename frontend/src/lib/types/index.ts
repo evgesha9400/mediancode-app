@@ -63,3 +63,28 @@ export interface ToggleSection extends FilterSectionBase {
 export type FilterSection = CheckboxGroupSection | ToggleSection;
 
 export type FilterConfig = FilterSection[];
+
+// Reference handling types for deletion safety
+export interface Reference {
+  id: string;
+  name: string;
+  type: 'field' | 'api' | 'validator';
+}
+
+export interface DeletionResult {
+  success: boolean;
+  error?: string;
+  references?: Reference[];
+}
+
+// Toast notification types
+export type ToastType = 'success' | 'error' | 'info' | 'warning';
+
+export type ToastPosition = 'top-right' | 'top-left' | 'bottom-right' | 'bottom-left';
+
+export interface Toast {
+  id: string;
+  message: string;
+  type: ToastType;
+  duration: number;
+}

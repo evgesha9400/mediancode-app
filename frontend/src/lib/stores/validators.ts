@@ -3,6 +3,8 @@ import { fieldsStore } from './fields';
 import type { Field } from './fields';
 import { getValidatorCategoriesForType } from './types';
 import type { PrimitiveTypeName } from './types';
+import { checkValidatorDeletion } from '$lib/utils/references';
+import type { DeletionResult } from '$lib/types';
 
 export interface ValidatorBase {
 	name: string;
@@ -228,28 +230,46 @@ export function getValidatorsByFieldType(fieldType: PrimitiveTypeName): Validato
 /**
  * Delete a custom validator by name
  * Only custom validators can be deleted, inline validators are protected
+ * Checks for references before deletion to prevent breaking field validators
+ *
  * @param validatorName - The name of the validator to delete
- * @returns boolean - true if deleted successfully, false if validator is inline or not found
+ * @returns DeletionResult - Contains success status and error message if blocked by references
  */
-export function deleteValidator(validatorName: string): boolean {
+export function deleteValidator(validatorName: string): DeletionResult {
 	const currentCustom = get(customValidatorsStore);
-	console.log('Current custom validators:', currentCustom.map(v => v.name));
-	console.log('Attempting to delete:', validatorName);
-
 	const validator = currentCustom.find(v => v.name === validatorName);
 
 	// Prevent deletion if validator not found in custom validators
 	if (!validator) {
-		console.log('Validator not found in custom validators');
-		return false;
+		return {
+			success: false,
+			error: `Validator "${validatorName}" not found or is a built-in validator that cannot be deleted.`
+		};
+	}
+
+	// Get the full validator with usage information
+	const fullValidator = get(validatorsStore).find(v => v.name === validatorName);
+	if (!fullValidator) {
+		return {
+			success: false,
+			error: `Unable to retrieve validator information for "${validatorName}".`
+		};
+	}
+
+	// Check if validator can be safely deleted
+	const deletionCheck = checkValidatorDeletion(
+		validatorName,
+		fullValidator.fieldsUsingValidator
+	);
+
+	if (!deletionCheck.success) {
+		return deletionCheck;
 	}
 
 	// Remove the custom validator from the custom validators store
 	customValidatorsStore.update(validators => {
-		const updated = validators.filter(v => v.name !== validatorName);
-		console.log('Updated custom validators:', updated.map(v => v.name));
-		return updated;
+		return validators.filter(v => v.name !== validatorName);
 	});
 
-	return true;
+	return { success: true };
 }
