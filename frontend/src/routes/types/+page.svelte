@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { typesStore, searchTypes, type FieldType } from '$lib/stores/types';
+  import { searchTypes } from '$lib/stores/types';
   import DashboardLayout from '$lib/components/DashboardLayout.svelte';
   import PageHeader from '$lib/components/layout/PageHeader.svelte';
   import SearchBar from '$lib/components/search/SearchBar.svelte';
@@ -20,7 +20,7 @@
     onlyUsedInFields: false
   });
 
-  const filterConfig = $derived([
+  let filterConfig = $derived([
     {
       type: 'checkbox-group',
       key: 'selectedCategories',
@@ -48,12 +48,11 @@
     }
   ] as FilterConfig);
 
-  // Sort state derived from URL parameters using Svelte 5 $derived rune
-  // IMPORTANT: Must use $derived (not $:) with page store from $app/state in Svelte 5
-  const sorts = $derived(parseMultiSortFromUrl(new URLSearchParams(page.url.search)));
+  // Sort state derived from URL parameters
+  let sorts = $derived(parseMultiSortFromUrl(new URLSearchParams(page.url.search)));
 
-  // Apply search and then sorting using Svelte 5 $derived rune
-  const filteredTypes = $derived((() => {
+  // Apply search and then sorting
+  let filteredTypes = $derived.by(() => {
     let result = searchTypes(searchQuery);
 
     // Apply filters
@@ -62,7 +61,7 @@
     }
 
     if (filters.selectedValidatorCategories.length > 0) {
-      result = result.filter(type => 
+      result = result.filter(type =>
         type.validatorCategories.some(cat => filters.selectedValidatorCategories.includes(cat))
       );
     }
@@ -73,7 +72,7 @@
 
     const numericColumns = new Set(['usedInFields']);
     return sortDataMultiColumn(result, sorts, numericColumns);
-  })());
+  });
 
   function handleSort(columnKey: string, shiftKey: boolean) {
     const newSorts = handleSortClick(columnKey, sorts, shiftKey);
@@ -85,7 +84,7 @@
     filtersOpen = !filtersOpen;
   }
 
-  const activeFiltersCount = $derived((filters.selectedCategories.length > 0 ? 1 : 0) +
+  let activeFiltersCount = $derived((filters.selectedCategories.length > 0 ? 1 : 0) +
                           (filters.selectedValidatorCategories.length > 0 ? 1 : 0) +
                           (filters.onlyUsedInFields ? 1 : 0));
 
@@ -136,7 +135,7 @@
         />
         <SortableColumn
           column="pythonType"
-          label="Python Type"
+          label="Type"
           {sorts}
           onSort={handleSort}
         />

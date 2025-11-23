@@ -1,7 +1,7 @@
 <script lang="ts">
   import { fieldsStore, updateField, deleteField, searchFields, type Field, type FieldValidator } from '$lib/stores/fields';
   import { validatorsStore, getValidatorsByFieldType, type Validator } from '$lib/stores/validators';
-  import { getPrimitiveTypes, type FieldType } from '$lib/stores/types';
+  import { getPrimitiveTypes, type PrimitiveTypeName } from '$lib/stores/types';
   import { showToast } from '$lib/stores/toasts';
   import { buildDeletionTooltip } from '$lib/utils/references';
   import DashboardLayout from '$lib/components/DashboardLayout.svelte';
@@ -53,12 +53,12 @@
   let showDeleteConfirm = $state(false);
   let previousFieldType = $state<string | null>(null);
 
-  // Sort state derived from URL parameters using Svelte 5 $derived rune
-  // IMPORTANT: Must use $derived (not $:) with page store from $app/state in Svelte 5
-  const sorts = $derived(parseMultiSortFromUrl(new URLSearchParams(page.url.search)));
+  // Sort state derived from URL parameters
+  let sorts = $derived(parseMultiSortFromUrl(new URLSearchParams(page.url.search)));
 
   // Handle highlight parameter from URL (for navigation from validators)
-  const highlightFieldId = $derived(page.url.searchParams.get('highlight'));
+  let highlightFieldId = $derived(page.url.searchParams.get('highlight'));
+
   $effect(() => {
     if (browser && highlightFieldId && $fieldsStore.length > 0) {
       const field = $fieldsStore.find(f => f.id === highlightFieldId);
@@ -72,8 +72,8 @@
     }
   });
 
-  // Apply filtering and sorting using Svelte 5 $derived rune
-  const filteredFields = $derived((() => {
+  // Apply filtering and sorting
+  let filteredFields = $derived.by(() => {
     // Use centralized search helper with reactive store data
     let result = searchFields($fieldsStore, searchQuery);
 
@@ -109,14 +109,14 @@
     );
 
     return sortDataMultiColumn(withApiCount, transformedSorts, numericColumns);
-  })());
+  });
 
-  const validators = $derived($validatorsStore);
-  const availableValidators = $derived(editedField ? getValidatorsByFieldType(editedField.type) : []);
-  const hasChanges = $derived(originalField && editedField ? JSON.stringify(originalField) !== JSON.stringify(editedField) : false);
-  const primitiveTypes = $derived(getPrimitiveTypes());
+  let validators = $derived($validatorsStore);
+  let availableValidators = $derived(editedField ? getValidatorsByFieldType(editedField.type) : []);
+  let hasChanges = $derived(originalField && editedField ? JSON.stringify(originalField) !== JSON.stringify(editedField) : false);
+  let primitiveTypes = $derived(getPrimitiveTypes());
 
-  const fieldFilterConfig = $derived([
+  let fieldFilterConfig = $derived([
     {
       type: 'checkbox-group',
       key: 'selectedTypes',
@@ -137,20 +137,19 @@
     }
   ] as FilterConfig);
 
-  // Reset validators and default value when field type changes
-  $effect(() => {
-    if (editedField && previousFieldType !== null && previousFieldType !== editedField.type) {
+  function handleTypeChange(newType: string) {
+    if (!editedField) return;
+
+    const typedNewType = newType as PrimitiveTypeName;
+
+    // If type actually changed, reset validators and default value
+    if (previousFieldType !== null && previousFieldType !== typedNewType) {
       editedField.validators = [];
       editedField.defaultValue = '';
     }
-  });
 
-  // Track field type changes
-  $effect(() => {
-    if (editedField) {
-      previousFieldType = editedField.type;
-    }
-  });
+    previousFieldType = typedNewType;
+  }
 
   function selectField(field: Field) {
     selectedField = field;
@@ -181,21 +180,22 @@
   }
 
   function validateForm(): boolean {
-    validationErrors = {};
+    const errors: Record<string, string> = {};
     let isValid = true;
 
     if (!editedField) return false;
 
     if (!editedField.name.trim()) {
-      validationErrors.name = 'Field name is required';
+      errors.name = 'Field name is required';
       isValid = false;
     }
 
     if (!editedField.type) {
-      validationErrors.type = 'Type is required';
+      errors.type = 'Type is required';
       isValid = false;
     }
 
+    validationErrors = errors;
     return isValid;
   }
 
@@ -212,6 +212,7 @@
   function handleUndo() {
     if (originalField) {
       editedField = JSON.parse(JSON.stringify(originalField));
+      previousFieldType = originalField.type;
       validationErrors = {};
     }
   }
@@ -237,12 +238,18 @@
 
     // Use the first available validator
     const firstValidator = available[0];
-    editedField.validators = [...editedField.validators, { name: firstValidator.name, params: {} }];
+    editedField = {
+      ...editedField,
+      validators: [...editedField.validators, { name: firstValidator.name, params: {} }]
+    };
   }
 
   function removeValidator(index: number) {
     if (!editedField) return;
-    editedField.validators = editedField.validators.filter((_, i) => i !== index);
+    editedField = {
+      ...editedField,
+      validators: editedField.validators.filter((_, i) => i !== index)
+    };
   }
 
   function updateValidatorName(index: number, name: string) {
@@ -250,19 +257,8 @@
     const validator = validators.find(v => v.name === name);
     if (!validator) return;
 
-    const newValidators = [...editedField.validators];
-    newValidators[index] = { name, params: {} };
-    editedField.validators = newValidators;
-  }
-
-  function formatValidatorDisplay(validator: FieldValidator): string {
-    if (!validator.params || Object.keys(validator.params).length === 0) {
-      return validator.name;
-    }
-    const paramStr = Object.entries(validator.params)
-      .map(([key, value]) => `${key}: ${value}`)
-      .join(', ');
-    return `${validator.name} (${paramStr})`;
+    // Reset params when validator name changes (bind:value already updated the name)
+    editedField.validators[index].params = {};
   }
 
   function formatValidatorPill(validator: FieldValidator): string {
@@ -297,12 +293,12 @@
     filtersOpen = !filtersOpen;
   }
 
-  const activeFiltersCount = $derived((filters.selectedTypes.length > 0 ? 1 : 0) +
+  let activeFiltersCount = $derived((filters.selectedTypes.length > 0 ? 1 : 0) +
     (filters.onlyUsedInApis ? 1 : 0) +
     (filters.onlyHasValidators ? 1 : 0));
 
-  const hasReferences = $derived(editedField ? editedField.usedInApis.length > 0 : false);
-  const deleteTooltip = $derived(editedField && hasReferences
+  let hasReferences = $derived(editedField ? editedField.usedInApis.length > 0 : false);
+  let deleteTooltip = $derived(editedField && hasReferences
     ? buildDeletionTooltip('field', 'API', editedField!.usedInApis.map(api => ({ name: api })))
     : '');
 </script>
@@ -459,6 +455,7 @@
             <select
               id="field-type"
               bind:value={editedField.type}
+              on:change={() => editedField && handleTypeChange(editedField.type)}
               class="w-full appearance-none px-3 py-2 border border-mono-300 rounded-md focus:ring-2 focus:ring-mono-400 focus:border-transparent pr-8 {validationErrors.type ? 'border-red-500' : ''}"
             >
               {#each primitiveTypes as type}
@@ -518,8 +515,8 @@
                   <div class="flex items-center space-x-2">
                     <div class="relative flex-1">
                       <select
-                        value={validator.name}
-                        on:change={(e) => updateValidatorName(index, e.currentTarget.value)}
+                        bind:value={editedField.validators[index].name}
+                        on:change={() => editedField && updateValidatorName(index, editedField.validators[index].name)}
                         class="w-full appearance-none px-3 py-1.5 border border-mono-300 rounded-md text-sm pr-8 focus:ring-2 focus:ring-mono-400 focus:border-transparent"
                       >
                         {#each availableValidators as v}

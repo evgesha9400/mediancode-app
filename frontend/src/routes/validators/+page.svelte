@@ -30,15 +30,9 @@
     onlyUsedInFields: false
   });
 
-  const uniqueCategories = $derived(Array.from(new Set($validatorsStore.map(v => v.category))).sort());
+  let uniqueCategories = $derived(Array.from(new Set($validatorsStore.map(v => v.category))).sort());
 
-  const filterConfig = $derived([
-    {
-      type: 'checkbox-group',
-      key: 'selectedCategories',
-      label: 'Category',
-      options: uniqueCategories.map(c => ({ label: c.charAt(0).toUpperCase() + c.slice(1), value: c }))
-    },
+  let filterConfig = $derived([
     {
       type: 'checkbox-group',
       key: 'selectedTypes',
@@ -49,6 +43,12 @@
       ]
     },
     {
+      type: 'checkbox-group',
+      key: 'selectedCategories',
+      label: 'Category',
+      options: uniqueCategories.map(c => ({ label: c.charAt(0).toUpperCase() + c.slice(1), value: c }))
+    },
+    {
       type: 'toggle',
       key: 'onlyUsedInFields',
       label: 'Usage',
@@ -56,12 +56,11 @@
     }
   ] as FilterConfig);
 
-  // Sort state derived from URL parameters using Svelte 5 $derived rune
-  // IMPORTANT: Must use $derived (not $:) with page store from $app/state in Svelte 5
-  const sorts = $derived(parseMultiSortFromUrl(new URLSearchParams(page.url.search)));
+  // Sort state derived from URL parameters
+  let sorts = $derived(parseMultiSortFromUrl(new URLSearchParams(page.url.search)));
 
-  // Apply filtering and sorting using Svelte 5 $derived rune
-  const filteredValidators = $derived((() => {
+  // Apply filtering and sorting
+  let filteredValidators = $derived.by(() => {
     // Use centralized search helper with reactive store data
     let result = searchValidators($validatorsStore, searchQuery);
 
@@ -81,7 +80,7 @@
     // Determine numeric columns for proper sorting
     const numericColumns = new Set(['usedInFields']);
     return sortDataMultiColumn(result, sorts, numericColumns);
-  })());
+  });
 
   function selectValidator(validator: Validator) {
     selectedValidator = validator;
@@ -110,7 +109,7 @@
     filtersOpen = !filtersOpen;
   }
 
-  const activeFiltersCount = $derived((filters.selectedCategories.length > 0 ? 1 : 0) +
+  let activeFiltersCount = $derived((filters.selectedCategories.length > 0 ? 1 : 0) +
                           (filters.selectedTypes.length > 0 ? 1 : 0) +
                           (filters.onlyUsedInFields ? 1 : 0));
 
@@ -132,9 +131,9 @@
     goto(`/field-registry?highlight=${fieldId}`);
   }
 
-  const isCustomValidator = $derived(selectedValidator?.type === 'custom');
-  const hasReferences = $derived(selectedValidator ? selectedValidator.fieldsUsingValidator.length > 0 : false);
-  const deleteTooltip = $derived(selectedValidator && hasReferences
+  let isCustomValidator = $derived(selectedValidator?.type === 'custom');
+  let hasReferences = $derived(selectedValidator ? selectedValidator.fieldsUsingValidator.length > 0 : false);
+  let deleteTooltip = $derived(selectedValidator && hasReferences
     ? buildDeletionTooltip('validator', 'field', selectedValidator!.fieldsUsingValidator)
     : '');
 </script>
