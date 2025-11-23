@@ -58,17 +58,26 @@
 
   // Handle highlight parameter from URL (for navigation from validators)
   let highlightFieldId = $derived(page.url.searchParams.get('highlight'));
+  let processedHighlightId = $state<string | null>(null);
 
   $effect(() => {
     if (browser && highlightFieldId && $fieldsStore.length > 0) {
-      const field = $fieldsStore.find(f => f.id === highlightFieldId);
-      if (field && !drawerOpen) {
-        selectField(field);
-        // Clear the highlight parameter after opening (use history.replaceState to avoid navigation)
-        const newUrl = new URL(window.location.href);
-        newUrl.searchParams.delete('highlight');
-        window.history.replaceState({}, '', newUrl.pathname + newUrl.search);
+      // Only process if we haven't already processed this highlight ID
+      if (highlightFieldId !== processedHighlightId) {
+        const field = $fieldsStore.find(f => f.id === highlightFieldId);
+        if (field && !drawerOpen) {
+          selectField(field);
+          processedHighlightId = highlightFieldId;
+          // Clear the highlight parameter after opening (use history.replaceState to avoid navigation)
+          const newUrl = new URL(window.location.href);
+          newUrl.searchParams.delete('highlight');
+          window.history.replaceState({}, '', newUrl.pathname + newUrl.search);
+        }
       }
+    } else if (browser && !highlightFieldId && processedHighlightId) {
+      // Reset processedHighlightId when highlight parameter is removed via navigation
+      // This allows the same highlight to be processed again if user navigates back
+      processedHighlightId = null;
     }
   });
 
@@ -172,6 +181,7 @@
       editMode = false;
       validationErrors = {};
       showDeleteConfirm = false;
+      // Don't reset processedHighlightId here - let the effect handle it when URL changes
     }, 300);
   }
 
@@ -509,7 +519,7 @@
             </button>
           </div>
           <div class="space-y-2">
-            {#each getAllValidatorsForField(editedField) as { validator, validatorMeta, source }, index}
+            {#each getAllValidatorsForField(editedField) as { validatorMeta, source }, index}
               <div class="flex items-center space-x-2 p-2 bg-mono-50 rounded-md">
                 <div class="flex-1 space-y-1">
                   <div class="flex items-center space-x-2">
