@@ -159,24 +159,19 @@ export function getTotalApiCount(): number {
 	return apiCount;
 }
 
-export function searchFields(query: string): Field[] {
+export function searchFields(fields: Field[], query: string): Field[] {
 	const lowerQuery = query.toLowerCase().trim();
-	let result: Field[] = [];
 
-	fieldsStore.subscribe(fields => {
-		if (!lowerQuery) {
-			result = fields;
-		} else {
-			result = fields.filter(field =>
-				field.name.toLowerCase().includes(lowerQuery) ||
-				field.type.toLowerCase().includes(lowerQuery) ||
-				field.description?.toLowerCase().includes(lowerQuery) ||
-				field.validators.some(v => v.name.toLowerCase().includes(lowerQuery))
-			);
-		}
-	})();
+	if (!lowerQuery) {
+		return fields;
+	}
 
-	return result;
+	return fields.filter(field =>
+		field.name.toLowerCase().includes(lowerQuery) ||
+		field.type.toLowerCase().includes(lowerQuery) ||
+		field.description?.toLowerCase().includes(lowerQuery) ||
+		field.validators.some(v => v.name.toLowerCase().includes(lowerQuery))
+	);
 }
 
 export function updateField(id: string, updates: Partial<Field>): void {
@@ -195,11 +190,8 @@ export function updateField(id: string, updates: Partial<Field>): void {
  * @returns DeletionResult - Contains success status and error message if blocked by references
  */
 export function deleteField(id: string): DeletionResult {
-	// Find the field to get its data
-	let fieldToDelete: Field | undefined;
-	fieldsStore.subscribe(fields => {
-		fieldToDelete = fields.find(f => f.id === id);
-	})();
+	// Reuse centralized getFieldById helper
+	const fieldToDelete = getFieldById(id);
 
 	if (!fieldToDelete) {
 		return {

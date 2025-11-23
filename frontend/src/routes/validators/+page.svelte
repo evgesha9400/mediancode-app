@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { validatorsStore, getTotalValidatorCount, deleteValidator, type Validator } from '$lib/stores/validators';
+  import { validatorsStore, getTotalValidatorCount, deleteValidator, searchValidators, type Validator } from '$lib/stores/validators';
   import { showToast } from '$lib/stores/toasts';
   import { buildDeletionTooltip } from '$lib/utils/references';
   import DashboardLayout from '$lib/components/DashboardLayout.svelte';
@@ -61,18 +61,8 @@
 
   // Apply filtering and sorting
   $: filteredValidators = (() => {
-    // Start with all validators from store
-    let result = $validatorsStore;
-
-    // Apply search filtering
-    if (searchQuery) {
-      const lowerQuery = searchQuery.toLowerCase().trim();
-      result = result.filter(validator =>
-        validator.name.toLowerCase().includes(lowerQuery) ||
-        validator.description.toLowerCase().includes(lowerQuery) ||
-        validator.category.toLowerCase().includes(lowerQuery)
-      );
-    }
+    // Use centralized search helper with reactive store data
+    let result = searchValidators($validatorsStore, searchQuery);
 
     // Apply advanced filters
     if (filters.selectedCategories.length > 0) {
@@ -222,7 +212,7 @@
     <svelte:fragment slot="body">
       {#each filteredValidators as validator}
         <tr
-          onclick={() => selectValidator(validator)}
+          on:click={() => selectValidator(validator)}
           class="cursor-pointer transition-colors {isSelected(validator) ? 'bg-mono-100' : 'hover:bg-mono-50'}"
         >
           <td class="px-6 py-4 whitespace-nowrap">
@@ -327,7 +317,7 @@
               {#each selectedValidator.fieldsUsingValidator as field}
                 <button
                   type="button"
-                  onclick={() => navigateToField(field.fieldId)}
+                  on:click={() => navigateToField(field.fieldId)}
                   class="w-full flex items-center justify-between p-3 bg-mono-50 rounded-md hover:bg-mono-100 cursor-pointer transition-colors group"
                 >
                   <div class="flex items-center space-x-2">
@@ -357,7 +347,7 @@
         <Tooltip text={deleteTooltip} position="top">
           <button
             type="button"
-            onclick={() => showDeleteConfirm = true}
+            on:click={() => showDeleteConfirm = true}
             disabled={hasReferences}
             class="w-full px-4 py-2 rounded-md flex items-center justify-center transition-colors font-medium {hasReferences ? 'bg-mono-200 text-mono-400 cursor-not-allowed' : 'bg-mono-100 text-mono-600 hover:bg-mono-200 cursor-pointer'}"
           >
@@ -371,14 +361,14 @@
           <div class="flex space-x-2">
             <button
               type="button"
-              onclick={handleDelete}
+              on:click={handleDelete}
               class="flex-1 px-3 py-1.5 bg-red-600 text-white rounded-md hover:bg-red-700 text-sm font-medium"
             >
               Yes, Delete
             </button>
             <button
               type="button"
-              onclick={() => showDeleteConfirm = false}
+              on:click={() => showDeleteConfirm = false}
               class="flex-1 px-3 py-1.5 border border-mono-300 text-mono-700 rounded-md hover:bg-mono-50 text-sm font-medium"
             >
               Cancel

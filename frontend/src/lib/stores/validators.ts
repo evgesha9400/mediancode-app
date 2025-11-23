@@ -195,9 +195,8 @@ export function getTotalValidatorCount(): number {
 	return get(validatorsBaseStore).length;
 }
 
-export function searchValidators(query: string): Validator[] {
+export function searchValidators(validators: Validator[], query: string): Validator[] {
 	const lowerQuery = query.toLowerCase().trim();
-	const validators = get(validatorsStore);
 
 	if (!lowerQuery) {
 		return validators;

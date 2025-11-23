@@ -4,8 +4,6 @@
   export let position: 'top' | 'bottom' = 'top';
 
   let showTooltip = false;
-  let tooltipElement: HTMLDivElement;
-  let wrapperElement: HTMLDivElement;
 
   function handleMouseEnter() {
     if (text && !disabled) {
@@ -20,16 +18,15 @@
 
 <div
   class="relative block"
-  bind:this={wrapperElement}
   on:mouseenter={handleMouseEnter}
   on:mouseleave={handleMouseLeave}
-  role="tooltip"
+  role="presentation"
 >
   <slot />
 
   {#if showTooltip && text}
     <div
-      bind:this={tooltipElement}
+      role="tooltip"
       class="absolute z-50 px-3 py-2 text-sm text-mono-100 bg-mono-800 rounded-md shadow-lg whitespace-pre-line max-w-md min-w-max transition-opacity duration-200 pointer-events-none"
       class:opacity-0={!showTooltip}
       class:opacity-100={showTooltip}

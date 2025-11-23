@@ -80,8 +80,6 @@ export interface DeletionResult {
 // Toast notification types
 export type ToastType = 'success' | 'error' | 'info' | 'warning';
 
-export type ToastPosition = 'top-right' | 'top-left' | 'bottom-right' | 'bottom-left';
-
 export interface Toast {
   id: string;
   message: string;

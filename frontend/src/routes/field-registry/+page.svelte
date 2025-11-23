@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { fieldsStore, getTotalFieldCount, updateField, deleteField, type Field, type FieldValidator } from '$lib/stores/fields';
+  import { fieldsStore, getTotalFieldCount, updateField, deleteField, searchFields, type Field, type FieldValidator } from '$lib/stores/fields';
   import { validatorsStore, getValidatorsByFieldType, type Validator } from '$lib/stores/validators';
   import { getPrimitiveTypes, type FieldType } from '$lib/stores/types';
   import { showToast } from '$lib/stores/toasts';
@@ -21,6 +21,9 @@
   import { goto } from '$app/navigation';
   import { parseMultiSortFromUrl, buildMultiSortUrl, handleSortClick, sortDataMultiColumn, type MultiSortState } from '$lib/utils/sorting';
   import { browser } from '$app/environment';
+
+  // Extended field type with computed properties for sorting
+  type FieldWithApiCount = Field & { usedInApisCount: number };
 
   let searchQuery = '';
   let selectedField: Field | null = null;
@@ -68,19 +71,8 @@
 
   // Apply filtering and sorting
   $: filteredFields = (() => {
-    // Start with all fields from store
-    let result = $fieldsStore;
-
-    // Apply search filtering
-    if (searchQuery) {
-      const lowerQuery = searchQuery.toLowerCase().trim();
-      result = result.filter(field =>
-        field.name.toLowerCase().includes(lowerQuery) ||
-        field.type.toLowerCase().includes(lowerQuery) ||
-        field.description?.toLowerCase().includes(lowerQuery) ||
-        field.validators.some(v => v.name.toLowerCase().includes(lowerQuery))
-      );
-    }
+    // Use centralized search helper with reactive store data
+    let result = searchFields($fieldsStore, searchQuery);
 
     // Apply advanced filters
     const { selectedTypes, onlyUsedInApis, onlyHasValidators } = filters;
@@ -98,7 +90,7 @@
     }
 
     // Add computed field for usedInApis count
-    const withApiCount = result.map(field => ({
+    const withApiCount: FieldWithApiCount[] = result.map(field => ({
       ...field,
       usedInApisCount: field.usedInApis.length
     }));
@@ -113,7 +105,7 @@
         : sort
     );
 
-    return sortDataMultiColumn(withApiCount as any[], transformedSorts, numericColumns);
+    return sortDataMultiColumn(withApiCount, transformedSorts, numericColumns);
   })();
 
   $: totalCount = getTotalFieldCount();
@@ -382,7 +374,7 @@
     <svelte:fragment slot="body">
       {#each filteredFields as field}
         <tr
-          onclick={() => selectField(field)}
+          on:click={() => selectField(field)}
           class="cursor-pointer transition-colors {isSelected(field) ? 'bg-mono-100' : 'hover:bg-mono-50'}"
         >
           <td class="px-6 py-4 whitespace-nowrap">
@@ -505,7 +497,7 @@
             <div class="block text-sm text-mono-700 font-medium">Validators</div>
             <button
               type="button"
-              onclick={addValidator}
+              on:click={addValidator}
               disabled={availableValidators.length === 0}
               class="text-sm flex items-center transition-colors {availableValidators.length > 0 ? 'text-mono-600 hover:text-mono-900 cursor-pointer' : 'text-mono-400 cursor-not-allowed'}"
             >
@@ -521,7 +513,7 @@
                     <div class="relative flex-1">
                       <select
                         value={validator.name}
-                        onchange={(e) => updateValidatorName(index, e.currentTarget.value)}
+                        on:change={(e) => updateValidatorName(index, e.currentTarget.value)}
                         class="w-full appearance-none px-3 py-1.5 border border-mono-300 rounded-md text-sm pr-8 focus:ring-2 focus:ring-mono-400 focus:border-transparent"
                       >
                         {#each availableValidators as v}
@@ -534,7 +526,7 @@
                     </div>
                     <button
                       type="button"
-                      onclick={() => removeValidator(index)}
+                      on:click={() => removeValidator(index)}
                       class="text-mono-400 hover:text-mono-600 transition-colors"
                       aria-label="Remove validator"
                     >
@@ -589,7 +581,7 @@
     {#if editedField}
       <button
         type="button"
-        onclick={handleSave}
+        on:click={handleSave}
         disabled={!hasChanges}
         class="w-full px-4 py-2 rounded-md transition-colors font-medium {hasChanges ? 'bg-mono-900 text-white hover:bg-mono-800 cursor-pointer' : 'bg-mono-300 text-mono-500 cursor-not-allowed'}"
       >
@@ -597,7 +589,7 @@
       </button>
       <button
         type="button"
-        onclick={handleUndo}
+        on:click={handleUndo}
         disabled={!hasChanges}
         class="w-full px-4 py-2 border rounded-md transition-colors font-medium {hasChanges ? 'border-mono-300 text-mono-700 hover:bg-mono-50 cursor-pointer' : 'border-mono-200 text-mono-400 cursor-not-allowed bg-mono-50'}"
       >
@@ -607,7 +599,7 @@
         <Tooltip text={deleteTooltip} position="top">
           <button
             type="button"
-            onclick={() => showDeleteConfirm = true}
+            on:click={() => showDeleteConfirm = true}
             disabled={hasReferences}
             class="w-full px-4 py-2 rounded-md flex items-center justify-center transition-colors font-medium {hasReferences ? 'bg-mono-200 text-mono-400 cursor-not-allowed' : 'bg-mono-100 text-mono-600 hover:bg-mono-200 cursor-pointer'}"
           >
@@ -621,14 +613,14 @@
           <div class="flex space-x-2">
             <button
               type="button"
-              onclick={handleDelete}
+              on:click={handleDelete}
               class="flex-1 px-3 py-1.5 bg-red-600 text-white rounded-md hover:bg-red-700 text-sm font-medium"
             >
               Yes, Delete
             </button>
             <button
               type="button"
-              onclick={() => showDeleteConfirm = false}
+              on:click={() => showDeleteConfirm = false}
               class="flex-1 px-3 py-1.5 border border-mono-300 text-mono-700 rounded-md hover:bg-mono-50 text-sm font-medium"
             >
               Cancel
