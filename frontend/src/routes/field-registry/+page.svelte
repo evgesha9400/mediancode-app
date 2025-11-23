@@ -376,7 +376,7 @@
     <svelte:fragment slot="body">
       {#each filteredFields as field}
         <tr
-          on:click={() => selectField(field)}
+          onclick={() => selectField(field)}
           class="cursor-pointer transition-colors {isSelected(field) ? 'bg-mono-100' : 'hover:bg-mono-50'}"
         >
           <td class="px-6 py-4 whitespace-nowrap">
@@ -455,7 +455,7 @@
             <select
               id="field-type"
               bind:value={editedField.type}
-              on:change={() => editedField && handleTypeChange(editedField.type)}
+              onchange={() => editedField && handleTypeChange(editedField.type)}
               class="w-full appearance-none px-3 py-2 border border-mono-300 rounded-md focus:ring-2 focus:ring-mono-400 focus:border-transparent pr-8 {validationErrors.type ? 'border-red-500' : ''}"
             >
               {#each primitiveTypes as type}
@@ -500,7 +500,7 @@
             <div class="block text-sm text-mono-700 font-medium">Validators</div>
             <button
               type="button"
-              on:click={addValidator}
+              onclick={addValidator}
               disabled={availableValidators.length === 0}
               class="text-sm flex items-center transition-colors {availableValidators.length > 0 ? 'text-mono-600 hover:text-mono-900 cursor-pointer' : 'text-mono-400 cursor-not-allowed'}"
             >
@@ -516,7 +516,7 @@
                     <div class="relative flex-1">
                       <select
                         bind:value={editedField.validators[index].name}
-                        on:change={() => editedField && updateValidatorName(index, editedField.validators[index].name)}
+                        onchange={() => editedField && updateValidatorName(index, editedField.validators[index].name)}
                         class="w-full appearance-none px-3 py-1.5 border border-mono-300 rounded-md text-sm pr-8 focus:ring-2 focus:ring-mono-400 focus:border-transparent"
                       >
                         {#each availableValidators as v}
@@ -529,7 +529,7 @@
                     </div>
                     <button
                       type="button"
-                      on:click={() => removeValidator(index)}
+                      onclick={() => removeValidator(index)}
                       class="text-mono-400 hover:text-mono-600 transition-colors"
                       aria-label="Remove validator"
                     >
@@ -584,7 +584,7 @@
     {#if editedField}
       <button
         type="button"
-        on:click={handleSave}
+        onclick={handleSave}
         disabled={!hasChanges}
         class="w-full px-4 py-2 rounded-md transition-colors font-medium {hasChanges ? 'bg-mono-900 text-white hover:bg-mono-800 cursor-pointer' : 'bg-mono-300 text-mono-500 cursor-not-allowed'}"
       >
@@ -592,7 +592,7 @@
       </button>
       <button
         type="button"
-        on:click={handleUndo}
+        onclick={handleUndo}
         disabled={!hasChanges}
         class="w-full px-4 py-2 border rounded-md transition-colors font-medium {hasChanges ? 'border-mono-300 text-mono-700 hover:bg-mono-50 cursor-pointer' : 'border-mono-200 text-mono-400 cursor-not-allowed bg-mono-50'}"
       >
@@ -602,7 +602,7 @@
         <Tooltip text={deleteTooltip} position="top">
           <button
             type="button"
-            on:click={() => showDeleteConfirm = true}
+            onclick={() => showDeleteConfirm = true}
             disabled={hasReferences}
             class="w-full px-4 py-2 rounded-md flex items-center justify-center transition-colors font-medium {hasReferences ? 'bg-mono-200 text-mono-400 cursor-not-allowed' : 'bg-mono-100 text-mono-600 hover:bg-mono-200 cursor-pointer'}"
           >
@@ -616,14 +616,14 @@
           <div class="flex space-x-2">
             <button
               type="button"
-              on:click={handleDelete}
+              onclick={handleDelete}
               class="flex-1 px-3 py-1.5 bg-red-600 text-white rounded-md hover:bg-red-700 text-sm font-medium"
             >
               Yes, Delete
             </button>
             <button
               type="button"
-              on:click={() => showDeleteConfirm = false}
+              onclick={() => showDeleteConfirm = false}
               class="flex-1 px-3 py-1.5 border border-mono-300 text-mono-700 rounded-md hover:bg-mono-50 text-sm font-medium"
             >
               Cancel

@@ -210,7 +210,7 @@
     <svelte:fragment slot="body">
       {#each filteredValidators as validator}
         <tr
-          on:click={() => selectValidator(validator)}
+          onclick={() => selectValidator(validator)}
           class="cursor-pointer transition-colors {isSelected(validator) ? 'bg-mono-100' : 'hover:bg-mono-50'}"
         >
           <td class="px-6 py-4 whitespace-nowrap">
@@ -315,7 +315,7 @@
               {#each selectedValidator.fieldsUsingValidator as field}
                 <button
                   type="button"
-                  on:click={() => navigateToField(field.fieldId)}
+                  onclick={() => navigateToField(field.fieldId)}
                   class="w-full flex items-center justify-between p-3 bg-mono-50 rounded-md hover:bg-mono-100 cursor-pointer transition-colors group"
                 >
                   <div class="flex items-center space-x-2">
@@ -345,7 +345,7 @@
         <Tooltip text={deleteTooltip} position="top">
           <button
             type="button"
-            on:click={() => showDeleteConfirm = true}
+            onclick={() => showDeleteConfirm = true}
             disabled={hasReferences}
             class="w-full px-4 py-2 rounded-md flex items-center justify-center transition-colors font-medium {hasReferences ? 'bg-mono-200 text-mono-400 cursor-not-allowed' : 'bg-mono-100 text-mono-600 hover:bg-mono-200 cursor-pointer'}"
           >
@@ -359,14 +359,14 @@
           <div class="flex space-x-2">
             <button
               type="button"
-              on:click={handleDelete}
+              onclick={handleDelete}
               class="flex-1 px-3 py-1.5 bg-red-600 text-white rounded-md hover:bg-red-700 text-sm font-medium"
             >
               Yes, Delete
             </button>
             <button
               type="button"
-              on:click={() => showDeleteConfirm = false}
+              onclick={() => showDeleteConfirm = false}
               class="flex-1 px-3 py-1.5 border border-mono-300 text-mono-700 rounded-md hover:bg-mono-50 text-sm font-medium"
             >
               Cancel

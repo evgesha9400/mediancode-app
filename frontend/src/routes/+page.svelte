@@ -106,13 +106,13 @@
 <header id="header" class="bg-white border-b border-mono-200 sticky top-0 z-50">
 	<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
 		<div class="flex items-center justify-between h-16">
-			<a href="/" on:click={scrollToTop} class="flex items-center space-x-2 cursor-pointer hover:opacity-80 transition-opacity">
+			<a href="/" onclick={scrollToTop} class="flex items-center space-x-2 cursor-pointer hover:opacity-80 transition-opacity">
 				<div class="w-8 h-8 bg-mono-900 rounded flex items-center justify-center">
 					<i class="fa-solid fa-code text-white text-sm"></i>
 				</div>
 				<span class="text-lg sm:text-xl font-bold text-mono-900">Median Code</span>
 			</a>
-			<button on:click={toggleMobileMenu} aria-label="Toggle mobile menu" class="md:hidden w-10 h-10 flex items-center justify-center">
+			<button onclick={toggleMobileMenu} aria-label="Toggle mobile menu" class="md:hidden w-10 h-10 flex items-center justify-center">
 				<i class="fa-solid {mobileMenuOpen ? 'fa-times' : 'fa-bars'} text-mono-900 text-xl"></i>
 			</button>
 			<nav class="hidden md:flex items-center space-x-6 lg:space-x-8">
@@ -141,9 +141,9 @@
 	</div>
 	<div class="md:hidden bg-white border-t border-mono-200" class:hidden={!mobileMenuOpen}>
 		<div class="px-4 py-4 space-y-3">
-			<a href="#features" on:click={closeMobileMenu} class="block text-mono-600 hover:text-mono-900 font-medium transition-colors py-2">Features</a>
-			<a href="#how-it-works" on:click={closeMobileMenu} class="block text-mono-600 hover:text-mono-900 font-medium transition-colors py-2">How It Works</a>
-			<a href="#benefits" on:click={closeMobileMenu} class="block text-mono-600 hover:text-mono-900 font-medium transition-colors py-2">Benefits</a>
+			<a href="#features" onclick={closeMobileMenu} class="block text-mono-600 hover:text-mono-900 font-medium transition-colors py-2">Features</a>
+			<a href="#how-it-works" onclick={closeMobileMenu} class="block text-mono-600 hover:text-mono-900 font-medium transition-colors py-2">How It Works</a>
+			<a href="#benefits" onclick={closeMobileMenu} class="block text-mono-600 hover:text-mono-900 font-medium transition-colors py-2">Benefits</a>
 		</div>
 	</div>
 </header>
@@ -180,7 +180,7 @@
 			<div id="email-signup" class="bg-mono-100 p-4 sm:p-6 rounded-lg border border-mono-200">
 				<h3 class="text-base sm:text-lg font-semibold text-mono-900 mb-2 sm:mb-3">Join the Waitlist</h3>
 				<p class="text-sm sm:text-base text-mono-600 mb-3 sm:mb-4">Be the first to know when Median Code launches.</p>
-				<form on:submit={handleHeroSubmit} action="https://formspree.io/f/meovrpjv" method="POST">
+				<form onsubmit={handleHeroSubmit} action="https://formspree.io/f/meovrpjv" method="POST">
 					<div class="flex flex-col sm:flex-row space-y-3 sm:space-y-0 sm:space-x-3">
 						<input type="email" name="email" bind:value={heroEmail} placeholder="Enter your email address" required
 							   class="flex-1 px-4 py-3 text-sm sm:text-base bg-white border border-mono-300 rounded-lg focus:outline-none focus:border-mono-600 focus:ring-1 focus:ring-mono-600">
@@ -359,7 +359,7 @@
 		<div class="bg-white p-6 sm:p-8 rounded-lg max-w-md mx-auto">
 			<h3 class="text-lg sm:text-xl font-semibold text-mono-900 mb-2 sm:mb-3">Get Early Access</h3>
 			<p class="text-sm sm:text-base text-mono-600 mb-4 sm:mb-6">Be among the first to experience deterministic API generation.</p>
-			<form on:submit={handleCtaSubmit} action="https://formspree.io/f/meovrpjv" method="POST">
+			<form onsubmit={handleCtaSubmit} action="https://formspree.io/f/meovrpjv" method="POST">
 				<div class="space-y-3 sm:space-y-4">
 					<input type="email" name="email" bind:value={ctaEmail} placeholder="Your email address" required
 						   class="w-full px-4 py-3 text-sm sm:text-base border border-mono-300 rounded-lg focus:outline-none focus:border-mono-600 focus:ring-1 focus:ring-mono-600">

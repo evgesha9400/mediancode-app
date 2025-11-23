@@ -18,8 +18,8 @@
 
 <div
   class="relative block"
-  on:mouseenter={handleMouseEnter}
-  on:mouseleave={handleMouseLeave}
+  onmouseenter={handleMouseEnter}
+  onmouseleave={handleMouseLeave}
   role="presentation"
 >
   <slot />

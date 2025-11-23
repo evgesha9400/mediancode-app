@@ -51,9 +51,9 @@
 
 {#if visible}
   <!-- Backdrop -->
-  <div 
-    class="fixed inset-0 z-10" 
-    on:click={() => dispatch('close')}
+  <div
+    class="fixed inset-0 z-10"
+    onclick={() => dispatch('close')}
     role="presentation"
   ></div>
 
@@ -61,9 +61,9 @@
   <div class="absolute right-0 top-full mt-2 w-72 bg-white rounded-lg shadow-xl border border-mono-200 z-20 overflow-hidden">
     <div class="p-4 border-b border-mono-100 flex justify-between items-center bg-mono-50">
       <h3 class="font-medium text-mono-900">Filters</h3>
-      <button 
+      <button
         type="button"
-        on:click={clearFilters}
+        onclick={clearFilters}
         class="text-xs text-mono-500 hover:text-mono-800 hover:underline"
       >
         Clear all
@@ -84,10 +84,10 @@
               {#each section.options as option}
                 <label class="flex items-center space-x-2 cursor-pointer group">
                   <div class="relative flex items-center">
-                    <input 
-                      type="checkbox" 
+                    <input
+                      type="checkbox"
                       checked={ensureArray(state[section.key]).includes(option.value)}
-                      on:change={() => toggleCheckbox(section.key, option.value)}
+                      onchange={() => toggleCheckbox(section.key, option.value)}
                       class="peer h-4 w-4 rounded border-mono-300 text-mono-900 focus:ring-mono-500"
                     />
                   </div>
@@ -97,10 +97,10 @@
             </div>
           {:else if section.type === 'toggle'}
             <label class="flex items-center space-x-2 cursor-pointer group">
-              <input 
-                type="checkbox" 
+              <input
+                type="checkbox"
                 checked={Boolean(state[section.key])}
-                on:change={(event) => setToggle(section.key, (event.currentTarget as HTMLInputElement).checked)}
+                onchange={(event) => setToggle(section.key, (event.currentTarget as HTMLInputElement).checked)}
                 class="h-4 w-4 rounded border-mono-300 text-mono-900 focus:ring-mono-500"
               />
               <span class="text-sm text-mono-700 group-hover:text-mono-900">{section.toggleLabel ?? section.label}</span>

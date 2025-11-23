@@ -77,7 +77,7 @@
   <span class="text-sm {style.textColor} flex-1">{toast.message}</span>
   <button
     type="button"
-    on:click={handleDismiss}
+    onclick={handleDismiss}
     class="{style.textColor} hover:opacity-70 transition-opacity"
     aria-label="Dismiss notification"
   >
