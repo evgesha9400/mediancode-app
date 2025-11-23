@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { fieldsStore, getTotalFieldCount, updateField, deleteField, searchFields, type Field, type FieldValidator } from '$lib/stores/fields';
+  import { fieldsStore, updateField, deleteField, searchFields, type Field, type FieldValidator } from '$lib/stores/fields';
   import { validatorsStore, getValidatorsByFieldType, type Validator } from '$lib/stores/validators';
   import { getPrimitiveTypes, type FieldType } from '$lib/stores/types';
   import { showToast } from '$lib/stores/toasts';
@@ -19,16 +19,16 @@
   import Tooltip from '$lib/components/tooltip/Tooltip.svelte';
   import { page } from '$app/state';
   import { goto } from '$app/navigation';
-  import { parseMultiSortFromUrl, buildMultiSortUrl, handleSortClick, sortDataMultiColumn, type MultiSortState } from '$lib/utils/sorting';
+  import { parseMultiSortFromUrl, buildMultiSortUrl, handleSortClick, sortDataMultiColumn } from '$lib/utils/sorting';
   import { browser } from '$app/environment';
 
   // Extended field type with computed properties for sorting
   type FieldWithApiCount = Field & { usedInApisCount: number };
 
-  let searchQuery = '';
-  let selectedField: Field | null = null;
-  let drawerOpen = false;
-  let editMode = false;
+  let searchQuery = $state('');
+  let selectedField = $state<Field | null>(null);
+  let drawerOpen = $state(false);
+  let editMode = $state(false);
 
   // Filter state
   type FieldFilterState = {
@@ -43,34 +43,37 @@
     onlyHasValidators: false
   });
 
-  let filtersOpen = false;
-  let filters: FieldFilterState = createFieldFilterState();
+  let filtersOpen = $state(false);
+  let filters = $state<FieldFilterState>(createFieldFilterState());
 
   // Form fields for editing
-  let editedField: Field | null = null;
-  let originalField: Field | null = null;
-  let validationErrors: Record<string, string> = {};
-  let showDeleteConfirm = false;
-  let previousFieldType: string | null = null;
+  let editedField = $state<Field | null>(null);
+  let originalField = $state<Field | null>(null);
+  let validationErrors = $state<Record<string, string>>({});
+  let showDeleteConfirm = $state(false);
+  let previousFieldType = $state<string | null>(null);
 
-  // Sort state derived from URL parameters
-  $: sorts = parseMultiSortFromUrl(page.url.searchParams);
+  // Sort state derived from URL parameters using Svelte 5 $derived rune
+  // IMPORTANT: Must use $derived (not $:) with page store from $app/state in Svelte 5
+  const sorts = $derived(parseMultiSortFromUrl(new URLSearchParams(page.url.search)));
 
   // Handle highlight parameter from URL (for navigation from validators)
-  $: highlightFieldId = page.url.searchParams.get('highlight');
-  $: if (browser && highlightFieldId && $fieldsStore.length > 0) {
-    const field = $fieldsStore.find(f => f.id === highlightFieldId);
-    if (field && !drawerOpen) {
-      selectField(field);
-      // Clear the highlight parameter after opening (use history.replaceState to avoid navigation)
-      const newUrl = new URL(window.location.href);
-      newUrl.searchParams.delete('highlight');
-      window.history.replaceState({}, '', newUrl.pathname + newUrl.search);
+  const highlightFieldId = $derived(page.url.searchParams.get('highlight'));
+  $effect(() => {
+    if (browser && highlightFieldId && $fieldsStore.length > 0) {
+      const field = $fieldsStore.find(f => f.id === highlightFieldId);
+      if (field && !drawerOpen) {
+        selectField(field);
+        // Clear the highlight parameter after opening (use history.replaceState to avoid navigation)
+        const newUrl = new URL(window.location.href);
+        newUrl.searchParams.delete('highlight');
+        window.history.replaceState({}, '', newUrl.pathname + newUrl.search);
+      }
     }
-  }
+  });
 
-  // Apply filtering and sorting
-  $: filteredFields = (() => {
+  // Apply filtering and sorting using Svelte 5 $derived rune
+  const filteredFields = $derived((() => {
     // Use centralized search helper with reactive store data
     let result = searchFields($fieldsStore, searchQuery);
 
@@ -106,15 +109,14 @@
     );
 
     return sortDataMultiColumn(withApiCount, transformedSorts, numericColumns);
-  })();
+  })());
 
-  $: totalCount = getTotalFieldCount();
-  $: validators = $validatorsStore;
-  $: availableValidators = editedField ? getValidatorsByFieldType(editedField.type) : [];
-  $: hasChanges = originalField && editedField ? JSON.stringify(originalField) !== JSON.stringify(editedField) : false;
-  $: primitiveTypes = getPrimitiveTypes();
+  const validators = $derived($validatorsStore);
+  const availableValidators = $derived(editedField ? getValidatorsByFieldType(editedField.type) : []);
+  const hasChanges = $derived(originalField && editedField ? JSON.stringify(originalField) !== JSON.stringify(editedField) : false);
+  const primitiveTypes = $derived(getPrimitiveTypes());
 
-  $: fieldFilterConfig = [
+  const fieldFilterConfig = $derived([
     {
       type: 'checkbox-group',
       key: 'selectedTypes',
@@ -133,18 +135,22 @@
       label: 'Validation',
       toggleLabel: 'Has validators only'
     }
-  ] as FilterConfig;
+  ] as FilterConfig);
 
   // Reset validators and default value when field type changes
-  $: if (editedField && previousFieldType !== null && previousFieldType !== editedField.type) {
-    editedField.validators = [];
-    editedField.defaultValue = '';
-  }
+  $effect(() => {
+    if (editedField && previousFieldType !== null && previousFieldType !== editedField.type) {
+      editedField.validators = [];
+      editedField.defaultValue = '';
+    }
+  });
 
   // Track field type changes
-  $: if (editedField) {
-    previousFieldType = editedField.type;
-  }
+  $effect(() => {
+    if (editedField) {
+      previousFieldType = editedField.type;
+    }
+  });
 
   function selectField(field: Field) {
     selectedField = field;
@@ -291,14 +297,14 @@
     filtersOpen = !filtersOpen;
   }
 
-  $: activeFiltersCount = (filters.selectedTypes.length > 0 ? 1 : 0) +
+  const activeFiltersCount = $derived((filters.selectedTypes.length > 0 ? 1 : 0) +
     (filters.onlyUsedInApis ? 1 : 0) +
-    (filters.onlyHasValidators ? 1 : 0);
+    (filters.onlyHasValidators ? 1 : 0));
 
-  $: hasReferences = editedField ? editedField.usedInApis.length > 0 : false;
-  $: deleteTooltip = editedField && hasReferences
-    ? buildDeletionTooltip('field', 'API', editedField.usedInApis.map(api => ({ name: api })))
-    : '';
+  const hasReferences = $derived(editedField ? editedField.usedInApis.length > 0 : false);
+  const deleteTooltip = $derived(editedField && hasReferences
+    ? buildDeletionTooltip('field', 'API', editedField!.usedInApis.map(api => ({ name: api })))
+    : '');
 </script>
 
 <DashboardLayout>

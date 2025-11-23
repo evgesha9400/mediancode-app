@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { typesStore, searchTypes, getTotalTypeCount, type FieldType } from '$lib/stores/types';
+  import { typesStore, searchTypes, type FieldType } from '$lib/stores/types';
   import DashboardLayout from '$lib/components/DashboardLayout.svelte';
   import PageHeader from '$lib/components/layout/PageHeader.svelte';
   import SearchBar from '$lib/components/search/SearchBar.svelte';
@@ -12,15 +12,15 @@
   import type { FilterConfig } from '$lib/types';
   import { parseMultiSortFromUrl, buildMultiSortUrl, handleSortClick, sortDataMultiColumn } from '$lib/utils/sorting';
 
-  let searchQuery = '';
-  let filtersOpen = false;
-  let filters = {
+  let searchQuery = $state('');
+  let filtersOpen = $state(false);
+  let filters = $state({
     selectedCategories: [] as string[],
     selectedValidatorCategories: [] as string[],
     onlyUsedInFields: false
-  };
+  });
 
-  $: filterConfig = [
+  const filterConfig = $derived([
     {
       type: 'checkbox-group',
       key: 'selectedCategories',
@@ -46,13 +46,14 @@
       label: 'Usage',
       toggleLabel: 'Used in fields only'
     }
-  ] as FilterConfig;
+  ] as FilterConfig);
 
-  // Sort state derived from URL parameters
-  $: sorts = parseMultiSortFromUrl(page.url.searchParams);
+  // Sort state derived from URL parameters using Svelte 5 $derived rune
+  // IMPORTANT: Must use $derived (not $:) with page store from $app/state in Svelte 5
+  const sorts = $derived(parseMultiSortFromUrl(new URLSearchParams(page.url.search)));
 
-  // Apply search and then sorting
-  $: filteredTypes = (() => {
+  // Apply search and then sorting using Svelte 5 $derived rune
+  const filteredTypes = $derived((() => {
     let result = searchTypes(searchQuery);
 
     // Apply filters
@@ -72,9 +73,7 @@
 
     const numericColumns = new Set(['usedInFields']);
     return sortDataMultiColumn(result, sorts, numericColumns);
-  })();
-
-  $: totalCount = getTotalTypeCount();
+  })());
 
   function handleSort(columnKey: string, shiftKey: boolean) {
     const newSorts = handleSortClick(columnKey, sorts, shiftKey);
@@ -86,9 +85,9 @@
     filtersOpen = !filtersOpen;
   }
 
-  $: activeFiltersCount = (filters.selectedCategories.length > 0 ? 1 : 0) + 
-                          (filters.selectedValidatorCategories.length > 0 ? 1 : 0) + 
-                          (filters.onlyUsedInFields ? 1 : 0);
+  const activeFiltersCount = $derived((filters.selectedCategories.length > 0 ? 1 : 0) +
+                          (filters.selectedValidatorCategories.length > 0 ? 1 : 0) +
+                          (filters.onlyUsedInFields ? 1 : 0));
 
   function getCategoryBadgeClass(category: 'primitive' | 'abstract'): string {
     return category === 'primitive'

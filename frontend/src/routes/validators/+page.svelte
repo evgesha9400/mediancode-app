@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { validatorsStore, getTotalValidatorCount, deleteValidator, searchValidators, type Validator } from '$lib/stores/validators';
+  import { validatorsStore, deleteValidator, searchValidators, type Validator } from '$lib/stores/validators';
   import { showToast } from '$lib/stores/toasts';
   import { buildDeletionTooltip } from '$lib/utils/references';
   import DashboardLayout from '$lib/components/DashboardLayout.svelte';
@@ -17,22 +17,22 @@
   import { goto } from '$app/navigation';
   import FilterPanel from '$lib/components/search/FilterPanel.svelte';
   import type { FilterConfig } from '$lib/types';
-  import { parseMultiSortFromUrl, buildMultiSortUrl, handleSortClick, sortDataMultiColumn, type MultiSortState } from '$lib/utils/sorting';
+  import { parseMultiSortFromUrl, buildMultiSortUrl, handleSortClick, sortDataMultiColumn } from '$lib/utils/sorting';
 
-  let searchQuery = '';
-  let selectedValidator: Validator | null = null;
-  let drawerOpen = false;
-  let filtersOpen = false;
-  let showDeleteConfirm = false;
-  let filters = {
+  let searchQuery = $state('');
+  let selectedValidator = $state<Validator | null>(null);
+  let drawerOpen = $state(false);
+  let filtersOpen = $state(false);
+  let showDeleteConfirm = $state(false);
+  let filters = $state({
     selectedCategories: [] as string[],
     selectedTypes: [] as string[],
     onlyUsedInFields: false
-  };
+  });
 
-  $: uniqueCategories = Array.from(new Set($validatorsStore.map(v => v.category))).sort();
+  const uniqueCategories = $derived(Array.from(new Set($validatorsStore.map(v => v.category))).sort());
 
-  $: filterConfig = [
+  const filterConfig = $derived([
     {
       type: 'checkbox-group',
       key: 'selectedCategories',
@@ -54,13 +54,14 @@
       label: 'Usage',
       toggleLabel: 'Used in fields only'
     }
-  ] as FilterConfig;
+  ] as FilterConfig);
 
-  // Sort state derived from URL parameters
-  $: sorts = parseMultiSortFromUrl(page.url.searchParams);
+  // Sort state derived from URL parameters using Svelte 5 $derived rune
+  // IMPORTANT: Must use $derived (not $:) with page store from $app/state in Svelte 5
+  const sorts = $derived(parseMultiSortFromUrl(new URLSearchParams(page.url.search)));
 
-  // Apply filtering and sorting
-  $: filteredValidators = (() => {
+  // Apply filtering and sorting using Svelte 5 $derived rune
+  const filteredValidators = $derived((() => {
     // Use centralized search helper with reactive store data
     let result = searchValidators($validatorsStore, searchQuery);
 
@@ -80,9 +81,7 @@
     // Determine numeric columns for proper sorting
     const numericColumns = new Set(['usedInFields']);
     return sortDataMultiColumn(result, sorts, numericColumns);
-  })();
-
-  $: totalCount = getTotalValidatorCount();
+  })());
 
   function selectValidator(validator: Validator) {
     selectedValidator = validator;
@@ -111,9 +110,9 @@
     filtersOpen = !filtersOpen;
   }
 
-  $: activeFiltersCount = (filters.selectedCategories.length > 0 ? 1 : 0) +
+  const activeFiltersCount = $derived((filters.selectedCategories.length > 0 ? 1 : 0) +
                           (filters.selectedTypes.length > 0 ? 1 : 0) +
-                          (filters.onlyUsedInFields ? 1 : 0);
+                          (filters.onlyUsedInFields ? 1 : 0));
 
   function handleDelete() {
     if (!selectedValidator) return;
@@ -133,11 +132,11 @@
     goto(`/field-registry?highlight=${fieldId}`);
   }
 
-  $: isCustomValidator = selectedValidator?.type === 'custom';
-  $: hasReferences = selectedValidator ? selectedValidator.fieldsUsingValidator.length > 0 : false;
-  $: deleteTooltip = selectedValidator && hasReferences
-    ? buildDeletionTooltip('validator', 'field', selectedValidator.fieldsUsingValidator)
-    : '';
+  const isCustomValidator = $derived(selectedValidator?.type === 'custom');
+  const hasReferences = $derived(selectedValidator ? selectedValidator.fieldsUsingValidator.length > 0 : false);
+  const deleteTooltip = $derived(selectedValidator && hasReferences
+    ? buildDeletionTooltip('validator', 'field', selectedValidator!.fieldsUsingValidator)
+    : '');
 </script>
 
 <DashboardLayout>
@@ -219,13 +218,13 @@
             <div class="text-sm text-mono-900 font-medium">{validator.name}</div>
           </td>
           <td class="px-6 py-4 whitespace-nowrap">
-            <span class="px-2 py-1 text-xs rounded-full bg-mono-900 text-white capitalize">
-              {validator.category}
+            <span class="px-2 py-1 text-xs rounded-full {validator.type === 'inline' ? 'bg-mono-200 text-mono-700' : 'bg-mono-700 text-white'} capitalize">
+              {validator.type}
             </span>
           </td>
           <td class="px-6 py-4 whitespace-nowrap">
-            <span class="px-2 py-1 text-xs rounded-full {validator.type === 'inline' ? 'bg-mono-200 text-mono-700' : 'bg-mono-700 text-white'} capitalize">
-              {validator.type}
+            <span class="px-2 py-1 text-xs rounded-full bg-mono-900 text-white capitalize">
+              {validator.category}
             </span>
           </td>
           <td class="px-6 py-4 text-sm text-mono-500">
@@ -265,15 +264,15 @@
 
         <div>
           <h3 class="text-sm text-mono-500 mb-1 font-medium">Type</h3>
-          <span class="px-2 py-1 text-xs rounded-full bg-mono-900 text-white capitalize">
-            {selectedValidator.category}
+          <span class="px-2 py-1 text-xs rounded-full {selectedValidator.type === 'inline' ? 'bg-mono-200 text-mono-700' : 'bg-mono-700 text-white'} capitalize">
+            {selectedValidator.type}
           </span>
         </div>
 
         <div>
           <h3 class="text-sm text-mono-500 mb-1 font-medium">Category</h3>
-          <span class="px-2 py-1 text-xs rounded-full {selectedValidator.type === 'inline' ? 'bg-mono-200 text-mono-700' : 'bg-mono-700 text-white'} capitalize">
-            {selectedValidator.type}
+          <span class="px-2 py-1 text-xs rounded-full bg-mono-900 text-white capitalize">
+            {selectedValidator.category}
           </span>
         </div>
 
