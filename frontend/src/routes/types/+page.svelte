@@ -107,7 +107,7 @@
     active={filtersOpen || activeFiltersCount > 0}
     onFilterClick={toggleFilters}
   >
-    <svelte:fragment slot="filter-panel">
+    {#snippet filterPanel()}
       <FilterPanel
         visible={filtersOpen}
         config={filterConfig}
@@ -115,11 +115,11 @@
         onClose={() => filtersOpen = false}
         onClear={() => filtersOpen = false}
       />
-    </svelte:fragment>
+    {/snippet}
   </SearchBar>
 
   <Table isEmpty={filteredTypes.length === 0}>
-    <svelte:fragment slot="header">
+    {#snippet header()}
       <tr>
         <SortableColumn
           column="name"
@@ -151,9 +151,9 @@
           onSort={handleSort}
         />
       </tr>
-    </svelte:fragment>
+    {/snippet}
 
-    <svelte:fragment slot="body">
+    {#snippet body()}
       {#each filteredTypes as type}
         <tr class="hover:bg-mono-50 transition-colors">
           <td class="px-6 py-4 whitespace-nowrap">
@@ -182,13 +182,13 @@
           </td>
         </tr>
       {/each}
-    </svelte:fragment>
+    {/snippet}
 
-    <svelte:fragment slot="empty">
+    {#snippet empty()}
       <EmptyState
         title="No types found"
         message="Try adjusting your search query"
       />
-    </svelte:fragment>
+    {/snippet}
   </Table>
 </DashboardLayout>

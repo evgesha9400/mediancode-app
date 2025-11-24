@@ -140,7 +140,7 @@
 
 <DashboardLayout>
   <PageHeader title="Validators Library">
-    <svelte:fragment slot="actions">
+    {#snippet actions()}
       <button
         type="button"
         disabled
@@ -149,7 +149,7 @@
         <i class="fa-solid fa-plus"></i>
         <span>Add Validator</span>
       </button>
-    </svelte:fragment>
+    {/snippet}
   </PageHeader>
 
   <SearchBar
@@ -161,7 +161,7 @@
     active={filtersOpen || activeFiltersCount > 0}
     onFilterClick={toggleFilters}
   >
-    <svelte:fragment slot="filter-panel">
+    {#snippet filterPanel()}
       <FilterPanel
         visible={filtersOpen}
         config={filterConfig}
@@ -169,11 +169,11 @@
         onClose={() => filtersOpen = false}
         onClear={() => filtersOpen = false}
       />
-    </svelte:fragment>
+    {/snippet}
   </SearchBar>
 
   <Table isEmpty={filteredValidators.length === 0}>
-    <svelte:fragment slot="header">
+    {#snippet header()}
       <tr>
         <SortableColumn
           column="name"
@@ -205,9 +205,9 @@
           onSort={handleSort}
         />
       </tr>
-    </svelte:fragment>
+    {/snippet}
 
-    <svelte:fragment slot="body">
+    {#snippet body()}
       {#each filteredValidators as validator}
         <tr
           onclick={() => selectValidator(validator)}
@@ -239,14 +239,14 @@
           </td>
         </tr>
       {/each}
-    </svelte:fragment>
+    {/snippet}
 
-    <svelte:fragment slot="empty">
+    {#snippet empty()}
       <EmptyState
         title="No validators found"
         message="Try adjusting your search query"
       />
-    </svelte:fragment>
+    {/snippet}
   </Table>
 </DashboardLayout>
 

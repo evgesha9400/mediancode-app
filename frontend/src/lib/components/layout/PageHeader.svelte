@@ -7,27 +7,34 @@
   @component
   @example
   <PageHeader title="Field Registry">
-    <svelte:fragment slot="actions">
+    {#snippet actions()}
       <button>Add Field</button>
-    </svelte:fragment>
+    {/snippet}
   </PageHeader>
 -->
 <script lang="ts">
+  import type { Snippet } from 'svelte';
+
   interface Props {
     /**
      * The title text to display in the header
      */
     title: string;
+
+    /**
+     * Optional snippet for action buttons in the header
+     */
+    actions?: Snippet;
   }
 
-  let { title }: Props = $props();
+  let { title, actions }: Props = $props();
 </script>
 
 <div class="bg-white border-b border-mono-200 py-4 px-6">
   <div class="flex justify-between items-center">
     <h1 class="text-xl text-mono-800 font-semibold">{title}</h1>
     <div class="flex items-center space-x-4">
-      <slot name="actions" />
+      {@render actions?.()}
     </div>
   </div>
 </div>

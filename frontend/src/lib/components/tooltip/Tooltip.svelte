@@ -11,6 +11,8 @@
   </Tooltip>
 -->
 <script lang="ts">
+  import type { Snippet } from 'svelte';
+
   interface Props {
     /**
      * The text content to display in the tooltip
@@ -29,9 +31,14 @@
      * @default 'top'
      */
     position?: 'top' | 'bottom';
+
+    /**
+     * Content to wrap with the tooltip
+     */
+    children?: Snippet;
   }
 
-  let { text = '', disabled = false, position = 'top' }: Props = $props();
+  let { text = '', disabled = false, position = 'top', children }: Props = $props();
 
   let showTooltip = $state(false);
 
@@ -52,7 +59,7 @@
   onmouseleave={handleMouseLeave}
   role="presentation"
 >
-  <slot />
+  {@render children?.()}
 
   {#if showTooltip && text}
     <div

@@ -6,6 +6,19 @@
 
   @component
 -->
+<script lang="ts">
+  import type { Snippet } from 'svelte';
+
+  interface Props {
+    /**
+     * Content to render inside the drawer content area
+     */
+    children?: Snippet;
+  }
+
+  let { children }: Props = $props();
+</script>
+
 <div class="flex-1 overflow-auto p-6">
-  <slot />
+  {@render children?.()}
 </div>

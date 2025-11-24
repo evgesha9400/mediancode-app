@@ -1,47 +1,64 @@
 <!--
   Table - Responsive table wrapper with empty state support
 
-  Provides a styled table container with three named slots: header, body, and empty.
+  Provides a styled table container with three snippets: header, body, and empty.
   Conditionally displays either the table content or an empty state based on the isEmpty prop.
 
   @component
   @example
   <Table isEmpty={items.length === 0}>
-    <svelte:fragment slot="header">
+    {#snippet header()}
       <tr><th>Name</th><th>Type</th></tr>
-    </svelte:fragment>
-    <svelte:fragment slot="body">
+    {/snippet}
+    {#snippet body()}
       <tr><td>item.name</td><td>item.type</td></tr>
-    </svelte:fragment>
-    <svelte:fragment slot="empty">
+    {/snippet}
+    {#snippet empty()}
       <EmptyState title="No items" message="Add your first item" />
-    </svelte:fragment>
+    {/snippet}
   </Table>
 -->
 <script lang="ts">
+  import type { Snippet } from 'svelte';
+
   interface Props {
     /**
      * Whether the table is empty (no data to display)
-     * When true, shows the "empty" slot instead of header/body
+     * When true, shows the "empty" snippet instead of header/body
      * @default false
      */
     isEmpty?: boolean;
+
+    /**
+     * Snippet for table header row
+     */
+    header?: Snippet;
+
+    /**
+     * Snippet for table body rows
+     */
+    body?: Snippet;
+
+    /**
+     * Snippet to render when table is empty
+     */
+    empty?: Snippet;
   }
 
-  let { isEmpty = false }: Props = $props();
+  let { isEmpty = false, header, body, empty }: Props = $props();
 </script>
 
 <div class="flex-1 overflow-auto">
   {#if !isEmpty}
     <table class="min-w-full bg-white">
       <thead class="bg-mono-50 sticky top-0">
-        <slot name="header" />
+        {@render header?.()}
       </thead>
       <tbody class="divide-y divide-mono-200">
-        <slot name="body" />
+        {@render body?.()}
       </tbody>
     </table>
   {:else}
-    <slot name="empty" />
+    {@render empty?.()}
   {/if}
 </div>

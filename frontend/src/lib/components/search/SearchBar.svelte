@@ -18,6 +18,8 @@
   />
 -->
 <script lang="ts">
+  import type { Snippet } from 'svelte';
+
   interface Props {
     /**
      * The current search query value (bindable)
@@ -57,6 +59,11 @@
      * Callback triggered when the filter button is clicked
      */
     onFilterClick?: () => void;
+
+    /**
+     * Optional snippet for filter panel content
+     */
+    filterPanel?: Snippet;
   }
 
   let {
@@ -66,7 +73,8 @@
     resultLabel = 'result',
     showFilter = false,
     active = false,
-    onFilterClick
+    onFilterClick,
+    filterPanel
   }: Props = $props();
 
   let pluralLabel = $derived(resultsCount !== 1 ? `${resultLabel}s` : resultLabel);
@@ -96,7 +104,7 @@
             <span class="ml-1 w-2 h-2 bg-mono-900 rounded-full"></span>
           {/if}
         </button>
-        <slot name="filter-panel" />
+        {@render filterPanel?.()}
       </div>
     </div>
     <div class="flex items-center text-sm text-mono-500">

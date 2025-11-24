@@ -8,6 +8,7 @@
   @component
 -->
 <script lang="ts">
+  import type { Snippet } from 'svelte';
   import { slide } from 'svelte/transition';
 
   interface Props {
@@ -21,9 +22,14 @@
      * @default 'w-96'
      */
     width?: string;
+
+    /**
+     * Content to render inside the drawer
+     */
+    children?: Snippet;
   }
 
-  let { open, width = 'w-96' }: Props = $props();
+  let { open, width = 'w-96', children }: Props = $props();
 </script>
 
 {#if open}
@@ -31,6 +37,6 @@
     transition:slide={{ duration: 300, axis: 'x' }}
     class="fixed right-0 top-0 h-screen {width} bg-white border-l border-mono-200 flex flex-col overflow-hidden z-50"
   >
-    <slot />
+    {@render children?.()}
   </div>
 {/if}

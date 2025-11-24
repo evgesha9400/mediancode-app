@@ -12,17 +12,24 @@
   </DrawerFooter>
 -->
 <script lang="ts">
+  import type { Snippet } from 'svelte';
+
   interface Props {
     /**
      * Tailwind spacing class for vertical spacing between footer elements
      * @default 'space-y-2'
      */
     spacing?: string;
+
+    /**
+     * Content to render inside the drawer footer
+     */
+    children?: Snippet;
   }
 
-  let { spacing = 'space-y-2' }: Props = $props();
+  let { spacing = 'space-y-2', children }: Props = $props();
 </script>
 
 <div class="p-6 border-t border-mono-200 {spacing}">
-  <slot />
+  {@render children?.()}
 </div>
