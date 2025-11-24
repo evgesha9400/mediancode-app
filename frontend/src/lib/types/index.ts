@@ -32,6 +32,9 @@ export interface FilterOption {
 interface FilterSectionBase {
   key: string;
   label: string;
+  // Optional custom predicate function for filtering logic
+  // If not provided, default behavior applies (direct property matching)
+  predicate?: (item: any, filterValue: any) => boolean;
 }
 
 export interface CheckboxGroupSection extends FilterSectionBase {

@@ -131,9 +131,8 @@ export function getTypeByName(name: TypeName): FieldType | undefined {
 	return get(typesStore).find(t => t.name === name);
 }
 
-export function searchTypes(query: string): FieldType[] {
+export function searchTypes(types: FieldType[], query: string): FieldType[] {
 	const lowerQuery = query.toLowerCase().trim();
-	const types = get(typesStore);
 
 	if (!lowerQuery) {
 		return types;

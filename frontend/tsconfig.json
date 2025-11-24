@@ -11,10 +11,15 @@
 		"sourceMap": true,
 		"strict": true,
 		"moduleResolution": "bundler"
-	}
+	},
 	// Path aliases are handled by https://svelte.dev/docs/kit/configuration#alias
 	// except $lib which is handled by https://svelte.dev/docs/kit/configuration#files
 	//
 	// To make changes to top-level options such as include and exclude, we recommend extending
 	// the generated config; see https://svelte.dev/docs/kit/configuration#typescript
+	//
+	// Note: Store test files are excluded because they use Vitest, which is not yet configured.
+	// The component barrel export smoke test (src/lib/components/index.test.ts) is included
+	// for compile-time verification.
+	"exclude": ["src/lib/stores/__tests__/**"]
 }

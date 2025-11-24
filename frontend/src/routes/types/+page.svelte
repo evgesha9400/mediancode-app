@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { searchTypes } from '$lib/stores/types';
+  import { typesStore, searchTypes, type FieldType } from '$lib/stores/types';
   import {
     DashboardLayout,
     PageHeader,
@@ -12,17 +12,16 @@
   import type { FilterConfig } from '$lib/types';
   import { page } from '$app/state';
   import { goto } from '$app/navigation';
-  import { parseMultiSortFromUrl, buildMultiSortUrl, handleSortClick, sortDataMultiColumn } from '$lib/utils/sorting';
+  import { createListViewState } from '$lib/stores/listViewState.svelte';
 
-  let searchQuery = $state('');
-  let filtersOpen = $state(false);
-  let filters = $state({
-    selectedCategories: [] as string[],
-    selectedValidatorCategories: [] as string[],
-    onlyUsedInFields: false
-  });
+  // Filter state type
+  type TypeFilterState = {
+    selectedCategories: string[];
+    selectedValidatorCategories: string[];
+    onlyUsedInFields: boolean;
+  };
 
-  let filterConfig = $derived([
+  let filterConfig: FilterConfig = [
     {
       type: 'checkbox-group',
       key: 'selectedCategories',
@@ -30,7 +29,8 @@
       options: [
         { label: 'Primitive', value: 'primitive' },
         { label: 'Abstract', value: 'abstract' }
-      ]
+      ],
+      predicate: (item: FieldType, selected: string[]) => selected.includes(item.category)
     },
     {
       type: 'checkbox-group',
@@ -40,55 +40,33 @@
         { label: 'String', value: 'string' },
         { label: 'Numeric', value: 'numeric' },
         { label: 'Collection', value: 'collection' }
-      ]
+      ],
+      predicate: (item: FieldType, selected: string[]) =>
+        item.validatorCategories.some(cat => selected.includes(cat))
     },
     {
       type: 'toggle',
       key: 'onlyUsedInFields',
       label: 'Usage',
-      toggleLabel: 'Used in fields only'
+      toggleLabel: 'Used in fields only',
+      predicate: (item: FieldType) => item.usedInFields > 0
     }
-  ] as FilterConfig);
+  ];
 
-  // Sort state derived from URL parameters
-  let sorts = $derived(parseMultiSortFromUrl(new URLSearchParams(page.url.search)));
-
-  // Apply search and then sorting
-  let filteredTypes = $derived.by(() => {
-    let result = searchTypes(searchQuery);
-
-    // Apply filters
-    if (filters.selectedCategories.length > 0) {
-      result = result.filter(type => filters.selectedCategories.includes(type.category));
-    }
-
-    if (filters.selectedValidatorCategories.length > 0) {
-      result = result.filter(type =>
-        type.validatorCategories.some(cat => filters.selectedValidatorCategories.includes(cat))
-      );
-    }
-
-    if (filters.onlyUsedInFields) {
-      result = result.filter(type => type.usedInFields > 0);
-    }
-
-    const numericColumns = new Set(['usedInFields']);
-    return sortDataMultiColumn(result, sorts, numericColumns);
+  // Create list view state (owns all reactive state)
+  const state = createListViewState<FieldType, TypeFilterState>({
+    itemsStore: () => $typesStore, // Use reactive store subscription
+    searchFn: searchTypes,
+    filterSections: filterConfig,
+    numericColumns: new Set(['usedInFields']),
+    urlScope: { page, goto },
+    getItemId: (type) => type.name
   });
 
-  function handleSort(columnKey: string, shiftKey: boolean) {
-    const newSorts = handleSortClick(columnKey, sorts, shiftKey);
-    const urlParams = buildMultiSortUrl(newSorts);
-    goto(`?${urlParams}`, { replaceState: false, keepFocus: true });
-  }
-
-  function toggleFilters() {
-    filtersOpen = !filtersOpen;
-  }
-
-  let activeFiltersCount = $derived((filters.selectedCategories.length > 0 ? 1 : 0) +
-                          (filters.selectedValidatorCategories.length > 0 ? 1 : 0) +
-                          (filters.onlyUsedInFields ? 1 : 0));
+  // Convenience aliases for template bindings
+  let filteredTypes = $derived(state.results);
+  let sorts = $derived(state.sorts);
+  let activeFiltersCount = $derived(state.activeFiltersCount);
 
   function getCategoryBadgeClass(category: 'primitive' | 'abstract'): string {
     return category === 'primitive'
@@ -101,21 +79,21 @@
   <PageHeader title="Types" />
 
   <SearchBar
-    bind:searchQuery
+    bind:searchQuery={state.query}
     placeholder="Search types..."
     resultsCount={filteredTypes.length}
     resultLabel="type"
     showFilter={true}
-    active={filtersOpen || activeFiltersCount > 0}
-    onFilterClick={toggleFilters}
+    active={state.filtersOpen || activeFiltersCount > 0}
+    onFilterClick={state.toggleFilters}
   >
     {#snippet filterPanel()}
       <FilterPanel
-        visible={filtersOpen}
+        visible={state.filtersOpen}
         config={filterConfig}
-        bind:state={filters}
-        onClose={() => filtersOpen = false}
-        onClear={() => filtersOpen = false}
+        bind:state={state.filters}
+        onClose={() => state.filtersOpen = false}
+        onClear={state.resetFilters}
       />
     {/snippet}
   </SearchBar>
@@ -127,19 +105,19 @@
           column="name"
           label="Type Name"
           {sorts}
-          onSort={handleSort}
+          onSort={state.handleSort}
         />
         <SortableColumn
           column="category"
           label="Category"
           {sorts}
-          onSort={handleSort}
+          onSort={state.handleSort}
         />
         <SortableColumn
           column="pythonType"
           label="Type"
           {sorts}
-          onSort={handleSort}
+          onSort={state.handleSort}
         />
         <th scope="col" class="px-6 py-3 text-left text-xs text-mono-500 uppercase tracking-wider font-medium">
           <div class="flex items-center space-x-1">
@@ -150,7 +128,7 @@
           column="usedInFields"
           label="Used In Fields"
           {sorts}
-          onSort={handleSort}
+          onSort={state.handleSort}
         />
       </tr>
     {/snippet}

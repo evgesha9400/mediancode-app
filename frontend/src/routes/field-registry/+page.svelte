@@ -21,132 +21,83 @@
   import type { FilterConfig } from '$lib/types';
   import { page } from '$app/state';
   import { goto } from '$app/navigation';
-  import { parseMultiSortFromUrl, buildMultiSortUrl, handleSortClick, sortDataMultiColumn } from '$lib/utils/sorting';
-  import { browser } from '$app/environment';
+  import { createListViewState } from '$lib/stores/listViewState.svelte';
 
   // Extended field type with computed properties for sorting
   type FieldWithApiCount = Field & { usedInApisCount: number };
 
-  let searchQuery = $state('');
-  let selectedField = $state<Field | null>(null);
-  let drawerOpen = $state(false);
-  let editMode = $state(false);
-
-  // Filter state
+  // Filter state type
   type FieldFilterState = {
     selectedTypes: string[];
     onlyUsedInApis: boolean;
     onlyHasValidators: boolean;
   };
 
-  const createFieldFilterState = (): FieldFilterState => ({
-    selectedTypes: [],
-    onlyUsedInApis: false,
-    onlyHasValidators: false
-  });
-
-  let filtersOpen = $state(false);
-  let filters = $state<FieldFilterState>(createFieldFilterState());
-
-  // Form fields for editing
-  let editedField = $state<Field | null>(null);
-  let originalField = $state<Field | null>(null);
-  let validationErrors = $state<Record<string, string>>({});
-  let showDeleteConfirm = $state(false);
+  // Form tracking
   let previousFieldType = $state<string | null>(null);
 
-  // Sort state derived from URL parameters
-  let sorts = $derived(parseMultiSortFromUrl(new URLSearchParams(page.url.search)));
+  let primitiveTypes = $derived(getPrimitiveTypes());
 
-  // Handle highlight parameter from URL (for navigation from validators)
-  let highlightFieldId = $derived(page.url.searchParams.get('highlight'));
-  let processedHighlightId = $state<string | null>(null);
-
-  $effect(() => {
-    if (browser && highlightFieldId && $fieldsStore.length > 0) {
-      // Only process if we haven't already processed this highlight ID
-      if (highlightFieldId !== processedHighlightId) {
-        const field = $fieldsStore.find(f => f.id === highlightFieldId);
-        if (field && !drawerOpen) {
-          selectField(field);
-          processedHighlightId = highlightFieldId;
-          // Clear the highlight parameter after opening (use history.replaceState to avoid navigation)
-          const newUrl = new URL(window.location.href);
-          newUrl.searchParams.delete('highlight');
-          window.history.replaceState({}, '', newUrl.pathname + newUrl.search);
-        }
+  // Build filter config from primitive types (reactive to store changes)
+  let fieldFilterConfig = $derived.by((): FilterConfig => {
+    return [
+      {
+        type: 'checkbox-group',
+        key: 'selectedTypes',
+        label: 'Field Type',
+        options: primitiveTypes.map(type => ({ label: type.name, value: type.name })),
+        predicate: (item: Field, selected: string[]) => selected.includes(item.type)
+      },
+      {
+        type: 'toggle',
+        key: 'onlyUsedInApis',
+        label: 'Usage',
+        toggleLabel: 'Used in APIs only',
+        predicate: (item: Field) => item.usedInApis.length > 0
+      },
+      {
+        type: 'toggle',
+        key: 'onlyHasValidators',
+        label: 'Validation',
+        toggleLabel: 'Has validators only',
+        predicate: (item: Field) => item.validators.length > 0
       }
-    } else if (browser && !highlightFieldId && processedHighlightId) {
-      // Reset processedHighlightId when highlight parameter is removed via navigation
-      // This allows the same highlight to be processed again if user navigates back
-      processedHighlightId = null;
-    }
+    ];
   });
 
-  // Apply filtering and sorting
-  let filteredFields = $derived.by(() => {
-    // Use centralized search helper with reactive store data
-    let result = searchFields($fieldsStore, searchQuery);
-
-    // Apply advanced filters
-    const { selectedTypes, onlyUsedInApis, onlyHasValidators } = filters;
-
-    if (selectedTypes.length > 0) {
-      result = result.filter(field => selectedTypes.includes(field.type));
-    }
-
-    if (onlyUsedInApis) {
-      result = result.filter(field => field.usedInApis.length > 0);
-    }
-
-    if (onlyHasValidators) {
-      result = result.filter(field => field.validators.length > 0);
-    }
-
-    // Add computed field for usedInApis count
-    const withApiCount: FieldWithApiCount[] = result.map(field => ({
-      ...field,
+  // Create list view state (owns all reactive state)
+  const listState = createListViewState<Field, FieldFilterState>({
+    itemsStore: () => $fieldsStore,
+    searchFn: searchFields,
+    filterSections: () => fieldFilterConfig,
+    numericColumns: new Set(['usedInApisCount']),
+    urlScope: { page, goto },
+    highlightParamKey: 'highlight',
+    getItemId: (field) => field.id,
+    deriveExtra: (field) => ({
       usedInApisCount: field.usedInApis.length
-    }));
-
-    // Determine numeric columns for proper sorting
-    const numericColumns = new Set(['usedInApisCount']);
-
-    // Transform sorts to use usedInApisCount instead of usedInApis
-    const transformedSorts = sorts.map(sort =>
-      sort.column === 'usedInApis'
-        ? { ...sort, column: 'usedInApisCount' }
-        : sort
-    );
-
-    return sortDataMultiColumn(withApiCount, transformedSorts, numericColumns);
+    }),
+    sortColumnMap: { 'usedInApis': 'usedInApisCount' },
+    drawerConfig: {
+      trackEdits: true,
+      allowDelete: true,
+      closeDelay: 300
+    }
   });
+
+  // Convenience aliases for template bindings
+  let selectedField = $derived(listState.selectedItem);
+  let editedField = $derived(listState.editedItem);
+  let originalField = $derived(listState.originalItem);
+  let validationErrors = $derived(listState.validationErrors);
+  let showDeleteConfirm = $derived(listState.showDeleteConfirm);
+  let filteredFields = $derived(listState.results as FieldWithApiCount[]);
+  let sorts = $derived(listState.sorts);
+  let activeFiltersCount = $derived(listState.activeFiltersCount);
+  let hasChanges = $derived(listState.hasChanges);
 
   let validators = $derived($validatorsStore);
   let availableValidators = $derived(editedField ? getValidatorsByFieldType(editedField.type) : []);
-  let hasChanges = $derived(originalField && editedField ? JSON.stringify(originalField) !== JSON.stringify(editedField) : false);
-  let primitiveTypes = $derived(getPrimitiveTypes());
-
-  let fieldFilterConfig = $derived([
-    {
-      type: 'checkbox-group',
-      key: 'selectedTypes',
-      label: 'Field Type',
-      options: primitiveTypes.map(type => ({ label: type.name, value: type.name }))
-    },
-    {
-      type: 'toggle',
-      key: 'onlyUsedInApis',
-      label: 'Usage',
-      toggleLabel: 'Used in APIs only'
-    },
-    {
-      type: 'toggle',
-      key: 'onlyHasValidators',
-      label: 'Validation',
-      toggleLabel: 'Has validators only'
-    }
-  ] as FilterConfig);
 
   function handleTypeChange(newType: string) {
     if (!editedField) return;
@@ -155,36 +106,24 @@
 
     // If type actually changed, reset validators and default value
     if (previousFieldType !== null && previousFieldType !== typedNewType) {
-      editedField.validators = [];
-      editedField.defaultValue = '';
+      listState.editedItem = {
+        ...editedField,
+        validators: [],
+        defaultValue: ''
+      };
     }
 
     previousFieldType = typedNewType;
   }
 
   function selectField(field: Field) {
-    selectedField = field;
-    editedField = JSON.parse(JSON.stringify(field)); // Deep clone
-    originalField = JSON.parse(JSON.stringify(field)); // Store original for comparison
-    previousFieldType = field.type; // Initialize type tracking
-    drawerOpen = true;
-    editMode = true;
-    validationErrors = {};
-    showDeleteConfirm = false;
+    listState.selectItem(field);
+    previousFieldType = field.type;
   }
 
   function closeDrawer() {
-    drawerOpen = false;
-    setTimeout(() => {
-      selectedField = null;
-      editedField = null;
-      originalField = null;
-      previousFieldType = null;
-      editMode = false;
-      validationErrors = {};
-      showDeleteConfirm = false;
-      // Don't reset processedHighlightId here - let the effect handle it when URL changes
-    }, 300);
+    listState.closeDrawer();
+    previousFieldType = null;
   }
 
   function isSelected(field: Field): boolean {
@@ -207,7 +146,7 @@
       isValid = false;
     }
 
-    validationErrors = errors;
+    listState.validationErrors = errors;
     return isValid;
   }
 
@@ -216,16 +155,16 @@
 
     const fieldName = editedField.name;
     updateField(editedField.id, editedField);
-    selectedField = editedField;
-    originalField = JSON.parse(JSON.stringify(editedField)); // Update original to match saved state
+    listState.selectedItem = editedField;
+    listState.originalItem = JSON.parse(JSON.stringify(editedField));
     showToast(`Field "${fieldName}" updated successfully`, 'success', 3000);
   }
 
   function handleUndo() {
     if (originalField) {
-      editedField = JSON.parse(JSON.stringify(originalField));
+      listState.editedItem = JSON.parse(JSON.stringify(originalField));
       previousFieldType = originalField.type;
-      validationErrors = {};
+      listState.validationErrors = {};
     }
   }
 
@@ -238,7 +177,6 @@
       closeDrawer();
       showToast(`Field "${fieldName}" deleted successfully`, 'success', 3000);
     } else {
-      // Surface error to user via toast notification
       showToast(result.error || 'Failed to delete field', 'error', 5000);
     }
   }
@@ -248,9 +186,8 @@
     const available = getValidatorsByFieldType(editedField.type);
     if (available.length === 0) return;
 
-    // Use the first available validator
     const firstValidator = available[0];
-    editedField = {
+    listState.editedItem = {
       ...editedField,
       validators: [...editedField.validators, { name: firstValidator.name, params: {} }]
     };
@@ -258,7 +195,7 @@
 
   function removeValidator(index: number) {
     if (!editedField) return;
-    editedField = {
+    listState.editedItem = {
       ...editedField,
       validators: editedField.validators.filter((_, i) => i !== index)
     };
@@ -269,7 +206,7 @@
     const validator = validators.find(v => v.name === name);
     if (!validator) return;
 
-    // Reset params when validator name changes (bind:value already updated the name)
+    // Reset params when validator name changes
     editedField.validators[index].params = {};
   }
 
@@ -295,20 +232,6 @@
     });
   }
 
-  function handleSort(columnKey: string, shiftKey: boolean) {
-    const newSorts = handleSortClick(columnKey, sorts, shiftKey);
-    const urlParams = buildMultiSortUrl(newSorts);
-    goto(`?${urlParams}`, { replaceState: false, keepFocus: true });
-  }
-
-  function toggleFilters() {
-    filtersOpen = !filtersOpen;
-  }
-
-  let activeFiltersCount = $derived((filters.selectedTypes.length > 0 ? 1 : 0) +
-    (filters.onlyUsedInApis ? 1 : 0) +
-    (filters.onlyHasValidators ? 1 : 0));
-
   let hasReferences = $derived(editedField ? editedField.usedInApis.length > 0 : false);
   let deleteTooltip = $derived(editedField && hasReferences
     ? buildDeletionTooltip('field', 'API', editedField!.usedInApis.map(api => ({ name: api })))
@@ -331,21 +254,21 @@
   </PageHeader>
 
   <SearchBar
-    bind:searchQuery
+    bind:searchQuery={listState.query}
     placeholder="Search fields..."
     resultsCount={filteredFields.length}
     resultLabel="field"
     showFilter={true}
-    active={filtersOpen || activeFiltersCount > 0}
-    onFilterClick={toggleFilters}
+    active={listState.filtersOpen || activeFiltersCount > 0}
+    onFilterClick={listState.toggleFilters}
   >
     {#snippet filterPanel()}
       <FilterPanel
-        visible={filtersOpen}
+        visible={listState.filtersOpen}
         config={fieldFilterConfig}
-        bind:state={filters}
-        onClose={() => filtersOpen = false}
-        onClear={() => filtersOpen = false}
+        bind:state={listState.filters}
+        onClose={() => listState.filtersOpen = false}
+        onClear={listState.resetFilters}
       />
     {/snippet}
   </SearchBar>
@@ -357,13 +280,13 @@
           column="name"
           label="Field Name"
           {sorts}
-          onSort={handleSort}
+          onSort={listState.handleSort}
         />
         <SortableColumn
           column="type"
           label="Type"
           {sorts}
-          onSort={handleSort}
+          onSort={listState.handleSort}
         />
         <th scope="col" class="px-6 py-3 text-left text-xs text-mono-500 uppercase tracking-wider font-medium">
           <div class="flex items-center space-x-1">
@@ -374,13 +297,13 @@
           column="defaultValue"
           label="Default Value"
           {sorts}
-          onSort={handleSort}
+          onSort={listState.handleSort}
         />
         <SortableColumn
           column="usedInApis"
           label="Used In APIs"
           {sorts}
-          onSort={handleSort}
+          onSort={listState.handleSort}
         />
       </tr>
     {/snippet}
@@ -436,7 +359,7 @@
   </Table>
 </DashboardLayout>
 
-<Drawer open={drawerOpen}>
+<Drawer open={listState.drawerOpen}>
   <DrawerHeader title="Edit Field" onClose={closeDrawer} />
 
   <DrawerContent>
@@ -614,7 +537,7 @@
         <Tooltip text={deleteTooltip} position="top">
           <button
             type="button"
-            onclick={() => showDeleteConfirm = true}
+            onclick={() => listState.showDeleteConfirm = true}
             disabled={hasReferences}
             class="w-full px-4 py-2 rounded-md flex items-center justify-center transition-colors font-medium {hasReferences ? 'bg-mono-200 text-mono-400 cursor-not-allowed' : 'bg-mono-100 text-mono-600 hover:bg-mono-200 cursor-pointer'}"
           >
@@ -635,7 +558,7 @@
             </button>
             <button
               type="button"
-              onclick={() => showDeleteConfirm = false}
+              onclick={() => listState.showDeleteConfirm = false}
               class="flex-1 px-3 py-1.5 border border-mono-300 text-mono-700 rounded-md hover:bg-mono-50 text-sm font-medium"
             >
               Cancel

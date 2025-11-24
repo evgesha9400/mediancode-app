@@ -19,101 +19,73 @@
   import type { FilterConfig } from '$lib/types';
   import { page } from '$app/state';
   import { goto } from '$app/navigation';
-  import { parseMultiSortFromUrl, buildMultiSortUrl, handleSortClick, sortDataMultiColumn } from '$lib/utils/sorting';
+  import { createListViewState } from '$lib/stores/listViewState.svelte';
 
-  let searchQuery = $state('');
-  let selectedValidator = $state<Validator | null>(null);
-  let drawerOpen = $state(false);
-  let filtersOpen = $state(false);
-  let showDeleteConfirm = $state(false);
-  let filters = $state({
-    selectedCategories: [] as string[],
-    selectedTypes: [] as string[],
-    onlyUsedInFields: false
+  // Filter state type
+  type ValidatorFilterState = {
+    selectedCategories: string[];
+    selectedTypes: string[];
+    onlyUsedInFields: boolean;
+  };
+
+  // Build filter config from validators (reactive to store changes)
+  let filterConfig = $derived.by((): FilterConfig => {
+    const validators = $validatorsStore;
+    const uniqueCategories = Array.from(new Set(validators.map(v => v.category))).sort();
+
+    return [
+      {
+        type: 'checkbox-group',
+        key: 'selectedTypes',
+        label: 'Type',
+        options: [
+          { label: 'Inline', value: 'inline' },
+          { label: 'Custom', value: 'custom' }
+        ],
+        predicate: (item: Validator, selected: string[]) => selected.includes(item.type)
+      },
+      {
+        type: 'checkbox-group',
+        key: 'selectedCategories',
+        label: 'Category',
+        options: uniqueCategories.map(c => ({ label: c.charAt(0).toUpperCase() + c.slice(1), value: c })),
+        predicate: (item: Validator, selected: string[]) => selected.includes(item.category)
+      },
+      {
+        type: 'toggle',
+        key: 'onlyUsedInFields',
+        label: 'Usage',
+        toggleLabel: 'Used in fields only',
+        predicate: (item: Validator) => item.usedInFields > 0
+      }
+    ];
   });
 
-  let uniqueCategories = $derived(Array.from(new Set($validatorsStore.map(v => v.category))).sort());
-
-  let filterConfig = $derived([
-    {
-      type: 'checkbox-group',
-      key: 'selectedTypes',
-      label: 'Type',
-      options: [
-        { label: 'Inline', value: 'inline' },
-        { label: 'Custom', value: 'custom' }
-      ]
-    },
-    {
-      type: 'checkbox-group',
-      key: 'selectedCategories',
-      label: 'Category',
-      options: uniqueCategories.map(c => ({ label: c.charAt(0).toUpperCase() + c.slice(1), value: c }))
-    },
-    {
-      type: 'toggle',
-      key: 'onlyUsedInFields',
-      label: 'Usage',
-      toggleLabel: 'Used in fields only'
+  // Create list view state (owns all reactive state)
+  const state = createListViewState<Validator, ValidatorFilterState>({
+    itemsStore: () => $validatorsStore,
+    searchFn: searchValidators,
+    filterSections: () => filterConfig,
+    numericColumns: new Set(['usedInFields']),
+    urlScope: { page, goto },
+    getItemId: (validator) => validator.name,
+    drawerConfig: {
+      trackEdits: false,
+      allowDelete: true,
+      closeDelay: 300
     }
-  ] as FilterConfig);
-
-  // Sort state derived from URL parameters
-  let sorts = $derived(parseMultiSortFromUrl(new URLSearchParams(page.url.search)));
-
-  // Apply filtering and sorting
-  let filteredValidators = $derived.by(() => {
-    // Use centralized search helper with reactive store data
-    let result = searchValidators($validatorsStore, searchQuery);
-
-    // Apply advanced filters
-    if (filters.selectedCategories.length > 0) {
-      result = result.filter(v => filters.selectedCategories.includes(v.category));
-    }
-
-    if (filters.selectedTypes.length > 0) {
-      result = result.filter(v => filters.selectedTypes.includes(v.type));
-    }
-
-    if (filters.onlyUsedInFields) {
-      result = result.filter(v => v.usedInFields > 0);
-    }
-
-    // Determine numeric columns for proper sorting
-    const numericColumns = new Set(['usedInFields']);
-    return sortDataMultiColumn(result, sorts, numericColumns);
   });
 
-  function selectValidator(validator: Validator) {
-    selectedValidator = validator;
-    drawerOpen = true;
-  }
-
-  function closeDrawer() {
-    drawerOpen = false;
-    setTimeout(() => {
-      selectedValidator = null;
-      showDeleteConfirm = false;
-    }, 300);
-  }
+  // Convenience aliases for template bindings
+  let selectedValidator = $derived(state.selectedItem);
+  let showDeleteConfirm = $derived(state.showDeleteConfirm);
+  let filteredValidators = $derived(state.results);
+  let sorts = $derived(state.sorts);
+  let activeFiltersCount = $derived(state.activeFiltersCount);
 
   function isSelected(validator: Validator): boolean {
     return selectedValidator?.name === validator.name;
   }
-
-  function handleSort(columnKey: string, shiftKey: boolean) {
-    const newSorts = handleSortClick(columnKey, sorts, shiftKey);
-    const urlParams = buildMultiSortUrl(newSorts);
-    goto(`?${urlParams}`, { replaceState: false, keepFocus: true });
-  }
-
-  function toggleFilters() {
-    filtersOpen = !filtersOpen;
-  }
-
-  let activeFiltersCount = $derived((filters.selectedCategories.length > 0 ? 1 : 0) +
-                          (filters.selectedTypes.length > 0 ? 1 : 0) +
-                          (filters.onlyUsedInFields ? 1 : 0));
 
   function handleDelete() {
     if (!selectedValidator) return;
@@ -121,10 +93,9 @@
     const validatorName = selectedValidator.name;
     const result = deleteValidator(selectedValidator.name);
     if (result.success) {
-      closeDrawer();
+      state.closeDrawer();
       showToast(`Validator "${validatorName}" deleted successfully`, 'success', 3000);
     } else {
-      // Surface error to user via toast notification
       showToast(result.error || 'Failed to delete validator', 'error', 5000);
     }
   }
@@ -155,21 +126,21 @@
   </PageHeader>
 
   <SearchBar
-    bind:searchQuery
+    bind:searchQuery={state.query}
     placeholder="Search validators..."
     resultsCount={filteredValidators.length}
     resultLabel="validator"
     showFilter={true}
-    active={filtersOpen || activeFiltersCount > 0}
-    onFilterClick={toggleFilters}
+    active={state.filtersOpen || activeFiltersCount > 0}
+    onFilterClick={state.toggleFilters}
   >
     {#snippet filterPanel()}
       <FilterPanel
-        visible={filtersOpen}
+        visible={state.filtersOpen}
         config={filterConfig}
-        bind:state={filters}
-        onClose={() => filtersOpen = false}
-        onClear={() => filtersOpen = false}
+        bind:state={state.filters}
+        onClose={() => state.filtersOpen = false}
+        onClear={state.resetFilters}
       />
     {/snippet}
   </SearchBar>
@@ -181,19 +152,19 @@
           column="name"
           label="Validator Name"
           {sorts}
-          onSort={handleSort}
+          onSort={state.handleSort}
         />
         <SortableColumn
           column="type"
           label="Type"
           {sorts}
-          onSort={handleSort}
+          onSort={state.handleSort}
         />
         <SortableColumn
           column="category"
           label="Category"
           {sorts}
-          onSort={handleSort}
+          onSort={state.handleSort}
         />
         <th scope="col" class="px-6 py-3 text-left text-xs text-mono-500 uppercase tracking-wider font-medium">
           <div class="flex items-center space-x-1">
@@ -204,7 +175,7 @@
           column="usedInFields"
           label="Used In Fields"
           {sorts}
-          onSort={handleSort}
+          onSort={state.handleSort}
         />
       </tr>
     {/snippet}
@@ -212,7 +183,7 @@
     {#snippet body()}
       {#each filteredValidators as validator}
         <tr
-          onclick={() => selectValidator(validator)}
+          onclick={() => state.selectItem(validator)}
           class="cursor-pointer transition-colors {isSelected(validator) ? 'bg-mono-100' : 'hover:bg-mono-50'}"
         >
           <td class="px-6 py-4 whitespace-nowrap">
@@ -252,8 +223,8 @@
   </Table>
 </DashboardLayout>
 
-<Drawer open={drawerOpen}>
-  <DrawerHeader title="Validator Details" onClose={closeDrawer} />
+<Drawer open={state.drawerOpen}>
+  <DrawerHeader title="Validator Details" onClose={state.closeDrawer} />
 
   <DrawerContent>
     {#if selectedValidator}
@@ -347,7 +318,7 @@
         <Tooltip text={deleteTooltip} position="top">
           <button
             type="button"
-            onclick={() => showDeleteConfirm = true}
+            onclick={() => state.showDeleteConfirm = true}
             disabled={hasReferences}
             class="w-full px-4 py-2 rounded-md flex items-center justify-center transition-colors font-medium {hasReferences ? 'bg-mono-200 text-mono-400 cursor-not-allowed' : 'bg-mono-100 text-mono-600 hover:bg-mono-200 cursor-pointer'}"
           >
@@ -368,7 +339,7 @@
             </button>
             <button
               type="button"
-              onclick={() => showDeleteConfirm = false}
+              onclick={() => state.showDeleteConfirm = false}
               class="flex-1 px-3 py-1.5 border border-mono-300 text-mono-700 rounded-md hover:bg-mono-50 text-sm font-medium"
             >
               Cancel
