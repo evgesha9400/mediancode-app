@@ -20,7 +20,7 @@
 <script lang="ts">
   import type { Snippet } from 'svelte';
 
-  interface Props {
+  export interface SearchBarProps {
     /**
      * The current search query value (bindable)
      */
@@ -65,6 +65,8 @@
      */
     filterPanel?: Snippet;
   }
+
+  interface Props extends SearchBarProps {}
 
   let {
     searchQuery = $bindable(),

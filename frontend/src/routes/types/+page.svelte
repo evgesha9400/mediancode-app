@@ -1,15 +1,17 @@
 <script lang="ts">
   import { searchTypes } from '$lib/stores/types';
-  import DashboardLayout from '$lib/components/DashboardLayout.svelte';
-  import PageHeader from '$lib/components/layout/PageHeader.svelte';
-  import SearchBar from '$lib/components/search/SearchBar.svelte';
-  import Table from '$lib/components/table/Table.svelte';
-  import SortableColumn from '$lib/components/table/SortableColumn.svelte';
-  import EmptyState from '$lib/components/table/EmptyState.svelte';
+  import {
+    DashboardLayout,
+    PageHeader,
+    SearchBar,
+    FilterPanel,
+    Table,
+    SortableColumn,
+    EmptyState
+  } from '$lib/components';
+  import type { FilterConfig } from '$lib/types';
   import { page } from '$app/state';
   import { goto } from '$app/navigation';
-  import FilterPanel from '$lib/components/search/FilterPanel.svelte';
-  import type { FilterConfig } from '$lib/types';
   import { parseMultiSortFromUrl, buildMultiSortUrl, handleSortClick, sortDataMultiColumn } from '$lib/utils/sorting';
 
   let searchQuery = $state('');

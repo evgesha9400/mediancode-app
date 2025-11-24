@@ -13,7 +13,7 @@
 <script lang="ts">
   import type { Snippet } from 'svelte';
 
-  interface Props {
+  export interface TooltipProps {
     /**
      * The text content to display in the tooltip
      * @default ''
@@ -37,6 +37,8 @@
      */
     children?: Snippet;
   }
+
+  interface Props extends TooltipProps {}
 
   let { text = '', disabled = false, position = 'top', children }: Props = $props();
 

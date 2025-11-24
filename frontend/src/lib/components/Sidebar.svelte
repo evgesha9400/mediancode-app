@@ -3,9 +3,11 @@
   import { goto } from '$app/navigation';
   import type { NavItem } from '$lib/types';
 
-  interface Props {
+  export interface SidebarProps {
     activeRoute: string;
   }
+
+  interface Props extends SidebarProps {}
 
   let { activeRoute }: Props = $props();
 

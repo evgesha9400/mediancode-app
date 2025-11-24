@@ -11,7 +11,7 @@
   import type { Snippet } from 'svelte';
   import { slide } from 'svelte/transition';
 
-  interface Props {
+  export interface DrawerProps {
     /**
      * Whether the drawer is currently open/visible
      */
@@ -28,6 +28,8 @@
      */
     children?: Snippet;
   }
+
+  interface Props extends DrawerProps {}
 
   let { open, width = 'w-96', children }: Props = $props();
 </script>

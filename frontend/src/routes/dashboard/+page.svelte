@@ -2,8 +2,7 @@
   import { fieldsStore, getTotalFieldCount, getTotalApiCount } from '$lib/stores/fields';
   import { validatorsStore, getTotalValidatorCount } from '$lib/stores/validators';
   import { clerkState } from '$lib/clerk';
-  import DashboardLayout from '$lib/components/DashboardLayout.svelte';
-  import StatCard from '$lib/components/StatCard.svelte';
+  import { DashboardLayout, StatCard } from '$lib/components';
 
   $: totalFields = getTotalFieldCount();
   $: totalValidators = getTotalValidatorCount();

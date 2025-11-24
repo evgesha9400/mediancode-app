@@ -15,7 +15,7 @@
 <script lang="ts">
   import type { Snippet } from 'svelte';
 
-  interface Props {
+  export interface PageHeaderProps {
     /**
      * The title text to display in the header
      */
@@ -26,6 +26,8 @@
      */
     actions?: Snippet;
   }
+
+  interface Props extends PageHeaderProps {}
 
   let { title, actions }: Props = $props();
 </script>

@@ -1,5 +1,12 @@
 <script lang="ts">
-  import type { ActivityItemProps } from '$lib/types';
+  export interface ActivityItemProps {
+    icon: string;
+    title: string;
+    name: string;
+    description: string;
+    time: string;
+    showBorder?: boolean;
+  }
 
   interface Props extends ActivityItemProps {}
 

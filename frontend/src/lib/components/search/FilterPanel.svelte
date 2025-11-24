@@ -18,7 +18,7 @@
 <script lang="ts">
   import type { FilterConfig } from '$lib/types';
 
-  interface Props {
+  export interface FilterPanelProps {
     /**
      * Whether the filter panel is currently visible
      * @default false
@@ -48,6 +48,8 @@
      */
     onClear?: () => void;
   }
+
+  interface Props extends FilterPanelProps {}
 
   let {
     visible = false,

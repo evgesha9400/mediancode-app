@@ -3,9 +3,11 @@
   import type { Toast } from '$lib/types';
   import { onMount } from 'svelte';
 
-  interface Props {
+  export interface ToastProps {
     toast: Toast;
   }
+
+  interface Props extends ToastProps {}
 
   let { toast }: Props = $props();
 

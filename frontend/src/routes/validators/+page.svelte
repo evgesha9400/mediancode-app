@@ -2,21 +2,23 @@
   import { validatorsStore, deleteValidator, searchValidators, type Validator } from '$lib/stores/validators';
   import { showToast } from '$lib/stores/toasts';
   import { buildDeletionTooltip } from '$lib/utils/references';
-  import DashboardLayout from '$lib/components/DashboardLayout.svelte';
-  import PageHeader from '$lib/components/layout/PageHeader.svelte';
-  import SearchBar from '$lib/components/search/SearchBar.svelte';
-  import Table from '$lib/components/table/Table.svelte';
-  import SortableColumn from '$lib/components/table/SortableColumn.svelte';
-  import EmptyState from '$lib/components/table/EmptyState.svelte';
-  import Drawer from '$lib/components/drawer/Drawer.svelte';
-  import DrawerHeader from '$lib/components/drawer/DrawerHeader.svelte';
-  import DrawerContent from '$lib/components/drawer/DrawerContent.svelte';
-  import DrawerFooter from '$lib/components/drawer/DrawerFooter.svelte';
-  import Tooltip from '$lib/components/tooltip/Tooltip.svelte';
+  import {
+    DashboardLayout,
+    PageHeader,
+    SearchBar,
+    FilterPanel,
+    Table,
+    SortableColumn,
+    EmptyState,
+    Drawer,
+    DrawerHeader,
+    DrawerContent,
+    DrawerFooter,
+    Tooltip
+  } from '$lib/components';
+  import type { FilterConfig } from '$lib/types';
   import { page } from '$app/state';
   import { goto } from '$app/navigation';
-  import FilterPanel from '$lib/components/search/FilterPanel.svelte';
-  import type { FilterConfig } from '$lib/types';
   import { parseMultiSortFromUrl, buildMultiSortUrl, handleSortClick, sortDataMultiColumn } from '$lib/utils/sorting';
 
   let searchQuery = $state('');

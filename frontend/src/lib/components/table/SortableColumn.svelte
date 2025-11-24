@@ -1,12 +1,14 @@
 <script lang="ts">
   import { getMultiSortIcon, getSortPriority, getMultiSortAriaLabel, type MultiSortState } from '$lib/utils/sorting';
 
-  interface Props {
+  export interface SortableColumnProps {
     column: string;
     label: string;
     sorts: MultiSortState;
     onSort: (columnKey: string, shiftKey: boolean) => void;
   }
+
+  interface Props extends SortableColumnProps {}
 
   let { column, label, sorts, onSort }: Props = $props();
 

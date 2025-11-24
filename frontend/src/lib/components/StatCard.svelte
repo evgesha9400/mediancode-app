@@ -1,5 +1,10 @@
 <script lang="ts">
-  import type { StatCardProps } from '$lib/types';
+  export interface StatCardProps {
+    title: string;
+    value: string | number;
+    icon: string;
+    trend?: string;
+  }
 
   interface Props extends StatCardProps {}
 

@@ -21,7 +21,7 @@
 <script lang="ts">
   import type { Snippet } from 'svelte';
 
-  interface Props {
+  export interface TableProps {
     /**
      * Whether the table is empty (no data to display)
      * When true, shows the "empty" snippet instead of header/body
@@ -44,6 +44,8 @@
      */
     empty?: Snippet;
   }
+
+  interface Props extends TableProps {}
 
   let { isEmpty = false, header, body, empty }: Props = $props();
 </script>

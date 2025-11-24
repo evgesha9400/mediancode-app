@@ -13,7 +13,7 @@
   />
 -->
 <script lang="ts">
-  interface Props {
+  export interface EmptyStateProps {
     /**
      * Font Awesome icon class to display
      * @default 'fa-search'
@@ -30,6 +30,8 @@
      */
     message: string;
   }
+
+  interface Props extends EmptyStateProps {}
 
   let { icon = 'fa-search', title, message }: Props = $props();
 </script>

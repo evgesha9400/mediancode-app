@@ -11,7 +11,7 @@
   ```
 -->
 <script lang="ts">
-  interface Props {
+  export interface DrawerHeaderProps {
     /**
      * The title text to display in the drawer header
      */
@@ -22,6 +22,8 @@
      */
     onClose: () => void;
   }
+
+  interface Props extends DrawerHeaderProps {}
 
   let { title, onClose }: Props = $props();
 </script>

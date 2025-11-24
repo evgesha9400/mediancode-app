@@ -14,7 +14,7 @@
 <script lang="ts">
   import type { Snippet } from 'svelte';
 
-  interface Props {
+  export interface DrawerFooterProps {
     /**
      * Tailwind spacing class for vertical spacing between footer elements
      * @default 'space-y-2'
@@ -26,6 +26,8 @@
      */
     children?: Snippet;
   }
+
+  interface Props extends DrawerFooterProps {}
 
   let { spacing = 'space-y-2', children }: Props = $props();
 </script>

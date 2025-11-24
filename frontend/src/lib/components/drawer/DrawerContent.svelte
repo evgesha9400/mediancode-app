@@ -9,12 +9,14 @@
 <script lang="ts">
   import type { Snippet } from 'svelte';
 
-  interface Props {
+  export interface DrawerContentProps {
     /**
      * Content to render inside the drawer content area
      */
     children?: Snippet;
   }
+
+  interface Props extends DrawerContentProps {}
 
   let { children }: Props = $props();
 </script>
