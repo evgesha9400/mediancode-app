@@ -1,9 +1,39 @@
-<script lang="ts">
-  export let text: string = '';
-  export let disabled: boolean = false;
-  export let position: 'top' | 'bottom' = 'top';
+<!--
+  Tooltip - Displays a tooltip on hover
 
-  let showTooltip = false;
+  Provides a customizable tooltip that appears on mouse enter and disappears on mouse leave.
+  Supports top and bottom positioning with optional disabled state.
+
+  @component
+  @example
+  <Tooltip text="This is a helpful tip" position="top">
+    <button>Hover me</button>
+  </Tooltip>
+-->
+<script lang="ts">
+  interface Props {
+    /**
+     * The text content to display in the tooltip
+     * @default ''
+     */
+    text?: string;
+
+    /**
+     * Whether the tooltip should be disabled (won't show on hover)
+     * @default false
+     */
+    disabled?: boolean;
+
+    /**
+     * Position of the tooltip relative to the element
+     * @default 'top'
+     */
+    position?: 'top' | 'bottom';
+  }
+
+  let { text = '', disabled = false, position = 'top' }: Props = $props();
+
+  let showTooltip = $state(false);
 
   function handleMouseEnter() {
     if (text && !disabled) {

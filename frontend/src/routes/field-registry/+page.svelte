@@ -335,15 +335,15 @@
     resultLabel="field"
     showFilter={true}
     active={filtersOpen || activeFiltersCount > 0}
-    on:filterClick={toggleFilters}
+    onFilterClick={toggleFilters}
   >
     <svelte:fragment slot="filter-panel">
       <FilterPanel
         visible={filtersOpen}
         config={fieldFilterConfig}
         bind:state={filters}
-        on:close={() => filtersOpen = false}
-        on:clear={() => filtersOpen = false}
+        onClose={() => filtersOpen = false}
+        onClear={() => filtersOpen = false}
       />
     </svelte:fragment>
   </SearchBar>

@@ -1,18 +1,75 @@
+<!--
+  SearchBar - Search input with filter button and results count
+
+  Provides a search input field with optional filter button and results display.
+  The filter button can show an active state indicator when filters are applied.
+  Uses callback props instead of event dispatching for Svelte 5 compatibility.
+
+  @component
+  @example
+  <SearchBar
+    bind:searchQuery={query}
+    placeholder="Search fields..."
+    resultsCount={10}
+    resultLabel="field"
+    showFilter={true}
+    active={filtersActive}
+    onFilterClick={() => toggleFilters()}
+  />
+-->
 <script lang="ts">
-  import { createEventDispatcher } from 'svelte';
+  interface Props {
+    /**
+     * The current search query value (bindable)
+     */
+    searchQuery: string;
 
-  export let searchQuery: string;
-  export let placeholder: string = 'Search...';
-  export let resultsCount: number;
-  export let resultLabel: string = 'result';
-  export let showFilter: boolean = false;
-  export let active: boolean = false;
+    /**
+     * Placeholder text for the search input
+     * @default 'Search...'
+     */
+    placeholder?: string;
 
-  const dispatch = createEventDispatcher<{
-    filterClick: void;
-  }>();
+    /**
+     * Number of results to display
+     */
+    resultsCount: number;
 
-  $: pluralLabel = resultsCount !== 1 ? `${resultLabel}s` : resultLabel;
+    /**
+     * Singular label for results (e.g., 'result', 'field', 'validator')
+     * @default 'result'
+     */
+    resultLabel?: string;
+
+    /**
+     * Whether to show the filter button
+     * @default false
+     */
+    showFilter?: boolean;
+
+    /**
+     * Whether filters are currently active (shows indicator)
+     * @default false
+     */
+    active?: boolean;
+
+    /**
+     * Callback triggered when the filter button is clicked
+     */
+    onFilterClick?: () => void;
+  }
+
+  let {
+    searchQuery = $bindable(),
+    placeholder = 'Search...',
+    resultsCount,
+    resultLabel = 'result',
+    showFilter = false,
+    active = false,
+    onFilterClick
+  }: Props = $props();
+
+  let pluralLabel = $derived(resultsCount !== 1 ? `${resultLabel}s` : resultLabel);
 </script>
 
 <div class="bg-white border-b border-mono-200 py-3 px-6">
@@ -30,7 +87,7 @@
       <div class="relative">
         <button
           type="button"
-          onclick={() => dispatch('filterClick')}
+          onclick={() => onFilterClick?.()}
           class="flex items-center space-x-2 px-3 py-2 border rounded-md transition-colors {showFilter ? (active ? 'bg-mono-100 border-mono-400 text-mono-900' : 'bg-white border-mono-300 text-mono-700 hover:bg-mono-50') : 'hidden'}"
         >
           <i class="fa-solid fa-filter {active ? 'text-mono-900' : 'text-mono-500'}"></i>

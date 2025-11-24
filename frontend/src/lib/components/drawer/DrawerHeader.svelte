@@ -1,6 +1,29 @@
+<!--
+  DrawerHeader - Header section for drawer component
+
+  Provides a drawer title and close button. The close button triggers the onClose callback.
+  This component is typically the first child of a Drawer component.
+
+  @component
+  @example
+  ```svelte
+  <DrawerHeader title="Edit Field" onClose={() => drawerOpen = false} />
+  ```
+-->
 <script lang="ts">
-  export let title: string;
-  export let onClose: () => void;
+  interface Props {
+    /**
+     * The title text to display in the drawer header
+     */
+    title: string;
+
+    /**
+     * Callback function triggered when the close button is clicked
+     */
+    onClose: () => void;
+  }
+
+  let { title, onClose }: Props = $props();
 </script>
 
 <div class="p-6 border-b border-mono-200">

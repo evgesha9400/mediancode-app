@@ -1,5 +1,26 @@
+<!--
+  PageHeader - Header component for application pages
+
+  Provides a consistent header layout with title and optional action buttons.
+  Used at the top of main content areas to display page title and controls.
+
+  @component
+  @example
+  <PageHeader title="Field Registry">
+    <svelte:fragment slot="actions">
+      <button>Add Field</button>
+    </svelte:fragment>
+  </PageHeader>
+-->
 <script lang="ts">
-  export let title: string;
+  interface Props {
+    /**
+     * The title text to display in the header
+     */
+    title: string;
+  }
+
+  let { title }: Props = $props();
 </script>
 
 <div class="bg-white border-b border-mono-200 py-4 px-6">

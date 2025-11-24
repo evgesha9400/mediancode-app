@@ -1,7 +1,37 @@
+<!--
+  EmptyState - Display message when table or list is empty
+
+  Shows an icon, title, and message when there are no items to display.
+  Commonly used within table empty slots or filtered results with no matches.
+
+  @component
+  @example
+  <EmptyState
+    icon="fa-search"
+    title="No results found"
+    message="Try adjusting your search criteria"
+  />
+-->
 <script lang="ts">
-  export let icon: string = 'fa-search';
-  export let title: string;
-  export let message: string;
+  interface Props {
+    /**
+     * Font Awesome icon class to display
+     * @default 'fa-search'
+     */
+    icon?: string;
+
+    /**
+     * Title text to display
+     */
+    title: string;
+
+    /**
+     * Descriptive message to display below the title
+     */
+    message: string;
+  }
+
+  let { icon = 'fa-search', title, message }: Props = $props();
 </script>
 
 <div class="flex flex-col items-center justify-center py-12 px-6">

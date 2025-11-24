@@ -1,8 +1,29 @@
+<!--
+  Drawer - Slide-in panel component
+
+  Provides a fixed-position drawer that slides in from the right side of the screen.
+  Uses Svelte's slide transition for smooth animation. Typically contains DrawerHeader,
+  DrawerContent, and DrawerFooter components.
+
+  @component
+-->
 <script lang="ts">
   import { slide } from 'svelte/transition';
 
-  export let open: boolean;
-  export let width: string = 'w-96';
+  interface Props {
+    /**
+     * Whether the drawer is currently open/visible
+     */
+    open: boolean;
+
+    /**
+     * Tailwind width class for the drawer
+     * @default 'w-96'
+     */
+    width?: string;
+  }
+
+  let { open, width = 'w-96' }: Props = $props();
 </script>
 
 {#if open}

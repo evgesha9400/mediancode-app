@@ -1,15 +1,61 @@
+<!--
+  FilterPanel - Dropdown filter panel with checkbox groups and toggles
+
+  Provides a configurable filter interface with support for checkbox groups and toggle switches.
+  Appears as a dropdown panel below the filter button. Uses callback props for close and clear actions.
+  State is managed externally via the bindable state prop.
+
+  @component
+  @example
+  <FilterPanel
+    visible={isVisible}
+    config={filterConfig}
+    bind:state={filterState}
+    onClose={() => isVisible = false}
+    onClear={() => handleClear()}
+  />
+-->
 <script lang="ts">
-  import { createEventDispatcher } from 'svelte';
   import type { FilterConfig } from '$lib/types';
 
-  export let visible = false;
-  export let config: FilterConfig = [];
-  export let state: Record<string, unknown> = {};
+  interface Props {
+    /**
+     * Whether the filter panel is currently visible
+     * @default false
+     */
+    visible?: boolean;
 
-  const dispatch = createEventDispatcher<{
-    close: void;
-    clear: void;
-  }>();
+    /**
+     * Filter configuration array defining the available filters
+     * @default []
+     */
+    config?: FilterConfig;
+
+    /**
+     * Current filter state object (bindable)
+     * Keys correspond to filter section keys, values depend on filter type
+     * @default {}
+     */
+    state?: Record<string, unknown>;
+
+    /**
+     * Callback triggered when the backdrop is clicked (to close the panel)
+     */
+    onClose?: () => void;
+
+    /**
+     * Callback triggered when the "Clear all" button is clicked
+     */
+    onClear?: () => void;
+  }
+
+  let {
+    visible = false,
+    config = [],
+    state = $bindable({}),
+    onClose,
+    onClear
+  }: Props = $props();
 
   function ensureArray(value: unknown): string[] {
     return Array.isArray(value) ? value : [];
@@ -45,7 +91,7 @@
 
   function clearFilters() {
     state = buildClearedState();
-    dispatch('clear');
+    onClear?.();
   }
 </script>
 
@@ -53,7 +99,7 @@
   <!-- Backdrop -->
   <div
     class="fixed inset-0 z-10"
-    onclick={() => dispatch('close')}
+    onclick={() => onClose?.()}
     role="presentation"
   ></div>
 
@@ -78,7 +124,7 @@
 
         <div>
           <h4 class="text-xs font-semibold text-mono-500 uppercase tracking-wider mb-3">{section.label}</h4>
-          
+
           {#if section.type === 'checkbox-group' && section.options}
             <div class="space-y-2">
               {#each section.options as option}
