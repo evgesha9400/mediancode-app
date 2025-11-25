@@ -6,7 +6,7 @@ from pathlib import Path
 # -------- CONFIG --------
 
 REPO_DIR = "."  # run from repo root or set an absolute path
-MAX_ITERATIONS = 8  # bump this up if you want a longer loop
+MAX_ITERATIONS = 10  # bump this up if you want a longer loop
 RUN_TESTS = False  # set True if you want to run tests after each Claude step
 
 
