@@ -335,7 +335,7 @@ export class FieldRegistryPage {
 	 * Sort by column (click column header)
 	 */
 	async sortByColumn(column: 'name' | 'type' | 'defaultValue' | 'usedInApis', withShift = false) {
-		const clickOptions = withShift ? { modifiers: ['Shift'] as const } : undefined;
+		const clickOptions = withShift ? { modifiers: ['Shift'] as ('Shift' | 'Alt' | 'Control' | 'Meta')[] } : undefined;
 
 		// Get fresh locator each time to avoid stale elements
 		// Click the button inside the th, which contains the label text

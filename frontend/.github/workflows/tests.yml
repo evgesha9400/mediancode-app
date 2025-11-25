@@ -34,9 +34,13 @@ jobs:
 
       - name: Run SvelteKit sync
         run: npm run prepare
+        env:
+          PUBLIC_CLERK_PUBLISHABLE_KEY: ${{ secrets.PUBLIC_CLERK_PUBLISHABLE_KEY || 'pk_test_placeholder' }}
 
       - name: Run svelte-check
         run: npm run check
+        env:
+          PUBLIC_CLERK_PUBLISHABLE_KEY: ${{ secrets.PUBLIC_CLERK_PUBLISHABLE_KEY || 'pk_test_placeholder' }}
 
       - name: Validate fixtures schema
         run: npm run test:fixtures:validate
