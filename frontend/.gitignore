@@ -67,3 +67,15 @@ vite.config.ts.timestamp-*
 
 # Playwright MCP
 /.playwright-mcp/
+
+# Playwright Test Artifacts
+playwright-report/
+test-results/
+
+# Coverage Reports
+coverage/
+
+# Orchestrator
+orchestrator.py
+codex_feedback_*.txt
+claude_output_*.txt

@@ -106,7 +106,72 @@ npm run dev          # Start development server
 npm run build        # Build for production
 npm run preview      # Preview production build
 npm run check        # Type-check
-npm run lint         # Run linter
+```
+
+## Testing
+
+Median Code has comprehensive testing across three layers: unit, integration, and end-to-end.
+
+### Quick Start
+
+```bash
+# Run all checks before committing
+npm run check                    # TypeScript type checking
+npm run test:fixtures:validate   # Validate test fixtures
+npm run test:unit                # Unit tests
+npm run test:integration         # Integration tests
+npm run test:e2e:smoke           # E2E smoke tests (fast)
+```
+
+### Test Commands
+
+```bash
+# Unit tests
+npm run test:unit                # Run unit tests once
+npm run test:unit:watch          # Watch mode for development
+
+# Integration tests
+npm run test:integration         # Run integration tests once
+npm run test:integration:watch   # Watch mode for development
+
+# E2E tests
+npm run test:e2e                 # All E2E tests
+npm run test:e2e:smoke           # Smoke tests (fast, runs on PRs)
+npm run test:e2e:full            # Full suite with visual regression
+npm run test:e2e:ui              # Interactive Playwright UI
+
+# Coverage
+npm run test:coverage            # Generate coverage report
+
+# Validation
+npm run test:fixtures:validate   # Validate fixture schema
+```
+
+### Test Infrastructure
+
+- **Unit Tests:** Component and utility testing with Vitest and Testing Library
+- **Integration Tests:** Route and store testing with MSW-backed API mocking
+- **E2E Tests:** Critical user flows with Playwright and visual regression
+- **Fixtures:** Deterministic test data shared across all test layers
+- **CI/CD:** GitHub Actions workflow validates all PRs
+
+### Documentation
+
+- **[Testing Overview](docs/TESTING_COMPLETE.md)** - Complete implementation guide
+- **[E2E Tests](tests/e2e/README.md)** - Playwright E2E testing guide
+- **[Testing Runbooks](docs/runbooks/testing.md)** - Step-by-step procedures
+- **[Testing Plan](docs/testing.md)** - Full implementation plan
+
+### Before Committing
+
+Always run these commands:
+
+```bash
+npm run check                    # Must pass (0 errors)
+npm run test:fixtures:validate   # Must pass
+npm run test:unit                # Must pass
+npm run test:integration         # Must pass
+npm run test:e2e:smoke           # Must pass
 ```
 
 ## Deployment
