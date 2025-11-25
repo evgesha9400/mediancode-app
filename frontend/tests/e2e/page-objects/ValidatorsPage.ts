@@ -77,7 +77,8 @@ export class ValidatorsPage {
 
 		// Sortable columns
 		this.nameColumnHeader = page.locator('th').filter({ hasText: 'Validator Name' });
-		this.typeColumnHeader = page.locator('th').filter({ hasText: /^Type$/i });
+		// Use nth(0) to get the first 'Type' header (the second is 'Parameter Type' in drawer)
+		this.typeColumnHeader = page.locator('thead th').filter({ hasText: 'Type' }).first();
 		this.categoryColumnHeader = page.locator('th').filter({ hasText: 'Category' });
 		this.usedInFieldsColumnHeader = page.locator('th').filter({ hasText: 'Used In Fields' });
 
