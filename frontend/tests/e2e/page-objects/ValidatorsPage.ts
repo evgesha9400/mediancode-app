@@ -77,8 +77,8 @@ export class ValidatorsPage {
 
 		// Sortable columns
 		this.nameColumnHeader = page.locator('th').filter({ hasText: 'Validator Name' });
-		// Use nth(0) to get the first 'Type' header (the second is 'Parameter Type' in drawer)
-		this.typeColumnHeader = page.locator('thead th').filter({ hasText: 'Type' }).first();
+		// Target the table header labeled exactly "Type" (skip drawer "Parameter Type" text)
+		this.typeColumnHeader = page.locator('thead th').filter({ hasText: /^Type$/i });
 		this.categoryColumnHeader = page.locator('th').filter({ hasText: 'Category' });
 		this.usedInFieldsColumnHeader = page.locator('th').filter({ hasText: 'Used In Fields' });
 
@@ -278,14 +278,15 @@ export class ValidatorsPage {
 	/**
 	 * Sort by column (click column header)
 	 */
-	async sortByColumn(column: 'name' | 'type' | 'category' | 'usedInFields') {
+	async sortByColumn(column: 'name' | 'type' | 'category' | 'usedInFields', withShift = false) {
 		const headers = {
 			name: this.nameColumnHeader,
 			type: this.typeColumnHeader,
 			category: this.categoryColumnHeader,
 			usedInFields: this.usedInFieldsColumnHeader
 		};
-		await headers[column].click();
+		const clickOptions = withShift ? { modifiers: ['Shift'] as const } : undefined;
+		await headers[column].click(clickOptions);
 		await this.page.waitForTimeout(200);
 	}
 

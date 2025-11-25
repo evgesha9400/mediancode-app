@@ -209,6 +209,32 @@ test.describe('Validators - Feature Tests', () => {
 	});
 
 	test.describe('Sorting', () => {
+		type RowData = { name: string; type: string; category: string };
+
+		const getRowData = async (): Promise<RowData[]> => {
+			const [names, types, categories] = await Promise.all([
+				validatorsPage.getVisibleValidatorNames(),
+				validatorsPage.getVisibleTypes(),
+				validatorsPage.getVisibleCategories()
+			]);
+
+			return names.map((name, index) => ({
+				name,
+				type: types[index],
+				category: categories[index]
+			}));
+		};
+
+		const sortRows = (rows: RowData[], order: Array<keyof RowData>): RowData[] => {
+			return [...rows].sort((a, b) => {
+				for (const key of order) {
+					const comparison = a[key].localeCompare(b[key]);
+					if (comparison !== 0) return comparison;
+				}
+				return 0;
+			});
+		};
+
 		test('should sort by validator name', async () => {
 			await validatorsPage.sortByColumn('name');
 
@@ -233,18 +259,25 @@ test.describe('Validators - Feature Tests', () => {
 			expect(descNames).toEqual([...ascNames].reverse());
 		});
 
-		test('should sort by type', async () => {
+		test('should cycle type sort through asc, desc, then clear', async () => {
+			const initialTypes = await validatorsPage.getVisibleTypes();
+			expect(initialTypes.length).toBeGreaterThan(0);
+
+			// First click - ascending
 			await validatorsPage.sortByColumn('type');
+			const ascTypes = await validatorsPage.getVisibleTypes();
+			const expectedAsc = [...initialTypes].sort((a, b) => a.localeCompare(b));
+			expect(ascTypes).toEqual(expectedAsc);
 
-			const types = await validatorsPage.getVisibleTypes();
-			expect(types.length).toBeGreaterThan(0);
+			// Second click - descending
+			await validatorsPage.sortByColumn('type');
+			const descTypes = await validatorsPage.getVisibleTypes();
+			expect(descTypes).toEqual([...expectedAsc].reverse());
 
-			// Verify types are sorted in some consistent order (ascending or descending)
-			const ascSorted = [...types].sort((a, b) => a.localeCompare(b));
-			const descSorted = [...types].sort((a, b) => b.localeCompare(a));
-			const isSorted = JSON.stringify(types) === JSON.stringify(ascSorted) ||
-			                 JSON.stringify(types) === JSON.stringify(descSorted);
-			expect(isSorted).toBe(true);
+			// Third click - clear sort
+			await validatorsPage.sortByColumn('type');
+			const resetTypes = await validatorsPage.getVisibleTypes();
+			expect(resetTypes).toEqual(initialTypes);
 		});
 
 		test('should sort by category', async () => {
@@ -256,6 +289,30 @@ test.describe('Validators - Feature Tests', () => {
 			// Verify ascending order
 			const sortedCategories = [...categories].sort((a, b) => a.localeCompare(b));
 			expect(categories).toEqual(sortedCategories);
+		});
+
+		test('should apply multi-column sort when category then type', async () => {
+			const baselineRows = await getRowData();
+
+			await validatorsPage.sortByColumn('category');
+			await validatorsPage.sortByColumn('type', true);
+
+			const sortedRows = await getRowData();
+			const expected = sortRows(baselineRows, ['category', 'type']);
+
+			expect(sortedRows).toEqual(expected);
+		});
+
+		test('should apply multi-column sort when type then category', async () => {
+			const baselineRows = await getRowData();
+
+			await validatorsPage.sortByColumn('type');
+			await validatorsPage.sortByColumn('category', true);
+
+			const sortedRows = await getRowData();
+			const expected = sortRows(baselineRows, ['type', 'category']);
+
+			expect(sortedRows).toEqual(expected);
 		});
 	});
 
