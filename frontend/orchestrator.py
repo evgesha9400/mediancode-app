@@ -7,7 +7,6 @@ from pathlib import Path
 
 REPO_DIR = "."  # run from repo root or set an absolute path
 MAX_ITERATIONS = 10  # bump this up if you want a longer loop
-RUN_TESTS = False  # set True if you want to run tests after each Claude step
 
 
 # -------- UTILITIES --------
@@ -34,18 +33,8 @@ def has_uncommitted_changes(repo_dir: str) -> bool:
 
 
 def git_stage_all(repo_dir: str):
-    """Stage all modified/deleted files."""
-    run(["git", "add", "-u"], cwd=repo_dir)
-
-
-def run_tests(repo_dir: str) -> bool:
-    """Run your test command. Adjust to your stack."""
-    try:
-        run(["npm", "test"], cwd=repo_dir)
-        return True
-    except RuntimeError as e:
-        print("Tests failed:\n", e)
-        return False
+    """Stage all changes (new, modified, and deleted files)."""
+    run(["git", "add", "-A"], cwd=repo_dir)
 
 
 # -------- LLM STEPS --------
@@ -92,6 +81,9 @@ def run_codex_review() -> str:
         # read-only sandbox so Codex doesn't change anything
         "-s",
         "read-only",
+        # auto-approve commands
+        "-a",
+        "never",
         # rely on default model/profile
         "exec",
     ]
@@ -129,9 +121,12 @@ def run_claude_apply_feedback(feedback: str) -> str:
         "-p",  # non-interactive, print response and exit
         "--output-format",
         "text",
-        # Allow tools and non-interactive edits; tweak permission mode as you like:
-        # "--permission-mode", "acceptEdits",
-        # "--tools", "default",
+        # Auto-accept edits
+        "--permission-mode",
+        "acceptEdits",
+        # Allow tools
+        "--tools",
+        "default",
     ]
     output = run(cmd, input_text=prompt, cwd=REPO_DIR)
     return output
@@ -172,17 +167,8 @@ def main():
         print(f"Claude output saved to claude_output_{iteration}.txt")
 
         # Step 3: Stage all changes
-        print("Staging changes with git add -u...")
+        print("Staging changes with git add -A...")
         git_stage_all(repo_dir)
-
-        # Optional: tests
-        if RUN_TESTS:
-            print("Running tests...")
-            tests_ok = run_tests(repo_dir)
-            if tests_ok:
-                print("Tests passed.")
-            else:
-                print("Tests failed after Claude's changes. Inspect before continuing.")
 
     print("\nWorkflow finished.")
 
