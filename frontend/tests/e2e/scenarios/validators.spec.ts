@@ -19,6 +19,11 @@ test.describe('Validators - Feature Tests', () => {
 		await validatorsPage.goto();
 	});
 
+	test.afterEach(async () => {
+		// Ensure drawer is closed after each test to prevent interference
+		await validatorsPage.closeDrawer();
+	});
+
 	test.describe('Page Load', () => {
 		test('should display validators page with title', async () => {
 			await expect(validatorsPage.pageTitle).toBeVisible();
@@ -209,110 +214,173 @@ test.describe('Validators - Feature Tests', () => {
 	});
 
 	test.describe('Sorting', () => {
-		type RowData = { name: string; type: string; category: string };
+		type RowData = { name: string; type: string; category: string; usedInFields: number };
 
 		const getRowData = async (): Promise<RowData[]> => {
-			const [names, types, categories] = await Promise.all([
+			const [names, types, categories, usedInFields] = await Promise.all([
 				validatorsPage.getVisibleValidatorNames(),
 				validatorsPage.getVisibleTypes(),
-				validatorsPage.getVisibleCategories()
+				validatorsPage.getVisibleCategories(),
+				validatorsPage.getVisibleUsedInFields()
 			]);
 
 			return names.map((name, index) => ({
 				name,
 				type: types[index],
-				category: categories[index]
+				category: categories[index],
+				usedInFields: usedInFields[index]
 			}));
 		};
 
 		const sortRows = (rows: RowData[], order: Array<keyof RowData>): RowData[] => {
 			return [...rows].sort((a, b) => {
 				for (const key of order) {
-					const comparison = a[key].localeCompare(b[key]);
+					let comparison = 0;
+					if (key === 'usedInFields') {
+						comparison = a[key] - b[key];
+					} else {
+						comparison = a[key].toString().toLowerCase().localeCompare(b[key].toString().toLowerCase());
+					}
 					if (comparison !== 0) return comparison;
 				}
 				return 0;
 			});
 		};
 
-		test('should sort by validator name', async () => {
-			await validatorsPage.sortByColumn('name');
+		test.describe('Single Column Sort Cycles', () => {
+			test('should cycle name sort through asc, desc, then clear', async () => {
+				const baselineNames = await validatorsPage.getVisibleValidatorNames();
+				expect(baselineNames.length).toBeGreaterThan(0);
 
-			const names = await validatorsPage.getVisibleValidatorNames();
-			expect(names.length).toBeGreaterThan(1);
+				// First click - ascending
+				await validatorsPage.sortByColumn('name');
+				const ascNames = await validatorsPage.getVisibleValidatorNames();
+				const expectedAsc = [...baselineNames].sort((a, b) => a.localeCompare(b));
+				expect(ascNames).toEqual(expectedAsc);
 
-			// Verify ascending order
-			const sortedNames = [...names].sort((a, b) => a.localeCompare(b));
-			expect(names).toEqual(sortedNames);
+				// Second click - descending
+				await validatorsPage.sortByColumn('name');
+				const descNames = await validatorsPage.getVisibleValidatorNames();
+				expect(descNames).toEqual([...expectedAsc].reverse());
+
+				// Third click - clear sort (reset to baseline)
+				await validatorsPage.sortByColumn('name');
+				const resetNames = await validatorsPage.getVisibleValidatorNames();
+				expect(resetNames).toEqual(baselineNames);
+			});
+
+			test('should cycle type sort through asc, desc, then clear', async () => {
+				const baselineTypes = await validatorsPage.getVisibleTypes();
+				expect(baselineTypes.length).toBeGreaterThan(0);
+
+				// First click - ascending
+				await validatorsPage.sortByColumn('type');
+				const ascTypes = await validatorsPage.getVisibleTypes();
+				const expectedAsc = [...baselineTypes].sort((a, b) => a.localeCompare(b));
+				expect(ascTypes).toEqual(expectedAsc);
+
+				// Second click - descending
+				await validatorsPage.sortByColumn('type');
+				const descTypes = await validatorsPage.getVisibleTypes();
+				expect(descTypes).toEqual([...expectedAsc].reverse());
+
+				// Third click - clear sort
+				await validatorsPage.sortByColumn('type');
+				const resetTypes = await validatorsPage.getVisibleTypes();
+				expect(resetTypes).toEqual(baselineTypes);
+			});
+
+			test('should cycle category sort through asc, desc, then clear', async () => {
+				const baselineCategories = await validatorsPage.getVisibleCategories();
+				expect(baselineCategories.length).toBeGreaterThan(0);
+
+				// First click - ascending
+				await validatorsPage.sortByColumn('category');
+				const ascCategories = await validatorsPage.getVisibleCategories();
+				const expectedAsc = [...baselineCategories].sort((a, b) => a.localeCompare(b));
+				expect(ascCategories).toEqual(expectedAsc);
+
+				// Second click - descending
+				await validatorsPage.sortByColumn('category');
+				const descCategories = await validatorsPage.getVisibleCategories();
+				expect(descCategories).toEqual([...expectedAsc].reverse());
+
+				// Third click - clear sort
+				await validatorsPage.sortByColumn('category');
+				const resetCategories = await validatorsPage.getVisibleCategories();
+				expect(resetCategories).toEqual(baselineCategories);
+			});
+
+			test('should cycle usedInFields sort through asc, desc, then clear', async () => {
+				const baselineUsedInFields = await validatorsPage.getVisibleUsedInFields();
+				expect(baselineUsedInFields.length).toBeGreaterThan(0);
+
+				// First click - ascending (numeric)
+				await validatorsPage.sortByColumn('usedInFields');
+				const ascUsedInFields = await validatorsPage.getVisibleUsedInFields();
+				const expectedAsc = [...baselineUsedInFields].sort((a, b) => a - b);
+				expect(ascUsedInFields).toEqual(expectedAsc);
+
+				// Second click - descending
+				await validatorsPage.sortByColumn('usedInFields');
+				const descUsedInFields = await validatorsPage.getVisibleUsedInFields();
+				expect(descUsedInFields).toEqual([...expectedAsc].reverse());
+
+				// Third click - clear sort
+				await validatorsPage.sortByColumn('usedInFields');
+				const resetUsedInFields = await validatorsPage.getVisibleUsedInFields();
+				expect(resetUsedInFields).toEqual(baselineUsedInFields);
+			});
 		});
 
-		test('should reverse sort on second click', async () => {
-			// First click - ascending
-			await validatorsPage.sortByColumn('name');
-			const ascNames = await validatorsPage.getVisibleValidatorNames();
+		test.describe('Multi-Column Sort', () => {
+			test('should apply multi-column sort when category then type', async () => {
+				const baselineRows = await getRowData();
 
-			// Second click - descending
-			await validatorsPage.sortByColumn('name');
-			const descNames = await validatorsPage.getVisibleValidatorNames();
+				await validatorsPage.sortByColumn('category');
+				await validatorsPage.sortByColumn('type', true);
 
-			// Verify descending order (reversed)
-			expect(descNames).toEqual([...ascNames].reverse());
-		});
+				const sortedRows = await getRowData();
+				const expected = sortRows(baselineRows, ['category', 'type']);
 
-		test('should cycle type sort through asc, desc, then clear', async () => {
-			const initialTypes = await validatorsPage.getVisibleTypes();
-			expect(initialTypes.length).toBeGreaterThan(0);
+				expect(sortedRows).toEqual(expected);
+			});
 
-			// First click - ascending
-			await validatorsPage.sortByColumn('type');
-			const ascTypes = await validatorsPage.getVisibleTypes();
-			const expectedAsc = [...initialTypes].sort((a, b) => a.localeCompare(b));
-			expect(ascTypes).toEqual(expectedAsc);
+			test('should apply multi-column sort when type then category', async () => {
+				const baselineRows = await getRowData();
 
-			// Second click - descending
-			await validatorsPage.sortByColumn('type');
-			const descTypes = await validatorsPage.getVisibleTypes();
-			expect(descTypes).toEqual([...expectedAsc].reverse());
+				await validatorsPage.sortByColumn('type');
+				await validatorsPage.sortByColumn('category', true);
 
-			// Third click - clear sort
-			await validatorsPage.sortByColumn('type');
-			const resetTypes = await validatorsPage.getVisibleTypes();
-			expect(resetTypes).toEqual(initialTypes);
-		});
+				const sortedRows = await getRowData();
+				const expected = sortRows(baselineRows, ['type', 'category']);
 
-		test('should sort by category', async () => {
-			await validatorsPage.sortByColumn('category');
+				expect(sortedRows).toEqual(expected);
+			});
 
-			const categories = await validatorsPage.getVisibleCategories();
-			expect(categories.length).toBeGreaterThan(0);
+			test('should apply multi-column sort when name then usedInFields', async () => {
+				const baselineRows = await getRowData();
 
-			// Verify ascending order
-			const sortedCategories = [...categories].sort((a, b) => a.localeCompare(b));
-			expect(categories).toEqual(sortedCategories);
-		});
+				await validatorsPage.sortByColumn('name');
+				await validatorsPage.sortByColumn('usedInFields', true);
 
-		test('should apply multi-column sort when category then type', async () => {
-			const baselineRows = await getRowData();
+				const sortedRows = await getRowData();
+				const expected = sortRows(baselineRows, ['name', 'usedInFields']);
 
-			await validatorsPage.sortByColumn('category');
-			await validatorsPage.sortByColumn('type', true);
+				expect(sortedRows).toEqual(expected);
+			});
 
-			const sortedRows = await getRowData();
-			const expected = sortRows(baselineRows, ['category', 'type']);
+			test('should apply multi-column sort when usedInFields then name', async () => {
+				const baselineRows = await getRowData();
 
-			expect(sortedRows).toEqual(expected);
-		});
+				await validatorsPage.sortByColumn('usedInFields');
+				await validatorsPage.sortByColumn('name', true);
 
-		test('should apply multi-column sort when type then category', async () => {
-			const baselineRows = await getRowData();
+				const sortedRows = await getRowData();
+				const expected = sortRows(baselineRows, ['usedInFields', 'name']);
 
-			await validatorsPage.sortByColumn('type');
-			await validatorsPage.sortByColumn('category', true);
-
-			const sortedRows = await getRowData();
-			const expected = sortRows(baselineRows, ['type', 'category']);
-
-			expect(sortedRows).toEqual(expected);
+				expect(sortedRows).toEqual(expected);
+			});
 		});
 	});
 

@@ -74,11 +74,11 @@ export class FieldRegistryPage {
 		this.tableRows = page.locator('tbody tr');
 		this.emptyState = page.locator('text=No fields found');
 
-		// Sortable columns - look for the column headers
-		this.nameColumnHeader = page.locator('th').filter({ hasText: 'Field Name' });
-		this.typeColumnHeader = page.locator('th').filter({ hasText: 'Type' }).first();
-		this.defaultValueColumnHeader = page.locator('th').filter({ hasText: 'Default Value' });
-		this.usedInApisColumnHeader = page.locator('th').filter({ hasText: 'Used In APIs' });
+		// Sortable columns - scoped to table to avoid conflicts with drawer/filter panel
+		this.nameColumnHeader = this.table.locator('thead th').filter({ hasText: 'Field Name' });
+		this.typeColumnHeader = this.table.locator('thead th').filter({ hasText: /^Type$/i });
+		this.defaultValueColumnHeader = this.table.locator('thead th').filter({ hasText: 'Default Value' });
+		this.usedInApisColumnHeader = this.table.locator('thead th').filter({ hasText: 'Used In APIs' });
 
 		// Drawer
 		this.drawer = page.locator('[class*="fixed"][class*="right-0"]').filter({ has: page.locator('text=Edit Field') });
@@ -334,15 +334,20 @@ export class FieldRegistryPage {
 	/**
 	 * Sort by column (click column header)
 	 */
-	async sortByColumn(column: 'name' | 'type' | 'defaultValue' | 'usedInApis') {
-		const headers = {
-			name: this.nameColumnHeader,
-			type: this.typeColumnHeader,
-			defaultValue: this.defaultValueColumnHeader,
-			usedInApis: this.usedInApisColumnHeader
+	async sortByColumn(column: 'name' | 'type' | 'defaultValue' | 'usedInApis', withShift = false) {
+		const clickOptions = withShift ? { modifiers: ['Shift'] as const } : undefined;
+
+		// Get fresh locator each time to avoid stale elements
+		// Click the button inside the th, which contains the label text
+		const headerMap = {
+			name: () => this.table.locator('thead th button').filter({ hasText: 'Field Name' }),
+			type: () => this.table.locator('thead th button').filter({ hasText: 'Type' }),
+			defaultValue: () => this.table.locator('thead th button').filter({ hasText: 'Default Value' }),
+			usedInApis: () => this.table.locator('thead th button').filter({ hasText: 'Used In APIs' })
 		};
-		await headers[column].click();
-		await this.page.waitForTimeout(200);
+
+		await headerMap[column]().click(clickOptions);
+		await this.page.waitForTimeout(300);
 	}
 
 	/**
@@ -358,6 +363,51 @@ export class FieldRegistryPage {
 			if (name) names.push(name.trim());
 		}
 		return names;
+	}
+
+	/**
+	 * Get all field types visible in the table
+	 */
+	async getVisibleTypes(): Promise<string[]> {
+		const types: string[] = [];
+		const count = await this.tableRows.count();
+		for (let i = 0; i < count; i++) {
+			const row = this.tableRows.nth(i);
+			const typeCell = row.locator('td').nth(1);
+			const type = await typeCell.textContent();
+			if (type) types.push(type.trim());
+		}
+		return types;
+	}
+
+	/**
+	 * Get all default values visible in the table
+	 */
+	async getVisibleDefaultValues(): Promise<string[]> {
+		const defaultValues: string[] = [];
+		const count = await this.tableRows.count();
+		for (let i = 0; i < count; i++) {
+			const row = this.tableRows.nth(i);
+			const defaultValueCell = row.locator('td').nth(3);
+			const value = await defaultValueCell.textContent();
+			if (value) defaultValues.push(value.trim());
+		}
+		return defaultValues;
+	}
+
+	/**
+	 * Get all usedInApis counts visible in the table
+	 */
+	async getVisibleUsedInApis(): Promise<number[]> {
+		const counts: number[] = [];
+		const count = await this.tableRows.count();
+		for (let i = 0; i < count; i++) {
+			const row = this.tableRows.nth(i);
+			const countSpan = row.locator('td').nth(4).locator('span').first();
+			const text = await countSpan.textContent();
+			counts.push(parseInt(text?.trim() ?? '0', 10));
+		}
+		return counts;
 	}
 
 	/**

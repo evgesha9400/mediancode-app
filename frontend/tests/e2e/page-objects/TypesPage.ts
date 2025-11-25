@@ -54,11 +54,11 @@ export class TypesPage {
 		this.tableRows = page.locator('tbody tr');
 		this.emptyState = page.locator('text=No types found');
 
-		// Sortable columns
-		this.nameColumnHeader = page.locator('th').filter({ hasText: 'Type Name' });
-		this.categoryColumnHeader = page.locator('th').filter({ hasText: 'Category' }).first();
-		this.pythonTypeColumnHeader = page.locator('th').filter({ hasText: 'Type' }).nth(1);
-		this.usedInFieldsColumnHeader = page.locator('th').filter({ hasText: 'Used In Fields' });
+		// Sortable columns - scoped to table to avoid conflicts with filter panel
+		this.nameColumnHeader = this.table.locator('thead th').filter({ hasText: 'Type Name' });
+		this.categoryColumnHeader = this.table.locator('thead th').filter({ hasText: /^Category$/i });
+		this.pythonTypeColumnHeader = this.table.locator('thead th').filter({ hasText: /^Type$/i });
+		this.usedInFieldsColumnHeader = this.table.locator('thead th').filter({ hasText: 'Used In Fields' });
 	}
 
 	/**
@@ -126,15 +126,20 @@ export class TypesPage {
 	/**
 	 * Sort by column (click column header)
 	 */
-	async sortByColumn(column: 'name' | 'category' | 'pythonType' | 'usedInFields') {
-		const headers = {
-			name: this.nameColumnHeader,
-			category: this.categoryColumnHeader,
-			pythonType: this.pythonTypeColumnHeader,
-			usedInFields: this.usedInFieldsColumnHeader
+	async sortByColumn(column: 'name' | 'category' | 'pythonType' | 'usedInFields', withShift = false) {
+		const clickOptions = withShift ? { modifiers: ['Shift'] as const } : undefined;
+
+		// Get fresh locator each time to avoid stale elements
+		// Click the button inside the th, which contains the label text
+		const headerMap = {
+			name: () => this.table.locator('thead th button').filter({ hasText: 'Type Name' }),
+			category: () => this.table.locator('thead th button').filter({ hasText: 'Category' }),
+			pythonType: () => this.table.locator('thead th button').filter({ hasText: 'Type' }).nth(1),
+			usedInFields: () => this.table.locator('thead th button').filter({ hasText: 'Used In Fields' })
 		};
-		await headers[column].click();
-		await this.page.waitForTimeout(200);
+
+		await headerMap[column]().click(clickOptions);
+		await this.page.waitForTimeout(300);
 	}
 
 	/**
@@ -165,6 +170,36 @@ export class TypesPage {
 			if (category) categories.push(category.trim().toLowerCase());
 		}
 		return categories;
+	}
+
+	/**
+	 * Get Python types visible in the table
+	 */
+	async getVisiblePythonTypes(): Promise<string[]> {
+		const pythonTypes: string[] = [];
+		const count = await this.tableRows.count();
+		for (let i = 0; i < count; i++) {
+			const row = this.tableRows.nth(i);
+			const typeCell = row.locator('td').nth(2);
+			const text = await typeCell.textContent();
+			if (text) pythonTypes.push(text.trim());
+		}
+		return pythonTypes;
+	}
+
+	/**
+	 * Get usedInFields counts visible in the table
+	 */
+	async getVisibleUsedInFields(): Promise<number[]> {
+		const counts: number[] = [];
+		const count = await this.tableRows.count();
+		for (let i = 0; i < count; i++) {
+			const row = this.tableRows.nth(i);
+			const countSpan = row.locator('td').nth(4).locator('span').first();
+			const text = await countSpan.textContent();
+			counts.push(parseInt(text?.trim() ?? '0', 10));
+		}
+		return counts;
 	}
 
 	/**

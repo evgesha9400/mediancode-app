@@ -66,39 +66,173 @@ test.describe('Types - Feature Tests', () => {
 	});
 
 	test.describe('Sorting', () => {
-		test('should sort by type name', async () => {
-			await typesPage.sortByColumn('name');
+		type RowData = { name: string; category: string; pythonType: string; usedInFields: number };
 
-			const names = await typesPage.getVisibleTypeNames();
-			expect(names.length).toBeGreaterThan(1);
+		const getRowData = async (): Promise<RowData[]> => {
+			const [names, categories, pythonTypes, usedInFields] = await Promise.all([
+				typesPage.getVisibleTypeNames(),
+				typesPage.getVisibleCategories(),
+				typesPage.getVisiblePythonTypes(),
+				typesPage.getVisibleUsedInFields()
+			]);
 
-			// Verify ascending order
-			const sortedNames = [...names].sort((a, b) => a.localeCompare(b));
-			expect(names).toEqual(sortedNames);
+			return names.map((name, index) => ({
+				name,
+				category: categories[index],
+				pythonType: pythonTypes[index],
+				usedInFields: usedInFields[index]
+			}));
+		};
+
+		const sortRows = (rows: RowData[], order: Array<keyof RowData>): RowData[] => {
+			return [...rows].sort((a, b) => {
+				for (const key of order) {
+					let comparison = 0;
+					if (key === 'usedInFields') {
+						comparison = a[key] - b[key];
+					} else {
+						comparison = a[key].toString().toLowerCase().localeCompare(b[key].toString().toLowerCase());
+					}
+					if (comparison !== 0) return comparison;
+				}
+				return 0;
+			});
+		};
+
+		test.describe('Single Column Sort Cycles', () => {
+			test('should cycle name sort through asc, desc, then clear', async () => {
+				const baselineNames = await typesPage.getVisibleTypeNames();
+				expect(baselineNames.length).toBeGreaterThan(0);
+
+				// First click - ascending
+				await typesPage.sortByColumn('name');
+				const ascNames = await typesPage.getVisibleTypeNames();
+				const expectedAsc = [...baselineNames].sort((a, b) => a.localeCompare(b));
+				expect(ascNames).toEqual(expectedAsc);
+
+				// Second click - descending
+				await typesPage.sortByColumn('name');
+				const descNames = await typesPage.getVisibleTypeNames();
+				expect(descNames).toEqual([...expectedAsc].reverse());
+
+				// Third click - clear sort (reset to baseline)
+				await typesPage.sortByColumn('name');
+				const resetNames = await typesPage.getVisibleTypeNames();
+				expect(resetNames).toEqual(baselineNames);
+			});
+
+			test('should cycle category sort through asc, desc, then clear', async () => {
+				const baselineCategories = await typesPage.getVisibleCategories();
+				expect(baselineCategories.length).toBeGreaterThan(0);
+
+				// First click - ascending
+				await typesPage.sortByColumn('category');
+				const ascCategories = await typesPage.getVisibleCategories();
+				const expectedAsc = [...baselineCategories].sort((a, b) => a.localeCompare(b));
+				expect(ascCategories).toEqual(expectedAsc);
+
+				// Second click - descending
+				await typesPage.sortByColumn('category');
+				const descCategories = await typesPage.getVisibleCategories();
+				expect(descCategories).toEqual([...expectedAsc].reverse());
+
+				// Third click - clear sort
+				await typesPage.sortByColumn('category');
+				const resetCategories = await typesPage.getVisibleCategories();
+				expect(resetCategories).toEqual(baselineCategories);
+			});
+
+			test('should cycle pythonType sort through asc, desc, then clear', async () => {
+				const baselinePythonTypes = await typesPage.getVisiblePythonTypes();
+				expect(baselinePythonTypes.length).toBeGreaterThan(0);
+
+				// First click - ascending
+				await typesPage.sortByColumn('pythonType');
+				const ascPythonTypes = await typesPage.getVisiblePythonTypes();
+				const expectedAsc = [...baselinePythonTypes].sort((a, b) => a.localeCompare(b));
+				expect(ascPythonTypes).toEqual(expectedAsc);
+
+				// Second click - descending
+				await typesPage.sortByColumn('pythonType');
+				const descPythonTypes = await typesPage.getVisiblePythonTypes();
+				expect(descPythonTypes).toEqual([...expectedAsc].reverse());
+
+				// Third click - clear sort
+				await typesPage.sortByColumn('pythonType');
+				const resetPythonTypes = await typesPage.getVisiblePythonTypes();
+				expect(resetPythonTypes).toEqual(baselinePythonTypes);
+			});
+
+			test('should cycle usedInFields sort through asc, desc, then clear', async () => {
+				const baselineUsedInFields = await typesPage.getVisibleUsedInFields();
+				expect(baselineUsedInFields.length).toBeGreaterThan(0);
+
+				// First click - ascending (numeric)
+				await typesPage.sortByColumn('usedInFields');
+				const ascUsedInFields = await typesPage.getVisibleUsedInFields();
+				const expectedAsc = [...baselineUsedInFields].sort((a, b) => a - b);
+				expect(ascUsedInFields).toEqual(expectedAsc);
+
+				// Second click - descending
+				await typesPage.sortByColumn('usedInFields');
+				const descUsedInFields = await typesPage.getVisibleUsedInFields();
+				expect(descUsedInFields).toEqual([...expectedAsc].reverse());
+
+				// Third click - clear sort
+				await typesPage.sortByColumn('usedInFields');
+				const resetUsedInFields = await typesPage.getVisibleUsedInFields();
+				expect(resetUsedInFields).toEqual(baselineUsedInFields);
+			});
 		});
 
-		test('should reverse sort on second click', async () => {
-			// First click - ascending
-			await typesPage.sortByColumn('name');
-			const ascNames = await typesPage.getVisibleTypeNames();
+		test.describe('Multi-Column Sort', () => {
+			test('should apply multi-column sort when category then name', async () => {
+				const baselineRows = await getRowData();
 
-			// Second click - descending
-			await typesPage.sortByColumn('name');
-			const descNames = await typesPage.getVisibleTypeNames();
+				await typesPage.sortByColumn('category');
+				await typesPage.sortByColumn('name', true);
 
-			// Verify descending order (reversed)
-			expect(descNames).toEqual([...ascNames].reverse());
-		});
+				const sortedRows = await getRowData();
+				const expected = sortRows(baselineRows, ['category', 'name']);
 
-		test('should sort by category', async () => {
-			await typesPage.sortByColumn('category');
+				expect(sortedRows).toEqual(expected);
+			});
 
-			const categories = await typesPage.getVisibleCategories();
-			expect(categories.length).toBeGreaterThan(0);
+			test('should apply multi-column sort when name then category', async () => {
+				const baselineRows = await getRowData();
 
-			// Verify ascending order
-			const sortedCategories = [...categories].sort((a, b) => a.localeCompare(b));
-			expect(categories).toEqual(sortedCategories);
+				await typesPage.sortByColumn('name');
+				await typesPage.sortByColumn('category', true);
+
+				const sortedRows = await getRowData();
+				const expected = sortRows(baselineRows, ['name', 'category']);
+
+				expect(sortedRows).toEqual(expected);
+			});
+
+			test('should apply multi-column sort when pythonType then usedInFields', async () => {
+				const baselineRows = await getRowData();
+
+				await typesPage.sortByColumn('pythonType');
+				await typesPage.sortByColumn('usedInFields', true);
+
+				const sortedRows = await getRowData();
+				const expected = sortRows(baselineRows, ['pythonType', 'usedInFields']);
+
+				expect(sortedRows).toEqual(expected);
+			});
+
+			test('should apply multi-column sort when usedInFields then pythonType', async () => {
+				const baselineRows = await getRowData();
+
+				await typesPage.sortByColumn('usedInFields');
+				await typesPage.sortByColumn('pythonType', true);
+
+				const sortedRows = await getRowData();
+				const expected = sortRows(baselineRows, ['usedInFields', 'pythonType']);
+
+				expect(sortedRows).toEqual(expected);
+			});
 		});
 	});
 

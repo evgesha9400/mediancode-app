@@ -75,12 +75,11 @@ export class ValidatorsPage {
 		this.tableRows = page.locator('tbody tr');
 		this.emptyState = page.locator('text=No validators found');
 
-		// Sortable columns
-		this.nameColumnHeader = page.locator('th').filter({ hasText: 'Validator Name' });
-		// Target the table header labeled exactly "Type" (skip drawer "Parameter Type" text)
-		this.typeColumnHeader = page.locator('thead th').filter({ hasText: /^Type$/i });
-		this.categoryColumnHeader = page.locator('th').filter({ hasText: 'Category' });
-		this.usedInFieldsColumnHeader = page.locator('th').filter({ hasText: 'Used In Fields' });
+		// Sortable columns - scoped to table to avoid conflicts with drawer/filter panel
+		this.nameColumnHeader = this.table.locator('thead th').filter({ hasText: 'Validator Name' });
+		this.typeColumnHeader = this.table.locator('thead th').filter({ hasText: /^Type$/i });
+		this.categoryColumnHeader = this.table.locator('thead th').filter({ hasText: /^Category$/i });
+		this.usedInFieldsColumnHeader = this.table.locator('thead th').filter({ hasText: 'Used In Fields' });
 
 		// Drawer
 		this.drawer = page.locator('[class*="fixed"][class*="right-0"]').filter({ has: page.locator('text=Validator Details') });
@@ -279,15 +278,19 @@ export class ValidatorsPage {
 	 * Sort by column (click column header)
 	 */
 	async sortByColumn(column: 'name' | 'type' | 'category' | 'usedInFields', withShift = false) {
-		const headers = {
-			name: this.nameColumnHeader,
-			type: this.typeColumnHeader,
-			category: this.categoryColumnHeader,
-			usedInFields: this.usedInFieldsColumnHeader
-		};
 		const clickOptions = withShift ? { modifiers: ['Shift'] as const } : undefined;
-		await headers[column].click(clickOptions);
-		await this.page.waitForTimeout(200);
+
+		// Get fresh locator each time to avoid stale elements
+		// Click the button inside the th, which contains the label text
+		const headerMap = {
+			name: () => this.table.locator('thead th button').filter({ hasText: 'Validator Name' }),
+			type: () => this.table.locator('thead th button').filter({ hasText: 'Type' }),
+			category: () => this.table.locator('thead th button').filter({ hasText: 'Category' }),
+			usedInFields: () => this.table.locator('thead th button').filter({ hasText: 'Used In Fields' })
+		};
+
+		await headerMap[column]().click(clickOptions);
+		await this.page.waitForTimeout(300);
 	}
 
 	/**
@@ -333,6 +336,21 @@ export class ValidatorsPage {
 			if (category) categories.push(category.trim().toLowerCase());
 		}
 		return categories;
+	}
+
+	/**
+	 * Get usedInFields counts visible in the table
+	 */
+	async getVisibleUsedInFields(): Promise<number[]> {
+		const counts: number[] = [];
+		const count = await this.tableRows.count();
+		for (let i = 0; i < count; i++) {
+			const row = this.tableRows.nth(i);
+			const countCell = row.locator('td').nth(4).locator('span').first();
+			const text = await countCell.textContent();
+			counts.push(parseInt(text?.trim() ?? '0', 10));
+		}
+		return counts;
 	}
 
 	/**

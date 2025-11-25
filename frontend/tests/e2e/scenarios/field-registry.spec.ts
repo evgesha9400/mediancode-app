@@ -279,28 +279,173 @@ test.describe('Field Registry - Feature Tests', () => {
 	});
 
 	test.describe('Sorting', () => {
-		test('should sort by field name', async () => {
-			await fieldRegistryPage.sortByColumn('name');
+		type RowData = { name: string; type: string; defaultValue: string; usedInApis: number };
 
-			const names = await fieldRegistryPage.getVisibleFieldNames();
-			expect(names.length).toBeGreaterThan(1);
+		const getRowData = async (): Promise<RowData[]> => {
+			const [names, types, defaultValues, usedInApis] = await Promise.all([
+				fieldRegistryPage.getVisibleFieldNames(),
+				fieldRegistryPage.getVisibleTypes(),
+				fieldRegistryPage.getVisibleDefaultValues(),
+				fieldRegistryPage.getVisibleUsedInApis()
+			]);
 
-			// Verify ascending order
-			const sortedNames = [...names].sort((a, b) => a.localeCompare(b));
-			expect(names).toEqual(sortedNames);
+			return names.map((name, index) => ({
+				name,
+				type: types[index],
+				defaultValue: defaultValues[index],
+				usedInApis: usedInApis[index]
+			}));
+		};
+
+		const sortRows = (rows: RowData[], order: Array<keyof RowData>): RowData[] => {
+			return [...rows].sort((a, b) => {
+				for (const key of order) {
+					let comparison = 0;
+					if (key === 'usedInApis') {
+						comparison = a[key] - b[key];
+					} else {
+						comparison = a[key].toString().toLowerCase().localeCompare(b[key].toString().toLowerCase());
+					}
+					if (comparison !== 0) return comparison;
+				}
+				return 0;
+			});
+		};
+
+		test.describe('Single Column Sort Cycles', () => {
+			test('should cycle name sort through asc, desc, then clear', async () => {
+				const baselineNames = await fieldRegistryPage.getVisibleFieldNames();
+				expect(baselineNames.length).toBeGreaterThan(0);
+
+				// First click - ascending
+				await fieldRegistryPage.sortByColumn('name');
+				const ascNames = await fieldRegistryPage.getVisibleFieldNames();
+				const expectedAsc = [...baselineNames].sort((a, b) => a.localeCompare(b));
+				expect(ascNames).toEqual(expectedAsc);
+
+				// Second click - descending
+				await fieldRegistryPage.sortByColumn('name');
+				const descNames = await fieldRegistryPage.getVisibleFieldNames();
+				expect(descNames).toEqual([...expectedAsc].reverse());
+
+				// Third click - clear sort (reset to baseline)
+				await fieldRegistryPage.sortByColumn('name');
+				const resetNames = await fieldRegistryPage.getVisibleFieldNames();
+				expect(resetNames).toEqual(baselineNames);
+			});
+
+			test('should cycle type sort through asc, desc, then clear', async () => {
+				const baselineTypes = await fieldRegistryPage.getVisibleTypes();
+				expect(baselineTypes.length).toBeGreaterThan(0);
+
+				// First click - ascending
+				await fieldRegistryPage.sortByColumn('type');
+				const ascTypes = await fieldRegistryPage.getVisibleTypes();
+				const expectedAsc = [...baselineTypes].sort((a, b) => a.localeCompare(b));
+				expect(ascTypes).toEqual(expectedAsc);
+
+				// Second click - descending
+				await fieldRegistryPage.sortByColumn('type');
+				const descTypes = await fieldRegistryPage.getVisibleTypes();
+				expect(descTypes).toEqual([...expectedAsc].reverse());
+
+				// Third click - clear sort
+				await fieldRegistryPage.sortByColumn('type');
+				const resetTypes = await fieldRegistryPage.getVisibleTypes();
+				expect(resetTypes).toEqual(baselineTypes);
+			});
+
+			test('should cycle defaultValue sort through asc, desc, then clear', async () => {
+				const baselineDefaultValues = await fieldRegistryPage.getVisibleDefaultValues();
+				expect(baselineDefaultValues.length).toBeGreaterThan(0);
+
+				// First click - ascending
+				await fieldRegistryPage.sortByColumn('defaultValue');
+				const ascDefaultValues = await fieldRegistryPage.getVisibleDefaultValues();
+				const expectedAsc = [...baselineDefaultValues].sort((a, b) => a.localeCompare(b));
+				expect(ascDefaultValues).toEqual(expectedAsc);
+
+				// Second click - descending
+				await fieldRegistryPage.sortByColumn('defaultValue');
+				const descDefaultValues = await fieldRegistryPage.getVisibleDefaultValues();
+				expect(descDefaultValues).toEqual([...expectedAsc].reverse());
+
+				// Third click - clear sort
+				await fieldRegistryPage.sortByColumn('defaultValue');
+				const resetDefaultValues = await fieldRegistryPage.getVisibleDefaultValues();
+				expect(resetDefaultValues).toEqual(baselineDefaultValues);
+			});
+
+			test('should cycle usedInApis sort through asc, desc, then clear', async () => {
+				const baselineUsedInApis = await fieldRegistryPage.getVisibleUsedInApis();
+				expect(baselineUsedInApis.length).toBeGreaterThan(0);
+
+				// First click - ascending (numeric)
+				await fieldRegistryPage.sortByColumn('usedInApis');
+				const ascUsedInApis = await fieldRegistryPage.getVisibleUsedInApis();
+				const expectedAsc = [...baselineUsedInApis].sort((a, b) => a - b);
+				expect(ascUsedInApis).toEqual(expectedAsc);
+
+				// Second click - descending
+				await fieldRegistryPage.sortByColumn('usedInApis');
+				const descUsedInApis = await fieldRegistryPage.getVisibleUsedInApis();
+				expect(descUsedInApis).toEqual([...expectedAsc].reverse());
+
+				// Third click - clear sort
+				await fieldRegistryPage.sortByColumn('usedInApis');
+				const resetUsedInApis = await fieldRegistryPage.getVisibleUsedInApis();
+				expect(resetUsedInApis).toEqual(baselineUsedInApis);
+			});
 		});
 
-		test('should reverse sort on second click', async () => {
-			// First click - ascending
-			await fieldRegistryPage.sortByColumn('name');
-			const ascNames = await fieldRegistryPage.getVisibleFieldNames();
+		test.describe('Multi-Column Sort', () => {
+			test('should apply multi-column sort when type then name', async () => {
+				const baselineRows = await getRowData();
 
-			// Second click - descending
-			await fieldRegistryPage.sortByColumn('name');
-			const descNames = await fieldRegistryPage.getVisibleFieldNames();
+				await fieldRegistryPage.sortByColumn('type');
+				await fieldRegistryPage.sortByColumn('name', true);
 
-			// Verify descending order (reversed)
-			expect(descNames).toEqual([...ascNames].reverse());
+				const sortedRows = await getRowData();
+				const expected = sortRows(baselineRows, ['type', 'name']);
+
+				expect(sortedRows).toEqual(expected);
+			});
+
+			test('should apply multi-column sort when name then type', async () => {
+				const baselineRows = await getRowData();
+
+				await fieldRegistryPage.sortByColumn('name');
+				await fieldRegistryPage.sortByColumn('type', true);
+
+				const sortedRows = await getRowData();
+				const expected = sortRows(baselineRows, ['name', 'type']);
+
+				expect(sortedRows).toEqual(expected);
+			});
+
+			test('should apply multi-column sort when defaultValue then usedInApis', async () => {
+				const baselineRows = await getRowData();
+
+				await fieldRegistryPage.sortByColumn('defaultValue');
+				await fieldRegistryPage.sortByColumn('usedInApis', true);
+
+				const sortedRows = await getRowData();
+				const expected = sortRows(baselineRows, ['defaultValue', 'usedInApis']);
+
+				expect(sortedRows).toEqual(expected);
+			});
+
+			test('should apply multi-column sort when usedInApis then defaultValue', async () => {
+				const baselineRows = await getRowData();
+
+				await fieldRegistryPage.sortByColumn('usedInApis');
+				await fieldRegistryPage.sortByColumn('defaultValue', true);
+
+				const sortedRows = await getRowData();
+				const expected = sortRows(baselineRows, ['usedInApis', 'defaultValue']);
+
+				expect(sortedRows).toEqual(expected);
+			});
 		});
 	});
 
