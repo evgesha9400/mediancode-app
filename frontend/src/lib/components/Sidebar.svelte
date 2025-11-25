@@ -34,7 +34,11 @@
   }
 </script>
 
-<div class="w-64 bg-mono-900 text-white flex flex-col">
+<nav
+  class="w-64 bg-mono-900 text-white flex flex-col"
+  aria-label="Main navigation"
+  data-testid="dashboard-sidebar"
+>
   <div class="p-4 border-b border-mono-800">
     <a href="/" class="flex items-center space-x-2 hover:opacity-80 transition-opacity cursor-pointer">
       <i class="fa-solid fa-code text-xl"></i>
@@ -112,4 +116,4 @@
       </button>
     </div>
   </div>
-</div>
+</nav>

@@ -68,6 +68,10 @@ export default defineConfig({
 		viewport: { width: 1280, height: 720 }
 	},
 
+	// Snapshot path template (D3 - Centralized screenshots directory)
+	// Organizes snapshots by test file in tests/e2e/__screenshots__/
+	snapshotPathTemplate: 'tests/e2e/__screenshots__/{testFilePath}/{arg}{ext}',
+
 	// Configure projects for different test scenarios
 	projects: [
 		{
@@ -103,7 +107,8 @@ export default defineConfig({
 		// Ensure the build has access to required environment variables
 		env: {
 			...process.env,
-			PUBLIC_CLERK_PUBLISHABLE_KEY: process.env.PUBLIC_CLERK_PUBLISHABLE_KEY || 'pk_test_placeholder'
+			PUBLIC_CLERK_PUBLISHABLE_KEY: process.env.PUBLIC_CLERK_PUBLISHABLE_KEY || 'pk_test_placeholder',
+			VITE_CLERK_MOCK_MODE: 'false'
 		}
 	}
 });

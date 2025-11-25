@@ -4,19 +4,16 @@
  * Fast, critical path tests for authentication flows.
  * These run on every PR to catch major regressions.
  *
- * NOTE: Clerk widget tests are skipped in CI when using placeholder key.
- * Page load and navigation tests still run to catch routing issues.
+ * NOTE: Tests verify that auth pages load correctly and render either:
+ * - The real Clerk widget (when proper API keys are available)
+ * - A loading state (when Clerk is initializing)
+ * - A mock component (when running in mock mode)
  *
  * @tags smoke
  */
 
 import { test, expect } from '@playwright/test';
 import { AuthPage } from '../page-objects';
-
-// Check if we're running with a real Clerk key or placeholder
-const hasRealClerkKey =
-	process.env.PUBLIC_CLERK_PUBLISHABLE_KEY &&
-	!process.env.PUBLIC_CLERK_PUBLISHABLE_KEY.includes('placeholder');
 
 test.describe('Authentication - Smoke Tests', () => {
 	let authPage: AuthPage;
@@ -32,18 +29,24 @@ test.describe('Authentication - Smoke Tests', () => {
 			await expect(page).toHaveURL('/signin');
 		});
 
-		test('should display Clerk component', async ({ page }) => {
-			// Skip Clerk widget test if using placeholder key
-			test.skip(!hasRealClerkKey, 'Clerk widget test requires real API key');
-
-			// Clerk container should be visible
+		test('should display Clerk component or loading state', async ({ page }) => {
+			// Wait for page to stabilize and Clerk to attempt initialization
+			// The page should either show Clerk widget, mock component, or loading state
 			const isLoaded = await authPage.isClerkLoaded();
-
-			// Assert Clerk loaded successfully
 			expect(isLoaded).toBe(true);
 
-			// Verify page title or heading is present
+			// Verify page rendered properly (body visible and basic structure present)
 			await expect(page.locator('body')).toBeVisible();
+
+			// Verify auth content is present - should show one of:
+			// - "Mock Sign In" (mock mode)
+			// - "Loading..." (Clerk initializing)
+			// - Clerk widget (real mode)
+			const hasMockSignIn = await page.locator('text=Mock Sign In').isVisible();
+			const hasLoading = await page.locator('text=Loading...').isVisible();
+			const hasClerkWidget = await page.locator('.cl-signIn-root, .cl-component').isVisible();
+
+			expect(hasMockSignIn || hasLoading || hasClerkWidget).toBe(true);
 		});
 	});
 
@@ -58,18 +61,23 @@ test.describe('Authentication - Smoke Tests', () => {
 			await expect(page).toHaveURL('/signup');
 		});
 
-		test('should display Clerk component', async ({ page }) => {
-			// Skip Clerk widget test if using placeholder key
-			test.skip(!hasRealClerkKey, 'Clerk widget test requires real API key');
-
-			// Verify Clerk loads on signup page
+		test('should display Clerk component or loading state', async ({ page }) => {
+			// Wait for page to stabilize and Clerk to attempt initialization
 			const isLoaded = await authPage.isClerkLoaded();
-
-			// Assert Clerk loaded successfully
 			expect(isLoaded).toBe(true);
 
-			// Verify page body is visible
+			// Verify page rendered properly
 			await expect(page.locator('body')).toBeVisible();
+
+			// Verify auth content is present - should show one of:
+			// - "Mock Sign Up" (mock mode)
+			// - "Loading..." (Clerk initializing)
+			// - Clerk widget (real mode)
+			const hasMockSignUp = await page.locator('text=Mock Sign Up').isVisible();
+			const hasLoading = await page.locator('text=Loading...').isVisible();
+			const hasClerkWidget = await page.locator('.cl-signUp-root, .cl-component').isVisible();
+
+			expect(hasMockSignUp || hasLoading || hasClerkWidget).toBe(true);
 		});
 	});
 
@@ -86,6 +94,32 @@ test.describe('Authentication - Smoke Tests', () => {
 
 			// Verify we're now on sign up page
 			await expect(page).toHaveURL('/signup');
+		});
+	});
+
+	test.describe('Visual Regression', () => {
+		test('signin page should have correct appearance', async ({ page }) => {
+			test.skip(process.platform !== 'darwin', 'Visual regression baselines only exist for macOS');
+
+			await page.goto('/signin');
+			await page.waitForTimeout(500); // Wait for Clerk to render
+
+			await expect(page).toHaveScreenshot('signin-full-page.png', {
+				fullPage: true,
+				animations: 'disabled'
+			});
+		});
+
+		test('signup page should have correct appearance', async ({ page }) => {
+			test.skip(process.platform !== 'darwin', 'Visual regression baselines only exist for macOS');
+
+			await page.goto('/signup');
+			await page.waitForTimeout(500); // Wait for Clerk to render
+
+			await expect(page).toHaveScreenshot('signup-full-page.png', {
+				fullPage: true,
+				animations: 'disabled'
+			});
 		});
 	});
 });

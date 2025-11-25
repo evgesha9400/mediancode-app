@@ -44,14 +44,6 @@ test.describe('Landing Page - Full Suite', () => {
 			await expect(landingPage.heroSubmitButton).toBeEnabled();
 		});
 
-		test('should have correct visual appearance', async ({ page }) => {
-			// Skip on non-darwin platforms until cross-platform baselines exist
-			test.skip(process.platform !== 'darwin', 'Visual regression baselines only exist for macOS');
-
-			// Visual regression test for hero section
-			// Baseline: landing.spec.ts-snapshots/hero-heading-{project}-{platform}.png
-			await expect(landingPage.heroHeading).toHaveScreenshot('hero-heading.png');
-		});
 	});
 
 	test.describe('Navigation', () => {
@@ -62,28 +54,26 @@ test.describe('Landing Page - Full Suite', () => {
 			// Mobile menu toggle should be visible
 			await expect(landingPage.mobileMenuToggle).toBeVisible();
 
+			// Mobile menu content should be hidden initially
+			const mobileMenuContent = page.locator('.md\\:hidden.bg-white.border-t');
+			await expect(mobileMenuContent).toBeHidden();
+
 			// Click to open mobile menu
 			await landingPage.toggleMobileMenu();
 
-			// Mobile sign in should be visible
-			await expect(landingPage.mobileMenuSignIn).toBeVisible();
+			// Mobile menu content should now be visible with navigation links
+			await expect(mobileMenuContent).toBeVisible();
+			await expect(page.locator('a[href="#features"]').last()).toBeVisible();
 
 			// Click to close mobile menu
 			await landingPage.toggleMobileMenu();
 
-			// Mobile sign in should be hidden
-			await expect(landingPage.mobileMenuSignIn).not.toBeVisible();
+			// Mobile menu should be hidden again
+			await expect(mobileMenuContent).toBeHidden();
 		});
 
-		test('should navigate to sign in from mobile menu', async ({ page }) => {
-			// Set mobile viewport
-			await page.setViewportSize({ width: 375, height: 667 });
-
-			await landingPage.navigateToSignInViaMobile();
-
-			// Should be on sign in page
-			await expect(page).toHaveURL('/signin');
-		});
+		// NOTE: Mobile users are intentionally blocked from the app (/mobile-blocked)
+		// so there is no sign-in link in the mobile menu - this is by design.
 	});
 
 	test.describe('Features Section', () => {
@@ -95,16 +85,6 @@ test.describe('Landing Page - Full Suite', () => {
 			expect(count).toBeGreaterThan(0);
 		});
 
-		test('should have correct visual appearance', async ({ page }) => {
-			// Skip on non-darwin platforms until cross-platform baselines exist
-			test.skip(process.platform !== 'darwin', 'Visual regression baselines only exist for macOS');
-
-			await landingPage.scrollToSection('features');
-
-			// Visual regression for features section
-			// Baseline: landing.spec.ts-snapshots/features-section-{project}-{platform}.png
-			await expect(landingPage.featuresSection).toHaveScreenshot('features-section.png');
-		});
 	});
 
 	test.describe('How It Works Section', () => {

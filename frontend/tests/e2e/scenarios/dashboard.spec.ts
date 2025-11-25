@@ -71,14 +71,6 @@ test.describe('Dashboard - Full Suite', () => {
 			expect(cardText).toBeTruthy();
 		});
 
-		test('should have correct visual appearance', async ({ page }) => {
-			// Skip on non-darwin platforms until cross-platform baselines exist
-			test.skip(process.platform !== 'darwin', 'Visual regression baselines only exist for macOS');
-
-			// Visual regression for stat cards
-			const statsContainer = page.locator('.grid').first();
-			await expect(statsContainer).toHaveScreenshot('stat-cards.png');
-		});
 	});
 
 	test.describe('Navigation', () => {
@@ -124,13 +116,41 @@ test.describe('Dashboard - Full Suite', () => {
 		});
 	});
 
-	test.describe('Full Page', () => {
-		test('should have correct full page appearance', async ({ page }) => {
-			// Skip on non-darwin platforms until cross-platform baselines exist
+	test.describe('Visual Regression', () => {
+		test('dashboard should have correct appearance', async ({ page }) => {
 			test.skip(process.platform !== 'darwin', 'Visual regression baselines only exist for macOS');
 
-			// Take full page screenshot for visual regression
 			await expect(page).toHaveScreenshot('dashboard-full-page.png', {
+				fullPage: true,
+				animations: 'disabled'
+			});
+		});
+
+		test('field-registry should have correct appearance', async ({ page }) => {
+			test.skip(process.platform !== 'darwin', 'Visual regression baselines only exist for macOS');
+
+			await page.goto('/field-registry');
+			await expect(page).toHaveScreenshot('field-registry-full-page.png', {
+				fullPage: true,
+				animations: 'disabled'
+			});
+		});
+
+		test('types should have correct appearance', async ({ page }) => {
+			test.skip(process.platform !== 'darwin', 'Visual regression baselines only exist for macOS');
+
+			await page.goto('/types');
+			await expect(page).toHaveScreenshot('types-full-page.png', {
+				fullPage: true,
+				animations: 'disabled'
+			});
+		});
+
+		test('validators should have correct appearance', async ({ page }) => {
+			test.skip(process.platform !== 'darwin', 'Visual regression baselines only exist for macOS');
+
+			await page.goto('/validators');
+			await expect(page).toHaveScreenshot('validators-full-page.png', {
 				fullPage: true,
 				animations: 'disabled'
 			});

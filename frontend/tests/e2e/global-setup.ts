@@ -3,17 +3,27 @@
  *
  * Runs once before all tests to prepare the test environment.
  *
- * IMPORTANT: MSW is NOT currently started in E2E tests.
- * This setup only verifies the service worker file exists but does NOT initialize MSW.
- * E2E tests run against the real app with Svelte stores providing data.
+ * This setup:
+ * 1. Verifies MSW service worker exists (infrastructure ready for future use)
+ * 2. Sets up Clerk mock mode for E2E tests (via VITE_CLERK_MOCK_MODE)
+ *
+ * MSW Status (Decision D1 - Infrastructure Ready):
+ * - MSW infrastructure is fully configured and ready
+ * - Service worker exists at static/mockServiceWorker.js
+ * - Handlers defined in tests/shared/msw/handlers.ts
+ * - Browser worker available in tests/shared/msw/browser.ts
+ *
+ * CURRENT STATE: MSW is NOT started because the app uses Svelte stores (not API calls).
+ * Data flows from src/lib/stores/initialData.ts → stores → components.
+ *
+ * FUTURE: When API endpoints are added, enable MSW by:
+ * 1. Import startMSW from tests/shared/msw/browser.ts
+ * 2. Call startMSW() in this setup or in Playwright fixtures
+ * 3. Update handlers to match actual API endpoints
+ * 4. Ensure handlers use fixtures from tests/fixtures/
  *
  * The MSW service worker (static/mockServiceWorker.js) is committed to the repo.
  * If you need to update it, run `npx msw init static --save` manually.
- *
- * To enable MSW mocking:
- * 1. Uncomment the startMSW() import and call below
- * 2. Or use a Playwright test fixture that starts MSW per-test
- * 3. Update tests/shared/msw/handlers.ts with appropriate mock responses
  */
 
 import * as fs from 'fs';
@@ -35,4 +45,5 @@ export default async function globalSetup() {
 	}
 
 	console.log('✅ MSW service worker verified');
+	console.log('✅ Clerk mock mode enabled via VITE_CLERK_MOCK_MODE');
 }

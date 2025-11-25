@@ -53,6 +53,21 @@ test.describe('Mobile Blocked Page - Smoke Tests', () => {
 	});
 });
 
+test.describe('Visual Regression', () => {
+	test.use(mobileConfig);
+
+	test('mobile-blocked page should have correct appearance', async ({ page }) => {
+		test.skip(process.platform !== 'darwin', 'Visual regression baselines only exist for macOS');
+
+		await page.goto('/mobile-blocked');
+
+		await expect(page).toHaveScreenshot('mobile-blocked-full-page.png', {
+			fullPage: true,
+			animations: 'disabled'
+		});
+	});
+});
+
 test.describe('Mobile Detection', () => {
 	// Use mobile configuration for this test block as well
 	test.use(mobileConfig);

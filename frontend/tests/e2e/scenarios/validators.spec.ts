@@ -1,0 +1,354 @@
+/**
+ * Validators Feature Tests
+ *
+ * Comprehensive E2E tests for the validators page functionality.
+ * Tests search, filter, sort, view details drawer, and delete operations.
+ * Note: Only custom validators can be deleted. Inline validators are read-only.
+ *
+ * @tags full
+ */
+
+import { test, expect } from '@playwright/test';
+import { ValidatorsPage } from '../page-objects/ValidatorsPage';
+
+test.describe('Validators - Feature Tests', () => {
+	let validatorsPage: ValidatorsPage;
+
+	test.beforeEach(async ({ page }) => {
+		validatorsPage = new ValidatorsPage(page);
+		await validatorsPage.goto();
+	});
+
+	test.describe('Page Load', () => {
+		test('should display validators page with title', async () => {
+			await expect(validatorsPage.pageTitle).toBeVisible();
+		});
+
+		test('should display table with validators', async () => {
+			await expect(validatorsPage.table).toBeVisible();
+			const rowCount = await validatorsPage.getRowCount();
+			expect(rowCount).toBeGreaterThan(0);
+		});
+
+		test('should display search input', async () => {
+			await expect(validatorsPage.searchInput).toBeVisible();
+		});
+
+		test('should have add validator button disabled', async () => {
+			await expect(validatorsPage.addValidatorButton).toBeVisible();
+			const isDisabled = await validatorsPage.isAddValidatorDisabled();
+			expect(isDisabled).toBe(true);
+		});
+	});
+
+	test.describe('Search', () => {
+		test('should filter validators by name', async () => {
+			const initialCount = await validatorsPage.getRowCount();
+
+			await validatorsPage.search('length');
+
+			const filteredCount = await validatorsPage.getRowCount();
+			expect(filteredCount).toBeLessThanOrEqual(initialCount);
+			expect(filteredCount).toBeGreaterThan(0);
+
+			// Verify matching results contain search term
+			const names = await validatorsPage.getVisibleValidatorNames();
+			for (const name of names) {
+				expect(name.toLowerCase()).toContain('length');
+			}
+		});
+
+		test('should show empty state for no results', async () => {
+			await validatorsPage.search('xyznonexistent123');
+
+			const isEmpty = await validatorsPage.isEmptyStateVisible();
+			expect(isEmpty).toBe(true);
+		});
+
+		test('should restore results when clearing search', async () => {
+			const initialCount = await validatorsPage.getRowCount();
+
+			await validatorsPage.search('min');
+			await validatorsPage.clearSearch();
+
+			const restoredCount = await validatorsPage.getRowCount();
+			expect(restoredCount).toBe(initialCount);
+		});
+	});
+
+	test.describe('View Details (Drawer)', () => {
+		test('should open drawer when clicking a row', async () => {
+			const names = await validatorsPage.getVisibleValidatorNames();
+			expect(names.length).toBeGreaterThan(0);
+
+			await validatorsPage.clickRow(names[0]);
+
+			const isOpen = await validatorsPage.isDrawerOpen();
+			expect(isOpen).toBe(true);
+		});
+
+		test('should display validator details in drawer', async () => {
+			const names = await validatorsPage.getVisibleValidatorNames();
+			await validatorsPage.clickRow(names[0]);
+
+			const validatorName = await validatorsPage.getValidatorName();
+			expect(validatorName).toBe(names[0]);
+		});
+
+		test('should display validator type in drawer', async () => {
+			const names = await validatorsPage.getVisibleValidatorNames();
+			await validatorsPage.clickRow(names[0]);
+
+			const validatorType = await validatorsPage.getValidatorType();
+			expect(['inline', 'custom']).toContain(validatorType.toLowerCase());
+		});
+
+		test('should display validator category in drawer', async () => {
+			const names = await validatorsPage.getVisibleValidatorNames();
+			await validatorsPage.clickRow(names[0]);
+
+			const category = await validatorsPage.getValidatorCategory();
+			expect(category).toBeTruthy();
+		});
+
+		test('should close drawer when clicking close button', async () => {
+			const names = await validatorsPage.getVisibleValidatorNames();
+			await validatorsPage.clickRow(names[0]);
+
+			await validatorsPage.closeDrawer();
+
+			const isOpen = await validatorsPage.isDrawerOpen();
+			expect(isOpen).toBe(false);
+		});
+
+		test('should have pydantic docs link', async () => {
+			const names = await validatorsPage.getVisibleValidatorNames();
+			await validatorsPage.clickRow(names[0]);
+
+			await expect(validatorsPage.pydanticDocsLink).toBeVisible();
+		});
+	});
+
+	test.describe('Delete Validator', () => {
+		test('should show delete button only for custom validators', async () => {
+			// Get all validators and find a custom one
+			const names = await validatorsPage.getVisibleValidatorNames();
+			const types = await validatorsPage.getVisibleTypes();
+
+			// Find index of a custom validator
+			const customIndex = types.findIndex(t => t === 'custom');
+
+			if (customIndex >= 0 && names[customIndex]) {
+				await validatorsPage.clickRow(names[customIndex]);
+
+				// Delete button should be visible for custom validators
+				const isVisible = await validatorsPage.isDeleteButtonVisible();
+				expect(isVisible).toBe(true);
+			}
+		});
+
+		test('should not show delete button for inline validators', async () => {
+			// Get all validators and find an inline one
+			const names = await validatorsPage.getVisibleValidatorNames();
+			const types = await validatorsPage.getVisibleTypes();
+
+			// Find index of an inline validator
+			const inlineIndex = types.findIndex(t => t === 'inline');
+
+			if (inlineIndex >= 0 && names[inlineIndex]) {
+				await validatorsPage.clickRow(names[inlineIndex]);
+
+				// Delete button should not be visible for inline validators
+				const isVisible = await validatorsPage.isDeleteButtonVisible();
+				expect(isVisible).toBe(false);
+			}
+		});
+
+		test('should show delete confirmation when clicking delete', async () => {
+			// Get all validators and find a custom one
+			const names = await validatorsPage.getVisibleValidatorNames();
+			const types = await validatorsPage.getVisibleTypes();
+
+			// Find index of a custom validator
+			const customIndex = types.findIndex(t => t === 'custom');
+
+			if (customIndex >= 0 && names[customIndex]) {
+				await validatorsPage.clickRow(names[customIndex]);
+
+				const isDeleteEnabled = await validatorsPage.isDeleteEnabled();
+
+				if (isDeleteEnabled) {
+					await validatorsPage.clickDelete();
+					await expect(validatorsPage.deleteConfirmButton).toBeVisible();
+				}
+			}
+		});
+
+		test('should cancel delete when clicking cancel', async () => {
+			// Get all validators and find a custom one
+			const names = await validatorsPage.getVisibleValidatorNames();
+			const types = await validatorsPage.getVisibleTypes();
+
+			// Find index of a custom validator
+			const customIndex = types.findIndex(t => t === 'custom');
+
+			if (customIndex >= 0 && names[customIndex]) {
+				await validatorsPage.clickRow(names[customIndex]);
+
+				const isDeleteEnabled = await validatorsPage.isDeleteEnabled();
+
+				if (isDeleteEnabled) {
+					await validatorsPage.clickDelete();
+					await validatorsPage.cancelDelete();
+
+					// Confirm button should no longer be visible
+					await expect(validatorsPage.deleteConfirmButton).not.toBeVisible();
+				}
+			}
+		});
+	});
+
+	test.describe('Sorting', () => {
+		test('should sort by validator name', async () => {
+			await validatorsPage.sortByColumn('name');
+
+			const names = await validatorsPage.getVisibleValidatorNames();
+			expect(names.length).toBeGreaterThan(1);
+
+			// Verify ascending order
+			const sortedNames = [...names].sort((a, b) => a.localeCompare(b));
+			expect(names).toEqual(sortedNames);
+		});
+
+		test('should reverse sort on second click', async () => {
+			// First click - ascending
+			await validatorsPage.sortByColumn('name');
+			const ascNames = await validatorsPage.getVisibleValidatorNames();
+
+			// Second click - descending
+			await validatorsPage.sortByColumn('name');
+			const descNames = await validatorsPage.getVisibleValidatorNames();
+
+			// Verify descending order (reversed)
+			expect(descNames).toEqual([...ascNames].reverse());
+		});
+
+		test('should sort by type', async () => {
+			await validatorsPage.sortByColumn('type');
+
+			const types = await validatorsPage.getVisibleTypes();
+			expect(types.length).toBeGreaterThan(0);
+
+			// Verify ascending order
+			const sortedTypes = [...types].sort((a, b) => a.localeCompare(b));
+			expect(types).toEqual(sortedTypes);
+		});
+
+		test('should sort by category', async () => {
+			await validatorsPage.sortByColumn('category');
+
+			const categories = await validatorsPage.getVisibleCategories();
+			expect(categories.length).toBeGreaterThan(0);
+
+			// Verify ascending order
+			const sortedCategories = [...categories].sort((a, b) => a.localeCompare(b));
+			expect(categories).toEqual(sortedCategories);
+		});
+	});
+
+	test.describe('Filters', () => {
+		test('should open filter panel', async () => {
+			await validatorsPage.openFilters();
+			await expect(validatorsPage.filterPanel).toBeVisible();
+		});
+
+		test('should filter by type (inline)', async () => {
+			const initialCount = await validatorsPage.getRowCount();
+
+			await validatorsPage.openFilters();
+			await validatorsPage.toggleFilterCheckbox('Inline');
+
+			// Wait for filter to apply
+			await validatorsPage.page.waitForTimeout(300);
+
+			const filteredCount = await validatorsPage.getRowCount();
+			expect(filteredCount).toBeLessThanOrEqual(initialCount);
+
+			// Verify all visible validators are inline
+			const types = await validatorsPage.getVisibleTypes();
+			for (const type of types) {
+				expect(type).toBe('inline');
+			}
+		});
+
+		test('should filter by type (custom)', async () => {
+			await validatorsPage.openFilters();
+			await validatorsPage.toggleFilterCheckbox('Custom');
+
+			// Wait for filter to apply
+			await validatorsPage.page.waitForTimeout(300);
+
+			// Verify all visible validators are custom
+			const types = await validatorsPage.getVisibleTypes();
+			for (const type of types) {
+				expect(type).toBe('custom');
+			}
+		});
+
+		test('should clear filters', async () => {
+			const initialCount = await validatorsPage.getRowCount();
+
+			await validatorsPage.openFilters();
+			await validatorsPage.toggleFilterCheckbox('Inline');
+
+			await validatorsPage.clearFilters();
+
+			// Wait for filter to clear
+			await validatorsPage.page.waitForTimeout(300);
+
+			const restoredCount = await validatorsPage.getRowCount();
+			expect(restoredCount).toBe(initialCount);
+		});
+	});
+
+	test.describe('Field References Navigation', () => {
+		test('should display field references in drawer', async () => {
+			// Find a validator that has field references
+			const names = await validatorsPage.getVisibleValidatorNames();
+
+			for (const name of names) {
+				await validatorsPage.clickRow(name);
+				const refCount = await validatorsPage.getFieldReferencesCount();
+
+				if (refCount > 0) {
+					// Found a validator with references
+					expect(refCount).toBeGreaterThan(0);
+					break;
+				}
+
+				await validatorsPage.closeDrawer();
+			}
+		});
+
+		test('should navigate to field when clicking reference', async ({ page }) => {
+			// Find a validator that has field references
+			const names = await validatorsPage.getVisibleValidatorNames();
+
+			for (const name of names) {
+				await validatorsPage.clickRow(name);
+				const refCount = await validatorsPage.getFieldReferencesCount();
+
+				if (refCount > 0) {
+					// Click the first field reference
+					await validatorsPage.clickFieldReference(0);
+
+					// Should navigate to field-registry page
+					await expect(page).toHaveURL(/\/field-registry/);
+					break;
+				}
+
+				await validatorsPage.closeDrawer();
+			}
+		});
+	});
+});
