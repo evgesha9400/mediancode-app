@@ -74,8 +74,8 @@ const abstractTypes: TypeBase[] = [
 	{
 		name: 'collection',
 		category: 'abstract',
-		pythonType: 'List | Set | Tuple',
-		description: 'Abstract grouping for collection types (lists, arrays, sets)',
+		pythonType: 'List | Set | Dict | Tuple',
+		description: 'Abstract grouping for collection types (lists, sets, dicts, tuples)',
 		validatorCategories: ['collection']
 	}
 ];

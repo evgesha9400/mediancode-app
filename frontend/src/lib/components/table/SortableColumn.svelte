@@ -21,7 +21,7 @@
   let ariaLabel = $derived(getMultiSortAriaLabel(column, label, sorts));
 </script>
 
-<th scope="col" class="px-6 py-3 text-left text-xs text-mono-500 uppercase tracking-wider font-medium">
+<th scope="col" class="px-6 py-3 text-left text-xs text-mono-500 tracking-wider font-medium">
   <button
     type="button"
     onclick={handleClick}

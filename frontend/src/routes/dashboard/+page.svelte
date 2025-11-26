@@ -1,9 +1,11 @@
 <script lang="ts">
-  import { fieldsStore, getTotalFieldCount, getTotalApiCount } from '$lib/stores/fields';
-  import { validatorsStore, getTotalValidatorCount } from '$lib/stores/validators';
+  import { getTotalFieldCount, getTotalApiCount } from '$lib/stores/fields';
+  import { getTotalValidatorCount } from '$lib/stores/validators';
+  import { getTotalTypeCount } from '$lib/stores/types';
   import { clerkState } from '$lib/clerk';
   import { DashboardLayout, StatCard } from '$lib/components';
 
+  $: totalTypes = getTotalTypeCount();
   $: totalFields = getTotalFieldCount();
   $: totalValidators = getTotalValidatorCount();
   $: totalApis = getTotalApiCount();
@@ -20,14 +22,32 @@
   </div>
 
   <!-- Main Dashboard Content -->
-  <div class="flex-1 overflow-auto p-6">
-    <!-- Stat Cards -->
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
-      <StatCard title="Total Fields" value={totalFields} icon="fa-table-list" trend="+12%" />
-      <StatCard title="Active APIs" value={totalApis} icon="fa-code" trend="+8%" />
-      <StatCard title="Validators" value={totalValidators} icon="fa-check-circle" trend="+5%" />
-      <StatCard title="Credits Available" value={2450} icon="fa-coins" />
-      <StatCard title="Credits Used" value={1550} icon="fa-chart-line" />
-    </div>
+  <div class="flex-1 overflow-auto p-6 space-y-8">
+    <!-- Core Components Section -->
+    <section>
+      <h2 class="text-xs uppercase tracking-wider text-mono-400 mb-3 font-medium">Core Components</h2>
+      <div class="flex flex-wrap gap-6">
+        <div class="w-40"><StatCard title="Types" value={totalTypes} icon="fa-shapes" /></div>
+        <div class="w-40"><StatCard title="Validators" value={totalValidators} icon="fa-check-circle" /></div>
+        <div class="w-40"><StatCard title="Fields" value={totalFields} icon="fa-table-list" /></div>
+      </div>
+    </section>
+
+    <!-- APIs Section -->
+    <section>
+      <h2 class="text-xs uppercase tracking-wider text-mono-400 mb-3 font-medium">APIs</h2>
+      <div class="flex flex-wrap gap-6">
+        <div class="w-40"><StatCard title="Generated APIs" value={totalApis} icon="fa-code" /></div>
+      </div>
+    </section>
+
+    <!-- Account Section -->
+    <section>
+      <h2 class="text-xs uppercase tracking-wider text-mono-400 mb-3 font-medium">Account</h2>
+      <div class="flex flex-wrap gap-6">
+        <div class="w-40"><StatCard title="Credits Available" value={2450} icon="fa-coins" /></div>
+        <div class="w-40"><StatCard title="Credits Used" value={1550} icon="fa-chart-line" /></div>
+      </div>
+    </section>
   </div>
 </DashboardLayout>
