@@ -45,7 +45,7 @@ export const initialFields: Field[] = [
 			{ name: 'max_length', params: { value: 255 } },
 			{ name: 'email_format' }
 		],
-		usedInApis: []
+		usedInApis: ['api-1', 'api-2']
 	},
 	{
 		id: 'field-2',
@@ -57,7 +57,7 @@ export const initialFields: Field[] = [
 			{ name: 'min_length', params: { value: 3 } },
 			{ name: 'max_length', params: { value: 50 } }
 		],
-		usedInApis: []
+		usedInApis: ['api-1']
 	},
 	{
 		id: 'field-3',
@@ -78,7 +78,7 @@ export const initialFields: Field[] = [
 		description: 'Unique identifier for user',
 		defaultValue: 'uuid.uuid4()',
 		validators: [],
-		usedInApis: []
+		usedInApis: ['api-1']
 	},
 	{
 		id: 'field-5',
@@ -96,7 +96,7 @@ export const initialFields: Field[] = [
 		description: 'Timestamp when the record was last updated',
 		defaultValue: 'datetime.now()',
 		validators: [],
-		usedInApis: []
+		usedInApis: ['api-1', 'api-2']
 	},
 	{
 		id: 'field-7',
@@ -114,7 +114,7 @@ export const initialFields: Field[] = [
 		description: 'Current status of the entity',
 		defaultValue: "'active'",
 		validators: [],
-		usedInApis: []
+		usedInApis: ['api-1', 'api-2', 'api-3']
 	},
 	{
 		id: 'field-9',
