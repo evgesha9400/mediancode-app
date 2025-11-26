@@ -85,7 +85,6 @@ The scope describes the part of the codebase affected:
 - Separate from body with a blank line
 - Include breaking change notices
 - Reference closed issues
-- Include co-authored-by for pair programming
 
 ## Examples
 

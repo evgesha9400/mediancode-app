@@ -7,7 +7,7 @@
  * NOTE: The dashboard UI displays values from Svelte stores (src/lib/stores/fields.ts,
  * src/lib/stores/validators.ts), not from test fixtures. The expected values are:
  * - Total Fields: 10 (from initialFields in fields.ts)
- * - Active APIs: 0 (fields have empty usedInApis arrays)
+ * - Active APIs: 3 (unique APIs: api-1, api-2, api-3 from usedInApis arrays)
  * - Validators: 14 (11 inline + 3 custom from validators.ts)
  *
  * IMPORTANT: Visual regression baselines currently only exist for macOS (darwin).
@@ -23,7 +23,7 @@ import { DashboardPage } from '../page-objects';
 // Expected values from actual stores (not fixtures)
 // These match the initial data in src/lib/stores/fields.ts and validators.ts
 const EXPECTED_FIELD_COUNT = 10;
-const EXPECTED_API_COUNT = 0;
+const EXPECTED_API_COUNT = 3; // 3 unique APIs: api-1, api-2, api-3
 const EXPECTED_VALIDATOR_COUNT = 14;
 
 test.describe('Dashboard - Full Suite', () => {
