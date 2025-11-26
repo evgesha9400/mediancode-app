@@ -178,9 +178,9 @@ describe('Dashboard Page - Store Integration', () => {
 
 		it('provides expected initial API count for stat card', () => {
 			// Dashboard shows this value in "Active APIs" stat card
-			// Initial fields have empty usedInApis arrays
+			// Fields reference 3 unique APIs: api-1, api-2, api-3
 			const apiCount = getTotalApiCount();
-			expect(apiCount).toBe(0);
+			expect(apiCount).toBe(3);
 		});
 	});
 });
