@@ -52,17 +52,6 @@
       ></textarea>
     </div>
     <div>
-      <label class="block text-sm text-mono-700 mb-1" for="api-metadata-base-url">Base URL</label>
-      <input
-        id="api-metadata-base-url"
-        type="text"
-        value={metadata.baseUrl}
-        oninput={(e) => handleInput('baseUrl', e.currentTarget.value)}
-        placeholder="/api/v1"
-        class="w-full px-3 py-1.5 border border-mono-300 rounded-md focus:ring-2 focus:ring-mono-400 focus:border-transparent"
-      />
-    </div>
-    <div>
       <label class="block text-sm text-mono-700 mb-1" for="api-metadata-server-url">Server URL</label>
       <input
         id="api-metadata-server-url"
@@ -70,6 +59,17 @@
         value={metadata.serverUrl}
         oninput={(e) => handleInput('serverUrl', e.currentTarget.value)}
         placeholder="https://api.example.com"
+        class="w-full px-3 py-1.5 border border-mono-300 rounded-md focus:ring-2 focus:ring-mono-400 focus:border-transparent"
+      />
+    </div>
+    <div>
+      <label class="block text-sm text-mono-700 mb-1" for="api-metadata-base-url">Base URL</label>
+      <input
+        id="api-metadata-base-url"
+        type="text"
+        value={metadata.baseUrl}
+        oninput={(e) => handleInput('baseUrl', e.currentTarget.value)}
+        placeholder="/api/v1"
         class="w-full px-3 py-1.5 border border-mono-300 rounded-md focus:ring-2 focus:ring-mono-400 focus:border-transparent"
       />
     </div>
