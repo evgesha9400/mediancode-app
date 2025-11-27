@@ -24,6 +24,10 @@ dotenv.config();
  * - Dashboard stat cards use values from src/lib/stores/fields.ts and validators.ts
  * - Forms submit to real Formspree/Clerk endpoints (may need network)
  */
+const PREVIEW_HOST = '127.0.0.1';
+const PREVIEW_PORT = 4173;
+const DEFAULT_BASE_URL = `http://${PREVIEW_HOST}:${PREVIEW_PORT}`;
+
 export default defineConfig({
 	// Test directory
 	testDir: './tests/e2e',
@@ -53,7 +57,7 @@ export default defineConfig({
 	// Shared settings for all projects
 	use: {
 		// Base URL for navigation (must match webServer port)
-		baseURL: process.env.PLAYWRIGHT_BASE_URL || 'http://localhost:4173',
+		baseURL: process.env.PLAYWRIGHT_BASE_URL || DEFAULT_BASE_URL,
 
 		// Collect trace when retrying the failed test
 		trace: 'on-first-retry',
@@ -99,8 +103,8 @@ export default defineConfig({
 
 	// Web server configuration for local development
 	webServer: {
-		command: 'npm run build && npm run preview',
-		port: 4173,
+		command: `npm run build && npm run preview -- --host ${PREVIEW_HOST} --port ${PREVIEW_PORT}`,
+		port: PREVIEW_PORT,
 		reuseExistingServer: !process.env.CI,
 		stdout: 'ignore',
 		stderr: 'pipe',

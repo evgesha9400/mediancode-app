@@ -38,8 +38,9 @@ test.describe('Dashboard - Smoke Tests', () => {
 
 	test('should display stat cards', async () => {
 		// All stat cards should be visible
-		await expect(dashboardPage.totalFieldsCard).toBeVisible();
-		await expect(dashboardPage.activeApisCard).toBeVisible();
+		await expect(dashboardPage.typesCard).toBeVisible();
+		await expect(dashboardPage.fieldsCard).toBeVisible();
+		await expect(dashboardPage.generatedApisCard).toBeVisible();
 		await expect(dashboardPage.validatorsCard).toBeVisible();
 		await expect(dashboardPage.creditsAvailableCard).toBeVisible();
 		await expect(dashboardPage.creditsUsedCard).toBeVisible();

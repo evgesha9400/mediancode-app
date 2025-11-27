@@ -165,7 +165,7 @@ describe('Dashboard Page - Store Integration', () => {
 
 	describe('Dashboard Expected Values', () => {
 		it('provides expected initial field count for stat card', () => {
-			// Dashboard shows this value in "Total Fields" stat card
+			// Dashboard shows this value in "Fields" stat card
 			const fieldCount = getTotalFieldCount();
 			expect(fieldCount).toBe(10); // Based on initialFields in fields.ts
 		});
@@ -177,7 +177,7 @@ describe('Dashboard Page - Store Integration', () => {
 		});
 
 		it('provides expected initial API count for stat card', () => {
-			// Dashboard shows this value in "Active APIs" stat card
+			// Dashboard shows this value in "Generated APIs" stat card
 			// Fields reference 3 unique APIs: api-1, api-2, api-3
 			const apiCount = getTotalApiCount();
 			expect(apiCount).toBe(3);

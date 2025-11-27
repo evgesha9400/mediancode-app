@@ -10,6 +10,17 @@
 import { type Page, type Locator } from '@playwright/test';
 import { getStatCardTestId } from '../../../src/lib/utils/testIds';
 
+export const STAT_CARD_TITLES = {
+	types: 'Types',
+	validators: 'Validators',
+	fields: 'Fields',
+	generatedApis: 'Generated APIs',
+	creditsAvailable: 'Credits Available',
+	creditsUsed: 'Credits Used'
+} as const;
+
+type StatCardTitle = (typeof STAT_CARD_TITLES)[keyof typeof STAT_CARD_TITLES];
+
 export class DashboardPage {
 	readonly page: Page;
 
@@ -19,8 +30,9 @@ export class DashboardPage {
 
 	// Stat cards - use data-testid attributes
 	readonly statCards: Locator;
-	readonly totalFieldsCard: Locator;
-	readonly activeApisCard: Locator;
+	readonly typesCard: Locator;
+	readonly fieldsCard: Locator;
+	readonly generatedApisCard: Locator;
 	readonly validatorsCard: Locator;
 	readonly creditsAvailableCard: Locator;
 	readonly creditsUsedCard: Locator;
@@ -44,11 +56,12 @@ export class DashboardPage {
 
 		// Stat cards - use data-testid selectors for stability
 		this.statCards = page.locator('[data-testid^="stat-card-"]');
-		this.totalFieldsCard = page.locator('[data-testid="stat-card-total-fields"]');
-		this.activeApisCard = page.locator('[data-testid="stat-card-active-apis"]');
-		this.validatorsCard = page.locator('[data-testid="stat-card-validators"]');
-		this.creditsAvailableCard = page.locator('[data-testid="stat-card-credits-available"]');
-		this.creditsUsedCard = page.locator('[data-testid="stat-card-credits-used"]');
+		this.typesCard = this.getStatCardLocator(STAT_CARD_TITLES.types);
+		this.fieldsCard = this.getStatCardLocator(STAT_CARD_TITLES.fields);
+		this.generatedApisCard = this.getStatCardLocator(STAT_CARD_TITLES.generatedApis);
+		this.validatorsCard = this.getStatCardLocator(STAT_CARD_TITLES.validators);
+		this.creditsAvailableCard = this.getStatCardLocator(STAT_CARD_TITLES.creditsAvailable);
+		this.creditsUsedCard = this.getStatCardLocator(STAT_CARD_TITLES.creditsUsed);
 
 		// Sidebar - use href-based navigation links
 		this.sidebar = page.locator('nav, aside').first();
@@ -71,11 +84,14 @@ export class DashboardPage {
 	/**
 	 * Get stat card value by title
 	 */
-	async getStatCardValue(title: string): Promise<string> {
-		const testId = getStatCardTestId(title);
-		const card = this.page.locator(`[data-testid="${testId}"]`);
+	async getStatCardValue(title: StatCardTitle): Promise<string> {
+		const card = this.getStatCardLocator(title);
 		const value = await card.locator('[data-testid="stat-value"]').textContent();
 		return value?.trim() || '';
+	}
+
+	private getStatCardLocator(title: StatCardTitle): Locator {
+		return this.page.locator(`[data-testid="${getStatCardTestId(title)}"]`);
 	}
 
 	/**

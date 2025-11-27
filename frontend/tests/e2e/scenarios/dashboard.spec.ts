@@ -6,8 +6,8 @@
  *
  * NOTE: The dashboard UI displays values from Svelte stores (src/lib/stores/fields.ts,
  * src/lib/stores/validators.ts), not from test fixtures. The expected values are:
- * - Total Fields: 10 (from initialFields in fields.ts)
- * - Active APIs: 3 (unique APIs: api-1, api-2, api-3 from usedInApis arrays)
+ * - Fields: 10 (from initialFields in fields.ts)
+ * - Generated APIs: 3 (unique APIs: api-1, api-2, api-3 from usedInApis arrays)
  * - Validators: 14 (11 inline + 3 custom from validators.ts)
  *
  * IMPORTANT: Visual regression baselines currently only exist for macOS (darwin).
@@ -18,7 +18,7 @@
  */
 
 import { test, expect } from '@playwright/test';
-import { DashboardPage } from '../page-objects';
+import { DashboardPage, STAT_CARD_TITLES } from '../page-objects';
 
 // Expected values from actual stores (not fixtures)
 // These match the initial data in src/lib/stores/fields.ts and validators.ts
@@ -38,8 +38,8 @@ test.describe('Dashboard - Full Suite', () => {
 
 	test.describe('Stat Cards', () => {
 		test('should display correct field count from store', async () => {
-			// Total fields should match store initial data
-			const totalFieldsText = await dashboardPage.getStatCardValue('Total Fields');
+			// Field count should match store initial data
+			const totalFieldsText = await dashboardPage.getStatCardValue(STAT_CARD_TITLES.fields);
 
 			// Parse number from stat card (may include formatting)
 			const actualCount = parseInt(totalFieldsText.replace(/,/g, ''), 10);
@@ -48,15 +48,15 @@ test.describe('Dashboard - Full Suite', () => {
 
 		test('should display correct validator count from store', async () => {
 			// Validators count should match store data (11 inline + 3 custom)
-			const validatorsText = await dashboardPage.getStatCardValue('Validators');
+			const validatorsText = await dashboardPage.getStatCardValue(STAT_CARD_TITLES.validators);
 
 			const actualCount = parseInt(validatorsText.replace(/,/g, ''), 10);
 			expect(actualCount).toBe(EXPECTED_VALIDATOR_COUNT);
 		});
 
 		test('should display correct API count from store', async () => {
-			// Active APIs should match store data (0 - no fields have usedInApis populated)
-			const apisText = await dashboardPage.getStatCardValue('Active APIs');
+			// Generated APIs should match store data (unique usedInApis references)
+			const apisText = await dashboardPage.getStatCardValue(STAT_CARD_TITLES.generatedApis);
 
 			const actualCount = parseInt(apisText.replace(/,/g, ''), 10);
 			expect(actualCount).toBe(EXPECTED_API_COUNT);
@@ -64,7 +64,7 @@ test.describe('Dashboard - Full Suite', () => {
 
 		test('should have trend indicators on some cards', async () => {
 			// Check for trend indicators (if present in implementation)
-			const fieldsCard = dashboardPage.totalFieldsCard;
+			const fieldsCard = dashboardPage.fieldsCard;
 			const cardText = await fieldsCard.textContent();
 
 			// Verify card is present and has content

@@ -6,7 +6,7 @@
  */
 
 export { LandingPage } from './LandingPage';
-export { DashboardPage } from './DashboardPage';
+export { DashboardPage, STAT_CARD_TITLES } from './DashboardPage';
 export { AuthPage } from './AuthPage';
 export { MobileBlockedPage } from './MobileBlockedPage';
 export { FieldRegistryPage } from './FieldRegistryPage';

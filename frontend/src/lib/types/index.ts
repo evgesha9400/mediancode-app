@@ -73,3 +73,42 @@ export interface Toast {
   type: ToastType;
   duration: number;
 }
+
+// API Generator types
+export type HttpMethod = 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
+
+export interface ApiMetadata {
+  title: string;
+  version: string;
+  description: string;
+  baseUrl: string;
+  serverUrl: string;
+}
+
+export interface EndpointTag {
+  id: string;
+  name: string;
+  description: string;
+}
+
+export interface EndpointParameter {
+  id: string;
+  name: string;
+  type: string;
+  description: string;
+  required: boolean;
+}
+
+export interface ApiEndpoint {
+  id: string;
+  method: HttpMethod;
+  path: string;
+  description: string;
+  tagId?: string;
+  pathParams: EndpointParameter[];
+  queryParams: EndpointParameter[];
+  requestBody?: string;
+  responseBody: string;
+  useEnvelope: boolean;
+  expanded?: boolean;
+}
