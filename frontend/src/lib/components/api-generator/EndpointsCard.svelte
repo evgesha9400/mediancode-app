@@ -7,15 +7,15 @@
     endpoints: ApiEndpoint[];
     tags: EndpointTag[];
     onAdd: () => void;
-    onToggleExpand: (endpointId: string) => void;
-    onUpdate: (endpointId: string, updates: Partial<ApiEndpoint>) => void;
+    onClick: (endpointId: string) => void;
     onDelete: (endpointId: string) => void;
     onDuplicate: (endpointId: string) => void;
+    isEditing: (endpointId: string) => boolean;
   }
 
   interface Props extends EndpointsCardProps {}
 
-  let { endpoints, tags, onAdd, onToggleExpand, onUpdate, onDelete, onDuplicate }: Props = $props();
+  let { endpoints, tags, onAdd, onClick, onDelete, onDuplicate, isEditing }: Props = $props();
 </script>
 
 <CollapsibleCard title="API Endpoints" icon="fa-route">
@@ -40,10 +40,10 @@
         <EndpointItem
           {endpoint}
           {tags}
-          onToggle={() => onToggleExpand(endpoint.id)}
-          onUpdate={(updates) => onUpdate(endpoint.id, updates)}
-          onDelete={() => onDelete(endpoint.id)}
+          editing={isEditing(endpoint.id)}
+          onClick={() => onClick(endpoint.id)}
           onDuplicate={() => onDuplicate(endpoint.id)}
+          onDelete={() => onDelete(endpoint.id)}
         />
       {/each}
     </div>

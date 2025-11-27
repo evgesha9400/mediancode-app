@@ -5,6 +5,7 @@ export { default as TagsCard } from './TagsCard.svelte';
 export { default as EndpointsCard } from './EndpointsCard.svelte';
 export { default as EndpointItem } from './EndpointItem.svelte';
 export { default as ParameterRow } from './ParameterRow.svelte';
+export { default as ParameterEditor } from './ParameterEditor.svelte';
 export { default as ResponsePreview } from './ResponsePreview.svelte';
 
 // API Generator component types
@@ -14,4 +15,5 @@ export type { TagsCardProps } from './TagsCard.svelte';
 export type { EndpointsCardProps } from './EndpointsCard.svelte';
 export type { EndpointItemProps } from './EndpointItem.svelte';
 export type { ParameterRowProps } from './ParameterRow.svelte';
+export type { ParameterEditorProps } from './ParameterEditor.svelte';
 export type { ResponsePreviewProps } from './ResponsePreview.svelte';
