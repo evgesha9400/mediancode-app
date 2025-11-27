@@ -6,7 +6,6 @@
     DrawerContent,
     DrawerFooter,
     ApiMetadataCard,
-    TagsCard,
     EndpointItem,
     ParameterEditor,
     ResponsePreview
@@ -17,13 +16,10 @@
     endpointsStore,
     updateApiMetadata,
     addTag,
-    updateTag,
     deleteTag,
     addEndpoint,
     updateEndpoint,
-    deleteEndpoint,
-    getEndpointCountByTag,
-    deleteTagAndClearEndpoints
+    deleteEndpoint
   } from '$lib/stores/apis';
   import { showToast } from '$lib/stores/toasts';
   import type { ApiMetadata, EndpointTag, ApiEndpoint, EndpointParameter } from '$lib/types';
@@ -64,17 +60,6 @@
     return `param-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
   }
 
-  // Get tag name
-  function getTagName(tagId?: string): string | undefined {
-    if (!tagId) return undefined;
-    return tags.find(t => t.id === tagId)?.name;
-  }
-
-  // Check if endpoint is being edited
-  function isEditing(endpoint: ApiEndpoint): boolean {
-    return selectedEndpoint?.id === endpoint.id;
-  }
-
   // ============================================================================
   // Metadata Operations
   // ============================================================================
@@ -84,27 +69,82 @@
   }
 
   // ============================================================================
-  // Tag Operations
+  // Tag Operations (Inline)
   // ============================================================================
 
-  function handleAddTag(data: { name: string; description: string }) {
+  // Tag input state for combobox
+  let tagInputValue = $state('');
+  let tagDropdownOpen = $state(false);
+  let tagToDelete = $state<EndpointTag | null>(null);
+
+  // Check if input matches an existing tag exactly
+  let exactTagMatch = $derived(
+    tags.find(t => t.name.toLowerCase() === tagInputValue.toLowerCase().trim())
+  );
+
+  // Count endpoints using a tag
+  function getEndpointsUsingTag(tagId: string): number {
+    return endpoints.filter(e => e.tagId === tagId).length;
+  }
+
+  function handleTagSelect(tagId: string | undefined) {
+    if (!editedEndpoint) return;
+    editedEndpoint = { ...editedEndpoint, tagId };
+    tagInputValue = tagId ? (tags.find(t => t.id === tagId)?.name || '') : '';
+    tagDropdownOpen = false;
+  }
+
+  function handleCreateTag() {
+    if (!editedEndpoint || !tagInputValue.trim() || exactTagMatch) return;
+
     const newTag: EndpointTag = {
       id: generateId('tag'),
-      name: data.name,
-      description: data.description
+      name: tagInputValue.trim(),
+      description: ''
     };
     addTag(newTag);
-    showToast('Tag created successfully', 'success');
+    editedEndpoint = { ...editedEndpoint, tagId: newTag.id };
+    tagDropdownOpen = false;
+    showToast(`Tag "${newTag.name}" created`, 'success');
   }
 
-  function handleEditTag(tagId: string, data: { name: string; description: string }) {
-    updateTag(tagId, data);
-    showToast('Tag updated successfully', 'success');
+  function handleDeleteTagClick(e: Event, tag: EndpointTag) {
+    e.stopPropagation();
+    tagToDelete = tag;
   }
 
-  function handleDeleteTag(tagId: string) {
-    deleteTagAndClearEndpoints(tagId);
-    showToast('Tag deleted successfully', 'success');
+  function confirmDeleteTag() {
+    if (!tagToDelete) return;
+
+    const tagName = tagToDelete.name;
+    const affectedCount = getEndpointsUsingTag(tagToDelete.id);
+
+    // Remove tag from all endpoints that use it
+    endpoints.forEach(endpoint => {
+      if (endpoint.tagId === tagToDelete!.id) {
+        updateEndpoint(endpoint.id, { ...endpoint, tagId: undefined });
+      }
+    });
+
+    // If current endpoint uses this tag, clear it
+    if (editedEndpoint?.tagId === tagToDelete.id) {
+      editedEndpoint = { ...editedEndpoint, tagId: undefined };
+      tagInputValue = '';
+    }
+
+    // Delete the tag
+    deleteTag(tagToDelete.id);
+    tagToDelete = null;
+
+    if (affectedCount > 0) {
+      showToast(`Tag "${tagName}" deleted and removed from ${affectedCount} endpoint${affectedCount > 1 ? 's' : ''}`, 'success');
+    } else {
+      showToast(`Tag "${tagName}" deleted`, 'success');
+    }
+  }
+
+  function cancelDeleteTag() {
+    tagToDelete = null;
   }
 
   // ============================================================================
@@ -163,6 +203,9 @@
     selectedEndpoint = endpoint;
     editedEndpoint = JSON.parse(JSON.stringify(endpoint));
     drawerOpen = true;
+    // Initialize tag input
+    tagInputValue = endpoint.tagId ? (tags.find(t => t.id === endpoint.tagId)?.name || '') : '';
+    tagDropdownOpen = false;
   }
 
   function closeDrawer() {
@@ -321,15 +364,6 @@
       <!-- API Metadata Card -->
       <ApiMetadataCard {metadata} onUpdate={handleMetadataUpdate} />
 
-      <!-- Endpoint Tags Card -->
-      <TagsCard
-        {tags}
-        onAdd={handleAddTag}
-        onEdit={handleEditTag}
-        onDelete={handleDeleteTag}
-        getEndpointCount={getEndpointCountByTag}
-      />
-
       <!-- API Endpoints Card -->
       <div class="bg-white rounded-lg border border-mono-200">
         <div class="flex items-center justify-between px-4 py-3">
@@ -358,10 +392,7 @@
                 <EndpointItem
                   {endpoint}
                   {tags}
-                  editing={isEditing(endpoint)}
                   onClick={() => openEndpoint(endpoint)}
-                  onDuplicate={() => handleDuplicateEndpoint(endpoint.id)}
-                  onDelete={() => handleDeleteEndpoint(endpoint.id)}
                 />
               {/each}
             </div>
@@ -410,35 +441,118 @@
           <p class="text-xs text-mono-500 mt-1">Use curly braces like <code class="bg-mono-100 px-1 rounded">{`{param_name}`}</code> for path parameters</p>
         </div>
 
-        <!-- Description -->
-        <div>
-          <h3 class="text-sm text-mono-700 mb-2 flex items-center font-medium">
-            <i class="fa-solid fa-align-left mr-2"></i>
-            Description
-          </h3>
-          <input
-            type="text"
-            bind:value={editedEndpoint.description}
-            placeholder="Add a description for this endpoint..."
-            class="w-full px-3 py-1.5 border border-mono-300 rounded-md focus:ring-2 focus:ring-mono-400 focus:border-transparent text-sm"
-          />
-        </div>
-
-        <!-- Tag Assignment -->
-        <div>
-          <h3 class="text-sm text-mono-700 mb-2 flex items-center font-medium">
-            <i class="fa-solid fa-tag mr-2"></i>
-            Tag
-          </h3>
-          <select
-            bind:value={editedEndpoint.tagId}
-            class="w-full px-3 py-1.5 border border-mono-300 rounded-md focus:ring-2 focus:ring-mono-400 focus:border-transparent text-sm"
-          >
-            <option value={undefined}>None</option>
-            {#each tags as tag (tag.id)}
-              <option value={tag.id}>{tag.name}</option>
-            {/each}
-          </select>
+        <!-- Tag and Description (same line) -->
+        <div class="flex space-x-4">
+          <div class="w-56 relative">
+            <h3 class="text-sm text-mono-700 mb-2 flex items-center font-medium">
+              <i class="fa-solid fa-tag mr-2"></i>
+              Tag
+            </h3>
+            <div class="relative">
+              <input
+                type="text"
+                bind:value={tagInputValue}
+                onfocus={() => tagDropdownOpen = true}
+                onblur={() => setTimeout(() => tagDropdownOpen = false, 150)}
+                onkeydown={(e) => {
+                  if (e.key === 'Enter' && tagInputValue.trim() && !exactTagMatch) {
+                    e.preventDefault();
+                    handleCreateTag();
+                  }
+                }}
+                placeholder="Select or create tag..."
+                class="w-full px-3 py-1.5 border border-mono-300 rounded-md focus:ring-2 focus:ring-mono-400 focus:border-transparent text-sm pr-8"
+              />
+              {#if tagInputValue}
+                <button
+                  type="button"
+                  onclick={() => handleTagSelect(undefined)}
+                  class="absolute right-2 top-1/2 -translate-y-1/2 text-mono-400 hover:text-mono-600"
+                  aria-label="Clear tag"
+                >
+                  <i class="fa-solid fa-times text-xs"></i>
+                </button>
+              {:else}
+                <i class="fa-solid fa-chevron-down absolute right-3 top-1/2 -translate-y-1/2 text-mono-400 text-xs pointer-events-none"></i>
+              {/if}
+            </div>
+            {#if tagDropdownOpen && !tagToDelete}
+              <div class="absolute z-10 w-full mt-1 bg-white border border-mono-300 rounded-md shadow-lg max-h-48 overflow-auto">
+                {#if tagInputValue.trim() && !exactTagMatch}
+                  <button
+                    type="button"
+                    onclick={handleCreateTag}
+                    class="w-full px-3 py-2 text-left text-sm hover:bg-mono-50 flex items-center space-x-2 text-mono-700 border-b border-mono-200"
+                  >
+                    <i class="fa-solid fa-plus text-xs"></i>
+                    <span>Create "<strong>{tagInputValue.trim()}</strong>"</span>
+                  </button>
+                {/if}
+                {#each tags as tag (tag.id)}
+                  <div class="flex items-center hover:bg-mono-50 {editedEndpoint?.tagId === tag.id ? 'bg-mono-100' : ''}">
+                    <button
+                      type="button"
+                      onclick={() => handleTagSelect(tag.id)}
+                      class="flex-1 px-3 py-2 text-left text-sm text-mono-700"
+                    >
+                      {tag.name}
+                    </button>
+                    <button
+                      type="button"
+                      onclick={(e) => handleDeleteTagClick(e, tag)}
+                      class="px-3 py-2 text-mono-400 hover:text-red-500 transition-colors"
+                      aria-label="Delete tag"
+                    >
+                      <i class="fa-solid fa-trash text-xs"></i>
+                    </button>
+                  </div>
+                {/each}
+                {#if tags.length === 0 && !tagInputValue.trim()}
+                  <div class="px-3 py-2 text-sm text-mono-500">No tags yet</div>
+                {/if}
+              </div>
+            {/if}
+            {#if tagToDelete}
+              <div class="absolute z-10 w-full mt-1 bg-white border border-mono-300 rounded-md shadow-lg p-3">
+                <p class="text-sm text-mono-700 mb-2">
+                  Delete tag "<strong>{tagToDelete.name}</strong>"?
+                </p>
+                {#if getEndpointsUsingTag(tagToDelete.id) > 0}
+                  <p class="text-xs text-mono-500 mb-3">
+                    This tag is used by {getEndpointsUsingTag(tagToDelete.id)} endpoint{getEndpointsUsingTag(tagToDelete.id) > 1 ? 's' : ''}. It will be removed from them.
+                  </p>
+                {/if}
+                <div class="flex space-x-2">
+                  <button
+                    type="button"
+                    onclick={confirmDeleteTag}
+                    class="flex-1 px-3 py-1.5 bg-red-600 text-white text-sm rounded-md hover:bg-red-700"
+                  >
+                    Delete
+                  </button>
+                  <button
+                    type="button"
+                    onclick={cancelDeleteTag}
+                    class="flex-1 px-3 py-1.5 border border-mono-300 text-mono-700 text-sm rounded-md hover:bg-mono-50"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            {/if}
+          </div>
+          <div class="flex-1">
+            <h3 class="text-sm text-mono-700 mb-2 flex items-center font-medium">
+              <i class="fa-solid fa-align-left mr-2"></i>
+              Description
+            </h3>
+            <input
+              type="text"
+              bind:value={editedEndpoint.description}
+              placeholder="Add a description for this endpoint..."
+              class="w-full px-3 py-1.5 border border-mono-300 rounded-md focus:ring-2 focus:ring-mono-400 focus:border-transparent text-sm"
+            />
+          </div>
         </div>
 
         <!-- Path Parameters -->
@@ -457,7 +571,8 @@
                 <ParameterEditor
                   parameter={param}
                   onUpdate={(updates) => handlePathParamUpdate(param.id, updates)}
-                  onDelete={() => handlePathParamDelete(param.id)}
+                  showRequired={false}
+                  nameEditable={false}
                 />
               {/each}
             </div>
@@ -474,7 +589,7 @@
             <button
               type="button"
               onclick={handleAddQueryParam}
-              class="text-xs px-2 py-1 bg-mono-100 text-mono-700 rounded hover:bg-mono-200 flex items-center space-x-1"
+              class="px-3 py-1.5 bg-mono-900 text-white text-sm rounded-md flex items-center space-x-2 hover:bg-mono-800"
             >
               <i class="fa-solid fa-plus"></i>
               <span>Add Parameter</span>
@@ -538,27 +653,27 @@
     {/if}
   </DrawerContent>
 
-  <DrawerFooter spacing="space-y-2">
+  <DrawerFooter>
     {#if editedEndpoint}
-      <button
-        type="button"
-        onclick={handleSave}
-        disabled={!hasChanges}
-        class="w-full px-4 py-2 rounded-md transition-colors font-medium flex items-center justify-center space-x-2 {hasChanges ? 'bg-mono-900 text-white hover:bg-mono-800 cursor-pointer' : 'bg-mono-300 text-mono-500 cursor-not-allowed'}"
-      >
-        <i class="fa-solid fa-save"></i>
-        <span>Save Changes</span>
-      </button>
-      <button
-        type="button"
-        onclick={handleUndo}
-        disabled={!hasChanges}
-        class="w-full px-4 py-2 border rounded-md transition-colors font-medium flex items-center justify-center space-x-2 {hasChanges ? 'border-mono-300 text-mono-700 hover:bg-mono-50 cursor-pointer' : 'border-mono-200 text-mono-400 cursor-not-allowed bg-mono-50'}"
-      >
-        <i class="fa-solid fa-undo"></i>
-        <span>Undo</span>
-      </button>
       <div class="flex space-x-2">
+        <button
+          type="button"
+          onclick={handleSave}
+          disabled={!hasChanges}
+          class="flex-1 px-4 py-2 rounded-md transition-colors font-medium flex items-center justify-center space-x-2 {hasChanges ? 'bg-mono-900 text-white hover:bg-mono-800 cursor-pointer' : 'bg-mono-300 text-mono-500 cursor-not-allowed'}"
+        >
+          <i class="fa-solid fa-save"></i>
+          <span>Save</span>
+        </button>
+        <button
+          type="button"
+          onclick={handleUndo}
+          disabled={!hasChanges}
+          class="flex-1 px-4 py-2 border rounded-md transition-colors font-medium flex items-center justify-center space-x-2 {hasChanges ? 'border-mono-300 text-mono-700 hover:bg-mono-50 cursor-pointer' : 'border-mono-200 text-mono-400 cursor-not-allowed bg-mono-50'}"
+        >
+          <i class="fa-solid fa-undo"></i>
+          <span>Undo</span>
+        </button>
         <button
           type="button"
           onclick={() => handleDuplicateEndpoint(editedEndpoint!.id)}
@@ -575,14 +690,14 @@
           <i class="fa-solid fa-trash"></i>
           <span>Delete</span>
         </button>
+        <button
+          type="button"
+          onclick={handleCancel}
+          class="flex-1 px-4 py-2 border border-mono-300 text-mono-700 rounded-md hover:bg-mono-50 transition-colors font-medium"
+        >
+          Cancel
+        </button>
       </div>
-      <button
-        type="button"
-        onclick={handleCancel}
-        class="w-full px-4 py-2 border border-mono-300 text-mono-700 rounded-md hover:bg-mono-50 transition-colors font-medium"
-      >
-        Cancel
-      </button>
     {/if}
   </DrawerFooter>
 </Drawer>
