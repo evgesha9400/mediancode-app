@@ -82,7 +82,7 @@
 </DashboardLayout>
 
 <!-- Edit Drawer -->
-<Drawer open={state.drawerOpen} width="w-[1200px]">
+<Drawer open={state.drawerOpen} maxWidth={1200}>
   <DrawerHeader title="Edit Endpoint" onClose={state.closeDrawer} />
 
   <DrawerContent>
