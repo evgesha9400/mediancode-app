@@ -116,7 +116,6 @@
               />
             </div>
           </div>
-          <p class="text-xs text-mono-500 mt-1">Use curly braces like <code class="bg-mono-100 px-1 rounded">{`{param_name}`}</code> for path parameters</p>
         </div>
 
         <!-- Tag and Description (same line) -->
