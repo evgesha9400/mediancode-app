@@ -99,6 +99,15 @@ export interface EndpointParameter {
   required: boolean;
 }
 
+// Body modes for request/response editing
+export type BodyMode = 'none' | 'fields' | 'json';
+
+// Validation error types
+export interface BodyValidationError {
+  field?: string;
+  message: string;
+}
+
 export interface ApiEndpoint {
   id: string;
   method: HttpMethod;
@@ -107,8 +116,23 @@ export interface ApiEndpoint {
   tagId?: string;
   pathParams: EndpointParameter[];
   queryParams: EndpointParameter[];
+
+  // Legacy string request body (deprecated in favor of structured body)
   requestBody?: string;
+
+  // New structured request body
+  requestBodyMode: BodyMode;
+  requestBodyFields: EndpointParameter[];
+  requestBodyJson: string;
+
+  // Legacy string response body (deprecated in favor of structured body)
   responseBody: string;
+
+  // New structured response body
+  responseBodyMode: BodyMode;
+  responseBodyFields: EndpointParameter[];
+  responseBodyJson: string;
+
   useEnvelope: boolean;
   expanded?: boolean;
 }

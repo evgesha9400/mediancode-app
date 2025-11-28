@@ -30,7 +30,8 @@ import {
 	initialApiMetadata
 } from '$lib/stores/apis';
 import { seedIdGenerator } from '$lib/utils/ids';
-import type { EndpointTag, ApiEndpoint } from '$lib/types';
+import type { EndpointTag } from '$lib/types';
+import { createMockEndpoint } from '../../../shared/testUtils';
 
 describe('apis store - Metadata Operations', () => {
 	beforeEach(() => {
@@ -453,18 +454,13 @@ describe('apis store - Legacy Functions', () => {
 	});
 
 	it('should support legacy addEndpoint function', () => {
-		const endpoint: ApiEndpoint = {
+		const endpoint = createMockEndpoint({
 			id: 'custom-endpoint',
 			method: 'POST',
 			path: '/test',
 			description: 'Test endpoint',
-			tagId: undefined,
-			pathParams: [],
-			queryParams: [],
-			responseBody: '{}',
-			useEnvelope: true,
-			expanded: false
-		};
+			tagId: undefined
+		});
 
 		addEndpoint(endpoint);
 

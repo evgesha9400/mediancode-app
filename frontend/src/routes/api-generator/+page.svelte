@@ -8,7 +8,8 @@
     ApiMetadataCard,
     EndpointItem,
     ParameterEditor,
-    ResponsePreview
+    RequestBodyEditor,
+    ResponseBodyEditor
   } from '$lib/components';
   import { createApiGeneratorState } from '$lib/stores/apiGeneratorState.svelte';
 
@@ -289,43 +290,34 @@
           {/if}
         </div>
 
-        <!-- Request Body -->
-        <div>
-          <h3 class="text-sm text-mono-700 mb-2 flex items-center font-medium">
-            <i class="fa-solid fa-arrow-up mr-2"></i>
-            Request Body
-          </h3>
-          <div class="p-3 bg-mono-50 rounded border border-mono-200">
-            {#if state.editedEndpoint.requestBody}
-              <pre class="text-xs text-mono-700">{state.editedEndpoint.requestBody}</pre>
-            {:else}
-              <p class="text-xs text-mono-500">No request body required</p>
-            {/if}
-          </div>
-        </div>
+        <!-- Request Body Editor -->
+        <RequestBodyEditor
+          mode={state.editedEndpoint.requestBodyMode}
+          fields={state.editedEndpoint.requestBodyFields}
+          jsonBody={state.editedEndpoint.requestBodyJson}
+          errors={state.requestBodyErrors}
+          onModeChange={state.handleRequestBodyModeChange}
+          onFieldUpdate={state.handleRequestBodyFieldUpdate}
+          onFieldDelete={state.handleRequestBodyFieldDelete}
+          onAddField={state.handleAddRequestBodyField}
+          onJsonChange={state.handleRequestBodyJsonChange}
+        />
 
-        <!-- Response Preview -->
-        <ResponsePreview responseBody={state.editedEndpoint.responseBody} />
-
-        <!-- Response Envelope -->
-        <div>
-          <h3 class="text-sm text-mono-700 mb-2 flex items-center font-medium">
-            <i class="fa-solid fa-envelope mr-2"></i>
-            Response Envelope
-          </h3>
-          <div class="flex items-center space-x-2">
-            <input
-              id="envelope-toggle-drawer"
-              type="checkbox"
-              checked={true}
-              disabled
-              class="h-4 w-4 text-mono-900 border-mono-300 rounded opacity-60 cursor-not-allowed"
-            />
-            <label for="envelope-toggle-drawer" class="text-sm text-mono-700">
-              Wrap response in standard envelope <span class="text-xs text-mono-500">(always enabled)</span>
-            </label>
-          </div>
-        </div>
+        <!-- Response Body Editor -->
+        <ResponseBodyEditor
+          mode={state.editedEndpoint.responseBodyMode}
+          fields={state.editedEndpoint.responseBodyFields}
+          jsonBody={state.editedEndpoint.responseBodyJson}
+          errors={state.responseBodyErrors}
+          useEnvelope={state.editedEndpoint.useEnvelope}
+          onModeChange={state.handleResponseBodyModeChange}
+          onFieldUpdate={state.handleResponseBodyFieldUpdate}
+          onFieldDelete={state.handleResponseBodyFieldDelete}
+          onAddField={state.handleAddResponseBodyField}
+          onJsonChange={state.handleResponseBodyJsonChange}
+          onCopyFromRequest={state.handleCopyRequestToResponse}
+          onEnvelopeToggle={state.handleEnvelopeToggle}
+        />
       </div>
     {/if}
   </DrawerContent>

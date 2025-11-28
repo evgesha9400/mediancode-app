@@ -21,7 +21,8 @@ import {
 	getTotalTagCount,
 	getEndpointCountByTag
 } from '$lib/stores/apis';
-import type { ApiEndpoint, EndpointTag } from '$lib/types';
+import type { EndpointTag } from '$lib/types';
+import { createMockEndpoint } from '../../../shared/testUtils';
 
 describe('API Generator Page - Store Integration', () => {
 	// Reset stores before each test
@@ -84,45 +85,9 @@ describe('API Generator Page - Store Integration', () => {
 			};
 			addTag(tag);
 
-			const endpoint1: ApiEndpoint = {
-				id: 'endpoint-1',
-				method: 'GET',
-				path: '/users',
-				description: '',
-				tagId: 'tag-1',
-				pathParams: [],
-				queryParams: [],
-				responseBody: '{}',
-				useEnvelope: true
-			};
-
-			const endpoint2: ApiEndpoint = {
-				id: 'endpoint-2',
-				method: 'POST',
-				path: '/users',
-				description: '',
-				tagId: 'tag-1',
-				pathParams: [],
-				queryParams: [],
-				responseBody: '{}',
-				useEnvelope: true
-			};
-
-			const endpoint3: ApiEndpoint = {
-				id: 'endpoint-3',
-				method: 'GET',
-				path: '/posts',
-				description: '',
-				tagId: undefined,
-				pathParams: [],
-				queryParams: [],
-				responseBody: '{}',
-				useEnvelope: true
-			};
-
-			addEndpoint(endpoint1);
-			addEndpoint(endpoint2);
-			addEndpoint(endpoint3);
+			addEndpoint(createMockEndpoint({ id: 'endpoint-1', path: '/users', tagId: 'tag-1' }));
+			addEndpoint(createMockEndpoint({ id: 'endpoint-2', method: 'POST', path: '/users', tagId: 'tag-1' }));
+			addEndpoint(createMockEndpoint({ id: 'endpoint-3', path: '/posts', tagId: undefined }));
 
 			expect(getEndpointCountByTag('tag-1')).toBe(2);
 		});
@@ -130,17 +95,10 @@ describe('API Generator Page - Store Integration', () => {
 
 	describe('Endpoint Management', () => {
 		it('adds endpoints to store correctly', () => {
-			const endpoint: ApiEndpoint = {
-				id: 'endpoint-1',
-				method: 'GET',
+			const endpoint = createMockEndpoint({
 				path: '/users',
-				description: 'Get all users',
-				tagId: undefined,
-				pathParams: [],
-				queryParams: [],
-				responseBody: '{}',
-				useEnvelope: true
-			};
+				description: 'Get all users'
+			});
 
 			addEndpoint(endpoint);
 
@@ -157,18 +115,7 @@ describe('API Generator Page - Store Integration', () => {
 			};
 			addTag(tag);
 
-			const endpoint: ApiEndpoint = {
-				id: 'endpoint-1',
-				method: 'GET',
-				path: '/users',
-				description: '',
-				tagId: undefined,
-				pathParams: [],
-				queryParams: [],
-				responseBody: '{}',
-				useEnvelope: true
-			};
-
+			const endpoint = createMockEndpoint({ path: '/users' });
 			addEndpoint(endpoint);
 
 			// Update endpoint to add tag
@@ -181,16 +128,7 @@ describe('API Generator Page - Store Integration', () => {
 		it('tracks endpoint count correctly', () => {
 			expect(getTotalEndpointCount()).toBe(0);
 
-			addEndpoint({
-				id: 'endpoint-1',
-				method: 'GET',
-				path: '/users',
-				description: '',
-				pathParams: [],
-				queryParams: [],
-				responseBody: '{}',
-				useEnvelope: true
-			});
+			addEndpoint(createMockEndpoint({ path: '/users' }));
 
 			expect(getTotalEndpointCount()).toBe(1);
 		});
@@ -212,17 +150,11 @@ describe('API Generator Page - Store Integration', () => {
 			addTag(tag1);
 			addTag(tag2);
 
-			const originalEndpoint: ApiEndpoint = {
-				id: 'endpoint-1',
-				method: 'GET',
+			const originalEndpoint = createMockEndpoint({
 				path: '/users',
 				description: 'Get users',
-				tagId: 'tag-1',
-				pathParams: [],
-				queryParams: [],
-				responseBody: '{}',
-				useEnvelope: true
-			};
+				tagId: 'tag-1'
+			});
 
 			addEndpoint(originalEndpoint);
 
@@ -254,17 +186,10 @@ describe('API Generator Page - Store Integration', () => {
 			};
 			addTag(tag);
 
-			const originalEndpoint: ApiEndpoint = {
-				id: 'endpoint-1',
-				method: 'GET',
+			const originalEndpoint = createMockEndpoint({
 				path: '/users',
-				description: '',
-				tagId: undefined,
-				pathParams: [],
-				queryParams: [],
-				responseBody: '{}',
-				useEnvelope: true
-			};
+				tagId: undefined
+			});
 
 			addEndpoint(originalEndpoint);
 
@@ -296,17 +221,10 @@ describe('API Generator Page - Store Integration', () => {
 			};
 			addTag(tag);
 
-			const endpoint: ApiEndpoint = {
-				id: 'endpoint-1',
-				method: 'GET',
+			const endpoint = createMockEndpoint({
 				path: '/users',
-				description: '',
-				tagId: 'tag-1',
-				pathParams: [],
-				queryParams: [],
-				responseBody: '{}',
-				useEnvelope: true
-			};
+				tagId: 'tag-1'
+			});
 
 			addEndpoint(endpoint);
 
@@ -326,17 +244,11 @@ describe('API Generator Page - Store Integration', () => {
 
 	describe('Store Data Structure', () => {
 		it('endpoints have required properties', () => {
-			const endpoint: ApiEndpoint = {
-				id: 'endpoint-1',
+			const endpoint = createMockEndpoint({
 				method: 'POST',
 				path: '/users',
-				description: 'Create user',
-				tagId: undefined,
-				pathParams: [],
-				queryParams: [],
-				responseBody: '{}',
-				useEnvelope: true
-			};
+				description: 'Create user'
+			});
 
 			addEndpoint(endpoint);
 
@@ -376,17 +288,10 @@ describe('API Generator Page - Store Integration', () => {
 			};
 			addTag(tag);
 
-			const endpoint: ApiEndpoint = {
-				id: 'endpoint-1',
-				method: 'GET',
+			const endpoint = createMockEndpoint({
 				path: '/users',
-				description: '',
-				tagId: 'tag-1',
-				pathParams: [],
-				queryParams: [],
-				responseBody: '{}',
-				useEnvelope: true
-			};
+				tagId: 'tag-1'
+			});
 			addEndpoint(endpoint);
 
 			// Delete tag
@@ -412,32 +317,8 @@ describe('API Generator Page - Store Integration', () => {
 			};
 			addTag(tag);
 
-			const endpoint1: ApiEndpoint = {
-				id: 'endpoint-1',
-				method: 'GET',
-				path: '/users',
-				description: '',
-				tagId: 'tag-1',
-				pathParams: [],
-				queryParams: [],
-				responseBody: '{}',
-				useEnvelope: true
-			};
-
-			const endpoint2: ApiEndpoint = {
-				id: 'endpoint-2',
-				method: 'POST',
-				path: '/users',
-				description: '',
-				tagId: 'tag-1',
-				pathParams: [],
-				queryParams: [],
-				responseBody: '{}',
-				useEnvelope: true
-			};
-
-			addEndpoint(endpoint1);
-			addEndpoint(endpoint2);
+			addEndpoint(createMockEndpoint({ id: 'endpoint-1', path: '/users', tagId: 'tag-1' }));
+			addEndpoint(createMockEndpoint({ id: 'endpoint-2', method: 'POST', path: '/users', tagId: 'tag-1' }));
 
 			const endpoints = get(endpointsStore);
 			expect(endpoints.filter(e => e.tagId === 'tag-1')).toHaveLength(2);

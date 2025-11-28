@@ -1,11 +1,56 @@
 /**
  * Additional Test Utilities
- * 
+ *
  * This module provides helper functions for common testing scenarios.
  */
 
 import { waitFor } from '@testing-library/svelte';
 import userEvent from '@testing-library/user-event';
+import type { ApiEndpoint, EndpointTag } from '$lib/types';
+
+/**
+ * Creates a mock API endpoint with all required fields and sensible defaults.
+ * Use overrides to customize specific properties for your test case.
+ *
+ * @param overrides - Partial endpoint properties to override defaults
+ * @returns Complete ApiEndpoint object
+ */
+export function createMockEndpoint(overrides: Partial<ApiEndpoint> = {}): ApiEndpoint {
+	return {
+		id: 'endpoint-1',
+		method: 'GET',
+		path: '/test',
+		description: '',
+		pathParams: [],
+		queryParams: [],
+		requestBody: undefined,
+		responseBody: '{}',
+		requestBodyMode: 'none',
+		requestBodyFields: [],
+		requestBodyJson: '',
+		responseBodyMode: 'none',
+		responseBodyFields: [],
+		responseBodyJson: '',
+		useEnvelope: true,
+		expanded: false,
+		...overrides
+	};
+}
+
+/**
+ * Creates a mock endpoint tag.
+ *
+ * @param overrides - Partial tag properties to override defaults
+ * @returns Complete EndpointTag object
+ */
+export function createMockTag(overrides: Partial<EndpointTag> = {}): EndpointTag {
+	return {
+		id: 'tag-1',
+		name: 'Test Tag',
+		description: 'Test description',
+		...overrides
+	};
+}
 
 /**
  * Creates a configured user event instance for interactions

@@ -198,7 +198,24 @@ export function createDefaultEndpoint(): ApiEndpoint {
 		tagId: undefined,
 		pathParams: [],
 		queryParams: [],
+		// Legacy fields (kept for backwards compatibility)
+		requestBody: undefined,
 		responseBody: '{\n  "message": "Success"\n}',
+		// New structured body fields
+		requestBodyMode: 'none',
+		requestBodyFields: [],
+		requestBodyJson: '',
+		responseBodyMode: 'fields',
+		responseBodyFields: [
+			{
+				id: generateParamId(),
+				name: 'message',
+				type: 'string',
+				description: 'Success message',
+				required: true
+			}
+		],
+		responseBodyJson: '',
 		useEnvelope: true,
 		expanded: false
 	};
@@ -242,7 +259,10 @@ export function duplicateEndpoint(endpointId: string): ApiEndpoint | undefined {
 		path: `${original.path}-copy`,
 		expanded: false,
 		pathParams: original.pathParams.map(p => ({ ...p, id: generateParamId() })),
-		queryParams: original.queryParams.map(p => ({ ...p, id: generateParamId() }))
+		queryParams: original.queryParams.map(p => ({ ...p, id: generateParamId() })),
+		// Clone body fields with new IDs
+		requestBodyFields: original.requestBodyFields.map(p => ({ ...p, id: generateParamId() })),
+		responseBodyFields: original.responseBodyFields.map(p => ({ ...p, id: generateParamId() }))
 	};
 
 	endpointsStore.update(endpoints => [...endpoints, duplicated]);
@@ -449,3 +469,4 @@ export function deleteQueryParameter(endpointId: string, paramId: string): void 
 	const updatedParams = endpoint.queryParams.filter(p => p.id !== paramId);
 	updateEndpoint(endpointId, { queryParams: updatedParams });
 }
+
