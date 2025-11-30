@@ -292,30 +292,17 @@
 
         <!-- Request Body Editor -->
         <RequestBodyEditor
-          mode={state.editedEndpoint.requestBodyMode}
-          fields={state.editedEndpoint.requestBodyFields}
-          jsonBody={state.editedEndpoint.requestBodyJson}
-          errors={state.requestBodyErrors}
-          onModeChange={state.handleRequestBodyModeChange}
-          onFieldUpdate={state.handleRequestBodyFieldUpdate}
-          onFieldDelete={state.handleRequestBodyFieldDelete}
+          selectedFieldIds={state.editedEndpoint.requestBodyFieldIds}
           onAddField={state.handleAddRequestBodyField}
-          onJsonChange={state.handleRequestBodyJsonChange}
+          onRemoveField={state.handleRemoveRequestBodyField}
         />
 
         <!-- Response Body Editor -->
         <ResponseBodyEditor
-          mode={state.editedEndpoint.responseBodyMode}
-          fields={state.editedEndpoint.responseBodyFields}
-          jsonBody={state.editedEndpoint.responseBodyJson}
-          errors={state.responseBodyErrors}
+          selectedFieldIds={state.editedEndpoint.responseBodyFieldIds}
           useEnvelope={state.editedEndpoint.useEnvelope}
-          onModeChange={state.handleResponseBodyModeChange}
-          onFieldUpdate={state.handleResponseBodyFieldUpdate}
-          onFieldDelete={state.handleResponseBodyFieldDelete}
           onAddField={state.handleAddResponseBodyField}
-          onJsonChange={state.handleResponseBodyJsonChange}
-          onCopyFromRequest={state.handleCopyRequestToResponse}
+          onRemoveField={state.handleRemoveResponseBodyField}
           onEnvelopeToggle={state.handleEnvelopeToggle}
         />
       </div>

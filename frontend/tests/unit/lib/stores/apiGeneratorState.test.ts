@@ -8,6 +8,8 @@ import {
 	updateEndpoint,
 	initialApiMetadata
 } from '$lib/stores/apis';
+import { fieldsStore } from '$lib/stores/fields';
+import { initialFields } from '$lib/stores/initialData';
 import { seedIdGenerator } from '$lib/utils/ids';
 import * as toastsModule from '$lib/stores/toasts';
 import { createMockEndpoint } from '../../../shared/testUtils';
@@ -88,13 +90,8 @@ describe('apiGeneratorState - Tag Operations', () => {
 			description: '',
 			pathParams: [],
 			queryParams: [],
-			responseBody: '{}',
-			requestBodyMode: 'none' as const,
-			requestBodyFields: [],
-			requestBodyJson: '',
-			responseBodyMode: 'none' as const,
-			responseBodyFields: [],
-			responseBodyJson: '',
+			requestBodyFieldIds: [],
+			responseBodyFieldIds: [],
 			useEnvelope: true,
 			expanded: false
 		};
@@ -120,13 +117,8 @@ describe('apiGeneratorState - Tag Operations', () => {
 			description: '',
 			pathParams: [],
 			queryParams: [],
-			responseBody: '{}',
-		requestBodyMode: 'none' as const,
-		requestBodyFields: [],
-		requestBodyJson: '',
-		responseBodyMode: 'none' as const,
-		responseBodyFields: [],
-		responseBodyJson: '',
+			requestBodyFieldIds: [],
+			responseBodyFieldIds: [],
 			useEnvelope: true,
 			expanded: false
 		};
@@ -150,13 +142,8 @@ describe('apiGeneratorState - Tag Operations', () => {
 			description: '',
 			pathParams: [],
 			queryParams: [],
-			responseBody: '{}',
-		requestBodyMode: 'none' as const,
-		requestBodyFields: [],
-		requestBodyJson: '',
-		responseBodyMode: 'none' as const,
-		responseBodyFields: [],
-		responseBodyJson: '',
+			requestBodyFieldIds: [],
+			responseBodyFieldIds: [],
 			useEnvelope: true,
 			expanded: false
 		};
@@ -185,13 +172,8 @@ describe('apiGeneratorState - Tag Operations', () => {
 			tagId: 'some-tag',
 			pathParams: [],
 			queryParams: [],
-			responseBody: '{}',
-		requestBodyMode: 'none' as const,
-		requestBodyFields: [],
-		requestBodyJson: '',
-		responseBodyMode: 'none' as const,
-		responseBodyFields: [],
-		responseBodyJson: '',
+			requestBodyFieldIds: [],
+			responseBodyFieldIds: [],
 			useEnvelope: true,
 			expanded: false
 		};
@@ -214,13 +196,8 @@ describe('apiGeneratorState - Tag Operations', () => {
 			description: '',
 			pathParams: [],
 			queryParams: [],
-			responseBody: '{}',
-		requestBodyMode: 'none' as const,
-		requestBodyFields: [],
-		requestBodyJson: '',
-		responseBodyMode: 'none' as const,
-		responseBodyFields: [],
-		responseBodyJson: '',
+			requestBodyFieldIds: [],
+			responseBodyFieldIds: [],
 			useEnvelope: true,
 			expanded: false
 		};
@@ -253,13 +230,8 @@ describe('apiGeneratorState - Tag Operations', () => {
 			description: '',
 			pathParams: [],
 			queryParams: [],
-			responseBody: '{}',
-		requestBodyMode: 'none' as const,
-		requestBodyFields: [],
-		requestBodyJson: '',
-		responseBodyMode: 'none' as const,
-		responseBodyFields: [],
-		responseBodyJson: '',
+			requestBodyFieldIds: [],
+			responseBodyFieldIds: [],
 			useEnvelope: true,
 			expanded: false
 		};
@@ -415,13 +387,8 @@ describe('apiGeneratorState - Drawer Operations', () => {
 			description: '',
 			pathParams: [],
 			queryParams: [],
-			responseBody: '{}',
-			requestBodyMode: 'none' as const,
-			requestBodyFields: [],
-			requestBodyJson: '',
-			responseBodyMode: 'none' as const,
-			responseBodyFields: [],
-			responseBodyJson: '',
+			requestBodyFieldIds: [],
+			responseBodyFieldIds: [],
 			useEnvelope: true,
 			expanded: false
 		};
@@ -444,13 +411,8 @@ describe('apiGeneratorState - Drawer Operations', () => {
 			description: '',
 			pathParams: [],
 			queryParams: [],
-			responseBody: '{}',
-			requestBodyMode: 'none' as const,
-			requestBodyFields: [],
-			requestBodyJson: '',
-			responseBodyMode: 'none' as const,
-			responseBodyFields: [],
-			responseBodyJson: '',
+			requestBodyFieldIds: [],
+			responseBodyFieldIds: [],
 			useEnvelope: true,
 			expanded: false
 		};
@@ -514,13 +476,8 @@ describe('apiGeneratorState - Drawer Operations', () => {
 			description: '',
 			pathParams: [],
 			queryParams: [],
-			responseBody: '{}',
-			requestBodyMode: 'none' as const,
-			requestBodyFields: [],
-			requestBodyJson: '',
-			responseBodyMode: 'none' as const,
-			responseBodyFields: [],
-			responseBodyJson: '',
+			requestBodyFieldIds: [],
+			responseBodyFieldIds: [],
 			useEnvelope: true,
 			expanded: false
 		};
@@ -544,13 +501,8 @@ describe('apiGeneratorState - Drawer Operations', () => {
 			description: '',
 			pathParams: [],
 			queryParams: [],
-			responseBody: '{}',
-			requestBodyMode: 'none' as const,
-			requestBodyFields: [],
-			requestBodyJson: '',
-			responseBodyMode: 'none' as const,
-			responseBodyFields: [],
-			responseBodyJson: '',
+			requestBodyFieldIds: [],
+			responseBodyFieldIds: [],
 			useEnvelope: true,
 			expanded: false
 		};
@@ -809,388 +761,131 @@ describe('apiGeneratorState - Derived State', () => {
 	});
 });
 
-describe('apiGeneratorState - Request Body Operations', () => {
+describe('apiGeneratorState - Body Field Selection Operations', () => {
 	beforeEach(() => {
 		endpointsStore.set([]);
+		fieldsStore.set(initialFields);
 		seedIdGenerator({ counter: 0, timestamp: 1000000 });
 		vi.clearAllMocks();
 	});
 
-	it('should change request body mode', () => {
+	it('should add request body field by ID', () => {
 		const state = createApiGeneratorState();
 
 		state.handleAddEndpoint();
 		const endpoint = get(endpointsStore)[0];
 		state.openEndpoint(endpoint);
 
-		expect(state.editedEndpoint?.requestBodyMode).toBe('none');
+		expect(state.editedEndpoint?.requestBodyFieldIds).toHaveLength(0);
 
-		state.handleRequestBodyModeChange('fields');
-		expect(state.editedEndpoint?.requestBodyMode).toBe('fields');
+		state.handleAddRequestBodyField('field-1');
 
-		state.handleRequestBodyModeChange('json');
-		expect(state.editedEndpoint?.requestBodyMode).toBe('json');
+		expect(state.editedEndpoint?.requestBodyFieldIds).toHaveLength(1);
+		expect(state.editedEndpoint?.requestBodyFieldIds[0]).toBe('field-1');
 	});
 
-	it('should add request body field', () => {
+	it('should prevent duplicate request body field IDs', () => {
 		const state = createApiGeneratorState();
 
 		state.handleAddEndpoint();
 		const endpoint = get(endpointsStore)[0];
 		state.openEndpoint(endpoint);
 
-		state.handleRequestBodyModeChange('fields');
-		state.handleAddRequestBodyField();
+		state.handleAddRequestBodyField('field-1');
+		state.handleAddRequestBodyField('field-1'); // Duplicate
 
-		expect(state.editedEndpoint?.requestBodyFields).toHaveLength(1);
-		expect(state.editedEndpoint?.requestBodyFields[0].name).toBe('new_field');
-		expect(state.editedEndpoint?.requestBodyFields[0].type).toBe('');
+		expect(state.editedEndpoint?.requestBodyFieldIds).toHaveLength(1);
 	});
 
-	it('should update request body field', () => {
+	it('should remove request body field by ID', () => {
 		const state = createApiGeneratorState();
 
 		state.handleAddEndpoint();
 		const endpoint = get(endpointsStore)[0];
 		state.openEndpoint(endpoint);
 
-		state.handleRequestBodyModeChange('fields');
-		state.handleAddRequestBodyField();
+		state.handleAddRequestBodyField('field-1');
+		state.handleAddRequestBodyField('field-2');
 
-		const fieldId = state.editedEndpoint!.requestBodyFields[0].id;
-		state.handleRequestBodyFieldUpdate(fieldId, { name: 'user_id', type: 'integer' });
+		expect(state.editedEndpoint?.requestBodyFieldIds).toHaveLength(2);
 
-		expect(state.editedEndpoint?.requestBodyFields[0].name).toBe('user_id');
-		expect(state.editedEndpoint?.requestBodyFields[0].type).toBe('integer');
+		state.handleRemoveRequestBodyField('field-1');
+
+		expect(state.editedEndpoint?.requestBodyFieldIds).toHaveLength(1);
+		expect(state.editedEndpoint?.requestBodyFieldIds[0]).toBe('field-2');
 	});
 
-	it('should delete request body field', () => {
+	it('should add response body field by ID', () => {
 		const state = createApiGeneratorState();
 
 		state.handleAddEndpoint();
 		const endpoint = get(endpointsStore)[0];
 		state.openEndpoint(endpoint);
 
-		state.handleRequestBodyModeChange('fields');
-		state.handleAddRequestBodyField();
-		state.handleAddRequestBodyField();
+		expect(state.editedEndpoint?.responseBodyFieldIds).toHaveLength(0);
 
-		expect(state.editedEndpoint?.requestBodyFields).toHaveLength(2);
+		state.handleAddResponseBodyField('field-3');
 
-		const fieldId = state.editedEndpoint!.requestBodyFields[0].id;
-		state.handleRequestBodyFieldDelete(fieldId);
-
-		expect(state.editedEndpoint?.requestBodyFields).toHaveLength(1);
+		expect(state.editedEndpoint?.responseBodyFieldIds).toHaveLength(1);
+		expect(state.editedEndpoint?.responseBodyFieldIds[0]).toBe('field-3');
 	});
 
-	it('should update request body JSON', () => {
+	it('should prevent duplicate response body field IDs', () => {
 		const state = createApiGeneratorState();
 
 		state.handleAddEndpoint();
 		const endpoint = get(endpointsStore)[0];
 		state.openEndpoint(endpoint);
 
-		state.handleRequestBodyModeChange('json');
-		state.handleRequestBodyJsonChange('{"name": "test"}');
+		state.handleAddResponseBodyField('field-3');
+		state.handleAddResponseBodyField('field-3'); // Duplicate
 
-		expect(state.editedEndpoint?.requestBodyJson).toBe('{"name": "test"}');
-	});
-});
-
-describe('apiGeneratorState - Response Body Operations', () => {
-	beforeEach(() => {
-		endpointsStore.set([]);
-		tagsStore.set([]);
-		apiMetadataStore.set(initialApiMetadata);
-		seedIdGenerator({ counter: 100, timestamp: 2000000 }); // Different seed to avoid collision with request body tests
-		vi.clearAllMocks();
+		expect(state.editedEndpoint?.responseBodyFieldIds).toHaveLength(1);
 	});
 
-	it('should change response body mode', () => {
+	it('should remove response body field by ID', () => {
 		const state = createApiGeneratorState();
 
 		state.handleAddEndpoint();
 		const endpoint = get(endpointsStore)[0];
 		state.openEndpoint(endpoint);
 
-		// Default endpoint starts with 'fields' mode and a default message field
-		expect(state.editedEndpoint?.responseBodyMode).toBe('fields');
+		state.handleAddResponseBodyField('field-3');
+		state.handleAddResponseBodyField('field-4');
 
-		state.handleResponseBodyModeChange('none');
-		expect(state.editedEndpoint?.responseBodyMode).toBe('none');
+		expect(state.editedEndpoint?.responseBodyFieldIds).toHaveLength(2);
 
-		state.handleResponseBodyModeChange('json');
-		expect(state.editedEndpoint?.responseBodyMode).toBe('json');
+		state.handleRemoveResponseBodyField('field-3');
 
-		state.handleResponseBodyModeChange('fields');
-		expect(state.editedEndpoint?.responseBodyMode).toBe('fields');
+		expect(state.editedEndpoint?.responseBodyFieldIds).toHaveLength(1);
+		expect(state.editedEndpoint?.responseBodyFieldIds[0]).toBe('field-4');
 	});
 
-	it('should add response body field', () => {
+	it('should toggle envelope setting', () => {
 		const state = createApiGeneratorState();
 
 		state.handleAddEndpoint();
 		const endpoint = get(endpointsStore)[0];
 		state.openEndpoint(endpoint);
 
-		// Default endpoint starts with 1 field (the default 'message' field)
-		const initialCount = state.editedEndpoint?.responseBodyFields.length ?? 0;
-		expect(initialCount).toBe(1);
+		expect(state.editedEndpoint?.useEnvelope).toBe(true); // Default
 
-		state.handleAddResponseBodyField();
+		state.handleEnvelopeToggle(false);
+		expect(state.editedEndpoint?.useEnvelope).toBe(false);
 
-		expect(state.editedEndpoint?.responseBodyFields).toHaveLength(initialCount + 1);
-		// The new field is added at the end
-		expect(state.editedEndpoint?.responseBodyFields[initialCount].name).toBe('new_field');
+		state.handleEnvelopeToggle(true);
+		expect(state.editedEndpoint?.useEnvelope).toBe(true);
 	});
 
-	it('should update response body field', () => {
+	it('should persist body field IDs on save', () => {
 		const state = createApiGeneratorState();
 
 		state.handleAddEndpoint();
 		const endpoint = get(endpointsStore)[0];
 		state.openEndpoint(endpoint);
 
-		// Add a new field to update (keep the default field intact)
-		state.handleAddResponseBodyField();
-
-		const fields = state.editedEndpoint!.responseBodyFields;
-		const newFieldId = fields[fields.length - 1].id;
-		state.handleResponseBodyFieldUpdate(newFieldId, { name: 'result', type: 'boolean' });
-
-		const updatedField = state.editedEndpoint?.responseBodyFields.find(f => f.id === newFieldId);
-		expect(updatedField?.name).toBe('result');
-		expect(updatedField?.type).toBe('boolean');
-	});
-
-	it('should delete response body field', () => {
-		const state = createApiGeneratorState();
-
-		state.handleAddEndpoint();
-		const endpoint = get(endpointsStore)[0];
-		state.openEndpoint(endpoint);
-
-		// Default endpoint starts with 1 field
-		const initialCount = state.editedEndpoint?.responseBodyFields.length ?? 0;
-		expect(initialCount).toBe(1);
-
-		// Add two more fields
-		state.handleAddResponseBodyField();
-		state.handleAddResponseBodyField();
-
-		expect(state.editedEndpoint?.responseBodyFields).toHaveLength(initialCount + 2);
-
-		// Delete the first added field (not the default one)
-		const fieldId = state.editedEndpoint!.responseBodyFields[initialCount].id;
-		state.handleResponseBodyFieldDelete(fieldId);
-
-		expect(state.editedEndpoint?.responseBodyFields).toHaveLength(initialCount + 1);
-	});
-
-	it('should update response body JSON', () => {
-		const state = createApiGeneratorState();
-
-		state.handleAddEndpoint();
-		const endpoint = get(endpointsStore)[0];
-		state.openEndpoint(endpoint);
-
-		state.handleResponseBodyModeChange('json');
-		state.handleResponseBodyJsonChange('{"success": true}');
-
-		expect(state.editedEndpoint?.responseBodyJson).toBe('{"success": true}');
-	});
-
-	it('should copy request body to response body', () => {
-		const state = createApiGeneratorState();
-
-		state.handleAddEndpoint();
-		const endpoint = get(endpointsStore)[0];
-		state.openEndpoint(endpoint);
-
-		// Setup request body with fields
-		state.handleRequestBodyModeChange('fields');
-		state.handleAddRequestBodyField();
-		const fieldId = state.editedEndpoint!.requestBodyFields[0].id;
-		state.handleRequestBodyFieldUpdate(fieldId, { name: 'user_id', type: 'integer' });
-
-		// Copy to response
-		state.handleCopyRequestToResponse();
-
-		expect(state.editedEndpoint?.responseBodyMode).toBe('fields');
-		expect(state.editedEndpoint?.responseBodyFields).toHaveLength(1);
-		expect(state.editedEndpoint?.responseBodyFields[0].name).toBe('user_id');
-		expect(state.editedEndpoint?.responseBodyFields[0].type).toBe('integer');
-		// Should have a new ID (not the same as request field)
-		expect(state.editedEndpoint?.responseBodyFields[0].id).not.toBe(fieldId);
-	});
-
-	it('should copy request body JSON to response body', () => {
-		const state = createApiGeneratorState();
-
-		state.handleAddEndpoint();
-		const endpoint = get(endpointsStore)[0];
-		state.openEndpoint(endpoint);
-
-		// Setup request body with JSON
-		state.handleRequestBodyModeChange('json');
-		state.handleRequestBodyJsonChange('{"name": "test"}');
-
-		// Copy to response
-		state.handleCopyRequestToResponse();
-
-		expect(state.editedEndpoint?.responseBodyMode).toBe('json');
-		expect(state.editedEndpoint?.responseBodyJson).toBe('{"name": "test"}');
-	});
-});
-
-describe('apiGeneratorState - Body Validation', () => {
-	beforeEach(() => {
-		endpointsStore.set([]);
-		seedIdGenerator({ counter: 0, timestamp: 1000000 });
-		vi.clearAllMocks();
-	});
-
-	it('should return no errors for none mode', () => {
-		const state = createApiGeneratorState();
-
-		state.handleAddEndpoint();
-		const endpoint = get(endpointsStore)[0];
-		state.openEndpoint(endpoint);
-
-		expect(state.requestBodyErrors).toHaveLength(0);
-		expect(state.responseBodyErrors).toHaveLength(0);
-	});
-
-	it('should return errors for fields with missing name', () => {
-		const state = createApiGeneratorState();
-
-		state.handleAddEndpoint();
-		const endpoint = get(endpointsStore)[0];
-		state.openEndpoint(endpoint);
-
-		state.handleRequestBodyModeChange('fields');
-		state.handleAddRequestBodyField();
-
-		// Field has empty name by default
-		const fieldId = state.editedEndpoint!.requestBodyFields[0].id;
-		state.handleRequestBodyFieldUpdate(fieldId, { name: '', type: 'string' });
-
-		expect(state.requestBodyErrors.length).toBeGreaterThan(0);
-		expect(state.requestBodyErrors.some(e => e.message.includes('name'))).toBe(true);
-	});
-
-	it('should return errors for fields with missing type', () => {
-		const state = createApiGeneratorState();
-
-		state.handleAddEndpoint();
-		const endpoint = get(endpointsStore)[0];
-		state.openEndpoint(endpoint);
-
-		state.handleRequestBodyModeChange('fields');
-		state.handleAddRequestBodyField();
-
-		// Field has empty type by default
-		const fieldId = state.editedEndpoint!.requestBodyFields[0].id;
-		state.handleRequestBodyFieldUpdate(fieldId, { name: 'user_id' }); // type still empty
-
-		expect(state.requestBodyErrors.length).toBeGreaterThan(0);
-		expect(state.requestBodyErrors.some(e => e.message.includes('type'))).toBe(true);
-	});
-
-	it('should return errors for invalid JSON', () => {
-		const state = createApiGeneratorState();
-
-		state.handleAddEndpoint();
-		const endpoint = get(endpointsStore)[0];
-		state.openEndpoint(endpoint);
-
-		state.handleRequestBodyModeChange('json');
-		state.handleRequestBodyJsonChange('{ invalid json }');
-
-		expect(state.requestBodyErrors.length).toBeGreaterThan(0);
-		expect(state.requestBodyErrors.some(e => e.message.includes('JSON'))).toBe(true);
-	});
-
-	it('should return no errors for valid JSON', () => {
-		const state = createApiGeneratorState();
-
-		state.handleAddEndpoint();
-		const endpoint = get(endpointsStore)[0];
-		state.openEndpoint(endpoint);
-
-		state.handleRequestBodyModeChange('json');
-		state.handleRequestBodyJsonChange('{"name": "test", "count": 42}');
-
-		expect(state.requestBodyErrors).toHaveLength(0);
-	});
-
-	it('should return no errors for empty JSON (optional)', () => {
-		const state = createApiGeneratorState();
-
-		state.handleAddEndpoint();
-		const endpoint = get(endpointsStore)[0];
-		state.openEndpoint(endpoint);
-
-		state.handleRequestBodyModeChange('json');
-		state.handleRequestBodyJsonChange('');
-
-		expect(state.requestBodyErrors).toHaveLength(0);
-	});
-
-	it('should prevent save with request body validation errors', () => {
-		const state = createApiGeneratorState();
-
-		state.handleAddEndpoint();
-		const endpoint = get(endpointsStore)[0];
-		state.openEndpoint(endpoint);
-
-		state.handleRequestBodyModeChange('fields');
-		state.handleAddRequestBodyField();
-		// Field has empty name and type by default
-
-		vi.clearAllMocks();
-		const result = state.handleSave();
-
-		expect(result).toBe(false);
-		expect(toastsModule.showToast).toHaveBeenCalledWith(
-			'Fix request body errors before saving',
-			'error'
-		);
-		// Store should not have been updated
-		expect(get(endpointsStore)[0].requestBodyMode).toBe('none');
-	});
-
-	it('should prevent save with response body validation errors', () => {
-		const state = createApiGeneratorState();
-
-		state.handleAddEndpoint();
-		const endpoint = get(endpointsStore)[0];
-		state.openEndpoint(endpoint);
-
-		state.handleResponseBodyModeChange('json');
-		state.handleResponseBodyJsonChange('{ invalid json }');
-
-		vi.clearAllMocks();
-		const result = state.handleSave();
-
-		expect(result).toBe(false);
-		expect(toastsModule.showToast).toHaveBeenCalledWith(
-			'Fix response body errors before saving',
-			'error'
-		);
-	});
-
-	it('should allow save with valid fields', () => {
-		const state = createApiGeneratorState();
-
-		state.handleAddEndpoint();
-		const endpoint = get(endpointsStore)[0];
-		state.openEndpoint(endpoint);
-
-		state.handleRequestBodyModeChange('fields');
-		state.handleAddRequestBodyField();
-		const fieldId = state.editedEndpoint!.requestBodyFields[0].id;
-		state.handleRequestBodyFieldUpdate(fieldId, { name: 'user_id', type: 'integer' });
+		state.handleAddRequestBodyField('field-1');
+		state.handleAddResponseBodyField('field-2');
 
 		vi.clearAllMocks();
 		const result = state.handleSave();
@@ -1198,8 +893,8 @@ describe('apiGeneratorState - Body Validation', () => {
 		expect(result).toBe(true);
 		expect(toastsModule.showToast).toHaveBeenCalledWith('Endpoint saved successfully', 'success');
 
-		// Store should have been updated
-		expect(get(endpointsStore)[0].requestBodyMode).toBe('fields');
-		expect(get(endpointsStore)[0].requestBodyFields[0].name).toBe('user_id');
+		const savedEndpoint = get(endpointsStore)[0];
+		expect(savedEndpoint.requestBodyFieldIds).toContain('field-1');
+		expect(savedEndpoint.responseBodyFieldIds).toContain('field-2');
 	});
 });
