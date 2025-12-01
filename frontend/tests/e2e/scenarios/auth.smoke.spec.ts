@@ -101,8 +101,15 @@ test.describe('Authentication - Smoke Tests', () => {
 		test('signin page should have correct appearance', async ({ page }) => {
 			test.skip(process.platform !== 'darwin', 'Visual regression baselines only exist for macOS');
 
-			await page.goto('/signin');
-			await page.waitForTimeout(500); // Wait for Clerk to render
+			const authPageObj = new AuthPage(page);
+			await authPageObj.gotoSignIn();
+
+			// Wait for the Clerk form to be fully loaded with OAuth providers and inputs
+			const fullyLoaded = await authPageObj.waitForFullyLoaded();
+			expect(fullyLoaded).toBe(true);
+
+			// Additional wait to ensure any animations have completed
+			await page.waitForTimeout(500);
 
 			await expect(page).toHaveScreenshot('signin-full-page.png', {
 				fullPage: true,
@@ -113,8 +120,15 @@ test.describe('Authentication - Smoke Tests', () => {
 		test('signup page should have correct appearance', async ({ page }) => {
 			test.skip(process.platform !== 'darwin', 'Visual regression baselines only exist for macOS');
 
-			await page.goto('/signup');
-			await page.waitForTimeout(500); // Wait for Clerk to render
+			const authPageObj = new AuthPage(page);
+			await authPageObj.gotoSignUp();
+
+			// Wait for the Clerk form to be fully loaded with OAuth providers and inputs
+			const fullyLoaded = await authPageObj.waitForFullyLoaded();
+			expect(fullyLoaded).toBe(true);
+
+			// Additional wait to ensure any animations have completed
+			await page.waitForTimeout(500);
 
 			await expect(page).toHaveScreenshot('signup-full-page.png', {
 				fullPage: true,

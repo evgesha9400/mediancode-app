@@ -91,6 +91,98 @@ export class AuthPage {
 	}
 
 	/**
+	 * Wait for OAuth provider buttons to be visible
+	 * This ensures the Clerk widget has fully loaded with all OAuth options
+	 */
+	async waitForOAuthProviders(timeout: number = 10000): Promise<boolean> {
+		try {
+			// Wait for at least one OAuth button to be visible
+			// Clerk typically shows buttons with data-provider attributes or specific SVG icons
+			const oauthButtonSelectors = [
+				'button[data-provider]', // Clerk's data-provider attribute
+				'button:has-text("Continue with Google")',
+				'button:has-text("Continue with GitHub")',
+				'button:has-text("Continue with Microsoft")',
+				'button:has-text("Sign in with Google")',
+				'button:has-text("Sign in with GitHub")',
+				'button:has-text("Sign in with Microsoft")',
+				// SVG-based detection for OAuth logos
+				'button:has(svg)',
+				// Clerk's internal structure for social buttons
+				'[class*="socialButton"]',
+				'[class*="providerIcon"]'
+			];
+
+			// Try to find any OAuth button
+			for (const selector of oauthButtonSelectors) {
+				try {
+					await this.page.waitForSelector(selector, { state: 'visible', timeout: timeout / oauthButtonSelectors.length });
+					return true;
+				} catch {
+					// Continue to next selector
+					continue;
+				}
+			}
+
+			return false;
+		} catch {
+			return false;
+		}
+	}
+
+	/**
+	 * Wait for email/password input fields to be visible
+	 * This ensures the Clerk form has fully rendered
+	 */
+	async waitForInputFields(timeout: number = 10000): Promise<boolean> {
+		try {
+			// Wait for either email input or identifier input
+			await Promise.race([
+				this.emailInput.first().waitFor({ state: 'visible', timeout }),
+				this.page.waitForSelector('input[name="identifier"]', { state: 'visible', timeout })
+			]);
+			return true;
+		} catch {
+			return false;
+		}
+	}
+
+	/**
+	 * Wait for the Clerk form to be fully loaded and ready for interaction
+	 * This includes waiting for OAuth providers, input fields, and submit button
+	 */
+	async waitForFullyLoaded(timeout: number = 15000): Promise<boolean> {
+		try {
+			// First, wait for Clerk component to be loaded
+			const clerkLoaded = await this.isClerkLoaded();
+			if (!clerkLoaded) {
+				return false;
+			}
+
+			// Wait for the page to be in a stable state (no loading indicator)
+			await this.page.waitForSelector('text=Loading...', { state: 'hidden', timeout: 5000 }).catch(() => {
+				// If "Loading..." is not found, that's fine - it might have already disappeared
+			});
+
+			// Wait for network to be idle to ensure all resources are loaded
+			await this.page.waitForLoadState('networkidle', { timeout: 5000 }).catch(() => {
+				// If network doesn't go idle, continue anyway
+			});
+
+			// Wait for either OAuth providers or input fields to be visible (in parallel)
+			// This ensures the form has fully rendered one way or another
+			const [hasOAuth, hasInputs] = await Promise.all([
+				this.waitForOAuthProviders(timeout / 2),
+				this.waitForInputFields(timeout / 2)
+			]);
+
+			return hasOAuth || hasInputs;
+		} catch {
+			return false;
+		}
+	}
+
+	/**
 	 * Check if error message is displayed
 	 */
 	async hasError(): Promise<boolean> {
