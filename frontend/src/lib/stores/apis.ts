@@ -201,6 +201,9 @@ export function createDefaultEndpoint(): ApiEndpoint {
 		requestBodyFieldIds: [],
 		responseBodyFieldIds: [],
 		useEnvelope: true,
+		responseShape: 'object',
+		responseItemShape: 'object',
+		responsePrimitiveFieldId: undefined,
 		expanded: false
 	};
 
@@ -225,6 +228,25 @@ export function updateEndpoint(id: string, updates: Partial<ApiEndpoint>): void 
 }
 
 /**
+ * Normalize an endpoint to ensure all required response shape fields exist
+ * This provides backward compatibility for endpoints created before response shape feature
+ *
+ * @param endpoint - The endpoint to normalize
+ * @returns The normalized endpoint with all required fields
+ */
+export function normalizeEndpoint(endpoint: ApiEndpoint): ApiEndpoint {
+	return {
+		...endpoint,
+		// Default to 'object' shape if missing
+		responseShape: endpoint.responseShape ?? 'object',
+		// Default to 'object' if missing
+		responseItemShape: endpoint.responseItemShape ?? 'object',
+		// Preserve existing primitive field id if any
+		responsePrimitiveFieldId: endpoint.responsePrimitiveFieldId
+	};
+}
+
+/**
  * Duplicate an endpoint with new IDs for the endpoint and all parameters
  *
  * @param endpointId - The ID of the endpoint to duplicate
@@ -237,8 +259,11 @@ export function duplicateEndpoint(endpointId: string): ApiEndpoint | undefined {
 		return undefined;
 	}
 
+	// Normalize before duplicating to ensure all fields are present
+	const normalized = normalizeEndpoint(original);
+
 	const duplicated: ApiEndpoint = {
-		...deepClone(original),
+		...deepClone(normalized),
 		id: generateId('endpoint'),
 		path: `${original.path}-copy`,
 		expanded: false,

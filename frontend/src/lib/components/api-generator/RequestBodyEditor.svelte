@@ -1,5 +1,6 @@
 <script lang="ts">
   import { fieldsStore, getFieldById } from '$lib/stores/fields';
+  import { buildRequestPreview } from '$lib/utils/examples';
   import FieldSelectorDropdown from './FieldSelectorDropdown.svelte';
   import ParameterEditor from './ParameterEditor.svelte';
 
@@ -13,42 +14,12 @@
 
   let { selectedFieldIds, onAddField, onRemoveField }: Props = $props();
 
-  // Helper function to get example value for a field type
-  function getExampleValueForType(type: string): any {
-    const normalizedType = type.toLowerCase();
-
-    if (normalizedType === 'str' || normalizedType === 'string') return 'string';
-    if (normalizedType === 'int' || normalizedType === 'integer') return 0;
-    if (normalizedType === 'float' || normalizedType === 'number') return 0.0;
-    if (normalizedType === 'bool' || normalizedType === 'boolean') return true;
-    if (normalizedType === 'uuid') return '00000000-0000-0000-0000-000000000000';
-    if (normalizedType === 'datetime') return '2024-01-01T00:00:00Z';
-    if (normalizedType === 'date') return '2024-01-01';
-    if (normalizedType === 'time') return '00:00:00';
-
-    return null;
-  }
-
-  // Build preview JSON from selected fields
-  const previewJson = $derived.by(() => {
-    if (selectedFieldIds.length === 0) {
-      return '{}';
-    }
-
-    let bodyContent: any = {};
-    selectedFieldIds.forEach(fieldId => {
-      const field = getFieldById(fieldId);
-      if (field) {
-        bodyContent[field.name] = getExampleValueForType(field.type);
-      }
-    });
-
-    return JSON.stringify(bodyContent, null, 2);
-  });
+  // Build preview JSON from selected fields using shared utility
+  const previewJson = $derived(buildRequestPreview(selectedFieldIds));
 </script>
 
-<div class="space-y-4">
-  <!-- Editor Section -->
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+  <!-- Left Column: Request Body Fields -->
   <div>
     <h3 class="text-sm text-mono-700 flex items-center font-medium mb-2">
       <i class="fa-solid fa-arrow-up mr-2"></i>
@@ -107,7 +78,7 @@
     </div>
   </div>
 
-  <!-- Preview Section -->
+  <!-- Right Column: Request Preview -->
   <div>
     <h3 class="text-sm text-mono-700 flex items-center font-medium mb-2">
       <i class="fa-solid fa-eye mr-2"></i>

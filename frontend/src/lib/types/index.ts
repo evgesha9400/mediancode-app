@@ -77,6 +77,10 @@ export interface Toast {
 // API Generator types
 export type HttpMethod = 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
 
+// Response shape types
+export type ResponseShape = 'object' | 'primitive' | 'list';
+export type ResponseItemShape = 'object' | 'primitive';
+
 export interface ApiMetadata {
   title: string;
   version: string;
@@ -110,5 +114,9 @@ export interface ApiEndpoint {
   requestBodyFieldIds: string[];
   responseBodyFieldIds: string[];
   useEnvelope: boolean;
+  // Response shape configuration
+  responseShape: ResponseShape;
+  responseItemShape: ResponseItemShape;
+  responsePrimitiveFieldId?: string;
   expanded?: boolean;
 }

@@ -9,7 +9,7 @@
  */
 
 import { get } from 'svelte/store';
-import type { ApiMetadata, ApiEndpoint, EndpointTag, EndpointParameter } from '$lib/types';
+import type { ApiMetadata, ApiEndpoint, EndpointTag, EndpointParameter, ResponseShape, ResponseItemShape } from '$lib/types';
 import {
 	apiMetadataStore,
 	tagsStore,
@@ -25,7 +25,8 @@ import {
 	updateEndpoint,
 	duplicateEndpoint,
 	deleteEndpoint,
-	reconcilePathParams
+	reconcilePathParams,
+	normalizeEndpoint
 } from './apis';
 import { getFieldById } from './fields';
 import { showToast } from './toasts';
@@ -104,6 +105,12 @@ export interface ApiGeneratorState {
 	handleAddResponseBodyField: (fieldId: string) => void;
 	handleRemoveResponseBodyField: (fieldId: string) => void;
 	handleEnvelopeToggle: (enabled: boolean) => void;
+
+	// Response shape configuration
+	handleSetResponseShape: (shape: ResponseShape) => void;
+	handleSetResponseItemShape: (itemShape: ResponseItemShape) => void;
+	handleSetResponsePrimitiveField: (fieldId: string | undefined) => void;
+	handleResetResponseDefaults: () => void;
 
 	// Code generation
 	handleGenerateCode: () => void;
@@ -260,12 +267,15 @@ export function createApiGeneratorState(): ApiGeneratorState {
 	// ============================================================================
 
 	function openEndpoint(endpoint: ApiEndpoint): void {
-		selectedEndpoint = endpoint;
-		editedEndpoint = deepClone(endpoint);
+		// Normalize endpoint to ensure all response shape fields exist
+		const normalized = normalizeEndpoint(endpoint);
+
+		selectedEndpoint = normalized;
+		editedEndpoint = deepClone(normalized);
 		drawerOpen = true;
 
 		// Initialize tag input
-		tagInputValue = endpoint.tagId ? (getTagById(endpoint.tagId)?.name || '') : '';
+		tagInputValue = normalized.tagId ? (getTagById(normalized.tagId)?.name || '') : '';
 		tagDropdownOpen = false;
 	}
 
@@ -443,6 +453,83 @@ export function createApiGeneratorState(): ApiGeneratorState {
 	}
 
 	// ============================================================================
+	// Response Shape Configuration
+	// ============================================================================
+
+	function handleSetResponseShape(shape: ResponseShape): void {
+		if (!editedEndpoint) return;
+
+		// Clear conflicting selections when switching shapes
+		const updates: Partial<ApiEndpoint> = { responseShape: shape };
+
+		if (shape === 'primitive') {
+			// Clear object/list field selections when switching to primitive
+			updates.responseBodyFieldIds = [];
+			// Keep responsePrimitiveFieldId if set, otherwise leave undefined
+		} else if (shape === 'object') {
+			// Clear primitive selection when switching to object
+			updates.responsePrimitiveFieldId = undefined;
+			// Keep responseBodyFieldIds for object shape
+		} else if (shape === 'list') {
+			// Keep current item shape, but clear primitive field if item shape is object
+			if (editedEndpoint.responseItemShape === 'object') {
+				updates.responsePrimitiveFieldId = undefined;
+			} else {
+				// Clear object fields if item shape is primitive
+				updates.responseBodyFieldIds = [];
+			}
+		}
+
+		editedEndpoint = { ...editedEndpoint, ...updates };
+	}
+
+	function handleSetResponseItemShape(itemShape: ResponseItemShape): void {
+		if (!editedEndpoint) return;
+
+		// Clear conflicting selections when switching item shapes
+		const updates: Partial<ApiEndpoint> = { responseItemShape: itemShape };
+
+		if (itemShape === 'primitive') {
+			// Clear object fields when switching to primitive items
+			updates.responseBodyFieldIds = [];
+		} else {
+			// Clear primitive field when switching to object items
+			updates.responsePrimitiveFieldId = undefined;
+		}
+
+		editedEndpoint = { ...editedEndpoint, ...updates };
+	}
+
+	function handleSetResponsePrimitiveField(fieldId: string | undefined): void {
+		if (!editedEndpoint) return;
+
+		// Validate field exists if provided
+		if (fieldId) {
+			const field = getFieldById(fieldId);
+			if (!field) {
+				showToast('Field not found in registry', 'error');
+				return;
+			}
+		}
+
+		editedEndpoint = { ...editedEndpoint, responsePrimitiveFieldId: fieldId };
+	}
+
+	function handleResetResponseDefaults(): void {
+		if (!editedEndpoint) return;
+
+		editedEndpoint = {
+			...editedEndpoint,
+			useEnvelope: true,
+			responseShape: 'object',
+			responseItemShape: 'object',
+			// Clear field selections when resetting
+			responseBodyFieldIds: [],
+			responsePrimitiveFieldId: undefined
+		};
+	}
+
+	// ============================================================================
 	// Code Generation
 	// ============================================================================
 
@@ -510,6 +597,10 @@ export function createApiGeneratorState(): ApiGeneratorState {
 		handleAddResponseBodyField,
 		handleRemoveResponseBodyField,
 		handleEnvelopeToggle,
+		handleSetResponseShape,
+		handleSetResponseItemShape,
+		handleSetResponsePrimitiveField,
+		handleResetResponseDefaults,
 		handleGenerateCode,
 		getEndpointsUsingTag
 	};

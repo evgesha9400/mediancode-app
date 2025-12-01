@@ -93,6 +93,9 @@ describe('apiGeneratorState - Tag Operations', () => {
 			requestBodyFieldIds: [],
 			responseBodyFieldIds: [],
 			useEnvelope: true,
+		responseShape: 'object' as const,
+		responseItemShape: 'object' as const,
+		responsePrimitiveFieldId: undefined,
 			expanded: false
 		};
 		state.editedEndpoint = endpoint;
@@ -120,6 +123,9 @@ describe('apiGeneratorState - Tag Operations', () => {
 			requestBodyFieldIds: [],
 			responseBodyFieldIds: [],
 			useEnvelope: true,
+		responseShape: 'object' as const,
+		responseItemShape: 'object' as const,
+		responsePrimitiveFieldId: undefined,
 			expanded: false
 		};
 		state.tagInputValue = '   ';
@@ -145,6 +151,9 @@ describe('apiGeneratorState - Tag Operations', () => {
 			requestBodyFieldIds: [],
 			responseBodyFieldIds: [],
 			useEnvelope: true,
+		responseShape: 'object' as const,
+		responseItemShape: 'object' as const,
+		responsePrimitiveFieldId: undefined,
 			expanded: false
 		};
 		state.tagInputValue = 'Users';
@@ -175,6 +184,9 @@ describe('apiGeneratorState - Tag Operations', () => {
 			requestBodyFieldIds: [],
 			responseBodyFieldIds: [],
 			useEnvelope: true,
+		responseShape: 'object' as const,
+		responseItemShape: 'object' as const,
+		responsePrimitiveFieldId: undefined,
 			expanded: false
 		};
 		state.tagInputValue = 'Users';
@@ -199,6 +211,9 @@ describe('apiGeneratorState - Tag Operations', () => {
 			requestBodyFieldIds: [],
 			responseBodyFieldIds: [],
 			useEnvelope: true,
+		responseShape: 'object' as const,
+		responseItemShape: 'object' as const,
+		responsePrimitiveFieldId: undefined,
 			expanded: false
 		};
 		state.tagInputValue = 'Users';
@@ -233,6 +248,9 @@ describe('apiGeneratorState - Tag Operations', () => {
 			requestBodyFieldIds: [],
 			responseBodyFieldIds: [],
 			useEnvelope: true,
+		responseShape: 'object' as const,
+		responseItemShape: 'object' as const,
+		responsePrimitiveFieldId: undefined,
 			expanded: false
 		};
 		state.tagInputValue = 'Users';
@@ -390,6 +408,9 @@ describe('apiGeneratorState - Drawer Operations', () => {
 			requestBodyFieldIds: [],
 			responseBodyFieldIds: [],
 			useEnvelope: true,
+		responseShape: 'object' as const,
+		responseItemShape: 'object' as const,
+		responsePrimitiveFieldId: undefined,
 			expanded: false
 		};
 
@@ -414,6 +435,9 @@ describe('apiGeneratorState - Drawer Operations', () => {
 			requestBodyFieldIds: [],
 			responseBodyFieldIds: [],
 			useEnvelope: true,
+		responseShape: 'object' as const,
+		responseItemShape: 'object' as const,
+		responsePrimitiveFieldId: undefined,
 			expanded: false
 		};
 
@@ -479,6 +503,9 @@ describe('apiGeneratorState - Drawer Operations', () => {
 			requestBodyFieldIds: [],
 			responseBodyFieldIds: [],
 			useEnvelope: true,
+		responseShape: 'object' as const,
+		responseItemShape: 'object' as const,
+		responsePrimitiveFieldId: undefined,
 			expanded: false
 		};
 
@@ -504,6 +531,9 @@ describe('apiGeneratorState - Drawer Operations', () => {
 			requestBodyFieldIds: [],
 			responseBodyFieldIds: [],
 			useEnvelope: true,
+		responseShape: 'object' as const,
+		responseItemShape: 'object' as const,
+		responsePrimitiveFieldId: undefined,
 			expanded: false
 		};
 
@@ -896,5 +926,375 @@ describe('apiGeneratorState - Body Field Selection Operations', () => {
 		const savedEndpoint = get(endpointsStore)[0];
 		expect(savedEndpoint.requestBodyFieldIds).toContain('field-1');
 		expect(savedEndpoint.responseBodyFieldIds).toContain('field-2');
+	});
+});
+
+describe('apiGeneratorState - Response Shape Configuration', () => {
+	beforeEach(() => {
+		endpointsStore.set([]);
+		fieldsStore.set(initialFields);
+		seedIdGenerator({ counter: 0, timestamp: 1000000 });
+		vi.clearAllMocks();
+	});
+
+	describe('handleSetResponseShape', () => {
+		it('should switch from object to primitive shape', () => {
+			const state = createApiGeneratorState();
+
+			state.handleAddEndpoint();
+			const endpoint = get(endpointsStore)[0];
+			state.openEndpoint(endpoint);
+
+			// Start with object shape and some fields
+			state.handleAddResponseBodyField('field-1');
+			state.handleAddResponseBodyField('field-2');
+
+			expect(state.editedEndpoint?.responseShape).toBe('object');
+			expect(state.editedEndpoint?.responseBodyFieldIds).toHaveLength(2);
+
+			// Switch to primitive
+			state.handleSetResponseShape('primitive');
+
+			expect(state.editedEndpoint?.responseShape).toBe('primitive');
+			expect(state.editedEndpoint?.responseBodyFieldIds).toHaveLength(0); // Cleared
+			expect(state.editedEndpoint?.responsePrimitiveFieldId).toBeUndefined();
+		});
+
+		it('should switch from object to list shape', () => {
+			const state = createApiGeneratorState();
+
+			state.handleAddEndpoint();
+			const endpoint = get(endpointsStore)[0];
+			state.openEndpoint(endpoint);
+
+			// Start with object shape and some fields
+			state.handleAddResponseBodyField('field-1');
+
+			expect(state.editedEndpoint?.responseShape).toBe('object');
+			expect(state.editedEndpoint?.responseBodyFieldIds).toHaveLength(1);
+
+			// Switch to list (default item shape is object)
+			state.handleSetResponseShape('list');
+
+			expect(state.editedEndpoint?.responseShape).toBe('list');
+			expect(state.editedEndpoint?.responseItemShape).toBe('object');
+			// Fields are kept for list of objects
+			expect(state.editedEndpoint?.responseBodyFieldIds).toHaveLength(1);
+			expect(state.editedEndpoint?.responsePrimitiveFieldId).toBeUndefined();
+		});
+
+		it('should switch from primitive to object shape', () => {
+			const state = createApiGeneratorState();
+
+			state.handleAddEndpoint();
+			const endpoint = get(endpointsStore)[0];
+			state.openEndpoint(endpoint);
+
+			// Switch to primitive first
+			state.handleSetResponseShape('primitive');
+			state.handleSetResponsePrimitiveField('field-1');
+
+			expect(state.editedEndpoint?.responseShape).toBe('primitive');
+			expect(state.editedEndpoint?.responsePrimitiveFieldId).toBe('field-1');
+
+			// Switch back to object
+			state.handleSetResponseShape('object');
+
+			expect(state.editedEndpoint?.responseShape).toBe('object');
+			expect(state.editedEndpoint?.responsePrimitiveFieldId).toBeUndefined(); // Cleared
+			expect(state.editedEndpoint?.responseBodyFieldIds).toHaveLength(0);
+		});
+
+		it('should handle list shape with primitive item shape', () => {
+			const state = createApiGeneratorState();
+
+			state.handleAddEndpoint();
+			const endpoint = get(endpointsStore)[0];
+			state.openEndpoint(endpoint);
+
+			// Set up list of objects first
+			state.handleSetResponseShape('list');
+			state.handleAddResponseBodyField('field-1');
+
+			// Switch item shape to primitive
+			state.handleSetResponseItemShape('primitive');
+
+			expect(state.editedEndpoint?.responseItemShape).toBe('primitive');
+			expect(state.editedEndpoint?.responseBodyFieldIds).toHaveLength(0); // Cleared
+
+			// Now switching to list should preserve the primitive item shape
+			state.handleSetResponseShape('list');
+
+			expect(state.editedEndpoint?.responseShape).toBe('list');
+			expect(state.editedEndpoint?.responseBodyFieldIds).toHaveLength(0); // Still cleared
+		});
+	});
+
+	describe('handleSetResponseItemShape', () => {
+		it('should set list item shape to object', () => {
+			const state = createApiGeneratorState();
+
+			state.handleAddEndpoint();
+			const endpoint = get(endpointsStore)[0];
+			state.openEndpoint(endpoint);
+
+			// Set to list shape first
+			state.handleSetResponseShape('list');
+			state.handleSetResponseItemShape('primitive');
+			state.handleSetResponsePrimitiveField('field-1');
+
+			expect(state.editedEndpoint?.responseItemShape).toBe('primitive');
+			expect(state.editedEndpoint?.responsePrimitiveFieldId).toBe('field-1');
+
+			// Switch item shape to object
+			state.handleSetResponseItemShape('object');
+
+			expect(state.editedEndpoint?.responseItemShape).toBe('object');
+			expect(state.editedEndpoint?.responsePrimitiveFieldId).toBeUndefined(); // Cleared
+		});
+
+		it('should set list item shape to primitive', () => {
+			const state = createApiGeneratorState();
+
+			state.handleAddEndpoint();
+			const endpoint = get(endpointsStore)[0];
+			state.openEndpoint(endpoint);
+
+			// Set to list shape with objects
+			state.handleSetResponseShape('list');
+			state.handleAddResponseBodyField('field-1');
+			state.handleAddResponseBodyField('field-2');
+
+			expect(state.editedEndpoint?.responseItemShape).toBe('object');
+			expect(state.editedEndpoint?.responseBodyFieldIds).toHaveLength(2);
+
+			// Switch item shape to primitive
+			state.handleSetResponseItemShape('primitive');
+
+			expect(state.editedEndpoint?.responseItemShape).toBe('primitive');
+			expect(state.editedEndpoint?.responseBodyFieldIds).toHaveLength(0); // Cleared
+		});
+
+		it('should clear object fields when switching to primitive items', () => {
+			const state = createApiGeneratorState();
+
+			state.handleAddEndpoint();
+			const endpoint = get(endpointsStore)[0];
+			state.openEndpoint(endpoint);
+
+			// Set to list of objects
+			state.handleSetResponseShape('list');
+			state.handleAddResponseBodyField('field-1');
+			state.handleAddResponseBodyField('field-2');
+			state.handleAddResponseBodyField('field-3');
+
+			expect(state.editedEndpoint?.responseBodyFieldIds).toHaveLength(3);
+
+			// Switch to primitive items
+			state.handleSetResponseItemShape('primitive');
+
+			expect(state.editedEndpoint?.responseBodyFieldIds).toHaveLength(0);
+		});
+
+		it('should clear primitive field when switching to object items', () => {
+			const state = createApiGeneratorState();
+
+			state.handleAddEndpoint();
+			const endpoint = get(endpointsStore)[0];
+			state.openEndpoint(endpoint);
+
+			// Set to list of primitives
+			state.handleSetResponseShape('list');
+			state.handleSetResponseItemShape('primitive');
+			state.handleSetResponsePrimitiveField('field-1');
+
+			expect(state.editedEndpoint?.responsePrimitiveFieldId).toBe('field-1');
+
+			// Switch to object items
+			state.handleSetResponseItemShape('object');
+
+			expect(state.editedEndpoint?.responsePrimitiveFieldId).toBeUndefined();
+		});
+	});
+
+	describe('handleSetResponsePrimitiveField', () => {
+		it('should set a primitive field ID', () => {
+			const state = createApiGeneratorState();
+
+			state.handleAddEndpoint();
+			const endpoint = get(endpointsStore)[0];
+			state.openEndpoint(endpoint);
+
+			state.handleSetResponseShape('primitive');
+			state.handleSetResponsePrimitiveField('field-1');
+
+			expect(state.editedEndpoint?.responsePrimitiveFieldId).toBe('field-1');
+		});
+
+		it('should clear the primitive field ID', () => {
+			const state = createApiGeneratorState();
+
+			state.handleAddEndpoint();
+			const endpoint = get(endpointsStore)[0];
+			state.openEndpoint(endpoint);
+
+			state.handleSetResponseShape('primitive');
+			state.handleSetResponsePrimitiveField('field-1');
+
+			expect(state.editedEndpoint?.responsePrimitiveFieldId).toBe('field-1');
+
+			// Clear it
+			state.handleSetResponsePrimitiveField(undefined);
+
+			expect(state.editedEndpoint?.responsePrimitiveFieldId).toBeUndefined();
+		});
+
+		it('should show error toast if field ID does not exist', () => {
+			const state = createApiGeneratorState();
+
+			state.handleAddEndpoint();
+			const endpoint = get(endpointsStore)[0];
+			state.openEndpoint(endpoint);
+
+			vi.clearAllMocks();
+			state.handleSetResponsePrimitiveField('non-existent-field');
+
+			expect(toastsModule.showToast).toHaveBeenCalledWith('Field not found in registry', 'error');
+			expect(state.editedEndpoint?.responsePrimitiveFieldId).toBeUndefined();
+		});
+
+		it('should allow setting field from field registry', () => {
+			const state = createApiGeneratorState();
+
+			state.handleAddEndpoint();
+			const endpoint = get(endpointsStore)[0];
+			state.openEndpoint(endpoint);
+
+			// field-1 exists in initialFields
+			state.handleSetResponsePrimitiveField('field-1');
+
+			expect(state.editedEndpoint?.responsePrimitiveFieldId).toBe('field-1');
+			expect(toastsModule.showToast).not.toHaveBeenCalled();
+		});
+	});
+
+	describe('handleResetResponseDefaults', () => {
+		it('should reset responseShape to object', () => {
+			const state = createApiGeneratorState();
+
+			state.handleAddEndpoint();
+			const endpoint = get(endpointsStore)[0];
+			state.openEndpoint(endpoint);
+
+			// Change to primitive
+			state.handleSetResponseShape('primitive');
+			expect(state.editedEndpoint?.responseShape).toBe('primitive');
+
+			// Reset
+			state.handleResetResponseDefaults();
+
+			expect(state.editedEndpoint?.responseShape).toBe('object');
+		});
+
+		it('should reset responseItemShape to object', () => {
+			const state = createApiGeneratorState();
+
+			state.handleAddEndpoint();
+			const endpoint = get(endpointsStore)[0];
+			state.openEndpoint(endpoint);
+
+			// Change to list with primitive items
+			state.handleSetResponseShape('list');
+			state.handleSetResponseItemShape('primitive');
+			expect(state.editedEndpoint?.responseItemShape).toBe('primitive');
+
+			// Reset
+			state.handleResetResponseDefaults();
+
+			expect(state.editedEndpoint?.responseItemShape).toBe('object');
+		});
+
+		it('should reset useEnvelope to true', () => {
+			const state = createApiGeneratorState();
+
+			state.handleAddEndpoint();
+			const endpoint = get(endpointsStore)[0];
+			state.openEndpoint(endpoint);
+
+			// Disable envelope
+			state.handleEnvelopeToggle(false);
+			expect(state.editedEndpoint?.useEnvelope).toBe(false);
+
+			// Reset
+			state.handleResetResponseDefaults();
+
+			expect(state.editedEndpoint?.useEnvelope).toBe(true);
+		});
+
+		it('should clear responseBodyFieldIds', () => {
+			const state = createApiGeneratorState();
+
+			state.handleAddEndpoint();
+			const endpoint = get(endpointsStore)[0];
+			state.openEndpoint(endpoint);
+
+			// Add some fields
+			state.handleAddResponseBodyField('field-1');
+			state.handleAddResponseBodyField('field-2');
+			expect(state.editedEndpoint?.responseBodyFieldIds).toHaveLength(2);
+
+			// Reset
+			state.handleResetResponseDefaults();
+
+			expect(state.editedEndpoint?.responseBodyFieldIds).toHaveLength(0);
+		});
+
+		it('should clear responsePrimitiveFieldId', () => {
+			const state = createApiGeneratorState();
+
+			state.handleAddEndpoint();
+			const endpoint = get(endpointsStore)[0];
+			state.openEndpoint(endpoint);
+
+			// Set primitive field
+			state.handleSetResponseShape('primitive');
+			state.handleSetResponsePrimitiveField('field-1');
+			expect(state.editedEndpoint?.responsePrimitiveFieldId).toBe('field-1');
+
+			// Reset
+			state.handleResetResponseDefaults();
+
+			expect(state.editedEndpoint?.responsePrimitiveFieldId).toBeUndefined();
+		});
+
+		it('should reset all response configuration to defaults', () => {
+			const state = createApiGeneratorState();
+
+			state.handleAddEndpoint();
+			const endpoint = get(endpointsStore)[0];
+			state.openEndpoint(endpoint);
+
+			// Make various changes
+			state.handleSetResponseShape('list');
+			state.handleSetResponseItemShape('primitive');
+			state.handleSetResponsePrimitiveField('field-1');
+			state.handleEnvelopeToggle(false);
+
+			// Verify changes
+			expect(state.editedEndpoint?.responseShape).toBe('list');
+			expect(state.editedEndpoint?.responseItemShape).toBe('primitive');
+			expect(state.editedEndpoint?.responsePrimitiveFieldId).toBe('field-1');
+			expect(state.editedEndpoint?.useEnvelope).toBe(false);
+
+			// Reset everything
+			state.handleResetResponseDefaults();
+
+			// Verify all defaults restored
+			expect(state.editedEndpoint?.useEnvelope).toBe(true);
+			expect(state.editedEndpoint?.responseShape).toBe('object');
+			expect(state.editedEndpoint?.responseItemShape).toBe('object');
+			expect(state.editedEndpoint?.responseBodyFieldIds).toHaveLength(0);
+			expect(state.editedEndpoint?.responsePrimitiveFieldId).toBeUndefined();
+		});
 	});
 });

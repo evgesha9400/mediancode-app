@@ -301,9 +301,15 @@
         <ResponseBodyEditor
           selectedFieldIds={state.editedEndpoint.responseBodyFieldIds}
           useEnvelope={state.editedEndpoint.useEnvelope}
+          responseShape={state.editedEndpoint.responseShape}
+          responseItemShape={state.editedEndpoint.responseItemShape}
+          responsePrimitiveFieldId={state.editedEndpoint.responsePrimitiveFieldId}
           onAddField={state.handleAddResponseBodyField}
           onRemoveField={state.handleRemoveResponseBodyField}
           onEnvelopeToggle={state.handleEnvelopeToggle}
+          onSetResponseShape={state.handleSetResponseShape}
+          onSetResponseItemShape={state.handleSetResponseItemShape}
+          onSetResponsePrimitiveField={state.handleSetResponsePrimitiveField}
         />
       </div>
     {/if}
