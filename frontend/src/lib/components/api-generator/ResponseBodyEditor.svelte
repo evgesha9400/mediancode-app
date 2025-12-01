@@ -73,11 +73,11 @@
     <!-- Response Shape Selection -->
     <div>
       <label class="block text-sm text-mono-700 mb-2 font-medium">Response Shape</label>
-      <div class="flex gap-1.5">
+      <div class="flex gap-1">
         <button
           type="button"
           onclick={() => onSetResponseShape('object')}
-          class="flex-1 px-2 py-1.5 text-sm border rounded-md transition-colors {responseShape === 'object'
+          class="flex-1 px-1.5 py-1 text-sm border rounded-md transition-colors {responseShape === 'object'
             ? 'bg-mono-900 text-white border-mono-900'
             : 'bg-white text-mono-700 border-mono-300 hover:border-mono-400'}"
         >
@@ -87,17 +87,17 @@
         <button
           type="button"
           onclick={() => onSetResponseShape('primitive')}
-          class="flex-1 px-2 py-1.5 text-sm border rounded-md transition-colors {responseShape === 'primitive'
+          class="flex-1 px-1.5 py-1 text-sm border rounded-md transition-colors {responseShape === 'primitive'
             ? 'bg-mono-900 text-white border-mono-900'
             : 'bg-white text-mono-700 border-mono-300 hover:border-mono-400'}"
         >
           <i class="fa-solid fa-cube mr-1.5"></i>
-          Primitive
+          Field
         </button>
         <button
           type="button"
           onclick={() => onSetResponseShape('list')}
-          class="flex-1 px-2 py-1.5 text-sm border rounded-md transition-colors {responseShape === 'list'
+          class="flex-1 px-1.5 py-1 text-sm border rounded-md transition-colors {responseShape === 'list'
             ? 'bg-mono-900 text-white border-mono-900'
             : 'bg-white text-mono-700 border-mono-300 hover:border-mono-400'}"
         >
@@ -111,11 +111,11 @@
     {#if responseShape === 'list'}
       <div>
         <label class="block text-sm text-mono-700 mb-2 font-medium">List Item Type</label>
-        <div class="flex gap-1.5">
+        <div class="flex gap-1">
           <button
             type="button"
             onclick={() => onSetResponseItemShape('object')}
-            class="flex-1 px-2 py-1.5 text-sm border rounded-md transition-colors {responseItemShape === 'object'
+            class="flex-1 px-1.5 py-1 text-sm border rounded-md transition-colors {responseItemShape === 'object'
               ? 'bg-mono-900 text-white border-mono-900'
               : 'bg-white text-mono-700 border-mono-300 hover:border-mono-400'}"
           >
@@ -125,12 +125,12 @@
           <button
             type="button"
             onclick={() => onSetResponseItemShape('primitive')}
-            class="flex-1 px-2 py-1.5 text-sm border rounded-md transition-colors {responseItemShape === 'primitive'
+            class="flex-1 px-1.5 py-1 text-sm border rounded-md transition-colors {responseItemShape === 'primitive'
               ? 'bg-mono-900 text-white border-mono-900'
               : 'bg-white text-mono-700 border-mono-300 hover:border-mono-400'}"
           >
             <i class="fa-solid fa-cube mr-1.5"></i>
-            Primitives
+            Fields
           </button>
         </div>
       </div>
@@ -159,39 +159,42 @@
               <p class="text-xs text-mono-500">No fields selected</p>
             </div>
           {:else}
-            {#each selectedFieldIds as fieldId (fieldId)}
-              {@const field = getFieldById(fieldId)}
-              {#if field}
-                <ParameterEditor
-                  parameter={{
-                    id: field.id,
-                    name: field.name,
-                    type: field.type,
-                    description: field.description || '',
-                    required: true
-                  }}
-                  readOnly={true}
-                  onDelete={() => onRemoveField(fieldId)}
-                  showRequired={false}
-                />
-              {:else}
-                <!-- Missing field fallback - field was deleted from registry -->
-                <div class="flex items-center gap-2 p-2 bg-red-50 border border-red-200 rounded-md">
-                  <i class="fa-solid fa-triangle-exclamation text-red-500 text-sm"></i>
-                  <span class="flex-1 text-sm text-red-700">
-                    Field not found <span class="font-mono text-xs text-red-500">({fieldId})</span>
-                  </span>
-                  <button
-                    type="button"
-                    onclick={() => onRemoveField(fieldId)}
-                    class="p-1 text-red-600 hover:text-red-800 hover:bg-red-100 rounded transition-colors"
-                    title="Remove missing field reference"
-                  >
-                    <i class="fa-solid fa-xmark"></i>
-                  </button>
-                </div>
-              {/if}
-            {/each}
+            <div class="p-2 bg-mono-50 rounded border border-mono-200 space-y-0 divide-y divide-mono-200">
+              {#each selectedFieldIds as fieldId (fieldId)}
+                {@const field = getFieldById(fieldId)}
+                {#if field}
+                  <ParameterEditor
+                    parameter={{
+                      id: field.id,
+                      name: field.name,
+                      type: field.type,
+                      description: field.description || '',
+                      required: true
+                    }}
+                    readOnly={true}
+                    onDelete={() => onRemoveField(fieldId)}
+                    showRequired={false}
+                    compact={true}
+                  />
+                {:else}
+                  <!-- Missing field fallback - field was deleted from registry -->
+                  <div class="flex items-center gap-2 py-1.5">
+                    <i class="fa-solid fa-triangle-exclamation text-red-500 text-sm"></i>
+                    <span class="flex-1 text-sm text-red-700">
+                      Field not found <span class="font-mono text-xs text-red-500">({fieldId})</span>
+                    </span>
+                    <button
+                      type="button"
+                      onclick={() => onRemoveField(fieldId)}
+                      class="p-1 text-red-600 hover:text-red-800 hover:bg-red-100 rounded transition-colors"
+                      title="Remove missing field reference"
+                    >
+                      <i class="fa-solid fa-xmark"></i>
+                    </button>
+                  </div>
+                {/if}
+              {/each}
+            </div>
           {/if}
         </div>
       </div>
@@ -218,33 +221,38 @@
           {#if responsePrimitiveFieldId}
             {@const field = getFieldById(responsePrimitiveFieldId)}
             {#if field}
-              <ParameterEditor
-                parameter={{
-                  id: field.id,
-                  name: field.name,
-                  type: field.type,
-                  description: field.description || '',
-                  required: true
-                }}
-                readOnly={true}
-                onDelete={() => onSetResponsePrimitiveField(undefined)}
-                showRequired={false}
-              />
+              <div class="p-2 bg-mono-50 rounded border border-mono-200">
+                <ParameterEditor
+                  parameter={{
+                    id: field.id,
+                    name: field.name,
+                    type: field.type,
+                    description: field.description || '',
+                    required: true
+                  }}
+                  readOnly={true}
+                  onDelete={() => onSetResponsePrimitiveField(undefined)}
+                  showRequired={false}
+                  compact={true}
+                />
+              </div>
             {:else}
               <!-- Missing field fallback -->
-              <div class="flex items-center gap-2 p-2 bg-red-50 border border-red-200 rounded-md">
-                <i class="fa-solid fa-triangle-exclamation text-red-500 text-sm"></i>
-                <span class="flex-1 text-sm text-red-700">
-                  Field not found <span class="font-mono text-xs text-red-500">({responsePrimitiveFieldId})</span>
-                </span>
-                <button
-                  type="button"
-                  onclick={() => onSetResponsePrimitiveField(undefined)}
-                  class="p-1 text-red-600 hover:text-red-800 hover:bg-red-100 rounded transition-colors"
-                  title="Remove missing field reference"
-                >
-                  <i class="fa-solid fa-xmark"></i>
-                </button>
+              <div class="p-2 bg-red-50 border border-red-200 rounded-md">
+                <div class="flex items-center gap-2">
+                  <i class="fa-solid fa-triangle-exclamation text-red-500 text-sm"></i>
+                  <span class="flex-1 text-sm text-red-700">
+                    Field not found <span class="font-mono text-xs text-red-500">({responsePrimitiveFieldId})</span>
+                  </span>
+                  <button
+                    type="button"
+                    onclick={() => onSetResponsePrimitiveField(undefined)}
+                    class="p-1 text-red-600 hover:text-red-800 hover:bg-red-100 rounded transition-colors"
+                    title="Remove missing field reference"
+                  >
+                    <i class="fa-solid fa-xmark"></i>
+                  </button>
+                </div>
               </div>
             {/if}
           {:else}
@@ -276,7 +284,7 @@
         </label>
       </div>
     </div>
-    <div class="p-3 bg-mono-900 rounded text-white text-xs overflow-x-auto">
+    <div class="p-3 bg-mono-900 rounded text-white text-sm overflow-x-auto">
       <pre>{previewJson}</pre>
     </div>
   </div>
