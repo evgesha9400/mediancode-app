@@ -51,13 +51,6 @@ export function getEndpointById(id: string): ApiEndpoint | undefined {
 }
 
 /**
- * Get all endpoints that belong to a specific tag
- */
-export function getEndpointsByTagId(tagId: string): ApiEndpoint[] {
-	return get(endpointsStore).filter(e => e.tagId === tagId);
-}
-
-/**
  * Count endpoints using a specific tag
  */
 export function getEndpointCountByTag(tagId: string): number {
@@ -171,13 +164,6 @@ export function deleteTagWithCleanup(tagId: string): DeletionResult {
  */
 export function deleteTag(id: string): void {
 	tagsStore.update(tags => tags.filter(tag => tag.id !== id));
-}
-
-/**
- * Legacy function for compatibility
- */
-export function deleteTagAndClearEndpoints(tagId: string): void {
-	deleteTagWithCleanup(tagId);
 }
 
 // ============================================================================
@@ -297,17 +283,6 @@ export function deleteEndpoint(id: string): DeletionResult {
 		success: true,
 		error: 'Endpoint deleted successfully'
 	};
-}
-
-/**
- * Toggle an endpoint's expanded state
- */
-export function toggleEndpointExpanded(id: string): void {
-	endpointsStore.update(endpoints =>
-		endpoints.map(endpoint =>
-			endpoint.id === id ? { ...endpoint, expanded: !endpoint.expanded } : endpoint
-		)
-	);
 }
 
 // ============================================================================

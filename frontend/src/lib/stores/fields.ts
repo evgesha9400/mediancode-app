@@ -95,9 +95,3 @@ export function deleteField(id: string): DeletionResult {
 
 	return { success: true };
 }
-
-export function addField(field: Field): void {
-	fieldsStore.update(fields => {
-		return [...fields, field];
-	});
-}

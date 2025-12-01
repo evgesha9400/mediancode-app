@@ -123,14 +123,6 @@ export function getPrimitiveTypes(): FieldType[] {
 	return get(typesStore).filter(t => t.category === 'primitive');
 }
 
-export function getAbstractTypes(): FieldType[] {
-	return get(typesStore).filter(t => t.category === 'abstract');
-}
-
-export function getTypeByName(name: TypeName): FieldType | undefined {
-	return get(typesStore).find(t => t.name === name);
-}
-
 export function searchTypes(types: FieldType[], query: string): FieldType[] {
 	const lowerQuery = query.toLowerCase().trim();
 

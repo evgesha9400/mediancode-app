@@ -45,10 +45,3 @@ export function showToast(
 export function dismissToast(id: string): void {
   toastsStore.update(toasts => toasts.filter(t => t.id !== id));
 }
-
-/**
- * Clear all active toasts
- */
-export function clearAllToasts(): void {
-  toastsStore.set([]);
-}

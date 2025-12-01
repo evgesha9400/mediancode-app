@@ -44,7 +44,6 @@ import {
   // Standalone components
   DashboardLayout,
   Sidebar,
-  ActivityItem,
   StatCard,
 } from '$lib/components';
 
@@ -78,69 +77,60 @@ import type {
   // Standalone component types
   DashboardLayoutProps,
   SidebarProps,
-  ActivityItemProps,
   StatCardProps,
 } from '$lib/components';
 
 /**
  * Type-level assertions to verify exports are correct
- * These don't run at runtime but ensure TypeScript recognizes the types
+ * These verify TypeScript recognizes all exported types and components
  */
 
-// Verify component types are constructable (have default exports)
-const _drawer: typeof Drawer = Drawer;
-const _drawerHeader: typeof DrawerHeader = DrawerHeader;
-const _drawerContent: typeof DrawerContent = DrawerContent;
-const _drawerFooter: typeof DrawerFooter = DrawerFooter;
+// Collect all components to verify they're constructable (have default exports)
+const components = [
+  Drawer,
+  DrawerHeader,
+  DrawerContent,
+  DrawerFooter,
+  Table,
+  SortableColumn,
+  EmptyState,
+  SearchBar,
+  FilterPanel,
+  Toast,
+  ToastContainer,
+  Tooltip,
+  PageHeader,
+  DashboardLayout,
+  Sidebar,
+  StatCard,
+] as const;
 
-const _table: typeof Table = Table;
-const _sortableColumn: typeof SortableColumn = SortableColumn;
-const _emptyState: typeof EmptyState = EmptyState;
+// Type assertions for prop interfaces - ensures types are valid
+export type PropTypes = [
+  DrawerProps,
+  DrawerHeaderProps,
+  DrawerContentProps,
+  DrawerFooterProps,
+  TableProps,
+  SortableColumnProps,
+  EmptyStateProps,
+  SearchBarProps,
+  FilterPanelProps,
+  ToastProps,
+  ToastContainerProps,
+  TooltipProps,
+  PageHeaderProps,
+  DashboardLayoutProps,
+  SidebarProps,
+  StatCardProps,
+];
 
-const _searchBar: typeof SearchBar = SearchBar;
-const _filterPanel: typeof FilterPanel = FilterPanel;
-
-const _toast: typeof Toast = Toast;
-const _toastContainer: typeof ToastContainer = ToastContainer;
-
-const _tooltip: typeof Tooltip = Tooltip;
-
-const _pageHeader: typeof PageHeader = PageHeader;
-
-const _dashboardLayout: typeof DashboardLayout = DashboardLayout;
-const _sidebar: typeof Sidebar = Sidebar;
-const _activityItem: typeof ActivityItem = ActivityItem;
-const _statCard: typeof StatCard = StatCard;
-
-// Verify prop types are valid interfaces/types
-const _drawerPropsCheck: DrawerProps = {} as DrawerProps;
-const _drawerHeaderPropsCheck: DrawerHeaderProps = {} as DrawerHeaderProps;
-const _drawerContentPropsCheck: DrawerContentProps = {} as DrawerContentProps;
-const _drawerFooterPropsCheck: DrawerFooterProps = {} as DrawerFooterProps;
-
-const _tablePropsCheck: TableProps = {} as TableProps;
-const _sortableColumnPropsCheck: SortableColumnProps = {} as SortableColumnProps;
-const _emptyStatePropsCheck: EmptyStateProps = {} as EmptyStateProps;
-
-const _searchBarPropsCheck: SearchBarProps = {} as SearchBarProps;
-const _filterPanelPropsCheck: FilterPanelProps = {} as FilterPanelProps;
-
-const _toastPropsCheck: ToastProps = {} as ToastProps;
-const _toastContainerPropsCheck: ToastContainerProps = {} as ToastContainerProps;
-
-const _tooltipPropsCheck: TooltipProps = {} as TooltipProps;
-
-const _pageHeaderPropsCheck: PageHeaderProps = {} as PageHeaderProps;
-
-const _dashboardLayoutPropsCheck: DashboardLayoutProps = {} as DashboardLayoutProps;
-const _sidebarPropsCheck: SidebarProps = {} as SidebarProps;
-const _activityItemPropsCheck: ActivityItemProps = {} as ActivityItemProps;
-const _statCardPropsCheck: StatCardProps = {} as StatCardProps;
+// PropTypes tuple above serves as a compile-time check that all prop types exist
 
 /**
  * Export a simple function to indicate this file has been processed
- * This is a no-op but ensures the file is valid TypeScript
+ * Returns the count of verified components
  */
-export function barrelExportSmokeTest(): boolean {
-  return true;
+export function barrelExportSmokeTest(): number {
+  return components.length;
 }

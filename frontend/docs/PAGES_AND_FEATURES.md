@@ -33,7 +33,6 @@
 - `DashboardLayout.svelte` - Main dashboard layout wrapper
 - `Sidebar.svelte` - Dashboard sidebar navigation
 - `StatCard.svelte` - Statistics display card
-- `ActivityItem.svelte` - Activity feed item component
 
 #### Component Categories
 

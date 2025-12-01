@@ -55,10 +55,6 @@ export const validatorsStore = derived(
 	}
 );
 
-export function getValidatorsByType(type: 'inline' | 'custom'): Validator[] {
-	return get(validatorsStore).filter(v => v.type === type);
-}
-
 export function getTotalValidatorCount(): number {
 	return get(validatorsBaseStore).length;
 }

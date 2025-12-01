@@ -7,7 +7,6 @@ import {
 	updateApiMetadata,
 	getTagById,
 	getEndpointById,
-	getEndpointsByTagId,
 	getEndpointCountByTag,
 	getTotalEndpointCount,
 	getTotalTagCount,
@@ -179,24 +178,6 @@ describe('apis store - Endpoint Operations', () => {
 		const found = getEndpointById(created.id);
 
 		expect(found).toEqual(created);
-	});
-
-	it('should get endpoints by tag ID', () => {
-		const tag = createTag('Users')!;
-
-		const endpoint1 = createDefaultEndpoint();
-		updateEndpoint(endpoint1.id, { tagId: tag.id });
-
-		const endpoint2 = createDefaultEndpoint();
-		updateEndpoint(endpoint2.id, { tagId: tag.id });
-
-		const endpoint3 = createDefaultEndpoint();
-		// No tag
-
-		const tagged = getEndpointsByTagId(tag.id);
-		expect(tagged).toHaveLength(2);
-		expect(tagged.map(e => e.id)).toContain(endpoint1.id);
-		expect(tagged.map(e => e.id)).toContain(endpoint2.id);
 	});
 
 	it('should count endpoints by tag', () => {
