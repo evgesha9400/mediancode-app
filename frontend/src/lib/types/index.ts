@@ -78,8 +78,10 @@ export interface Toast {
 export type HttpMethod = 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
 
 // Response shape types
-export type ResponseShape = 'object' | 'primitive' | 'list';
-export type ResponseItemShape = 'object' | 'primitive';
+// Request body: ONLY single object (no arrays, no primitives)
+// Response body: ONLY object or array of objects (no primitives)
+export type ResponseShape = 'object' | 'list';
+export type ResponseItemShape = 'object'; // Only objects allowed in lists
 
 export interface ApiMetadata {
   title: string;
@@ -111,13 +113,11 @@ export interface ApiEndpoint {
   tagId?: string;
   pathParams: EndpointParameter[];
   queryParams: EndpointParameter[];
-  requestBodyFieldIds: string[];
-  responseBodyFieldIds: string[];
+  requestBodyObjectId?: string; // Select ONE object for request body (optional - only POST/PUT/PATCH methods)
+  responseBodyObjectId?: string; // Select ONE object for response body (for both single object and array of objects)
   useEnvelope: boolean;
-  // Response shape configuration
+  // Response shape configuration (object or list of objects only)
   responseShape: ResponseShape;
-  responseItemShape: ResponseItemShape;
-  responsePrimitiveFieldId?: string;
   expanded?: boolean;
 }
 

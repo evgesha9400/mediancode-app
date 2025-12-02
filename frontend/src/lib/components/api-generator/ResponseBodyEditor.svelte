@@ -1,81 +1,54 @@
 <script lang="ts">
-  import type { ResponseShape, ResponseItemShape } from '$lib/types';
-  import { fieldsStore, getFieldById } from '$lib/stores/fields';
-  import { buildResponsePreview } from '$lib/utils/examples';
-  import FieldSelectorDropdown from './FieldSelectorDropdown.svelte';
-  import ParameterEditor from './ParameterEditor.svelte';
+  import type { ResponseShape } from '$lib/types';
+  import { objectsStore, getObjectById } from '$lib/stores/objects';
+  import { getFieldById } from '$lib/stores/fields';
+  import { buildResponsePreviewFromObject } from '$lib/utils/examples';
+  import ObjectSelectorDropdown from './ObjectSelectorDropdown.svelte';
 
   export interface ResponseBodyEditorProps {
-    selectedFieldIds: string[];
+    selectedObjectId?: string;
     useEnvelope: boolean;
     responseShape: ResponseShape;
-    responseItemShape: ResponseItemShape;
-    responsePrimitiveFieldId?: string;
-    onAddField: (fieldId: string) => void;
-    onRemoveField: (fieldId: string) => void;
+    onSelectObject: (objectId: string | undefined) => void;
     onEnvelopeToggle: (enabled: boolean) => void;
     onSetResponseShape: (shape: ResponseShape) => void;
-    onSetResponseItemShape: (itemShape: ResponseItemShape) => void;
-    onSetResponsePrimitiveField: (fieldId: string | undefined) => void;
   }
 
   interface Props extends ResponseBodyEditorProps {}
 
   let {
-    selectedFieldIds,
+    selectedObjectId,
     useEnvelope,
     responseShape,
-    responseItemShape,
-    responsePrimitiveFieldId,
-    onAddField,
-    onRemoveField,
+    onSelectObject,
     onEnvelopeToggle,
-    onSetResponseShape,
-    onSetResponseItemShape,
-    onSetResponsePrimitiveField
+    onSetResponseShape
   }: Props = $props();
 
   // Build preview JSON using shared utility
-  // Note: Include $fieldsStore in derived dependencies to ensure preview updates
-  // when field definitions (name, type, etc.) change in the registry
+  // Note: Include $objectsStore in derived dependencies to ensure preview updates
+  // when object definitions change in the registry
   const previewJson = $derived(
-    buildResponsePreview(
+    buildResponsePreviewFromObject(
       responseShape,
-      selectedFieldIds,
-      responsePrimitiveFieldId,
-      responseItemShape,
+      selectedObjectId,
       useEnvelope,
-      $fieldsStore
+      $objectsStore
     )
   );
 
-  // Determine if we should show the object field selector
-  const showObjectFieldSelector = $derived(
-    responseShape === 'object' || (responseShape === 'list' && responseItemShape === 'object')
+  // Get the selected object for display
+  const selectedObject = $derived(
+    selectedObjectId ? getObjectById(selectedObjectId) : undefined
   );
-
-  // Determine if we should show the primitive field selector
-  const showPrimitiveFieldSelector = $derived(
-    responseShape === 'primitive' || (responseShape === 'list' && responseItemShape === 'primitive')
-  );
-
-  // Handle primitive field selection from dropdown
-  function handlePrimitiveFieldSelect(fieldId: string): void {
-    // Toggle selection (single select behavior)
-    if (responsePrimitiveFieldId === fieldId) {
-      onSetResponsePrimitiveField(undefined);
-    } else {
-      onSetResponsePrimitiveField(fieldId);
-    }
-  }
 </script>
 
 <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
-  <!-- Left Column: Response Shape & Response Fields -->
+  <!-- Left Column: Response Shape & Response Object -->
   <div class="space-y-4">
     <!-- Response Shape Selection -->
     <div>
-      <label class="block text-sm text-mono-700 mb-2 font-medium">Response Shape</label>
+      <div class="block text-sm text-mono-700 mb-2 font-medium">Response Shape</div>
       <div class="flex gap-1">
         <button
           type="button"
@@ -89,183 +62,74 @@
         </button>
         <button
           type="button"
-          onclick={() => onSetResponseShape('primitive')}
-          class="flex-1 px-1.5 py-1 text-sm border rounded-md transition-colors {responseShape === 'primitive'
-            ? 'bg-mono-900 text-white border-mono-900'
-            : 'bg-white text-mono-700 border-mono-300 hover:border-mono-400'}"
-        >
-          <i class="fa-solid fa-cube mr-1.5"></i>
-          Field
-        </button>
-        <button
-          type="button"
           onclick={() => onSetResponseShape('list')}
           class="flex-1 px-1.5 py-1 text-sm border rounded-md transition-colors {responseShape === 'list'
             ? 'bg-mono-900 text-white border-mono-900'
             : 'bg-white text-mono-700 border-mono-300 hover:border-mono-400'}"
         >
           <i class="fa-solid fa-list mr-1.5"></i>
-          List
+          List of Objects
         </button>
       </div>
     </div>
 
-    <!-- List Item Shape Selection (only visible when list is selected) -->
-    {#if responseShape === 'list'}
-      <div>
-        <label class="block text-sm text-mono-700 mb-2 font-medium">List Item Type</label>
-        <div class="flex gap-1">
-          <button
-            type="button"
-            onclick={() => onSetResponseItemShape('object')}
-            class="flex-1 px-1.5 py-1 text-sm border rounded-md transition-colors {responseItemShape === 'object'
-              ? 'bg-mono-900 text-white border-mono-900'
-              : 'bg-white text-mono-700 border-mono-300 hover:border-mono-400'}"
-          >
-            <i class="fa-solid fa-box mr-1.5"></i>
-            Objects
-          </button>
-          <button
-            type="button"
-            onclick={() => onSetResponseItemShape('primitive')}
-            class="flex-1 px-1.5 py-1 text-sm border rounded-md transition-colors {responseItemShape === 'primitive'
-              ? 'bg-mono-900 text-white border-mono-900'
-              : 'bg-white text-mono-700 border-mono-300 hover:border-mono-400'}"
-          >
-            <i class="fa-solid fa-cube mr-1.5"></i>
-            Fields
-          </button>
-        </div>
-      </div>
-    {/if}
+    <!-- Object Selector (for both single object and list of objects) -->
+    <div>
+      <h3 class="text-sm text-mono-700 flex items-center font-medium mb-2">
+        <i class="fa-solid fa-arrow-down mr-2"></i>
+        {responseShape === 'object' ? 'Response Object' : 'List Item Object'}
+      </h3>
 
-    <!-- Object Field Selector (for object shape or list of objects) -->
-    {#if showObjectFieldSelector}
-      <div>
-        <h3 class="text-sm text-mono-700 flex items-center font-medium mb-2">
-          <i class="fa-solid fa-arrow-down mr-2"></i>
-          {responseShape === 'object' ? 'Response Fields' : 'List Item Fields'}
-        </h3>
+      <div class="space-y-2">
+        <!-- Object Selector Dropdown -->
+        <ObjectSelectorDropdown
+          availableObjects={$objectsStore}
+          selectedObjectId={selectedObjectId}
+          onSelect={onSelectObject}
+          placeholder="Select object for response..."
+        />
 
-        <div class="space-y-2">
-          <!-- Field Selector Dropdown -->
-          <FieldSelectorDropdown
-            availableFields={$fieldsStore}
-            selectedFieldIds={selectedFieldIds}
-            onSelect={onAddField}
-            placeholder="Add field to response..."
-          />
-
-          <!-- Selected Fields (Read-only ParameterEditor) -->
-          {#if selectedFieldIds.length === 0}
-            <div class="p-3 bg-mono-50 rounded border border-mono-200">
-              <p class="text-xs text-mono-500">No fields selected</p>
+        <!-- Selected Object Details -->
+        {#if selectedObject}
+          <div class="p-3 bg-mono-50 rounded border border-mono-200">
+            <div class="flex items-center justify-between mb-2">
+              <div class="flex items-center space-x-2">
+                <i class="fa-solid fa-box text-mono-500 text-sm"></i>
+                <span class="font-mono text-sm text-mono-700">{selectedObject.name}</span>
+              </div>
+              <span class="text-xs text-mono-500">{selectedObject.fields.length} fields</span>
             </div>
-          {:else}
-            <div class="p-2 bg-mono-50 rounded border border-mono-200 space-y-0 divide-y divide-mono-200">
-              {#each selectedFieldIds as fieldId (fieldId)}
-                {@const field = getFieldById(fieldId)}
+
+            {#if selectedObject.description}
+              <p class="text-xs text-mono-500 mb-2">{selectedObject.description}</p>
+            {/if}
+
+            <!-- Field List -->
+            <div class="space-y-1 mt-2">
+              <p class="text-xs text-mono-600 font-medium">Fields:</p>
+              {#each selectedObject.fields as fieldRef (fieldRef.fieldId)}
+                {@const field = getFieldById(fieldRef.fieldId)}
                 {#if field}
-                  <ParameterEditor
-                    parameter={{
-                      id: field.id,
-                      name: field.name,
-                      type: field.type,
-                      description: field.description || '',
-                      required: true
-                    }}
-                    readOnly={true}
-                    onDelete={() => onRemoveField(fieldId)}
-                    showRequired={false}
-                    compact={true}
-                  />
+                  <div class="flex items-center justify-between text-xs">
+                    <span class="font-mono text-mono-700">{field.name}</span>
+                    <span class="text-mono-500 bg-mono-100 px-1.5 py-0.5 rounded">{field.type}</span>
+                  </div>
                 {:else}
-                  <!-- Missing field fallback - field was deleted from registry -->
-                  <div class="flex items-center gap-2 py-1.5">
-                    <i class="fa-solid fa-triangle-exclamation text-red-500 text-sm"></i>
-                    <span class="flex-1 text-sm text-red-700">
-                      Field not found <span class="font-mono text-xs text-red-500">({fieldId})</span>
-                    </span>
-                    <button
-                      type="button"
-                      onclick={() => onRemoveField(fieldId)}
-                      class="p-1 text-red-700 hover:text-red-600 hover:bg-red-100 rounded transition-colors"
-                      title="Remove missing field reference"
-                    >
-                      <i class="fa-solid fa-xmark"></i>
-                    </button>
+                  <div class="flex items-center gap-2 text-xs text-red-600">
+                    <i class="fa-solid fa-triangle-exclamation"></i>
+                    <span>Field not found ({fieldRef.fieldId})</span>
                   </div>
                 {/if}
               {/each}
             </div>
-          {/if}
-        </div>
+          </div>
+        {:else}
+          <div class="p-3 bg-mono-50 rounded border border-mono-200">
+            <p class="text-xs text-mono-500">No object selected</p>
+          </div>
+        {/if}
       </div>
-    {/if}
-
-    <!-- Primitive Field Selector (for primitive shape or list of primitives) -->
-    {#if showPrimitiveFieldSelector}
-      <div>
-        <h3 class="text-sm text-mono-700 flex items-center font-medium mb-2">
-          <i class="fa-solid fa-cube mr-2"></i>
-          {responseShape === 'primitive' ? 'Primitive Type' : 'List Item Type'}
-        </h3>
-
-        <div class="space-y-2">
-          <!-- Single-select Field Dropdown -->
-          <FieldSelectorDropdown
-            availableFields={$fieldsStore}
-            selectedFieldIds={responsePrimitiveFieldId ? [responsePrimitiveFieldId] : []}
-            onSelect={handlePrimitiveFieldSelect}
-            placeholder="Select primitive type..."
-          />
-
-          <!-- Selected Primitive Field (Read-only) -->
-          {#if responsePrimitiveFieldId}
-            {@const field = getFieldById(responsePrimitiveFieldId)}
-            {#if field}
-              <div class="p-2 bg-mono-50 rounded border border-mono-200">
-                <ParameterEditor
-                  parameter={{
-                    id: field.id,
-                    name: field.name,
-                    type: field.type,
-                    description: field.description || '',
-                    required: true
-                  }}
-                  readOnly={true}
-                  onDelete={() => onSetResponsePrimitiveField(undefined)}
-                  showRequired={false}
-                  compact={true}
-                />
-              </div>
-            {:else}
-              <!-- Missing field fallback -->
-              <div class="p-2 bg-red-50 border border-red-200 rounded-md">
-                <div class="flex items-center gap-2">
-                  <i class="fa-solid fa-triangle-exclamation text-red-500 text-sm"></i>
-                  <span class="flex-1 text-sm text-red-700">
-                    Field not found <span class="font-mono text-xs text-red-500">({responsePrimitiveFieldId})</span>
-                  </span>
-                  <button
-                    type="button"
-                    onclick={() => onSetResponsePrimitiveField(undefined)}
-                    class="p-1 text-red-700 hover:text-red-600 hover:bg-red-100 rounded transition-colors"
-                    title="Remove missing field reference"
-                  >
-                    <i class="fa-solid fa-xmark"></i>
-                  </button>
-                </div>
-              </div>
-            {/if}
-          {:else}
-            <div class="p-3 bg-mono-50 rounded border border-mono-200">
-              <p class="text-xs text-mono-500">No primitive type selected</p>
-            </div>
-          {/if}
-        </div>
-      </div>
-    {/if}
+    </div>
   </div>
 
   <!-- Right Column: Response Preview -->

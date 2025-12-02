@@ -184,12 +184,10 @@ export function createDefaultEndpoint(): ApiEndpoint {
 		tagId: undefined,
 		pathParams: [],
 		queryParams: [],
-		requestBodyFieldIds: [],
-		responseBodyFieldIds: [],
+		requestBodyObjectId: undefined,
+		responseBodyObjectId: undefined,
 		useEnvelope: true,
 		responseShape: 'object',
-		responseItemShape: 'object',
-		responsePrimitiveFieldId: undefined,
 		expanded: false
 	};
 
@@ -215,7 +213,7 @@ export function updateEndpoint(id: string, updates: Partial<ApiEndpoint>): void 
 
 /**
  * Normalize an endpoint to ensure all required response shape fields exist
- * This provides backward compatibility for endpoints created before response shape feature
+ * This provides backward compatibility for endpoints created before response shape simplification
  *
  * @param endpoint - The endpoint to normalize
  * @returns The normalized endpoint with all required fields
@@ -224,11 +222,7 @@ export function normalizeEndpoint(endpoint: ApiEndpoint): ApiEndpoint {
 	return {
 		...endpoint,
 		// Default to 'object' shape if missing
-		responseShape: endpoint.responseShape ?? 'object',
-		// Default to 'object' if missing
-		responseItemShape: endpoint.responseItemShape ?? 'object',
-		// Preserve existing primitive field id if any
-		responsePrimitiveFieldId: endpoint.responsePrimitiveFieldId
+		responseShape: endpoint.responseShape ?? 'object'
 	};
 }
 

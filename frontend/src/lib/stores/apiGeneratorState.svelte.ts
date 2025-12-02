@@ -9,7 +9,7 @@
  */
 
 import { get } from 'svelte/store';
-import type { ApiMetadata, ApiEndpoint, EndpointTag, EndpointParameter, ResponseShape, ResponseItemShape } from '$lib/types';
+import type { ApiMetadata, ApiEndpoint, EndpointTag, EndpointParameter, ResponseShape } from '$lib/types';
 import {
 	apiMetadataStore,
 	tagsStore,
@@ -63,6 +63,9 @@ export interface ApiGeneratorState {
 	tagDropdownOpen: boolean;
 	tagToDelete: EndpointTag | null;
 
+	// Endpoint deletion confirmation state
+	showEndpointDeleteConfirm: boolean;
+
 	// Derived state
 	readonly hasChanges: boolean;
 	readonly exactTagMatch: EndpointTag | undefined;
@@ -79,7 +82,9 @@ export interface ApiGeneratorState {
 
 	// Endpoint list actions
 	handleAddEndpoint: () => void;
-	handleDeleteEndpoint: (endpointId: string) => void;
+	handleDeleteEndpoint: () => void;
+	handleDeleteEndpointClick: () => void;
+	cancelDeleteEndpoint: () => void;
 	handleDuplicateEndpoint: (endpointId: string) => void;
 
 	// Drawer actions
@@ -97,19 +102,15 @@ export interface ApiGeneratorState {
 	handleQueryParamDelete: (paramId: string) => void;
 	handleAddQueryParam: () => void;
 
-	// Request body field selection
-	handleAddRequestBodyField: (fieldId: string) => void;
-	handleRemoveRequestBodyField: (fieldId: string) => void;
+	// Request body object selection
+	handleSelectRequestBodyObject: (objectId: string | undefined) => void;
 
-	// Response body field selection
-	handleAddResponseBodyField: (fieldId: string) => void;
-	handleRemoveResponseBodyField: (fieldId: string) => void;
+	// Response body object selection
+	handleSelectResponseBodyObject: (objectId: string | undefined) => void;
 	handleEnvelopeToggle: (enabled: boolean) => void;
 
 	// Response shape configuration
 	handleSetResponseShape: (shape: ResponseShape) => void;
-	handleSetResponseItemShape: (itemShape: ResponseItemShape) => void;
-	handleSetResponsePrimitiveField: (fieldId: string | undefined) => void;
 	handleResetResponseDefaults: () => void;
 
 	// Code generation
@@ -143,6 +144,9 @@ export function createApiGeneratorState(): ApiGeneratorState {
 	let tagInputValue = $state('');
 	let tagDropdownOpen = $state(false);
 	let tagToDelete = $state<EndpointTag | null>(null);
+
+	// Endpoint deletion confirmation state
+	let showEndpointDeleteConfirm = $state(false);
 
 	// Derived: Track if there are unsaved changes
 	let hasChanges = $derived(
@@ -237,19 +241,27 @@ export function createApiGeneratorState(): ApiGeneratorState {
 		openEndpoint(newEndpoint);
 	}
 
-	function handleDeleteEndpoint(endpointId: string): void {
+	function handleDeleteEndpointClick(): void {
+		showEndpointDeleteConfirm = true;
+	}
+
+	function handleDeleteEndpoint(): void {
+		if (!editedEndpoint) return;
+
+		const endpointId = editedEndpoint.id;
 		const result = deleteEndpoint(endpointId);
 
 		if (result.success) {
 			showToast(MESSAGES.ENDPOINT_DELETED, 'success');
-
-			// Close drawer if deleting the currently open endpoint
-			if (selectedEndpoint?.id === endpointId) {
-				closeDrawer();
-			}
+			showEndpointDeleteConfirm = false;
+			closeDrawer();
 		} else if (result.error) {
 			showToast(result.error, 'error');
 		}
+	}
+
+	function cancelDeleteEndpoint(): void {
+		showEndpointDeleteConfirm = false;
 	}
 
 	function handleDuplicateEndpoint(endpointId: string): void {
@@ -281,6 +293,7 @@ export function createApiGeneratorState(): ApiGeneratorState {
 
 	function closeDrawer(): void {
 		drawerOpen = false;
+		showEndpointDeleteConfirm = false;
 
 		setTimeout(() => {
 			selectedEndpoint = null;
@@ -383,66 +396,28 @@ export function createApiGeneratorState(): ApiGeneratorState {
 	}
 
 	// ============================================================================
-	// Request Body Field Selection
+	// Request Body Object Selection
 	// ============================================================================
 
-	function handleAddRequestBodyField(fieldId: string): void {
-		if (!editedEndpoint) return;
-
-		// Validate field exists in registry
-		const field = getFieldById(fieldId);
-		if (!field) {
-			showToast('Field not found in registry', 'error');
-			return;
-		}
-
-		// Prevent duplicates
-		if (editedEndpoint.requestBodyFieldIds.includes(fieldId)) return;
-
-		editedEndpoint = {
-			...editedEndpoint,
-			requestBodyFieldIds: [...editedEndpoint.requestBodyFieldIds, fieldId]
-		};
-	}
-
-	function handleRemoveRequestBodyField(fieldId: string): void {
+	function handleSelectRequestBodyObject(objectId: string | undefined): void {
 		if (!editedEndpoint) return;
 
 		editedEndpoint = {
 			...editedEndpoint,
-			requestBodyFieldIds: editedEndpoint.requestBodyFieldIds.filter(id => id !== fieldId)
+			requestBodyObjectId: objectId
 		};
 	}
 
 	// ============================================================================
-	// Response Body Field Selection
+	// Response Body Object Selection
 	// ============================================================================
 
-	function handleAddResponseBodyField(fieldId: string): void {
-		if (!editedEndpoint) return;
-
-		// Validate field exists in registry
-		const field = getFieldById(fieldId);
-		if (!field) {
-			showToast('Field not found in registry', 'error');
-			return;
-		}
-
-		// Prevent duplicates
-		if (editedEndpoint.responseBodyFieldIds.includes(fieldId)) return;
-
-		editedEndpoint = {
-			...editedEndpoint,
-			responseBodyFieldIds: [...editedEndpoint.responseBodyFieldIds, fieldId]
-		};
-	}
-
-	function handleRemoveResponseBodyField(fieldId: string): void {
+	function handleSelectResponseBodyObject(objectId: string | undefined): void {
 		if (!editedEndpoint) return;
 
 		editedEndpoint = {
 			...editedEndpoint,
-			responseBodyFieldIds: editedEndpoint.responseBodyFieldIds.filter(id => id !== fieldId)
+			responseBodyObjectId: objectId
 		};
 	}
 
@@ -459,60 +434,9 @@ export function createApiGeneratorState(): ApiGeneratorState {
 	function handleSetResponseShape(shape: ResponseShape): void {
 		if (!editedEndpoint) return;
 
-		// Clear conflicting selections when switching shapes
-		const updates: Partial<ApiEndpoint> = { responseShape: shape };
-
-		if (shape === 'primitive') {
-			// Clear object/list field selections when switching to primitive
-			updates.responseBodyFieldIds = [];
-			// Keep responsePrimitiveFieldId if set, otherwise leave undefined
-		} else if (shape === 'object') {
-			// Clear primitive selection when switching to object
-			updates.responsePrimitiveFieldId = undefined;
-			// Keep responseBodyFieldIds for object shape
-		} else if (shape === 'list') {
-			// Keep current item shape, but clear primitive field if item shape is object
-			if (editedEndpoint.responseItemShape === 'object') {
-				updates.responsePrimitiveFieldId = undefined;
-			} else {
-				// Clear object fields if item shape is primitive
-				updates.responseBodyFieldIds = [];
-			}
-		}
-
-		editedEndpoint = { ...editedEndpoint, ...updates };
-	}
-
-	function handleSetResponseItemShape(itemShape: ResponseItemShape): void {
-		if (!editedEndpoint) return;
-
-		// Clear conflicting selections when switching item shapes
-		const updates: Partial<ApiEndpoint> = { responseItemShape: itemShape };
-
-		if (itemShape === 'primitive') {
-			// Clear object fields when switching to primitive items
-			updates.responseBodyFieldIds = [];
-		} else {
-			// Clear primitive field when switching to object items
-			updates.responsePrimitiveFieldId = undefined;
-		}
-
-		editedEndpoint = { ...editedEndpoint, ...updates };
-	}
-
-	function handleSetResponsePrimitiveField(fieldId: string | undefined): void {
-		if (!editedEndpoint) return;
-
-		// Validate field exists if provided
-		if (fieldId) {
-			const field = getFieldById(fieldId);
-			if (!field) {
-				showToast('Field not found in registry', 'error');
-				return;
-			}
-		}
-
-		editedEndpoint = { ...editedEndpoint, responsePrimitiveFieldId: fieldId };
+		// Simple shape switching - both options use object fields
+		// No need to clear anything as both 'object' and 'list' use responseBodyFieldIds
+		editedEndpoint = { ...editedEndpoint, responseShape: shape };
 	}
 
 	function handleResetResponseDefaults(): void {
@@ -522,10 +446,8 @@ export function createApiGeneratorState(): ApiGeneratorState {
 			...editedEndpoint,
 			useEnvelope: true,
 			responseShape: 'object',
-			responseItemShape: 'object',
-			// Clear field selections when resetting
-			responseBodyFieldIds: [],
-			responsePrimitiveFieldId: undefined
+			// Clear object selection when resetting
+			responseBodyObjectId: undefined
 		};
 	}
 
@@ -567,6 +489,9 @@ export function createApiGeneratorState(): ApiGeneratorState {
 		get tagToDelete() { return tagToDelete; },
 		set tagToDelete(v: EndpointTag | null) { tagToDelete = v; },
 
+		get showEndpointDeleteConfirm() { return showEndpointDeleteConfirm; },
+		set showEndpointDeleteConfirm(v: boolean) { showEndpointDeleteConfirm = v; },
+
 		// Derived state (readonly)
 		get hasChanges() { return hasChanges; },
 		get exactTagMatch() { return exactTagMatch; },
@@ -580,6 +505,8 @@ export function createApiGeneratorState(): ApiGeneratorState {
 		cancelDeleteTag,
 		handleAddEndpoint,
 		handleDeleteEndpoint,
+		handleDeleteEndpointClick,
+		cancelDeleteEndpoint,
 		handleDuplicateEndpoint,
 		openEndpoint,
 		closeDrawer,
@@ -592,14 +519,10 @@ export function createApiGeneratorState(): ApiGeneratorState {
 		handleQueryParamUpdate,
 		handleQueryParamDelete,
 		handleAddQueryParam,
-		handleAddRequestBodyField,
-		handleRemoveRequestBodyField,
-		handleAddResponseBodyField,
-		handleRemoveResponseBodyField,
+		handleSelectRequestBodyObject,
+		handleSelectResponseBodyObject,
 		handleEnvelopeToggle,
 		handleSetResponseShape,
-		handleSetResponseItemShape,
-		handleSetResponsePrimitiveField,
 		handleResetResponseDefaults,
 		handleGenerateCode,
 		getEndpointsUsingTag

@@ -292,24 +292,18 @@
 
         <!-- Request Body Editor -->
         <RequestBodyEditor
-          selectedFieldIds={state.editedEndpoint.requestBodyFieldIds}
-          onAddField={state.handleAddRequestBodyField}
-          onRemoveField={state.handleRemoveRequestBodyField}
+          selectedObjectId={state.editedEndpoint.requestBodyObjectId}
+          onSelectObject={state.handleSelectRequestBodyObject}
         />
 
         <!-- Response Body Editor -->
         <ResponseBodyEditor
-          selectedFieldIds={state.editedEndpoint.responseBodyFieldIds}
+          selectedObjectId={state.editedEndpoint.responseBodyObjectId}
           useEnvelope={state.editedEndpoint.useEnvelope}
           responseShape={state.editedEndpoint.responseShape}
-          responseItemShape={state.editedEndpoint.responseItemShape}
-          responsePrimitiveFieldId={state.editedEndpoint.responsePrimitiveFieldId}
-          onAddField={state.handleAddResponseBodyField}
-          onRemoveField={state.handleRemoveResponseBodyField}
+          onSelectObject={state.handleSelectResponseBodyObject}
           onEnvelopeToggle={state.handleEnvelopeToggle}
           onSetResponseShape={state.handleSetResponseShape}
-          onSetResponseItemShape={state.handleSetResponseItemShape}
-          onSetResponsePrimitiveField={state.handleSetResponsePrimitiveField}
         />
       </div>
     {/if}
@@ -317,49 +311,71 @@
 
   <DrawerFooter>
     {#if state.editedEndpoint}
-      <div class="flex space-x-2">
-        <button
-          type="button"
-          onclick={state.handleSave}
-          disabled={!state.hasChanges}
-          class="flex-1 px-4 py-2 rounded-md transition-colors font-medium flex items-center justify-center space-x-2 {state.hasChanges ? 'bg-mono-900 text-white hover:bg-mono-800 cursor-pointer' : 'bg-mono-300 text-mono-500 cursor-not-allowed'}"
-        >
-          <i class="fa-solid fa-save"></i>
-          <span>Save</span>
-        </button>
-        <button
-          type="button"
-          onclick={state.handleUndo}
-          disabled={!state.hasChanges}
-          class="flex-1 px-4 py-2 border rounded-md transition-colors font-medium flex items-center justify-center space-x-2 {state.hasChanges ? 'border-mono-300 text-mono-700 hover:bg-mono-50 cursor-pointer' : 'border-mono-200 text-mono-400 cursor-not-allowed bg-mono-50'}"
-        >
-          <i class="fa-solid fa-undo"></i>
-          <span>Undo</span>
-        </button>
-        <button
-          type="button"
-          onclick={() => state.handleDuplicateEndpoint(state.editedEndpoint!.id)}
-          class="flex-1 px-4 py-2 border border-mono-300 text-mono-700 rounded-md hover:bg-mono-50 transition-colors font-medium flex items-center justify-center space-x-2"
-        >
-          <i class="fa-solid fa-copy"></i>
-          <span>Duplicate</span>
-        </button>
-        <button
-          type="button"
-          onclick={() => state.handleDeleteEndpoint(state.editedEndpoint!.id)}
-          class="flex-1 px-4 py-2 border border-mono-300 text-red-700 rounded-md hover:bg-red-50 transition-colors font-medium flex items-center justify-center space-x-2"
-        >
-          <i class="fa-solid fa-xmark"></i>
-          <span>Delete</span>
-        </button>
-        <button
-          type="button"
-          onclick={state.handleCancel}
-          class="flex-1 px-4 py-2 border border-mono-300 text-mono-700 rounded-md hover:bg-mono-50 transition-colors font-medium"
-        >
-          Cancel
-        </button>
-      </div>
+      {#if !state.showEndpointDeleteConfirm}
+        <div class="flex space-x-2">
+          <button
+            type="button"
+            onclick={state.handleSave}
+            disabled={!state.hasChanges}
+            class="flex-1 px-4 py-2 rounded-md transition-colors font-medium flex items-center justify-center space-x-2 {state.hasChanges ? 'bg-mono-900 text-white hover:bg-mono-800 cursor-pointer' : 'bg-mono-300 text-mono-500 cursor-not-allowed'}"
+          >
+            <i class="fa-solid fa-save"></i>
+            <span>Save</span>
+          </button>
+          <button
+            type="button"
+            onclick={state.handleUndo}
+            disabled={!state.hasChanges}
+            class="flex-1 px-4 py-2 border rounded-md transition-colors font-medium flex items-center justify-center space-x-2 {state.hasChanges ? 'border-mono-300 text-mono-700 hover:bg-mono-50 cursor-pointer' : 'border-mono-200 text-mono-400 cursor-not-allowed bg-mono-50'}"
+          >
+            <i class="fa-solid fa-undo"></i>
+            <span>Undo</span>
+          </button>
+          <button
+            type="button"
+            onclick={() => state.handleDuplicateEndpoint(state.editedEndpoint!.id)}
+            class="flex-1 px-4 py-2 border border-mono-300 text-mono-700 rounded-md hover:bg-mono-50 transition-colors font-medium flex items-center justify-center space-x-2"
+          >
+            <i class="fa-solid fa-copy"></i>
+            <span>Duplicate</span>
+          </button>
+          <button
+            type="button"
+            onclick={state.handleDeleteEndpointClick}
+            class="flex-1 px-4 py-2 border border-mono-300 text-red-700 rounded-md hover:bg-red-50 transition-colors font-medium flex items-center justify-center space-x-2"
+          >
+            <i class="fa-solid fa-xmark"></i>
+            <span>Delete</span>
+          </button>
+          <button
+            type="button"
+            onclick={state.handleCancel}
+            class="flex-1 px-4 py-2 border border-mono-300 text-mono-700 rounded-md hover:bg-mono-50 transition-colors font-medium"
+          >
+            Cancel
+          </button>
+        </div>
+      {:else}
+        <div class="bg-red-50 border border-red-200 rounded-md p-3">
+          <p class="text-sm text-red-800 mb-2">Are you sure you want to delete this endpoint?</p>
+          <div class="flex space-x-2">
+            <button
+              type="button"
+              onclick={state.handleDeleteEndpoint}
+              class="flex-1 px-3 py-1.5 bg-red-600 text-white rounded-md hover:bg-red-700 text-sm font-medium"
+            >
+              Yes, Delete
+            </button>
+            <button
+              type="button"
+              onclick={state.cancelDeleteEndpoint}
+              class="flex-1 px-3 py-1.5 border border-mono-300 text-mono-700 rounded-md hover:bg-mono-50 text-sm font-medium"
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      {/if}
     {/if}
   </DrawerFooter>
 </Drawer>

@@ -200,50 +200,6 @@ describe('examples - buildResponsePreview', () => {
 		});
 	});
 
-	describe('primitive shape', () => {
-		it('should generate primitive shape without envelope', () => {
-			const shape: ResponseShape = 'primitive';
-			const preview = buildResponsePreview(shape, [], 'field-1', 'object', false);
-
-			const parsed = JSON.parse(preview);
-			// field-1 is 'email' with type 'str', so example should be 'string'
-			expect(parsed).toBe('string');
-		});
-
-		it('should generate primitive shape with envelope', () => {
-			const shape: ResponseShape = 'primitive';
-			const preview = buildResponsePreview(shape, [], 'field-1', 'object', true);
-
-			const parsed = JSON.parse(preview);
-			expect(parsed).toHaveProperty('data');
-			expect(parsed.data).toBe('string');
-		});
-
-		it('should return null for primitive shape without field ID', () => {
-			const shape: ResponseShape = 'primitive';
-			const preview = buildResponsePreview(shape, [], undefined, 'object', false);
-
-			const parsed = JSON.parse(preview);
-			expect(parsed).toBe(null);
-		});
-
-		it('should return envelope with null for primitive shape without field ID', () => {
-			const shape: ResponseShape = 'primitive';
-			const preview = buildResponsePreview(shape, [], undefined, 'object', true);
-
-			const parsed = JSON.parse(preview);
-			expect(parsed).toEqual({ data: null });
-		});
-
-		it('should handle non-existent primitive field ID', () => {
-			const shape: ResponseShape = 'primitive';
-			const preview = buildResponsePreview(shape, [], 'non-existent-field', 'object', false);
-
-			const parsed = JSON.parse(preview);
-			expect(parsed).toBe(null);
-		});
-	});
-
 	describe('list of objects', () => {
 		it('should generate list of objects without envelope', () => {
 			const shape: ResponseShape = 'list';
@@ -290,66 +246,12 @@ describe('examples - buildResponsePreview', () => {
 		});
 	});
 
-	describe('list of primitives', () => {
-		it('should generate list of primitives without envelope', () => {
-			const shape: ResponseShape = 'list';
-			const itemShape: ResponseItemShape = 'primitive';
-			const preview = buildResponsePreview(shape, [], 'field-1', itemShape, false);
-
-			const parsed = JSON.parse(preview);
-			expect(Array.isArray(parsed)).toBe(true);
-			expect(parsed).toHaveLength(2); // Shows 2 example items
-			expect(parsed[0]).toBe('string');
-			expect(parsed[1]).toBe('string');
-		});
-
-		it('should generate list of primitives with envelope', () => {
-			const shape: ResponseShape = 'list';
-			const itemShape: ResponseItemShape = 'primitive';
-			const preview = buildResponsePreview(shape, [], 'field-1', itemShape, true);
-
-			const parsed = JSON.parse(preview);
-			expect(parsed).toHaveProperty('data');
-			expect(Array.isArray(parsed.data)).toBe(true);
-			expect(parsed.data).toHaveLength(2);
-			expect(parsed.data[0]).toBe('string');
-			expect(parsed.data[1]).toBe('string');
-		});
-
-		it('should return empty array for list of primitives without field ID', () => {
-			const shape: ResponseShape = 'list';
-			const itemShape: ResponseItemShape = 'primitive';
-			const preview = buildResponsePreview(shape, [], undefined, itemShape, false);
-
-			const parsed = JSON.parse(preview);
-			expect(parsed).toEqual([]);
-		});
-
-		it('should return envelope with empty array for list of primitives without field ID', () => {
-			const shape: ResponseShape = 'list';
-			const itemShape: ResponseItemShape = 'primitive';
-			const preview = buildResponsePreview(shape, [], undefined, itemShape, true);
-
-			const parsed = JSON.parse(preview);
-			expect(parsed).toEqual({ data: [] });
-		});
-
-		it('should handle non-existent primitive field for list', () => {
-			const shape: ResponseShape = 'list';
-			const itemShape: ResponseItemShape = 'primitive';
-			const preview = buildResponsePreview(shape, [], 'non-existent-field', itemShape, false);
-
-			const parsed = JSON.parse(preview);
-			expect(parsed).toEqual([]);
-		});
-	});
-
 	describe('edge cases', () => {
 		it('should handle all response shapes with envelope enabled', () => {
-			const shapes: ResponseShape[] = ['object', 'primitive', 'list'];
+			const shapes: ResponseShape[] = ['object', 'list'];
 
 			shapes.forEach(shape => {
-				const preview = buildResponsePreview(shape, ['field-1'], 'field-1', 'object', true);
+				const preview = buildResponsePreview(shape, ['field-1'], undefined, 'object', true);
 				const parsed = JSON.parse(preview);
 				expect(parsed).toHaveProperty('data');
 			});
@@ -370,20 +272,22 @@ describe('examples - buildResponsePreview', () => {
 			let parsed = JSON.parse(preview);
 			expect(parsed.data).toHaveProperty('email');
 
-			// Primitive without envelope
-			preview = buildResponsePreview('primitive', [], 'field-1', 'object', false);
+			// Object without envelope
+			preview = buildResponsePreview('object', ['field-1', 'field-2'], undefined, 'object', false);
 			parsed = JSON.parse(preview);
-			expect(parsed).toBe('string');
+			expect(parsed).toHaveProperty('email');
+			expect(parsed).toHaveProperty('name');
 
 			// List of objects with envelope
 			preview = buildResponsePreview('list', ['field-1'], undefined, 'object', true);
 			parsed = JSON.parse(preview);
 			expect(parsed.data).toHaveLength(2);
 
-			// List of primitives without envelope
-			preview = buildResponsePreview('list', [], 'field-1', 'primitive', false);
+			// List of objects without envelope
+			preview = buildResponsePreview('list', ['field-1', 'field-2'], undefined, 'object', false);
 			parsed = JSON.parse(preview);
 			expect(parsed).toHaveLength(2);
+			expect(parsed[0]).toHaveProperty('email');
 		});
 	});
 });

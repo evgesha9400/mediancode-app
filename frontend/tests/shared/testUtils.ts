@@ -23,12 +23,10 @@ export function createMockEndpoint(overrides: Partial<ApiEndpoint> = {}): ApiEnd
 		description: '',
 		pathParams: [],
 		queryParams: [],
-		requestBodyFieldIds: [],
-		responseBodyFieldIds: [],
+		requestBodyObjectId: undefined,
+		responseBodyObjectId: undefined,
 		useEnvelope: true,
 		responseShape: 'object',
-		responseItemShape: 'object',
-		responsePrimitiveFieldId: undefined,
 		expanded: false,
 		...overrides
 	};

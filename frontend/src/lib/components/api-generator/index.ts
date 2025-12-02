@@ -6,6 +6,7 @@ export { default as ParameterEditor } from './ParameterEditor.svelte';
 export { default as RequestBodyEditor } from './RequestBodyEditor.svelte';
 export { default as ResponseBodyEditor } from './ResponseBodyEditor.svelte';
 export { default as FieldSelectorDropdown } from './FieldSelectorDropdown.svelte';
+export { default as ObjectSelectorDropdown } from './ObjectSelectorDropdown.svelte';
 
 // API Generator component types
 export type { CollapsibleCardProps } from './CollapsibleCard.svelte';
@@ -15,3 +16,4 @@ export type { ParameterEditorProps } from './ParameterEditor.svelte';
 export type { RequestBodyEditorProps } from './RequestBodyEditor.svelte';
 export type { ResponseBodyEditorProps } from './ResponseBodyEditor.svelte';
 export type { FieldSelectorDropdownProps } from './FieldSelectorDropdown.svelte';
+export type { ObjectSelectorDropdownProps } from './ObjectSelectorDropdown.svelte';

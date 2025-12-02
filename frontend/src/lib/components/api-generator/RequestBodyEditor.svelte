@@ -1,27 +1,31 @@
 <script lang="ts">
-  import { fieldsStore, getFieldById } from '$lib/stores/fields';
-  import { buildRequestPreview } from '$lib/utils/examples';
-  import FieldSelectorDropdown from './FieldSelectorDropdown.svelte';
-  import ParameterEditor from './ParameterEditor.svelte';
+  import { objectsStore, getObjectById } from '$lib/stores/objects';
+  import { getFieldById } from '$lib/stores/fields';
+  import { buildRequestPreviewFromObject } from '$lib/utils/examples';
+  import ObjectSelectorDropdown from './ObjectSelectorDropdown.svelte';
 
   export interface RequestBodyEditorProps {
-    selectedFieldIds: string[];
-    onAddField: (fieldId: string) => void;
-    onRemoveField: (fieldId: string) => void;
+    selectedObjectId?: string;
+    onSelectObject: (objectId: string | undefined) => void;
   }
 
   interface Props extends RequestBodyEditorProps {}
 
-  let { selectedFieldIds, onAddField, onRemoveField }: Props = $props();
+  let { selectedObjectId, onSelectObject }: Props = $props();
 
-  // Build preview JSON from selected fields using shared utility
-  // Note: Include $fieldsStore in derived dependencies to ensure preview updates
-  // when field definitions (name, type, etc.) change in the registry
-  const previewJson = $derived(buildRequestPreview(selectedFieldIds, $fieldsStore));
+  // Build preview JSON from selected object using shared utility
+  // Note: Include $objectsStore in derived dependencies to ensure preview updates
+  // when object definitions change in the registry
+  const previewJson = $derived(buildRequestPreviewFromObject(selectedObjectId, $objectsStore));
+
+  // Get the selected object for display
+  const selectedObject = $derived(
+    selectedObjectId ? getObjectById(selectedObjectId) : undefined
+  );
 </script>
 
 <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
-  <!-- Left Column: Request Body Fields -->
+  <!-- Left Column: Request Body Object Selection -->
   <div>
     <h3 class="text-sm text-mono-700 flex items-center font-medium mb-2">
       <i class="fa-solid fa-arrow-up mr-2"></i>
@@ -29,55 +33,51 @@
     </h3>
 
     <div class="space-y-2">
-      <!-- Field Selector Dropdown -->
-      <FieldSelectorDropdown
-        availableFields={$fieldsStore}
-        selectedFieldIds={selectedFieldIds}
-        onSelect={onAddField}
-        placeholder="Add field to request body..."
+      <!-- Object Selector Dropdown -->
+      <ObjectSelectorDropdown
+        availableObjects={$objectsStore}
+        selectedObjectId={selectedObjectId}
+        onSelect={onSelectObject}
+        placeholder="Select object for request body..."
       />
 
-      <!-- Selected Fields (Read-only ParameterEditor) -->
-      {#if selectedFieldIds.length === 0}
+      <!-- Selected Object Details -->
+      {#if selectedObject}
         <div class="p-3 bg-mono-50 rounded border border-mono-200">
-          <p class="text-xs text-mono-500">No fields selected</p>
+          <div class="flex items-center justify-between mb-2">
+            <div class="flex items-center space-x-2">
+              <i class="fa-solid fa-box text-mono-500 text-sm"></i>
+              <span class="font-mono text-sm text-mono-700">{selectedObject.name}</span>
+            </div>
+            <span class="text-xs text-mono-500">{selectedObject.fields.length} fields</span>
+          </div>
+
+          {#if selectedObject.description}
+            <p class="text-xs text-mono-500 mb-2">{selectedObject.description}</p>
+          {/if}
+
+          <!-- Field List -->
+          <div class="space-y-1 mt-2">
+            <p class="text-xs text-mono-600 font-medium">Fields:</p>
+            {#each selectedObject.fields as fieldRef (fieldRef.fieldId)}
+              {@const field = getFieldById(fieldRef.fieldId)}
+              {#if field}
+                <div class="flex items-center justify-between text-xs">
+                  <span class="font-mono text-mono-700">{field.name}</span>
+                  <span class="text-mono-500 bg-mono-100 px-1.5 py-0.5 rounded">{field.type}</span>
+                </div>
+              {:else}
+                <div class="flex items-center gap-2 text-xs text-red-600">
+                  <i class="fa-solid fa-triangle-exclamation"></i>
+                  <span>Field not found ({fieldRef.fieldId})</span>
+                </div>
+              {/if}
+            {/each}
+          </div>
         </div>
       {:else}
-        <div class="p-2 bg-mono-50 rounded border border-mono-200 space-y-0 divide-y divide-mono-200">
-          {#each selectedFieldIds as fieldId (fieldId)}
-            {@const field = getFieldById(fieldId)}
-            {#if field}
-              <ParameterEditor
-                parameter={{
-                  id: field.id,
-                  name: field.name,
-                  type: field.type,
-                  description: field.description || '',
-                  required: true
-                }}
-                readOnly={true}
-                onDelete={() => onRemoveField(fieldId)}
-                showRequired={false}
-                compact={true}
-              />
-            {:else}
-              <!-- Missing field fallback - field was deleted from registry -->
-              <div class="flex items-center gap-2 py-1.5">
-                <i class="fa-solid fa-triangle-exclamation text-red-500 text-sm"></i>
-                <span class="flex-1 text-sm text-red-700">
-                  Field not found <span class="font-mono text-xs text-red-500">({fieldId})</span>
-                </span>
-                <button
-                  type="button"
-                  onclick={() => onRemoveField(fieldId)}
-                  class="p-1 text-red-700 hover:text-red-600 hover:bg-red-100 rounded transition-colors"
-                  title="Remove missing field reference"
-                >
-                  <i class="fa-solid fa-xmark"></i>
-                </button>
-              </div>
-            {/if}
-          {/each}
+        <div class="p-3 bg-mono-50 rounded border border-mono-200">
+          <p class="text-xs text-mono-500">No object selected</p>
         </div>
       {/if}
     </div>
