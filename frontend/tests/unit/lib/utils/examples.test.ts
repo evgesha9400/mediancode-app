@@ -276,7 +276,7 @@ describe('examples - buildResponsePreview', () => {
 			preview = buildResponsePreview('object', ['field-1', 'field-2'], undefined, 'object', false);
 			parsed = JSON.parse(preview);
 			expect(parsed).toHaveProperty('email');
-			expect(parsed).toHaveProperty('name');
+			expect(parsed).toHaveProperty('username');
 
 			// List of objects with envelope
 			preview = buildResponsePreview('list', ['field-1'], undefined, 'object', true);

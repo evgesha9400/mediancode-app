@@ -296,7 +296,7 @@ export class FieldRegistryPage {
 	 * Remove validator by index (0-based)
 	 */
 	async removeValidator(index: number) {
-		const removeButton = this.validatorRows.nth(index).locator('button').filter({ has: this.page.locator('i.fa-trash') });
+		const removeButton = this.validatorRows.nth(index).getByRole('button', { name: 'Remove validator' });
 		await removeButton.click();
 	}
 

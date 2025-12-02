@@ -141,7 +141,6 @@
                 onblur={() => setTimeout(() => showSearch = false, 200)}
                 placeholder="Search objects..."
                 class="w-40 px-2 py-1 text-xs border border-mono-300 rounded focus:ring-1 focus:ring-mono-400"
-                autofocus
               />
               {#if searchResults.length > 0}
                 <div class="absolute z-10 w-52 mt-1 bg-white border border-mono-300 rounded-md shadow-lg max-h-40 overflow-auto">
