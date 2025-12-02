@@ -119,3 +119,43 @@ export function checkFieldDeletion(fieldName: string, usedInApis: string[]): Del
     references
   };
 }
+
+/**
+ * Checks if an object can be deleted safely
+ * An object cannot be deleted if it's currently used in any APIs
+ *
+ * @param objectName - The name of the object being deleted
+ * @param usedInApis - Array of API IDs where this object is used
+ * @returns DeletionResult indicating whether deletion is safe
+ */
+export function checkObjectDeletion(objectName: string, usedInApis: string[]): DeletionResult {
+  // If object is not used in any APIs, deletion is safe
+  if (usedInApis.length === 0) {
+    return { success: true };
+  }
+
+  // Build reference list for blocking APIs
+  const references: Reference[] = usedInApis.map(apiId => ({
+    id: apiId,
+    name: apiId,
+    type: 'api' as const
+  }));
+
+  // Generate user-friendly error message
+  const apiCount = usedInApis.length;
+  const apiNames = usedInApis
+    .slice(0, 3)
+    .map(api => `"${api}"`)
+    .join(', ');
+
+  const remainingCount = apiCount - 3;
+  const remainingText = remainingCount > 0 ? ` and ${remainingCount} more` : '';
+
+  const error = `Cannot delete object "${objectName}" because it is used in ${apiCount} API${apiCount > 1 ? 's' : ''}: ${apiNames}${remainingText}. Remove this object from all APIs before deleting.`;
+
+  return {
+    success: false,
+    error,
+    references
+  };
+}

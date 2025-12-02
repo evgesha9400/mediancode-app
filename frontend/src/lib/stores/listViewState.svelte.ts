@@ -291,6 +291,21 @@ export function createListViewState<Item, FilterState extends Record<string, any
 
   // Action: Select an item and open drawer
   function selectItem(item: Item): void {
+    const itemId = getItemId(item);
+    const currentId = selectedItem ? getItemId(selectedItem) : null;
+    const isSameItem = itemId === currentId;
+    const wasOpen = drawerOpen;
+
+    // If clicking the same item while drawer is open, do nothing (already showing)
+    if (isSameItem && wasOpen) {
+      return;
+    }
+
+    // If drawer is open for a different item, close it first for clean state transition
+    if (wasOpen && !isSameItem) {
+      drawerOpen = false;
+    }
+
     selectedItem = item;
 
     if (trackEdits) {
@@ -298,9 +313,18 @@ export function createListViewState<Item, FilterState extends Record<string, any
       originalItem = structuredClone(item);
     }
 
-    drawerOpen = true;
-    validationErrors = {};
-    showDeleteConfirm = false;
+    // Use setTimeout to ensure state is cleared before reopening when switching items
+    if (wasOpen && !isSameItem) {
+      setTimeout(() => {
+        drawerOpen = true;
+        validationErrors = {};
+        showDeleteConfirm = false;
+      }, 0);
+    } else {
+      drawerOpen = true;
+      validationErrors = {};
+      showDeleteConfirm = false;
+    }
   }
 
   // Action: Close drawer with delay

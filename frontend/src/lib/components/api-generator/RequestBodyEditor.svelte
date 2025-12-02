@@ -15,7 +15,9 @@
   let { selectedFieldIds, onAddField, onRemoveField }: Props = $props();
 
   // Build preview JSON from selected fields using shared utility
-  const previewJson = $derived(buildRequestPreview(selectedFieldIds));
+  // Note: Include $fieldsStore in derived dependencies to ensure preview updates
+  // when field definitions (name, type, etc.) change in the registry
+  const previewJson = $derived(buildRequestPreview(selectedFieldIds, $fieldsStore));
 </script>
 
 <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
@@ -68,7 +70,7 @@
                 <button
                   type="button"
                   onclick={() => onRemoveField(fieldId)}
-                  class="p-1 text-red-600 hover:text-red-800 hover:bg-red-100 rounded transition-colors"
+                  class="p-1 text-red-700 hover:text-red-600 hover:bg-red-100 rounded transition-colors"
                   title="Remove missing field reference"
                 >
                   <i class="fa-solid fa-xmark"></i>

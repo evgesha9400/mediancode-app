@@ -320,9 +320,9 @@
             type="button"
             onclick={() => state.showDeleteConfirm = true}
             disabled={hasReferences}
-            class="w-full px-4 py-2 rounded-md flex items-center justify-center transition-colors font-medium {hasReferences ? 'bg-mono-200 text-mono-400 cursor-not-allowed' : 'bg-mono-100 text-mono-600 hover:bg-mono-200 cursor-pointer'}"
+            class="w-full px-4 py-2 rounded-md flex items-center justify-center transition-colors font-medium {hasReferences ? 'bg-mono-200 text-mono-400 cursor-not-allowed' : 'bg-mono-100 text-red-700 hover:bg-red-50 cursor-pointer'}"
           >
-            <i class="fa-solid fa-trash mr-2"></i>
+            <i class="fa-solid fa-xmark mr-2"></i>
             <span>Delete Validator</span>
           </button>
         </Tooltip>

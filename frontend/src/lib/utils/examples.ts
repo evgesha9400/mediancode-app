@@ -31,9 +31,10 @@ export function getExampleValueForType(type: string): any {
  * Build an object from field IDs
  *
  * @param fieldIds - Array of field IDs to include in the object
+ * @param fields - Optional fields array for reactive dependencies (not used directly but ensures reactivity)
  * @returns An object with field names as keys and example values
  */
-export function buildObjectFromFieldIds(fieldIds: string[]): Record<string, any> {
+export function buildObjectFromFieldIds(fieldIds: string[], fields?: any[]): Record<string, any> {
 	const obj: Record<string, any> = {};
 
 	fieldIds.forEach(fieldId => {
@@ -50,14 +51,15 @@ export function buildObjectFromFieldIds(fieldIds: string[]): Record<string, any>
  * Build request body preview JSON
  *
  * @param fieldIds - Array of field IDs to include in the request body
+ * @param fields - Optional fields array for reactive dependencies (not used directly but ensures reactivity)
  * @returns JSON string representation of the request body
  */
-export function buildRequestPreview(fieldIds: string[]): string {
+export function buildRequestPreview(fieldIds: string[], fields?: any[]): string {
 	if (fieldIds.length === 0) {
 		return '{}';
 	}
 
-	const bodyContent = buildObjectFromFieldIds(fieldIds);
+	const bodyContent = buildObjectFromFieldIds(fieldIds, fields);
 	return JSON.stringify(bodyContent, null, 2);
 }
 
@@ -74,6 +76,7 @@ export function buildRequestPreview(fieldIds: string[]): string {
  * @param primitiveFieldId - Field ID for primitive/list-of-primitives shapes
  * @param itemShape - Item shape for list responses ('object' or 'primitive')
  * @param useEnvelope - Whether to wrap the response in a { data: ... } envelope
+ * @param fields - Optional fields array for reactive dependencies (not used directly but ensures reactivity)
  * @returns JSON string representation of the response body
  */
 export function buildResponsePreview(
@@ -81,7 +84,8 @@ export function buildResponsePreview(
 	fieldIds: string[],
 	primitiveFieldId: string | undefined,
 	itemShape: ResponseItemShape,
-	useEnvelope: boolean
+	useEnvelope: boolean,
+	fields?: any[]
 ): string {
 	let bodyContent: any;
 
@@ -90,7 +94,7 @@ export function buildResponsePreview(
 		if (fieldIds.length === 0) {
 			bodyContent = {};
 		} else {
-			bodyContent = buildObjectFromFieldIds(fieldIds);
+			bodyContent = buildObjectFromFieldIds(fieldIds, fields);
 		}
 	} else if (shape === 'primitive') {
 		// Primitive shape: single value from selected field
@@ -107,7 +111,7 @@ export function buildResponsePreview(
 			if (fieldIds.length === 0) {
 				bodyContent = [];
 			} else {
-				const itemObject = buildObjectFromFieldIds(fieldIds);
+				const itemObject = buildObjectFromFieldIds(fieldIds, fields);
 				bodyContent = [itemObject, itemObject]; // Show 2 example items
 			}
 		} else {

@@ -36,13 +36,16 @@
   }: Props = $props();
 
   // Build preview JSON using shared utility
+  // Note: Include $fieldsStore in derived dependencies to ensure preview updates
+  // when field definitions (name, type, etc.) change in the registry
   const previewJson = $derived(
     buildResponsePreview(
       responseShape,
       selectedFieldIds,
       responsePrimitiveFieldId,
       responseItemShape,
-      useEnvelope
+      useEnvelope,
+      $fieldsStore
     )
   );
 
@@ -186,7 +189,7 @@
                     <button
                       type="button"
                       onclick={() => onRemoveField(fieldId)}
-                      class="p-1 text-red-600 hover:text-red-800 hover:bg-red-100 rounded transition-colors"
+                      class="p-1 text-red-700 hover:text-red-600 hover:bg-red-100 rounded transition-colors"
                       title="Remove missing field reference"
                     >
                       <i class="fa-solid fa-xmark"></i>
@@ -247,7 +250,7 @@
                   <button
                     type="button"
                     onclick={() => onSetResponsePrimitiveField(undefined)}
-                    class="p-1 text-red-600 hover:text-red-800 hover:bg-red-100 rounded transition-colors"
+                    class="p-1 text-red-700 hover:text-red-600 hover:bg-red-100 rounded transition-colors"
                     title="Remove missing field reference"
                   >
                     <i class="fa-solid fa-xmark"></i>

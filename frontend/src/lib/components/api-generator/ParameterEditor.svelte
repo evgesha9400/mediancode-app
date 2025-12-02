@@ -99,10 +99,10 @@
     <button
       type="button"
       onclick={onDelete}
-      class="text-mono-400 hover:text-mono-600 transition-colors"
+      class="text-red-700 hover:text-red-600 transition-colors"
       aria-label="Delete parameter"
     >
-      <i class="fa-solid fa-trash text-sm"></i>
+      <i class="fa-solid fa-xmark text-sm"></i>
     </button>
   {/if}
 </div>

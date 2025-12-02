@@ -120,3 +120,17 @@ export interface ApiEndpoint {
   responsePrimitiveFieldId?: string;
   expanded?: boolean;
 }
+
+// Object Builder types
+export interface ObjectFieldReference {
+  fieldId: string;
+  required: boolean;
+}
+
+export interface ObjectDefinition {
+  id: string;
+  name: string;
+  description?: string;
+  fields: ObjectFieldReference[];
+  usedInApis: string[];
+}

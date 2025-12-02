@@ -14,6 +14,7 @@
  */
 
 import type { PrimitiveTypeName } from './types';
+import type { ObjectDefinition } from '$lib/types';
 
 // ============================================================================
 // Field Data
@@ -308,4 +309,119 @@ export function cloneFields(fields: Field[] = initialFields): Field[] {
  */
 export function cloneValidatorBases(validators: ValidatorBase[]): ValidatorBase[] {
 	return validators.map(v => ({ ...v }));
+}
+
+// ============================================================================
+// Object Data
+// ============================================================================
+
+// Types imported from $lib/types (ObjectDefinition, ObjectFieldReference)
+
+export const initialObjects: ObjectDefinition[] = [
+	{
+		id: 'object-1',
+		name: 'User',
+		description: 'User account information',
+		fields: [
+			{ fieldId: 'field-4', required: true },  // user_id
+			{ fieldId: 'field-2', required: true },  // username
+			{ fieldId: 'field-1', required: true },  // email
+			{ fieldId: 'field-3', required: true },  // password
+			{ fieldId: 'field-5', required: true },  // created_at
+			{ fieldId: 'field-6', required: false }  // updated_at
+		],
+		usedInApis: ['api-1']
+	},
+	{
+		id: 'object-2',
+		name: 'Product',
+		description: 'Product catalog item',
+		fields: [
+			{ fieldId: 'field-7', required: true },  // price
+			{ fieldId: 'field-8', required: true },  // status
+			{ fieldId: 'field-5', required: true },  // created_at
+			{ fieldId: 'field-6', required: false }  // updated_at
+		],
+		usedInApis: []
+	},
+	{
+		id: 'object-3',
+		name: 'Order',
+		description: 'Customer order details',
+		fields: [
+			{ fieldId: 'field-4', required: true },  // user_id (repurposed as order_id)
+			{ fieldId: 'field-8', required: true },  // status
+			{ fieldId: 'field-7', required: true },  // price (total)
+			{ fieldId: 'field-5', required: true },  // created_at
+			{ fieldId: 'field-6', required: false }  // updated_at
+		],
+		usedInApis: ['api-2']
+	},
+	{
+		id: 'object-4',
+		name: 'Customer',
+		description: 'Customer profile information',
+		fields: [
+			{ fieldId: 'field-1', required: true },  // email
+			{ fieldId: 'field-10', required: false }, // phone
+			{ fieldId: 'field-5', required: true },  // created_at
+		],
+		usedInApis: []
+	},
+	{
+		id: 'object-5',
+		name: 'Payment',
+		description: 'Payment transaction record',
+		fields: [
+			{ fieldId: 'field-7', required: true },  // price (amount)
+			{ fieldId: 'field-8', required: true },  // status
+			{ fieldId: 'field-5', required: true },  // created_at
+		],
+		usedInApis: ['api-3']
+	},
+	{
+		id: 'object-6',
+		name: 'Address',
+		description: 'Physical address information',
+		fields: [
+			{ fieldId: 'field-9', required: false }, // website (repurposed)
+			{ fieldId: 'field-10', required: false }, // phone
+		],
+		usedInApis: []
+	},
+	{
+		id: 'object-7',
+		name: 'Company',
+		description: 'Company profile',
+		fields: [
+			{ fieldId: 'field-9', required: true },  // website
+			{ fieldId: 'field-10', required: false }, // phone
+			{ fieldId: 'field-1', required: true },  // email
+			{ fieldId: 'field-5', required: true },  // created_at
+		],
+		usedInApis: []
+	},
+	{
+		id: 'object-8',
+		name: 'Invoice',
+		description: 'Billing invoice',
+		fields: [
+			{ fieldId: 'field-7', required: true },  // price (total)
+			{ fieldId: 'field-8', required: true },  // status
+			{ fieldId: 'field-5', required: true },  // created_at
+			{ fieldId: 'field-6', required: false }  // updated_at
+		],
+		usedInApis: []
+	}
+];
+
+/**
+ * Create a deep clone of objects data for test isolation
+ */
+export function cloneObjects(objects: ObjectDefinition[] = initialObjects): ObjectDefinition[] {
+	return objects.map(obj => ({
+		...obj,
+		fields: obj.fields.map(f => ({ ...f })),
+		usedInApis: [...obj.usedInApis]
+	}));
 }

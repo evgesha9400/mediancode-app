@@ -26,6 +26,7 @@
     { href: '/types', label: 'Types', icon: 'fa-shapes' },
     { href: '/validators', label: 'Validators', icon: 'fa-check-circle' },
     { href: '/field-registry', label: 'Field Registry', icon: 'fa-table-list' },
+    { href: '/object-builder', label: 'Object Builder', icon: 'fa-cubes' },
     { href: '/api-generator', label: 'API Designer', icon: 'fa-code' }
   ];
 

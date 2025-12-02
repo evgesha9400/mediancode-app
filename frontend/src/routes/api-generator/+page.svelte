@@ -145,10 +145,10 @@
                 <button
                   type="button"
                   onclick={() => state.handleTagSelect(undefined)}
-                  class="absolute right-2 top-1/2 -translate-y-1/2 text-mono-400 hover:text-mono-600"
+                  class="absolute right-2 top-1/2 -translate-y-1/2 text-red-700 hover:text-red-600"
                   aria-label="Clear tag"
                 >
-                  <i class="fa-solid fa-times text-xs"></i>
+                  <i class="fa-solid fa-xmark text-xs"></i>
                 </button>
               {:else}
                 <i class="fa-solid fa-chevron-down absolute right-3 top-1/2 -translate-y-1/2 text-mono-400 text-xs pointer-events-none"></i>
@@ -178,10 +178,10 @@
                     <button
                       type="button"
                       onclick={(e) => state.handleDeleteTagClick(e, tag)}
-                      class="px-3 py-2 text-mono-400 hover:text-red-500 transition-colors"
+                      class="px-3 py-2 text-red-700 hover:text-red-600 transition-colors"
                       aria-label="Delete tag"
                     >
-                      <i class="fa-solid fa-trash text-xs"></i>
+                      <i class="fa-solid fa-xmark text-xs"></i>
                     </button>
                   </div>
                 {/each}
@@ -347,9 +347,9 @@
         <button
           type="button"
           onclick={() => state.handleDeleteEndpoint(state.editedEndpoint!.id)}
-          class="flex-1 px-4 py-2 border border-mono-300 text-mono-700 rounded-md hover:bg-mono-50 transition-colors font-medium flex items-center justify-center space-x-2"
+          class="flex-1 px-4 py-2 border border-mono-300 text-red-700 rounded-md hover:bg-red-50 transition-colors font-medium flex items-center justify-center space-x-2"
         >
-          <i class="fa-solid fa-trash"></i>
+          <i class="fa-solid fa-xmark"></i>
           <span>Delete</span>
         </button>
         <button
