@@ -158,6 +158,7 @@
     listState.selectedItem = editedField;
     listState.originalItem = JSON.parse(JSON.stringify(editedField));
     showToast(`Field "${fieldName}" updated successfully`, 'success', 3000);
+    closeDrawer();
   }
 
   function handleUndo() {
@@ -239,7 +240,7 @@
 </script>
 
 <DashboardLayout>
-  <PageHeader title="Unified Field Registry">
+  <PageHeader title="Fields">
     {#snippet actions()}
       <button
         type="button"

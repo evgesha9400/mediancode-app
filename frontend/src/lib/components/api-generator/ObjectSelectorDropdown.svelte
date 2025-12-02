@@ -61,7 +61,7 @@
       <!-- Display selected object with clear button -->
       <div class="w-full px-3 py-1.5 border border-mono-300 rounded-md bg-white flex items-center justify-between">
         <div class="flex items-center space-x-2">
-          <i class="fa-solid fa-box text-mono-500 text-xs"></i>
+          <i class="fa-solid fa-cube text-mono-500 text-xs"></i>
           <span class="font-mono text-sm text-mono-700">{selectedObject.name}</span>
           <span class="text-xs text-mono-500">({selectedObject.fields.length} fields)</span>
         </div>
@@ -99,7 +99,7 @@
           <div class="flex items-start justify-between">
             <div class="flex-1">
               <div class="flex items-center space-x-2">
-                <i class="fa-solid fa-box text-mono-500 text-xs"></i>
+                <i class="fa-solid fa-cube text-mono-500 text-xs"></i>
                 <span class="font-mono text-sm text-mono-700">{object.name}</span>
                 <span class="text-xs text-mono-500 bg-mono-100 px-2 py-0.5 rounded">
                   {object.fields.length} fields
@@ -126,7 +126,7 @@
   {#if dropdownOpen && filteredObjects.length === 0 && !searchQuery.trim()}
     <div class="absolute z-10 w-full mt-1 bg-white border border-mono-300 rounded-md shadow-lg">
       <div class="px-3 py-2 text-sm text-mono-500">
-        No objects available. Create objects in the Object Builder first.
+        No objects available. Create objects in Objects first.
       </div>
     </div>
   {/if}

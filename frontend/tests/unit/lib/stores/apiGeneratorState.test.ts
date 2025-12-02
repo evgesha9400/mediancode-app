@@ -89,7 +89,7 @@ describe('apiGeneratorState - Tag Operations', () => {
 			path: '/test',
 			description: '',
 			pathParams: [],
-			queryParams: [],
+			queryParamsObjectId: undefined,
 			requestBodyObjectId: undefined,
 			responseBodyObjectId: undefined,
 			useEnvelope: true,
@@ -117,7 +117,7 @@ describe('apiGeneratorState - Tag Operations', () => {
 			path: '/test',
 			description: '',
 			pathParams: [],
-			queryParams: [],
+			queryParamsObjectId: undefined,
 			requestBodyObjectId: undefined,
 			responseBodyObjectId: undefined,
 			useEnvelope: true,
@@ -143,7 +143,7 @@ describe('apiGeneratorState - Tag Operations', () => {
 			path: '/test',
 			description: '',
 			pathParams: [],
-			queryParams: [],
+			queryParamsObjectId: undefined,
 			requestBodyObjectId: undefined,
 			responseBodyObjectId: undefined,
 			useEnvelope: true,
@@ -174,7 +174,7 @@ describe('apiGeneratorState - Tag Operations', () => {
 			description: '',
 			tagId: 'some-tag',
 			pathParams: [],
-			queryParams: [],
+			queryParamsObjectId: undefined,
 			requestBodyObjectId: undefined,
 			responseBodyObjectId: undefined,
 			useEnvelope: true,
@@ -199,7 +199,7 @@ describe('apiGeneratorState - Tag Operations', () => {
 			path: '/test',
 			description: '',
 			pathParams: [],
-			queryParams: [],
+			queryParamsObjectId: undefined,
 			requestBodyObjectId: undefined,
 			responseBodyObjectId: undefined,
 			useEnvelope: true,
@@ -234,7 +234,7 @@ describe('apiGeneratorState - Tag Operations', () => {
 			path: '/test',
 			description: '',
 			pathParams: [],
-			queryParams: [],
+			queryParamsObjectId: undefined,
 			requestBodyObjectId: undefined,
 			responseBodyObjectId: undefined,
 			useEnvelope: true,
@@ -394,7 +394,7 @@ describe('apiGeneratorState - Drawer Operations', () => {
 			path: '/test',
 			description: '',
 			pathParams: [],
-			queryParams: [],
+			queryParamsObjectId: undefined,
 			requestBodyObjectId: undefined,
 			responseBodyObjectId: undefined,
 			useEnvelope: true,
@@ -419,7 +419,7 @@ describe('apiGeneratorState - Drawer Operations', () => {
 			path: '/test',
 			description: '',
 			pathParams: [],
-			queryParams: [],
+			queryParamsObjectId: undefined,
 			requestBodyObjectId: undefined,
 			responseBodyObjectId: undefined,
 			useEnvelope: true,
@@ -439,7 +439,7 @@ describe('apiGeneratorState - Drawer Operations', () => {
 		expect(hasChanges).toBe(true);
 	});
 
-	it('should save changes', () => {
+	it('should save changes and close drawer', () => {
 		const state = createApiGeneratorState();
 
 		state.handleAddEndpoint();
@@ -455,6 +455,7 @@ describe('apiGeneratorState - Drawer Operations', () => {
 		const updated = get(endpointsStore)[0];
 		expect(updated.description).toBe('Updated description');
 		expect(toastsModule.showToast).toHaveBeenCalledWith('Endpoint saved successfully', 'success');
+		expect(state.drawerOpen).toBe(false);
 	});
 
 	it('should undo changes', () => {
@@ -485,7 +486,7 @@ describe('apiGeneratorState - Drawer Operations', () => {
 			path: '/test',
 			description: '',
 			pathParams: [],
-			queryParams: [],
+			queryParamsObjectId: undefined,
 			requestBodyObjectId: undefined,
 			responseBodyObjectId: undefined,
 			useEnvelope: true,
@@ -511,7 +512,7 @@ describe('apiGeneratorState - Drawer Operations', () => {
 			path: '/test',
 			description: '',
 			pathParams: [],
-			queryParams: [],
+			queryParamsObjectId: undefined,
 			requestBodyObjectId: undefined,
 			responseBodyObjectId: undefined,
 			useEnvelope: true,
@@ -577,6 +578,7 @@ describe('apiGeneratorState - Path and Parameter Operations', () => {
 		const updated = get(endpointsStore)[0];
 		expect(updated.path).toBe('/users/{user_id}');
 		expect(updated.pathParams).toHaveLength(1);
+		expect(state.drawerOpen).toBe(false);
 	});
 
 	it('should discard path changes on Undo', () => {
@@ -636,102 +638,81 @@ describe('apiGeneratorState - Path and Parameter Operations', () => {
 		expect(state.editedEndpoint?.pathParams).toHaveLength(0);
 	});
 
-	it('should add query parameter locally without persisting to store', () => {
+	it('should select query params object locally without persisting to store', () => {
 		const state = createApiGeneratorState();
 
 		state.handleAddEndpoint();
 		const endpoint = get(endpointsStore)[0];
 		state.openEndpoint(endpoint);
 
-		state.handleAddQueryParam();
+		state.handleSelectQueryParamsObject('object-123');
 
 		// Changes should only be in editedEndpoint, not in the store
-		expect(state.editedEndpoint?.queryParams).toHaveLength(1);
-		expect(state.editedEndpoint?.queryParams[0].name).toBe('new_param');
+		expect(state.editedEndpoint?.queryParamsObjectId).toBe('object-123');
 
-		// Store should still have the original (no query params)
+		// Store should still have the original (no query params object)
 		const storeEndpoint = get(endpointsStore)[0];
-		expect(storeEndpoint.queryParams).toHaveLength(0);
+		expect(storeEndpoint.queryParamsObjectId).toBeUndefined();
 	});
 
-	it('should persist query parameter to store only on Save', () => {
+	it('should persist query params object to store only on Save', () => {
 		const state = createApiGeneratorState();
 
 		state.handleAddEndpoint();
 		const endpoint = get(endpointsStore)[0];
 		state.openEndpoint(endpoint);
 
-		state.handleAddQueryParam();
+		state.handleSelectQueryParamsObject('object-456');
 
 		// Verify store unchanged
-		expect(get(endpointsStore)[0].queryParams).toHaveLength(0);
+		expect(get(endpointsStore)[0].queryParamsObjectId).toBeUndefined();
 
 		// Save changes
 		vi.clearAllMocks();
 		state.handleSave();
 
-		// Now store should have the query param
-		expect(get(endpointsStore)[0].queryParams).toHaveLength(1);
+		// Now store should have the query params object
+		expect(get(endpointsStore)[0].queryParamsObjectId).toBe('object-456');
+		expect(state.drawerOpen).toBe(false);
 	});
 
-	it('should update query parameter locally', () => {
+	it('should clear query params object locally', () => {
 		const state = createApiGeneratorState();
 
 		state.handleAddEndpoint();
 		const endpoint = get(endpointsStore)[0];
 		state.openEndpoint(endpoint);
-		state.handleAddQueryParam();
+		state.handleSelectQueryParamsObject('object-789');
 
-		const paramId = state.editedEndpoint!.queryParams[0].id;
+		// Verify object is selected
+		expect(state.editedEndpoint?.queryParamsObjectId).toBe('object-789');
 
-		state.handleQueryParamUpdate(paramId, {
-			name: 'limit',
-			type: 'integer'
-		});
+		// Clear the selection
+		state.handleSelectQueryParamsObject(undefined);
 
 		// Changes are local to editedEndpoint
-		expect(state.editedEndpoint?.queryParams[0].name).toBe('limit');
-		expect(state.editedEndpoint?.queryParams[0].type).toBe('integer');
+		expect(state.editedEndpoint?.queryParamsObjectId).toBeUndefined();
 
 		// Store should still be unchanged
-		expect(get(endpointsStore)[0].queryParams).toHaveLength(0);
+		expect(get(endpointsStore)[0].queryParamsObjectId).toBeUndefined();
 	});
 
-	it('should delete query parameter locally', () => {
+	it('should discard query params object changes on Cancel', () => {
 		const state = createApiGeneratorState();
 
 		state.handleAddEndpoint();
 		const endpoint = get(endpointsStore)[0];
 		state.openEndpoint(endpoint);
-		state.handleAddQueryParam();
+		state.handleSelectQueryParamsObject('object-999');
 
-		const paramId = state.editedEndpoint!.queryParams[0].id;
-
-		state.handleQueryParamDelete(paramId);
-
-		// editedEndpoint should have no query params
-		expect(state.editedEndpoint?.queryParams).toHaveLength(0);
-
-		// Store should still be unchanged (was never modified)
-		expect(get(endpointsStore)[0].queryParams).toHaveLength(0);
-	});
-
-	it('should discard query param changes on Cancel', () => {
-		const state = createApiGeneratorState();
-
-		state.handleAddEndpoint();
-		const endpoint = get(endpointsStore)[0];
-		state.openEndpoint(endpoint);
-		state.handleAddQueryParam();
-
-		// Verify editedEndpoint has the new param
-		expect(state.editedEndpoint?.queryParams).toHaveLength(1);
+		// Verify editedEndpoint has the object
+		expect(state.editedEndpoint?.queryParamsObjectId).toBe('object-999');
 
 		// Cancel without saving
 		state.handleCancel();
 
-		// Store should still have no query params
-		expect(get(endpointsStore)[0].queryParams).toHaveLength(0);
+		// Store should still have no query params object
+		expect(get(endpointsStore)[0].queryParamsObjectId).toBeUndefined();
 	});
 });
 
@@ -900,6 +881,7 @@ describe('apiGeneratorState - Body Field Selection Operations', () => {
 		const savedEndpoint = get(endpointsStore)[0];
 		expect(savedEndpoint.requestBodyObjectId).toBe('object-1');
 		expect(savedEndpoint.responseBodyObjectId).toBe('object-2');
+		expect(state.drawerOpen).toBe(false);
 	});
 });
 

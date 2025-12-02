@@ -58,7 +58,7 @@ export class ValidatorsPage {
 		this.page = page;
 
 		// Header
-		this.pageTitle = page.getByRole('heading', { name: 'Validators Library', level: 1 });
+		this.pageTitle = page.getByRole('heading', { name: 'Validators', level: 1 });
 		this.addValidatorButton = page.getByRole('button', { name: 'Add Validator' });
 
 		// Search

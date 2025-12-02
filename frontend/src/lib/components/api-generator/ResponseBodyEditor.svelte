@@ -94,7 +94,7 @@
           <div class="p-3 bg-mono-50 rounded border border-mono-200">
             <div class="flex items-center justify-between mb-2">
               <div class="flex items-center space-x-2">
-                <i class="fa-solid fa-box text-mono-500 text-sm"></i>
+                <i class="fa-solid fa-cube text-mono-500 text-sm"></i>
                 <span class="font-mono text-sm text-mono-700">{selectedObject.name}</span>
               </div>
               <span class="text-xs text-mono-500">{selectedObject.fields.length} fields</span>

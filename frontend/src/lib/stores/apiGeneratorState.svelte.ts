@@ -98,9 +98,9 @@ export interface ApiGeneratorState {
 	handlePathChange: (newPath: string) => void;
 	handlePathParamUpdate: (paramId: string, updates: Partial<EndpointParameter>) => void;
 	handlePathParamDelete: (paramId: string) => void;
-	handleQueryParamUpdate: (paramId: string, updates: Partial<EndpointParameter>) => void;
-	handleQueryParamDelete: (paramId: string) => void;
-	handleAddQueryParam: () => void;
+
+	// Query parameters object selection
+	handleSelectQueryParamsObject: (objectId: string | undefined) => void;
 
 	// Request body object selection
 	handleSelectRequestBodyObject: (objectId: string | undefined) => void;
@@ -307,6 +307,7 @@ export function createApiGeneratorState(): ApiGeneratorState {
 		updateEndpoint(editedEndpoint.id, editedEndpoint);
 		selectedEndpoint = editedEndpoint;
 		showToast(MESSAGES.ENDPOINT_SAVED, 'success');
+		closeDrawer();
 		return true;
 	}
 
@@ -360,38 +361,16 @@ export function createApiGeneratorState(): ApiGeneratorState {
 		editedEndpoint = { ...editedEndpoint, pathParams: updatedParams };
 	}
 
-	function handleQueryParamUpdate(paramId: string, updates: Partial<EndpointParameter>): void {
+	// ============================================================================
+	// Query Parameters Object Selection
+	// ============================================================================
+
+	function handleSelectQueryParamsObject(objectId: string | undefined): void {
 		if (!editedEndpoint) return;
 
-		const updatedParams = editedEndpoint.queryParams.map(p =>
-			p.id === paramId ? { ...p, ...updates } : p
-		);
-		editedEndpoint = { ...editedEndpoint, queryParams: updatedParams };
-	}
-
-	function handleQueryParamDelete(paramId: string): void {
-		if (!editedEndpoint) return;
-
-		const updatedParams = editedEndpoint.queryParams.filter(p => p.id !== paramId);
-		editedEndpoint = { ...editedEndpoint, queryParams: updatedParams };
-	}
-
-	function handleAddQueryParam(): void {
-		if (!editedEndpoint) return;
-
-		// Create new parameter locally (changes persist on Save)
-		const newParam: EndpointParameter = {
-			id: generateParamId(),
-			name: 'new_param',
-			type: '',
-			description: '',
-			required: false
-		};
-
-		// Update local edited state only
 		editedEndpoint = {
 			...editedEndpoint,
-			queryParams: [...editedEndpoint.queryParams, newParam]
+			queryParamsObjectId: objectId
 		};
 	}
 
@@ -516,9 +495,7 @@ export function createApiGeneratorState(): ApiGeneratorState {
 		handlePathChange,
 		handlePathParamUpdate,
 		handlePathParamDelete,
-		handleQueryParamUpdate,
-		handleQueryParamDelete,
-		handleAddQueryParam,
+		handleSelectQueryParamsObject,
 		handleSelectRequestBodyObject,
 		handleSelectResponseBodyObject,
 		handleEnvelopeToggle,

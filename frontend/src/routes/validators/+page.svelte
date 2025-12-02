@@ -112,7 +112,7 @@
 </script>
 
 <DashboardLayout>
-  <PageHeader title="Validators Library">
+  <PageHeader title="Validators">
     {#snippet actions()}
       <button
         type="button"

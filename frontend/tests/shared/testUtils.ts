@@ -22,7 +22,7 @@ export function createMockEndpoint(overrides: Partial<ApiEndpoint> = {}): ApiEnd
 		path: '/test',
 		description: '',
 		pathParams: [],
-		queryParams: [],
+		queryParamsObjectId: undefined,
 		requestBodyObjectId: undefined,
 		responseBodyObjectId: undefined,
 		useEnvelope: true,

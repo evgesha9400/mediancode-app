@@ -6,7 +6,7 @@
 
   @component
   @example
-  <PageHeader title="Field Registry">
+  <PageHeader title="Fields">
     {#snippet actions()}
       <button>Add Field</button>
     {/snippet}

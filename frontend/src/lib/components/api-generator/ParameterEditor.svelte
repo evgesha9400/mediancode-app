@@ -29,7 +29,7 @@
   ];
 </script>
 
-<div class="flex items-center space-x-2 {compact ? 'py-1.5' : 'p-2 bg-mono-50 rounded border border-mono-200'}">
+<div class="flex items-center space-x-2 {compact ? 'py-1.5' : ''}">
   {#if !readOnly}
     <!-- Editable Mode -->
     <!-- Parameter Name -->
@@ -39,10 +39,10 @@
         value={parameter.name}
         oninput={(e) => onUpdate?.({ name: e.currentTarget.value })}
         placeholder="param_name"
-        class="w-40 px-2 py-1 text-sm border border-mono-300 rounded-md focus:ring-2 focus:ring-mono-400 focus:border-transparent"
+        class="w-40 px-2 py-1 text-xs border border-mono-300 rounded-md focus:ring-2 focus:ring-mono-400 focus:border-transparent"
       />
     {:else}
-      <div class="w-40 px-2 py-1 text-sm bg-mono-100 border border-mono-200 rounded-md text-mono-700 font-mono">
+      <div class="w-40 px-2 py-1 text-xs bg-mono-100 border border-mono-200 rounded-md text-mono-700 font-mono">
         {parameter.name}
       </div>
     {/if}
@@ -51,7 +51,7 @@
     <select
       value={parameter.type}
       onchange={(e) => onUpdate?.({ type: e.currentTarget.value })}
-      class="px-2 py-1 text-sm border border-mono-300 rounded-md focus:ring-2 focus:ring-mono-400 focus:border-transparent {parameter.type === '' ? 'text-mono-400' : 'text-mono-700'}"
+      class="px-2 py-1 text-xs border border-mono-300 rounded-md focus:ring-2 focus:ring-mono-400 focus:border-transparent {parameter.type === '' ? 'text-mono-400' : 'text-mono-700'}"
     >
       {#each parameterTypes as type (type.value)}
         <option value={type.value}>{type.label}</option>
@@ -64,7 +64,7 @@
       value={parameter.description}
       oninput={(e) => onUpdate?.({ description: e.currentTarget.value })}
       placeholder="Description"
-      class="flex-1 px-2 py-1 text-sm border border-mono-300 rounded-md focus:ring-2 focus:ring-mono-400 focus:border-transparent"
+      class="flex-1 px-2 py-1 text-xs border border-mono-300 rounded-md focus:ring-2 focus:ring-mono-400 focus:border-transparent"
     />
 
     <!-- Required Toggle (only for query params, path params are always required) -->
@@ -76,19 +76,19 @@
           onchange={(e) => onUpdate?.({ required: e.currentTarget.checked })}
           class="h-4 w-4 text-mono-900 border-mono-300 rounded"
         />
-        <span class="text-sm text-mono-600 whitespace-nowrap">Required</span>
+        <span class="text-xs text-mono-600 whitespace-nowrap">Required</span>
       </label>
     {/if}
   {:else}
     <!-- Read-Only Mode -->
-    <div class="flex-1 px-2 py-1 text-sm bg-mono-100 border border-mono-200 rounded-md text-mono-700 font-mono">
+    <div class="flex-1 px-2 py-1 text-xs bg-mono-100 border border-mono-200 rounded-md text-mono-700 font-mono">
       {parameter.name}
     </div>
-    <div class="px-2 py-1 text-sm bg-mono-100 border border-mono-200 rounded-md text-mono-700">
+    <div class="px-2 py-1 text-xs bg-mono-100 border border-mono-200 rounded-md text-mono-700">
       {parameterTypes.find(t => t.value === parameter.type)?.label || parameter.type}
     </div>
     {#if showRequired}
-      <div class="px-2 py-1 text-sm text-mono-600">
+      <div class="px-2 py-1 text-xs text-mono-600">
         {parameter.required ? 'Required' : 'Optional'}
       </div>
     {/if}
@@ -102,7 +102,7 @@
       class="text-red-700 hover:text-red-600 transition-colors"
       aria-label="Delete parameter"
     >
-      <i class="fa-solid fa-xmark text-sm"></i>
+      <i class="fa-solid fa-xmark"></i>
     </button>
   {/if}
 </div>

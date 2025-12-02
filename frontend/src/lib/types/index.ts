@@ -112,7 +112,7 @@ export interface ApiEndpoint {
   description: string;
   tagId?: string;
   pathParams: EndpointParameter[];
-  queryParams: EndpointParameter[];
+  queryParamsObjectId?: string; // Select ONE object for query parameters (optional)
   requestBodyObjectId?: string; // Select ONE object for request body (optional - only POST/PUT/PATCH methods)
   responseBodyObjectId?: string; // Select ONE object for response body (for both single object and array of objects)
   useEnvelope: boolean;

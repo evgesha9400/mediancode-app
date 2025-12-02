@@ -8,6 +8,7 @@
     ApiMetadataCard,
     EndpointItem,
     ParameterEditor,
+    QueryParametersEditor,
     RequestBodyEditor,
     ResponseBodyEditor
   } from '$lib/components';
@@ -240,17 +241,18 @@
             Path Parameters
           </h3>
           {#if state.editedEndpoint.pathParams.length === 0}
-            <div class="p-3 bg-mono-50 rounded border border-mono-200">
+            <div class="px-3 py-1 bg-mono-50 rounded border border-mono-200">
               <p class="text-xs text-mono-500">No path parameters. Add parameters to your URL path using <code class="bg-mono-100 px-1 rounded">{`{param_name}`}</code></p>
             </div>
           {:else}
-            <div class="space-y-2">
+            <div class="px-3 py-1 bg-mono-50 rounded border border-mono-200 space-y-2">
               {#each state.editedEndpoint.pathParams as param (param.id)}
                 <ParameterEditor
                   parameter={param}
                   onUpdate={(updates) => state.handlePathParamUpdate(param.id, updates)}
                   showRequired={false}
                   nameEditable={false}
+                  compact={true}
                 />
               {/each}
             </div>
@@ -258,37 +260,10 @@
         </div>
 
         <!-- Query Parameters -->
-        <div>
-          <div class="flex items-center justify-between mb-2">
-            <h3 class="text-sm text-mono-700 flex items-center font-medium">
-              <i class="fa-solid fa-filter mr-2"></i>
-              Query Parameters
-            </h3>
-            <button
-              type="button"
-              onclick={state.handleAddQueryParam}
-              class="px-3 py-1.5 bg-mono-900 text-white text-sm rounded-md flex items-center space-x-2 hover:bg-mono-800"
-            >
-              <i class="fa-solid fa-plus"></i>
-              <span>Add Parameter</span>
-            </button>
-          </div>
-          {#if state.editedEndpoint.queryParams.length === 0}
-            <div class="p-3 bg-mono-50 rounded border border-mono-200">
-              <p class="text-xs text-mono-500">No query parameters</p>
-            </div>
-          {:else}
-            <div class="space-y-2">
-              {#each state.editedEndpoint.queryParams as param (param.id)}
-                <ParameterEditor
-                  parameter={param}
-                  onUpdate={(updates) => state.handleQueryParamUpdate(param.id, updates)}
-                  onDelete={() => state.handleQueryParamDelete(param.id)}
-                />
-              {/each}
-            </div>
-          {/if}
-        </div>
+        <QueryParametersEditor
+          selectedObjectId={state.editedEndpoint.queryParamsObjectId}
+          onSelectObject={state.handleSelectQueryParamsObject}
+        />
 
         <!-- Request Body Editor -->
         <RequestBodyEditor

@@ -183,7 +183,7 @@ export function createDefaultEndpoint(): ApiEndpoint {
 		description: '',
 		tagId: undefined,
 		pathParams: [],
-		queryParams: [],
+		queryParamsObjectId: undefined,
 		requestBodyObjectId: undefined,
 		responseBodyObjectId: undefined,
 		useEnvelope: true,
@@ -247,8 +247,7 @@ export function duplicateEndpoint(endpointId: string): ApiEndpoint | undefined {
 		id: generateId('endpoint'),
 		path: `${original.path}-copy`,
 		expanded: false,
-		pathParams: original.pathParams.map(p => ({ ...p, id: generateParamId() })),
-		queryParams: original.queryParams.map(p => ({ ...p, id: generateParamId() }))
+		pathParams: original.pathParams.map(p => ({ ...p, id: generateParamId() }))
 	};
 
 	endpointsStore.update(endpoints => [...endpoints, duplicated]);
@@ -390,58 +389,5 @@ export function deletePathParameter(endpointId: string, paramId: string): void {
 
 	const updatedParams = endpoint.pathParams.filter(p => p.id !== paramId);
 	updateEndpoint(endpointId, { pathParams: updatedParams });
-}
-
-/**
- * Add a new query parameter to an endpoint
- */
-export function addQueryParameter(endpointId: string): EndpointParameter | undefined {
-	const endpoint = getEndpointById(endpointId);
-
-	if (!endpoint) return undefined;
-
-	const newParam: EndpointParameter = {
-		id: generateParamId(),
-		name: 'new_param',
-		type: '',
-		description: '',
-		required: false
-	};
-
-	const updatedParams = [...endpoint.queryParams, newParam];
-	updateEndpoint(endpointId, { queryParams: updatedParams });
-
-	return newParam;
-}
-
-/**
- * Update a specific query parameter
- */
-export function updateQueryParameter(
-	endpointId: string,
-	paramId: string,
-	updates: Partial<EndpointParameter>
-): void {
-	const endpoint = getEndpointById(endpointId);
-
-	if (!endpoint) return;
-
-	const updatedParams = endpoint.queryParams.map(p =>
-		p.id === paramId ? { ...p, ...updates } : p
-	);
-
-	updateEndpoint(endpointId, { queryParams: updatedParams });
-}
-
-/**
- * Delete a query parameter
- */
-export function deleteQueryParameter(endpointId: string, paramId: string): void {
-	const endpoint = getEndpointById(endpointId);
-
-	if (!endpoint) return;
-
-	const updatedParams = endpoint.queryParams.filter(p => p.id !== paramId);
-	updateEndpoint(endpointId, { queryParams: updatedParams });
 }
 

@@ -58,7 +58,7 @@ export class FieldRegistryPage {
 		this.page = page;
 
 		// Header
-		this.pageTitle = page.getByRole('heading', { name: 'Unified Field Registry', level: 1 });
+		this.pageTitle = page.getByRole('heading', { name: 'Fields', level: 1 });
 
 		// Search
 		this.searchInput = page.getByPlaceholder('Search fields...');

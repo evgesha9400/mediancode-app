@@ -110,6 +110,7 @@
     listState.selectedItem = editedObject;
     listState.originalItem = JSON.parse(JSON.stringify(editedObject));
     showToast(`Object "${objectName}" updated successfully`, 'success', 3000);
+    closeDrawer();
   }
 
   function handleUndo() {
@@ -167,7 +168,7 @@
 </script>
 
 <DashboardLayout>
-  <PageHeader title="Object Builder">
+  <PageHeader title="Objects">
     {#snippet actions()}
       <button
         type="button"

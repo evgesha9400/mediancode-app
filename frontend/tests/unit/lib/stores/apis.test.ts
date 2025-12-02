@@ -23,9 +23,6 @@ import {
 	updateEndpointPath,
 	updatePathParameter,
 	deletePathParameter,
-	addQueryParameter,
-	updateQueryParameter,
-	deleteQueryParameter,
 	initialApiMetadata
 } from '$lib/stores/apis';
 import { seedIdGenerator } from '$lib/utils/ids';
@@ -167,7 +164,7 @@ describe('apis store - Endpoint Operations', () => {
 		expect(endpoint.method).toBe('GET');
 		expect(endpoint.path).toBe('/');
 		expect(endpoint.pathParams).toHaveLength(0);
-		expect(endpoint.queryParams).toHaveLength(0);
+		expect(endpoint.queryParamsObjectId).toBeUndefined();
 
 		const endpoints = get(endpointsStore);
 		expect(endpoints).toHaveLength(1);
@@ -210,7 +207,7 @@ describe('apis store - Endpoint Operations', () => {
 		updateEndpoint(original.id, {
 			path: '/users/{user_id}',
 			pathParams: [{ id: 'param-1', name: 'user_id', type: 'integer', description: '', required: true }],
-			queryParams: [{ id: 'query-1', name: 'limit', type: 'integer', description: '', required: false }]
+			queryParamsObjectId: 'object-123'
 		});
 
 		const duplicated = duplicateEndpoint(original.id);
@@ -219,7 +216,7 @@ describe('apis store - Endpoint Operations', () => {
 		expect(duplicated!.id).not.toBe(original.id);
 		expect(duplicated!.path).toBe('/users/{user_id}-copy');
 		expect(duplicated!.pathParams[0].id).not.toBe('param-1');
-		expect(duplicated!.queryParams[0].id).not.toBe('query-1');
+		expect(duplicated!.queryParamsObjectId).toBe('object-123');
 
 		// Original should be unchanged
 		const originalCheck = getEndpointById(original.id);
@@ -343,63 +340,6 @@ describe('apis store - Path Parameter Operations', () => {
 	});
 });
 
-describe('apis store - Query Parameter Operations', () => {
-	beforeEach(() => {
-		endpointsStore.set([]);
-		seedIdGenerator({ counter: 0, timestamp: 1000000 });
-	});
-
-	it('should add a query parameter', () => {
-		const endpoint = createDefaultEndpoint();
-
-		const param = addQueryParameter(endpoint.id);
-
-		expect(param).toBeDefined();
-		expect(param?.name).toBe('new_param');
-		expect(param?.required).toBe(false);
-
-		const updated = getEndpointById(endpoint.id);
-		expect(updated?.queryParams).toHaveLength(1);
-	});
-
-	it('should update a query parameter', () => {
-		const endpoint = createDefaultEndpoint();
-		const param = addQueryParameter(endpoint.id)!;
-
-		updateQueryParameter(endpoint.id, param.id, {
-			name: 'limit',
-			type: 'integer',
-			description: 'Number of results',
-			required: true
-		});
-
-		const updated = getEndpointById(endpoint.id);
-		expect(updated?.queryParams[0].name).toBe('limit');
-		expect(updated?.queryParams[0].type).toBe('integer');
-		expect(updated?.queryParams[0].required).toBe(true);
-	});
-
-	it('should delete a query parameter', () => {
-		const endpoint = createDefaultEndpoint();
-		const param = addQueryParameter(endpoint.id)!;
-
-		deleteQueryParameter(endpoint.id, param.id);
-
-		const updated = getEndpointById(endpoint.id);
-		expect(updated?.queryParams).toHaveLength(0);
-	});
-
-	it('should handle multiple query parameters', () => {
-		const endpoint = createDefaultEndpoint();
-
-		addQueryParameter(endpoint.id);
-		addQueryParameter(endpoint.id);
-		addQueryParameter(endpoint.id);
-
-		const updated = getEndpointById(endpoint.id);
-		expect(updated?.queryParams).toHaveLength(3);
-	});
-});
 
 describe('apis store - Legacy Functions', () => {
 	beforeEach(() => {
