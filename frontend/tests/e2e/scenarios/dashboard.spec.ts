@@ -126,7 +126,7 @@ test.describe('Dashboard - Full Suite', () => {
 			});
 		});
 
-		test('field-registry should have correct appearance', async ({ page }) => {
+		test('fields should have correct appearance', async ({ page }) => {
 			test.skip(process.platform !== 'darwin', 'Visual regression baselines only exist for macOS');
 
 			await page.goto('/field-registry');

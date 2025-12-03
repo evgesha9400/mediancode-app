@@ -1,7 +1,7 @@
 /**
- * Field Registry Feature Tests
+ * Fields Feature Tests
  *
- * Comprehensive E2E tests for the field registry page functionality.
+ * Comprehensive E2E tests for the fields page functionality.
  * Tests search, filter, sort, view details, edit, and delete operations.
  *
  * @tags full
@@ -10,7 +10,7 @@
 import { test, expect } from '@playwright/test';
 import { FieldRegistryPage } from '../page-objects/FieldRegistryPage';
 
-test.describe('Field Registry - Feature Tests', () => {
+test.describe('Fields - Feature Tests', () => {
 	let fieldRegistryPage: FieldRegistryPage;
 
 	test.beforeEach(async ({ page }) => {
@@ -19,7 +19,7 @@ test.describe('Field Registry - Feature Tests', () => {
 	});
 
 	test.describe('Page Load', () => {
-		test('should display field registry page with title', async () => {
+		test('should display fields page with title', async () => {
 			await expect(fieldRegistryPage.pageTitle).toBeVisible();
 		});
 
@@ -148,21 +148,22 @@ test.describe('Field Registry - Feature Tests', () => {
 
 		test('should save changes successfully', async () => {
 			const names = await fieldRegistryPage.getVisibleFieldNames();
-			await fieldRegistryPage.clickRow(names[0]);
+			const fieldName = names[0];
 
-			const originalDescription = await fieldRegistryPage.getFieldDescription();
+			await fieldRegistryPage.clickRow(fieldName);
+
 			const newDescription = 'Updated description ' + Date.now();
 			await fieldRegistryPage.setFieldDescription(newDescription);
 
+			// Save should enable after making changes
+			const saveEnabledBefore = await fieldRegistryPage.isSaveEnabled();
+			expect(saveEnabledBefore).toBe(true);
+
 			await fieldRegistryPage.save();
 
-			// Verify save button is disabled after save (no pending changes)
-			const saveEnabled = await fieldRegistryPage.isSaveEnabled();
-			expect(saveEnabled).toBe(false);
-
-			// Restore original description for other tests
-			await fieldRegistryPage.setFieldDescription(originalDescription);
-			await fieldRegistryPage.save();
+			// Verify drawer closed after save
+			const isOpen = await fieldRegistryPage.isDrawerOpen();
+			expect(isOpen).toBe(false);
 		});
 
 		test('should validate required field name', async () => {

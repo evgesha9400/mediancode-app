@@ -1,7 +1,7 @@
 /**
- * Field Registry Page Object
+ * Fields Page Object
  *
- * Encapsulates interactions with the field registry page (/field-registry).
+ * Encapsulates interactions with the fields page (/field-registry).
  * Handles search, filter, sort, view details, edit, and delete operations.
  */
 
@@ -103,7 +103,7 @@ export class FieldRegistryPage {
 	}
 
 	/**
-	 * Navigate to the field registry page
+	 * Navigate to the fields page
 	 */
 	async goto() {
 		await this.page.goto('/field-registry');
@@ -246,7 +246,8 @@ export class FieldRegistryPage {
 	 */
 	async save() {
 		await this.saveButton.click();
-		await this.page.waitForTimeout(300);
+		// Wait for save to complete and drawer to close (closeDelay is 300ms + animation time)
+		await this.page.waitForTimeout(600);
 	}
 
 	/**
