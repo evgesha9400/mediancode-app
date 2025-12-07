@@ -23,32 +23,32 @@
 
   // Filter state type
   type ValidatorFilterState = {
-    selectedCategories: string[];
     selectedTypes: string[];
+    selectedCategories: string[];
     onlyUsedInFields: boolean;
   };
 
   // Build filter config from validators (reactive to store changes)
   let filterConfig = $derived.by((): FilterConfig => {
     const validators = $validatorsStore;
-    const uniqueCategories = Array.from(new Set(validators.map(v => v.category))).sort();
+    const uniqueTypes = Array.from(new Set(validators.map(v => v.type))).sort();
 
     return [
       {
         type: 'checkbox-group',
         key: 'selectedTypes',
         label: 'Type',
-        options: [
-          { label: 'Inline', value: 'inline' },
-          { label: 'Custom', value: 'custom' }
-        ],
+        options: uniqueTypes.map(t => ({ label: t.charAt(0).toUpperCase() + t.slice(1), value: t })),
         predicate: (item: Validator, selected: string[]) => selected.includes(item.type)
       },
       {
         type: 'checkbox-group',
         key: 'selectedCategories',
         label: 'Category',
-        options: uniqueCategories.map(c => ({ label: c.charAt(0).toUpperCase() + c.slice(1), value: c })),
+        options: [
+          { label: 'Inline', value: 'inline' },
+          { label: 'Custom', value: 'custom' }
+        ],
         predicate: (item: Validator, selected: string[]) => selected.includes(item.category)
       },
       {
@@ -104,7 +104,7 @@
     goto(`/field-registry?highlight=${fieldId}`);
   }
 
-  let isCustomValidator = $derived(selectedValidator?.type === 'custom');
+  let isCustomValidator = $derived(selectedValidator?.category === 'custom');
   let hasReferences = $derived(selectedValidator ? selectedValidator.fieldsUsingValidator.length > 0 : false);
   let deleteTooltip = $derived(selectedValidator && hasReferences
     ? buildDeletionTooltip('validator', 'field', selectedValidator!.fieldsUsingValidator)
@@ -190,12 +190,12 @@
             <div class="text-sm text-mono-900 font-medium">{validator.name}</div>
           </td>
           <td class="px-6 py-4 whitespace-nowrap">
-            <span class="px-2 py-1 text-xs rounded-full {validator.type === 'inline' ? 'bg-mono-200 text-mono-700' : 'bg-mono-700 text-white'} capitalize">
+            <span class="px-2 py-1 text-xs rounded-full bg-mono-900 text-white capitalize">
               {validator.type}
             </span>
           </td>
           <td class="px-6 py-4 whitespace-nowrap">
-            <span class="px-2 py-1 text-xs rounded-full bg-mono-900 text-white capitalize">
+            <span class="px-2 py-1 text-xs rounded-full {validator.category === 'inline' ? 'bg-mono-200 text-mono-700' : 'bg-mono-700 text-white'} capitalize">
               {validator.category}
             </span>
           </td>
@@ -236,14 +236,14 @@
 
         <div>
           <h3 class="text-sm text-mono-500 mb-1 font-medium">Type</h3>
-          <span class="px-2 py-1 text-xs rounded-full {selectedValidator.type === 'inline' ? 'bg-mono-200 text-mono-700' : 'bg-mono-700 text-white'} capitalize">
+          <span class="px-2 py-1 text-xs rounded-full bg-mono-900 text-white capitalize">
             {selectedValidator.type}
           </span>
         </div>
 
         <div>
           <h3 class="text-sm text-mono-500 mb-1 font-medium">Category</h3>
-          <span class="px-2 py-1 text-xs rounded-full bg-mono-900 text-white capitalize">
+          <span class="px-2 py-1 text-xs rounded-full {selectedValidator.category === 'inline' ? 'bg-mono-200 text-mono-700' : 'bg-mono-700 text-white'} capitalize">
             {selectedValidator.category}
           </span>
         </div>

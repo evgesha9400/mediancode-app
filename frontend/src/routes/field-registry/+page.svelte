@@ -228,7 +228,7 @@
       return {
         validator: fv,
         validatorMeta,
-        source: validatorMeta?.type || 'inline'
+        source: validatorMeta?.category || 'inline'
       };
     });
   }
@@ -444,10 +444,10 @@
               <span>Add</span>
             </button>
           </div>
-          <div class="space-y-2">
-            {#each getAllValidatorsForField(editedField) as { validatorMeta, source }, index}
-              <div class="flex items-center space-x-2 p-2 bg-mono-50 rounded-md">
-                <div class="flex-1 space-y-1">
+          <div class="bg-mono-50 rounded-md p-2">
+            {#if editedField.validators.length > 0}
+              <div class="space-y-2">
+                {#each getAllValidatorsForField(editedField) as { validatorMeta, source }, index}
                   <div class="flex items-center space-x-2">
                     <div class="relative flex-1">
                       <select
@@ -472,25 +472,12 @@
                       <i class="fa-solid fa-xmark"></i>
                     </button>
                   </div>
-                  {#if validatorMeta}
-                    <div class="flex items-center space-x-2 pl-3">
-                      <span class="px-2 py-0.5 text-xs rounded-full bg-mono-900 text-white capitalize">
-                        {validatorMeta.category}
-                      </span>
-                      <span class="px-2 py-0.5 text-xs rounded-full {source === 'inline' ? 'bg-mono-200 text-mono-700' : 'bg-mono-700 text-white'} capitalize">
-                        {source}
-                      </span>
-                    </div>
-                  {/if}
-                </div>
+                {/each}
               </div>
-            {/each}
-            {#if editedField.validators.length === 0}
-              {#if availableValidators.length === 0}
-                <p class="text-sm text-mono-500 italic">No validators available for {editedField.type} type</p>
-              {:else}
-                <p class="text-sm text-mono-500 italic">No validators added</p>
-              {/if}
+            {:else if availableValidators.length === 0}
+              <p class="text-sm text-mono-500 italic">No validators available for {editedField.type} type</p>
+            {:else}
+              <p class="text-sm text-mono-500 italic">No validators added</p>
             {/if}
           </div>
         </div>

@@ -105,34 +105,34 @@ describe('Dashboard Page - Store Integration', () => {
 	});
 
 	describe('Validator Categories', () => {
-		it('validators have valid category values', () => {
-			const validators = get(validatorsStore);
-			const validCategories = ['string', 'numeric', 'collection'];
-
-			validators.forEach((validator) => {
-				expect(validCategories).toContain(validator.category);
-			});
-		});
-
 		it('validators have valid type values', () => {
 			const validators = get(validatorsStore);
-			const validTypes = ['inline', 'custom'];
+			const validTypes = ['string', 'numeric', 'collection'];
 
 			validators.forEach((validator) => {
 				expect(validTypes).toContain(validator.type);
 			});
 		});
 
+		it('validators have valid category values', () => {
+			const validators = get(validatorsStore);
+			const validCategories = ['inline', 'custom'];
+
+			validators.forEach((validator) => {
+				expect(validCategories).toContain(validator.category);
+			});
+		});
+
 		it('inline validators exist in store', () => {
 			const validators = get(validatorsStore);
-			const inlineValidators = validators.filter((v) => v.type === 'inline');
+			const inlineValidators = validators.filter((v) => v.category === 'inline');
 
 			expect(inlineValidators.length).toBeGreaterThan(0);
 		});
 
 		it('custom validators exist in store', () => {
 			const validators = get(validatorsStore);
-			const customValidators = validators.filter((v) => v.type === 'custom');
+			const customValidators = validators.filter((v) => v.category === 'custom');
 
 			expect(customValidators.length).toBeGreaterThan(0);
 		});

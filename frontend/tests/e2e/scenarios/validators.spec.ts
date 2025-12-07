@@ -105,7 +105,7 @@ test.describe('Validators - Feature Tests', () => {
 			await validatorsPage.clickRow(names[0]);
 
 			const validatorType = await validatorsPage.getValidatorType();
-			expect(['inline', 'custom']).toContain(validatorType.toLowerCase());
+			expect(validatorType.toLowerCase()).toMatch(/^(string|numeric|collection)$/);
 		});
 
 		test('should display validator category in drawer', async () => {
@@ -113,7 +113,7 @@ test.describe('Validators - Feature Tests', () => {
 			await validatorsPage.clickRow(names[0]);
 
 			const category = await validatorsPage.getValidatorCategory();
-			expect(category).toBeTruthy();
+			expect(category.toLowerCase()).toMatch(/^(inline|custom)$/);
 		});
 
 		test('should close drawer when clicking close button', async () => {
@@ -138,10 +138,10 @@ test.describe('Validators - Feature Tests', () => {
 		test('should show delete button only for custom validators', async () => {
 			// Get all validators and find a custom one
 			const names = await validatorsPage.getVisibleValidatorNames();
-			const types = await validatorsPage.getVisibleTypes();
+			const categories = await validatorsPage.getVisibleCategories();
 
 			// Find index of a custom validator
-			const customIndex = types.findIndex(t => t === 'custom');
+			const customIndex = categories.findIndex(c => c === 'custom');
 
 			if (customIndex >= 0 && names[customIndex]) {
 				await validatorsPage.clickRow(names[customIndex]);
@@ -155,10 +155,10 @@ test.describe('Validators - Feature Tests', () => {
 		test('should not show delete button for inline validators', async () => {
 			// Get all validators and find an inline one
 			const names = await validatorsPage.getVisibleValidatorNames();
-			const types = await validatorsPage.getVisibleTypes();
+			const categories = await validatorsPage.getVisibleCategories();
 
 			// Find index of an inline validator
-			const inlineIndex = types.findIndex(t => t === 'inline');
+			const inlineIndex = categories.findIndex(c => c === 'inline');
 
 			if (inlineIndex >= 0 && names[inlineIndex]) {
 				await validatorsPage.clickRow(names[inlineIndex]);
@@ -172,10 +172,10 @@ test.describe('Validators - Feature Tests', () => {
 		test('should show delete confirmation when clicking delete', async () => {
 			// Get all validators and find a custom one
 			const names = await validatorsPage.getVisibleValidatorNames();
-			const types = await validatorsPage.getVisibleTypes();
+			const categories = await validatorsPage.getVisibleCategories();
 
 			// Find index of a custom validator
-			const customIndex = types.findIndex(t => t === 'custom');
+			const customIndex = categories.findIndex(c => c === 'custom');
 
 			if (customIndex >= 0 && names[customIndex]) {
 				await validatorsPage.clickRow(names[customIndex]);
@@ -192,10 +192,10 @@ test.describe('Validators - Feature Tests', () => {
 		test('should cancel delete when clicking cancel', async () => {
 			// Get all validators and find a custom one
 			const names = await validatorsPage.getVisibleValidatorNames();
-			const types = await validatorsPage.getVisibleTypes();
+			const categories = await validatorsPage.getVisibleCategories();
 
 			// Find index of a custom validator
-			const customIndex = types.findIndex(t => t === 'custom');
+			const customIndex = categories.findIndex(c => c === 'custom');
 
 			if (customIndex >= 0 && names[customIndex]) {
 				await validatorsPage.clickRow(names[customIndex]);
@@ -390,7 +390,7 @@ test.describe('Validators - Feature Tests', () => {
 			await expect(validatorsPage.filterPanel).toBeVisible();
 		});
 
-		test('should filter by type (inline)', async () => {
+		test('should filter by category (inline)', async () => {
 			const initialCount = await validatorsPage.getRowCount();
 
 			await validatorsPage.openFilters();
@@ -403,13 +403,13 @@ test.describe('Validators - Feature Tests', () => {
 			expect(filteredCount).toBeLessThanOrEqual(initialCount);
 
 			// Verify all visible validators are inline
-			const types = await validatorsPage.getVisibleTypes();
-			for (const type of types) {
-				expect(type).toBe('inline');
+			const categories = await validatorsPage.getVisibleCategories();
+			for (const category of categories) {
+				expect(category).toBe('inline');
 			}
 		});
 
-		test('should filter by type (custom)', async () => {
+		test('should filter by category (custom)', async () => {
 			await validatorsPage.openFilters();
 			await validatorsPage.toggleFilterCheckbox('Custom');
 
@@ -417,9 +417,9 @@ test.describe('Validators - Feature Tests', () => {
 			await validatorsPage.page.waitForTimeout(300);
 
 			// Verify all visible validators are custom
-			const types = await validatorsPage.getVisibleTypes();
-			for (const type of types) {
-				expect(type).toBe('custom');
+			const categories = await validatorsPage.getVisibleCategories();
+			for (const category of categories) {
+				expect(category).toBe('custom');
 			}
 		});
 

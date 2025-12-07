@@ -149,9 +149,9 @@ export const initialFields: Field[] = [
 
 export interface ValidatorBase {
 	name: string;
-	category: 'string' | 'numeric' | 'collection';
+	type: 'string' | 'numeric' | 'collection';
 	description: string;
-	type: 'inline' | 'custom';
+	category: 'inline' | 'custom';
 	parameterType: string;
 	exampleUsage: string;
 	pydanticDocsUrl: string;
@@ -160,99 +160,99 @@ export interface ValidatorBase {
 export const initialInlineValidators: ValidatorBase[] = [
 	{
 		name: 'min_length',
-		category: 'string',
+		type: 'string',
 		description: 'Validates minimum string length. This validator ensures that string fields meet a minimum character count requirement.',
-		type: 'inline',
+		category: 'inline',
 		parameterType: 'Integer',
 		exampleUsage: 'Field(..., min_length=3)',
 		pydanticDocsUrl: 'https://docs.pydantic.dev/latest/api/fields/#pydantic.fields.Field'
 	},
 	{
 		name: 'max_length',
-		category: 'string',
+		type: 'string',
 		description: 'Validates maximum string length. Prevents string fields from exceeding a specified character limit.',
-		type: 'inline',
+		category: 'inline',
 		parameterType: 'Integer',
 		exampleUsage: 'Field(..., max_length=100)',
 		pydanticDocsUrl: 'https://docs.pydantic.dev/latest/api/fields/#pydantic.fields.Field'
 	},
 	{
 		name: 'regex',
-		category: 'string',
+		type: 'string',
 		description: 'Validates against regex pattern. Ensures string values match a specific regular expression pattern.',
-		type: 'inline',
+		category: 'inline',
 		parameterType: 'String (regex pattern)',
 		exampleUsage: 'Field(..., pattern=r"^[A-Za-z0-9]+$")',
 		pydanticDocsUrl: 'https://docs.pydantic.dev/latest/api/fields/#pydantic.fields.Field'
 	},
 	{
 		name: 'gt',
-		category: 'numeric',
+		type: 'numeric',
 		description: 'Greater than validation. Ensures numeric values are strictly greater than a specified threshold.',
-		type: 'inline',
+		category: 'inline',
 		parameterType: 'Number',
 		exampleUsage: 'Field(..., gt=0)',
 		pydanticDocsUrl: 'https://docs.pydantic.dev/latest/api/fields/#pydantic.fields.Field'
 	},
 	{
 		name: 'ge',
-		category: 'numeric',
+		type: 'numeric',
 		description: 'Greater than or equal validation. Ensures numeric values are greater than or equal to a specified minimum.',
-		type: 'inline',
+		category: 'inline',
 		parameterType: 'Number',
 		exampleUsage: 'Field(..., ge=0)',
 		pydanticDocsUrl: 'https://docs.pydantic.dev/latest/api/fields/#pydantic.fields.Field'
 	},
 	{
 		name: 'lt',
-		category: 'numeric',
+		type: 'numeric',
 		description: 'Less than validation. Ensures numeric values are strictly less than a specified maximum.',
-		type: 'inline',
+		category: 'inline',
 		parameterType: 'Number',
 		exampleUsage: 'Field(..., lt=100)',
 		pydanticDocsUrl: 'https://docs.pydantic.dev/latest/api/fields/#pydantic.fields.Field'
 	},
 	{
 		name: 'le',
-		category: 'numeric',
+		type: 'numeric',
 		description: 'Less than or equal validation. Ensures numeric values are less than or equal to a specified maximum.',
-		type: 'inline',
+		category: 'inline',
 		parameterType: 'Number',
 		exampleUsage: 'Field(..., le=100)',
 		pydanticDocsUrl: 'https://docs.pydantic.dev/latest/api/fields/#pydantic.fields.Field'
 	},
 	{
 		name: 'multiple_of',
-		category: 'numeric',
+		type: 'numeric',
 		description: 'Multiple of validation. Ensures numeric values are multiples of a specified number.',
-		type: 'inline',
+		category: 'inline',
 		parameterType: 'Number',
 		exampleUsage: 'Field(..., multiple_of=5)',
 		pydanticDocsUrl: 'https://docs.pydantic.dev/latest/api/fields/#pydantic.fields.Field'
 	},
 	{
 		name: 'min_items',
-		category: 'collection',
+		type: 'collection',
 		description: 'Minimum items in collection. Ensures lists or arrays contain at least a specified number of items.',
-		type: 'inline',
+		category: 'inline',
 		parameterType: 'Integer',
 		exampleUsage: 'Field(..., min_length=1)',
 		pydanticDocsUrl: 'https://docs.pydantic.dev/latest/api/fields/#pydantic.fields.Field'
 	},
 	{
 		name: 'max_items',
-		category: 'collection',
+		type: 'collection',
 		description: 'Maximum items in collection. Limits the number of items allowed in lists or arrays.',
-		type: 'inline',
+		category: 'inline',
 		parameterType: 'Integer',
 		exampleUsage: 'Field(..., max_length=10)',
 		pydanticDocsUrl: 'https://docs.pydantic.dev/latest/api/fields/#pydantic.fields.Field'
 	},
 	{
 		name: 'unique_items',
-		category: 'collection',
+		type: 'collection',
 		description: 'Ensures unique items in collection. Validates that all items in a list or array are distinct.',
-		type: 'inline',
+		category: 'inline',
 		parameterType: 'Boolean',
 		exampleUsage: 'Field(..., unique_items=True)',
 		pydanticDocsUrl: 'https://docs.pydantic.dev/latest/api/fields/#pydantic.fields.Field'
@@ -262,27 +262,27 @@ export const initialInlineValidators: ValidatorBase[] = [
 export const initialCustomValidators: ValidatorBase[] = [
 	{
 		name: 'email_format',
-		category: 'string',
+		type: 'string',
 		description: 'Validates email address format. Custom validator that ensures email addresses are properly formatted and valid.',
-		type: 'custom',
+		category: 'custom',
 		parameterType: 'String',
 		exampleUsage: '@field_validator("email")\ndef validate_email(cls, v):\n    if not re.match(r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$", v):\n        raise ValueError("Invalid email format")\n    return v',
 		pydanticDocsUrl: 'https://docs.pydantic.dev/latest/concepts/validators/'
 	},
 	{
 		name: 'phone_number',
-		category: 'string',
+		type: 'string',
 		description: 'Validates phone number format. Custom validator that ensures phone numbers match standard international formats.',
-		type: 'custom',
+		category: 'custom',
 		parameterType: 'String',
 		exampleUsage: '@field_validator("phone")\ndef validate_phone(cls, v):\n    if not re.match(r"^\\+?[1-9]\\d{1,14}$", v):\n        raise ValueError("Invalid phone number")\n    return v',
 		pydanticDocsUrl: 'https://docs.pydantic.dev/latest/concepts/validators/'
 	},
 	{
 		name: 'url_format',
-		category: 'string',
+		type: 'string',
 		description: 'Validates URL format. Custom validator that ensures URLs are properly formatted and valid.',
-		type: 'custom',
+		category: 'custom',
 		parameterType: 'String',
 		exampleUsage: '@field_validator("website")\ndef validate_url(cls, v):\n    if not v.startswith(("http://", "https://")):\n        raise ValueError("Invalid URL format")\n    return v',
 		pydanticDocsUrl: 'https://docs.pydantic.dev/latest/concepts/validators/'

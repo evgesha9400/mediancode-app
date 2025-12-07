@@ -309,7 +309,7 @@ export class ValidatorsPage {
 	}
 
 	/**
-	 * Get validator types visible in the table
+	 * Get validator types visible in the table (column 1: string, numeric, collection)
 	 */
 	async getVisibleTypes(): Promise<string[]> {
 		const types: string[] = [];
@@ -324,7 +324,7 @@ export class ValidatorsPage {
 	}
 
 	/**
-	 * Get validator categories visible in the table
+	 * Get validator categories visible in the table (column 2: inline, custom)
 	 */
 	async getVisibleCategories(): Promise<string[]> {
 		const categories: string[] = [];

@@ -53,17 +53,17 @@ export function getValidatorByName(name: string): Validator | undefined {
 }
 
 /**
- * Get validators by category
+ * Get validators by type
  */
-export function getValidatorsByCategory(
-	category: 'string' | 'numeric' | 'collection'
+export function getValidatorsByType(
+	type: 'string' | 'numeric' | 'collection'
 ): Validator[] {
-	return mockValidators.filter((validator) => validator.category === category);
+	return mockValidators.filter((validator) => validator.type === type);
 }
 
 /**
- * Get validators by type
+ * Get validators by category
  */
-export function getValidatorsByType(type: 'inline' | 'custom'): Validator[] {
-	return mockValidators.filter((validator) => validator.type === type);
+export function getValidatorsByCategory(category: 'inline' | 'custom'): Validator[] {
+	return mockValidators.filter((validator) => validator.category === category);
 }

@@ -113,7 +113,7 @@ export const handlers = [
 			return new HttpResponse(null, { status: 404 });
 		}
 		// Only custom validators can be deleted
-		if (validator.type !== 'custom') {
+		if (validator.category !== 'custom') {
 			return new HttpResponse(
 				JSON.stringify({ error: 'Cannot delete inline validators' }),
 				{ status: 400 }

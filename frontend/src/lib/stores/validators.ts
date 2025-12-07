@@ -69,24 +69,24 @@ export function searchValidators(validators: Validator[], query: string): Valida
 	return validators.filter(validator =>
 		validator.name.toLowerCase().includes(lowerQuery) ||
 		validator.description.toLowerCase().includes(lowerQuery) ||
-		validator.category.toLowerCase().includes(lowerQuery)
+		validator.type.toLowerCase().includes(lowerQuery)
 	);
 }
 
 export function getValidatorsByFieldType(fieldType: PrimitiveTypeName): Validator[] {
 	const validators = get(validatorsStore);
 
-	// Get compatible validator categories from the centralized types store
-	const compatibleCategories = getValidatorCategoriesForType(fieldType);
+	// Get compatible validator types from the centralized types store
+	const compatibleTypes = getValidatorCategoriesForType(fieldType);
 
-	// If no compatible categories, return empty array
-	if (compatibleCategories.length === 0) {
+	// If no compatible types, return empty array
+	if (compatibleTypes.length === 0) {
 		return [];
 	}
 
-	// Filter validators by compatible categories
+	// Filter validators by compatible types
 	return validators.filter(validator =>
-		compatibleCategories.includes(validator.category)
+		compatibleTypes.includes(validator.type)
 	);
 }
 
