@@ -10,7 +10,8 @@
     ParameterEditor,
     QueryParametersEditor,
     RequestBodyEditor,
-    ResponseBodyEditor
+    ResponseBodyEditor,
+    NamespaceSelector
   } from '$lib/components';
   import { createApiGeneratorState } from '$lib/stores/apiGeneratorState.svelte';
 
@@ -27,6 +28,7 @@
         <p class="text-sm text-mono-500 mt-1">Design and configure OpenAPI endpoints</p>
       </div>
       <div class="flex items-center space-x-3">
+        <NamespaceSelector />
         <button
           onclick={state.handleGenerateCode}
           class="px-4 py-2 bg-mono-900 text-white rounded-md flex items-center space-x-2 hover:bg-mono-800"

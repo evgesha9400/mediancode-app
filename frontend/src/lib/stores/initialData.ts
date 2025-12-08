@@ -14,7 +14,30 @@
  */
 
 import type { PrimitiveTypeName } from './types';
-import type { ObjectDefinition } from '$lib/types';
+import type { ObjectDefinition, Namespace } from '$lib/types';
+
+// ============================================================================
+// Namespace Data
+// ============================================================================
+
+/** Global namespace ID constant - used across all seed data */
+export const GLOBAL_NAMESPACE_ID = 'namespace-global';
+
+export const initialNamespaces: Namespace[] = [
+	{
+		id: GLOBAL_NAMESPACE_ID,
+		name: 'global',
+		description: 'Immutable global templates and examples',
+		locked: true
+	}
+];
+
+/**
+ * Create a deep clone of namespaces data for test isolation
+ */
+export function cloneNamespaces(namespaces: Namespace[] = initialNamespaces): Namespace[] {
+	return namespaces.map(ns => ({ ...ns }));
+}
 
 // ============================================================================
 // Field Data
@@ -27,6 +50,7 @@ export interface FieldValidator {
 
 export interface Field {
 	id: string;
+	namespaceId: string;
 	name: string;
 	type: PrimitiveTypeName;
 	description?: string;
@@ -38,6 +62,7 @@ export interface Field {
 export const initialFields: Field[] = [
 	{
 		id: 'field-1',
+		namespaceId: GLOBAL_NAMESPACE_ID,
 		name: 'email',
 		type: 'str',
 		description: 'User email address',
@@ -50,6 +75,7 @@ export const initialFields: Field[] = [
 	},
 	{
 		id: 'field-2',
+		namespaceId: GLOBAL_NAMESPACE_ID,
 		name: 'username',
 		type: 'str',
 		description: 'Unique username for the user account',
@@ -62,6 +88,7 @@ export const initialFields: Field[] = [
 	},
 	{
 		id: 'field-3',
+		namespaceId: GLOBAL_NAMESPACE_ID,
 		name: 'password',
 		type: 'str',
 		description: 'Encrypted user password',
@@ -74,6 +101,7 @@ export const initialFields: Field[] = [
 	},
 	{
 		id: 'field-4',
+		namespaceId: GLOBAL_NAMESPACE_ID,
 		name: 'user_id',
 		type: 'uuid',
 		description: 'Unique identifier for user',
@@ -83,6 +111,7 @@ export const initialFields: Field[] = [
 	},
 	{
 		id: 'field-5',
+		namespaceId: GLOBAL_NAMESPACE_ID,
 		name: 'created_at',
 		type: 'datetime',
 		description: 'Timestamp when the record was created',
@@ -92,6 +121,7 @@ export const initialFields: Field[] = [
 	},
 	{
 		id: 'field-6',
+		namespaceId: GLOBAL_NAMESPACE_ID,
 		name: 'updated_at',
 		type: 'datetime',
 		description: 'Timestamp when the record was last updated',
@@ -101,6 +131,7 @@ export const initialFields: Field[] = [
 	},
 	{
 		id: 'field-7',
+		namespaceId: GLOBAL_NAMESPACE_ID,
 		name: 'price',
 		type: 'float',
 		description: 'Product or service price',
@@ -110,6 +141,7 @@ export const initialFields: Field[] = [
 	},
 	{
 		id: 'field-8',
+		namespaceId: GLOBAL_NAMESPACE_ID,
 		name: 'status',
 		type: 'str',
 		description: 'Current status of the entity',
@@ -119,6 +151,7 @@ export const initialFields: Field[] = [
 	},
 	{
 		id: 'field-9',
+		namespaceId: GLOBAL_NAMESPACE_ID,
 		name: 'website',
 		type: 'str',
 		description: 'Company website URL',
@@ -132,6 +165,7 @@ export const initialFields: Field[] = [
 	},
 	{
 		id: 'field-10',
+		namespaceId: GLOBAL_NAMESPACE_ID,
 		name: 'phone',
 		type: 'str',
 		description: 'Contact phone number',
@@ -149,6 +183,7 @@ export const initialFields: Field[] = [
 
 export interface ValidatorBase {
 	name: string;
+	namespaceId: string;
 	type: 'string' | 'numeric' | 'collection';
 	description: string;
 	category: 'inline' | 'custom';
@@ -160,6 +195,7 @@ export interface ValidatorBase {
 export const initialInlineValidators: ValidatorBase[] = [
 	{
 		name: 'min_length',
+		namespaceId: GLOBAL_NAMESPACE_ID,
 		type: 'string',
 		description: 'Validates minimum string length. This validator ensures that string fields meet a minimum character count requirement.',
 		category: 'inline',
@@ -169,6 +205,7 @@ export const initialInlineValidators: ValidatorBase[] = [
 	},
 	{
 		name: 'max_length',
+		namespaceId: GLOBAL_NAMESPACE_ID,
 		type: 'string',
 		description: 'Validates maximum string length. Prevents string fields from exceeding a specified character limit.',
 		category: 'inline',
@@ -178,6 +215,7 @@ export const initialInlineValidators: ValidatorBase[] = [
 	},
 	{
 		name: 'regex',
+		namespaceId: GLOBAL_NAMESPACE_ID,
 		type: 'string',
 		description: 'Validates against regex pattern. Ensures string values match a specific regular expression pattern.',
 		category: 'inline',
@@ -187,6 +225,7 @@ export const initialInlineValidators: ValidatorBase[] = [
 	},
 	{
 		name: 'gt',
+		namespaceId: GLOBAL_NAMESPACE_ID,
 		type: 'numeric',
 		description: 'Greater than validation. Ensures numeric values are strictly greater than a specified threshold.',
 		category: 'inline',
@@ -196,6 +235,7 @@ export const initialInlineValidators: ValidatorBase[] = [
 	},
 	{
 		name: 'ge',
+		namespaceId: GLOBAL_NAMESPACE_ID,
 		type: 'numeric',
 		description: 'Greater than or equal validation. Ensures numeric values are greater than or equal to a specified minimum.',
 		category: 'inline',
@@ -205,6 +245,7 @@ export const initialInlineValidators: ValidatorBase[] = [
 	},
 	{
 		name: 'lt',
+		namespaceId: GLOBAL_NAMESPACE_ID,
 		type: 'numeric',
 		description: 'Less than validation. Ensures numeric values are strictly less than a specified maximum.',
 		category: 'inline',
@@ -214,6 +255,7 @@ export const initialInlineValidators: ValidatorBase[] = [
 	},
 	{
 		name: 'le',
+		namespaceId: GLOBAL_NAMESPACE_ID,
 		type: 'numeric',
 		description: 'Less than or equal validation. Ensures numeric values are less than or equal to a specified maximum.',
 		category: 'inline',
@@ -223,6 +265,7 @@ export const initialInlineValidators: ValidatorBase[] = [
 	},
 	{
 		name: 'multiple_of',
+		namespaceId: GLOBAL_NAMESPACE_ID,
 		type: 'numeric',
 		description: 'Multiple of validation. Ensures numeric values are multiples of a specified number.',
 		category: 'inline',
@@ -232,6 +275,7 @@ export const initialInlineValidators: ValidatorBase[] = [
 	},
 	{
 		name: 'min_items',
+		namespaceId: GLOBAL_NAMESPACE_ID,
 		type: 'collection',
 		description: 'Minimum items in collection. Ensures lists or arrays contain at least a specified number of items.',
 		category: 'inline',
@@ -241,6 +285,7 @@ export const initialInlineValidators: ValidatorBase[] = [
 	},
 	{
 		name: 'max_items',
+		namespaceId: GLOBAL_NAMESPACE_ID,
 		type: 'collection',
 		description: 'Maximum items in collection. Limits the number of items allowed in lists or arrays.',
 		category: 'inline',
@@ -250,6 +295,7 @@ export const initialInlineValidators: ValidatorBase[] = [
 	},
 	{
 		name: 'unique_items',
+		namespaceId: GLOBAL_NAMESPACE_ID,
 		type: 'collection',
 		description: 'Ensures unique items in collection. Validates that all items in a list or array are distinct.',
 		category: 'inline',
@@ -262,6 +308,7 @@ export const initialInlineValidators: ValidatorBase[] = [
 export const initialCustomValidators: ValidatorBase[] = [
 	{
 		name: 'email_format',
+		namespaceId: GLOBAL_NAMESPACE_ID,
 		type: 'string',
 		description: 'Validates email address format. Custom validator that ensures email addresses are properly formatted and valid.',
 		category: 'custom',
@@ -271,6 +318,7 @@ export const initialCustomValidators: ValidatorBase[] = [
 	},
 	{
 		name: 'phone_number',
+		namespaceId: GLOBAL_NAMESPACE_ID,
 		type: 'string',
 		description: 'Validates phone number format. Custom validator that ensures phone numbers match standard international formats.',
 		category: 'custom',
@@ -280,6 +328,7 @@ export const initialCustomValidators: ValidatorBase[] = [
 	},
 	{
 		name: 'url_format',
+		namespaceId: GLOBAL_NAMESPACE_ID,
 		type: 'string',
 		description: 'Validates URL format. Custom validator that ensures URLs are properly formatted and valid.',
 		category: 'custom',
@@ -320,6 +369,7 @@ export function cloneValidatorBases(validators: ValidatorBase[]): ValidatorBase[
 export const initialObjects: ObjectDefinition[] = [
 	{
 		id: 'object-1',
+		namespaceId: GLOBAL_NAMESPACE_ID,
 		name: 'User',
 		description: 'User account information',
 		fields: [
@@ -334,6 +384,7 @@ export const initialObjects: ObjectDefinition[] = [
 	},
 	{
 		id: 'object-2',
+		namespaceId: GLOBAL_NAMESPACE_ID,
 		name: 'Product',
 		description: 'Product catalog item',
 		fields: [
@@ -346,6 +397,7 @@ export const initialObjects: ObjectDefinition[] = [
 	},
 	{
 		id: 'object-3',
+		namespaceId: GLOBAL_NAMESPACE_ID,
 		name: 'Order',
 		description: 'Customer order details',
 		fields: [
@@ -359,6 +411,7 @@ export const initialObjects: ObjectDefinition[] = [
 	},
 	{
 		id: 'object-4',
+		namespaceId: GLOBAL_NAMESPACE_ID,
 		name: 'Customer',
 		description: 'Customer profile information',
 		fields: [
@@ -370,6 +423,7 @@ export const initialObjects: ObjectDefinition[] = [
 	},
 	{
 		id: 'object-5',
+		namespaceId: GLOBAL_NAMESPACE_ID,
 		name: 'Payment',
 		description: 'Payment transaction record',
 		fields: [
@@ -381,6 +435,7 @@ export const initialObjects: ObjectDefinition[] = [
 	},
 	{
 		id: 'object-6',
+		namespaceId: GLOBAL_NAMESPACE_ID,
 		name: 'Address',
 		description: 'Physical address information',
 		fields: [
@@ -391,6 +446,7 @@ export const initialObjects: ObjectDefinition[] = [
 	},
 	{
 		id: 'object-7',
+		namespaceId: GLOBAL_NAMESPACE_ID,
 		name: 'Company',
 		description: 'Company profile',
 		fields: [
@@ -403,6 +459,7 @@ export const initialObjects: ObjectDefinition[] = [
 	},
 	{
 		id: 'object-8',
+		namespaceId: GLOBAL_NAMESPACE_ID,
 		name: 'Invoice',
 		description: 'Billing invoice',
 		fields: [

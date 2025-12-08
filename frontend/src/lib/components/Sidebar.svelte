@@ -30,6 +30,10 @@
     { href: '/api-generator', label: 'API Designer', icon: 'fa-code' }
   ];
 
+  const configItems: NavItem[] = [
+    { href: '/namespaces', label: 'Namespaces', icon: 'fa-layer-group' }
+  ];
+
   function isActive(href: string): boolean {
     return activeRoute === href;
   }
@@ -82,6 +86,21 @@
               <span>{item.label}</span>
             </a>
           {/if}
+        </li>
+      {/each}
+    </ul>
+
+    <h2 class="text-xs uppercase tracking-wider text-mono-400 mb-3 mt-6 font-medium">Configuration</h2>
+    <ul class="space-y-1">
+      {#each configItems as item}
+        <li>
+          <a
+            href={item.href}
+            class="flex items-center space-x-2 px-2 py-1.5 rounded-md cursor-pointer {isActive(item.href) ? 'bg-mono-800' : 'hover:bg-mono-800'}"
+          >
+            <i class="fa-solid {item.icon} w-5"></i>
+            <span>{item.label}</span>
+          </a>
         </li>
       {/each}
     </ul>

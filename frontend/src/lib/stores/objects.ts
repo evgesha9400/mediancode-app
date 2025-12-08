@@ -1,7 +1,8 @@
-import { writable } from 'svelte/store';
+import { writable, get } from 'svelte/store';
 import type { DeletionResult, ObjectDefinition } from '$lib/types';
 import { checkObjectDeletion } from '$lib/utils/references';
-import { initialObjects } from './initialData';
+import { initialObjects, GLOBAL_NAMESPACE_ID } from './initialData';
+import { generateId } from '$lib/utils/ids';
 
 // Re-export types from types for backwards compatibility
 export type { ObjectDefinition } from '$lib/types';
@@ -9,19 +10,29 @@ export type { ObjectDefinition } from '$lib/types';
 export const objectsStore = writable<ObjectDefinition[]>(initialObjects);
 
 export function getObjectById(id: string): ObjectDefinition | undefined {
-	let result: ObjectDefinition | undefined;
-	objectsStore.subscribe(objects => {
-		result = objects.find(o => o.id === id);
-	})();
-	return result;
+	return get(objectsStore).find(o => o.id === id);
 }
 
 export function getTotalObjectCount(): number {
-	let count = 0;
-	objectsStore.subscribe(objects => {
-		count = objects.length;
-	})();
-	return count;
+	return get(objectsStore).length;
+}
+
+// ============================================================================
+// Namespace Filtering
+// ============================================================================
+
+/**
+ * Get all objects for a specific namespace
+ */
+export function getObjectsByNamespace(namespaceId: string): ObjectDefinition[] {
+	return get(objectsStore).filter(o => o.namespaceId === namespaceId);
+}
+
+/**
+ * Get the count of objects in a specific namespace
+ */
+export function getObjectCountByNamespace(namespaceId: string): number {
+	return get(objectsStore).filter(o => o.namespaceId === namespaceId).length;
 }
 
 export function searchObjects(objects: ObjectDefinition[], query: string): ObjectDefinition[] {
@@ -75,4 +86,52 @@ export function deleteObject(id: string): DeletionResult {
 	});
 
 	return { success: true };
+}
+
+// ============================================================================
+// Object Lifecycle Operations
+// ============================================================================
+
+/**
+ * Create a new object with uniqueness guard within the namespace
+ *
+ * @param name - The name for the new object
+ * @param namespaceId - The namespace to create the object in (defaults to global)
+ * @param options - Optional object properties (description, fields, etc.)
+ * @returns The created object, or undefined if an object with that name already exists in the namespace
+ */
+export function createObject(
+	name: string,
+	namespaceId: string = GLOBAL_NAMESPACE_ID,
+	options: Partial<Omit<ObjectDefinition, 'id' | 'name' | 'namespaceId'>> = {}
+): ObjectDefinition | undefined {
+	const trimmedName = name.trim();
+
+	// Check for existing object with same name in the same namespace (case-insensitive)
+	const existingObject = get(objectsStore).find(
+		o => o.name.toLowerCase() === trimmedName.toLowerCase() && o.namespaceId === namespaceId
+	);
+
+	if (existingObject) {
+		return undefined;
+	}
+
+	const newObject: ObjectDefinition = {
+		id: generateId('object'),
+		namespaceId,
+		name: trimmedName,
+		description: options.description ?? '',
+		fields: options.fields ?? [],
+		usedInApis: options.usedInApis ?? []
+	};
+
+	objectsStore.update(objects => [...objects, newObject]);
+	return newObject;
+}
+
+/**
+ * Add a pre-constructed object (legacy support)
+ */
+export function addObject(object: ObjectDefinition): void {
+	objectsStore.update(objects => [...objects, object]);
 }

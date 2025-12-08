@@ -5,7 +5,8 @@ import { getValidatorCategoriesForType } from './types';
 import type { PrimitiveTypeName } from './types';
 import { checkValidatorDeletion } from '$lib/utils/references';
 import type { DeletionResult } from '$lib/types';
-import { initialInlineValidators, initialCustomValidators, type ValidatorBase } from './initialData';
+import { initialInlineValidators, initialCustomValidators, GLOBAL_NAMESPACE_ID, type ValidatorBase } from './initialData';
+import { generateId } from '$lib/utils/ids';
 
 // Re-export types from initialData for backwards compatibility
 export type { ValidatorBase } from './initialData';
@@ -57,6 +58,24 @@ export const validatorsStore = derived(
 
 export function getTotalValidatorCount(): number {
 	return get(validatorsBaseStore).length;
+}
+
+// ============================================================================
+// Namespace Filtering
+// ============================================================================
+
+/**
+ * Get all validators for a specific namespace
+ */
+export function getValidatorsByNamespace(namespaceId: string): Validator[] {
+	return get(validatorsStore).filter(v => v.namespaceId === namespaceId);
+}
+
+/**
+ * Get the count of validators in a specific namespace
+ */
+export function getValidatorCountByNamespace(namespaceId: string): number {
+	return get(validatorsStore).filter(v => v.namespaceId === namespaceId).length;
 }
 
 export function searchValidators(validators: Validator[], query: string): Validator[] {
@@ -135,4 +154,56 @@ export function deleteValidator(validatorName: string): DeletionResult {
 	});
 
 	return { success: true };
+}
+
+// ============================================================================
+// Validator Lifecycle Operations
+// ============================================================================
+
+/**
+ * Create a new custom validator with uniqueness guard within the namespace
+ *
+ * @param name - The name for the new validator
+ * @param type - The validator type (string, numeric, or collection)
+ * @param description - Description of the validator
+ * @param namespaceId - The namespace to create the validator in (defaults to global)
+ * @returns The created validator, or undefined if a validator with that name already exists in the namespace
+ */
+export function createValidator(
+	name: string,
+	type: 'string' | 'numeric' | 'collection',
+	description: string,
+	namespaceId: string = GLOBAL_NAMESPACE_ID
+): ValidatorBase | undefined {
+	const trimmedName = name.trim();
+
+	// Check for existing validator with same name in the same namespace (case-insensitive)
+	const existingValidator = get(validatorsStore).find(
+		v => v.name.toLowerCase() === trimmedName.toLowerCase() && v.namespaceId === namespaceId
+	);
+
+	if (existingValidator) {
+		return undefined;
+	}
+
+	const newValidator: ValidatorBase = {
+		name: trimmedName,
+		namespaceId,
+		type,
+		description,
+		category: 'custom',
+		parameterType: '',
+		exampleUsage: '',
+		pydanticDocsUrl: ''
+	};
+
+	customValidatorsStore.update(validators => [...validators, newValidator]);
+	return newValidator;
+}
+
+/**
+ * Add a pre-constructed custom validator (legacy support)
+ */
+export function addValidator(validator: ValidatorBase): void {
+	customValidatorsStore.update(validators => [...validators, validator]);
 }

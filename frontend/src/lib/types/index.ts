@@ -74,6 +74,14 @@ export interface Toast {
   duration: number;
 }
 
+// Namespace types
+export interface Namespace {
+  id: string;
+  name: string;
+  description?: string;
+  locked: boolean; // true for immutable global namespace
+}
+
 // API Generator types
 export type HttpMethod = 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
 
@@ -84,6 +92,8 @@ export type ResponseShape = 'object' | 'list';
 export type ResponseItemShape = 'object'; // Only objects allowed in lists
 
 export interface ApiMetadata {
+  id: string;
+  namespaceId: string;
   title: string;
   version: string;
   description: string;
@@ -93,6 +103,7 @@ export interface ApiMetadata {
 
 export interface EndpointTag {
   id: string;
+  namespaceId: string;
   name: string;
   description: string;
 }
@@ -107,6 +118,7 @@ export interface EndpointParameter {
 
 export interface ApiEndpoint {
   id: string;
+  namespaceId: string;
   method: HttpMethod;
   path: string;
   description: string;
@@ -129,6 +141,7 @@ export interface ObjectFieldReference {
 
 export interface ObjectDefinition {
   id: string;
+  namespaceId: string;
   name: string;
   description?: string;
   fields: ObjectFieldReference[];

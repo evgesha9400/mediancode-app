@@ -28,6 +28,7 @@ import {
 	reconcilePathParams,
 	normalizeEndpoint
 } from './apis';
+import { activeNamespaceId } from './namespaces';
 import { getFieldById } from './fields';
 import { showToast } from './toasts';
 import { deepClone, generateParamId } from '$lib/utils/ids';
@@ -127,13 +128,19 @@ export function createApiGeneratorState(): ApiGeneratorState {
 	// Subscribe to stores - these will update reactively
 	// We use direct store subscriptions instead of $effect for testability
 	let metadata = $state(get(apiMetadataStore));
-	let tags = $state(get(tagsStore));
-	let endpoints = $state(get(endpointsStore));
+	let allTags = $state(get(tagsStore));
+	let allEndpoints = $state(get(endpointsStore));
+	let currentNamespaceId = $state(get(activeNamespaceId));
+
+	// Derived filtered state based on active namespace
+	let tags = $derived(allTags.filter(t => t.namespaceId === currentNamespaceId));
+	let endpoints = $derived(allEndpoints.filter(e => e.namespaceId === currentNamespaceId));
 
 	// Subscribe to store updates and update local state
 	apiMetadataStore.subscribe(value => metadata = value);
-	tagsStore.subscribe(value => tags = value);
-	endpointsStore.subscribe(value => endpoints = value);
+	tagsStore.subscribe(value => allTags = value);
+	endpointsStore.subscribe(value => allEndpoints = value);
+	activeNamespaceId.subscribe(value => currentNamespaceId = value);
 
 	// Drawer state
 	let drawerOpen = $state(false);

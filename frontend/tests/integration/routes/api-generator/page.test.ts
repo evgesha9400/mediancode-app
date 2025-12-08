@@ -19,32 +19,28 @@ import {
 	deleteTag,
 	getTotalEndpointCount,
 	getTotalTagCount,
-	getEndpointCountByTag
+	getEndpointCountByTag,
+	initialApiMetadata
 } from '$lib/stores/apis';
 import type { EndpointTag } from '$lib/types';
-import { createMockEndpoint } from '../../../shared/testUtils';
+import { createMockEndpoint, createMockTag } from '../../../shared/testUtils';
+import { GLOBAL_NAMESPACE_ID } from '$lib/stores/initialData';
 
 describe('API Generator Page - Store Integration', () => {
 	// Reset stores before each test
 	beforeEach(() => {
 		tagsStore.set([]);
 		endpointsStore.set([]);
-		apiMetadataStore.set({
-			title: '',
-			version: '1.0.0',
-			description: '',
-			baseUrl: '/api/v1',
-			serverUrl: ''
-		});
+		apiMetadataStore.set(initialApiMetadata);
 	});
 
 	describe('Tag Management', () => {
 		it('adds tags to store correctly', () => {
-			const tag: EndpointTag = {
+			const tag = createMockTag({
 				id: 'tag-1',
 				name: 'Users',
 				description: 'User-related endpoints'
-			};
+			});
 
 			addTag(tag);
 
@@ -54,11 +50,11 @@ describe('API Generator Page - Store Integration', () => {
 		});
 
 		it('deletes tags from store correctly', () => {
-			const tag: EndpointTag = {
+			const tag = createMockTag({
 				id: 'tag-1',
 				name: 'Users',
 				description: 'User-related endpoints'
-			};
+			});
 
 			addTag(tag);
 			expect(get(tagsStore)).toHaveLength(1);
@@ -70,19 +66,19 @@ describe('API Generator Page - Store Integration', () => {
 		it('tracks tag count correctly', () => {
 			expect(getTotalTagCount()).toBe(0);
 
-			addTag({ id: 'tag-1', name: 'Users', description: '' });
+			addTag(createMockTag({ id: 'tag-1', name: 'Users', description: '' }));
 			expect(getTotalTagCount()).toBe(1);
 
-			addTag({ id: 'tag-2', name: 'Posts', description: '' });
+			addTag(createMockTag({ id: 'tag-2', name: 'Posts', description: '' }));
 			expect(getTotalTagCount()).toBe(2);
 		});
 
 		it('counts endpoints using a specific tag', () => {
-			const tag: EndpointTag = {
+			const tag = createMockTag({
 				id: 'tag-1',
 				name: 'Users',
 				description: ''
-			};
+			});
 			addTag(tag);
 
 			addEndpoint(createMockEndpoint({ id: 'endpoint-1', path: '/users', tagId: 'tag-1' }));
@@ -108,11 +104,11 @@ describe('API Generator Page - Store Integration', () => {
 		});
 
 		it('updates endpoint properties including tagId', () => {
-			const tag: EndpointTag = {
+			const tag = createMockTag({
 				id: 'tag-1',
 				name: 'Users',
 				description: ''
-			};
+			});
 			addTag(tag);
 
 			const endpoint = createMockEndpoint({ path: '/users' });
@@ -137,16 +133,16 @@ describe('API Generator Page - Store Integration', () => {
 	describe('Undo Functionality - Tag Synchronization', () => {
 		it('restores original tagId when undoing changes', () => {
 			// Setup: Create a tag and an endpoint with that tag
-			const tag1: EndpointTag = {
+			const tag1 = createMockTag({
 				id: 'tag-1',
 				name: 'Users',
 				description: ''
-			};
-			const tag2: EndpointTag = {
+			});
+			const tag2 = createMockTag({
 				id: 'tag-2',
 				name: 'Posts',
 				description: ''
-			};
+			});
 			addTag(tag1);
 			addTag(tag2);
 
@@ -179,11 +175,11 @@ describe('API Generator Page - Store Integration', () => {
 
 		it('restores tagId to undefined when undoing tag assignment', () => {
 			// Setup: Create endpoint without a tag
-			const tag: EndpointTag = {
+			const tag = createMockTag({
 				id: 'tag-1',
 				name: 'Users',
 				description: ''
-			};
+			});
 			addTag(tag);
 
 			const originalEndpoint = createMockEndpoint({
@@ -214,11 +210,11 @@ describe('API Generator Page - Store Integration', () => {
 
 		it('handles undo after tag deletion', () => {
 			// Setup: Create a tag and endpoint with that tag
-			const tag: EndpointTag = {
+			const tag = createMockTag({
 				id: 'tag-1',
 				name: 'Users',
 				description: ''
-			};
+			});
 			addTag(tag);
 
 			const endpoint = createMockEndpoint({
@@ -254,6 +250,7 @@ describe('API Generator Page - Store Integration', () => {
 
 			const endpoints = get(endpointsStore);
 			expect(endpoints[0]).toHaveProperty('id');
+			expect(endpoints[0]).toHaveProperty('namespaceId');
 			expect(endpoints[0]).toHaveProperty('method');
 			expect(endpoints[0]).toHaveProperty('path');
 			expect(endpoints[0]).toHaveProperty('description');
@@ -266,16 +263,17 @@ describe('API Generator Page - Store Integration', () => {
 		});
 
 		it('tags have required properties', () => {
-			const tag: EndpointTag = {
+			const tag = createMockTag({
 				id: 'tag-1',
 				name: 'Users',
 				description: 'User endpoints'
-			};
+			});
 
 			addTag(tag);
 
 			const tags = get(tagsStore);
 			expect(tags[0]).toHaveProperty('id');
+			expect(tags[0]).toHaveProperty('namespaceId');
 			expect(tags[0]).toHaveProperty('name');
 			expect(tags[0]).toHaveProperty('description');
 		});
@@ -283,11 +281,11 @@ describe('API Generator Page - Store Integration', () => {
 
 	describe('Tag-Endpoint Relationships', () => {
 		it('maintains referential integrity when tag is deleted', () => {
-			const tag: EndpointTag = {
+			const tag = createMockTag({
 				id: 'tag-1',
 				name: 'Users',
 				description: ''
-			};
+			});
 			addTag(tag);
 
 			const endpoint = createMockEndpoint({
@@ -312,11 +310,11 @@ describe('API Generator Page - Store Integration', () => {
 		});
 
 		it('allows multiple endpoints to share the same tag', () => {
-			const tag: EndpointTag = {
+			const tag = createMockTag({
 				id: 'tag-1',
 				name: 'Users',
 				description: ''
-			};
+			});
 			addTag(tag);
 
 			addEndpoint(createMockEndpoint({ id: 'endpoint-1', path: '/users', tagId: 'tag-1' }));

@@ -26,8 +26,9 @@ import {
 	initialApiMetadata
 } from '$lib/stores/apis';
 import { seedIdGenerator } from '$lib/utils/ids';
+import { GLOBAL_NAMESPACE_ID } from '$lib/stores/initialData';
 import type { EndpointTag } from '$lib/types';
-import { createMockEndpoint } from '../../../shared/testUtils';
+import { createMockEndpoint, createMockTag } from '../../../shared/testUtils';
 
 describe('apis store - Metadata Operations', () => {
 	beforeEach(() => {
@@ -54,7 +55,7 @@ describe('apis store - Tag Operations', () => {
 	});
 
 	it('should create a new tag with uniqueness guard', () => {
-		const tag = createTag('Users', 'User management');
+		const tag = createTag('Users', GLOBAL_NAMESPACE_ID, 'User management');
 
 		expect(tag).toBeDefined();
 		expect(tag?.id).toBe('tag-1000000-0');
@@ -348,11 +349,11 @@ describe('apis store - Legacy Functions', () => {
 	});
 
 	it('should support legacy addTag function', () => {
-		const tag: EndpointTag = {
+		const tag = createMockTag({
 			id: 'custom-id',
 			name: 'Custom',
 			description: 'Test'
-		};
+		});
 
 		addTag(tag);
 
@@ -362,11 +363,11 @@ describe('apis store - Legacy Functions', () => {
 	});
 
 	it('should support legacy deleteTag function', () => {
-		const tag: EndpointTag = {
+		const tag = createMockTag({
 			id: 'test-id',
 			name: 'Test',
 			description: ''
-		};
+		});
 
 		addTag(tag);
 		deleteTag(tag.id);

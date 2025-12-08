@@ -1,4 +1,7 @@
 import type { DeletionResult, Reference } from '$lib/types';
+import { get } from 'svelte/store';
+import { fieldsStore } from '$lib/stores/fields';
+import { endpointsStore } from '$lib/stores/apis';
 
 /**
  * Builds a tooltip message for deletion blocking references
@@ -40,30 +43,43 @@ export function buildDeletionTooltip(
 /**
  * Checks if a validator can be deleted safely
  * A validator cannot be deleted if it's currently used in any fields
+ * Only checks references within the same namespace when namespaceId is provided
  *
  * @param validatorName - The name of the validator to check
  * @param fieldsUsingValidator - Array of fields using this validator
+ * @param namespaceId - Optional namespace to filter references by (only checks same-namespace references)
  * @returns DeletionResult indicating whether deletion is safe
  */
 export function checkValidatorDeletion(
   validatorName: string,
-  fieldsUsingValidator: Array<{ name: string; fieldId: string }>
+  fieldsUsingValidator: Array<{ name: string; fieldId: string }>,
+  namespaceId?: string
 ): DeletionResult {
-  // If no fields are using this validator, deletion is safe
-  if (fieldsUsingValidator.length === 0) {
+  // Filter by namespace if provided
+  let filteredFields = fieldsUsingValidator;
+  if (namespaceId) {
+    const allFields = get(fieldsStore);
+    const sameNamespaceFieldIds = new Set(
+      allFields.filter(f => f.namespaceId === namespaceId).map(f => f.id)
+    );
+    filteredFields = fieldsUsingValidator.filter(f => sameNamespaceFieldIds.has(f.fieldId));
+  }
+
+  // If no fields are using this validator (in the same namespace), deletion is safe
+  if (filteredFields.length === 0) {
     return { success: true };
   }
 
   // Build reference list for blocking fields
-  const references: Reference[] = fieldsUsingValidator.map(field => ({
+  const references: Reference[] = filteredFields.map(field => ({
     id: field.fieldId,
     name: field.name,
     type: 'field' as const
   }));
 
   // Generate user-friendly error message
-  const fieldCount = fieldsUsingValidator.length;
-  const fieldNames = fieldsUsingValidator
+  const fieldCount = filteredFields.length;
+  const fieldNames = filteredFields
     .slice(0, 3)
     .map(f => `"${f.name}"`)
     .join(', ');
@@ -83,27 +99,39 @@ export function checkValidatorDeletion(
 /**
  * Checks if a field can be deleted safely
  * A field cannot be deleted if it's currently used in any APIs
+ * Only checks references within the same namespace when namespaceId is provided
  *
  * @param fieldName - The name of the field being deleted
  * @param usedInApis - Array of API IDs where this field is used
+ * @param namespaceId - Optional namespace to filter references by (only checks same-namespace references)
  * @returns DeletionResult indicating whether deletion is safe
  */
-export function checkFieldDeletion(fieldName: string, usedInApis: string[]): DeletionResult {
-  // If field is not used in any APIs, deletion is safe
-  if (usedInApis.length === 0) {
+export function checkFieldDeletion(fieldName: string, usedInApis: string[], namespaceId?: string): DeletionResult {
+  // Filter by namespace if provided
+  let filteredApis = usedInApis;
+  if (namespaceId) {
+    const allEndpoints = get(endpointsStore);
+    const sameNamespaceEndpointIds = new Set(
+      allEndpoints.filter(e => e.namespaceId === namespaceId).map(e => e.id)
+    );
+    filteredApis = usedInApis.filter(apiId => sameNamespaceEndpointIds.has(apiId));
+  }
+
+  // If field is not used in any APIs (in the same namespace), deletion is safe
+  if (filteredApis.length === 0) {
     return { success: true };
   }
 
   // Build reference list for blocking APIs
-  const references: Reference[] = usedInApis.map(apiId => ({
+  const references: Reference[] = filteredApis.map(apiId => ({
     id: apiId,
     name: apiId,
     type: 'api' as const
   }));
 
   // Generate user-friendly error message
-  const apiCount = usedInApis.length;
-  const apiNames = usedInApis
+  const apiCount = filteredApis.length;
+  const apiNames = filteredApis
     .slice(0, 3)
     .map(api => `"${api}"`)
     .join(', ');
@@ -123,27 +151,39 @@ export function checkFieldDeletion(fieldName: string, usedInApis: string[]): Del
 /**
  * Checks if an object can be deleted safely
  * An object cannot be deleted if it's currently used in any APIs
+ * Only checks references within the same namespace when namespaceId is provided
  *
  * @param objectName - The name of the object being deleted
  * @param usedInApis - Array of API IDs where this object is used
+ * @param namespaceId - Optional namespace to filter references by (only checks same-namespace references)
  * @returns DeletionResult indicating whether deletion is safe
  */
-export function checkObjectDeletion(objectName: string, usedInApis: string[]): DeletionResult {
-  // If object is not used in any APIs, deletion is safe
-  if (usedInApis.length === 0) {
+export function checkObjectDeletion(objectName: string, usedInApis: string[], namespaceId?: string): DeletionResult {
+  // Filter by namespace if provided
+  let filteredApis = usedInApis;
+  if (namespaceId) {
+    const allEndpoints = get(endpointsStore);
+    const sameNamespaceEndpointIds = new Set(
+      allEndpoints.filter(e => e.namespaceId === namespaceId).map(e => e.id)
+    );
+    filteredApis = usedInApis.filter(apiId => sameNamespaceEndpointIds.has(apiId));
+  }
+
+  // If object is not used in any APIs (in the same namespace), deletion is safe
+  if (filteredApis.length === 0) {
     return { success: true };
   }
 
   // Build reference list for blocking APIs
-  const references: Reference[] = usedInApis.map(apiId => ({
+  const references: Reference[] = filteredApis.map(apiId => ({
     id: apiId,
     name: apiId,
     type: 'api' as const
   }));
 
   // Generate user-friendly error message
-  const apiCount = usedInApis.length;
-  const apiNames = usedInApis
+  const apiCount = filteredApis.length;
+  const apiNames = filteredApis
     .slice(0, 3)
     .map(api => `"${api}"`)
     .join(', ');

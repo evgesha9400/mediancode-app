@@ -2,6 +2,7 @@
   import { objectsStore, updateObject, deleteObject, searchObjects, type ObjectDefinition } from '$lib/stores/objects';
   import { fieldsStore, getFieldById } from '$lib/stores/fields';
   import { showToast } from '$lib/stores/toasts';
+  import { activeNamespaceId } from '$lib/stores/namespaces';
   import { buildDeletionTooltip } from '$lib/utils/references';
   import {
     DashboardLayout,
@@ -15,7 +16,8 @@
     DrawerContent,
     DrawerFooter,
     Tooltip,
-    FieldSelectorDropdown
+    FieldSelectorDropdown,
+    NamespaceSelector
   } from '$lib/components';
   import { page } from '$app/state';
   import { goto } from '$app/navigation';
@@ -33,9 +35,12 @@
   // Build filter config (empty initially)
   let objectFilterConfig = $derived([]);
 
+  // Filter objects by active namespace
+  let namespacedObjects = $derived($objectsStore.filter(o => o.namespaceId === $activeNamespaceId));
+
   // Create list view state (owns all reactive state)
   const listState = createListViewState<ObjectDefinition, ObjectFilterState>({
-    itemsStore: () => $objectsStore,
+    itemsStore: () => namespacedObjects,
     searchFn: searchObjects,
     filterSections: () => objectFilterConfig,
     numericColumns: new Set(['fieldCount', 'usedInApisCount']),
@@ -170,6 +175,7 @@
 <DashboardLayout>
   <PageHeader title="Objects">
     {#snippet actions()}
+      <NamespaceSelector />
       <button
         type="button"
         disabled

@@ -3,6 +3,7 @@
   import { validatorsStore, getValidatorsByFieldType, type Validator } from '$lib/stores/validators';
   import { getPrimitiveTypes, type PrimitiveTypeName } from '$lib/stores/types';
   import { showToast } from '$lib/stores/toasts';
+  import { activeNamespaceId } from '$lib/stores/namespaces';
   import { buildDeletionTooltip } from '$lib/utils/references';
   import {
     DashboardLayout,
@@ -16,7 +17,8 @@
     DrawerHeader,
     DrawerContent,
     DrawerFooter,
-    Tooltip
+    Tooltip,
+    NamespaceSelector
   } from '$lib/components';
   import type { FilterConfig } from '$lib/types';
   import { page } from '$app/state';
@@ -65,9 +67,12 @@
     ];
   });
 
+  // Filter fields by active namespace
+  let namespacedFields = $derived($fieldsStore.filter(f => f.namespaceId === $activeNamespaceId));
+
   // Create list view state (owns all reactive state)
   const listState = createListViewState<Field, FieldFilterState>({
-    itemsStore: () => $fieldsStore,
+    itemsStore: () => namespacedFields,
     searchFn: searchFields,
     filterSections: () => fieldFilterConfig,
     numericColumns: new Set(['usedInApisCount']),
@@ -242,6 +247,7 @@
 <DashboardLayout>
   <PageHeader title="Fields">
     {#snippet actions()}
+      <NamespaceSelector />
       <button
         type="button"
         disabled

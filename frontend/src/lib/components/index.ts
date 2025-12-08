@@ -19,6 +19,9 @@ export * from './tooltip';
 // Layout components
 export * from './layout';
 
+// Namespace components
+export * from './namespace';
+
 // API Generator components
 export * from './api-generator';
 

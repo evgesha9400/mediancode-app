@@ -7,6 +7,7 @@
 import { waitFor } from '@testing-library/svelte';
 import userEvent from '@testing-library/user-event';
 import type { ApiEndpoint, EndpointTag } from '$lib/types';
+import { GLOBAL_NAMESPACE_ID } from '$lib/stores/initialData';
 
 /**
  * Creates a mock API endpoint with all required fields and sensible defaults.
@@ -18,6 +19,7 @@ import type { ApiEndpoint, EndpointTag } from '$lib/types';
 export function createMockEndpoint(overrides: Partial<ApiEndpoint> = {}): ApiEndpoint {
 	return {
 		id: 'endpoint-1',
+		namespaceId: GLOBAL_NAMESPACE_ID,
 		method: 'GET',
 		path: '/test',
 		description: '',
@@ -41,6 +43,7 @@ export function createMockEndpoint(overrides: Partial<ApiEndpoint> = {}): ApiEnd
 export function createMockTag(overrides: Partial<EndpointTag> = {}): EndpointTag {
 	return {
 		id: 'tag-1',
+		namespaceId: GLOBAL_NAMESPACE_ID,
 		name: 'Test Tag',
 		description: 'Test description',
 		...overrides

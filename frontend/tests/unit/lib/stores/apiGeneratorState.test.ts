@@ -83,19 +83,7 @@ describe('apiGeneratorState - Tag Operations', () => {
 		const state = createApiGeneratorState();
 
 		// Simulate opening an endpoint first
-		const endpoint = {
-			id: 'endpoint-1',
-			method: 'GET' as const,
-			path: '/test',
-			description: '',
-			pathParams: [],
-			queryParamsObjectId: undefined,
-			requestBodyObjectId: undefined,
-			responseBodyObjectId: undefined,
-			useEnvelope: true,
-		responseShape: 'object' as const,
-			expanded: false
-		};
+		const endpoint = createMockEndpoint({ id: 'endpoint-1', path: '/test' });
 		state.editedEndpoint = endpoint;
 		state.tagInputValue = 'Users';
 
@@ -111,19 +99,7 @@ describe('apiGeneratorState - Tag Operations', () => {
 	it('should not create tag if input is empty', () => {
 		const state = createApiGeneratorState();
 
-		state.editedEndpoint = {
-			id: 'endpoint-1',
-			method: 'GET' as const,
-			path: '/test',
-			description: '',
-			pathParams: [],
-			queryParamsObjectId: undefined,
-			requestBodyObjectId: undefined,
-			responseBodyObjectId: undefined,
-			useEnvelope: true,
-		responseShape: 'object' as const,
-			expanded: false
-		};
+		state.editedEndpoint = createMockEndpoint({ id: 'endpoint-1', path: '/test' });
 		state.tagInputValue = '   ';
 
 		state.handleCreateTag();
@@ -137,19 +113,7 @@ describe('apiGeneratorState - Tag Operations', () => {
 		const state = createApiGeneratorState();
 
 		// Create a tag first
-		state.editedEndpoint = {
-			id: 'endpoint-1',
-			method: 'GET' as const,
-			path: '/test',
-			description: '',
-			pathParams: [],
-			queryParamsObjectId: undefined,
-			requestBodyObjectId: undefined,
-			responseBodyObjectId: undefined,
-			useEnvelope: true,
-		responseShape: 'object' as const,
-			expanded: false
-		};
+		state.editedEndpoint = createMockEndpoint({ id: 'endpoint-1', path: '/test' });
 		state.tagInputValue = 'Users';
 		state.handleCreateTag();
 
@@ -167,20 +131,7 @@ describe('apiGeneratorState - Tag Operations', () => {
 	it('should clear tag selection', () => {
 		const state = createApiGeneratorState();
 
-		state.editedEndpoint = {
-			id: 'endpoint-1',
-			method: 'GET' as const,
-			path: '/test',
-			description: '',
-			tagId: 'some-tag',
-			pathParams: [],
-			queryParamsObjectId: undefined,
-			requestBodyObjectId: undefined,
-			responseBodyObjectId: undefined,
-			useEnvelope: true,
-		responseShape: 'object' as const,
-			expanded: false
-		};
+		state.editedEndpoint = createMockEndpoint({ id: 'endpoint-1', path: '/test', tagId: 'some-tag' });
 		state.tagInputValue = 'Users';
 
 		state.handleTagSelect(undefined);
@@ -193,19 +144,7 @@ describe('apiGeneratorState - Tag Operations', () => {
 		const state = createApiGeneratorState();
 
 		// Create a tag
-		state.editedEndpoint = {
-			id: 'endpoint-1',
-			method: 'GET' as const,
-			path: '/test',
-			description: '',
-			pathParams: [],
-			queryParamsObjectId: undefined,
-			requestBodyObjectId: undefined,
-			responseBodyObjectId: undefined,
-			useEnvelope: true,
-		responseShape: 'object' as const,
-			expanded: false
-		};
+		state.editedEndpoint = createMockEndpoint({ id: 'endpoint-1', path: '/test' });
 		state.tagInputValue = 'Users';
 		state.handleCreateTag();
 
@@ -228,19 +167,7 @@ describe('apiGeneratorState - Tag Operations', () => {
 		const state = createApiGeneratorState();
 
 		// Create a tag
-		state.editedEndpoint = {
-			id: 'endpoint-1',
-			method: 'GET' as const,
-			path: '/test',
-			description: '',
-			pathParams: [],
-			queryParamsObjectId: undefined,
-			requestBodyObjectId: undefined,
-			responseBodyObjectId: undefined,
-			useEnvelope: true,
-		responseShape: 'object' as const,
-			expanded: false
-		};
+		state.editedEndpoint = createMockEndpoint({ id: 'endpoint-1', path: '/test' });
 		state.tagInputValue = 'Users';
 		state.handleCreateTag();
 
@@ -388,19 +315,7 @@ describe('apiGeneratorState - Drawer Operations', () => {
 	it('should open endpoint in drawer', () => {
 		const state = createApiGeneratorState();
 
-		const endpoint = {
-			id: 'endpoint-1',
-			method: 'GET' as const,
-			path: '/test',
-			description: '',
-			pathParams: [],
-			queryParamsObjectId: undefined,
-			requestBodyObjectId: undefined,
-			responseBodyObjectId: undefined,
-			useEnvelope: true,
-		responseShape: 'object' as const,
-			expanded: false
-		};
+		const endpoint = createMockEndpoint({ id: 'endpoint-1', path: '/test' });
 
 		state.openEndpoint(endpoint);
 
@@ -413,19 +328,7 @@ describe('apiGeneratorState - Drawer Operations', () => {
 	it('should track changes', () => {
 		const state = createApiGeneratorState();
 
-		const endpoint = {
-			id: 'endpoint-1',
-			method: 'GET' as const,
-			path: '/test',
-			description: '',
-			pathParams: [],
-			queryParamsObjectId: undefined,
-			requestBodyObjectId: undefined,
-			responseBodyObjectId: undefined,
-			useEnvelope: true,
-		responseShape: 'object' as const,
-			expanded: false
-		};
+		const endpoint = createMockEndpoint({ id: 'endpoint-1', path: '/test' });
 
 		state.openEndpoint(endpoint);
 
@@ -480,19 +383,7 @@ describe('apiGeneratorState - Drawer Operations', () => {
 	it('should close drawer', () => {
 		const state = createApiGeneratorState();
 
-		const endpoint = {
-			id: 'endpoint-1',
-			method: 'GET' as const,
-			path: '/test',
-			description: '',
-			pathParams: [],
-			queryParamsObjectId: undefined,
-			requestBodyObjectId: undefined,
-			responseBodyObjectId: undefined,
-			useEnvelope: true,
-		responseShape: 'object' as const,
-			expanded: false
-		};
+		const endpoint = createMockEndpoint({ id: 'endpoint-1', path: '/test' });
 
 		state.openEndpoint(endpoint);
 		expect(state.drawerOpen).toBe(true);
@@ -506,19 +397,7 @@ describe('apiGeneratorState - Drawer Operations', () => {
 	it('should handle cancel', () => {
 		const state = createApiGeneratorState();
 
-		const endpoint = {
-			id: 'endpoint-1',
-			method: 'GET' as const,
-			path: '/test',
-			description: '',
-			pathParams: [],
-			queryParamsObjectId: undefined,
-			requestBodyObjectId: undefined,
-			responseBodyObjectId: undefined,
-			useEnvelope: true,
-		responseShape: 'object' as const,
-			expanded: false
-		};
+		const endpoint = createMockEndpoint({ id: 'endpoint-1', path: '/test' });
 
 		state.openEndpoint(endpoint);
 		state.editedEndpoint!.description = 'Changed';

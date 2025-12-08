@@ -1,6 +1,7 @@
 <script lang="ts">
   import { validatorsStore, deleteValidator, searchValidators, type Validator } from '$lib/stores/validators';
   import { showToast } from '$lib/stores/toasts';
+  import { activeNamespaceId } from '$lib/stores/namespaces';
   import { buildDeletionTooltip } from '$lib/utils/references';
   import {
     DashboardLayout,
@@ -14,7 +15,8 @@
     DrawerHeader,
     DrawerContent,
     DrawerFooter,
-    Tooltip
+    Tooltip,
+    NamespaceSelector
   } from '$lib/components';
   import type { FilterConfig } from '$lib/types';
   import { page } from '$app/state';
@@ -61,9 +63,12 @@
     ];
   });
 
+  // Filter validators by active namespace
+  let namespacedValidators = $derived($validatorsStore.filter(v => v.namespaceId === $activeNamespaceId));
+
   // Create list view state (owns all reactive state)
   const state = createListViewState<Validator, ValidatorFilterState>({
-    itemsStore: () => $validatorsStore,
+    itemsStore: () => namespacedValidators,
     searchFn: searchValidators,
     filterSections: () => filterConfig,
     numericColumns: new Set(['usedInFields']),
@@ -114,6 +119,7 @@
 <DashboardLayout>
   <PageHeader title="Validators">
     {#snippet actions()}
+      <NamespaceSelector />
       <button
         type="button"
         disabled

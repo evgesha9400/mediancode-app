@@ -2,9 +2,12 @@ import { writable, get } from 'svelte/store';
 import type { ApiMetadata, EndpointTag, ApiEndpoint, EndpointParameter, DeletionResult } from '$lib/types';
 import { extractPathParameters } from '$lib/utils/urlParser';
 import { generateId, generateParamId, deepClone } from '$lib/utils/ids';
+import { GLOBAL_NAMESPACE_ID } from './initialData';
 
 // Initial empty state for API metadata
 export const initialApiMetadata: ApiMetadata = {
+	id: 'api-metadata-global',
+	namespaceId: GLOBAL_NAMESPACE_ID,
 	title: '',
 	version: '1.0.0',
 	description: '',
@@ -72,6 +75,38 @@ export function getTotalTagCount(): number {
 }
 
 // ============================================================================
+// Namespace Filtering
+// ============================================================================
+
+/**
+ * Get all tags for a specific namespace
+ */
+export function getTagsByNamespace(namespaceId: string): EndpointTag[] {
+	return get(tagsStore).filter(t => t.namespaceId === namespaceId);
+}
+
+/**
+ * Get the count of tags in a specific namespace
+ */
+export function getTagCountByNamespace(namespaceId: string): number {
+	return get(tagsStore).filter(t => t.namespaceId === namespaceId).length;
+}
+
+/**
+ * Get all endpoints for a specific namespace
+ */
+export function getEndpointsByNamespace(namespaceId: string): ApiEndpoint[] {
+	return get(endpointsStore).filter(e => e.namespaceId === namespaceId);
+}
+
+/**
+ * Get the count of endpoints in a specific namespace
+ */
+export function getEndpointCountByNamespace(namespaceId: string): number {
+	return get(endpointsStore).filter(e => e.namespaceId === namespaceId).length;
+}
+
+// ============================================================================
 // Tag Lifecycle Operations
 // ============================================================================
 
@@ -79,15 +114,16 @@ export function getTotalTagCount(): number {
  * Create a new tag with uniqueness guard
  *
  * @param name - The name for the new tag
+ * @param namespaceId - The namespace to create the tag in
  * @param description - Optional description for the tag
- * @returns The created tag, or undefined if a tag with that name already exists
+ * @returns The created tag, or undefined if a tag with that name already exists in the namespace
  */
-export function createTag(name: string, description: string = ''): EndpointTag | undefined {
+export function createTag(name: string, namespaceId: string = GLOBAL_NAMESPACE_ID, description: string = ''): EndpointTag | undefined {
 	const trimmedName = name.trim();
 
-	// Check for existing tag with same name (case-insensitive)
+	// Check for existing tag with same name in the same namespace (case-insensitive)
 	const existingTag = get(tagsStore).find(
-		t => t.name.toLowerCase() === trimmedName.toLowerCase()
+		t => t.name.toLowerCase() === trimmedName.toLowerCase() && t.namespaceId === namespaceId
 	);
 
 	if (existingTag) {
@@ -96,6 +132,7 @@ export function createTag(name: string, description: string = ''): EndpointTag |
 
 	const newTag: EndpointTag = {
 		id: generateId('tag'),
+		namespaceId,
 		name: trimmedName,
 		description
 	};
@@ -173,11 +210,13 @@ export function deleteTag(id: string): void {
 /**
  * Create a new default endpoint
  *
+ * @param namespaceId - The namespace to create the endpoint in
  * @returns The newly created endpoint
  */
-export function createDefaultEndpoint(): ApiEndpoint {
+export function createDefaultEndpoint(namespaceId: string = GLOBAL_NAMESPACE_ID): ApiEndpoint {
 	const newEndpoint: ApiEndpoint = {
 		id: generateId('endpoint'),
+		namespaceId,
 		method: 'GET',
 		path: '/',
 		description: '',
