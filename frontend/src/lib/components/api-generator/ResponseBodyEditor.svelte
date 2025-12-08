@@ -6,6 +6,7 @@
   import ObjectSelectorDropdown from './ObjectSelectorDropdown.svelte';
 
   export interface ResponseBodyEditorProps {
+    endpointNamespaceId: string;
     selectedObjectId?: string;
     useEnvelope: boolean;
     responseShape: ResponseShape;
@@ -17,6 +18,7 @@
   interface Props extends ResponseBodyEditorProps {}
 
   let {
+    endpointNamespaceId,
     selectedObjectId,
     useEnvelope,
     responseShape,
@@ -24,6 +26,9 @@
     onEnvelopeToggle,
     onSetResponseShape
   }: Props = $props();
+
+  // Filter objects to only show those in the endpoint's namespace
+  const namespacedObjects = $derived($objectsStore.filter(obj => obj.namespaceId === endpointNamespaceId));
 
   // Build preview JSON using shared utility
   // Note: Include $objectsStore in derived dependencies to ensure preview updates
@@ -83,7 +88,7 @@
       <div class="space-y-2">
         <!-- Object Selector Dropdown -->
         <ObjectSelectorDropdown
-          availableObjects={$objectsStore}
+          availableObjects={namespacedObjects}
           selectedObjectId={selectedObjectId}
           onSelect={onSelectObject}
           placeholder="Select object for response..."

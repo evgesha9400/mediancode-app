@@ -280,12 +280,13 @@ test.describe('Fields - Feature Tests', () => {
 	});
 
 	test.describe('Sorting', () => {
-		type RowData = { name: string; type: string; defaultValue: string; usedInApis: number };
+		type RowData = { name: string; type: string; namespace: string; defaultValue: string; usedInApis: number };
 
 		const getRowData = async (): Promise<RowData[]> => {
-			const [names, types, defaultValues, usedInApis] = await Promise.all([
+			const [names, types, namespaces, defaultValues, usedInApis] = await Promise.all([
 				fieldRegistryPage.getVisibleFieldNames(),
 				fieldRegistryPage.getVisibleTypes(),
+				fieldRegistryPage.getVisibleNamespaces(),
 				fieldRegistryPage.getVisibleDefaultValues(),
 				fieldRegistryPage.getVisibleUsedInApis()
 			]);
@@ -293,6 +294,7 @@ test.describe('Fields - Feature Tests', () => {
 			return names.map((name, index) => ({
 				name,
 				type: types[index],
+				namespace: namespaces[index],
 				defaultValue: defaultValues[index],
 				usedInApis: usedInApis[index]
 			}));

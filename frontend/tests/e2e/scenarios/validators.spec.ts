@@ -214,13 +214,14 @@ test.describe('Validators - Feature Tests', () => {
 	});
 
 	test.describe('Sorting', () => {
-		type RowData = { name: string; type: string; category: string; usedInFields: number };
+		type RowData = { name: string; type: string; category: string; namespace: string; usedInFields: number };
 
 		const getRowData = async (): Promise<RowData[]> => {
-			const [names, types, categories, usedInFields] = await Promise.all([
+			const [names, types, categories, namespaces, usedInFields] = await Promise.all([
 				validatorsPage.getVisibleValidatorNames(),
 				validatorsPage.getVisibleTypes(),
 				validatorsPage.getVisibleCategories(),
+				validatorsPage.getVisibleNamespaces(),
 				validatorsPage.getVisibleUsedInFields()
 			]);
 
@@ -228,6 +229,7 @@ test.describe('Validators - Feature Tests', () => {
 				name,
 				type: types[index],
 				category: categories[index],
+				namespace: namespaces[index],
 				usedInFields: usedInFields[index]
 			}));
 		};

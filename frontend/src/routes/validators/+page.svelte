@@ -1,7 +1,7 @@
 <script lang="ts">
   import { validatorsStore, deleteValidator, searchValidators, type Validator } from '$lib/stores/validators';
   import { showToast } from '$lib/stores/toasts';
-  import { activeNamespaceId } from '$lib/stores/namespaces';
+  import { activeNamespaceId, getNamespaceById } from '$lib/stores/namespaces';
   import { buildDeletionTooltip } from '$lib/utils/references';
   import {
     DashboardLayout,
@@ -22,6 +22,9 @@
   import { page } from '$app/state';
   import { goto } from '$app/navigation';
   import { createListViewState } from '$lib/stores/listViewState.svelte';
+
+  // Extended validator type with computed properties for sorting
+  type ValidatorWithNamespace = Validator & { namespaceName: string };
 
   // Filter state type
   type ValidatorFilterState = {
@@ -74,6 +77,10 @@
     numericColumns: new Set(['usedInFields']),
     urlScope: { page, goto },
     getItemId: (validator) => validator.name,
+    deriveExtra: (validator) => ({
+      namespaceName: getNamespaceById(validator.namespaceId)?.name ?? ''
+    }),
+    sortColumnMap: { 'namespace': 'namespaceName' },
     drawerConfig: {
       trackEdits: false,
       allowDelete: true,
@@ -84,7 +91,7 @@
   // Convenience aliases for template bindings
   let selectedValidator = $derived(state.selectedItem);
   let showDeleteConfirm = $derived(state.showDeleteConfirm);
-  let filteredValidators = $derived(state.results);
+  let filteredValidators = $derived(state.results as ValidatorWithNamespace[]);
   let sorts = $derived(state.sorts);
   let activeFiltersCount = $derived(state.activeFiltersCount);
 
@@ -172,6 +179,12 @@
           {sorts}
           onSort={state.handleSort}
         />
+        <SortableColumn
+          column="namespace"
+          label="Namespace"
+          {sorts}
+          onSort={state.handleSort}
+        />
         <th scope="col" class="px-6 py-3 text-left text-xs text-mono-500 tracking-wider font-medium">
           <div class="flex items-center space-x-1">
             <span>Description</span>
@@ -204,6 +217,9 @@
             <span class="px-2 py-1 text-xs rounded-full {validator.category === 'inline' ? 'bg-mono-200 text-mono-700' : 'bg-mono-700 text-white'} capitalize">
               {validator.category}
             </span>
+          </td>
+          <td class="px-6 py-4 whitespace-nowrap">
+            <span class="text-sm text-mono-600">{validator.namespaceName}</span>
           </td>
           <td class="px-6 py-4 text-sm text-mono-500">
             {validator.description.split('.')[0]}.

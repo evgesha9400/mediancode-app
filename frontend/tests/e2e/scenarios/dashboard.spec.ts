@@ -21,10 +21,11 @@ import { test, expect } from '@playwright/test';
 import { DashboardPage, STAT_CARD_TITLES } from '../page-objects';
 
 // Expected values from actual stores (not fixtures)
-// These match the initial data in src/lib/stores/fields.ts and validators.ts
-const EXPECTED_FIELD_COUNT = 10;
+// These match the initial data in src/lib/stores/initialData.ts
+// Dashboard shows TOTAL counts (not filtered by namespace)
+const EXPECTED_FIELD_COUNT = 13; // 10 global + 3 user namespace fields
 const EXPECTED_API_COUNT = 3; // 3 unique APIs: api-1, api-2, api-3
-const EXPECTED_VALIDATOR_COUNT = 14;
+const EXPECTED_VALIDATOR_COUNT = 15; // 11 inline + 4 custom (3 global + 1 user)
 
 test.describe('Dashboard - Full Suite', () => {
 	let dashboardPage: DashboardPage;

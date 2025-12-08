@@ -22,6 +22,7 @@ import type { ObjectDefinition, Namespace } from '$lib/types';
 
 /** Global namespace ID constant - used across all seed data */
 export const GLOBAL_NAMESPACE_ID = 'namespace-global';
+export const USER_NAMESPACE_ID = 'namespace-user';
 
 export const initialNamespaces: Namespace[] = [
 	{
@@ -29,6 +30,12 @@ export const initialNamespaces: Namespace[] = [
 		name: 'global',
 		description: 'Immutable global templates and examples',
 		locked: true
+	},
+	{
+		id: USER_NAMESPACE_ID,
+		name: 'user',
+		description: 'User-created entities for testing namespace isolation',
+		locked: false
 	}
 ];
 
@@ -172,6 +179,44 @@ export const initialFields: Field[] = [
 		defaultValue: '',
 		validators: [
 			{ name: 'phone_number' }
+		],
+		usedInApis: []
+	},
+	// User namespace fields for testing isolation
+	{
+		id: 'field-user-1',
+		namespaceId: USER_NAMESPACE_ID,
+		name: 'product_name',
+		type: 'str',
+		description: 'Product name in user namespace',
+		defaultValue: '',
+		validators: [
+			{ name: 'min_length', params: { value: 2 } },
+			{ name: 'max_length', params: { value: 100 } }
+		],
+		usedInApis: []
+	},
+	{
+		id: 'field-user-2',
+		namespaceId: USER_NAMESPACE_ID,
+		name: 'quantity',
+		type: 'int',
+		description: 'Product quantity in user namespace',
+		defaultValue: '0',
+		validators: [
+			{ name: 'ge', params: { value: 0 } }
+		],
+		usedInApis: []
+	},
+	{
+		id: 'field-user-3',
+		namespaceId: USER_NAMESPACE_ID,
+		name: 'product_price',
+		type: 'float',
+		description: 'Product price in user namespace',
+		defaultValue: '0.0',
+		validators: [
+			{ name: 'gt', params: { value: 0 } }
 		],
 		usedInApis: []
 	}
@@ -335,6 +380,17 @@ export const initialCustomValidators: ValidatorBase[] = [
 		parameterType: 'String',
 		exampleUsage: '@field_validator("website")\ndef validate_url(cls, v):\n    if not v.startswith(("http://", "https://")):\n        raise ValueError("Invalid URL format")\n    return v',
 		pydanticDocsUrl: 'https://docs.pydantic.dev/latest/concepts/validators/'
+	},
+	// User namespace validators for testing isolation
+	{
+		name: 'product_name_format',
+		namespaceId: USER_NAMESPACE_ID,
+		type: 'string',
+		description: 'Validates product name format in user namespace. Ensures product names follow company standards.',
+		category: 'custom',
+		parameterType: 'String',
+		exampleUsage: '@field_validator("product_name")\ndef validate_product_name(cls, v):\n    if not v.strip():\n        raise ValueError("Product name cannot be empty")\n    return v.strip()',
+		pydanticDocsUrl: 'https://docs.pydantic.dev/latest/concepts/validators/'
 	}
 ];
 
@@ -467,6 +523,19 @@ export const initialObjects: ObjectDefinition[] = [
 			{ fieldId: 'field-8', required: true },  // status
 			{ fieldId: 'field-5', required: true },  // created_at
 			{ fieldId: 'field-6', required: false }  // updated_at
+		],
+		usedInApis: []
+	},
+	// User namespace objects for testing isolation
+	{
+		id: 'object-user-1',
+		namespaceId: USER_NAMESPACE_ID,
+		name: 'ProductCatalogItem',
+		description: 'Product catalog item in user namespace',
+		fields: [
+			{ fieldId: 'field-user-1', required: true },  // product_name
+			{ fieldId: 'field-user-2', required: true },  // quantity
+			{ fieldId: 'field-user-3', required: true }   // product_price
 		],
 		usedInApis: []
 	}

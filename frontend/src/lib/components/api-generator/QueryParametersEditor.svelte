@@ -4,13 +4,17 @@
   import ObjectSelectorDropdown from './ObjectSelectorDropdown.svelte';
 
   export interface QueryParametersEditorProps {
+    endpointNamespaceId: string;
     selectedObjectId?: string;
     onSelectObject: (objectId: string | undefined) => void;
   }
 
   interface Props extends QueryParametersEditorProps {}
 
-  let { selectedObjectId, onSelectObject }: Props = $props();
+  let { endpointNamespaceId, selectedObjectId, onSelectObject }: Props = $props();
+
+  // Filter objects to only show those in the endpoint's namespace
+  const namespacedObjects = $derived($objectsStore.filter(obj => obj.namespaceId === endpointNamespaceId));
 
   // Get the selected object for display
   const selectedObject = $derived(
@@ -29,7 +33,7 @@
   <div class="space-y-2">
     <!-- Object Selector Dropdown -->
     <ObjectSelectorDropdown
-      availableObjects={$objectsStore}
+      availableObjects={namespacedObjects}
       selectedObjectId={selectedObjectId}
       onSelect={onSelectObject}
       placeholder="Select object for query parameters..."

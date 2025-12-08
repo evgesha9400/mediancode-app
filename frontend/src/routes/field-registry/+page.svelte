@@ -1,9 +1,9 @@
 <script lang="ts">
   import { fieldsStore, updateField, deleteField, searchFields, type Field, type FieldValidator } from '$lib/stores/fields';
-  import { validatorsStore, getValidatorsByFieldType, type Validator } from '$lib/stores/validators';
+  import { validatorsStore, getValidatorsByFieldType, getValidatorsByFieldTypeAndNamespace, type Validator } from '$lib/stores/validators';
   import { getPrimitiveTypes, type PrimitiveTypeName } from '$lib/stores/types';
   import { showToast } from '$lib/stores/toasts';
-  import { activeNamespaceId } from '$lib/stores/namespaces';
+  import { activeNamespaceId, namespacesStore, getNamespaceById } from '$lib/stores/namespaces';
   import { buildDeletionTooltip } from '$lib/utils/references';
   import {
     DashboardLayout,
@@ -26,7 +26,7 @@
   import { createListViewState } from '$lib/stores/listViewState.svelte';
 
   // Extended field type with computed properties for sorting
-  type FieldWithApiCount = Field & { usedInApisCount: number };
+  type FieldWithApiCount = Field & { usedInApisCount: number; namespaceName: string };
 
   // Filter state type
   type FieldFilterState = {
@@ -80,9 +80,10 @@
     highlightParamKey: 'highlight',
     getItemId: (field) => field.id,
     deriveExtra: (field) => ({
-      usedInApisCount: field.usedInApis.length
+      usedInApisCount: field.usedInApis.length,
+      namespaceName: getNamespaceById(field.namespaceId)?.name ?? ''
     }),
-    sortColumnMap: { 'usedInApis': 'usedInApisCount' },
+    sortColumnMap: { 'usedInApis': 'usedInApisCount', 'namespace': 'namespaceName' },
     drawerConfig: {
       trackEdits: true,
       allowDelete: true,
@@ -102,7 +103,12 @@
   let hasChanges = $derived(listState.hasChanges);
 
   let validators = $derived($validatorsStore);
-  let availableValidators = $derived(editedField ? getValidatorsByFieldType(editedField.type) : []);
+  // Filter validators by field's namespace AND type compatibility
+  let availableValidators = $derived(
+    editedField
+      ? getValidatorsByFieldTypeAndNamespace(editedField.type, editedField.namespaceId)
+      : []
+  );
 
   function handleTypeChange(newType: string) {
     if (!editedField) return;
@@ -189,7 +195,7 @@
 
   function addValidator() {
     if (!editedField) return;
-    const available = getValidatorsByFieldType(editedField.type);
+    const available = getValidatorsByFieldTypeAndNamespace(editedField.type, editedField.namespaceId);
     if (available.length === 0) return;
 
     const firstValidator = available[0];
@@ -295,6 +301,12 @@
           {sorts}
           onSort={listState.handleSort}
         />
+        <SortableColumn
+          column="namespace"
+          label="Namespace"
+          {sorts}
+          onSort={listState.handleSort}
+        />
         <th scope="col" class="px-6 py-3 text-left text-xs text-mono-500 tracking-wider font-medium">
           <div class="flex items-center space-x-1">
             <span>Validators</span>
@@ -328,6 +340,9 @@
             <span class="px-2 py-1 text-xs rounded-full bg-mono-900 text-white">
               {field.type}
             </span>
+          </td>
+          <td class="px-6 py-4 whitespace-nowrap">
+            <span class="text-sm text-mono-600">{field.namespaceName}</span>
           </td>
           <td class="px-6 py-4 text-sm text-mono-500">
             {#if field.validators.length > 0}
@@ -372,6 +387,21 @@
   <DrawerContent>
     {#if editedField}
       <div class="space-y-4">
+        <!-- Namespace (Read-only) -->
+        <div>
+          <label for="field-namespace" class="block text-sm text-mono-700 mb-1 font-medium">
+            Namespace
+          </label>
+          <input
+            id="field-namespace"
+            type="text"
+            value={getNamespaceById(editedField.namespaceId)?.name ?? ''}
+            disabled
+            class="w-full px-3 py-2 border border-mono-300 rounded-md bg-mono-50 text-mono-500 cursor-not-allowed"
+          />
+          <p class="text-xs text-mono-500 mt-1">Namespace cannot be changed after creation</p>
+        </div>
+
         <!-- Field Name -->
         <div>
           <label for="field-name" class="block text-sm text-mono-700 mb-1 font-medium">
@@ -481,7 +511,9 @@
                 {/each}
               </div>
             {:else if availableValidators.length === 0}
-              <p class="text-sm text-mono-500 italic">No validators available for {editedField.type} type</p>
+              <p class="text-sm text-mono-500 italic">
+                No validators available for {editedField.type} type in this namespace
+              </p>
             {:else}
               <p class="text-sm text-mono-500 italic">No validators added</p>
             {/if}

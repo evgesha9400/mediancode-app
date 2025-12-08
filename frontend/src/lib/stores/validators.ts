@@ -110,6 +110,35 @@ export function getValidatorsByFieldType(fieldType: PrimitiveTypeName): Validato
 }
 
 /**
+ * Get validators filtered by both namespace and field type compatibility
+ * This follows the namespace isolation rule: validators must be in the same namespace as the field
+ *
+ * @param fieldType - The field type to match validators against
+ * @param namespaceId - The namespace to filter validators by
+ * @returns Array of validators that match both namespace and type
+ */
+export function getValidatorsByFieldTypeAndNamespace(
+	fieldType: PrimitiveTypeName,
+	namespaceId: string
+): Validator[] {
+	const validators = get(validatorsStore);
+
+	// Get compatible validator types from the centralized types store
+	const compatibleTypes = getValidatorCategoriesForType(fieldType);
+
+	// If no compatible types, return empty array
+	if (compatibleTypes.length === 0) {
+		return [];
+	}
+
+	// Filter validators by namespace AND compatible types
+	return validators.filter(validator =>
+		validator.namespaceId === namespaceId &&
+		compatibleTypes.includes(validator.type)
+	);
+}
+
+/**
  * Delete a custom validator by name
  * Only custom validators can be deleted, inline validators are protected
  * Checks for references before deletion to prevent breaking field validators

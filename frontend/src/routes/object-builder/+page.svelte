@@ -2,7 +2,7 @@
   import { objectsStore, updateObject, deleteObject, searchObjects, type ObjectDefinition } from '$lib/stores/objects';
   import { fieldsStore, getFieldById } from '$lib/stores/fields';
   import { showToast } from '$lib/stores/toasts';
-  import { activeNamespaceId } from '$lib/stores/namespaces';
+  import { activeNamespaceId, getNamespaceById } from '$lib/stores/namespaces';
   import { buildDeletionTooltip } from '$lib/utils/references';
   import {
     DashboardLayout,
@@ -27,6 +27,7 @@
   type ObjectWithCounts = ObjectDefinition & {
     fieldCount: number;
     usedInApisCount: number;
+    namespaceName: string;
   };
 
   // Filter state type (no filters initially)
@@ -49,9 +50,10 @@
     getItemId: (obj) => obj.id,
     deriveExtra: (obj) => ({
       fieldCount: obj.fields.length,
-      usedInApisCount: obj.usedInApis.length
+      usedInApisCount: obj.usedInApis.length,
+      namespaceName: getNamespaceById(obj.namespaceId)?.name ?? ''
     }),
-    sortColumnMap: { 'fields': 'fieldCount', 'usedInApis': 'usedInApisCount' },
+    sortColumnMap: { 'fields': 'fieldCount', 'usedInApis': 'usedInApisCount', 'namespace': 'namespaceName' },
     drawerConfig: {
       trackEdits: true,
       allowDelete: true,
@@ -71,6 +73,9 @@
   let hasChanges = $derived(listState.hasChanges);
 
   let fields = $derived($fieldsStore);
+
+  // Filter fields to only show those in the object's namespace
+  let namespacedFields = $derived(editedObject ? fields.filter(f => f.namespaceId === editedObject.namespaceId) : []);
 
   // Derive selected field IDs for the FieldSelectorDropdown
   let selectedFieldIds = $derived(editedObject?.fields.map(f => f.fieldId) ?? []);
@@ -207,6 +212,12 @@
           onSort={listState.handleSort}
         />
         <SortableColumn
+          column="namespace"
+          label="Namespace"
+          {sorts}
+          onSort={listState.handleSort}
+        />
+        <SortableColumn
           column="fields"
           label="Fields"
           {sorts}
@@ -234,6 +245,9 @@
         >
           <td class="px-6 py-4 whitespace-nowrap">
             <div class="text-sm text-mono-900 font-medium">{object.name}</div>
+          </td>
+          <td class="px-6 py-4 whitespace-nowrap">
+            <span class="text-sm text-mono-600">{object.namespaceName}</span>
           </td>
           <td class="px-6 py-4 whitespace-nowrap">
             <div class="flex items-center space-x-2">
@@ -273,6 +287,21 @@
   <DrawerContent>
     {#if editedObject}
       <div class="space-y-4">
+        <!-- Namespace (Read-only) -->
+        <div>
+          <label for="object-namespace" class="block text-sm text-mono-700 mb-1 font-medium">
+            Namespace
+          </label>
+          <input
+            id="object-namespace"
+            type="text"
+            value={getNamespaceById(editedObject.namespaceId)?.name ?? ''}
+            disabled
+            class="w-full px-3 py-2 border border-mono-300 rounded-md bg-mono-50 text-mono-500 cursor-not-allowed"
+          />
+          <p class="text-xs text-mono-500 mt-1">Namespace cannot be changed after creation</p>
+        </div>
+
         <!-- Object Name -->
         <div>
           <label for="object-name" class="block text-sm text-mono-700 mb-1 font-medium">
@@ -307,7 +336,7 @@
           <div class="space-y-2">
             <!-- Field Selector Dropdown -->
             <FieldSelectorDropdown
-              availableFields={fields}
+              availableFields={namespacedFields}
               selectedFieldIds={selectedFieldIds}
               onSelect={addField}
               placeholder="Add field to object..."

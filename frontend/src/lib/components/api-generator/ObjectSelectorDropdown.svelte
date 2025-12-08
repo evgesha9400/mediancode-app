@@ -126,7 +126,7 @@
   {#if dropdownOpen && filteredObjects.length === 0 && !searchQuery.trim()}
     <div class="absolute z-10 w-full mt-1 bg-white border border-mono-300 rounded-md shadow-lg">
       <div class="px-3 py-2 text-sm text-mono-500">
-        No objects available. Create objects in Objects first.
+        No objects available in this namespace. Create objects in the same namespace first.
       </div>
     </div>
   {/if}

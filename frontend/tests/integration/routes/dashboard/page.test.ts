@@ -167,13 +167,13 @@ describe('Dashboard Page - Store Integration', () => {
 		it('provides expected initial field count for stat card', () => {
 			// Dashboard shows this value in "Fields" stat card
 			const fieldCount = getTotalFieldCount();
-			expect(fieldCount).toBe(10); // Based on initialFields in fields.ts
+			expect(fieldCount).toBe(13); // 10 global + 3 user namespace fields
 		});
 
 		it('provides expected initial validator count for stat card', () => {
 			// Dashboard shows this value in "Validators" stat card
 			const validatorCount = getTotalValidatorCount();
-			expect(validatorCount).toBe(14); // 11 inline + 3 custom
+			expect(validatorCount).toBe(15); // 11 inline + 4 custom (3 global + 1 user namespace)
 		});
 
 		it('provides expected initial API count for stat card', () => {

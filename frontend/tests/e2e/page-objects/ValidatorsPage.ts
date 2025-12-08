@@ -339,6 +339,21 @@ export class ValidatorsPage {
 	}
 
 	/**
+	 * Get all namespaces visible in the table
+	 */
+	async getVisibleNamespaces(): Promise<string[]> {
+		const namespaces: string[] = [];
+		const count = await this.tableRows.count();
+		for (let i = 0; i < count; i++) {
+			const row = this.tableRows.nth(i);
+			const namespaceCell = row.locator('td').nth(3);
+			const namespace = await namespaceCell.textContent();
+			if (namespace) namespaces.push(namespace.trim());
+		}
+		return namespaces;
+	}
+
+	/**
 	 * Get usedInFields counts visible in the table
 	 */
 	async getVisibleUsedInFields(): Promise<number[]> {
@@ -346,7 +361,7 @@ export class ValidatorsPage {
 		const count = await this.tableRows.count();
 		for (let i = 0; i < count; i++) {
 			const row = this.tableRows.nth(i);
-			const countCell = row.locator('td').nth(4).locator('span').first();
+			const countCell = row.locator('td').nth(5).locator('span').first();
 			const text = await countCell.textContent();
 			counts.push(parseInt(text?.trim() ?? '0', 10));
 		}

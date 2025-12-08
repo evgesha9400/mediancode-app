@@ -31,10 +31,11 @@ describe('namespaces store - Basic Operations', () => {
 
 	it('should have global namespace by default', () => {
 		const namespaces = get(namespacesStore);
-		expect(namespaces).toHaveLength(1);
-		expect(namespaces[0].id).toBe(GLOBAL_NAMESPACE_ID);
-		expect(namespaces[0].name).toBe('global');
-		expect(namespaces[0].locked).toBe(true);
+		expect(namespaces).toHaveLength(2); // global + user namespace
+		const globalNs = namespaces.find(ns => ns.id === GLOBAL_NAMESPACE_ID);
+		expect(globalNs).toBeDefined();
+		expect(globalNs?.name).toBe('global');
+		expect(globalNs?.locked).toBe(true);
 	});
 
 	it('should have active namespace set to global by default', () => {
@@ -54,7 +55,7 @@ describe('namespaces store - Basic Operations', () => {
 	});
 
 	it('should count total namespaces', () => {
-		expect(getTotalNamespaceCount()).toBe(1);
+		expect(getTotalNamespaceCount()).toBe(2); // global + user namespace
 	});
 });
 
@@ -74,7 +75,7 @@ describe('namespaces store - CRUD Operations', () => {
 		expect(namespace?.description).toBe('Dev environment');
 		expect(namespace?.locked).toBe(false);
 
-		expect(getTotalNamespaceCount()).toBe(2);
+		expect(getTotalNamespaceCount()).toBe(3); // global + user + development
 	});
 
 	it('should prevent duplicate namespace creation (case-insensitive)', () => {
@@ -82,13 +83,13 @@ describe('namespaces store - CRUD Operations', () => {
 		const duplicate = createNamespace('Development');
 
 		expect(duplicate).toBeUndefined();
-		expect(getTotalNamespaceCount()).toBe(2);
+		expect(getTotalNamespaceCount()).toBe(3); // global + user + development
 	});
 
 	it('should not allow creating namespace with same name as global', () => {
 		const duplicate = createNamespace('global');
 		expect(duplicate).toBeUndefined();
-		expect(getTotalNamespaceCount()).toBe(1);
+		expect(getTotalNamespaceCount()).toBe(2); // global + user (unchanged)
 	});
 
 	it('should trim namespace names', () => {
@@ -117,7 +118,7 @@ describe('namespaces store - CRUD Operations', () => {
 
 		expect(result.success).toBe(true);
 		expect(getNamespaceById(namespace!.id)).toBeUndefined();
-		expect(getTotalNamespaceCount()).toBe(1);
+		expect(getTotalNamespaceCount()).toBe(2); // global + user (back to initial)
 	});
 
 	it('should not delete locked namespaces', () => {
@@ -125,7 +126,7 @@ describe('namespaces store - CRUD Operations', () => {
 
 		expect(result.success).toBe(false);
 		expect(result.error).toContain('locked');
-		expect(getTotalNamespaceCount()).toBe(1);
+		expect(getTotalNamespaceCount()).toBe(2); // global + user (unchanged)
 	});
 
 	it('should return error for non-existent namespace deletion', () => {
@@ -195,7 +196,7 @@ describe('namespaces store - Search', () => {
 		const namespaces = get(namespacesStore);
 		const results = searchNamespaces(namespaces, '');
 
-		expect(results).toHaveLength(4); // global + 3 created
+		expect(results).toHaveLength(5); // global + user + 3 created
 	});
 
 	it('should be case insensitive', () => {
@@ -229,7 +230,7 @@ describe('namespaces store - Entity Count', () => {
 				id: 'field-1',
 				namespaceId: GLOBAL_NAMESPACE_ID,
 				name: 'test_field',
-				type: 'string' as const,
+				type: 'str' as const,
 				validators: [],
 				usedInApis: []
 			}
@@ -250,7 +251,7 @@ describe('namespaces store - Entity Count', () => {
 				id: 'field-1',
 				namespaceId: GLOBAL_NAMESPACE_ID,
 				name: 'test_field',
-				type: 'string' as const,
+				type: 'str' as const,
 				validators: [],
 				usedInApis: []
 			}
@@ -290,7 +291,7 @@ describe('namespaces store - Entity Count', () => {
 				id: 'field-1',
 				namespaceId: namespace!.id,
 				name: 'test_field',
-				type: 'string' as const,
+				type: 'str' as const,
 				validators: [],
 				usedInApis: []
 			}

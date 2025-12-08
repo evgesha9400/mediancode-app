@@ -263,18 +263,21 @@
 
         <!-- Query Parameters -->
         <QueryParametersEditor
+          endpointNamespaceId={state.editedEndpoint.namespaceId}
           selectedObjectId={state.editedEndpoint.queryParamsObjectId}
           onSelectObject={state.handleSelectQueryParamsObject}
         />
 
         <!-- Request Body Editor -->
         <RequestBodyEditor
+          endpointNamespaceId={state.editedEndpoint.namespaceId}
           selectedObjectId={state.editedEndpoint.requestBodyObjectId}
           onSelectObject={state.handleSelectRequestBodyObject}
         />
 
         <!-- Response Body Editor -->
         <ResponseBodyEditor
+          endpointNamespaceId={state.editedEndpoint.namespaceId}
           selectedObjectId={state.editedEndpoint.responseBodyObjectId}
           useEnvelope={state.editedEndpoint.useEnvelope}
           responseShape={state.editedEndpoint.responseShape}

@@ -5,13 +5,17 @@
   import ObjectSelectorDropdown from './ObjectSelectorDropdown.svelte';
 
   export interface RequestBodyEditorProps {
+    endpointNamespaceId: string;
     selectedObjectId?: string;
     onSelectObject: (objectId: string | undefined) => void;
   }
 
   interface Props extends RequestBodyEditorProps {}
 
-  let { selectedObjectId, onSelectObject }: Props = $props();
+  let { endpointNamespaceId, selectedObjectId, onSelectObject }: Props = $props();
+
+  // Filter objects to only show those in the endpoint's namespace
+  const namespacedObjects = $derived($objectsStore.filter(obj => obj.namespaceId === endpointNamespaceId));
 
   // Build preview JSON from selected object using shared utility
   // Note: Include $objectsStore in derived dependencies to ensure preview updates
@@ -35,7 +39,7 @@
     <div class="space-y-2">
       <!-- Object Selector Dropdown -->
       <ObjectSelectorDropdown
-        availableObjects={$objectsStore}
+        availableObjects={namespacedObjects}
         selectedObjectId={selectedObjectId}
         onSelect={onSelectObject}
         placeholder="Select object for request body..."

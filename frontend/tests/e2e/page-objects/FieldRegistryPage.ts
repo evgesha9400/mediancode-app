@@ -46,6 +46,7 @@ export class FieldRegistryPage {
 	// Drawer validators section
 	readonly addValidatorButton: Locator;
 	readonly validatorRows: Locator;
+	readonly validatorsContainer: Locator;
 
 	// Drawer actions
 	readonly saveButton: Locator;
@@ -92,7 +93,9 @@ export class FieldRegistryPage {
 
 		// Drawer validators section
 		this.addValidatorButton = page.getByRole('button', { name: '+ Add', exact: true });
-		this.validatorRows = page.locator('.bg-mono-50.rounded-md').filter({ has: page.locator('select') });
+		// Select the validators container div, then get individual validator rows
+		this.validatorsContainer = page.locator('.bg-mono-50.rounded-md').filter({ has: page.locator('select') });
+		this.validatorRows = this.validatorsContainer.locator('.flex.items-center.space-x-2').filter({ has: page.locator('select') });
 
 		// Drawer actions
 		this.saveButton = page.getByRole('button', { name: 'Save Changes' });
@@ -382,6 +385,21 @@ export class FieldRegistryPage {
 	}
 
 	/**
+	 * Get all namespaces visible in the table
+	 */
+	async getVisibleNamespaces(): Promise<string[]> {
+		const namespaces: string[] = [];
+		const count = await this.tableRows.count();
+		for (let i = 0; i < count; i++) {
+			const row = this.tableRows.nth(i);
+			const namespaceCell = row.locator('td').nth(2);
+			const namespace = await namespaceCell.textContent();
+			if (namespace) namespaces.push(namespace.trim());
+		}
+		return namespaces;
+	}
+
+	/**
 	 * Get all default values visible in the table
 	 */
 	async getVisibleDefaultValues(): Promise<string[]> {
@@ -389,7 +407,7 @@ export class FieldRegistryPage {
 		const count = await this.tableRows.count();
 		for (let i = 0; i < count; i++) {
 			const row = this.tableRows.nth(i);
-			const defaultValueCell = row.locator('td').nth(3);
+			const defaultValueCell = row.locator('td').nth(4);
 			const value = await defaultValueCell.textContent();
 			if (value) defaultValues.push(value.trim());
 		}
@@ -404,7 +422,7 @@ export class FieldRegistryPage {
 		const count = await this.tableRows.count();
 		for (let i = 0; i < count; i++) {
 			const row = this.tableRows.nth(i);
-			const countSpan = row.locator('td').nth(4).locator('span').first();
+			const countSpan = row.locator('td').nth(5).locator('span').first();
 			const text = await countSpan.textContent();
 			counts.push(parseInt(text?.trim() ?? '0', 10));
 		}
