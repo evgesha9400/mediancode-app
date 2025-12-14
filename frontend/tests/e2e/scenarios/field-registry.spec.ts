@@ -574,9 +574,16 @@ test.describe('Fields - Feature Tests', () => {
 				defaultValue: 'test_default'
 			});
 
-			// Drawer should close after creation
-			const isOpen = await fieldRegistryPage.isCreateDrawerOpen();
-			expect(isOpen).toBe(false);
+			// Drawer should remain open showing the newly created field
+			const isOpen = await fieldRegistryPage.isDrawerOpen();
+			expect(isOpen).toBe(true);
+
+			// Verify the drawer is showing the newly created field
+			const fieldName = await fieldRegistryPage.getFieldName();
+			expect(fieldName).toBe(uniqueFieldName);
+
+			// Close drawer to verify field in table
+			await fieldRegistryPage.closeDrawer();
 
 			// Field should appear in table
 			const hasField = await fieldRegistryPage.hasField(uniqueFieldName);
@@ -585,6 +592,37 @@ test.describe('Fields - Feature Tests', () => {
 			// Row count should increase
 			const newCount = await fieldRegistryPage.getRowCount();
 			expect(newCount).toBe(initialCount + 1);
+		});
+
+		test('should keep newly created field selected in drawer (race condition fix)', async () => {
+			const uniqueFieldName = `race_test_${Date.now()}`;
+
+			await fieldRegistryPage.createNewField({
+				name: uniqueFieldName,
+				description: 'Testing race condition fix'
+			});
+
+			// Drawer should be open immediately after creation
+			const isOpenImmediately = await fieldRegistryPage.isDrawerOpen();
+			expect(isOpenImmediately).toBe(true);
+
+			// Field name should be visible immediately
+			const fieldNameImmediately = await fieldRegistryPage.getFieldName();
+			expect(fieldNameImmediately).toBe(uniqueFieldName);
+
+			// Wait for the original timeout period (300ms) to ensure selection persists
+			await fieldRegistryPage.page.waitForTimeout(400);
+
+			// Drawer should still be open
+			const isOpenAfterTimeout = await fieldRegistryPage.isDrawerOpen();
+			expect(isOpenAfterTimeout).toBe(true);
+
+			// Field should still be selected and visible
+			const fieldNameAfterTimeout = await fieldRegistryPage.getFieldName();
+			expect(fieldNameAfterTimeout).toBe(uniqueFieldName);
+
+			// Clean up
+			await fieldRegistryPage.closeDrawer();
 		});
 
 		test('should show validation error for duplicate field name', async () => {

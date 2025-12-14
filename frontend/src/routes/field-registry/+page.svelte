@@ -18,7 +18,8 @@
     DrawerContent,
     DrawerFooter,
     Tooltip,
-    NamespaceSelector
+    NamespaceSelector,
+    ValidatorSelectorDropdown
   } from '$lib/components';
   import type { FilterConfig } from '$lib/types';
   import { page } from '$app/state';
@@ -110,6 +111,9 @@
       ? getValidatorsByFieldTypeAndNamespace(editedField.type, editedField.namespaceId)
       : []
   );
+
+  // Derive selected validator names for the ValidatorSelectorDropdown
+  let selectedValidatorNames = $derived(editedField?.validators.map(v => v.name) ?? []);
 
   function handleTypeChange(newType: string) {
     if (!editedField) return;
@@ -218,9 +222,17 @@
     }
 
     showToast(`Field "${createdField.name}" created successfully`, 'success', 3000);
-    closeDrawer();
-    // Select the newly created field
-    listState.selectItem(createdField);
+
+    // Exit create mode and transition to edit mode for the newly created field
+    // We directly update the state instead of using selectField() to keep the drawer open
+    // (selectField would close/reopen the drawer due to the item switch logic)
+    isCreating = false;
+    listState.selectedItem = createdField;
+    listState.editedItem = JSON.parse(JSON.stringify(createdField));
+    listState.originalItem = JSON.parse(JSON.stringify(createdField));
+    listState.validationErrors = {};
+    previousFieldType = createdField.type;
+    // Drawer remains open - no need to toggle drawerOpen
   }
 
   function handleUndo() {
@@ -244,15 +256,12 @@
     }
   }
 
-  function addValidator() {
+  function addValidator(validatorName: string) {
     if (!editedField) return;
-    const available = getValidatorsByFieldTypeAndNamespace(editedField.type, editedField.namespaceId);
-    if (available.length === 0) return;
 
-    const firstValidator = available[0];
     listState.editedItem = {
       ...editedField,
-      validators: [...editedField.validators, { name: firstValidator.name, params: {} }]
+      validators: [...editedField.validators, { name: validatorName, params: {} }]
     };
   }
 
@@ -264,15 +273,6 @@
     };
   }
 
-  function updateValidatorName(index: number, name: string) {
-    if (!editedField) return;
-    const validator = validators.find(v => v.name === name);
-    if (!validator) return;
-
-    // Reset params when validator name changes
-    editedField.validators[index].params = {};
-  }
-
   function formatValidatorPill(validator: FieldValidator): string {
     if (!validator.params || Object.keys(validator.params).length === 0) {
       return validator.name;
@@ -282,17 +282,6 @@
       return `${validator.name}: ${value}`;
     }
     return validator.name;
-  }
-
-  function getAllValidatorsForField(field: Field): Array<{ validator: FieldValidator; validatorMeta: Validator | undefined; source: 'inline' | 'custom' }> {
-    return field.validators.map(fv => {
-      const validatorMeta = validators.find(v => v.name === fv.name);
-      return {
-        validator: fv,
-        validatorMeta,
-        source: validatorMeta?.category || 'inline'
-      };
-    });
   }
 
   let hasReferences = $derived(editedField ? editedField.usedInApis.length > 0 : false);
@@ -518,54 +507,72 @@
 
         <!-- Validators -->
         <div>
-          <div class="flex justify-between items-center mb-2">
-            <div class="block text-sm text-mono-700 font-medium">Validators</div>
-            <button
-              type="button"
-              onclick={addValidator}
-              disabled={availableValidators.length === 0}
-              class="text-sm flex items-center transition-colors {availableValidators.length > 0 ? 'text-mono-600 hover:text-mono-900 cursor-pointer' : 'text-mono-400 cursor-not-allowed'}"
-            >
-              <i class="fa-solid fa-plus mr-1"></i>
-              <span>Add</span>
-            </button>
-          </div>
-          <div class="bg-mono-50 rounded-md p-2">
-            {#if editedField.validators.length > 0}
-              <div class="space-y-2">
-                {#each getAllValidatorsForField(editedField) as { validatorMeta, source }, index}
-                  <div class="flex items-center space-x-2">
-                    <div class="relative flex-1">
-                      <select
-                        bind:value={editedField.validators[index].name}
-                        onchange={() => editedField && updateValidatorName(index, editedField.validators[index].name)}
-                        class="w-full appearance-none px-3 py-1.5 border border-mono-300 rounded-md text-sm pr-8 focus:ring-2 focus:ring-mono-400 focus:border-transparent"
-                      >
-                        {#each availableValidators as v}
-                          <option value={v.name}>{v.name}</option>
-                        {/each}
-                      </select>
-                      <div class="absolute inset-y-0 right-0 flex items-center px-2 pointer-events-none">
-                        <i class="fa-solid fa-chevron-down text-mono-400 text-xs"></i>
+          <h3 class="text-sm text-mono-700 mb-2 font-medium">Validators ({editedField.validators.length})</h3>
+
+          <div class="space-y-2">
+            <!-- Validator Selector Dropdown -->
+            <ValidatorSelectorDropdown
+              availableValidators={availableValidators}
+              selectedValidatorNames={selectedValidatorNames}
+              onSelect={addValidator}
+              placeholder="Add validator to field..."
+            />
+
+            <!-- Selected Validators -->
+            {#if editedField.validators.length === 0}
+              <div class="p-3 bg-mono-50 rounded border border-mono-200">
+                <p class="text-xs text-mono-500">No validators selected</p>
+              </div>
+            {:else}
+              <div class="p-2 bg-mono-50 rounded border border-mono-200 space-y-2">
+                {#each editedField.validators as validator, index}
+                  {@const validatorMeta = validators.find(v => v.name === validator.name)}
+                  {#if validatorMeta}
+                    <div class="flex items-center space-x-2 p-2 bg-white rounded border border-mono-200">
+                      <!-- Validator Name and Type -->
+                      <div class="flex items-center space-x-2">
+                        <span class="font-mono text-sm text-mono-700">{validatorMeta.name}</span>
+                        <span class="text-xs text-mono-500 bg-mono-100 px-2 py-0.5 rounded">{validatorMeta.type}</span>
                       </div>
+
+                      <!-- Description (if available) -->
+                      {#if validatorMeta.description}
+                        <div class="flex-1 text-xs text-mono-500">
+                          {validatorMeta.description}
+                        </div>
+                      {:else}
+                        <div class="flex-1"></div>
+                      {/if}
+
+                      <!-- Delete Button (aligned to the right) -->
+                      <button
+                        type="button"
+                        onclick={() => removeValidator(index)}
+                        class="text-red-700 hover:text-red-600 transition-colors"
+                        title="Remove validator"
+                      >
+                        <i class="fa-solid fa-xmark"></i>
+                      </button>
                     </div>
-                    <button
-                      type="button"
-                      onclick={() => removeValidator(index)}
-                      class="text-red-700 hover:text-red-600 transition-colors"
-                      aria-label="Remove validator"
-                    >
-                      <i class="fa-solid fa-xmark"></i>
-                    </button>
-                  </div>
+                  {:else}
+                    <!-- Missing validator fallback - validator was deleted from registry -->
+                    <div class="flex items-center gap-2 py-1.5">
+                      <i class="fa-solid fa-triangle-exclamation text-red-500 text-sm"></i>
+                      <span class="flex-1 text-sm text-red-700">
+                        Validator not found <span class="font-mono text-xs text-red-500">({validator.name})</span>
+                      </span>
+                      <button
+                        type="button"
+                        onclick={() => removeValidator(index)}
+                        class="p-1 text-red-700 hover:text-red-600 hover:bg-red-100 rounded transition-colors"
+                        title="Remove missing validator reference"
+                      >
+                        <i class="fa-solid fa-xmark"></i>
+                      </button>
+                    </div>
+                  {/if}
                 {/each}
               </div>
-            {:else if availableValidators.length === 0}
-              <p class="text-sm text-mono-500 italic">
-                No validators available for {editedField.type} type in this namespace
-              </p>
-            {:else}
-              <p class="text-sm text-mono-500 italic">No validators added</p>
             {/if}
           </div>
         </div>

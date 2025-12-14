@@ -1,8 +1,8 @@
 <script lang="ts">
-  import { objectsStore, updateObject, deleteObject, searchObjects, type ObjectDefinition } from '$lib/stores/objects';
+  import { objectsStore, updateObject, deleteObject, searchObjects, createObject, type ObjectDefinition } from '$lib/stores/objects';
   import { fieldsStore, getFieldById } from '$lib/stores/fields';
   import { showToast } from '$lib/stores/toasts';
-  import { activeNamespaceId, getNamespaceById } from '$lib/stores/namespaces';
+  import { activeNamespaceId, getNamespaceById, namespacesStore } from '$lib/stores/namespaces';
   import { buildDeletionTooltip } from '$lib/utils/references';
   import {
     DashboardLayout,
@@ -35,6 +35,9 @@
 
   // Build filter config (empty initially)
   let objectFilterConfig = $derived([]);
+
+  // Form tracking
+  let isCreating = $state(false);
 
   // Filter objects by active namespace
   let namespacedObjects = $derived($objectsStore.filter(o => o.namespaceId === $activeNamespaceId));
@@ -86,6 +89,27 @@
 
   function closeDrawer() {
     listState.closeDrawer();
+    isCreating = false;
+  }
+
+  function createObjectDraft(): ObjectDefinition {
+    return {
+      id: '',
+      namespaceId: $activeNamespaceId,
+      name: '',
+      description: '',
+      fields: [],
+      usedInApis: []
+    };
+  }
+
+  function openCreateDrawer() {
+    isCreating = true;
+    listState.editedItem = createObjectDraft();
+    listState.selectedItem = null;
+    listState.originalItem = null;
+    listState.validationErrors = {};
+    listState.drawerOpen = true;
   }
 
   function isSelected(obj: ObjectDefinition): boolean {
@@ -114,12 +138,36 @@
 
     // Strip derived properties before saving to store
     // These are UI-only fields added by deriveExtra and should not be persisted
-    const { fieldCount, usedInApisCount, ...cleanObject } = editedObject as ObjectWithCounts;
+    const { fieldCount, usedInApisCount, namespaceName, ...cleanObject } = editedObject as ObjectWithCounts;
 
     updateObject(cleanObject.id, cleanObject);
     listState.selectedItem = editedObject;
     listState.originalItem = JSON.parse(JSON.stringify(editedObject));
     showToast(`Object "${objectName}" updated successfully`, 'success', 3000);
+    closeDrawer();
+  }
+
+  function handleCreate() {
+    if (!editedObject || !validateForm()) return;
+
+    const createdObject = createObject(
+      editedObject.name,
+      editedObject.namespaceId,
+      {
+        fields: editedObject.fields,
+        description: editedObject.description
+      }
+    );
+
+    if (!createdObject) {
+      listState.validationErrors = { name: 'An object with this name already exists in this namespace' };
+      return;
+    }
+
+    showToast(`Object "${createdObject.name}" created successfully`, 'success', 3000);
+
+    // Close drawer after successful creation
+    isCreating = false;
     closeDrawer();
   }
 
@@ -171,6 +219,21 @@
     };
   }
 
+  function handleNamespaceChange(newNamespaceId: string) {
+    if (!editedObject) return;
+
+    // Update the object's namespace
+    listState.editedItem = {
+      ...editedObject,
+      namespaceId: newNamespaceId,
+      // Clear fields that don't belong to the new namespace
+      fields: editedObject.fields.filter(fieldRef => {
+        const field = getFieldById(fieldRef.fieldId);
+        return field && field.namespaceId === newNamespaceId;
+      })
+    };
+  }
+
   let hasReferences = $derived(editedObject ? editedObject.usedInApis.length > 0 : false);
   let deleteTooltip = $derived(editedObject && hasReferences
     ? buildDeletionTooltip('object', 'API', editedObject!.usedInApis.map(api => ({ name: api })))
@@ -183,9 +246,8 @@
       <NamespaceSelector />
       <button
         type="button"
-        disabled
-        class="px-4 py-2 bg-mono-400 text-white rounded-md flex items-center space-x-2 cursor-not-allowed opacity-60"
-        title="Coming soon"
+        onclick={openCreateDrawer}
+        class="px-4 py-2 bg-mono-900 text-white rounded-md flex items-center space-x-2 hover:bg-mono-800 cursor-pointer transition-colors"
       >
         <i class="fa-solid fa-plus"></i>
         <span>Create Object</span>
@@ -282,24 +344,42 @@
 </DashboardLayout>
 
 <Drawer open={listState.drawerOpen} maxWidth={720}>
-  <DrawerHeader title="Edit Object" onClose={closeDrawer} />
+  <DrawerHeader title={isCreating ? 'Create Object' : 'Edit Object'} onClose={closeDrawer} />
 
   <DrawerContent>
     {#if editedObject}
       <div class="space-y-4">
-        <!-- Namespace (Read-only) -->
+        <!-- Namespace -->
         <div>
           <label for="object-namespace" class="block text-sm text-mono-700 mb-1 font-medium">
-            Namespace
+            Namespace {#if isCreating}<span class="text-red-500">*</span>{/if}
           </label>
-          <input
-            id="object-namespace"
-            type="text"
-            value={getNamespaceById(editedObject.namespaceId)?.name ?? ''}
-            disabled
-            class="w-full px-3 py-2 border border-mono-300 rounded-md bg-mono-50 text-mono-500 cursor-not-allowed"
-          />
-          <p class="text-xs text-mono-500 mt-1">Namespace cannot be changed after creation</p>
+          {#if isCreating}
+            <div class="relative">
+              <select
+                id="object-namespace"
+                bind:value={editedObject.namespaceId}
+                onchange={() => editedObject && handleNamespaceChange(editedObject.namespaceId)}
+                class="w-full appearance-none px-3 py-2 border border-mono-300 rounded-md focus:ring-2 focus:ring-mono-400 focus:border-transparent pr-8"
+              >
+                {#each $namespacesStore as namespace}
+                  <option value={namespace.id}>{namespace.name}</option>
+                {/each}
+              </select>
+              <div class="absolute inset-y-0 right-0 flex items-center px-2 pointer-events-none">
+                <i class="fa-solid fa-chevron-down text-mono-400"></i>
+              </div>
+            </div>
+          {:else}
+            <input
+              id="object-namespace"
+              type="text"
+              value={getNamespaceById(editedObject.namespaceId)?.name ?? ''}
+              disabled
+              class="w-full px-3 py-2 border border-mono-300 rounded-md bg-mono-50 text-mono-500 cursor-not-allowed"
+            />
+            <p class="text-xs text-mono-500 mt-1">Namespace cannot be changed after creation</p>
+          {/if}
         </div>
 
         <!-- Object Name -->
@@ -434,7 +514,26 @@
   </DrawerContent>
 
   <DrawerFooter>
-    {#if editedObject}
+    {#if editedObject && isCreating}
+      <!-- Creation mode buttons -->
+      {@const isFormValid = editedObject.name.trim() !== '' && !!editedObject.namespaceId}
+      <button
+        type="button"
+        onclick={handleCreate}
+        disabled={!isFormValid}
+        class="w-full px-4 py-2 rounded-md transition-colors font-medium {isFormValid ? 'bg-mono-900 text-white hover:bg-mono-800 cursor-pointer' : 'bg-mono-300 text-mono-500 cursor-not-allowed'}"
+      >
+        Create Object
+      </button>
+      <button
+        type="button"
+        onclick={closeDrawer}
+        class="w-full px-4 py-2 border border-mono-300 text-mono-700 rounded-md hover:bg-mono-50 cursor-pointer transition-colors font-medium"
+      >
+        Cancel
+      </button>
+    {:else if editedObject}
+      <!-- Edit mode buttons -->
       <button
         type="button"
         onclick={handleSave}

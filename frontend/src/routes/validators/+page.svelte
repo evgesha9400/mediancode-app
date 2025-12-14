@@ -127,14 +127,6 @@
   <PageHeader title="Validators">
     {#snippet actions()}
       <NamespaceSelector />
-      <button
-        type="button"
-        disabled
-        class="px-4 py-2 bg-mono-400 text-white rounded-md flex items-center space-x-2 cursor-not-allowed opacity-60"
-      >
-        <i class="fa-solid fa-plus"></i>
-        <span>Add Validator</span>
-      </button>
     {/snippet}
   </PageHeader>
 
