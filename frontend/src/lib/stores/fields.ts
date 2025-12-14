@@ -141,7 +141,8 @@ export function createField(
 		type,
 		validators: options.validators ?? [],
 		usedInApis: options.usedInApis ?? [],
-		description: options.description ?? ''
+		description: options.description ?? '',
+		defaultValue: options.defaultValue ?? ''
 	};
 
 	fieldsStore.update(fields => [...fields, newField]);

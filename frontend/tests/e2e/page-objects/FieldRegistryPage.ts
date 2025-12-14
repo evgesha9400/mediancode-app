@@ -55,6 +55,12 @@ export class FieldRegistryPage {
 	readonly deleteConfirmButton: Locator;
 	readonly deleteCancelButton: Locator;
 
+	// Creation mode
+	readonly addFieldButton: Locator;
+	readonly createButton: Locator;
+	readonly cancelButton: Locator;
+	readonly createDrawer: Locator;
+
 	constructor(page: Page) {
 		this.page = page;
 
@@ -103,6 +109,12 @@ export class FieldRegistryPage {
 		this.deleteButton = page.getByRole('button', { name: 'Delete Field' });
 		this.deleteConfirmButton = page.getByRole('button', { name: 'Yes, Delete' });
 		this.deleteCancelButton = page.getByRole('button', { name: 'Cancel' });
+
+		// Creation mode
+		this.addFieldButton = page.getByRole('button', { name: 'Add Field' });
+		this.createButton = page.getByRole('button', { name: 'Create Field' });
+		this.cancelButton = page.getByRole('button', { name: 'Cancel' });
+		this.createDrawer = page.locator('[class*="fixed"][class*="right-0"]').filter({ has: page.locator('text=Create Field') });
 	}
 
 	/**
@@ -453,5 +465,78 @@ export class FieldRegistryPage {
 			return await errorLocator.textContent();
 		}
 		return null;
+	}
+
+	// ============================================================================
+	// Creation Mode Methods
+	// ============================================================================
+
+	/**
+	 * Click the Add Field button to open creation drawer
+	 */
+	async openCreateDrawer() {
+		await this.addFieldButton.click();
+		// Wait for drawer to open
+		await this.page.waitForTimeout(300);
+	}
+
+	/**
+	 * Check if creation drawer is open
+	 */
+	async isCreateDrawerOpen(): Promise<boolean> {
+		return await this.createButton.isVisible();
+	}
+
+	/**
+	 * Check if create button is enabled
+	 */
+	async isCreateEnabled(): Promise<boolean> {
+		return await this.createButton.isEnabled();
+	}
+
+	/**
+	 * Click create button
+	 */
+	async create() {
+		await this.createButton.click();
+		// Wait for create to complete and drawer to close
+		await this.page.waitForTimeout(600);
+	}
+
+	/**
+	 * Cancel creation (close drawer without creating)
+	 */
+	async cancelCreate() {
+		await this.cancelButton.click();
+		// Wait for drawer close animation
+		await this.page.waitForTimeout(500);
+	}
+
+	/**
+	 * Create a new field with the given properties
+	 */
+	async createNewField(options: {
+		name: string;
+		type?: string;
+		description?: string;
+		defaultValue?: string;
+	}) {
+		await this.openCreateDrawer();
+
+		await this.setFieldName(options.name);
+
+		if (options.type) {
+			await this.setFieldType(options.type);
+		}
+
+		if (options.description) {
+			await this.setFieldDescription(options.description);
+		}
+
+		if (options.defaultValue) {
+			await this.setDefaultValue(options.defaultValue);
+		}
+
+		await this.create();
 	}
 }

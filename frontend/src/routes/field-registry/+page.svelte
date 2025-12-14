@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { fieldsStore, updateField, deleteField, searchFields, type Field, type FieldValidator } from '$lib/stores/fields';
+  import { fieldsStore, updateField, deleteField, searchFields, createField, type Field, type FieldValidator } from '$lib/stores/fields';
   import { validatorsStore, getValidatorsByFieldType, getValidatorsByFieldTypeAndNamespace, type Validator } from '$lib/stores/validators';
   import { getPrimitiveTypes, type PrimitiveTypeName } from '$lib/stores/types';
   import { showToast } from '$lib/stores/toasts';
@@ -37,6 +37,7 @@
 
   // Form tracking
   let previousFieldType = $state<string | null>(null);
+  let isCreating = $state(false);
 
   let primitiveTypes = $derived(getPrimitiveTypes());
 
@@ -135,6 +136,31 @@
   function closeDrawer() {
     listState.closeDrawer();
     previousFieldType = null;
+    isCreating = false;
+  }
+
+  function createFieldDraft(): Field {
+    const firstType = primitiveTypes[0]?.name ?? 'str';
+    return {
+      id: '',
+      namespaceId: $activeNamespaceId,
+      name: '',
+      type: firstType as PrimitiveTypeName,
+      validators: [],
+      usedInApis: [],
+      description: '',
+      defaultValue: ''
+    };
+  }
+
+  function openCreateDrawer() {
+    isCreating = true;
+    listState.editedItem = createFieldDraft();
+    listState.selectedItem = null;
+    listState.originalItem = null;
+    listState.validationErrors = {};
+    listState.drawerOpen = true;
+    previousFieldType = primitiveTypes[0]?.name ?? 'str';
   }
 
   function isSelected(field: Field): boolean {
@@ -170,6 +196,31 @@
     listState.originalItem = JSON.parse(JSON.stringify(editedField));
     showToast(`Field "${fieldName}" updated successfully`, 'success', 3000);
     closeDrawer();
+  }
+
+  function handleCreate() {
+    if (!editedField || !validateForm()) return;
+
+    const createdField = createField(
+      editedField.name,
+      editedField.type,
+      editedField.namespaceId,
+      {
+        validators: editedField.validators,
+        description: editedField.description,
+        defaultValue: editedField.defaultValue
+      }
+    );
+
+    if (!createdField) {
+      listState.validationErrors = { name: 'A field with this name already exists in this namespace' };
+      return;
+    }
+
+    showToast(`Field "${createdField.name}" created successfully`, 'success', 3000);
+    closeDrawer();
+    // Select the newly created field
+    listState.selectItem(createdField);
   }
 
   function handleUndo() {
@@ -256,9 +307,8 @@
       <NamespaceSelector />
       <button
         type="button"
-        disabled
-        class="px-4 py-2 bg-mono-400 text-white rounded-md flex items-center space-x-2 cursor-not-allowed opacity-60"
-        title="Coming soon"
+        onclick={openCreateDrawer}
+        class="px-4 py-2 bg-mono-900 text-white rounded-md flex items-center space-x-2 hover:bg-mono-800 cursor-pointer transition-colors"
       >
         <i class="fa-solid fa-plus"></i>
         <span>Add Field</span>
@@ -382,7 +432,7 @@
 </DashboardLayout>
 
 <Drawer open={listState.drawerOpen}>
-  <DrawerHeader title="Edit Field" onClose={closeDrawer} />
+  <DrawerHeader title={isCreating ? 'Create Field' : 'Edit Field'} onClose={closeDrawer} />
 
   <DrawerContent>
     {#if editedField}
@@ -542,7 +592,26 @@
   </DrawerContent>
 
   <DrawerFooter>
-    {#if editedField}
+    {#if editedField && isCreating}
+      <!-- Creation mode buttons -->
+      {@const isFormValid = editedField.name.trim() !== '' && !!editedField.type}
+      <button
+        type="button"
+        onclick={handleCreate}
+        disabled={!isFormValid}
+        class="w-full px-4 py-2 rounded-md transition-colors font-medium {isFormValid ? 'bg-mono-900 text-white hover:bg-mono-800 cursor-pointer' : 'bg-mono-300 text-mono-500 cursor-not-allowed'}"
+      >
+        Create Field
+      </button>
+      <button
+        type="button"
+        onclick={closeDrawer}
+        class="w-full px-4 py-2 border border-mono-300 text-mono-700 rounded-md hover:bg-mono-50 cursor-pointer transition-colors font-medium"
+      >
+        Cancel
+      </button>
+    {:else if editedField}
+      <!-- Edit mode buttons -->
       <button
         type="button"
         onclick={handleSave}

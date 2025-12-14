@@ -196,6 +196,43 @@ test.describe('Fields - Feature Tests', () => {
 			}
 		});
 
+		test('should correctly count individual validator rows (regression test)', async () => {
+			const names = await fieldRegistryPage.getVisibleFieldNames();
+			await fieldRegistryPage.clickRow(names[0]);
+
+			// Get initial count - should be 0 or more, but definitely not 1 if there are no validators
+			const initialCount = await fieldRegistryPage.getValidatorCount();
+
+			// Add first validator
+			await fieldRegistryPage.addValidator();
+			const countAfterFirst = await fieldRegistryPage.getValidatorCount();
+			expect(countAfterFirst).toBe(initialCount + 1);
+
+			// Add second validator - this is the critical test
+			// The old broken locator would return count=1 (the container)
+			// The fixed locator should return count=2 (individual rows)
+			await fieldRegistryPage.addValidator();
+			const countAfterSecond = await fieldRegistryPage.getValidatorCount();
+			expect(countAfterSecond).toBe(initialCount + 2);
+
+			// Add third validator to be extra sure
+			await fieldRegistryPage.addValidator();
+			const countAfterThird = await fieldRegistryPage.getValidatorCount();
+			expect(countAfterThird).toBe(initialCount + 3);
+
+			// Verify each validator is independently accessible
+			const firstValidatorRow = fieldRegistryPage.validatorRows.nth(0);
+			const secondValidatorRow = fieldRegistryPage.validatorRows.nth(1);
+			const thirdValidatorRow = fieldRegistryPage.validatorRows.nth(2);
+
+			await expect(firstValidatorRow).toBeVisible();
+			await expect(secondValidatorRow).toBeVisible();
+			await expect(thirdValidatorRow).toBeVisible();
+
+			// Undo to restore original state
+			await fieldRegistryPage.undo();
+		});
+
 		test('should add a validator', async () => {
 			const names = await fieldRegistryPage.getVisibleFieldNames();
 			await fieldRegistryPage.clickRow(names[0]);
@@ -485,6 +522,115 @@ test.describe('Fields - Feature Tests', () => {
 
 			const restoredCount = await fieldRegistryPage.getRowCount();
 			expect(restoredCount).toBe(initialCount);
+		});
+	});
+
+	test.describe('Create Field', () => {
+		test('should open creation drawer when clicking Add Field', async () => {
+			await fieldRegistryPage.openCreateDrawer();
+
+			const isOpen = await fieldRegistryPage.isCreateDrawerOpen();
+			expect(isOpen).toBe(true);
+		});
+
+		test('should have create button disabled when name is empty', async () => {
+			await fieldRegistryPage.openCreateDrawer();
+
+			// Initially the name is empty, so create should be disabled
+			const isEnabled = await fieldRegistryPage.isCreateEnabled();
+			expect(isEnabled).toBe(false);
+		});
+
+		test('should enable create button when name is entered', async () => {
+			await fieldRegistryPage.openCreateDrawer();
+
+			await fieldRegistryPage.setFieldName('new_test_field');
+
+			const isEnabled = await fieldRegistryPage.isCreateEnabled();
+			expect(isEnabled).toBe(true);
+		});
+
+		test('should cancel creation and close drawer', async () => {
+			await fieldRegistryPage.openCreateDrawer();
+
+			await fieldRegistryPage.setFieldName('cancelled_field');
+			await fieldRegistryPage.cancelCreate();
+
+			const isOpen = await fieldRegistryPage.isCreateDrawerOpen();
+			expect(isOpen).toBe(false);
+
+			// Field should not exist in table
+			const hasField = await fieldRegistryPage.hasField('cancelled_field');
+			expect(hasField).toBe(false);
+		});
+
+		test('should successfully create a new field', async () => {
+			const uniqueFieldName = `test_field_${Date.now()}`;
+			const initialCount = await fieldRegistryPage.getRowCount();
+
+			await fieldRegistryPage.createNewField({
+				name: uniqueFieldName,
+				description: 'A test field created by E2E tests',
+				defaultValue: 'test_default'
+			});
+
+			// Drawer should close after creation
+			const isOpen = await fieldRegistryPage.isCreateDrawerOpen();
+			expect(isOpen).toBe(false);
+
+			// Field should appear in table
+			const hasField = await fieldRegistryPage.hasField(uniqueFieldName);
+			expect(hasField).toBe(true);
+
+			// Row count should increase
+			const newCount = await fieldRegistryPage.getRowCount();
+			expect(newCount).toBe(initialCount + 1);
+		});
+
+		test('should show validation error for duplicate field name', async () => {
+			// Get an existing field name
+			const existingNames = await fieldRegistryPage.getVisibleFieldNames();
+			expect(existingNames.length).toBeGreaterThan(0);
+
+			const existingName = existingNames[0];
+
+			await fieldRegistryPage.openCreateDrawer();
+			await fieldRegistryPage.setFieldName(existingName);
+			await fieldRegistryPage.create();
+
+			// Should show validation error
+			const error = await fieldRegistryPage.getValidationError('name');
+			expect(error).toContain('already exists');
+		});
+
+		test('should reset validators when type changes during creation', async () => {
+			await fieldRegistryPage.openCreateDrawer();
+			await fieldRegistryPage.setFieldName('type_change_test');
+
+			// Add a validator
+			const initialCount = await fieldRegistryPage.getValidatorCount();
+			await fieldRegistryPage.addValidator();
+			const countAfterAdd = await fieldRegistryPage.getValidatorCount();
+			expect(countAfterAdd).toBe(initialCount + 1);
+
+			// Change type
+			await fieldRegistryPage.setFieldType('int');
+
+			// Validators should be reset
+			const countAfterTypeChange = await fieldRegistryPage.getValidatorCount();
+			expect(countAfterTypeChange).toBe(0);
+
+			// Cancel to not leave test data
+			await fieldRegistryPage.cancelCreate();
+		});
+
+		test('should pre-populate first primitive type in creation mode', async () => {
+			await fieldRegistryPage.openCreateDrawer();
+
+			// The type should be pre-selected (first available type)
+			const type = await fieldRegistryPage.getFieldType();
+			expect(type).toBeTruthy();
+			expect(type.length).toBeGreaterThan(0);
 		});
 	});
 });
