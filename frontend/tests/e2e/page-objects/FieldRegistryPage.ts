@@ -160,10 +160,10 @@ export class FieldRegistryPage {
 	}
 
 	/**
-	 * Check if drawer is open
+	 * Check if drawer is open (either edit or create drawer)
 	 */
 	async isDrawerOpen(): Promise<boolean> {
-		return await this.fieldNameInput.isVisible();
+		return await this.drawer.isVisible() || await this.createDrawer.isVisible();
 	}
 
 	/**
@@ -516,8 +516,10 @@ export class FieldRegistryPage {
 	 */
 	async create() {
 		await this.createButton.click();
-		// Wait for create to complete and drawer to close
+		// Wait for create to complete and drawer to close (closeDelay is 300ms + animation time)
 		await this.page.waitForTimeout(600);
+		// Additionally wait for drawer to actually be hidden
+		await this.createDrawer.waitFor({ state: 'hidden', timeout: 5000 }).catch(() => {});
 	}
 
 	/**

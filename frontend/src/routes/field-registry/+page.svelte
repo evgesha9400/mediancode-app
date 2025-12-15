@@ -223,16 +223,9 @@
 
     showToast(`Field "${createdField.name}" created successfully`, 'success', 3000);
 
-    // Exit create mode and transition to edit mode for the newly created field
-    // We directly update the state instead of using selectField() to keep the drawer open
-    // (selectField would close/reopen the drawer due to the item switch logic)
+    // Close drawer after successful creation (matches object builder behavior)
     isCreating = false;
-    listState.selectedItem = createdField;
-    listState.editedItem = JSON.parse(JSON.stringify(createdField));
-    listState.originalItem = JSON.parse(JSON.stringify(createdField));
-    listState.validationErrors = {};
-    previousFieldType = createdField.type;
-    // Drawer remains open - no need to toggle drawerOpen
+    closeDrawer();
   }
 
   function handleUndo() {

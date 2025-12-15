@@ -574,16 +574,9 @@ test.describe('Fields - Feature Tests', () => {
 				defaultValue: 'test_default'
 			});
 
-			// Drawer should remain open showing the newly created field
+			// Drawer should close after successful creation (matches object builder behavior)
 			const isOpen = await fieldRegistryPage.isDrawerOpen();
-			expect(isOpen).toBe(true);
-
-			// Verify the drawer is showing the newly created field
-			const fieldName = await fieldRegistryPage.getFieldName();
-			expect(fieldName).toBe(uniqueFieldName);
-
-			// Close drawer to verify field in table
-			await fieldRegistryPage.closeDrawer();
+			expect(isOpen).toBe(false);
 
 			// Field should appear in table
 			const hasField = await fieldRegistryPage.hasField(uniqueFieldName);
@@ -594,32 +587,35 @@ test.describe('Fields - Feature Tests', () => {
 			expect(newCount).toBe(initialCount + 1);
 		});
 
-		test('should keep newly created field selected in drawer (race condition fix)', async () => {
-			const uniqueFieldName = `race_test_${Date.now()}`;
+		test('should allow viewing newly created field by clicking its row', async () => {
+			const uniqueFieldName = `view_after_create_${Date.now()}`;
 
 			await fieldRegistryPage.createNewField({
 				name: uniqueFieldName,
-				description: 'Testing race condition fix'
+				description: 'Testing view after creation'
 			});
 
-			// Drawer should be open immediately after creation
-			const isOpenImmediately = await fieldRegistryPage.isDrawerOpen();
-			expect(isOpenImmediately).toBe(true);
+			// Drawer should close after creation
+			const isClosedAfterCreate = await fieldRegistryPage.isDrawerOpen();
+			expect(isClosedAfterCreate).toBe(false);
 
-			// Field name should be visible immediately
-			const fieldNameImmediately = await fieldRegistryPage.getFieldName();
-			expect(fieldNameImmediately).toBe(uniqueFieldName);
+			// Field should appear in table
+			const hasField = await fieldRegistryPage.hasField(uniqueFieldName);
+			expect(hasField).toBe(true);
 
-			// Wait for the original timeout period (300ms) to ensure selection persists
-			await fieldRegistryPage.page.waitForTimeout(400);
+			// Wait for table state to stabilize after creation
+			await fieldRegistryPage.page.waitForTimeout(500);
 
-			// Drawer should still be open
-			const isOpenAfterTimeout = await fieldRegistryPage.isDrawerOpen();
-			expect(isOpenAfterTimeout).toBe(true);
+			// Click on the newly created field to view it
+			await fieldRegistryPage.clickRow(uniqueFieldName);
 
-			// Field should still be selected and visible
-			const fieldNameAfterTimeout = await fieldRegistryPage.getFieldName();
-			expect(fieldNameAfterTimeout).toBe(uniqueFieldName);
+			// Drawer should open with the field details
+			const isOpenAfterClick = await fieldRegistryPage.isDrawerOpen();
+			expect(isOpenAfterClick).toBe(true);
+
+			// Verify field name in drawer
+			const fieldName = await fieldRegistryPage.getFieldName();
+			expect(fieldName).toBe(uniqueFieldName);
 
 			// Clean up
 			await fieldRegistryPage.closeDrawer();

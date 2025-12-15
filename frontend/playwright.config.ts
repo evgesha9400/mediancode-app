@@ -102,10 +102,12 @@ export default defineConfig({
 	],
 
 	// Web server configuration for local development
+	// IMPORTANT: reuseExistingServer is false to always rebuild with fresh code
+	// This prevents stale code issues when debugging test failures
 	webServer: {
 		command: `npm run build && npm run preview -- --host ${PREVIEW_HOST} --port ${PREVIEW_PORT}`,
 		port: PREVIEW_PORT,
-		reuseExistingServer: !process.env.CI,
+		reuseExistingServer: false,
 		stdout: 'ignore',
 		stderr: 'pipe',
 		// Ensure the build has access to required environment variables
