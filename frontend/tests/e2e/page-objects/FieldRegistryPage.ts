@@ -44,9 +44,9 @@ export class FieldRegistryPage {
 	readonly fieldDefaultValueInput: Locator;
 
 	// Drawer validators section
-	readonly addValidatorButton: Locator;
+	readonly validatorSelectorInput: Locator;
+	readonly validatorDropdownOptions: Locator;
 	readonly validatorRows: Locator;
-	readonly validatorsContainer: Locator;
 
 	// Drawer actions
 	readonly saveButton: Locator;
@@ -91,17 +91,17 @@ export class FieldRegistryPage {
 		this.drawer = page.locator('[class*="fixed"][class*="right-0"]').filter({ has: page.locator('text=Edit Field') });
 		this.drawerCloseButton = page.locator('button[aria-label="Close drawer"]');
 
-		// Drawer form fields
-		this.fieldNameInput = page.locator('#field-name');
-		this.fieldTypeSelect = page.locator('#field-type');
-		this.fieldDescriptionTextarea = page.locator('#field-description');
-		this.fieldDefaultValueInput = page.locator('#field-default-value');
+		// Drawer form fields (using prefixed IDs to avoid conflicts)
+		this.fieldNameInput = page.locator('#field-registry-name');
+		this.fieldTypeSelect = page.locator('#field-registry-type');
+		this.fieldDescriptionTextarea = page.locator('#field-registry-description');
+		this.fieldDefaultValueInput = page.locator('#field-registry-default-value');
 
-		// Drawer validators section
-		this.addValidatorButton = page.getByRole('button', { name: '+ Add', exact: true });
-		// Select the validators container div, then get individual validator rows
-		this.validatorsContainer = page.locator('.bg-mono-50.rounded-md').filter({ has: page.locator('select') });
-		this.validatorRows = this.validatorsContainer.locator('.flex.items-center.space-x-2').filter({ has: page.locator('select') });
+		// Drawer validators section - uses ValidatorSelectorDropdown component
+		this.validatorSelectorInput = page.getByPlaceholder('Add validator to field...');
+		this.validatorDropdownOptions = page.locator('.absolute.z-10 button');
+		// Individual validator rows - identified by having a "Remove validator" button
+		this.validatorRows = page.locator('.flex.items-center.space-x-2.p-2.bg-white').filter({ has: page.getByRole('button', { name: 'Remove validator' }) });
 
 		// Drawer actions
 		this.saveButton = page.getByRole('button', { name: 'Save Changes' });
@@ -295,10 +295,27 @@ export class FieldRegistryPage {
 	}
 
 	/**
-	 * Add a validator
+	 * Add a validator using the dropdown selector
+	 * @param validatorName - Optional name of specific validator to select. If not provided, selects first available.
 	 */
-	async addValidator() {
-		await this.addValidatorButton.click();
+	async addValidator(validatorName?: string) {
+		// Click the input to open the dropdown
+		await this.validatorSelectorInput.click();
+
+		// Wait for dropdown to populate
+		await this.page.waitForTimeout(200);
+
+		// Select a validator
+		if (validatorName) {
+			const option = this.validatorDropdownOptions.filter({ hasText: validatorName });
+			await option.first().click();
+		} else {
+			// Select first available validator if no specific name provided
+			await this.validatorDropdownOptions.first().click();
+		}
+
+		// Wait for selection to complete
+		await this.page.waitForTimeout(100);
 	}
 
 	/**

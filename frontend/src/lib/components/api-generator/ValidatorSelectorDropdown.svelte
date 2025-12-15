@@ -14,6 +14,7 @@
 
   let searchQuery = $state('');
   let dropdownOpen = $state(false);
+  let blurTimeoutId: ReturnType<typeof setTimeout> | null = null;
 
   // Filter validators based on search query and exclude already selected
   const filteredValidators = $derived.by(() => {
@@ -37,13 +38,28 @@
     dropdownOpen = false;
   }
 
-  function handleFocus(): void {
+  function openDropdown(): void {
+    // Cancel any pending blur timeout to prevent race conditions
+    if (blurTimeoutId) {
+      clearTimeout(blurTimeoutId);
+      blurTimeoutId = null;
+    }
     dropdownOpen = true;
   }
 
+  function handleFocus(): void {
+    openDropdown();
+  }
+
+  function handleClick(): void {
+    // Also open on click in case input is already focused
+    openDropdown();
+  }
+
   function handleBlur(): void {
-    setTimeout(() => {
+    blurTimeoutId = setTimeout(() => {
       dropdownOpen = false;
+      blurTimeoutId = null;
     }, 150);
   }
 </script>
@@ -54,6 +70,7 @@
       type="text"
       bind:value={searchQuery}
       onfocus={handleFocus}
+      onclick={handleClick}
       onblur={handleBlur}
       placeholder={placeholder}
       class="w-full px-3 py-1.5 border border-mono-300 rounded-md focus:ring-2 focus:ring-mono-400 focus:border-transparent text-sm pr-8"

@@ -13,7 +13,6 @@ export class ValidatorsPage {
 
 	// Header
 	readonly pageTitle: Locator;
-	readonly addValidatorButton: Locator;
 
 	// Search
 	readonly searchInput: Locator;
@@ -59,7 +58,6 @@ export class ValidatorsPage {
 
 		// Header
 		this.pageTitle = page.getByRole('heading', { name: 'Validators', level: 1 });
-		this.addValidatorButton = page.getByRole('button', { name: 'Add Validator' });
 
 		// Search
 		this.searchInput = page.getByPlaceholder('Search validators...');
@@ -383,10 +381,4 @@ export class ValidatorsPage {
 		return await this.emptyState.isVisible();
 	}
 
-	/**
-	 * Check if add validator button is disabled (expected to be disabled per UI)
-	 */
-	async isAddValidatorDisabled(): Promise<boolean> {
-		return !(await this.addValidatorButton.isEnabled());
-	}
 }

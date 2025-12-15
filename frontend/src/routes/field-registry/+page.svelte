@@ -428,11 +428,11 @@
       <div class="space-y-4">
         <!-- Namespace (Read-only) -->
         <div>
-          <label for="field-namespace" class="block text-sm text-mono-700 mb-1 font-medium">
+          <label for="field-registry-namespace" class="block text-sm text-mono-700 mb-1 font-medium">
             Namespace
           </label>
           <input
-            id="field-namespace"
+            id="field-registry-namespace"
             type="text"
             value={getNamespaceById(editedField.namespaceId)?.name ?? ''}
             disabled
@@ -443,11 +443,11 @@
 
         <!-- Field Name -->
         <div>
-          <label for="field-name" class="block text-sm text-mono-700 mb-1 font-medium">
+          <label for="field-registry-name" class="block text-sm text-mono-700 mb-1 font-medium">
             Field Name <span class="text-red-500">*</span>
           </label>
           <input
-            id="field-name"
+            id="field-registry-name"
             type="text"
             bind:value={editedField.name}
             class="w-full px-3 py-2 border border-mono-300 rounded-md focus:ring-2 focus:ring-mono-400 focus:border-transparent {validationErrors.name ? 'border-red-500' : ''}"
@@ -459,12 +459,12 @@
 
         <!-- Type -->
         <div>
-          <label for="field-type" class="block text-sm text-mono-700 mb-1 font-medium">
+          <label for="field-registry-type" class="block text-sm text-mono-700 mb-1 font-medium">
             Type <span class="text-red-500">*</span>
           </label>
           <div class="relative">
             <select
-              id="field-type"
+              id="field-registry-type"
               bind:value={editedField.type}
               onchange={() => editedField && handleTypeChange(editedField.type)}
               class="w-full appearance-none px-3 py-2 border border-mono-300 rounded-md focus:ring-2 focus:ring-mono-400 focus:border-transparent pr-8 {validationErrors.type ? 'border-red-500' : ''}"
@@ -484,9 +484,9 @@
 
         <!-- Description -->
         <div>
-          <label for="field-description" class="block text-sm text-mono-700 mb-1 font-medium">Description</label>
+          <label for="field-registry-description" class="block text-sm text-mono-700 mb-1 font-medium">Description</label>
           <textarea
-            id="field-description"
+            id="field-registry-description"
             bind:value={editedField.description}
             rows="3"
             class="w-full px-3 py-2 border border-mono-300 rounded-md focus:ring-2 focus:ring-mono-400 focus:border-transparent"
@@ -495,9 +495,9 @@
 
         <!-- Default Value -->
         <div>
-          <label for="field-default-value" class="block text-sm text-mono-700 mb-1 font-medium">Default Value</label>
+          <label for="field-registry-default-value" class="block text-sm text-mono-700 mb-1 font-medium">Default Value</label>
           <input
-            id="field-default-value"
+            id="field-registry-default-value"
             type="text"
             bind:value={editedField.defaultValue}
             placeholder="None"
@@ -550,6 +550,7 @@
                         onclick={() => removeValidator(index)}
                         class="text-red-700 hover:text-red-600 transition-colors"
                         title="Remove validator"
+                        aria-label="Remove validator"
                       >
                         <i class="fa-solid fa-xmark"></i>
                       </button>
@@ -566,6 +567,7 @@
                         onclick={() => removeValidator(index)}
                         class="p-1 text-red-700 hover:text-red-600 hover:bg-red-100 rounded transition-colors"
                         title="Remove missing validator reference"
+                        aria-label="Remove validator"
                       >
                         <i class="fa-solid fa-xmark"></i>
                       </button>

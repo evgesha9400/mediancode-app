@@ -309,8 +309,9 @@ export function createListViewState<Item, FilterState extends Record<string, any
     selectedItem = item;
 
     if (trackEdits) {
-      editedItem = structuredClone(item);
-      originalItem = structuredClone(item);
+      // Use JSON clone instead of structuredClone to handle Svelte 5 reactive proxies
+      editedItem = JSON.parse(JSON.stringify(item));
+      originalItem = JSON.parse(JSON.stringify(item));
     }
 
     // Use setTimeout to ensure state is cleared before reopening when switching items

@@ -294,6 +294,9 @@ test.describe('Object Builder - Feature Tests', () => {
 			const hasObject = await objectBuilderPage.hasObject(uniqueObjectName);
 			expect(hasObject).toBe(true);
 
+			// Wait for table state to stabilize after creation
+			await objectBuilderPage.page.waitForTimeout(500);
+
 			// Click on the newly created object to view it
 			await objectBuilderPage.clickRow(uniqueObjectName);
 
@@ -408,19 +411,17 @@ test.describe('Object Builder - Feature Tests', () => {
 			}
 		});
 
-		test('should allow namespace selection during creation', async () => {
-			const uniqueObjectName = `NamespacedObject_${Date.now()}`;
-
+		test('should show namespace from global selector in create mode', async () => {
 			await objectBuilderPage.openCreateDrawer();
 
-			// Namespace selector should be visible and interactive in create mode
+			// Namespace field should be visible but disabled (controlled by global selector)
 			await expect(objectBuilderPage.objectNamespaceSelect).toBeVisible();
-			await expect(objectBuilderPage.objectNamespaceSelect).toBeEnabled();
+			await expect(objectBuilderPage.objectNamespaceSelect).toBeDisabled();
 
-			await objectBuilderPage.setObjectName(uniqueObjectName);
-
-			// The namespace selector is a dropdown - we can interact with it
-			// (We don't test changing namespaces as that requires specific namespace IDs)
+			// Should display the active namespace (not empty)
+			const namespaceValue = await objectBuilderPage.objectNamespaceSelect.inputValue();
+			expect(namespaceValue.length).toBeGreaterThan(0);
+			expect(namespaceValue).not.toBe('No namespace selected');
 
 			// Cancel to clean up
 			await objectBuilderPage.cancelCreate();

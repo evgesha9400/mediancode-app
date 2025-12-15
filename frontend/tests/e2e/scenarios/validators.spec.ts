@@ -38,12 +38,6 @@ test.describe('Validators - Feature Tests', () => {
 		test('should display search input', async () => {
 			await expect(validatorsPage.searchInput).toBeVisible();
 		});
-
-		test('should have add validator button disabled', async () => {
-			await expect(validatorsPage.addValidatorButton).toBeVisible();
-			const isDisabled = await validatorsPage.isAddValidatorDisabled();
-			expect(isDisabled).toBe(true);
-		});
 	});
 
 	test.describe('Search', () => {

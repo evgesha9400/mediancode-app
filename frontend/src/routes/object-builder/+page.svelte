@@ -2,7 +2,7 @@
   import { objectsStore, updateObject, deleteObject, searchObjects, createObject, type ObjectDefinition } from '$lib/stores/objects';
   import { fieldsStore, getFieldById } from '$lib/stores/fields';
   import { showToast } from '$lib/stores/toasts';
-  import { activeNamespaceId, getNamespaceById, namespacesStore } from '$lib/stores/namespaces';
+  import { activeNamespaceId, getNamespaceById } from '$lib/stores/namespaces';
   import { buildDeletionTooltip } from '$lib/utils/references';
   import {
     DashboardLayout,
@@ -219,21 +219,6 @@
     };
   }
 
-  function handleNamespaceChange(newNamespaceId: string) {
-    if (!editedObject) return;
-
-    // Update the object's namespace
-    listState.editedItem = {
-      ...editedObject,
-      namespaceId: newNamespaceId,
-      // Clear fields that don't belong to the new namespace
-      fields: editedObject.fields.filter(fieldRef => {
-        const field = getFieldById(fieldRef.fieldId);
-        return field && field.namespaceId === newNamespaceId;
-      })
-    };
-  }
-
   let hasReferences = $derived(editedObject ? editedObject.usedInApis.length > 0 : false);
   let deleteTooltip = $derived(editedObject && hasReferences
     ? buildDeletionTooltip('object', 'API', editedObject!.usedInApis.map(api => ({ name: api })))
@@ -349,37 +334,21 @@
   <DrawerContent>
     {#if editedObject}
       <div class="space-y-4">
-        <!-- Namespace -->
+        <!-- Namespace (Read-only - uses active namespace from selector) -->
         <div>
           <label for="object-namespace" class="block text-sm text-mono-700 mb-1 font-medium">
-            Namespace {#if isCreating}<span class="text-red-500">*</span>{/if}
+            Namespace
           </label>
-          {#if isCreating}
-            <div class="relative">
-              <select
-                id="object-namespace"
-                bind:value={editedObject.namespaceId}
-                onchange={() => editedObject && handleNamespaceChange(editedObject.namespaceId)}
-                class="w-full appearance-none px-3 py-2 border border-mono-300 rounded-md focus:ring-2 focus:ring-mono-400 focus:border-transparent pr-8"
-              >
-                {#each $namespacesStore as namespace}
-                  <option value={namespace.id}>{namespace.name}</option>
-                {/each}
-              </select>
-              <div class="absolute inset-y-0 right-0 flex items-center px-2 pointer-events-none">
-                <i class="fa-solid fa-chevron-down text-mono-400"></i>
-              </div>
-            </div>
-          {:else}
-            <input
-              id="object-namespace"
-              type="text"
-              value={getNamespaceById(editedObject.namespaceId)?.name ?? ''}
-              disabled
-              class="w-full px-3 py-2 border border-mono-300 rounded-md bg-mono-50 text-mono-500 cursor-not-allowed"
-            />
-            <p class="text-xs text-mono-500 mt-1">Namespace cannot be changed after creation</p>
-          {/if}
+          <input
+            id="object-namespace"
+            type="text"
+            value={getNamespaceById(editedObject.namespaceId)?.name ?? 'No namespace selected'}
+            disabled
+            class="w-full px-3 py-2 border border-mono-200 rounded-lg bg-mono-100 text-mono-500 cursor-not-allowed"
+          />
+          <p class="mt-1 text-xs text-mono-500">
+            Namespace is determined by the selector above
+          </p>
         </div>
 
         <!-- Object Name -->
