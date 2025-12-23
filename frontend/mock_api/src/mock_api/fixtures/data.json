@@ -1,0 +1,228 @@
+{
+  "types": [
+    {
+      "id": "type_1",
+      "name": "String",
+      "python_type": "str",
+      "description": "Text string type",
+      "is_builtin": true,
+      "is_nullable": false,
+      "default_value": "",
+      "owner_id": "user_test123",
+      "account_id": "acct_test123",
+      "created_at": "2024-01-01T00:00:00Z",
+      "updated_at": "2024-01-01T00:00:00Z"
+    },
+    {
+      "id": "type_2",
+      "name": "Integer",
+      "python_type": "int",
+      "description": "Whole number type",
+      "is_builtin": true,
+      "is_nullable": false,
+      "default_value": 0,
+      "owner_id": "user_test123",
+      "account_id": "acct_test123",
+      "created_at": "2024-01-01T00:00:00Z",
+      "updated_at": "2024-01-01T00:00:00Z"
+    },
+    {
+      "id": "type_3",
+      "name": "Boolean",
+      "python_type": "bool",
+      "description": "True/False type",
+      "is_builtin": true,
+      "is_nullable": false,
+      "default_value": false,
+      "owner_id": "user_test123",
+      "account_id": "acct_test123",
+      "created_at": "2024-01-01T00:00:00Z",
+      "updated_at": "2024-01-01T00:00:00Z"
+    },
+    {
+      "id": "type_4",
+      "name": "Float",
+      "python_type": "float",
+      "description": "Decimal number type",
+      "is_builtin": true,
+      "owner_id": "user_other456",
+      "account_id": "acct_other456",
+      "created_at": "2024-01-02T00:00:00Z",
+      "updated_at": "2024-01-02T00:00:00Z"
+    }
+  ],
+  "validators": [
+    {
+      "id": "val_1",
+      "name": "Email Format",
+      "validator_type": "pattern",
+      "description": "Validates email addresses",
+      "config": {
+        "pattern": "^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$"
+      },
+      "error_message": "Invalid email format",
+      "owner_id": "user_test123",
+      "account_id": "acct_test123",
+      "created_at": "2024-01-01T00:00:00Z",
+      "updated_at": "2024-01-01T00:00:00Z"
+    },
+    {
+      "id": "val_2",
+      "name": "String Length",
+      "validator_type": "length",
+      "description": "Validates string length between 1 and 255 characters",
+      "config": {
+        "min": 1,
+        "max": 255
+      },
+      "error_message": "String must be between 1 and 255 characters",
+      "owner_id": "user_test123",
+      "account_id": "acct_test123",
+      "created_at": "2024-01-01T00:00:00Z",
+      "updated_at": "2024-01-01T00:00:00Z"
+    },
+    {
+      "id": "val_3",
+      "name": "Age Range",
+      "validator_type": "range",
+      "description": "Validates age between 0 and 150",
+      "config": {
+        "min": 0,
+        "max": 150
+      },
+      "error_message": "Age must be between 0 and 150",
+      "owner_id": "user_test123",
+      "account_id": "acct_test123",
+      "created_at": "2024-01-01T00:00:00Z",
+      "updated_at": "2024-01-01T00:00:00Z"
+    },
+    {
+      "id": "val_4",
+      "name": "Custom Validator",
+      "validator_type": "custom",
+      "description": "Custom validation logic",
+      "config": {
+        "custom_code": "lambda x: len(x) > 0"
+      },
+      "owner_id": "user_other456",
+      "account_id": "acct_other456",
+      "created_at": "2024-01-02T00:00:00Z",
+      "updated_at": "2024-01-02T00:00:00Z"
+    }
+  ],
+  "fields": [
+    {
+      "id": "field_1",
+      "name": "email",
+      "type_id": "type_1",
+      "description": "User email address",
+      "is_required": true,
+      "is_unique": true,
+      "is_indexed": true,
+      "default_value": null,
+      "validator_ids": ["val_1", "val_2"],
+      "namespace": "user",
+      "owner_id": "user_test123",
+      "account_id": "acct_test123",
+      "created_at": "2024-01-01T00:00:00Z",
+      "updated_at": "2024-01-01T00:00:00Z"
+    },
+    {
+      "id": "field_2",
+      "name": "age",
+      "type_id": "type_2",
+      "description": "User age in years",
+      "is_required": false,
+      "is_unique": false,
+      "is_indexed": false,
+      "default_value": 0,
+      "validator_ids": ["val_3"],
+      "namespace": "user",
+      "owner_id": "user_test123",
+      "account_id": "acct_test123",
+      "created_at": "2024-01-01T00:00:00Z",
+      "updated_at": "2024-01-01T00:00:00Z"
+    },
+    {
+      "id": "field_3",
+      "name": "is_active",
+      "type_id": "type_3",
+      "description": "Whether the user account is active",
+      "is_required": true,
+      "is_unique": false,
+      "is_indexed": true,
+      "default_value": true,
+      "validator_ids": [],
+      "namespace": "user",
+      "owner_id": "user_test123",
+      "account_id": "acct_test123",
+      "created_at": "2024-01-01T00:00:00Z",
+      "updated_at": "2024-01-01T00:00:00Z"
+    },
+    {
+      "id": "field_4",
+      "name": "username",
+      "type_id": "type_1",
+      "description": "Unique username",
+      "is_required": true,
+      "is_unique": true,
+      "validator_ids": ["val_2"],
+      "namespace": "user",
+      "owner_id": "user_test123",
+      "account_id": "acct_test123",
+      "created_at": "2024-01-01T00:00:00Z",
+      "updated_at": "2024-01-01T00:00:00Z"
+    },
+    {
+      "id": "field_5",
+      "name": "score",
+      "type_id": "type_4",
+      "description": "User score",
+      "is_required": false,
+      "owner_id": "user_other456",
+      "account_id": "acct_other456",
+      "created_at": "2024-01-02T00:00:00Z",
+      "updated_at": "2024-01-02T00:00:00Z"
+    }
+  ],
+  "objects": [
+    {
+      "id": "obj_1",
+      "name": "User",
+      "description": "User account object",
+      "field_ids": ["field_1", "field_2", "field_3", "field_4"],
+      "namespace": "user",
+      "table_name": "users",
+      "is_active": true,
+      "owner_id": "user_test123",
+      "account_id": "acct_test123",
+      "created_at": "2024-01-01T00:00:00Z",
+      "updated_at": "2024-01-01T00:00:00Z"
+    },
+    {
+      "id": "obj_2",
+      "name": "Profile",
+      "description": "User profile object",
+      "field_ids": ["field_2"],
+      "namespace": "user",
+      "table_name": "profiles",
+      "is_active": true,
+      "owner_id": "user_test123",
+      "account_id": "acct_test123",
+      "created_at": "2024-01-01T00:00:00Z",
+      "updated_at": "2024-01-01T00:00:00Z"
+    },
+    {
+      "id": "obj_3",
+      "name": "Score",
+      "description": "Score tracking object",
+      "field_ids": ["field_5"],
+      "namespace": "game",
+      "table_name": "scores",
+      "owner_id": "user_other456",
+      "account_id": "acct_other456",
+      "created_at": "2024-01-02T00:00:00Z",
+      "updated_at": "2024-01-02T00:00:00Z"
+    }
+  ]
+}
