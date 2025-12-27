@@ -29,7 +29,9 @@ import {
 	normalizeEndpoint
 } from './apis';
 import { activeNamespaceId } from './namespaces';
-import { getFieldById } from './fields';
+import { fieldsStore, getFieldById } from './fields';
+import { objectsStore } from './objects';
+import { validatorsStore } from './validators';
 import { showToast } from './toasts';
 import { deepClone, generateParamId } from '$lib/utils/ids';
 
@@ -442,7 +444,22 @@ export function createApiGeneratorState(): ApiGeneratorState {
 	// ============================================================================
 
 	function handleGenerateCode(): void {
-		showToast(MESSAGES.CODE_GENERATION_SOON, 'info', 3000);
+		// Gather all data from stores for code generation
+		const requestPayload = {
+			metadata: get(apiMetadataStore),
+			tags: get(tagsStore),
+			endpoints: get(endpointsStore),
+			objects: get(objectsStore),
+			fields: get(fieldsStore),
+			validators: get(validatorsStore)
+		};
+
+		// Log the payload for development/testing
+		console.log('Generate request payload:', requestPayload);
+
+		// TODO: Make API call to /v1/generate endpoint
+		// This will be implemented when the backend is deployed
+		showToast('Code generation will be available when backend is deployed', 'info', 5000);
 	}
 
 	// ============================================================================

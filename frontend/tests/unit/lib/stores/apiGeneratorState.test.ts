@@ -600,12 +600,19 @@ describe('apiGeneratorState - Code Generation', () => {
 		vi.clearAllMocks();
 	});
 
-	it('should show code generation toast', () => {
+	it('should show code generation toast and log payload', () => {
 		const state = createApiGeneratorState();
+		const consoleSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
 
 		state.handleGenerateCode();
 
-		expect(toastsModule.showToast).toHaveBeenCalledWith('Code generation coming soon', 'info', 3000);
+		// Verify console.log was called with the payload
+		expect(consoleSpy).toHaveBeenCalledWith('Generate request payload:', expect.any(Object));
+
+		// Verify toast message
+		expect(toastsModule.showToast).toHaveBeenCalledWith('Code generation will be available when backend is deployed', 'info', 5000);
+
+		consoleSpy.mockRestore();
 	});
 });
 

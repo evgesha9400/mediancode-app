@@ -11,8 +11,6 @@
     "check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
     "check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch",
     "kill-dev": "./scripts/kill-dev.sh",
-    "mock-api": "cd mock_api && PYTHONPATH=src poetry run uvicorn mock_api.main:app --reload --port 8000",
-    "kill-mock-api": "./scripts/kill-mock-api.sh",
     "test": "vitest run",
     "test:unit": "vitest run tests/unit",
     "test:integration": "vitest run tests/integration",
