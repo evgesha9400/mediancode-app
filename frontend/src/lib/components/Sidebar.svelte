@@ -51,7 +51,7 @@
     </a>
   </div>
 
-  <div class="p-4">
+  <div class="flex-1 overflow-y-auto p-4">
     <ul class="space-y-1 mb-6">
       <li>
         <a
@@ -89,8 +89,10 @@
         </li>
       {/each}
     </ul>
+  </div>
 
-    <h2 class="text-xs uppercase tracking-wider text-mono-400 mb-3 mt-6 font-medium">Configuration</h2>
+  <div class="p-4 border-t border-mono-800">
+    <h2 class="text-xs uppercase tracking-wider text-mono-400 mb-3 font-medium">Configuration</h2>
     <ul class="space-y-1">
       {#each configItems as item}
         <li>

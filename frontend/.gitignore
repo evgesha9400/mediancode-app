@@ -79,3 +79,6 @@ coverage/
 orchestrator.py
 codex_feedback_*.txt
 claude_output_*.txt
+
+# Auto Claude data directory
+.auto-claude/
