@@ -729,17 +729,26 @@ export function createApiDetailState(config: ApiDetailStateConfig): ApiDetailSta
 	function handleGenerateCode(): void {
 		if (!editedApi) return;
 
-		const requestPayload = {
-			api: editedApi,
-			tags: isNewApi ? draftTags : get(tagsStore).filter(t => t.apiId === actualApiId),
-			endpoints: isNewApi ? draftEndpoints : get(endpointsStore).filter(e => e.apiId === actualApiId),
-			objects: get(objectsStore),
-			fields: get(fieldsStore),
-			validators: get(validatorsStore)
-		};
+		// Require API to be saved before generating code
+		if (isNewApi && !hasBeenSaved) {
+			showToast('Please save the API before generating code', 'warning', 5000);
+			return;
+		}
 
-		console.log('Generate request payload:', requestPayload);
+		// TODO: Implement when backend is deployed
+		// The new endpoint structure is: POST /apis/{actualApiId}/generate
+		// The backend will automatically retrieve all related entities by API ID
+		//
+		// Implementation outline:
+		// 1. Get Clerk session token: const token = await clerk?.session?.getToken();
+		// 2. Call fetch(`${API_BASE_URL}/apis/${actualApiId}/generate`, {
+		//      method: 'POST',
+		//      headers: { 'Authorization': `Bearer ${token}` }
+		//    });
+		// 3. Handle zip file download from response blob
+		// 4. Show success/error toast
 
+		console.log('Generate code for API:', actualApiId);
 		showToast('Code generation will be available when backend is deployed', 'info', 5000);
 	}
 

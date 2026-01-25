@@ -21,19 +21,19 @@ info:
     Manage your API design entities with full CRUD operations:
 
     - **Namespaces** (`/namespaces`) - Create and manage namespaces for organizing entities
+    - **APIs** (`/apis`) - Create and manage API definitions that group endpoints and tags
     - **Types** (`/types`) - Retrieve primitive and abstract type definitions (read-only)
     - **Validators** (`/validators`) - Retrieve validator definitions (read-only)
     - **Fields** (`/fields`) - Create, read, update, and delete field definitions
     - **Objects** (`/objects`) - Create, read, update, and delete object definitions
     - **Tags** (`/tags`) - Create, read, update, and delete endpoint tags
     - **Endpoints** (`/endpoints`) - Create, read, update, and delete API endpoint definitions
-    - **Metadata** (`/metadata`) - Retrieve and update API metadata
 
     All list endpoints support filtering by `namespaceId` query parameter.
 
     ### 2. Code Generation
 
-    The `/generate` endpoint accepts a complete API specification and returns a production-ready FastAPI application as a downloadable zip file.
+    The `/apis/{id}/generate` endpoint generates a production-ready FastAPI application for a specific API and returns it as a downloadable zip file.
 
     #### Generated Application Structure
 
@@ -43,17 +43,7 @@ info:
     - `requirements.txt` - Python dependencies
     - `README.md` - Setup and deployment instructions
 
-    #### Generation Request Schema
-
-    The request body must include:
-    - **metadata**: API metadata (title, version, description, base URL)
-    - **tags**: Endpoint tags for OpenAPI organization
-    - **endpoints**: Array of API endpoint definitions
-    - **objects**: Object definitions used in requests/responses
-    - **fields**: Field definitions used in objects
-    - **validators**: Validator definitions applied to fields
-
-    All IDs are client-generated and used for referencing relationships between entities (e.g., endpoint → object → fields).
+    The server automatically retrieves all related entities (tags, endpoints, objects, fields, validators) for the specified API ID.
 
     ## Namespace Isolation
 
@@ -76,10 +66,10 @@ security:
   - BearerAuth: []
 
 tags:
-  - name: Code Generation
-    description: Generate production-ready FastAPI applications
   - name: Namespaces
     description: Manage user namespaces for organizing API entities
+  - name: APIs
+    description: Manage API definitions, group endpoints and tags, and generate production-ready FastAPI applications
   - name: Types
     description: Retrieve primitive and abstract type definitions
   - name: Validators
@@ -92,8 +82,6 @@ tags:
     description: Manage endpoint tags for OpenAPI organization
   - name: Endpoints
     description: Manage API endpoint definitions
-  - name: Metadata
-    description: Manage API metadata configuration
 
 paths:
   /namespaces:
@@ -260,13 +248,199 @@ paths:
         '401':
           $ref: '#/components/responses/Unauthorized'
 
-  /generate:
+  /apis:
+    get:
+      tags:
+        - APIs
+      summary: List all APIs
+      description: Retrieve all API definitions accessible to the authenticated user. APIs can be filtered by namespace.
+      operationId: listApis
+      parameters:
+        - name: namespaceId
+          in: query
+          required: false
+          schema:
+            type: string
+          description: Filter APIs by namespace ID
+      responses:
+        '200':
+          description: Successfully retrieved APIs
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Api'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
     post:
       tags:
-        - Code Generation
+        - APIs
+      summary: Create a new API
+      description: Create a new API definition. Server automatically sets createdAt and updatedAt timestamps.
+      operationId: createApi
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - namespaceId
+                - title
+                - version
+              properties:
+                namespaceId:
+                  type: string
+                  example: "namespace-user"
+                title:
+                  type: string
+                  example: "User Management API"
+                version:
+                  type: string
+                  example: "1.0.0"
+                description:
+                  type: string
+                  example: "API for managing user accounts"
+                baseUrl:
+                  type: string
+                  example: "/api/v1"
+                serverUrl:
+                  type: string
+                  example: "https://api.example.com"
+      responses:
+        '201':
+          description: API created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Api'
+        '400':
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /apis/{id}:
+    get:
+      tags:
+        - APIs
+      summary: Get API by ID
+      description: Retrieve a specific API definition by its ID.
+      operationId: getApi
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: API ID
+      responses:
+        '200':
+          description: Successfully retrieved API
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Api'
+        '404':
+          description: API not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+    put:
+      tags:
+        - APIs
+      summary: Update API
+      description: Update an existing API definition. Server automatically updates the updatedAt timestamp.
+      operationId: updateApi
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: API ID
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                title:
+                  type: string
+                  example: "Updated API Title"
+                version:
+                  type: string
+                  example: "2.0.0"
+                description:
+                  type: string
+                  example: "Updated API description"
+                baseUrl:
+                  type: string
+                  example: "/api/v2"
+                serverUrl:
+                  type: string
+                  example: "https://api.example.com"
+      responses:
+        '200':
+          description: API updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Api'
+        '400':
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: API not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+    delete:
+      tags:
+        - APIs
+      summary: Delete API
+      description: Delete an API definition. This operation cascades and also deletes all endpoints and tags belonging to this API.
+      operationId: deleteApi
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: API ID
+      responses:
+        '204':
+          description: API deleted successfully (including all endpoints and tags)
+        '404':
+          description: API not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /apis/{id}/generate:
+    post:
+      tags:
+        - APIs
       summary: Generate FastAPI application
       description: |
-        Generates a complete, production-ready FastAPI application based on the provided API specification.
+        Generates a complete, production-ready FastAPI application for the specified API.
 
         The generated application includes:
         - Fully configured FastAPI app with all endpoints
@@ -276,88 +450,19 @@ paths:
         - Requirements file with dependencies
         - README with setup instructions
 
+        The server automatically retrieves all related entities (tags, endpoints, objects, fields, validators) for the specified API ID.
+
         **Returns:** A binary zip file containing the complete application structure.
 
-        **Authentication:** Requires valid Clerk JWT token. Generated code is scoped to the authenticated user's namespace.
-      operationId: generateFastAPI
-      requestBody:
-        required: true
-        description: Complete API specification from the Median Code frontend
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/GenerateRequest'
-            example:
-              metadata:
-                id: "api-metadata-global"
-                namespaceId: "namespace-global"
-                title: "My API"
-                version: "1.0.0"
-                description: "Example API"
-                baseUrl: "/api/v1"
-                serverUrl: "https://api.example.com"
-              tags:
-                - id: "tag-1"
-                  namespaceId: "namespace-global"
-                  name: "Users"
-                  description: "User management endpoints"
-              endpoints:
-                - id: "endpoint-1"
-                  namespaceId: "namespace-global"
-                  method: "GET"
-                  path: "/users/{user_id}"
-                  description: "Get user by ID"
-                  tagId: "tag-1"
-                  pathParams:
-                    - id: "param-1"
-                      name: "user_id"
-                      type: "uuid"
-                      description: "User identifier"
-                      required: true
-                  queryParamsObjectId: null
-                  requestBodyObjectId: null
-                  responseBodyObjectId: "object-1"
-                  useEnvelope: true
-                  responseShape: "object"
-              objects:
-                - id: "object-1"
-                  namespaceId: "namespace-global"
-                  name: "User"
-                  description: "User object"
-                  fields:
-                    - fieldId: "field-1"
-                      required: true
-                    - fieldId: "field-2"
-                      required: false
-                  usedInApis: ["endpoint-1"]
-              fields:
-                - id: "field-1"
-                  namespaceId: "namespace-global"
-                  name: "user_id"
-                  type: "uuid"
-                  description: "User identifier"
-                  defaultValue: ""
-                  validators: []
-                  usedInApis: ["endpoint-1"]
-                - id: "field-2"
-                  namespaceId: "namespace-global"
-                  name: "email"
-                  type: "str"
-                  description: "User email"
-                  defaultValue: ""
-                  validators:
-                    - name: "email_format"
-                      params: {}
-                  usedInApis: ["endpoint-1"]
-              validators:
-                - name: "email_format"
-                  namespaceId: "namespace-global"
-                  type: "string"
-                  description: "Validates email format"
-                  category: "inline"
-                  parameterType: "None"
-                  exampleUsage: "EmailStr"
-                  pydanticDocsUrl: "https://docs.pydantic.dev/"
+        **Authentication:** Requires valid Clerk JWT token.
+      operationId: generateApiCode
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: API ID to generate code for
       responses:
         '200':
           description: Successfully generated FastAPI application
@@ -371,24 +476,16 @@ paths:
               schema:
                 type: string
                 example: attachment; filename="fastapi-app.zip"
-        '400':
-          description: Invalid request - validation errors in API specification
+        '404':
+          description: API not found
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
               example:
-                detail: "Invalid endpoint path: must start with /"
+                detail: "API with ID 'api-1' not found"
         '401':
           $ref: '#/components/responses/Unauthorized'
-        '422':
-          description: Unprocessable entity - semantic errors in API specification
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-              example:
-                detail: "Referenced object 'object-999' not found in objects array"
 
   /types:
     get:
@@ -852,12 +949,16 @@ paths:
               type: object
               required:
                 - namespaceId
+                - apiId
                 - name
                 - description
               properties:
                 namespaceId:
                   type: string
                   example: "namespace-user"
+                apiId:
+                  type: string
+                  example: "api-1"
                 name:
                   type: string
                   example: "Users"
@@ -929,6 +1030,9 @@ paths:
             schema:
               type: object
               properties:
+                apiId:
+                  type: string
+                  example: "api-1"
                 name:
                   type: string
                   example: "UpdatedTagName"
@@ -1028,6 +1132,7 @@ paths:
               type: object
               required:
                 - namespaceId
+                - apiId
                 - method
                 - path
                 - description
@@ -1038,6 +1143,9 @@ paths:
                 namespaceId:
                   type: string
                   example: "namespace-user"
+                apiId:
+                  type: string
+                  example: "api-1"
                 method:
                   type: string
                   enum: [GET, POST, PUT, PATCH, DELETE]
@@ -1140,6 +1248,9 @@ paths:
             schema:
               type: object
               properties:
+                apiId:
+                  type: string
+                  example: "api-1"
                 method:
                   type: string
                   enum: [GET, POST, PUT, PATCH, DELETE]
@@ -1217,118 +1328,6 @@ paths:
         '401':
           $ref: '#/components/responses/Unauthorized'
 
-  /metadata:
-    get:
-      tags:
-        - Metadata
-      summary: List all API metadata
-      description: Retrieve all API metadata configurations. Metadata can be filtered by namespace.
-      operationId: listMetadata
-      parameters:
-        - name: namespaceId
-          in: query
-          required: false
-          schema:
-            type: string
-          description: Filter metadata by namespace ID
-      responses:
-        '200':
-          description: Successfully retrieved metadata
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/ApiMetadata'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-
-  /metadata/{id}:
-    get:
-      tags:
-        - Metadata
-      summary: Get metadata by ID
-      description: Retrieve specific API metadata by its ID.
-      operationId: getMetadata
-      parameters:
-        - name: id
-          in: path
-          required: true
-          schema:
-            type: string
-          description: Metadata ID
-      responses:
-        '200':
-          description: Successfully retrieved metadata
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ApiMetadata'
-        '404':
-          description: Metadata not found
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-    put:
-      tags:
-        - Metadata
-      summary: Update API metadata
-      description: Update API metadata configuration.
-      operationId: updateMetadata
-      parameters:
-        - name: id
-          in: path
-          required: true
-          schema:
-            type: string
-          description: Metadata ID
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                title:
-                  type: string
-                  example: "My API"
-                version:
-                  type: string
-                  example: "2.0.0"
-                description:
-                  type: string
-                  example: "Updated API description"
-                baseUrl:
-                  type: string
-                  example: "/api/v2"
-                serverUrl:
-                  type: string
-                  example: "https://api.example.com"
-      responses:
-        '200':
-          description: Metadata updated successfully
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ApiMetadata'
-        '400':
-          description: Invalid request
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        '404':
-          description: Metadata not found
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-
 components:
   securitySchemes:
     BearerAuth:
@@ -1365,6 +1364,62 @@ components:
           type: boolean
           description: Whether this namespace is locked (immutable)
           example: true
+
+    # ========================================================================
+    # Api Schema
+    # ========================================================================
+
+    Api:
+      type: object
+      required:
+        - id
+        - namespaceId
+        - title
+        - version
+        - description
+        - baseUrl
+        - serverUrl
+        - createdAt
+        - updatedAt
+      properties:
+        id:
+          type: string
+          description: Client-generated unique identifier
+          example: "api-1"
+        namespaceId:
+          type: string
+          description: Namespace this API belongs to
+          example: "namespace-global"
+        title:
+          type: string
+          description: API title for OpenAPI spec
+          example: "User Management API"
+        version:
+          type: string
+          description: API version (semantic versioning)
+          example: "1.0.0"
+        description:
+          type: string
+          description: API description
+          example: "Endpoints for user management"
+        baseUrl:
+          type: string
+          description: Base path for all endpoints
+          example: "/api/v1"
+        serverUrl:
+          type: string
+          description: Full server URL
+          example: "https://api.example.com"
+        createdAt:
+          type: string
+          format: date-time
+          description: Timestamp when the API was created
+          example: "2026-01-25T10:30:00Z"
+        updatedAt:
+          type: string
+          format: date-time
+          description: Timestamp when the API was last updated
+          example: "2026-01-25T10:30:00Z"
 
     # ========================================================================
     # Type Schema
@@ -1410,15 +1465,15 @@ components:
     GenerateRequest:
       type: object
       required:
-        - metadata
+        - api
         - tags
         - endpoints
         - objects
         - fields
         - validators
       properties:
-        metadata:
-          $ref: '#/components/schemas/ApiMetadata'
+        api:
+          $ref: '#/components/schemas/Api'
         tags:
           type: array
           items:
@@ -1446,50 +1501,6 @@ components:
           description: Validator definitions applied to fields
 
     # ========================================================================
-    # API Metadata
-    # ========================================================================
-
-    ApiMetadata:
-      type: object
-      required:
-        - id
-        - namespaceId
-        - title
-        - version
-        - description
-        - baseUrl
-        - serverUrl
-      properties:
-        id:
-          type: string
-          description: Client-generated unique identifier
-          example: "api-metadata-global"
-        namespaceId:
-          type: string
-          description: Namespace this metadata belongs to
-          example: "namespace-global"
-        title:
-          type: string
-          description: API title for OpenAPI spec
-          example: "My API"
-        version:
-          type: string
-          description: API version (semantic versioning)
-          example: "1.0.0"
-        description:
-          type: string
-          description: API description for OpenAPI spec
-          example: "Production API for user management"
-        baseUrl:
-          type: string
-          description: Base path for all endpoints
-          example: "/api/v1"
-        serverUrl:
-          type: string
-          description: Full server URL
-          example: "https://api.example.com"
-
-    # ========================================================================
     # Endpoint Tag
     # ========================================================================
 
@@ -1498,6 +1509,7 @@ components:
       required:
         - id
         - namespaceId
+        - apiId
         - name
         - description
       properties:
@@ -1509,6 +1521,10 @@ components:
           type: string
           description: Namespace this tag belongs to
           example: "namespace-global"
+        apiId:
+          type: string
+          description: Reference to the API this tag belongs to
+          example: "api-1"
         name:
           type: string
           description: Tag name for OpenAPI spec
@@ -1527,6 +1543,7 @@ components:
       required:
         - id
         - namespaceId
+        - apiId
         - method
         - path
         - description
@@ -1542,6 +1559,10 @@ components:
           type: string
           description: Namespace this endpoint belongs to
           example: "namespace-global"
+        apiId:
+          type: string
+          description: Reference to the API this endpoint belongs to
+          example: "api-1"
         method:
           type: string
           enum: [GET, POST, PUT, PATCH, DELETE]
