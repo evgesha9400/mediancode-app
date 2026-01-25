@@ -20,6 +20,7 @@ export function createMockEndpoint(overrides: Partial<ApiEndpoint> = {}): ApiEnd
 	return {
 		id: 'endpoint-1',
 		namespaceId: GLOBAL_NAMESPACE_ID,
+		apiId: 'api-test-1',
 		method: 'GET',
 		path: '/test',
 		description: '',
@@ -44,6 +45,7 @@ export function createMockTag(overrides: Partial<EndpointTag> = {}): EndpointTag
 	return {
 		id: 'tag-1',
 		namespaceId: GLOBAL_NAMESPACE_ID,
+		apiId: 'api-test-1',
 		name: 'Test Tag',
 		description: 'Test description',
 		...overrides

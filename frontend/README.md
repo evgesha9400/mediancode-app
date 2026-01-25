@@ -75,7 +75,7 @@ median-code/
 
 2. **Install dependencies**
    ```bash
-   npm install
+   bun install
    ```
 
 3. **Set up environment variables**
@@ -90,7 +90,7 @@ median-code/
 
 4. **Start development server**
    ```bash
-   npm run dev
+   bun run dev
    ```
 
 5. **Visit the application**
@@ -102,10 +102,10 @@ median-code/
 ### Development Commands
 
 ```bash
-npm run dev          # Start development server
-npm run build        # Build for production
-npm run preview      # Preview production build
-npm run check        # Type-check
+bun run dev          # Start development server
+bun run build        # Build for production
+bun run preview      # Preview production build
+bun run check        # Type-check
 ```
 
 ## Testing
@@ -116,35 +116,35 @@ Median Code has comprehensive testing across three layers: unit, integration, an
 
 ```bash
 # Run all checks before committing
-npm run check                    # TypeScript type checking
-npm run test:fixtures:validate   # Validate test fixtures
-npm run test:unit                # Unit tests
-npm run test:integration         # Integration tests
-npm run test:e2e:smoke           # E2E smoke tests (fast)
+bun run check                    # TypeScript type checking
+bun run test:fixtures:validate   # Validate test fixtures
+bun run test:unit                # Unit tests
+bun run test:integration         # Integration tests
+bun run test:e2e:smoke           # E2E smoke tests (fast)
 ```
 
 ### Test Commands
 
 ```bash
 # Unit tests
-npm run test:unit                # Run unit tests once
-npm run test:unit:watch          # Watch mode for development
+bun run test:unit                # Run unit tests once
+bun run test:unit:watch          # Watch mode for development
 
 # Integration tests
-npm run test:integration         # Run integration tests once
-npm run test:integration:watch   # Watch mode for development
+bun run test:integration         # Run integration tests once
+bun run test:integration:watch   # Watch mode for development
 
 # E2E tests
-npm run test:e2e                 # All E2E tests
-npm run test:e2e:smoke           # Smoke tests (fast, runs on PRs)
-npm run test:e2e:full            # Full suite with visual regression
-npm run test:e2e:ui              # Interactive Playwright UI
+bun run test:e2e                 # All E2E tests
+bun run test:e2e:smoke           # Smoke tests (fast, runs on PRs)
+bun run test:e2e:full            # Full suite with visual regression
+bun run test:e2e:ui              # Interactive Playwright UI
 
 # Coverage
-npm run test:coverage            # Generate coverage report
+bun run test:coverage            # Generate coverage report
 
 # Validation
-npm run test:fixtures:validate   # Validate fixture schema
+bun run test:fixtures:validate   # Validate fixture schema
 ```
 
 ### Test Infrastructure
@@ -167,11 +167,11 @@ npm run test:fixtures:validate   # Validate fixture schema
 Always run these commands:
 
 ```bash
-npm run check                    # Must pass (0 errors)
-npm run test:fixtures:validate   # Must pass
-npm run test:unit                # Must pass
-npm run test:integration         # Must pass
-npm run test:e2e:smoke           # Must pass
+bun run check                    # Must pass (0 errors)
+bun run test:fixtures:validate   # Must pass
+bun run test:unit                # Must pass
+bun run test:integration         # Must pass
+bun run test:e2e:smoke           # Must pass
 ```
 
 ## Deployment
@@ -270,7 +270,7 @@ The dashboard uses Clerk for authentication with support for:
 ## Development Workflow
 
 1. **Feature Development**: Work on `develop` branch
-2. **Testing**: Test locally with `npm run dev`
+2. **Testing**: Test locally with `bun run dev`
 3. **Commit**: Use conventional commit format (see `COMMIT_MESSAGE_STANDARD.md`)
 4. **Deploy**: Merge `develop` → `main` to trigger Vercel deployment
 

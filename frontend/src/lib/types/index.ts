@@ -91,6 +91,19 @@ export type HttpMethod = 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
 export type ResponseShape = 'object' | 'list';
 export type ResponseItemShape = 'object'; // Only objects allowed in lists
 
+export interface Api {
+  id: string;
+  namespaceId: string;
+  title: string;
+  version: string;
+  description: string;
+  baseUrl: string;
+  serverUrl: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+// Legacy single API metadata (deprecated, use Api instead)
 export interface ApiMetadata {
   id: string;
   namespaceId: string;
@@ -104,6 +117,7 @@ export interface ApiMetadata {
 export interface EndpointTag {
   id: string;
   namespaceId: string;
+  apiId: string;
   name: string;
   description: string;
 }
@@ -119,6 +133,7 @@ export interface EndpointParameter {
 export interface ApiEndpoint {
   id: string;
   namespaceId: string;
+  apiId: string;
   method: HttpMethod;
   path: string;
   description: string;

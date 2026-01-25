@@ -36,4 +36,4 @@ Steps:
    - Unit: add coverage around `createObject` (success path, duplicate guard, namespace assignment, fields persisted).
    - Integration/UI: add object-builder page test that covers create flow (open create, choose namespace, search/select fields, prevent duplicate add, create, verify row counts/namespace/fields displayed).
 9) Verification
-   - Run `npm run check` and targeted tests (`npm run test:unit`, `npm run test:integration` or focused suites added for object builder); run Playwright spec if added.
+   - Run `bun run check` and targeted tests (`bun run test:unit`, `bun run test:integration` or focused suites added for object builder); run Playwright spec if added.

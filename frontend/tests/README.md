@@ -155,37 +155,37 @@ MSW handlers in `tests/shared/msw/handlers.ts` are consumed by BOTH Vitest (unit
 
 ### All Tests
 ```bash
-npm test
+bun test
 ```
 
 ### Unit Tests Only
 ```bash
-npm run test:unit
+bun run test:unit
 ```
 
 ### Integration Tests Only
 ```bash
-npm run test:integration
+bun run test:integration
 ```
 
 ### E2E Smoke Tests (Fast)
 ```bash
-npm run test:e2e:smoke
+bun run test:e2e:smoke
 ```
 
 ### E2E Full Suite
 ```bash
-npm run test:e2e:full
+bun run test:e2e:full
 ```
 
 ### Watch Mode (Unit)
 ```bash
-npm run test:unit:watch
+bun run test:unit:watch
 ```
 
 ### Coverage
 ```bash
-npm run test:coverage
+bun run test:coverage
 ```
 
 ## Future Maintenance
@@ -210,7 +210,7 @@ npm run test:coverage
 1. Update fixture definitions in `tests/fixtures/`
 2. Update `tests/fixtures/SCHEMA.md`
 3. Update MSW handlers in `tests/shared/msw/handlers.ts`
-4. Run `npm run test:fixtures:validate` to check for drift
+4. Run `bun run test:fixtures:validate` to check for drift
 5. Update affected tests
 
 ## LLM Agent Guidelines

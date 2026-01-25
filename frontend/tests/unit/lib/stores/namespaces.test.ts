@@ -262,6 +262,7 @@ describe('namespaces store - Entity Count', () => {
 			{
 				id: 'endpoint-1',
 				namespaceId: GLOBAL_NAMESPACE_ID,
+				apiId: 'api-test-1',
 				method: 'GET' as const,
 				path: '/test',
 				description: '',

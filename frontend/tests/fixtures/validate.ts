@@ -2,7 +2,7 @@
  * Fixture Validation Script
  * 
  * Validates that all fixtures maintain data integrity and consistency.
- * Run with: npm run test:fixtures:validate
+ * Run with: bun run test:fixtures:validate
  */
 
 import {

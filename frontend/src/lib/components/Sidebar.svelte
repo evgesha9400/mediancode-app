@@ -27,7 +27,7 @@
     { href: '/validators', label: 'Validators', icon: 'fa-check-circle' },
     { href: '/field-registry', label: 'Fields', icon: 'fa-table-list' },
     { href: '/object-builder', label: 'Objects', icon: 'fa-cubes' },
-    { href: '/api-generator', label: 'API Designer', icon: 'fa-code' }
+    { href: '/apis', label: 'APIs', icon: 'fa-code' }
   ];
 
   const configItems: NavItem[] = [

@@ -30,6 +30,9 @@ import { GLOBAL_NAMESPACE_ID } from '$lib/stores/initialData';
 import type { EndpointTag } from '$lib/types';
 import { createMockEndpoint, createMockTag } from '../../../shared/testUtils';
 
+// Test API ID for all endpoint and tag operations
+const TEST_API_ID = 'api-test-1';
+
 describe('apis store - Metadata Operations', () => {
 	beforeEach(() => {
 		// Reset stores to initial state
@@ -55,7 +58,7 @@ describe('apis store - Tag Operations', () => {
 	});
 
 	it('should create a new tag with uniqueness guard', () => {
-		const tag = createTag('Users', GLOBAL_NAMESPACE_ID, 'User management');
+		const tag = createTag('Users', GLOBAL_NAMESPACE_ID, TEST_API_ID, 'User management');
 
 		expect(tag).toBeDefined();
 		expect(tag?.id).toBe('tag-1000000-0');
@@ -67,8 +70,8 @@ describe('apis store - Tag Operations', () => {
 	});
 
 	it('should prevent duplicate tag creation (case-insensitive)', () => {
-		createTag('Users');
-		const duplicate = createTag('users');
+		createTag('Users', GLOBAL_NAMESPACE_ID, TEST_API_ID);
+		const duplicate = createTag('users', GLOBAL_NAMESPACE_ID, TEST_API_ID);
 
 		expect(duplicate).toBeUndefined();
 
@@ -77,13 +80,13 @@ describe('apis store - Tag Operations', () => {
 	});
 
 	it('should trim tag names', () => {
-		const tag = createTag('  Users  ');
+		const tag = createTag('  Users  ', GLOBAL_NAMESPACE_ID, TEST_API_ID);
 
 		expect(tag?.name).toBe('Users');
 	});
 
 	it('should get tag by ID', () => {
-		const created = createTag('Users');
+		const created = createTag('Users', GLOBAL_NAMESPACE_ID, TEST_API_ID);
 		const found = getTagById(created!.id);
 
 		expect(found).toEqual(created);
@@ -96,7 +99,7 @@ describe('apis store - Tag Operations', () => {
 	});
 
 	it('should update a tag', () => {
-		const tag = createTag('Users');
+		const tag = createTag('Users', GLOBAL_NAMESPACE_ID, TEST_API_ID);
 		updateTag(tag!.id, { description: 'Updated description' });
 
 		const updated = getTagById(tag!.id);
@@ -104,13 +107,13 @@ describe('apis store - Tag Operations', () => {
 	});
 
 	it('should delete tag and detach from endpoints', () => {
-		const tag = createTag('Users')!;
+		const tag = createTag('Users', GLOBAL_NAMESPACE_ID, TEST_API_ID)!;
 
 		// Create endpoints using this tag
-		const endpoint1 = createDefaultEndpoint();
+		const endpoint1 = createDefaultEndpoint(GLOBAL_NAMESPACE_ID, TEST_API_ID);
 		updateEndpoint(endpoint1.id, { tagId: tag.id });
 
-		const endpoint2 = createDefaultEndpoint();
+		const endpoint2 = createDefaultEndpoint(GLOBAL_NAMESPACE_ID, TEST_API_ID);
 		updateEndpoint(endpoint2.id, { tagId: tag.id });
 
 		const result = deleteTagWithCleanup(tag.id);
@@ -127,7 +130,7 @@ describe('apis store - Tag Operations', () => {
 	});
 
 	it('should handle deleting tag with no endpoints', () => {
-		const tag = createTag('Users')!;
+		const tag = createTag('Users', GLOBAL_NAMESPACE_ID, TEST_API_ID)!;
 		const result = deleteTagWithCleanup(tag.id);
 
 		expect(result.success).toBe(true);
@@ -144,8 +147,8 @@ describe('apis store - Tag Operations', () => {
 	it('should count total tags', () => {
 		expect(getTotalTagCount()).toBe(0);
 
-		createTag('Users');
-		createTag('Posts');
+		createTag('Users', GLOBAL_NAMESPACE_ID, TEST_API_ID);
+		createTag('Posts', GLOBAL_NAMESPACE_ID, TEST_API_ID);
 
 		expect(getTotalTagCount()).toBe(2);
 	});
@@ -159,7 +162,7 @@ describe('apis store - Endpoint Operations', () => {
 	});
 
 	it('should create a default endpoint', () => {
-		const endpoint = createDefaultEndpoint();
+		const endpoint = createDefaultEndpoint(GLOBAL_NAMESPACE_ID, TEST_API_ID);
 
 		expect(endpoint.id).toBe('endpoint-1000000-0');
 		expect(endpoint.method).toBe('GET');
@@ -172,30 +175,30 @@ describe('apis store - Endpoint Operations', () => {
 	});
 
 	it('should get endpoint by ID', () => {
-		const created = createDefaultEndpoint();
+		const created = createDefaultEndpoint(GLOBAL_NAMESPACE_ID, TEST_API_ID);
 		const found = getEndpointById(created.id);
 
 		expect(found).toEqual(created);
 	});
 
 	it('should count endpoints by tag', () => {
-		const tag = createTag('Users')!;
+		const tag = createTag('Users', GLOBAL_NAMESPACE_ID, TEST_API_ID)!;
 
 		expect(getEndpointCountByTag(tag.id)).toBe(0);
 
-		const endpoint1 = createDefaultEndpoint();
+		const endpoint1 = createDefaultEndpoint(GLOBAL_NAMESPACE_ID, TEST_API_ID);
 		updateEndpoint(endpoint1.id, { tagId: tag.id });
 
 		expect(getEndpointCountByTag(tag.id)).toBe(1);
 
-		const endpoint2 = createDefaultEndpoint();
+		const endpoint2 = createDefaultEndpoint(GLOBAL_NAMESPACE_ID, TEST_API_ID);
 		updateEndpoint(endpoint2.id, { tagId: tag.id });
 
 		expect(getEndpointCountByTag(tag.id)).toBe(2);
 	});
 
 	it('should update an endpoint', () => {
-		const endpoint = createDefaultEndpoint();
+		const endpoint = createDefaultEndpoint(GLOBAL_NAMESPACE_ID, TEST_API_ID);
 		updateEndpoint(endpoint.id, { method: 'POST', description: 'Create user' });
 
 		const updated = getEndpointById(endpoint.id);
@@ -204,7 +207,7 @@ describe('apis store - Endpoint Operations', () => {
 	});
 
 	it('should duplicate an endpoint with new IDs', () => {
-		const original = createDefaultEndpoint();
+		const original = createDefaultEndpoint(GLOBAL_NAMESPACE_ID, TEST_API_ID);
 		updateEndpoint(original.id, {
 			path: '/users/{user_id}',
 			pathParams: [{ id: 'param-1', name: 'user_id', type: 'integer', description: '', required: true }],
@@ -225,7 +228,7 @@ describe('apis store - Endpoint Operations', () => {
 	});
 
 	it('should delete an endpoint', () => {
-		const endpoint = createDefaultEndpoint();
+		const endpoint = createDefaultEndpoint(GLOBAL_NAMESPACE_ID, TEST_API_ID);
 		const result = deleteEndpoint(endpoint.id);
 
 		expect(result.success).toBe(true);
@@ -242,8 +245,8 @@ describe('apis store - Endpoint Operations', () => {
 	it('should count total endpoints', () => {
 		expect(getTotalEndpointCount()).toBe(0);
 
-		createDefaultEndpoint();
-		createDefaultEndpoint();
+		createDefaultEndpoint(GLOBAL_NAMESPACE_ID, TEST_API_ID);
+		createDefaultEndpoint(GLOBAL_NAMESPACE_ID, TEST_API_ID);
 
 		expect(getTotalEndpointCount()).toBe(2);
 	});
@@ -256,7 +259,7 @@ describe('apis store - Path Parameter Operations', () => {
 	});
 
 	it('should update endpoint path and extract path parameters', () => {
-		const endpoint = createDefaultEndpoint();
+		const endpoint = createDefaultEndpoint(GLOBAL_NAMESPACE_ID, TEST_API_ID);
 
 		const updated = updateEndpointPath(endpoint.id, '/users/{user_id}/posts/{post_id}');
 
@@ -268,7 +271,7 @@ describe('apis store - Path Parameter Operations', () => {
 	});
 
 	it('should normalize path to start with /', () => {
-		const endpoint = createDefaultEndpoint();
+		const endpoint = createDefaultEndpoint(GLOBAL_NAMESPACE_ID, TEST_API_ID);
 
 		const updated = updateEndpointPath(endpoint.id, 'users');
 
@@ -276,7 +279,7 @@ describe('apis store - Path Parameter Operations', () => {
 	});
 
 	it('should preserve existing parameter definitions when path changes', () => {
-		const endpoint = createDefaultEndpoint();
+		const endpoint = createDefaultEndpoint(GLOBAL_NAMESPACE_ID, TEST_API_ID);
 
 		// Set initial path with parameters
 		let updated = updateEndpointPath(endpoint.id, '/users/{user_id}')!;
@@ -301,7 +304,7 @@ describe('apis store - Path Parameter Operations', () => {
 	});
 
 	it('should remove parameters when they are removed from path', () => {
-		const endpoint = createDefaultEndpoint();
+		const endpoint = createDefaultEndpoint(GLOBAL_NAMESPACE_ID, TEST_API_ID);
 
 		// Set path with two parameters
 		updateEndpointPath(endpoint.id, '/users/{user_id}/posts/{post_id}');
@@ -314,7 +317,7 @@ describe('apis store - Path Parameter Operations', () => {
 	});
 
 	it('should update a path parameter', () => {
-		const endpoint = createDefaultEndpoint();
+		const endpoint = createDefaultEndpoint(GLOBAL_NAMESPACE_ID, TEST_API_ID);
 		const updated = updateEndpointPath(endpoint.id, '/users/{user_id}')!;
 
 		const paramId = updated.pathParams[0].id;
@@ -330,7 +333,7 @@ describe('apis store - Path Parameter Operations', () => {
 	});
 
 	it('should delete a path parameter', () => {
-		const endpoint = createDefaultEndpoint();
+		const endpoint = createDefaultEndpoint(GLOBAL_NAMESPACE_ID, TEST_API_ID);
 		const updated = updateEndpointPath(endpoint.id, '/users/{user_id}')!;
 
 		const paramId = updated.pathParams[0].id;

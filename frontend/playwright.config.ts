@@ -105,7 +105,7 @@ export default defineConfig({
 	// IMPORTANT: reuseExistingServer is false to always rebuild with fresh code
 	// This prevents stale code issues when debugging test failures
 	webServer: {
-		command: `npm run build && npm run preview -- --host ${PREVIEW_HOST} --port ${PREVIEW_PORT}`,
+		command: `bun run build && bun run preview -- --host ${PREVIEW_HOST} --port ${PREVIEW_PORT}`,
 		port: PREVIEW_PORT,
 		reuseExistingServer: false,
 		stdout: 'ignore',

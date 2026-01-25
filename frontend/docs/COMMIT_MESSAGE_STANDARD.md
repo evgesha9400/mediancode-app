@@ -192,7 +192,7 @@ Ref: IMPLEMENTATION_TRACKER.md Step 2
 This format is compatible with Commitizen. To set up:
 
 ```bash
-npm install -g commitizen cz-conventional-changelog
+bun install -g commitizen cz-conventional-changelog
 echo '{ "path": "cz-conventional-changelog" }' > ~/.czrc
 ```
 
@@ -209,7 +209,7 @@ npx conventional-changelog -p angular -i CHANGELOG.md -s
 Consider adding commitlint for validation:
 
 ```bash
-npm install --save-dev @commitlint/config-conventional @commitlint/cli
+bun install --save-dev @commitlint/config-conventional @commitlint/cli
 echo "module.exports = {extends: ['@commitlint/config-conventional']}" > commitlint.config.js
 ```
 

@@ -245,7 +245,7 @@ interface Role {
 
 ### Data Integrity Checks
 
-The fixture validation script (`npm run test:fixtures:validate`) should verify:
+The fixture validation script (`bun run test:fixtures:validate`) should verify:
 
 1. **No orphaned references:**
    - All `usedInApis[]` IDs exist in `mockApis`
@@ -324,7 +324,7 @@ When updating fixtures:
 1. Update the fixture file (e.g., `tests/fixtures/fields.ts`)
 2. Update this SCHEMA.md if schema changes
 3. Update MSW handlers if API responses change
-4. Run `npm run test:fixtures:validate` to check for issues
+4. Run `bun run test:fixtures:validate` to check for issues
 5. Update affected tests
 
 ## Future Enhancements

@@ -1,10 +1,17 @@
 import { writable, get } from 'svelte/store';
-import type { ApiMetadata, EndpointTag, ApiEndpoint, EndpointParameter, DeletionResult } from '$lib/types';
+import type { Api, ApiMetadata, EndpointTag, ApiEndpoint, EndpointParameter, DeletionResult } from '$lib/types';
 import { extractPathParameters } from '$lib/utils/urlParser';
 import { generateId, generateParamId, deepClone } from '$lib/utils/ids';
 import { GLOBAL_NAMESPACE_ID } from './initialData';
 
-// Initial empty state for API metadata
+// ============================================================================
+// Stores
+// ============================================================================
+
+// Store for multiple APIs
+export const apisStore = writable<Api[]>([]);
+
+// Initial empty state for API metadata (legacy - deprecated)
 export const initialApiMetadata: ApiMetadata = {
 	id: 'api-metadata-global',
 	namespaceId: GLOBAL_NAMESPACE_ID,
@@ -15,7 +22,7 @@ export const initialApiMetadata: ApiMetadata = {
 	serverUrl: ''
 };
 
-// Store for API metadata
+// Store for API metadata (legacy - deprecated, use apisStore instead)
 export const apiMetadataStore = writable<ApiMetadata>(initialApiMetadata);
 
 // Store for endpoint tags
@@ -23,6 +30,132 @@ export const tagsStore = writable<EndpointTag[]>([]);
 
 // Store for API endpoints
 export const endpointsStore = writable<ApiEndpoint[]>([]);
+
+// ============================================================================
+// API CRUD Operations
+// ============================================================================
+
+/**
+ * Create a new API
+ */
+export function createApi(namespaceId: string): Api {
+	const now = new Date().toISOString();
+	const newApi: Api = {
+		id: generateId('api'),
+		namespaceId,
+		title: 'Untitled API',
+		version: '1.0.0',
+		description: '',
+		baseUrl: '/api/v1',
+		serverUrl: '',
+		createdAt: now,
+		updatedAt: now
+	};
+
+	apisStore.update(apis => [...apis, newApi]);
+	return newApi;
+}
+
+/**
+ * Add an existing API object to the store (for draft mode)
+ */
+export function addApi(api: Api): void {
+	apisStore.update(apis => [...apis, api]);
+}
+
+/**
+ * Update an API's properties
+ */
+export function updateApi(id: string, updates: Partial<Api>): void {
+	apisStore.update(apis =>
+		apis.map(api => api.id === id ? { ...api, ...updates, updatedAt: new Date().toISOString() } : api)
+	);
+}
+
+/**
+ * Delete an API and all its endpoints and tags
+ */
+export function deleteApi(id: string): DeletionResult {
+	const api = getApiById(id);
+
+	if (!api) {
+		return {
+			success: false,
+			error: `API with ID "${id}" not found.`
+		};
+	}
+
+	// Delete all endpoints belonging to this API
+	endpointsStore.update(endpoints => endpoints.filter(e => e.apiId !== id));
+
+	// Delete all tags belonging to this API
+	tagsStore.update(tags => tags.filter(t => t.apiId !== id));
+
+	// Delete the API
+	apisStore.update(apis => apis.filter(a => a.id !== id));
+
+	return {
+		success: true,
+		error: `API "${api.title}" and all its endpoints deleted`
+	};
+}
+
+/**
+ * Get an API by its ID
+ */
+export function getApiById(id: string): Api | undefined {
+	return get(apisStore).find(a => a.id === id);
+}
+
+/**
+ * Get all APIs for a specific namespace
+ */
+export function getApisByNamespace(namespaceId: string): Api[] {
+	return get(apisStore).filter(a => a.namespaceId === namespaceId);
+}
+
+/**
+ * Search APIs by title or description
+ */
+export function searchApis(apis: Api[], query: string): Api[] {
+	if (!query.trim()) return apis;
+
+	const lowerQuery = query.toLowerCase();
+	return apis.filter(
+		api =>
+			api.title.toLowerCase().includes(lowerQuery) ||
+			api.description.toLowerCase().includes(lowerQuery) ||
+			api.baseUrl.toLowerCase().includes(lowerQuery)
+	);
+}
+
+/**
+ * Get endpoint count for a specific API
+ */
+export function getEndpointCountByApi(apiId: string): number {
+	return get(endpointsStore).filter(e => e.apiId === apiId).length;
+}
+
+/**
+ * Get tag count for a specific API
+ */
+export function getTagCountByApi(apiId: string): number {
+	return get(tagsStore).filter(t => t.apiId === apiId).length;
+}
+
+/**
+ * Get all endpoints for a specific API
+ */
+export function getEndpointsByApi(apiId: string): ApiEndpoint[] {
+	return get(endpointsStore).filter(e => e.apiId === apiId);
+}
+
+/**
+ * Get all tags for a specific API
+ */
+export function getTagsByApi(apiId: string): EndpointTag[] {
+	return get(tagsStore).filter(t => t.apiId === apiId);
+}
 
 // ============================================================================
 // API Metadata Operations
@@ -115,15 +248,16 @@ export function getEndpointCountByNamespace(namespaceId: string): number {
  *
  * @param name - The name for the new tag
  * @param namespaceId - The namespace to create the tag in
+ * @param apiId - The API this tag belongs to
  * @param description - Optional description for the tag
- * @returns The created tag, or undefined if a tag with that name already exists in the namespace
+ * @returns The created tag, or undefined if a tag with that name already exists in the API
  */
-export function createTag(name: string, namespaceId: string = GLOBAL_NAMESPACE_ID, description: string = ''): EndpointTag | undefined {
+export function createTag(name: string, namespaceId: string, apiId: string, description: string = ''): EndpointTag | undefined {
 	const trimmedName = name.trim();
 
-	// Check for existing tag with same name in the same namespace (case-insensitive)
+	// Check for existing tag with same name in the same API (case-insensitive)
 	const existingTag = get(tagsStore).find(
-		t => t.name.toLowerCase() === trimmedName.toLowerCase() && t.namespaceId === namespaceId
+		t => t.name.toLowerCase() === trimmedName.toLowerCase() && t.apiId === apiId
 	);
 
 	if (existingTag) {
@@ -133,6 +267,7 @@ export function createTag(name: string, namespaceId: string = GLOBAL_NAMESPACE_I
 	const newTag: EndpointTag = {
 		id: generateId('tag'),
 		namespaceId,
+		apiId,
 		name: trimmedName,
 		description
 	};
@@ -211,12 +346,14 @@ export function deleteTag(id: string): void {
  * Create a new default endpoint
  *
  * @param namespaceId - The namespace to create the endpoint in
+ * @param apiId - The API this endpoint belongs to
  * @returns The newly created endpoint
  */
-export function createDefaultEndpoint(namespaceId: string = GLOBAL_NAMESPACE_ID): ApiEndpoint {
+export function createDefaultEndpoint(namespaceId: string, apiId: string): ApiEndpoint {
 	const newEndpoint: ApiEndpoint = {
 		id: generateId('endpoint'),
 		namespaceId,
+		apiId,
 		method: 'GET',
 		path: '/',
 		description: '',
@@ -428,5 +565,61 @@ export function deletePathParameter(endpointId: string, paramId: string): void {
 
 	const updatedParams = endpoint.pathParams.filter(p => p.id !== paramId);
 	updateEndpoint(endpointId, { pathParams: updatedParams });
+}
+
+// ============================================================================
+// Data Migration
+// ============================================================================
+
+/**
+ * Migrate from single API metadata to multiple APIs model.
+ * This should be called on app initialization.
+ *
+ * Migration steps:
+ * 1. If apisStore is empty but apiMetadataStore has data, create a default API
+ * 2. Update all existing endpoints and tags with the new apiId
+ */
+export function migrateToMultipleApis(): void {
+	const apis = get(apisStore);
+	const metadata = get(apiMetadataStore);
+	const endpoints = get(endpointsStore);
+	const tags = get(tagsStore);
+
+	// Only migrate if we have no APIs but have metadata or endpoints
+	if (apis.length === 0 && (metadata.title || endpoints.length > 0 || tags.length > 0)) {
+		const now = new Date().toISOString();
+		const defaultApiId = generateId('api');
+
+		// Create default API from existing metadata
+		const defaultApi: Api = {
+			id: defaultApiId,
+			namespaceId: metadata.namespaceId,
+			title: metadata.title || 'Default API',
+			version: metadata.version,
+			description: metadata.description,
+			baseUrl: metadata.baseUrl,
+			serverUrl: metadata.serverUrl,
+			createdAt: now,
+			updatedAt: now
+		};
+
+		apisStore.set([defaultApi]);
+
+		// Update all endpoints with the new apiId
+		if (endpoints.length > 0) {
+			endpointsStore.update(eps =>
+				eps.map(e => ({ ...e, apiId: e.apiId || defaultApiId }))
+			);
+		}
+
+		// Update all tags with the new apiId
+		if (tags.length > 0) {
+			tagsStore.update(t =>
+				t.map(tag => ({ ...tag, apiId: tag.apiId || defaultApiId }))
+			);
+		}
+
+		console.log('Migration complete: Migrated to multiple APIs model');
+	}
 }
 

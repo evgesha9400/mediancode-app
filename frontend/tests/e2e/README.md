@@ -30,7 +30,7 @@ We maintain two Playwright test projects:
 
 **Run locally:**
 ```bash
-npm run test:e2e:smoke
+bun run test:e2e:smoke
 ```
 
 ### 2. chromium-full
@@ -43,7 +43,7 @@ npm run test:e2e:smoke
 
 **Run locally:**
 ```bash
-npm run test:e2e:full
+bun run test:e2e:full
 ```
 
 ## MSW Integration
@@ -111,7 +111,7 @@ tests/e2e/__screenshots__/
 1. **Review Changes:** Always review screenshot diffs before updating
 2. **Update Command:**
    ```bash
-   npx playwright test --update-snapshots
+   bunx playwright test --update-snapshots
    ```
 3. **Commit Policy:**
    - Include screenshots in PR
@@ -131,32 +131,32 @@ tests/e2e/__screenshots__/
 
 ### All E2E Tests
 ```bash
-npm run test:e2e
+bun run test:e2e
 ```
 
 ### Smoke Tests Only
 ```bash
-npm run test:e2e:smoke
+bun run test:e2e:smoke
 ```
 
 ### Full Tests with Visual Regression
 ```bash
-npm run test:e2e:full
+bun run test:e2e:full
 ```
 
 ### UI Mode (Interactive)
 ```bash
-npm run test:e2e:ui
+bun run test:e2e:ui
 ```
 
 ### Debug Mode
 ```bash
-npx playwright test --debug
+bunx playwright test --debug
 ```
 
 ### Headed Mode (See Browser)
 ```bash
-npx playwright test --headed
+bunx playwright test --headed
 ```
 
 ## Browser Installation
@@ -164,12 +164,12 @@ npx playwright test --headed
 Playwright requires browsers to be installed:
 
 ```bash
-npx playwright install chromium
+bunx playwright install chromium
 ```
 
 For CI environments:
 ```bash
-npx playwright install --with-deps chromium
+bunx playwright install --with-deps chromium
 ```
 
 ## Environment Variables
@@ -219,7 +219,7 @@ See `.github/workflows/tests.yml` for configuration.
 
 - Review screenshot diff in `playwright-report/index.html`
 - Check if changes are intentional
-- Update baselines if needed: `npx playwright test --update-snapshots`
+- Update baselines if needed: `bunx playwright test --update-snapshots`
 
 ### External Network Requests in E2E Tests
 

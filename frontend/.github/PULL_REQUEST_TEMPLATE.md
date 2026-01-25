@@ -36,10 +36,10 @@
 
 I have run the following tests locally:
 
-- [ ] `npm run check` - Type checking passed
-- [ ] `npm run test:unit` - Unit tests passed
-- [ ] `npm run test:integration` - Integration tests passed
-- [ ] `npm run test:e2e:smoke` - Smoke tests passed
+- [ ] `bun run check` - Type checking passed
+- [ ] `bun run test:unit` - Unit tests passed
+- [ ] `bun run test:integration` - Integration tests passed
+- [ ] `bun run test:e2e:smoke` - Smoke tests passed
 
 ### Test Updates
 
@@ -59,7 +59,7 @@ I have run the following tests locally:
 
 - [ ] Updated fixtures in `tests/fixtures/`
 - [ ] Updated MSW handlers in `tests/shared/msw/handlers.ts`
-- [ ] Ran `npm run test:fixtures:validate` successfully
+- [ ] Ran `bun run test:fixtures:validate` successfully
 - [ ] Updated fixture schema documentation
 - [ ] N/A - No fixture changes
 

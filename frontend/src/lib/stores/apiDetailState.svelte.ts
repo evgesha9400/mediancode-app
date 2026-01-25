@@ -1,66 +1,67 @@
 /**
- * API Generator State Container
+ * API Detail State Container
  *
- * @deprecated This file is deprecated. Use apiDetailState.svelte.ts instead.
- * The /api-generator route now redirects to /apis.
- *
- * Encapsulates UI state and domain operations for the API generator page.
+ * Encapsulates UI state and domain operations for the API detail page.
  * Follows the listViewState pattern: owns all state using Svelte runes and
  * delegates domain logic to apis.ts store.
  *
- * This consolidates ~400 lines of page-level logic into a testable, reusable module.
+ * Supports two modes:
+ * - New API mode (apiId === 'new'): Draft state kept locally until Save
+ * - Edit mode: Loads existing API from store
  */
 
 import { get } from 'svelte/store';
-import type { ApiMetadata, ApiEndpoint, EndpointTag, EndpointParameter, ResponseShape } from '$lib/types';
+import type { Api, ApiEndpoint, EndpointTag, EndpointParameter, ResponseShape } from '$lib/types';
 import {
-	apiMetadataStore,
 	apisStore,
 	tagsStore,
 	endpointsStore,
-	updateApiMetadata,
-	addEndpoint,
+	addApi,
+	updateApi,
+	getApiById,
 	getTagById,
-	getEndpointById,
+	addTag,
+	addEndpoint,
 	getEndpointCountByTag,
-	createTag,
 	deleteTagWithCleanup,
-	createDefaultEndpoint,
 	updateEndpoint,
-	duplicateEndpoint,
 	deleteEndpoint,
 	reconcilePathParams,
-	normalizeEndpoint,
-	createApi
+	normalizeEndpoint
 } from './apis';
-import { activeNamespaceId } from './namespaces';
-import { fieldsStore, getFieldById } from './fields';
+import { fieldsStore } from './fields';
 import { objectsStore } from './objects';
 import { validatorsStore } from './validators';
 import { showToast } from './toasts';
-import { deepClone, generateParamId } from '$lib/utils/ids';
-
-// Legacy API ID for backwards compatibility
-const LEGACY_API_ID = 'legacy-api-generator';
+import { deepClone, generateId, generateParamId } from '$lib/utils/ids';
 
 /**
  * Toast message constants
  */
 const MESSAGES = {
+	API_CREATED: 'API created successfully',
+	API_SAVED: 'API saved successfully',
 	ENDPOINT_SAVED: 'Endpoint saved successfully',
 	ENDPOINT_DUPLICATED: 'Endpoint duplicated successfully',
 	ENDPOINT_DELETED: 'Endpoint deleted successfully',
 	TAG_CREATED: (name: string) => `Tag "${name}" created`,
-	CODE_GENERATION_SOON: 'Code generation coming soon'
+	CODE_GENERATION_SOON: 'Code generation coming soon',
+	UNSAVED_CHANGES: 'You have unsaved changes'
 } as const;
 
 /**
- * State returned by the factory for use in the API generator page.
+ * State returned by the factory for use in the API detail page.
  * All state properties are reactive and can be bound directly in templates.
  */
-export interface ApiGeneratorState {
-	// Reactive store subscriptions
-	readonly metadata: ApiMetadata;
+export interface ApiDetailState {
+	// Whether this is a new API (not yet saved to store)
+	readonly isNewApi: boolean;
+
+	// The API being edited
+	readonly api: Api | null;
+	editedApi: Api | null;
+
+	// Reactive filtered data for this API
 	readonly tags: EndpointTag[];
 	readonly endpoints: ApiEndpoint[];
 
@@ -77,12 +78,28 @@ export interface ApiGeneratorState {
 	// Endpoint deletion confirmation state
 	showEndpointDeleteConfirm: boolean;
 
+	// Close confirmation state
+	showCloseConfirm: boolean;
+
 	// Derived state
-	readonly hasChanges: boolean;
+	readonly hasApiChanges: boolean;
+	readonly hasEndpointChanges: boolean;
+	readonly hasAnyChanges: boolean;
 	readonly exactTagMatch: EndpointTag | undefined;
 
-	// Metadata actions
-	handleMetadataUpdate: (updates: Partial<ApiMetadata>) => void;
+	// API metadata actions
+	handleApiUpdate: (updates: Partial<Api>) => void;
+	handleSaveApi: () => boolean;
+	handleDiscardApiChanges: () => void;
+
+	// Delete action (only for saved APIs)
+	handleDeleteApi: () => void;
+
+	// Close actions
+	handleClose: () => void;
+	handleSaveAndClose: () => void;
+	handleDiscardAndClose: () => void;
+	cancelClose: () => void;
 
 	// Tag actions
 	handleTagSelect: (tagId: string | undefined) => void;
@@ -101,9 +118,9 @@ export interface ApiGeneratorState {
 	// Drawer actions
 	openEndpoint: (endpoint: ApiEndpoint) => void;
 	closeDrawer: () => void;
-	handleSave: () => boolean;
-	handleUndo: () => void;
-	handleCancel: () => void;
+	handleSaveEndpoint: () => boolean;
+	handleUndoEndpoint: () => void;
+	handleCancelEndpoint: () => void;
 
 	// Endpoint editing actions
 	handlePathChange: (newPath: string) => void;
@@ -132,25 +149,109 @@ export interface ApiGeneratorState {
 }
 
 /**
- * Creates the API generator state container
+ * Configuration for creating API detail state
  */
-export function createApiGeneratorState(): ApiGeneratorState {
+export interface ApiDetailStateConfig {
+	apiId: string; // 'new' for creating a new API
+	namespaceId: string;
+	onClose: () => void;
+	onApiCreated?: (apiId: string) => void; // Called after new API is saved
+}
+
+/**
+ * Creates a default API object for new APIs
+ */
+function createDefaultApi(id: string, namespaceId: string): Api {
+	const now = new Date().toISOString();
+	return {
+		id,
+		namespaceId,
+		title: 'Untitled API',
+		version: '1.0.0',
+		description: '',
+		baseUrl: '/api/v1',
+		serverUrl: '',
+		createdAt: now,
+		updatedAt: now
+	};
+}
+
+/**
+ * Creates a default endpoint object
+ */
+function createDefaultEndpointLocal(namespaceId: string, apiId: string): ApiEndpoint {
+	return {
+		id: generateId('endpoint'),
+		namespaceId,
+		apiId,
+		method: 'GET',
+		path: '/',
+		description: '',
+		pathParams: [],
+		useEnvelope: true,
+		responseShape: 'object'
+	};
+}
+
+/**
+ * Creates the API detail state container for a specific API
+ */
+export function createApiDetailState(config: ApiDetailStateConfig): ApiDetailState {
+	const { apiId: configApiId, namespaceId, onClose, onApiCreated } = config;
+
+	// Determine if this is a new API
+	const isNewApi = configApiId === 'new';
+
+	// Generate a real ID for new APIs upfront
+	const actualApiId = isNewApi ? generateId('api') : configApiId;
+
 	// Subscribe to stores - these will update reactively
-	// We use direct store subscriptions instead of $effect for testability
-	let metadata = $state(get(apiMetadataStore));
+	let allApis = $state(get(apisStore));
 	let allTags = $state(get(tagsStore));
 	let allEndpoints = $state(get(endpointsStore));
-	let currentNamespaceId = $state(get(activeNamespaceId));
 
-	// Derived filtered state based on active namespace
-	let tags = $derived(allTags.filter(t => t.namespaceId === currentNamespaceId));
-	let endpoints = $derived(allEndpoints.filter(e => e.namespaceId === currentNamespaceId));
+	// Draft state for new APIs (local only, not in stores)
+	let draftTags = $state<EndpointTag[]>([]);
+	let draftEndpoints = $state<ApiEndpoint[]>([]);
 
-	// Subscribe to store updates and update local state
-	apiMetadataStore.subscribe(value => metadata = value);
+	// Track if a new API has been saved (transitions from draft to saved)
+	let hasBeenSaved = $state(false);
+
+	// The current API from store (null for new APIs until saved)
+	let storedApi = $derived(allApis.find(a => a.id === actualApiId) ?? null);
+
+	// For new APIs that haven't been saved, api is null; otherwise use stored
+	let api = $derived((isNewApi && !hasBeenSaved) ? null : storedApi);
+
+	// Edited copy of API for tracking changes
+	let editedApi = $state<Api | null>(
+		isNewApi ? createDefaultApi(actualApiId, namespaceId) : null
+	);
+
+	// Initialize editedApi when existing api is loaded
+	$effect(() => {
+		if (!isNewApi && storedApi && !editedApi) {
+			editedApi = deepClone(storedApi);
+		}
+	});
+
+	// Derived filtered state for this specific API
+	// For new APIs that haven't been saved, use draft state; otherwise use store
+	let tags = $derived(
+		(isNewApi && !hasBeenSaved)
+			? draftTags
+			: allTags.filter(t => t.apiId === actualApiId)
+	);
+	let endpoints = $derived(
+		(isNewApi && !hasBeenSaved)
+			? draftEndpoints
+			: allEndpoints.filter(e => e.apiId === actualApiId)
+	);
+
+	// Subscribe to store updates
+	apisStore.subscribe(value => allApis = value);
 	tagsStore.subscribe(value => allTags = value);
 	endpointsStore.subscribe(value => allEndpoints = value);
-	activeNamespaceId.subscribe(value => currentNamespaceId = value);
 
 	// Drawer state
 	let drawerOpen = $state(false);
@@ -165,24 +266,137 @@ export function createApiGeneratorState(): ApiGeneratorState {
 	// Endpoint deletion confirmation state
 	let showEndpointDeleteConfirm = $state(false);
 
-	// Derived: Track if there are unsaved changes
-	let hasChanges = $derived(
+	// Close confirmation state
+	let showCloseConfirm = $state(false);
+
+	// Derived: Track if there are unsaved API changes
+	let hasApiChanges = $derived.by(() => {
+		if (isNewApi && !hasBeenSaved) {
+			// For new APIs that haven't been saved yet, always consider it as having changes
+			return true;
+		}
+		// After saving (or for existing APIs), compare edited vs stored
+		if (!editedApi || !storedApi) return false;
+		return JSON.stringify(editedApi) !== JSON.stringify(storedApi);
+	});
+
+	// Derived: Track if there are unsaved endpoint changes
+	let hasEndpointChanges = $derived(
 		editedEndpoint && selectedEndpoint
 			? JSON.stringify(editedEndpoint) !== JSON.stringify(selectedEndpoint)
 			: false
 	);
+
+	// Derived: Any unsaved changes
+	let hasAnyChanges = $derived(hasApiChanges || hasEndpointChanges);
 
 	// Derived: Check if input matches an existing tag exactly
 	let exactTagMatch = $derived(
 		tags.find((t: EndpointTag) => t.name.toLowerCase() === tagInputValue.toLowerCase().trim())
 	);
 
+	// Helper to find tag by ID (checks both draft and store)
+	function findTagById(tagId: string): EndpointTag | undefined {
+		if (isNewApi) {
+			return draftTags.find(t => t.id === tagId);
+		}
+		return getTagById(tagId);
+	}
+
 	// ============================================================================
-	// Metadata Operations
+	// API Metadata Operations
 	// ============================================================================
 
-	function handleMetadataUpdate(updates: Partial<ApiMetadata>): void {
-		updateApiMetadata(updates);
+	function handleApiUpdate(updates: Partial<Api>): void {
+		if (!editedApi) return;
+		editedApi = { ...editedApi, ...updates };
+	}
+
+	function handleSaveApi(): boolean {
+		if (!editedApi) return false;
+
+		if (isNewApi && !hasBeenSaved) {
+			// Commit new API and all draft data to stores
+			addApi(editedApi);
+
+			// Add all draft tags to store
+			for (const tag of draftTags) {
+				addTag(tag);
+			}
+
+			// Add all draft endpoints to store
+			for (const endpoint of draftEndpoints) {
+				addEndpoint(endpoint);
+			}
+
+			// Mark as saved - now we switch to using store data
+			hasBeenSaved = true;
+
+			// Clear draft arrays (data is now in stores)
+			draftTags = [];
+			draftEndpoints = [];
+
+			showToast(MESSAGES.API_CREATED, 'success');
+
+			// Notify parent to update URL (replace /apis/new with /apis/{id})
+			if (onApiCreated) {
+				onApiCreated(actualApiId);
+			}
+
+			return true;
+		}
+
+		// Existing API (or previously saved new API) - just update
+		updateApi(actualApiId, editedApi);
+		showToast(MESSAGES.API_SAVED, 'success');
+		return true;
+	}
+
+	function handleDiscardApiChanges(): void {
+		if (isNewApi) {
+			// Reset to default for new APIs
+			editedApi = createDefaultApi(actualApiId, namespaceId);
+			draftTags = [];
+			draftEndpoints = [];
+		} else if (storedApi) {
+			editedApi = deepClone(storedApi);
+		}
+	}
+
+	function handleDeleteApi(): void {
+		// This should only be called for saved APIs (handled in UI)
+		// The actual deletion is handled by the parent component
+		// since it needs to navigate away after deletion
+	}
+
+	// ============================================================================
+	// Close Operations
+	// ============================================================================
+
+	function handleClose(): void {
+		if (hasAnyChanges) {
+			showCloseConfirm = true;
+		} else {
+			onClose();
+		}
+	}
+
+	function handleSaveAndClose(): void {
+		handleSaveApi();
+		if (hasEndpointChanges && editedEndpoint) {
+			handleSaveEndpoint();
+		}
+		showCloseConfirm = false;
+		onClose();
+	}
+
+	function handleDiscardAndClose(): void {
+		showCloseConfirm = false;
+		onClose();
+	}
+
+	function cancelClose(): void {
+		showCloseConfirm = false;
 	}
 
 	// ============================================================================
@@ -190,6 +404,9 @@ export function createApiGeneratorState(): ApiGeneratorState {
 	// ============================================================================
 
 	function getEndpointsUsingTag(tagId: string): number {
+		if (isNewApi) {
+			return draftEndpoints.filter(e => e.tagId === tagId).length;
+		}
 		return getEndpointCountByTag(tagId);
 	}
 
@@ -197,18 +414,27 @@ export function createApiGeneratorState(): ApiGeneratorState {
 		if (!editedEndpoint) return;
 
 		editedEndpoint = { ...editedEndpoint, tagId };
-		tagInputValue = tagId ? (getTagById(tagId)?.name || '') : '';
+		tagInputValue = tagId ? (findTagById(tagId)?.name || '') : '';
 		tagDropdownOpen = false;
 	}
 
 	function handleCreateTag(): void {
 		if (!editedEndpoint || !tagInputValue.trim() || exactTagMatch) return;
 
-		const newTag = createTag(tagInputValue.trim(), currentNamespaceId, LEGACY_API_ID);
+		const newTag: EndpointTag = {
+			id: generateId('tag'),
+			namespaceId,
+			apiId: actualApiId,
+			name: tagInputValue.trim(),
+			description: ''
+		};
 
-		if (!newTag) {
-			showToast('Tag already exists', 'error');
-			return;
+		if (isNewApi) {
+			// Add to draft state
+			draftTags = [...draftTags, newTag];
+		} else {
+			// Add to store immediately
+			addTag(newTag);
 		}
 
 		editedEndpoint = { ...editedEndpoint, tagId: newTag.id };
@@ -224,10 +450,25 @@ export function createApiGeneratorState(): ApiGeneratorState {
 	function confirmDeleteTag(): void {
 		if (!tagToDelete) return;
 
-		const result = deleteTagWithCleanup(tagToDelete.id);
+		if (isNewApi) {
+			// Remove from draft state
+			draftTags = draftTags.filter(t => t.id !== tagToDelete!.id);
 
-		// If current endpoint uses this tag, clear it from both edited and selected
-		// to prevent Undo from resurrecting the deleted tag reference
+			// Clear tag from any endpoints using it
+			draftEndpoints = draftEndpoints.map(e =>
+				e.tagId === tagToDelete!.id ? { ...e, tagId: undefined } : e
+			);
+
+			showToast(`Tag "${tagToDelete.name}" deleted`, 'success');
+		} else {
+			// Delete from store
+			const result = deleteTagWithCleanup(tagToDelete.id);
+			if (result.success && result.error) {
+				showToast(result.error, 'success');
+			}
+		}
+
+		// If current endpoint uses this tag, clear it
 		if (editedEndpoint?.tagId === tagToDelete.id) {
 			editedEndpoint = { ...editedEndpoint, tagId: undefined };
 			tagInputValue = '';
@@ -237,10 +478,6 @@ export function createApiGeneratorState(): ApiGeneratorState {
 		}
 
 		tagToDelete = null;
-
-		if (result.success && result.error) {
-			showToast(result.error, 'success');
-		}
 	}
 
 	function cancelDeleteTag(): void {
@@ -252,9 +489,16 @@ export function createApiGeneratorState(): ApiGeneratorState {
 	// ============================================================================
 
 	function handleAddEndpoint(): void {
-		// createDefaultEndpoint() adds the endpoint to the store automatically
-		const newEndpoint = createDefaultEndpoint(currentNamespaceId, LEGACY_API_ID);
-		// Automatically open the new endpoint in the drawer
+		const newEndpoint = createDefaultEndpointLocal(namespaceId, actualApiId);
+
+		if (isNewApi) {
+			// Add to draft state
+			draftEndpoints = [...draftEndpoints, newEndpoint];
+		} else {
+			// Add to store immediately
+			addEndpoint(newEndpoint);
+		}
+
 		openEndpoint(newEndpoint);
 	}
 
@@ -266,14 +510,24 @@ export function createApiGeneratorState(): ApiGeneratorState {
 		if (!editedEndpoint) return;
 
 		const endpointId = editedEndpoint.id;
-		const result = deleteEndpoint(endpointId);
 
-		if (result.success) {
+		if (isNewApi) {
+			// Remove from draft state
+			draftEndpoints = draftEndpoints.filter(e => e.id !== endpointId);
 			showToast(MESSAGES.ENDPOINT_DELETED, 'success');
 			showEndpointDeleteConfirm = false;
 			closeDrawer();
-		} else if (result.error) {
-			showToast(result.error, 'error');
+		} else {
+			// Delete from store
+			const result = deleteEndpoint(endpointId);
+
+			if (result.success) {
+				showToast(MESSAGES.ENDPOINT_DELETED, 'success');
+				showEndpointDeleteConfirm = false;
+				closeDrawer();
+			} else if (result.error) {
+				showToast(result.error, 'error');
+			}
 		}
 	}
 
@@ -282,13 +536,34 @@ export function createApiGeneratorState(): ApiGeneratorState {
 	}
 
 	function handleDuplicateEndpoint(endpointId: string): void {
-		const duplicated = duplicateEndpoint(endpointId);
+		// Find the endpoint to duplicate
+		const original = isNewApi
+			? draftEndpoints.find(e => e.id === endpointId)
+			: allEndpoints.find(e => e.id === endpointId);
 
-		if (duplicated) {
-			showToast(MESSAGES.ENDPOINT_DUPLICATED, 'success');
-		} else {
+		if (!original) {
 			showToast('Failed to duplicate endpoint', 'error');
+			return;
 		}
+
+		// Create a copy with new IDs
+		const duplicated: ApiEndpoint = {
+			...deepClone(original),
+			id: generateId('endpoint'),
+			path: original.path + '-copy',
+			pathParams: original.pathParams.map(p => ({
+				...p,
+				id: generateParamId()
+			}))
+		};
+
+		if (isNewApi) {
+			draftEndpoints = [...draftEndpoints, duplicated];
+		} else {
+			addEndpoint(duplicated);
+		}
+
+		showToast(MESSAGES.ENDPOINT_DUPLICATED, 'success');
 	}
 
 	// ============================================================================
@@ -296,15 +571,13 @@ export function createApiGeneratorState(): ApiGeneratorState {
 	// ============================================================================
 
 	function openEndpoint(endpoint: ApiEndpoint): void {
-		// Normalize endpoint to ensure all response shape fields exist
 		const normalized = normalizeEndpoint(endpoint);
 
 		selectedEndpoint = normalized;
 		editedEndpoint = deepClone(normalized);
 		drawerOpen = true;
 
-		// Initialize tag input
-		tagInputValue = normalized.tagId ? (getTagById(normalized.tagId)?.name || '') : '';
+		tagInputValue = normalized.tagId ? (findTagById(normalized.tagId)?.name || '') : '';
 		tagDropdownOpen = false;
 	}
 
@@ -318,29 +591,36 @@ export function createApiGeneratorState(): ApiGeneratorState {
 		}, 300);
 	}
 
-	function handleSave(): boolean {
+	function handleSaveEndpoint(): boolean {
 		if (!editedEndpoint || !selectedEndpoint) return false;
 
-		updateEndpoint(editedEndpoint.id, editedEndpoint);
+		if (isNewApi) {
+			// Update in draft state
+			draftEndpoints = draftEndpoints.map(e =>
+				e.id === editedEndpoint!.id ? editedEndpoint! : e
+			);
+		} else {
+			// Update in store
+			updateEndpoint(editedEndpoint.id, editedEndpoint);
+		}
+
 		selectedEndpoint = editedEndpoint;
 		showToast(MESSAGES.ENDPOINT_SAVED, 'success');
 		closeDrawer();
 		return true;
 	}
 
-
-	function handleUndo(): void {
+	function handleUndoEndpoint(): void {
 		if (!selectedEndpoint) return;
 
 		editedEndpoint = deepClone(selectedEndpoint);
 
-		// Sync tag input with restored endpoint
 		tagInputValue = editedEndpoint?.tagId
-			? (getTagById(editedEndpoint.tagId)?.name || '')
+			? (findTagById(editedEndpoint.tagId)?.name || '')
 			: '';
 	}
 
-	function handleCancel(): void {
+	function handleCancelEndpoint(): void {
 		closeDrawer();
 	}
 
@@ -351,10 +631,8 @@ export function createApiGeneratorState(): ApiGeneratorState {
 	function handlePathChange(newPath: string): void {
 		if (!editedEndpoint) return;
 
-		// Use centralized reconciliation logic (changes stay local until Save)
 		const { path, pathParams } = reconcilePathParams(newPath, editedEndpoint.pathParams);
 
-		// Update local edited state only (changes persist on Save)
 		editedEndpoint = {
 			...editedEndpoint,
 			path,
@@ -430,8 +708,6 @@ export function createApiGeneratorState(): ApiGeneratorState {
 	function handleSetResponseShape(shape: ResponseShape): void {
 		if (!editedEndpoint) return;
 
-		// Simple shape switching - both options use object fields
-		// No need to clear anything as both 'object' and 'list' use responseBodyFieldIds
 		editedEndpoint = { ...editedEndpoint, responseShape: shape };
 	}
 
@@ -442,7 +718,6 @@ export function createApiGeneratorState(): ApiGeneratorState {
 			...editedEndpoint,
 			useEnvelope: true,
 			responseShape: 'object',
-			// Clear object selection when resetting
 			responseBodyObjectId: undefined
 		};
 	}
@@ -452,21 +727,19 @@ export function createApiGeneratorState(): ApiGeneratorState {
 	// ============================================================================
 
 	function handleGenerateCode(): void {
-		// Gather all data from stores for code generation
+		if (!editedApi) return;
+
 		const requestPayload = {
-			metadata: get(apiMetadataStore),
-			tags: get(tagsStore),
-			endpoints: get(endpointsStore),
+			api: editedApi,
+			tags: isNewApi ? draftTags : get(tagsStore).filter(t => t.apiId === actualApiId),
+			endpoints: isNewApi ? draftEndpoints : get(endpointsStore).filter(e => e.apiId === actualApiId),
 			objects: get(objectsStore),
 			fields: get(fieldsStore),
 			validators: get(validatorsStore)
 		};
 
-		// Log the payload for development/testing
 		console.log('Generate request payload:', requestPayload);
 
-		// TODO: Make API call to /v1/generate endpoint
-		// This will be implemented when the backend is deployed
 		showToast('Code generation will be available when backend is deployed', 'info', 5000);
 	}
 
@@ -475,8 +748,16 @@ export function createApiGeneratorState(): ApiGeneratorState {
 	// ============================================================================
 
 	return {
+		// Mode flag (readonly)
+		get isNewApi() { return isNewApi && !hasBeenSaved; },
+
+		// API data (readonly)
+		get api() { return api; },
+
+		get editedApi() { return editedApi; },
+		set editedApi(v: Api | null) { editedApi = v; },
+
 		// Store subscriptions (readonly)
-		get metadata() { return metadata; },
 		get tags() { return tags; },
 		get endpoints() { return endpoints; },
 
@@ -503,12 +784,24 @@ export function createApiGeneratorState(): ApiGeneratorState {
 		get showEndpointDeleteConfirm() { return showEndpointDeleteConfirm; },
 		set showEndpointDeleteConfirm(v: boolean) { showEndpointDeleteConfirm = v; },
 
+		get showCloseConfirm() { return showCloseConfirm; },
+		set showCloseConfirm(v: boolean) { showCloseConfirm = v; },
+
 		// Derived state (readonly)
-		get hasChanges() { return hasChanges; },
+		get hasApiChanges() { return hasApiChanges; },
+		get hasEndpointChanges() { return hasEndpointChanges; },
+		get hasAnyChanges() { return hasAnyChanges; },
 		get exactTagMatch() { return exactTagMatch; },
 
 		// Actions
-		handleMetadataUpdate,
+		handleApiUpdate,
+		handleSaveApi,
+		handleDiscardApiChanges,
+		handleDeleteApi,
+		handleClose,
+		handleSaveAndClose,
+		handleDiscardAndClose,
+		cancelClose,
 		handleTagSelect,
 		handleCreateTag,
 		handleDeleteTagClick,
@@ -521,9 +814,9 @@ export function createApiGeneratorState(): ApiGeneratorState {
 		handleDuplicateEndpoint,
 		openEndpoint,
 		closeDrawer,
-		handleSave,
-		handleUndo,
-		handleCancel,
+		handleSaveEndpoint,
+		handleUndoEndpoint,
+		handleCancelEndpoint,
 		handlePathChange,
 		handlePathParamUpdate,
 		handlePathParamDelete,
