@@ -60,7 +60,7 @@
     }
   };
 
-  const style = toastStyles[toast.type];
+  const style = $derived(toastStyles[toast.type]);
 </script>
 
 <div

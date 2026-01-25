@@ -36,11 +36,11 @@
 
   let { open, tag, onSave, onCancel }: Props = $props();
 
-  // Form state
-  let name = $state(tag?.name || '');
-  let description = $state(tag?.description || '');
+  // Form state - initialized empty, synced via $effect
+  let name = $state('');
+  let description = $state('');
 
-  // Update form when tag prop changes
+  // Sync form state when tag prop changes
   $effect(() => {
     if (tag) {
       name = tag.name;

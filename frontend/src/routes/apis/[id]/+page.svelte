@@ -1,6 +1,7 @@
 <script lang="ts">
   import { page } from '$app/state';
   import { goto } from '$app/navigation';
+  import { untrack } from 'svelte';
   import {
     DashboardLayout,
     Drawer,
@@ -33,9 +34,11 @@
   let showDeleteConfirm = $state(false);
 
   // Create state container for this specific API
+  // Using untrack() because the apiId is intentionally captured at mount time
+  // SvelteKit remounts the component when the route changes
   const apiState = createApiDetailState({
-    apiId,
-    namespaceId: $activeNamespaceId,
+    apiId: untrack(() => apiId),
+    namespaceId: untrack(() => $activeNamespaceId),
     onClose: () => goto('/apis'),
     onApiCreated: (newApiId: string) => {
       // Replace /apis/new with /apis/{actualId} in URL without reloading

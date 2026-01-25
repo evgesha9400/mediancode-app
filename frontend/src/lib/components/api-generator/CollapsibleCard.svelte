@@ -1,5 +1,6 @@
 <script lang="ts">
   import type { Snippet } from 'svelte';
+  import { untrack } from 'svelte';
 
   export interface CollapsibleCardProps {
     title: string;
@@ -13,7 +14,8 @@
   }
 
   let { title, icon, defaultExpanded = true, actions, children }: Props = $props();
-  let isExpanded = $state(defaultExpanded);
+  // Using untrack() to intentionally capture only the initial value
+  let isExpanded = $state(untrack(() => defaultExpanded));
 
   function toggleExpanded() {
     isExpanded = !isExpanded;

@@ -73,7 +73,7 @@
     primary: 'bg-mono-900 hover:bg-mono-800 text-white'
   };
 
-  const buttonStyle = buttonStyles[variant];
+  const buttonStyle = $derived(buttonStyles[variant]);
 </script>
 
 {#if open}
