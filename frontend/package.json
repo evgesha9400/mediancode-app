@@ -1,5 +1,5 @@
 {
-  "name": "dashboard",
+  "name": "median-code-frontend",
   "private": true,
   "version": "0.0.1",
   "type": "module",
@@ -51,7 +51,7 @@
     "vitest": "^4.0.13",
     "whatwg-fetch": "^3.6.20"
   },
-  "description": "Everything you need to build a Svelte project, powered by [`sv`](https://github.com/sveltejs/cli).",
+  "description": "Median Code Frontend - SvelteKit dashboard for FastAPI code generation",
   "main": "svelte.config.js",
   "keywords": [],
   "author": "",
