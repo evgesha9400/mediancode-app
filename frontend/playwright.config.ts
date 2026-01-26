@@ -44,8 +44,8 @@ export default defineConfig({
 	// Retry on CI only
 	retries: process.env.CI ? 2 : 0,
 
-	// Opt out of parallel tests on CI for more stable runs
-	workers: process.env.CI ? 1 : undefined,
+	// Run 2 workers in CI (GitHub Actions has 2 CPUs), unlimited locally
+	workers: process.env.CI ? 2 : undefined,
 
 	// Reporter to use
 	reporter: [
@@ -94,8 +94,9 @@ export default defineConfig({
 			use: {
 				...devices['Desktop Chrome']
 			},
-			// Run all spec files
+			// Run all spec files except smoke tests (they run in chromium-smoke project)
 			testMatch: /.*\.spec\.ts/,
+			testIgnore: /.*\.smoke\.spec\.ts/,
 			// Longer timeout for comprehensive tests
 			timeout: 30 * 1000
 		}
