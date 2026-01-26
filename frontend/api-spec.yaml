@@ -1459,48 +1459,6 @@ components:
           example: ["string"]
 
     # ========================================================================
-    # Main Request Schema
-    # ========================================================================
-
-    GenerateRequest:
-      type: object
-      required:
-        - api
-        - tags
-        - endpoints
-        - objects
-        - fields
-        - validators
-      properties:
-        api:
-          $ref: '#/components/schemas/Api'
-        tags:
-          type: array
-          items:
-            $ref: '#/components/schemas/EndpointTag'
-          description: Tags for organizing endpoints in OpenAPI spec
-        endpoints:
-          type: array
-          items:
-            $ref: '#/components/schemas/ApiEndpoint'
-          description: Array of API endpoint definitions
-        objects:
-          type: array
-          items:
-            $ref: '#/components/schemas/ObjectDefinition'
-          description: Object definitions used in requests/responses
-        fields:
-          type: array
-          items:
-            $ref: '#/components/schemas/Field'
-          description: Field definitions used in objects
-        validators:
-          type: array
-          items:
-            $ref: '#/components/schemas/ValidatorBase'
-          description: Validator definitions applied to fields
-
-    # ========================================================================
     # Endpoint Tag
     # ========================================================================
 
