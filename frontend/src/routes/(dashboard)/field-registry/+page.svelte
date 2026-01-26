@@ -6,7 +6,6 @@
   import { activeNamespaceId, namespacesStore, getNamespaceById } from '$lib/stores/namespaces';
   import { buildDeletionTooltip } from '$lib/utils/references';
   import {
-    DashboardLayout,
     PageHeader,
     SearchBar,
     FilterPanel,
@@ -283,8 +282,7 @@
     : '');
 </script>
 
-<DashboardLayout>
-  <PageHeader title="Fields">
+<PageHeader title="Fields">
     {#snippet actions()}
       <NamespaceSelector />
       <button
@@ -411,7 +409,6 @@
       />
     {/snippet}
   </Table>
-</DashboardLayout>
 
 <Drawer open={listState.drawerOpen}>
   <DrawerHeader title={isCreating ? 'Create Field' : 'Edit Field'} onClose={closeDrawer} />

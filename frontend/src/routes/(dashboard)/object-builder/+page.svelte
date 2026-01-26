@@ -5,7 +5,6 @@
   import { activeNamespaceId, getNamespaceById } from '$lib/stores/namespaces';
   import { buildDeletionTooltip } from '$lib/utils/references';
   import {
-    DashboardLayout,
     PageHeader,
     SearchBar,
     Table,
@@ -225,8 +224,7 @@
     : '');
 </script>
 
-<DashboardLayout>
-  <PageHeader title="Objects">
+<PageHeader title="Objects">
     {#snippet actions()}
       <NamespaceSelector />
       <button
@@ -326,7 +324,6 @@
       />
     {/snippet}
   </Table>
-</DashboardLayout>
 
 <Drawer open={listState.drawerOpen} maxWidth={720}>
   <DrawerHeader title={isCreating ? 'Create Object' : 'Edit Object'} onClose={closeDrawer} />

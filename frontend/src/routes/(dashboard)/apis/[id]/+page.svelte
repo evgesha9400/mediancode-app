@@ -3,7 +3,6 @@
   import { goto } from '$app/navigation';
   import { untrack } from 'svelte';
   import {
-    DashboardLayout,
     Drawer,
     DrawerHeader,
     DrawerContent,
@@ -71,24 +70,21 @@
 </script>
 
 {#if !apiExists}
-  <DashboardLayout>
-    <div class="flex-1 flex items-center justify-center">
-      <div class="text-center">
-        <i class="fa-solid fa-circle-exclamation text-4xl text-mono-400 mb-4"></i>
-        <h2 class="text-xl text-mono-800 mb-2">API Not Found</h2>
-        <p class="text-mono-500 mb-4">The API you're looking for doesn't exist or has been deleted.</p>
-        <button
-          onclick={() => goto('/apis')}
-          class="px-4 py-2 bg-mono-900 text-white rounded-md hover:bg-mono-800"
-        >
-          Back to APIs
-        </button>
-      </div>
+  <div class="flex-1 flex items-center justify-center">
+    <div class="text-center">
+      <i class="fa-solid fa-circle-exclamation text-4xl text-mono-400 mb-4"></i>
+      <h2 class="text-xl text-mono-800 mb-2">API Not Found</h2>
+      <p class="text-mono-500 mb-4">The API you're looking for doesn't exist or has been deleted.</p>
+      <button
+        onclick={() => goto('/apis')}
+        class="px-4 py-2 bg-mono-900 text-white rounded-md hover:bg-mono-800"
+      >
+        Back to APIs
+      </button>
     </div>
-  </DashboardLayout>
+  </div>
 {:else}
-  <DashboardLayout>
-    <!-- Header -->
+  <!-- Header -->
     <div class="bg-white border-b border-mono-200 py-4 px-6">
       <div class="flex justify-between items-center">
         <div>
@@ -183,7 +179,6 @@
         </div>
       </div>
     </div>
-  </DashboardLayout>
 
   <!-- Close Confirmation Modal -->
   {#if apiState.showCloseConfirm}

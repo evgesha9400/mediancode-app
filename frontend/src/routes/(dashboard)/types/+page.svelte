@@ -1,7 +1,6 @@
 <script lang="ts">
   import { typesStore, searchTypes, type FieldType } from '$lib/stores/types';
   import {
-    DashboardLayout,
     PageHeader,
     SearchBar,
     FilterPanel,
@@ -75,8 +74,7 @@
   }
 </script>
 
-<DashboardLayout>
-  <PageHeader title="Types" />
+<PageHeader title="Types" />
 
   <SearchBar
     bind:searchQuery={state.query}
@@ -171,4 +169,3 @@
       />
     {/snippet}
   </Table>
-</DashboardLayout>

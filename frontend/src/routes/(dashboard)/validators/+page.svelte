@@ -4,7 +4,6 @@
   import { activeNamespaceId, getNamespaceById } from '$lib/stores/namespaces';
   import { buildDeletionTooltip } from '$lib/utils/references';
   import {
-    DashboardLayout,
     PageHeader,
     SearchBar,
     FilterPanel,
@@ -123,8 +122,7 @@
     : '');
 </script>
 
-<DashboardLayout>
-  <PageHeader title="Validators">
+<PageHeader title="Validators">
     {#snippet actions()}
       <NamespaceSelector />
     {/snippet}
@@ -235,7 +233,6 @@
       />
     {/snippet}
   </Table>
-</DashboardLayout>
 
 <Drawer open={state.drawerOpen}>
   <DrawerHeader title="Validator Details" onClose={state.closeDrawer} />

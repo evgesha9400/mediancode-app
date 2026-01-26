@@ -3,7 +3,7 @@
   import { getTotalValidatorCount } from '$lib/stores/validators';
   import { getTotalTypeCount } from '$lib/stores/types';
   import { clerkState } from '$lib/clerk';
-  import { DashboardLayout, StatCard } from '$lib/components';
+  import { StatCard } from '$lib/components';
 
   $: totalTypes = getTotalTypeCount();
   $: totalFields = getTotalFieldCount();
@@ -12,9 +12,8 @@
   $: userName = $clerkState.user?.firstName || $clerkState.user?.fullName || 'Developer';
 </script>
 
-<DashboardLayout>
-  <!-- Header -->
-  <div class="bg-white border-b border-mono-200 py-4 px-6">
+<!-- Header -->
+<div class="bg-white border-b border-mono-200 py-4 px-6">
     <div>
       <h1 class="text-2xl text-mono-800 font-semibold">Dashboard</h1>
       <p class="text-sm text-mono-500 mt-1">Welcome back, {userName}! Here's your overview</p>
@@ -50,4 +49,3 @@
       </div>
     </section>
   </div>
-</DashboardLayout>

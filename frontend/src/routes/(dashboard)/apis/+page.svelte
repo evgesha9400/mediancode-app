@@ -10,7 +10,6 @@
   import { showToast } from '$lib/stores/toasts';
   import { activeNamespaceId, getNamespaceById } from '$lib/stores/namespaces';
   import {
-    DashboardLayout,
     PageHeader,
     SearchBar,
     Table,
@@ -105,8 +104,7 @@
   }
 </script>
 
-<DashboardLayout>
-  <PageHeader title="APIs">
+<PageHeader title="APIs">
     {#snippet actions()}
       <NamespaceSelector />
       <button
@@ -221,7 +219,6 @@
       />
     {/snippet}
   </Table>
-</DashboardLayout>
 
 <Drawer open={listState.drawerOpen}>
   <DrawerHeader title="API Details" onClose={listState.closeDrawer} />

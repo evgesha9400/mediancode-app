@@ -10,7 +10,6 @@
   } from '$lib/stores/namespaces';
   import { showToast } from '$lib/stores/toasts';
   import {
-    DashboardLayout,
     PageHeader,
     SearchBar,
     FilterPanel,
@@ -206,8 +205,7 @@
   });
 </script>
 
-<DashboardLayout>
-  <PageHeader title="Namespaces">
+<PageHeader title="Namespaces">
     {#snippet actions()}
       <button
         type="button"
@@ -311,7 +309,6 @@
       />
     {/snippet}
   </Table>
-</DashboardLayout>
 
 <Drawer open={listState.drawerOpen}>
   <DrawerHeader title={isLocked ? 'View Namespace' : 'Edit Namespace'} onClose={closeDrawer} />

@@ -2,7 +2,7 @@
   import { fieldsStore, getFieldById } from '$lib/stores/fields';
   import { objectsStore, getObjectById } from '$lib/stores/objects';
   import type { ObjectDefinition } from '$lib/types';
-  import { DashboardLayout, PageHeader } from '$lib/components';
+  import { PageHeader } from '$lib/components';
 
   // ============================================================================
   // STATE
@@ -71,8 +71,7 @@
   let selectedObject = $derived(selectedObjectId ? getObjectById(selectedObjectId) : undefined);
 </script>
 
-<DashboardLayout>
-  <PageHeader title="Response Body Prototype">
+<PageHeader title="Response Body Prototype">
     {#snippet actions()}
       <div class="flex items-center gap-2">
         <label class="flex items-center gap-2 text-sm">
@@ -178,4 +177,3 @@
       </div>
     </div>
   </div>
-</DashboardLayout>
