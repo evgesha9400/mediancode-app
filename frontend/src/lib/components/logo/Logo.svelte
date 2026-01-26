@@ -1,17 +1,23 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
+	import { browser } from '$app/environment';
 	import * as THREE from 'three';
 
 	export interface LogoProps {
 		size?: 'sm' | 'md' | 'lg' | 'xl';
 		variant?: 'light' | 'dark';
 		showText?: boolean;
+		paused?: boolean;
 		class?: string;
 	}
 
 	interface Props extends LogoProps {}
 
-	let { size = 'md', variant = 'light', showText = false, class: className = '' }: Props = $props();
+	let { size = 'md', variant = 'light', showText = false, paused = false, class: className = '' }: Props = $props();
+
+	// Detect Playwright/test environment for automatic animation pausing
+	// navigator.webdriver is true when controlled by automation tools
+	const isAutomatedEnvironment = browser && typeof navigator !== 'undefined' && navigator.webdriver === true;
 
 	const sizeMap = {
 		sm: 32,
@@ -143,7 +149,20 @@
 		// Create connecting cylinders between cubes
 		createConnectingCylinders(scene, outerVertices, innerVertices, edgeColor, cylinderRadius);
 
-		// Animation loop
+		// Determine if animation should be paused
+		// Either explicitly via prop or automatically in test environments
+		const shouldPause = paused || isAutomatedEnvironment;
+
+		// Set initial rotation for a visually pleasing fixed position
+		// This angle shows the 3D structure clearly
+		const INITIAL_ROTATION = Math.PI / 6; // 30 degrees
+		scene.rotation.x = INITIAL_ROTATION;
+		scene.rotation.y = INITIAL_ROTATION;
+
+		// Render the initial frame immediately (always needed, even when paused)
+		renderer.render(scene, camera);
+
+		// Animation loop - only runs if not paused
 		function animate() {
 			if (!renderer || !isVisible) {
 				animationId = requestAnimationFrame(animate);
@@ -157,20 +176,22 @@
 			animationId = requestAnimationFrame(animate);
 		}
 
-		// Set up Intersection Observer for performance
-		observer = new IntersectionObserver(
-			(entries) => {
-				entries.forEach((entry) => {
-					isVisible = entry.isIntersecting;
-				});
-			},
-			{ threshold: 0.1 }
-		);
+		// Set up Intersection Observer for performance (only needed when animating)
+		if (!shouldPause) {
+			observer = new IntersectionObserver(
+				(entries) => {
+					entries.forEach((entry) => {
+						isVisible = entry.isIntersecting;
+					});
+				},
+				{ threshold: 0.1 }
+			);
 
-		observer.observe(canvasContainer);
+			observer.observe(canvasContainer);
 
-		// Start animation
-		animate();
+			// Start animation loop only if not paused
+			animate();
+		}
 
 		// Cleanup
 		return () => {

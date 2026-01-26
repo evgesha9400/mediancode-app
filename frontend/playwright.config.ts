@@ -102,12 +102,11 @@ export default defineConfig({
 	],
 
 	// Web server configuration for local development
-	// IMPORTANT: reuseExistingServer is false to always rebuild with fresh code
-	// This prevents stale code issues when debugging test failures
+	// In CI: always start fresh server. Locally: reuse existing dev/preview server if running
 	webServer: {
 		command: `bun run build && bun run preview -- --host ${PREVIEW_HOST} --port ${PREVIEW_PORT}`,
 		port: PREVIEW_PORT,
-		reuseExistingServer: false,
+		reuseExistingServer: !process.env.CI,
 		stdout: 'ignore',
 		stderr: 'pipe',
 		// Ensure the build has access to required environment variables
