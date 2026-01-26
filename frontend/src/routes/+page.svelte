@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { clerkState } from '$lib/clerk';
+	import { Logo } from '$lib/components';
 
 	let mobileMenuOpen = false;
 	let heroFormSuccess = false;
@@ -107,9 +108,7 @@
 	<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
 		<div class="flex items-center justify-between h-16">
 			<a href="/" onclick={scrollToTop} class="flex items-center space-x-2 cursor-pointer hover:opacity-80 transition-opacity">
-				<div class="w-8 h-8 bg-mono-900 rounded flex items-center justify-center">
-					<i class="fa-solid fa-code text-white text-sm"></i>
-				</div>
+				<Logo size="md" />
 				<span class="text-lg sm:text-xl font-bold text-mono-900">Median Code</span>
 			</a>
 			<button onclick={toggleMobileMenu} aria-label="Toggle mobile menu" class="md:hidden w-10 h-10 flex items-center justify-center">
@@ -381,9 +380,7 @@
 	<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
 		<div class="flex flex-col sm:flex-row items-center justify-between space-y-4 sm:space-y-0">
 			<div class="flex items-center space-x-2">
-				<div class="w-8 h-8 bg-mono-900 rounded flex items-center justify-center">
-					<i class="fa-solid fa-code text-white text-sm"></i>
-				</div>
+				<Logo size="md" />
 				<span class="text-lg sm:text-xl font-bold text-mono-900">Median Code</span>
 			</div>
 			<div class="text-mono-500 text-xs sm:text-sm text-center sm:text-right">

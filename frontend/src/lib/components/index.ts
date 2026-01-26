@@ -1,6 +1,9 @@
 // Main component library barrel export
 // Single entry point for all UI components and their type definitions
 
+// Logo component
+export * from './logo';
+
 // Drawer components
 export * from './drawer';
 

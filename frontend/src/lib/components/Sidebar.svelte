@@ -2,6 +2,7 @@
   import { clerkState, signOut } from '$lib/clerk';
   import { goto } from '$app/navigation';
   import type { NavItem } from '$lib/types';
+  import { Logo } from '$lib/components/logo';
 
   export interface SidebarProps {
     activeRoute: string;
@@ -46,7 +47,7 @@
 >
   <div class="p-4 border-b border-mono-800">
     <a href="/" class="flex items-center space-x-2 hover:opacity-80 transition-opacity cursor-pointer">
-      <i class="fa-solid fa-code text-xl"></i>
+      <Logo size="md" />
       <h1 class="text-lg font-semibold">Median Code</h1>
     </a>
   </div>

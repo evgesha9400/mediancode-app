@@ -1,9 +1,11 @@
+<script lang="ts">
+	import { Logo } from '$lib/components';
+</script>
+
 <div class="min-h-screen bg-mono-50 flex items-center justify-center p-4">
 	<div class="max-w-md text-center space-y-6">
-		<div class="flex items-center justify-center space-x-2 mb-8">
-			<div class="w-16 h-16 bg-mono-900 rounded flex items-center justify-center">
-				<i class="fa-solid fa-code text-white text-2xl"></i>
-			</div>
+		<div class="flex items-center justify-center mb-8">
+			<Logo size="xl" />
 		</div>
 
 		<h1 class="text-3xl font-bold text-mono-900">Desktop Required</h1>
