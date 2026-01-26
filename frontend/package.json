@@ -21,10 +21,12 @@
     "test:e2e": "playwright test",
     "test:e2e:smoke": "playwright test --project chromium-smoke",
     "test:e2e:full": "playwright test --project chromium-full",
-    "test:e2e:ui": "playwright test --ui"
+    "test:e2e:ui": "playwright test --ui",
+    "lint:api": "spectral lint api-spec.yaml --fail-severity=warn"
   },
   "devDependencies": {
     "@playwright/test": "^1.56.1",
+    "@stoplight/spectral-cli": "^6.15.0",
     "@sveltejs/adapter-auto": "^7.0.0",
     "@sveltejs/kit": "^2.47.1",
     "@sveltejs/vite-plugin-svelte": "^6.2.1",
