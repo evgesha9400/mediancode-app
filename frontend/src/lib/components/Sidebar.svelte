@@ -47,7 +47,7 @@
 >
   <div class="p-4 border-b border-mono-800">
     <a href="/" class="flex items-center space-x-2 hover:opacity-80 transition-opacity cursor-pointer">
-      <Logo size="md" />
+      <Logo size="md" variant="dark" />
       <h1 class="text-lg font-semibold">Median Code</h1>
     </a>
   </div>

@@ -4,19 +4,20 @@
 
 	export interface LogoProps {
 		size?: 'sm' | 'md' | 'lg' | 'xl';
+		variant?: 'light' | 'dark';
 		showText?: boolean;
 		class?: string;
 	}
 
 	interface Props extends LogoProps {}
 
-	let { size = 'md', showText = false, class: className = '' }: Props = $props();
+	let { size = 'md', variant = 'light', showText = false, class: className = '' }: Props = $props();
 
 	const sizeMap = {
-		sm: 24,
-		md: 32,
-		lg: 48,
-		xl: 64
+		sm: 32,
+		md: 48,
+		lg: 80,
+		xl: 120
 	};
 
 	let canvasContainer = $state<HTMLDivElement>();
@@ -109,7 +110,9 @@
 		if (!canvasContainer) return;
 
 		const pixelSize = sizeMap[size];
-		const edgeColor = 0x333333;
+		// Light variant (for light backgrounds): dark edges
+		// Dark variant (for dark backgrounds): light edges
+		const edgeColor = variant === 'light' ? 0x333333 : 0xe5e5e5;
 		const cylinderRadius = 0.03;
 
 		// Scene setup
@@ -203,6 +206,6 @@
 		style="width: {sizeMap[size]}px; height: {sizeMap[size]}px;"
 	></div>
 	{#if showText}
-		<span class="font-bold text-mono-900">Median Code</span>
+		<span class="font-bold {variant === 'light' ? 'text-mono-900' : 'text-white'}">Median Code</span>
 	{/if}
 </div>
