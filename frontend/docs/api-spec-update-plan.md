@@ -37,7 +37,7 @@ This plan includes:
    - `"mock-api": "cd mock_api && PYTHONPATH=src poetry run uvicorn mock_api.main:app --reload --port 8000"`
    - `"kill-mock-api": "./scripts/kill-mock-api.sh"`
 
-**Expected Result:** No references to mock API in npm scripts
+**Expected Result:** No references to mock API in package.json scripts
 
 ---
 
@@ -812,7 +812,7 @@ security:
 
 **Tools:**
 - Swagger Editor: https://editor.swagger.io/
-- OpenAPI CLI validator: `npx @apidevtools/swagger-cli validate api-spec.yaml`
+- OpenAPI CLI validator: `bunx @apidevtools/swagger-cli validate api-spec.yaml`
 
 ---
 
@@ -1050,7 +1050,7 @@ All endpoints require Clerk JWT authentication via Bearer token in the Authoriza
 To validate the OpenAPI spec:
 
 ```bash
-npx @apidevtools/swagger-cli validate api-spec.yaml
+bunx @apidevtools/swagger-cli validate api-spec.yaml
 ```
 
 To view in Swagger UI:
