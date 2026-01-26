@@ -169,8 +169,8 @@
 				return;
 			}
 
-			scene.rotation.x += 0.01;
-			scene.rotation.y += 0.01;
+			scene.rotation.x += 0.002;
+			scene.rotation.y += 0.003;
 
 			renderer.render(scene, camera);
 			animationId = requestAnimationFrame(animate);
