@@ -4,59 +4,106 @@ Production-ready FastAPI code generation platform with optional AWS CDK deployme
 
 ## Project Overview
 
-Median Code is a SvelteKit application that serves both the marketing landing page and the authenticated dashboard. The landing page is publicly accessible at the root route (`/`), while the dashboard requires authentication.
+Median Code is a SvelteKit application that serves both the marketing landing page and the authenticated dashboard. The landing page is publicly accessible at the root route (`/`), while the dashboard requires authentication and provides a complete API design workflow.
 
 ## Project Structure
 
 ```
 median-code/
 ├── src/
-│   ├── app.html               # HTML shell with Font Awesome
-│   ├── app.css                # Global Tailwind styles
+│   ├── app.html                     # HTML shell with Font Awesome
+│   ├── app.css                      # Global Tailwind styles
 │   ├── routes/
-│   │   ├── +layout.svelte     # Root layout with Clerk initialization
-│   │   ├── +layout.ts         # Server-side layout load
-│   │   ├── +page.svelte       # Landing page (public, root route)
-│   │   ├── (marketing)/       # Route group for public pages
-│   │   ├── signin/            # Sign-in page
-│   │   ├── signup/            # Sign-up page
-│   │   ├── dashboard/         # Authenticated dashboard
-│   │   └── mobile-blocked/    # Mobile device blocking
+│   │   ├── +layout.svelte           # Root layout with Clerk initialization
+│   │   ├── +layout.ts               # Server-side layout load
+│   │   ├── +page.svelte             # Landing page (public, root route)
+│   │   ├── (marketing)/             # Route group for public pages
+│   │   ├── (dashboard)/             # Route group for authenticated pages
+│   │   │   ├── +layout.svelte       # Dashboard layout (Sidebar + content)
+│   │   │   ├── dashboard/           # Dashboard home
+│   │   │   ├── types/               # Types management
+│   │   │   ├── validators/          # Validators management
+│   │   │   ├── field-registry/      # Fields management
+│   │   │   ├── object-builder/      # Objects management
+│   │   │   ├── apis/                # APIs list
+│   │   │   │   └── [id]/            # API detail/edit
+│   │   │   ├── namespaces/          # Namespaces management
+│   │   │   ├── api-generator/       # API generator
+│   │   │   └── prototypes/          # Prototype pages
+│   │   ├── signin/                  # Sign-in page
+│   │   ├── signup/                  # Sign-up page
+│   │   └── mobile-blocked/          # Mobile device blocking
 │   └── lib/
-│       ├── clerk.ts           # Clerk authentication
-│       └── deviceDetection.ts
-├── static/                    # Static assets
+│       ├── clerk.ts                 # Clerk authentication
+│       ├── deviceDetection.ts       # Mobile device detection
+│       ├── components/              # UI components (barrel exports)
+│       │   ├── api-generator/       # API generator components
+│       │   ├── drawer/              # Drawer components
+│       │   ├── layout/              # Layout components
+│       │   ├── logo/                # 3D Logo component
+│       │   ├── namespace/           # Namespace selector
+│       │   ├── search/              # Search and filter components
+│       │   ├── table/               # Table components
+│       │   ├── toast/               # Toast notifications
+│       │   └── tooltip/             # Tooltip component
+│       ├── stores/                  # Svelte stores for state management
+│       ├── types/                   # Shared TypeScript types
+│       └── utils/                   # Utility functions
+├── static/                          # Static assets
 │   ├── font-awesome.min.css
 │   ├── font-awesome.min.js
 │   └── webfonts/
-├── tailwind.config.js         # Tailwind configuration
-├── package.json               # Dependencies
-├── vercel.json                # Vercel deployment config
-├── svelte.config.js           # SvelteKit configuration
-├── vite.config.ts             # Vite configuration
-├── tsconfig.json              # TypeScript configuration
-├── CLAUDE.md                  # AI assistant guidance
-├── COMMIT_MESSAGE_STANDARD.md # Commit conventions
-└── README.md                  # This file
+├── tests/                           # Test suites
+│   ├── unit/                        # Unit tests (Vitest)
+│   ├── integration/                 # Integration tests
+│   ├── e2e/                         # E2E tests (Playwright)
+│   ├── fixtures/                    # Shared test fixtures
+│   └── shared/                      # Shared test utilities (MSW)
+├── docs/                            # Project documentation
+├── tailwind.config.js               # Tailwind configuration
+├── package.json                     # Dependencies
+├── vercel.json                      # Vercel deployment config
+├── svelte.config.js                 # SvelteKit configuration
+├── vite.config.ts                   # Vite configuration
+├── vitest.config.ts                 # Vitest configuration
+├── playwright.config.ts             # Playwright configuration
+├── api-spec.yaml                    # OpenAPI 3.0 specification
+├── tsconfig.json                    # TypeScript configuration
+├── CLAUDE.md                        # AI assistant guidance
+├── AGENTS.md                        # AI agent guidance
+└── README.md                        # This file
 ```
 
 ## Tech Stack
 
-- **Framework**: SvelteKit
+- **Framework**: SvelteKit (Svelte 5)
 - **Language**: TypeScript
 - **Styling**: Tailwind CSS (monochrome design system)
 - **Icons**: Font Awesome 6.4.0 (locally hosted)
+- **3D Graphics**: Three.js (logo animation)
 - **Authentication**: Clerk
 - **Deployment**: Vercel
 - **Forms**: Formspree
+- **Testing**: Vitest, Playwright, MSW
 
 ## Route Structure
 
-- `/` - Public landing page (marketing)
+**Public Routes:**
+- `/` - Landing page (marketing)
 - `/signin` - Sign-in page with Clerk authentication
 - `/signup` - Sign-up page for new users
-- `/dashboard` - Authenticated dashboard (requires sign-in)
 - `/mobile-blocked` - Mobile device blocking page
+
+**Dashboard Routes** (authenticated):
+- `/dashboard` - Dashboard home with overview stats
+- `/types` - Types management (create, edit, delete types)
+- `/validators` - Validators management
+- `/field-registry` - Fields management
+- `/object-builder` - Objects management
+- `/apis` - APIs list view
+- `/apis/[id]` - API detail and edit view
+- `/namespaces` - Namespaces management
+- `/api-generator` - API code generator
 
 ## Local Development
 
@@ -83,9 +130,9 @@ median-code/
    cp .env.example .env
    ```
 
-   Add your Clerk publishable key to `.env`:
+   Add your Clerk publishable key to `.env` (get from https://dashboard.clerk.com):
    ```
-   PUBLIC_CLERK_PUBLISHABLE_KEY=your_clerk_publishable_key_here
+   PUBLIC_CLERK_PUBLISHABLE_KEY=pk_test_...
    ```
 
 4. **Start development server**
@@ -157,10 +204,9 @@ bun run test:fixtures:validate   # Validate fixture schema
 
 ### Documentation
 
-- **[Testing Overview](docs/TESTING_COMPLETE.md)** - Complete implementation guide
+- **[Test Structure](tests/README.md)** - Directory structure and conventions
 - **[E2E Tests](tests/e2e/README.md)** - Playwright E2E testing guide
-- **[Testing Runbooks](docs/runbooks/testing.md)** - Step-by-step procedures
-- **[Testing Plan](docs/testing.md)** - Full implementation plan
+- **[Fixture Schema](tests/fixtures/SCHEMA.md)** - Test data schema documentation
 
 ### Before Committing
 
@@ -244,7 +290,7 @@ The dashboard uses Clerk for authentication with support for:
 - `/mobile-blocked` - Mobile blocking page
 
 **Protected Routes** (authentication required):
-- `/dashboard` - Main dashboard
+- All `/dashboard/*` routes (dashboard, types, validators, field-registry, object-builder, apis, namespaces, api-generator)
 
 ## Key Features
 
@@ -258,8 +304,14 @@ The dashboard uses Clerk for authentication with support for:
 ### Dashboard
 - **Clerk Authentication**: Secure user authentication
 - **Mobile Device Detection**: Automatically redirects mobile users
-- **User Profile**: Display user information and avatar
-- **Sign Out**: Secure session termination
+- **Persistent Sidebar**: Navigation with 3D animated logo
+- **Types Management**: Create and manage data types
+- **Validators Management**: Define validation rules
+- **Fields Management**: Create reusable field definitions
+- **Objects Management**: Build complex data structures
+- **APIs Management**: Design API endpoints with request/response bodies
+- **Namespaces Management**: Organize APIs by namespace
+- **API Generator**: Generate FastAPI code from your definitions
 
 ### Performance Optimizations
 - **Clerk Initialization**: Loads on all routes to handle OAuth callbacks properly
@@ -295,13 +347,15 @@ fix(signin): resolve Clerk redirect issue
 style(dashboard): update header layout
 ```
 
-See `COMMIT_MESSAGE_STANDARD.md` for detailed guidelines.
+See `docs/COMMIT_MESSAGE_STANDARD.md` for detailed guidelines.
 
 ## Project Documentation
 
 - **CLAUDE.md** - Detailed guidance for Claude Code AI assistant
-- **COMMIT_MESSAGE_STANDARD.md** - Commit message conventions
-- **docs/MIGRATION_SVELTEKIT.md** - Migration plan from static landing to SvelteKit
+- **AGENTS.md** - Guidance for AI code agents
+- **docs/COMMIT_MESSAGE_STANDARD.md** - Commit message conventions
+- **docs/PAGES_AND_FEATURES.md** - Pages and features documentation
+- **api-spec.yaml** - OpenAPI 3.0 specification for code generation API
 
 ## Contributing
 
