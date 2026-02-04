@@ -6,7 +6,7 @@
 
   @component
 -->
-<script lang="ts">
+<script module lang="ts">
   import type { Snippet } from 'svelte';
 
   export interface DrawerContentProps {
@@ -15,7 +15,9 @@
      */
     children?: Snippet;
   }
+</script>
 
+<script lang="ts">
   interface Props extends DrawerContentProps {}
 
   let { children }: Props = $props();

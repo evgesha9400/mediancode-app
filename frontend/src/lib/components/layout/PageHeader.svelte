@@ -12,7 +12,7 @@
     {/snippet}
   </PageHeader>
 -->
-<script lang="ts">
+<script module lang="ts">
   import type { Snippet } from 'svelte';
 
   export interface PageHeaderProps {
@@ -26,7 +26,9 @@
      */
     actions?: Snippet;
   }
+</script>
 
+<script lang="ts">
   interface Props extends PageHeaderProps {}
 
   let { title, actions }: Props = $props();

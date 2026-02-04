@@ -1,11 +1,14 @@
-<script lang="ts">
+<script module lang="ts">
   import type { ApiMetadata } from '$lib/types';
-  import CollapsibleCard from './CollapsibleCard.svelte';
 
   export interface ApiMetadataCardProps {
     metadata: ApiMetadata;
     onUpdate: (updates: Partial<ApiMetadata>) => void;
   }
+</script>
+
+<script lang="ts">
+  import CollapsibleCard from './CollapsibleCard.svelte';
 
   interface Props extends ApiMetadataCardProps {}
 

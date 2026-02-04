@@ -1,11 +1,14 @@
-<script lang="ts">
-  import { dismissToast } from '$lib/stores/toasts';
+<script module lang="ts">
   import type { Toast } from '$lib/types';
-  import { onMount } from 'svelte';
 
   export interface ToastProps {
     toast: Toast;
   }
+</script>
+
+<script lang="ts">
+  import { dismissToast } from '$lib/stores/toasts';
+  import { onMount } from 'svelte';
 
   interface Props extends ToastProps {}
 

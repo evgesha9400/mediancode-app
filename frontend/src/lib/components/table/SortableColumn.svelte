@@ -1,5 +1,5 @@
-<script lang="ts">
-  import { getMultiSortIcon, getSortPriority, getMultiSortAriaLabel, type MultiSortState } from '$lib/utils/sorting';
+<script module lang="ts">
+  import type { MultiSortState } from '$lib/utils/sorting';
 
   export interface SortableColumnProps {
     column: string;
@@ -7,6 +7,10 @@
     sorts: MultiSortState;
     onSort: (columnKey: string, shiftKey: boolean) => void;
   }
+</script>
+
+<script lang="ts">
+  import { getMultiSortIcon, getSortPriority, getMultiSortAriaLabel } from '$lib/utils/sorting';
 
   interface Props extends SortableColumnProps {}
 

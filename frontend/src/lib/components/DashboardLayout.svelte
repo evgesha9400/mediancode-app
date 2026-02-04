@@ -1,12 +1,15 @@
-<script lang="ts">
+<script module lang="ts">
   import type { Snippet } from 'svelte';
-  import { page } from '$app/state';
-  import Sidebar from './Sidebar.svelte';
-  import ToastContainer from './toast/ToastContainer.svelte';
 
   export interface DashboardLayoutProps {
     children: Snippet;
   }
+</script>
+
+<script lang="ts">
+  import { page } from '$app/state';
+  import Sidebar from './Sidebar.svelte';
+  import ToastContainer from './toast/ToastContainer.svelte';
 
   interface Props extends DashboardLayoutProps {}
 

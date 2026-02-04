@@ -1,12 +1,14 @@
+<script module lang="ts">
+  export interface SidebarProps {
+    activeRoute: string;
+  }
+</script>
+
 <script lang="ts">
   import { clerkState, signOut } from '$lib/clerk';
   import { goto } from '$app/navigation';
   import type { NavItem } from '$lib/types';
   import { Logo } from '$lib/components/logo';
-
-  export interface SidebarProps {
-    activeRoute: string;
-  }
 
   interface Props extends SidebarProps {}
 

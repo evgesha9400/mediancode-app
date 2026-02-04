@@ -15,7 +15,7 @@
     onClear={() => handleClear()}
   />
 -->
-<script lang="ts">
+<script module lang="ts">
   import type { FilterConfig } from '$lib/types';
 
   export interface FilterPanelProps {
@@ -48,7 +48,9 @@
      */
     onClear?: () => void;
   }
+</script>
 
+<script lang="ts">
   interface Props extends FilterPanelProps {}
 
   let {

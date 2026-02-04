@@ -6,8 +6,7 @@
 
   @component
 -->
-<script lang="ts">
-  import { fade } from 'svelte/transition';
+<script module lang="ts">
   import type { EndpointTag } from '$lib/types';
 
   export interface TagEditModalProps {
@@ -31,6 +30,10 @@
      */
     onCancel: () => void;
   }
+</script>
+
+<script lang="ts">
+  import { fade } from 'svelte/transition';
 
   interface Props extends TagEditModalProps {}
 

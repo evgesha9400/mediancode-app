@@ -1,13 +1,14 @@
 import { writable, get } from 'svelte/store';
 import type { DeletionResult, ObjectDefinition } from '$lib/types';
 import { checkObjectDeletion } from '$lib/utils/references';
-import { initialObjects, GLOBAL_NAMESPACE_ID } from './initialData';
+import { GLOBAL_NAMESPACE_ID } from './initialData';
 import { generateId } from '$lib/utils/ids';
 
 // Re-export types from types for backwards compatibility
 export type { ObjectDefinition } from '$lib/types';
 
-export const objectsStore = writable<ObjectDefinition[]>(initialObjects);
+// Initialize with empty array - data will be loaded from API via loader.ts
+export const objectsStore = writable<ObjectDefinition[]>([]);
 
 export function getObjectById(id: string): ObjectDefinition | undefined {
 	return get(objectsStore).find(o => o.id === id);

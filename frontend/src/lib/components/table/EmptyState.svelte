@@ -12,7 +12,7 @@
     message="Try adjusting your search criteria"
   />
 -->
-<script lang="ts">
+<script module lang="ts">
   export interface EmptyStateProps {
     /**
      * Font Awesome icon class to display
@@ -30,7 +30,9 @@
      */
     message: string;
   }
+</script>
 
+<script lang="ts">
   interface Props extends EmptyStateProps {}
 
   let { icon = 'fa-search', title, message }: Props = $props();

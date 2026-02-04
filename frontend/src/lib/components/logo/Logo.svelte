@@ -1,8 +1,4 @@
-<script lang="ts">
-	import { onMount } from 'svelte';
-	import { browser } from '$app/environment';
-	import * as THREE from 'three';
-
+<script module lang="ts">
 	export interface LogoProps {
 		size?: 'sm' | 'md' | 'lg' | 'xl';
 		variant?: 'light' | 'dark';
@@ -10,6 +6,12 @@
 		paused?: boolean;
 		class?: string;
 	}
+</script>
+
+<script lang="ts">
+	import { onMount } from 'svelte';
+	import { browser } from '$app/environment';
+	import * as THREE from 'three';
 
 	interface Props extends LogoProps {}
 

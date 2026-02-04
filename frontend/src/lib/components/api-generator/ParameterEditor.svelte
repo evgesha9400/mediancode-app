@@ -1,4 +1,4 @@
-<script lang="ts">
+<script module lang="ts">
   import type { EndpointParameter } from '$lib/types';
 
   export interface ParameterEditorProps {
@@ -10,7 +10,9 @@
     readOnly?: boolean;
     compact?: boolean;
   }
+</script>
 
+<script lang="ts">
   interface Props extends ParameterEditorProps {}
 
   let { parameter, onUpdate, onDelete, showRequired = true, nameEditable = true, readOnly = false, compact = false }: Props = $props();

@@ -1,12 +1,15 @@
-<script lang="ts">
+<script module lang="ts">
   import type { Snippet } from 'svelte';
-  import { untrack } from 'svelte';
 
   export interface CollapsibleCardProps {
     title: string;
     icon: string;
     defaultExpanded?: boolean;
   }
+</script>
+
+<script lang="ts">
+  import { untrack } from 'svelte';
 
   interface Props extends CollapsibleCardProps {
     actions?: Snippet;

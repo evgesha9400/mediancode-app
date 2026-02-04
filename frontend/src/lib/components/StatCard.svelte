@@ -1,12 +1,14 @@
-<script lang="ts">
-  import { getStatCardTestId } from '$lib/utils/testIds';
-
+<script module lang="ts">
   export interface StatCardProps {
     title: string;
     value: string | number;
     icon: string;
     trend?: string;
   }
+</script>
+
+<script lang="ts">
+  import { getStatCardTestId } from '$lib/utils/testIds';
 
   interface Props extends StatCardProps {}
 

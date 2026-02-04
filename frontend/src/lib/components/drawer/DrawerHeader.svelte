@@ -10,7 +10,7 @@
   <DrawerHeader title="Edit Field" onClose={() => drawerOpen = false} />
   ```
 -->
-<script lang="ts">
+<script module lang="ts">
   export interface DrawerHeaderProps {
     /**
      * The title text to display in the drawer header
@@ -22,7 +22,9 @@
      */
     onClose: () => void;
   }
+</script>
 
+<script lang="ts">
   interface Props extends DrawerHeaderProps {}
 
   let { title, onClose }: Props = $props();

@@ -13,9 +13,8 @@
 
   @component
 -->
-<script lang="ts">
+<script module lang="ts">
   import type { Snippet } from 'svelte';
-  import { slide } from 'svelte/transition';
 
   export interface DrawerProps {
     /**
@@ -34,6 +33,10 @@
      */
     children?: Snippet;
   }
+</script>
+
+<script lang="ts">
+  import { slide } from 'svelte/transition';
 
   interface Props extends DrawerProps {}
 

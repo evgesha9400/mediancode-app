@@ -1,4 +1,4 @@
-<script lang="ts">
+<script module lang="ts">
   import type { Validator } from '$lib/stores/validators';
 
   export interface ValidatorSelectorDropdownProps {
@@ -7,7 +7,9 @@
     onSelect: (validatorName: string) => void;
     placeholder?: string;
   }
+</script>
 
+<script lang="ts">
   interface Props extends ValidatorSelectorDropdownProps {}
 
   let { availableValidators, selectedValidatorNames, onSelect, placeholder = 'Add validator...' }: Props = $props();

@@ -1,6 +1,6 @@
 import { writable, derived, get } from 'svelte/store';
 import type { Namespace, DeletionResult } from '$lib/types';
-import { initialNamespaces, GLOBAL_NAMESPACE_ID } from './initialData';
+import { GLOBAL_NAMESPACE_ID } from './initialData';
 import { generateId } from '$lib/utils/ids';
 import { fieldsStore } from './fields';
 import { validatorsStore } from './validators';
@@ -11,7 +11,8 @@ import { endpointsStore, tagsStore } from './apis';
 // Namespace Store
 // ============================================================================
 
-export const namespacesStore = writable<Namespace[]>(initialNamespaces);
+// Initialize with empty array - data will be loaded from API via loader.ts
+export const namespacesStore = writable<Namespace[]>([]);
 
 // Active namespace selector (global by default)
 export const activeNamespaceId = writable<string>(GLOBAL_NAMESPACE_ID);

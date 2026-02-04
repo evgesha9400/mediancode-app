@@ -10,7 +10,7 @@
     <button>Hover me</button>
   </Tooltip>
 -->
-<script lang="ts">
+<script module lang="ts">
   import type { Snippet } from 'svelte';
 
   export interface TooltipProps {
@@ -37,7 +37,9 @@
      */
     children?: Snippet;
   }
+</script>
 
+<script lang="ts">
   interface Props extends TooltipProps {}
 
   let { text = '', disabled = false, position = 'top', children }: Props = $props();

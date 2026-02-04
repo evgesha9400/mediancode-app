@@ -1,14 +1,16 @@
-<script lang="ts">
-  import { objectsStore, getObjectById } from '$lib/stores/objects';
-  import { getFieldById } from '$lib/stores/fields';
-  import { buildRequestPreviewFromObject } from '$lib/utils/examples';
-  import ObjectSelectorDropdown from './ObjectSelectorDropdown.svelte';
-
+<script module lang="ts">
   export interface RequestBodyEditorProps {
     endpointNamespaceId: string;
     selectedObjectId?: string;
     onSelectObject: (objectId: string | undefined) => void;
   }
+</script>
+
+<script lang="ts">
+  import { objectsStore, getObjectById } from '$lib/stores/objects';
+  import { getFieldById } from '$lib/stores/fields';
+  import { buildRequestPreviewFromObject } from '$lib/utils/examples';
+  import ObjectSelectorDropdown from './ObjectSelectorDropdown.svelte';
 
   interface Props extends RequestBodyEditorProps {}
 

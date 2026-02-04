@@ -17,7 +17,7 @@
     onFilterClick={() => toggleFilters()}
   />
 -->
-<script lang="ts">
+<script module lang="ts">
   import type { Snippet } from 'svelte';
 
   export interface SearchBarProps {
@@ -65,7 +65,9 @@
      */
     filterPanel?: Snippet;
   }
+</script>
 
+<script lang="ts">
   interface Props extends SearchBarProps {}
 
   let {

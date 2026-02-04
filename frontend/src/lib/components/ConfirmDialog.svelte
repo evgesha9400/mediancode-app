@@ -6,10 +6,7 @@
 
   @component
 -->
-<script lang="ts">
-  import type { Snippet } from 'svelte';
-  import { fade } from 'svelte/transition';
-
+<script module lang="ts">
   export interface ConfirmDialogProps {
     /**
      * Whether the dialog is currently open/visible
@@ -54,6 +51,10 @@
      */
     onCancel: () => void;
   }
+</script>
+
+<script lang="ts">
+  import { fade } from 'svelte/transition';
 
   interface Props extends ConfirmDialogProps {}
 

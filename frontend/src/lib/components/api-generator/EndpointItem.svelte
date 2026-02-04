@@ -1,12 +1,15 @@
-<script lang="ts">
+<script module lang="ts">
   import type { ApiEndpoint, EndpointTag } from '$lib/types';
-  import { getNamespaceById } from '$lib/stores/namespaces';
 
   export interface EndpointItemProps {
     endpoint: ApiEndpoint;
     tags: EndpointTag[];
     onClick: () => void;
   }
+</script>
+
+<script lang="ts">
+  import { getNamespaceById } from '$lib/stores/namespaces';
 
   interface Props extends EndpointItemProps {}
 

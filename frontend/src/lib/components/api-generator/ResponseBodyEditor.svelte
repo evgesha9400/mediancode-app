@@ -1,9 +1,5 @@
-<script lang="ts">
+<script module lang="ts">
   import type { ResponseShape } from '$lib/types';
-  import { objectsStore, getObjectById } from '$lib/stores/objects';
-  import { getFieldById } from '$lib/stores/fields';
-  import { buildResponsePreviewFromObject } from '$lib/utils/examples';
-  import ObjectSelectorDropdown from './ObjectSelectorDropdown.svelte';
 
   export interface ResponseBodyEditorProps {
     endpointNamespaceId: string;
@@ -14,6 +10,13 @@
     onEnvelopeToggle: (enabled: boolean) => void;
     onSetResponseShape: (shape: ResponseShape) => void;
   }
+</script>
+
+<script lang="ts">
+  import { objectsStore, getObjectById } from '$lib/stores/objects';
+  import { getFieldById } from '$lib/stores/fields';
+  import { buildResponsePreviewFromObject } from '$lib/utils/examples';
+  import ObjectSelectorDropdown from './ObjectSelectorDropdown.svelte';
 
   interface Props extends ResponseBodyEditorProps {}
 

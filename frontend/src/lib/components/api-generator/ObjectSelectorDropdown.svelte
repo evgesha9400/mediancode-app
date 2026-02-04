@@ -1,4 +1,4 @@
-<script lang="ts">
+<script module lang="ts">
   import type { ObjectDefinition } from '$lib/types';
 
   export interface ObjectSelectorDropdownProps {
@@ -7,7 +7,9 @@
     onSelect: (objectId: string | undefined) => void;
     placeholder?: string;
   }
+</script>
 
+<script lang="ts">
   interface Props extends ObjectSelectorDropdownProps {}
 
   let { availableObjects, selectedObjectId, onSelect, placeholder = 'Select object...' }: Props = $props();

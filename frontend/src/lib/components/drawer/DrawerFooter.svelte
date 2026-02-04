@@ -11,7 +11,7 @@
     <button>Cancel</button>
   </DrawerFooter>
 -->
-<script lang="ts">
+<script module lang="ts">
   import type { Snippet } from 'svelte';
 
   export interface DrawerFooterProps {
@@ -26,7 +26,9 @@
      */
     children?: Snippet;
   }
+</script>
 
+<script lang="ts">
   interface Props extends DrawerFooterProps {}
 
   let { spacing = 'space-y-2', children }: Props = $props();

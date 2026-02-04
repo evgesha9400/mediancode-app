@@ -1,11 +1,9 @@
-import { writable, derived, get } from 'svelte/store';
-import { fieldsStore } from './fields';
-import type { Field } from './fields';
+import { writable, get } from 'svelte/store';
 import { getValidatorCategoriesForType } from './types';
 import type { PrimitiveTypeName } from './types';
 import { checkValidatorDeletion } from '$lib/utils/references';
 import type { DeletionResult } from '$lib/types';
-import { initialInlineValidators, initialCustomValidators, GLOBAL_NAMESPACE_ID, type ValidatorBase } from './initialData';
+import { GLOBAL_NAMESPACE_ID, type ValidatorBase } from './initialData';
 import { generateId } from '$lib/utils/ids';
 
 // Re-export types from initialData for backwards compatibility
@@ -16,48 +14,12 @@ export interface Validator extends ValidatorBase {
 	fieldsUsingValidator: Array<{ name: string; fieldId: string }>;
 }
 
-// Use centralized data from initialData module
-const inlineValidators = initialInlineValidators;
-
-// Writable store for custom validators (can be modified)
-// Initialize with centralized custom validators
-const customValidatorsStore = writable(initialCustomValidators);
-
-// Base store that combines inline validators and custom validators
-const validatorsBaseStore = derived(
-	customValidatorsStore,
-	($customValidators) => [...inlineValidators, ...$customValidators]
-);
-
-// Derived store that calculates validator usage dynamically based on fieldsStore
-export const validatorsStore = derived(
-	[validatorsBaseStore, fieldsStore],
-	([$validatorsBase, $fields]) => {
-		// Calculate usage for each validator
-		return $validatorsBase.map(validatorBase => {
-			const fieldsUsingValidator: Array<{ name: string; fieldId: string }> = [];
-
-			$fields.forEach(field => {
-				const usesValidator = field.validators.some(v => v.name === validatorBase.name);
-				if (usesValidator) {
-					fieldsUsingValidator.push({
-						name: field.name,
-						fieldId: field.id
-					});
-				}
-			});
-
-			return {
-				...validatorBase,
-				usedInFields: fieldsUsingValidator.length,
-				fieldsUsingValidator
-			} as Validator;
-		});
-	}
-);
+// Main validators store - data will be loaded from API via loader.ts
+// The API returns validators with usage information already calculated
+export const validatorsStore = writable<Validator[]>([]);
 
 export function getTotalValidatorCount(): number {
-	return get(validatorsBaseStore).length;
+	return get(validatorsStore).length;
 }
 
 // ============================================================================
@@ -147,38 +109,37 @@ export function getValidatorsByFieldTypeAndNamespace(
  * @returns DeletionResult - Contains success status and error message if blocked by references
  */
 export function deleteValidator(validatorName: string): DeletionResult {
-	const currentCustom = get(customValidatorsStore);
-	const validator = currentCustom.find(v => v.name === validatorName);
+	const allValidators = get(validatorsStore);
+	const validator = allValidators.find(v => v.name === validatorName);
 
-	// Prevent deletion if validator not found in custom validators
+	// Prevent deletion if validator not found
 	if (!validator) {
 		return {
 			success: false,
-			error: `Validator "${validatorName}" not found or is a built-in validator that cannot be deleted.`
+			error: `Validator "${validatorName}" not found.`
 		};
 	}
 
-	// Get the full validator with usage information
-	const fullValidator = get(validatorsStore).find(v => v.name === validatorName);
-	if (!fullValidator) {
+	// Prevent deletion of inline validators
+	if (validator.category === 'inline') {
 		return {
 			success: false,
-			error: `Unable to retrieve validator information for "${validatorName}".`
+			error: `Validator "${validatorName}" is a built-in validator that cannot be deleted.`
 		};
 	}
 
 	// Check if validator can be safely deleted
 	const deletionCheck = checkValidatorDeletion(
 		validatorName,
-		fullValidator.fieldsUsingValidator
+		validator.fieldsUsingValidator
 	);
 
 	if (!deletionCheck.success) {
 		return deletionCheck;
 	}
 
-	// Remove the custom validator from the custom validators store
-	customValidatorsStore.update(validators => {
+	// Remove the validator from the store
+	validatorsStore.update(validators => {
 		return validators.filter(v => v.name !== validatorName);
 	});
 
@@ -203,7 +164,7 @@ export function createValidator(
 	type: 'string' | 'numeric' | 'collection',
 	description: string,
 	namespaceId: string = GLOBAL_NAMESPACE_ID
-): ValidatorBase | undefined {
+): Validator | undefined {
 	const trimmedName = name.trim();
 
 	// Check for existing validator with same name in the same namespace (case-insensitive)
@@ -215,7 +176,7 @@ export function createValidator(
 		return undefined;
 	}
 
-	const newValidator: ValidatorBase = {
+	const newValidator: Validator = {
 		name: trimmedName,
 		namespaceId,
 		type,
@@ -223,16 +184,18 @@ export function createValidator(
 		category: 'custom',
 		parameterType: '',
 		exampleUsage: '',
-		pydanticDocsUrl: ''
+		pydanticDocsUrl: '',
+		usedInFields: 0,
+		fieldsUsingValidator: []
 	};
 
-	customValidatorsStore.update(validators => [...validators, newValidator]);
+	validatorsStore.update(validators => [...validators, newValidator]);
 	return newValidator;
 }
 
 /**
- * Add a pre-constructed custom validator (legacy support)
+ * Add a pre-constructed validator (for API data loading)
  */
-export function addValidator(validator: ValidatorBase): void {
-	customValidatorsStore.update(validators => [...validators, validator]);
+export function addValidator(validator: Validator): void {
+	validatorsStore.update(validators => [...validators, validator]);
 }

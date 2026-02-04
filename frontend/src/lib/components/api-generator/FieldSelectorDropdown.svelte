@@ -1,4 +1,4 @@
-<script lang="ts">
+<script module lang="ts">
   import type { Field } from '$lib/stores/fields';
 
   export interface FieldSelectorDropdownProps {
@@ -7,7 +7,9 @@
     onSelect: (fieldId: string) => void;
     placeholder?: string;
   }
+</script>
 
+<script lang="ts">
   interface Props extends FieldSelectorDropdownProps {}
 
   let { availableFields, selectedFieldIds, onSelect, placeholder = 'Add field...' }: Props = $props();

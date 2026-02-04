@@ -18,7 +18,7 @@
     {/snippet}
   </Table>
 -->
-<script lang="ts">
+<script module lang="ts">
   import type { Snippet } from 'svelte';
 
   export interface TableProps {
@@ -44,7 +44,9 @@
      */
     empty?: Snippet;
   }
+</script>
 
+<script lang="ts">
   interface Props extends TableProps {}
 
   let { isEmpty = false, header, body, empty }: Props = $props();

@@ -8,6 +8,15 @@
   @example
   <NamespaceSelector />
 -->
+<script module lang="ts">
+  export interface NamespaceSelectorProps {
+    /**
+     * Optional CSS class to apply to the container
+     */
+    class?: string;
+  }
+</script>
+
 <script lang="ts">
   import {
     namespacesStore,
@@ -16,13 +25,6 @@
     setActiveNamespace
   } from '$lib/stores/namespaces';
   import type { Namespace } from '$lib/types';
-
-  export interface NamespaceSelectorProps {
-    /**
-     * Optional CSS class to apply to the container
-     */
-    class?: string;
-  }
 
   interface Props extends NamespaceSelectorProps {}
 
