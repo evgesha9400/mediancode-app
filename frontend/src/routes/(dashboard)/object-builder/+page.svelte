@@ -1,5 +1,6 @@
 <script lang="ts">
-  import { objectsStore, updateObject, deleteObject, searchObjects, createObject, type ObjectDefinition } from '$lib/stores/objects';
+  import { objectsStore, searchObjects, type ObjectDefinition } from '$lib/stores/objects';
+  import { createObjectAction, updateObjectAction, deleteObjectAction } from '$lib/stores/actions';
   import { fieldsStore, getFieldById } from '$lib/stores/fields';
   import { showToast } from '$lib/stores/toasts';
   import { activeNamespaceId, getNamespaceById } from '$lib/stores/namespaces';
@@ -37,6 +38,7 @@
 
   // Form tracking
   let isCreating = $state(false);
+  let isSaving = $state(false);
 
   // Filter objects by active namespace
   let namespacedObjects = $derived($objectsStore.filter(o => o.namespaceId === $activeNamespaceId));
@@ -130,40 +132,62 @@
     return isValid;
   }
 
-  function handleSave() {
-    if (!editedObject || !validateForm()) return;
+  async function handleSave() {
+    if (!editedObject || !validateForm() || isSaving) return;
 
     const objectName = editedObject.name;
+    isSaving = true;
 
-    // Strip derived properties before saving to store
-    // These are UI-only fields added by deriveExtra and should not be persisted
+    // Strip derived properties before saving
     const { fieldCount, usedInApisCount, namespaceName, ...cleanObject } = editedObject as ObjectWithCounts;
 
-    updateObject(cleanObject.id, cleanObject);
-    listState.selectedItem = editedObject;
-    listState.originalItem = JSON.parse(JSON.stringify(editedObject));
+    const result = await updateObjectAction(cleanObject.id, {
+      name: cleanObject.name,
+      description: cleanObject.description,
+      fields: cleanObject.fields
+    });
+
+    isSaving = false;
+
+    if (!result.success) {
+      if (result.error?.includes('already exists')) {
+        listState.validationErrors = { name: result.error };
+      } else {
+        showToast(result.error || 'Failed to update object', 'error', 5000);
+      }
+      return;
+    }
+
+    listState.selectedItem = result.data!;
+    listState.originalItem = JSON.parse(JSON.stringify(result.data!));
     showToast(`Object "${objectName}" updated successfully`, 'success', 3000);
     closeDrawer();
   }
 
-  function handleCreate() {
-    if (!editedObject || !validateForm()) return;
+  async function handleCreate() {
+    if (!editedObject || !validateForm() || isSaving) return;
 
-    const createdObject = createObject(
-      editedObject.name,
-      editedObject.namespaceId,
-      {
-        fields: editedObject.fields,
-        description: editedObject.description
+    isSaving = true;
+
+    const result = await createObjectAction({
+      namespaceId: editedObject.namespaceId,
+      name: editedObject.name,
+      description: editedObject.description,
+      fields: editedObject.fields
+    });
+
+    isSaving = false;
+
+    if (!result.success) {
+      if (result.error?.includes('already exists')) {
+        listState.validationErrors = { name: result.error };
+      } else {
+        showToast(result.error || 'Failed to create object', 'error', 5000);
       }
-    );
-
-    if (!createdObject) {
-      listState.validationErrors = { name: 'An object with this name already exists in this namespace' };
       return;
     }
 
-    showToast(`Object "${createdObject.name}" created successfully`, 'success', 3000);
+    showToast(`Object "${result.data!.name}" created successfully`, 'success', 3000);
 
     // Close drawer after successful creation
     isCreating = false;
@@ -177,11 +201,16 @@
     }
   }
 
-  function handleDelete() {
-    if (!editedObject) return;
+  async function handleDelete() {
+    if (!editedObject || isSaving) return;
 
     const objectName = editedObject.name;
-    const result = deleteObject(editedObject.id);
+    isSaving = true;
+
+    const result = await deleteObjectAction(editedObject.id);
+
+    isSaving = false;
+
     if (result.success) {
       closeDrawer();
       showToast(`Object "${objectName}" deleted successfully`, 'success', 3000);
@@ -482,14 +511,19 @@
   <DrawerFooter>
     {#if editedObject && isCreating}
       <!-- Creation mode buttons -->
-      {@const isFormValid = editedObject.name.trim() !== '' && !!editedObject.namespaceId}
+      {@const isFormValid = editedObject.name.trim() !== '' && !!editedObject.namespaceId && !isSaving}
       <button
         type="button"
         onclick={handleCreate}
         disabled={!isFormValid}
         class="w-full px-4 py-2 rounded-md transition-colors font-medium {isFormValid ? 'bg-mono-900 text-white hover:bg-mono-800 cursor-pointer' : 'bg-mono-300 text-mono-500 cursor-not-allowed'}"
       >
-        Create Object
+        {#if isSaving}
+          <i class="fa-solid fa-spinner fa-spin mr-2"></i>
+          Creating...
+        {:else}
+          Create Object
+        {/if}
       </button>
       <button
         type="button"
@@ -500,19 +534,25 @@
       </button>
     {:else if editedObject}
       <!-- Edit mode buttons -->
+      {@const canSave = hasChanges && !isSaving}
       <button
         type="button"
         onclick={handleSave}
-        disabled={!hasChanges}
-        class="w-full px-4 py-2 rounded-md transition-colors font-medium {hasChanges ? 'bg-mono-900 text-white hover:bg-mono-800 cursor-pointer' : 'bg-mono-300 text-mono-500 cursor-not-allowed'}"
+        disabled={!canSave}
+        class="w-full px-4 py-2 rounded-md transition-colors font-medium {canSave ? 'bg-mono-900 text-white hover:bg-mono-800 cursor-pointer' : 'bg-mono-300 text-mono-500 cursor-not-allowed'}"
       >
-        Save Changes
+        {#if isSaving}
+          <i class="fa-solid fa-spinner fa-spin mr-2"></i>
+          Saving...
+        {:else}
+          Save Changes
+        {/if}
       </button>
       <button
         type="button"
         onclick={handleUndo}
-        disabled={!hasChanges}
-        class="w-full px-4 py-2 border rounded-md transition-colors font-medium {hasChanges ? 'border-mono-300 text-mono-700 hover:bg-mono-50 cursor-pointer' : 'border-mono-200 text-mono-400 cursor-not-allowed bg-mono-50'}"
+        disabled={!hasChanges || isSaving}
+        class="w-full px-4 py-2 border rounded-md transition-colors font-medium {hasChanges && !isSaving ? 'border-mono-300 text-mono-700 hover:bg-mono-50 cursor-pointer' : 'border-mono-200 text-mono-400 cursor-not-allowed bg-mono-50'}"
       >
         Undo
       </button>

@@ -16,7 +16,8 @@
     NamespaceSelector
   } from '$lib/components';
   import { createApiDetailState } from '$lib/stores/apiDetailState.svelte';
-  import { getApiById, deleteApi } from '$lib/stores/apis';
+  import { getApiById } from '$lib/stores/apis';
+  import { deleteApiAction } from '$lib/stores/actions';
   import { activeNamespaceId } from '$lib/stores/namespaces';
   import { showToast } from '$lib/stores/toasts';
 
@@ -31,6 +32,7 @@
 
   // Delete confirmation state
   let showDeleteConfirm = $state(false);
+  let isDeleting = $state(false);
 
   // Create state container for this specific API
   // Using untrack() because the apiId is intentionally captured at mount time
@@ -49,17 +51,20 @@
     showDeleteConfirm = true;
   }
 
-  function confirmDelete() {
-    if (!apiState.api) return;
+  async function confirmDelete() {
+    if (!apiState.api || isDeleting) return;
 
     const apiTitle = apiState.api.title;
-    const result = deleteApi(apiState.api.id);
+    isDeleting = true;
+
+    const result = await deleteApiAction(apiState.api.id);
 
     if (result.success) {
       showToast(`API "${apiTitle}" deleted successfully`, 'success');
       goto('/apis');
     } else {
       showToast(result.error || 'Failed to delete API', 'error');
+      isDeleting = false;
     }
     showDeleteConfirm = false;
   }
@@ -224,14 +229,21 @@
         <div class="flex space-x-2">
           <button
             onclick={confirmDelete}
-            class="flex-1 px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 flex items-center justify-center space-x-2"
+            disabled={isDeleting}
+            class="flex-1 px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 flex items-center justify-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            <i class="fa-solid fa-trash"></i>
-            <span>Delete</span>
+            {#if isDeleting}
+              <i class="fa-solid fa-spinner fa-spin"></i>
+              <span>Deleting...</span>
+            {:else}
+              <i class="fa-solid fa-trash"></i>
+              <span>Delete</span>
+            {/if}
           </button>
           <button
             onclick={cancelDelete}
-            class="flex-1 px-4 py-2 border border-mono-300 text-mono-700 rounded-md hover:bg-mono-50"
+            disabled={isDeleting}
+            class="flex-1 px-4 py-2 border border-mono-300 text-mono-700 rounded-md hover:bg-mono-50 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             Cancel
           </button>

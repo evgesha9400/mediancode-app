@@ -1,10 +1,10 @@
 /**
  * Objects API Service
  *
- * GET methods for object operations.
+ * CRUD methods for object operations.
  */
 
-import { apiGet } from './client';
+import { apiGet, apiPost, apiPut, apiDelete } from './client';
 import type { ObjectDefinition, ObjectFieldReference } from '$lib/types';
 
 /**
@@ -68,4 +68,63 @@ export async function listObjects(namespaceId?: string): Promise<ObjectDefinitio
 export async function getObject(id: string): Promise<ObjectDefinition> {
 	const response = await apiGet<ObjectResponse>(`/objects/${id}`);
 	return transformObject(response);
+}
+
+// ============================================================================
+// Mutation Types
+// ============================================================================
+
+/**
+ * Request payload for creating an object
+ */
+export interface CreateObjectRequest {
+	namespaceId: string;
+	name: string;
+	description?: string;
+	fields: ObjectFieldReference[];
+}
+
+/**
+ * Request payload for updating an object
+ */
+export interface UpdateObjectRequest {
+	name?: string;
+	description?: string;
+	fields?: ObjectFieldReference[];
+}
+
+// ============================================================================
+// Mutation Methods
+// ============================================================================
+
+/**
+ * Create a new object
+ *
+ * @param data - Object creation data
+ * @returns The created object
+ */
+export async function createObjectApi(data: CreateObjectRequest): Promise<ObjectDefinition> {
+	const response = await apiPost<ObjectResponse>('/objects', data);
+	return transformObject(response);
+}
+
+/**
+ * Update an existing object
+ *
+ * @param id - Object ID to update
+ * @param data - Partial object data to update
+ * @returns The updated object
+ */
+export async function updateObjectApi(id: string, data: UpdateObjectRequest): Promise<ObjectDefinition> {
+	const response = await apiPut<ObjectResponse>(`/objects/${id}`, data);
+	return transformObject(response);
+}
+
+/**
+ * Delete an object
+ *
+ * @param id - Object ID to delete
+ */
+export async function deleteObjectApi(id: string): Promise<void> {
+	await apiDelete<void>(`/objects/${id}`);
 }

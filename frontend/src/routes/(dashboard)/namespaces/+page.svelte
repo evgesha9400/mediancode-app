@@ -1,13 +1,11 @@
 <script lang="ts">
   import {
     namespacesStore,
-    createNamespace,
-    updateNamespace,
-    deleteNamespace,
     searchNamespaces,
     getNamespaceEntityDetails,
     GLOBAL_NAMESPACE_ID
   } from '$lib/stores/namespaces';
+  import { createNamespaceAction, updateNamespaceAction, deleteNamespaceAction } from '$lib/stores/actions';
   import { showToast } from '$lib/stores/toasts';
   import {
     PageHeader,
@@ -57,6 +55,7 @@
   let newNamespaceName = $state('');
   let newNamespaceDescription = $state('');
   let createErrors = $state<Record<string, string>>({});
+  let isSaving = $state(false);
 
   // Create list view state (owns all reactive state)
   const listState = createListViewState<Namespace, NamespaceFilterState>({
@@ -122,8 +121,8 @@
     return isValid;
   }
 
-  function handleSave() {
-    if (!editedNamespace || !validateForm()) return;
+  async function handleSave() {
+    if (!editedNamespace || !validateForm() || isSaving) return;
 
     // Can't edit locked namespaces
     if (editedNamespace.locked) {
@@ -132,9 +131,26 @@
     }
 
     const namespaceName = editedNamespace.name;
-    updateNamespace(editedNamespace.id, editedNamespace);
-    listState.selectedItem = editedNamespace;
-    listState.originalItem = JSON.parse(JSON.stringify(editedNamespace));
+    isSaving = true;
+
+    const result = await updateNamespaceAction(editedNamespace.id, {
+      name: editedNamespace.name,
+      description: editedNamespace.description
+    });
+
+    isSaving = false;
+
+    if (!result.success) {
+      if (result.error?.includes('already exists')) {
+        listState.validationErrors = { name: result.error };
+      } else {
+        showToast(result.error || 'Failed to update namespace', 'error', 5000);
+      }
+      return;
+    }
+
+    listState.selectedItem = result.data!;
+    listState.originalItem = JSON.parse(JSON.stringify(result.data!));
     showToast(`Namespace "${namespaceName}" updated successfully`, 'success', 3000);
     closeDrawer();
   }
@@ -146,11 +162,16 @@
     }
   }
 
-  function handleDelete() {
-    if (!editedNamespace) return;
+  async function handleDelete() {
+    if (!editedNamespace || isSaving) return;
 
     const namespaceName = editedNamespace.name;
-    const result = deleteNamespace(editedNamespace.id);
+    isSaving = true;
+
+    const result = await deleteNamespaceAction(editedNamespace.id);
+
+    isSaving = false;
+
     if (result.success) {
       closeDrawer();
       showToast(`Namespace "${namespaceName}" deleted successfully`, 'success', 3000);
@@ -170,7 +191,7 @@
     showCreateModal = false;
   }
 
-  function handleCreate() {
+  async function handleCreate() {
     createErrors = {};
 
     if (!newNamespaceName.trim()) {
@@ -178,14 +199,26 @@
       return;
     }
 
-    const newNamespace = createNamespace(newNamespaceName.trim(), newNamespaceDescription.trim());
+    if (isSaving) return;
+    isSaving = true;
 
-    if (!newNamespace) {
-      createErrors.name = 'A namespace with this name already exists';
+    const result = await createNamespaceAction({
+      name: newNamespaceName.trim(),
+      description: newNamespaceDescription.trim() || undefined
+    });
+
+    isSaving = false;
+
+    if (!result.success) {
+      if (result.error?.includes('already exists')) {
+        createErrors.name = 'A namespace with this name already exists';
+      } else {
+        showToast(result.error || 'Failed to create namespace', 'error', 5000);
+      }
       return;
     }
 
-    showToast(`Namespace "${newNamespaceName}" created successfully`, 'success', 3000);
+    showToast(`Namespace "${result.data!.name}" created successfully`, 'success', 3000);
     closeCreateModal();
   }
 
@@ -398,19 +431,25 @@
 
   <DrawerFooter>
     {#if editedNamespace && !isLocked}
+      {@const canSave = hasChanges && !isSaving}
       <button
         type="button"
         onclick={handleSave}
-        disabled={!hasChanges}
-        class="w-full px-4 py-2 rounded-md transition-colors font-medium {hasChanges ? 'bg-mono-900 text-white hover:bg-mono-800 cursor-pointer' : 'bg-mono-300 text-mono-500 cursor-not-allowed'}"
+        disabled={!canSave}
+        class="w-full px-4 py-2 rounded-md transition-colors font-medium {canSave ? 'bg-mono-900 text-white hover:bg-mono-800 cursor-pointer' : 'bg-mono-300 text-mono-500 cursor-not-allowed'}"
       >
-        Save Changes
+        {#if isSaving}
+          <i class="fa-solid fa-spinner fa-spin mr-2"></i>
+          Saving...
+        {:else}
+          Save Changes
+        {/if}
       </button>
       <button
         type="button"
         onclick={handleUndo}
-        disabled={!hasChanges}
-        class="w-full px-4 py-2 border rounded-md transition-colors font-medium {hasChanges ? 'border-mono-300 text-mono-700 hover:bg-mono-50 cursor-pointer' : 'border-mono-200 text-mono-400 cursor-not-allowed bg-mono-50'}"
+        disabled={!hasChanges || isSaving}
+        class="w-full px-4 py-2 border rounded-md transition-colors font-medium {hasChanges && !isSaving ? 'border-mono-300 text-mono-700 hover:bg-mono-50 cursor-pointer' : 'border-mono-200 text-mono-400 cursor-not-allowed bg-mono-50'}"
       >
         Undo
       </button>
@@ -507,14 +546,21 @@
         <button
           type="button"
           onclick={handleCreate}
-          class="flex-1 px-4 py-2 bg-mono-900 text-white rounded-md hover:bg-mono-800 transition-colors font-medium"
+          disabled={isSaving}
+          class="flex-1 px-4 py-2 bg-mono-900 text-white rounded-md hover:bg-mono-800 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          Create
+          {#if isSaving}
+            <i class="fa-solid fa-spinner fa-spin mr-2"></i>
+            Creating...
+          {:else}
+            Create
+          {/if}
         </button>
         <button
           type="button"
           onclick={closeCreateModal}
-          class="flex-1 px-4 py-2 border border-mono-300 text-mono-700 rounded-md hover:bg-mono-50 transition-colors font-medium"
+          disabled={isSaving}
+          class="flex-1 px-4 py-2 border border-mono-300 text-mono-700 rounded-md hover:bg-mono-50 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed"
         >
           Cancel
         </button>

@@ -3,10 +3,10 @@
   import {
     apisStore,
     searchApis,
-    deleteApi,
     getEndpointCountByApi,
     getTagCountByApi
   } from '$lib/stores/apis';
+  import { deleteApiAction } from '$lib/stores/actions';
   import { showToast } from '$lib/stores/toasts';
   import { activeNamespaceId, getNamespaceById } from '$lib/stores/namespaces';
   import {
@@ -69,6 +69,8 @@
   let filteredApis = $derived(listState.results as ApiWithCounts[]);
   let sorts = $derived(listState.sorts);
 
+  let isDeleting = $state(false);
+
   function isSelected(api: Api): boolean {
     return selectedApi?.id === api.id;
   }
@@ -81,11 +83,16 @@
     goto(`/apis/${api.id}`);
   }
 
-  function handleDelete() {
-    if (!selectedApi) return;
+  async function handleDelete() {
+    if (!selectedApi || isDeleting) return;
 
     const apiTitle = selectedApi.title;
-    const result = deleteApi(selectedApi.id);
+    isDeleting = true;
+
+    const result = await deleteApiAction(selectedApi.id);
+
+    isDeleting = false;
+
     if (result.success) {
       listState.closeDrawer();
       showToast(`API "${apiTitle}" deleted successfully`, 'success', 3000);
@@ -315,9 +322,15 @@
             <button
               type="button"
               onclick={handleDelete}
-              class="flex-1 px-3 py-1.5 bg-red-600 text-white rounded-md hover:bg-red-700 text-sm font-medium"
+              disabled={isDeleting}
+              class="flex-1 px-3 py-1.5 bg-red-600 text-white rounded-md hover:bg-red-700 text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              Yes, Delete
+              {#if isDeleting}
+                <i class="fa-solid fa-spinner fa-spin mr-1"></i>
+                Deleting...
+              {:else}
+                Yes, Delete
+              {/if}
             </button>
             <button
               type="button"

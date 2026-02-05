@@ -1,5 +1,6 @@
 <script lang="ts">
-  import { fieldsStore, updateField, deleteField, searchFields, createField, type Field, type FieldValidator } from '$lib/stores/fields';
+  import { fieldsStore, searchFields, type Field, type FieldValidator } from '$lib/stores/fields';
+  import { createFieldAction, updateFieldAction, deleteFieldAction } from '$lib/stores/actions';
   import { validatorsStore, getValidatorsByFieldType, getValidatorsByFieldTypeAndNamespace, type Validator } from '$lib/stores/validators';
   import { getPrimitiveTypes, type PrimitiveTypeName } from '$lib/stores/types';
   import { showToast } from '$lib/stores/toasts';
@@ -38,6 +39,7 @@
   // Form tracking
   let previousFieldType = $state<string | null>(null);
   let isCreating = $state(false);
+  let isSaving = $state(false);
 
   let primitiveTypes = $derived(getPrimitiveTypes());
 
@@ -190,37 +192,63 @@
     return isValid;
   }
 
-  function handleSave() {
-    if (!editedField || !validateForm()) return;
+  async function handleSave() {
+    if (!editedField || !validateForm() || isSaving) return;
 
     const fieldName = editedField.name;
-    updateField(editedField.id, editedField);
-    listState.selectedItem = editedField;
-    listState.originalItem = JSON.parse(JSON.stringify(editedField));
+    isSaving = true;
+
+    const result = await updateFieldAction(editedField.id, {
+      name: editedField.name,
+      type: editedField.type,
+      description: editedField.description,
+      defaultValue: editedField.defaultValue,
+      validators: editedField.validators
+    });
+
+    isSaving = false;
+
+    if (!result.success) {
+      if (result.error?.includes('already exists')) {
+        listState.validationErrors = { name: result.error };
+      } else {
+        showToast(result.error || 'Failed to update field', 'error', 5000);
+      }
+      return;
+    }
+
+    listState.selectedItem = result.data!;
+    listState.originalItem = JSON.parse(JSON.stringify(result.data!));
     showToast(`Field "${fieldName}" updated successfully`, 'success', 3000);
     closeDrawer();
   }
 
-  function handleCreate() {
-    if (!editedField || !validateForm()) return;
+  async function handleCreate() {
+    if (!editedField || !validateForm() || isSaving) return;
 
-    const createdField = createField(
-      editedField.name,
-      editedField.type,
-      editedField.namespaceId,
-      {
-        validators: editedField.validators,
-        description: editedField.description,
-        defaultValue: editedField.defaultValue
+    isSaving = true;
+
+    const result = await createFieldAction({
+      namespaceId: editedField.namespaceId,
+      name: editedField.name,
+      type: editedField.type,
+      description: editedField.description,
+      defaultValue: editedField.defaultValue,
+      validators: editedField.validators
+    });
+
+    isSaving = false;
+
+    if (!result.success) {
+      if (result.error?.includes('already exists')) {
+        listState.validationErrors = { name: result.error };
+      } else {
+        showToast(result.error || 'Failed to create field', 'error', 5000);
       }
-    );
-
-    if (!createdField) {
-      listState.validationErrors = { name: 'A field with this name already exists in this namespace' };
       return;
     }
 
-    showToast(`Field "${createdField.name}" created successfully`, 'success', 3000);
+    showToast(`Field "${result.data!.name}" created successfully`, 'success', 3000);
 
     // Close drawer after successful creation (matches object builder behavior)
     isCreating = false;
@@ -235,11 +263,16 @@
     }
   }
 
-  function handleDelete() {
-    if (!editedField) return;
+  async function handleDelete() {
+    if (!editedField || isSaving) return;
 
     const fieldName = editedField.name;
-    const result = deleteField(editedField.id);
+    isSaving = true;
+
+    const result = await deleteFieldAction(editedField.id);
+
+    isSaving = false;
+
     if (result.success) {
       closeDrawer();
       showToast(`Field "${fieldName}" deleted successfully`, 'success', 3000);
@@ -593,14 +626,19 @@
   <DrawerFooter>
     {#if editedField && isCreating}
       <!-- Creation mode buttons -->
-      {@const isFormValid = editedField.name.trim() !== '' && !!editedField.type}
+      {@const isFormValid = editedField.name.trim() !== '' && !!editedField.type && !isSaving}
       <button
         type="button"
         onclick={handleCreate}
         disabled={!isFormValid}
         class="w-full px-4 py-2 rounded-md transition-colors font-medium {isFormValid ? 'bg-mono-900 text-white hover:bg-mono-800 cursor-pointer' : 'bg-mono-300 text-mono-500 cursor-not-allowed'}"
       >
-        Create Field
+        {#if isSaving}
+          <i class="fa-solid fa-spinner fa-spin mr-2"></i>
+          Creating...
+        {:else}
+          Create Field
+        {/if}
       </button>
       <button
         type="button"
@@ -611,19 +649,25 @@
       </button>
     {:else if editedField}
       <!-- Edit mode buttons -->
+      {@const canSave = hasChanges && !isSaving}
       <button
         type="button"
         onclick={handleSave}
-        disabled={!hasChanges}
-        class="w-full px-4 py-2 rounded-md transition-colors font-medium {hasChanges ? 'bg-mono-900 text-white hover:bg-mono-800 cursor-pointer' : 'bg-mono-300 text-mono-500 cursor-not-allowed'}"
+        disabled={!canSave}
+        class="w-full px-4 py-2 rounded-md transition-colors font-medium {canSave ? 'bg-mono-900 text-white hover:bg-mono-800 cursor-pointer' : 'bg-mono-300 text-mono-500 cursor-not-allowed'}"
       >
-        Save Changes
+        {#if isSaving}
+          <i class="fa-solid fa-spinner fa-spin mr-2"></i>
+          Saving...
+        {:else}
+          Save Changes
+        {/if}
       </button>
       <button
         type="button"
         onclick={handleUndo}
-        disabled={!hasChanges}
-        class="w-full px-4 py-2 border rounded-md transition-colors font-medium {hasChanges ? 'border-mono-300 text-mono-700 hover:bg-mono-50 cursor-pointer' : 'border-mono-200 text-mono-400 cursor-not-allowed bg-mono-50'}"
+        disabled={!hasChanges || isSaving}
+        class="w-full px-4 py-2 border rounded-md transition-colors font-medium {hasChanges && !isSaving ? 'border-mono-300 text-mono-700 hover:bg-mono-50 cursor-pointer' : 'border-mono-200 text-mono-400 cursor-not-allowed bg-mono-50'}"
       >
         Undo
       </button>

@@ -1,10 +1,10 @@
 /**
  * Fields API Service
  *
- * GET methods for field operations.
+ * CRUD methods for field operations.
  */
 
-import { apiGet } from './client';
+import { apiGet, apiPost, apiPut, apiDelete } from './client';
 import type { Field, FieldValidator } from '$lib/stores/initialData';
 
 /**
@@ -72,4 +72,67 @@ export async function listFields(namespaceId?: string): Promise<Field[]> {
 export async function getField(id: string): Promise<Field> {
 	const response = await apiGet<FieldResponse>(`/fields/${id}`);
 	return transformField(response);
+}
+
+// ============================================================================
+// Mutation Types
+// ============================================================================
+
+/**
+ * Request payload for creating a field
+ */
+export interface CreateFieldRequest {
+	namespaceId: string;
+	name: string;
+	type: string;
+	description?: string;
+	defaultValue?: string;
+	validators: { name: string; params?: Record<string, unknown> }[];
+}
+
+/**
+ * Request payload for updating a field
+ */
+export interface UpdateFieldRequest {
+	name?: string;
+	type?: string;
+	description?: string;
+	defaultValue?: string;
+	validators?: { name: string; params?: Record<string, unknown> }[];
+}
+
+// ============================================================================
+// Mutation Methods
+// ============================================================================
+
+/**
+ * Create a new field
+ *
+ * @param data - Field creation data
+ * @returns The created field
+ */
+export async function createFieldApi(data: CreateFieldRequest): Promise<Field> {
+	const response = await apiPost<FieldResponse>('/fields', data);
+	return transformField(response);
+}
+
+/**
+ * Update an existing field
+ *
+ * @param id - Field ID to update
+ * @param data - Partial field data to update
+ * @returns The updated field
+ */
+export async function updateFieldApi(id: string, data: UpdateFieldRequest): Promise<Field> {
+	const response = await apiPut<FieldResponse>(`/fields/${id}`, data);
+	return transformField(response);
+}
+
+/**
+ * Delete a field
+ *
+ * @param id - Field ID to delete
+ */
+export async function deleteFieldApi(id: string): Promise<void> {
+	await apiDelete<void>(`/fields/${id}`);
 }

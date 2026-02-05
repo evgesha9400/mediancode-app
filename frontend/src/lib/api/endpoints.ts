@@ -1,10 +1,10 @@
 /**
  * Endpoints API Service
  *
- * GET methods for API endpoint operations.
+ * CRUD methods for API endpoint operations.
  */
 
-import { apiGet } from './client';
+import { apiGet, apiPost, apiPut, apiDelete } from './client';
 import type { ApiEndpoint, EndpointParameter, HttpMethod, ResponseShape } from '$lib/types';
 
 /**
@@ -93,4 +93,78 @@ export async function listEndpoints(namespaceId?: string, apiId?: string): Promi
 export async function getEndpoint(id: string): Promise<ApiEndpoint> {
 	const response = await apiGet<EndpointResponse>(`/endpoints/${id}`);
 	return transformEndpoint(response);
+}
+
+// ============================================================================
+// Mutation Types
+// ============================================================================
+
+/**
+ * Request payload for creating an endpoint
+ */
+export interface CreateEndpointRequest {
+	namespaceId: string;
+	apiId: string;
+	method: HttpMethod;
+	path: string;
+	description?: string;
+	tagId?: string;
+	pathParams?: { name: string; type: string; description?: string; required?: boolean }[];
+	queryParamsObjectId?: string;
+	requestBodyObjectId?: string;
+	responseBodyObjectId?: string;
+	useEnvelope?: boolean;
+	responseShape?: ResponseShape;
+}
+
+/**
+ * Request payload for updating an endpoint
+ */
+export interface UpdateEndpointRequest {
+	method?: HttpMethod;
+	path?: string;
+	description?: string;
+	tagId?: string | null;
+	pathParams?: { id?: string; name: string; type: string; description?: string; required?: boolean }[];
+	queryParamsObjectId?: string | null;
+	requestBodyObjectId?: string | null;
+	responseBodyObjectId?: string | null;
+	useEnvelope?: boolean;
+	responseShape?: ResponseShape;
+}
+
+// ============================================================================
+// Mutation Methods
+// ============================================================================
+
+/**
+ * Create a new endpoint
+ *
+ * @param data - Endpoint creation data
+ * @returns The created endpoint
+ */
+export async function createEndpointApi(data: CreateEndpointRequest): Promise<ApiEndpoint> {
+	const response = await apiPost<EndpointResponse>('/endpoints', data);
+	return transformEndpoint(response);
+}
+
+/**
+ * Update an existing endpoint
+ *
+ * @param id - Endpoint ID to update
+ * @param data - Partial endpoint data to update
+ * @returns The updated endpoint
+ */
+export async function updateEndpointApi(id: string, data: UpdateEndpointRequest): Promise<ApiEndpoint> {
+	const response = await apiPut<EndpointResponse>(`/endpoints/${id}`, data);
+	return transformEndpoint(response);
+}
+
+/**
+ * Delete an endpoint
+ *
+ * @param id - Endpoint ID to delete
+ */
+export async function deleteEndpointApi(id: string): Promise<void> {
+	await apiDelete<void>(`/endpoints/${id}`);
 }
