@@ -12,3 +12,5 @@ export { MobileBlockedPage } from './MobileBlockedPage';
 export { FieldRegistryPage } from './FieldRegistryPage';
 export { TypesPage } from './TypesPage';
 export { ValidatorsPage } from './ValidatorsPage';
+export { ApisPage } from './ApisPage';
+export { ObjectBuilderPage } from './ObjectBuilderPage';

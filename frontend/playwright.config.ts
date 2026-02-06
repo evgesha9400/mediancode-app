@@ -1,38 +1,48 @@
 import { defineConfig, devices } from '@playwright/test';
 import * as dotenv from 'dotenv';
+import path from 'path';
+import { fileURLToPath } from 'url';
 
 // Load environment variables from .env file
 dotenv.config();
 
+// ES module equivalent of __dirname
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
 /**
  * Playwright Configuration
  *
- * This configuration defines two test projects:
+ * This configuration defines test projects for different scenarios:
+ *
+ * EXISTING PROJECTS (frontend-only tests):
  * 1. chromium-smoke: Fast subset for PR validation (~2 minutes)
  * 2. chromium-full: Complete suite with visual regression (nightly)
  *
- * NOTE: MSW (Mock Service Worker) is NOT currently initialized for E2E tests.
- * The tests run against the actual app with real Svelte stores (not fixtures).
- * The MSW service worker file exists in static/ but is not started.
+ * NEW PROJECTS (backend integration tests):
+ * 3. setup: Authenticates test user for CRUD tests
+ * 4. app-crud: Tests entity CRUD lifecycle against dev backend
+ * 5. auth-flows: Tests signup, password change, org creation
  *
- * To enable MSW mocking in E2E tests:
- * 1. Import and call startMSW() in global-setup.ts or a test fixture
- * 2. Update handlers in tests/shared/msw/handlers.ts
- * 3. Ensure the app hydrates with mocked data
- *
- * Current behavior:
- * - Dashboard stat cards use values from src/lib/stores/fields.ts and validators.ts
- * - Forms submit to real Formspree/Clerk endpoints (may need network)
+ * Backend integration tests run against dev.api.mediancode.com
+ * and require:
+ * - E2E_TEST_USER_EMAIL: Pre-created test user email
+ * - E2E_TEST_USER_PASSWORD: Test user password
+ * - CLERK_SECRET_KEY: For auth flow cleanup (auth-flows only)
  */
+
 const PREVIEW_HOST = '127.0.0.1';
 const PREVIEW_PORT = 4173;
 const DEFAULT_BASE_URL = `http://${PREVIEW_HOST}:${PREVIEW_PORT}`;
+
+// Auth state file path
+const AUTH_FILE = path.join(__dirname, 'tests/e2e/.auth/user.json');
 
 export default defineConfig({
 	// Test directory
 	testDir: './tests/e2e',
 
-	// Global setup to initialize MSW
+	// Global setup to initialize MSW (for existing tests)
 	globalSetup: './tests/e2e/global-setup.ts',
 
 	// Maximum time one test can run
@@ -44,7 +54,8 @@ export default defineConfig({
 	// Retry on CI only
 	retries: process.env.CI ? 2 : 0,
 
-	// Run 2 workers in CI (GitHub Actions has 2 CPUs), unlimited locally
+	// Run 2 workers in CI for existing tests, 1 for CRUD tests (sequential)
+	// Note: app-crud and auth-flows projects override this to 1
 	workers: process.env.CI ? 2 : undefined,
 
 	// Reporter to use
@@ -78,6 +89,10 @@ export default defineConfig({
 
 	// Configure projects for different test scenarios
 	projects: [
+		// ========================================================================
+		// EXISTING PROJECTS - Frontend-only tests
+		// ========================================================================
+
 		{
 			name: 'chromium-smoke',
 			use: {
@@ -94,11 +109,60 @@ export default defineConfig({
 			use: {
 				...devices['Desktop Chrome']
 			},
-			// Run all spec files except smoke tests (they run in chromium-smoke project)
+			// Run all spec files except smoke tests and CRUD/auth tests
 			testMatch: /.*\.spec\.ts/,
-			testIgnore: /.*\.smoke\.spec\.ts/,
+			testIgnore: [/.*\.smoke\.spec\.ts/, /.*\.crud\.spec\.ts/, /scenarios\/auth-flows\/.*/],
 			// Longer timeout for comprehensive tests
 			timeout: 30 * 1000
+		},
+
+		// ========================================================================
+		// NEW PROJECTS - Backend integration tests
+		// ========================================================================
+
+		{
+			// Setup project - authenticates test user before CRUD tests
+			name: 'setup',
+			testMatch: /auth\.setup\.ts/,
+			use: {
+				...devices['Desktop Chrome']
+			},
+			timeout: 60 * 1000 // Auth can take longer
+		},
+
+		{
+			// App CRUD tests - tests entity lifecycle against dev backend
+			name: 'app-crud',
+			use: {
+				...devices['Desktop Chrome'],
+				// Use authenticated state from setup
+				storageState: AUTH_FILE
+			},
+			// Only run CRUD test files
+			testMatch: /.*\.crud\.spec\.ts/,
+			// Depends on setup completing first
+			dependencies: ['setup'],
+			// Sequential execution to avoid race conditions
+			fullyParallel: false,
+			// Longer timeout for API operations
+			timeout: 45 * 1000
+		},
+
+		{
+			// Auth flows tests - tests signup, password change, org creation
+			// These do NOT use pre-authenticated state (they test the auth flow itself)
+			name: 'auth-flows',
+			use: {
+				...devices['Desktop Chrome']
+				// No storageState - these tests start unauthenticated
+			},
+			// Only run auth flow test files
+			testDir: './tests/e2e/scenarios/auth-flows',
+			testMatch: /.*\.spec\.ts/,
+			// Sequential execution - one test at a time
+			fullyParallel: false,
+			// Longer timeout for auth operations
+			timeout: 60 * 1000
 		}
 	],
 
@@ -113,8 +177,11 @@ export default defineConfig({
 		// Ensure the build has access to required environment variables
 		env: {
 			...process.env,
-			PUBLIC_CLERK_PUBLISHABLE_KEY: process.env.PUBLIC_CLERK_PUBLISHABLE_KEY || 'pk_test_placeholder',
-			VITE_CLERK_MOCK_MODE: 'false'
+			PUBLIC_CLERK_PUBLISHABLE_KEY:
+				process.env.PUBLIC_CLERK_PUBLISHABLE_KEY || 'pk_test_placeholder',
+			VITE_CLERK_MOCK_MODE: 'false',
+			// API base URL for backend integration
+			VITE_API_BASE_URL: process.env.E2E_API_BASE_URL || 'https://dev.api.mediancode.com/v1'
 		}
 	}
 });
