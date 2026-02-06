@@ -336,11 +336,11 @@
                       <span>Create "<strong>{apiState.tagInputValue.trim()}</strong>"</span>
                     </button>
                   {/if}
-                  {#each apiState.tags as tag (tag.id)}
-                    <div class="flex items-center hover:bg-mono-50 {apiState.editedEndpoint?.tagId === tag.id ? 'bg-mono-100' : ''}">
+                  {#each apiState.tags as tag (tag.name)}
+                    <div class="flex items-center hover:bg-mono-50 {apiState.editedEndpoint?.tagName === tag.name ? 'bg-mono-100' : ''}">
                       <button
                         type="button"
-                        onclick={() => apiState.handleTagSelect(tag.id)}
+                        onclick={() => apiState.handleTagSelect(tag.name)}
                         class="flex-1 px-3 py-2 text-left text-sm text-mono-700"
                       >
                         {tag.name}
@@ -365,9 +365,9 @@
                   <p class="text-sm text-mono-700 mb-2">
                     Delete tag "<strong>{apiState.tagToDelete.name}</strong>"?
                   </p>
-                  {#if apiState.getEndpointsUsingTag(apiState.tagToDelete.id) > 0}
+                  {#if apiState.getEndpointsUsingTag(apiState.tagToDelete.name) > 0}
                     <p class="text-xs text-mono-500 mb-3">
-                      This tag is used by {apiState.getEndpointsUsingTag(apiState.tagToDelete.id)} endpoint{apiState.getEndpointsUsingTag(apiState.tagToDelete.id) > 1 ? 's' : ''}. It will be removed from them.
+                      This tag is used by {apiState.getEndpointsUsingTag(apiState.tagToDelete.name)} endpoint{apiState.getEndpointsUsingTag(apiState.tagToDelete.name) > 1 ? 's' : ''}. It will be removed from them.
                     </p>
                   {/if}
                   <div class="flex space-x-2">

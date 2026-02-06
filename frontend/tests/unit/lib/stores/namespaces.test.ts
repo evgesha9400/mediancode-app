@@ -19,7 +19,7 @@ import { initialNamespaces } from '$lib/stores/initialData';
 import { seedIdGenerator } from '$lib/utils/ids';
 import { fieldsStore } from '$lib/stores/fields';
 import { objectsStore } from '$lib/stores/objects';
-import { endpointsStore, tagsStore } from '$lib/stores/apis';
+import { endpointsStore, apisStore } from '$lib/stores/apis';
 
 describe('namespaces store - Basic Operations', () => {
 	beforeEach(() => {
@@ -215,7 +215,7 @@ describe('namespaces store - Entity Count', () => {
 		fieldsStore.set([]);
 		objectsStore.set([]);
 		endpointsStore.set([]);
-		tagsStore.set([]);
+		apisStore.set([]);
 		seedIdGenerator({ counter: 0, timestamp: 1000000 });
 	});
 
@@ -278,7 +278,7 @@ describe('namespaces store - Entity Count', () => {
 		expect(details.endpoints).toBe(1);
 		expect(details.validators).toBe(initialValidatorCount); // Inline validators still present
 		expect(details.objects).toBe(0);
-		expect(details.tags).toBe(0);
+		expect(details.apis).toBe(0);
 		expect(details.total).toBe(2 + initialValidatorCount);
 	});
 

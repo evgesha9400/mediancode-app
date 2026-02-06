@@ -6,7 +6,7 @@
 
 import { waitFor } from '@testing-library/svelte';
 import userEvent from '@testing-library/user-event';
-import type { ApiEndpoint, EndpointTag } from '$lib/types';
+import type { ApiEndpoint, ApiTag, Api } from '$lib/types';
 import { GLOBAL_NAMESPACE_ID } from '$lib/stores/initialData';
 
 /**
@@ -36,18 +36,38 @@ export function createMockEndpoint(overrides: Partial<ApiEndpoint> = {}): ApiEnd
 }
 
 /**
- * Creates a mock endpoint tag.
+ * Creates a mock API tag (embedded in API).
+ * Tags no longer have IDs - they are identified by name within an API.
  *
  * @param overrides - Partial tag properties to override defaults
- * @returns Complete EndpointTag object
+ * @returns Complete ApiTag object
  */
-export function createMockTag(overrides: Partial<EndpointTag> = {}): EndpointTag {
+export function createMockTag(overrides: Partial<ApiTag> = {}): ApiTag {
 	return {
-		id: 'tag-1',
-		namespaceId: GLOBAL_NAMESPACE_ID,
-		apiId: 'api-test-1',
 		name: 'Test Tag',
 		description: 'Test description',
+		...overrides
+	};
+}
+
+/**
+ * Creates a mock API with all required fields and sensible defaults.
+ *
+ * @param overrides - Partial API properties to override defaults
+ * @returns Complete Api object
+ */
+export function createMockApi(overrides: Partial<Api> = {}): Api {
+	return {
+		id: 'api-test-1',
+		namespaceId: GLOBAL_NAMESPACE_ID,
+		title: 'Test API',
+		version: '1.0.0',
+		description: '',
+		baseUrl: '/api/v1',
+		serverUrl: 'http://localhost:8000',
+		tags: [],
+		createdAt: new Date().toISOString(),
+		updatedAt: new Date().toISOString(),
 		...overrides
 	};
 }

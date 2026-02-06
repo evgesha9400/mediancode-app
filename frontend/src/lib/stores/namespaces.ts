@@ -5,7 +5,7 @@ import { generateId } from '$lib/utils/ids';
 import { fieldsStore } from './fields';
 import { validatorsStore } from './validators';
 import { objectsStore } from './objects';
-import { endpointsStore, tagsStore } from './apis';
+import { endpointsStore, apisStore } from './apis';
 
 // ============================================================================
 // Namespace Store
@@ -65,41 +65,43 @@ export function searchNamespaces(namespaces: Namespace[], query: string): Namesp
 
 /**
  * Count all entities within a namespace
+ * Note: Tags are now embedded in APIs and not counted separately
  */
 export function getNamespaceEntityCount(namespaceId: string): number {
 	const fields = get(fieldsStore).filter(f => f.namespaceId === namespaceId);
 	const validators = get(validatorsStore).filter(v => v.namespaceId === namespaceId);
 	const objects = get(objectsStore).filter(o => o.namespaceId === namespaceId);
 	const endpoints = get(endpointsStore).filter(e => e.namespaceId === namespaceId);
-	const tags = get(tagsStore).filter(t => t.namespaceId === namespaceId);
+	const apis = get(apisStore).filter(a => a.namespaceId === namespaceId);
 
-	return fields.length + validators.length + objects.length + endpoints.length + tags.length;
+	return fields.length + validators.length + objects.length + endpoints.length + apis.length;
 }
 
 /**
  * Get detailed entity counts for a namespace
+ * Note: Tags are now embedded in APIs and counted as part of APIs
  */
 export function getNamespaceEntityDetails(namespaceId: string): {
 	fields: number;
 	validators: number;
 	objects: number;
 	endpoints: number;
-	tags: number;
+	apis: number;
 	total: number;
 } {
 	const fields = get(fieldsStore).filter(f => f.namespaceId === namespaceId).length;
 	const validators = get(validatorsStore).filter(v => v.namespaceId === namespaceId).length;
 	const objects = get(objectsStore).filter(o => o.namespaceId === namespaceId).length;
 	const endpoints = get(endpointsStore).filter(e => e.namespaceId === namespaceId).length;
-	const tags = get(tagsStore).filter(t => t.namespaceId === namespaceId).length;
+	const apis = get(apisStore).filter(a => a.namespaceId === namespaceId).length;
 
 	return {
 		fields,
 		validators,
 		objects,
 		endpoints,
-		tags,
-		total: fields + validators + objects + endpoints + tags
+		apis,
+		total: fields + validators + objects + endpoints + apis
 	};
 }
 
@@ -191,7 +193,7 @@ export function deleteNamespace(id: string): DeletionResult {
 		if (details.validators > 0) parts.push(`${details.validators} validator${details.validators > 1 ? 's' : ''}`);
 		if (details.objects > 0) parts.push(`${details.objects} object${details.objects > 1 ? 's' : ''}`);
 		if (details.endpoints > 0) parts.push(`${details.endpoints} endpoint${details.endpoints > 1 ? 's' : ''}`);
-		if (details.tags > 0) parts.push(`${details.tags} tag${details.tags > 1 ? 's' : ''}`);
+		if (details.apis > 0) parts.push(`${details.apis} API${details.apis > 1 ? 's' : ''}`);
 
 		return {
 			success: false,

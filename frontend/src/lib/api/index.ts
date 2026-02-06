@@ -15,5 +15,4 @@ export * from './types';
 export * from './validators';
 export * from './fields';
 export * from './objects';
-export * from './tags';
 export * from './endpoints';

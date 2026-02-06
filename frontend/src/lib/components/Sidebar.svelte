@@ -5,19 +5,13 @@
 </script>
 
 <script lang="ts">
-  import { clerkState, signOut } from '$lib/clerk';
-  import { goto } from '$app/navigation';
   import type { NavItem } from '$lib/types';
   import { Logo } from '$lib/components/logo';
+  import { ClerkSidebarUser } from '$lib/components/clerk';
 
   interface Props extends SidebarProps {}
 
   let { activeRoute }: Props = $props();
-
-  async function handleSignOut() {
-    await signOut();
-    goto('/signin');
-  }
 
   const dashboardItem: NavItem = {
     href: '/dashboard',
@@ -111,34 +105,11 @@
     </ul>
   </div>
 
-  <div class="mt-auto p-4 border-t border-mono-800">
-    <div class="flex items-center justify-between">
-      <div class="flex items-center space-x-2">
-        {#if $clerkState.user?.imageUrl}
-          <img
-            src={$clerkState.user.imageUrl}
-            alt="User avatar"
-            class="w-8 h-8 rounded-full"
-          />
-        {:else}
-          <div class="w-8 h-8 rounded-full bg-mono-700 flex items-center justify-center">
-            <i class="fa-solid fa-user text-sm"></i>
-          </div>
-        {/if}
-        <div class="flex-1 min-w-0">
-          <p class="text-sm truncate">
-            {$clerkState.user?.fullName || 'Developer'}
-          </p>
-          <p class="text-xs text-mono-400 truncate">Developer</p>
-        </div>
-      </div>
-      <button
-        onclick={handleSignOut}
-        class="text-mono-400 hover:text-white transition-colors p-1"
-        title="Sign out"
-      >
-        <i class="fa-solid fa-arrow-right-from-bracket"></i>
-      </button>
-    </div>
+  <!-- User Section with Clerk UserButton -->
+  <div
+    class="p-4 border-t border-mono-800"
+    data-testid="sidebar-user-section"
+  >
+    <ClerkSidebarUser />
   </div>
 </nav>

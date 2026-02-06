@@ -8,6 +8,7 @@
  */
 
 import { getClerk } from '$lib/clerk';
+import { getActiveOrganizationId } from '$lib/stores/organization';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/v1';
 
@@ -92,6 +93,12 @@ export async function apiClient<T>(
 		if (token) {
 			(headers as Record<string, string>)['Authorization'] = `Bearer ${token}`;
 		}
+	}
+
+	// Add organization context header if in org mode
+	const orgId = getActiveOrganizationId();
+	if (orgId) {
+		(headers as Record<string, string>)['X-Organization-Id'] = orgId;
 	}
 
 	// Build request URL

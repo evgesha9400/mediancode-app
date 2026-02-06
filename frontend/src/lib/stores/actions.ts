@@ -38,13 +38,6 @@ import {
 	type UpdateEndpointRequest
 } from '$lib/api/endpoints';
 import {
-	createTagApi,
-	updateTagApi,
-	deleteTagApi,
-	type CreateTagRequest,
-	type UpdateTagRequest
-} from '$lib/api/tags';
-import {
 	createNamespaceApi,
 	updateNamespaceApi,
 	deleteNamespaceApi,
@@ -53,9 +46,9 @@ import {
 } from '$lib/api/namespaces';
 import { fieldsStore, type Field } from './fields';
 import { objectsStore, type ObjectDefinition } from './objects';
-import { apisStore, endpointsStore, tagsStore } from './apis';
+import { apisStore, endpointsStore } from './apis';
 import { namespacesStore, activeNamespaceId, GLOBAL_NAMESPACE_ID } from './namespaces';
-import type { Api, ApiEndpoint, EndpointTag, Namespace } from '$lib/types';
+import type { Api, ApiEndpoint, Namespace } from '$lib/types';
 
 // ============================================================================
 // Types
@@ -258,10 +251,16 @@ export async function updateApiAction(
 ): Promise<ActionResult<Api>> {
 	const previousApis = get(apisStore);
 
-	// Optimistic update
+	// Optimistic update - normalize tags to ensure description is always a string
+	// Destructure tags out and handle separately to avoid type conflicts
+	const { tags: updateTags, ...restUpdates } = updates;
+	const normalizedUpdates: Partial<Api> = { ...restUpdates };
+	if (updateTags !== undefined) {
+		normalizedUpdates.tags = updateTags.map(t => ({ name: t.name, description: t.description ?? '' }));
+	}
 	apisStore.update(apis =>
 		apis.map(a =>
-			a.id === id ? { ...a, ...updates, updatedAt: new Date().toISOString() } : a
+			a.id === id ? { ...a, ...normalizedUpdates, updatedAt: new Date().toISOString() } : a
 		)
 	);
 
@@ -278,17 +277,16 @@ export async function updateApiAction(
 
 /**
  * Delete an API via API with optimistic update
- * Also removes associated endpoints and tags from local stores
+ * Also removes associated endpoints from local stores
+ * Note: Tags are now embedded in APIs, so they are deleted with the API
  */
 export async function deleteApiAction(id: string): Promise<ActionResult<void>> {
 	const previousApis = get(apisStore);
 	const previousEndpoints = get(endpointsStore);
-	const previousTags = get(tagsStore);
 
-	// Optimistic delete (including related entities)
+	// Optimistic delete (including related endpoints)
 	apisStore.update(apis => apis.filter(a => a.id !== id));
 	endpointsStore.update(endpoints => endpoints.filter(e => e.apiId !== id));
-	tagsStore.update(tags => tags.filter(t => t.apiId !== id));
 
 	try {
 		await deleteApiApi(id);
@@ -297,7 +295,6 @@ export async function deleteApiAction(id: string): Promise<ActionResult<void>> {
 		// Rollback all stores
 		apisStore.set(previousApis);
 		endpointsStore.set(previousEndpoints);
-		tagsStore.set(previousTags);
 		const message = handleApiError(err, 'delete API');
 		return { success: false, error: message };
 	}
@@ -332,10 +329,10 @@ export async function updateEndpointAction(
 ): Promise<ActionResult<ApiEndpoint>> {
 	const previousEndpoints = get(endpointsStore);
 
-	// Convert null to undefined for tagId to match ApiEndpoint type
+	// Convert null to undefined for tagName to match ApiEndpoint type
 	const normalizedUpdates = {
 		...updates,
-		tagId: updates.tagId === null ? undefined : updates.tagId
+		tagName: updates.tagName === null ? undefined : updates.tagName
 	};
 
 	// Optimistic update - cast to ApiEndpoint since we know the structure is valid
@@ -369,72 +366,6 @@ export async function deleteEndpointAction(id: string): Promise<ActionResult<voi
 	} catch (err) {
 		endpointsStore.set(previousEndpoints);
 		const message = handleApiError(err, 'delete endpoint');
-		return { success: false, error: message };
-	}
-}
-
-// ============================================================================
-// Tag Actions
-// ============================================================================
-
-/**
- * Create a new tag via API
- */
-export async function createTagAction(data: CreateTagRequest): Promise<ActionResult<EndpointTag>> {
-	try {
-		const tag = await createTagApi(data);
-		tagsStore.update(tags => [...tags, tag]);
-		return { success: true, data: tag };
-	} catch (err) {
-		const message = handleApiError(err, 'create tag');
-		return { success: false, error: message };
-	}
-}
-
-/**
- * Update an existing tag via API with optimistic update
- */
-export async function updateTagAction(
-	id: string,
-	updates: UpdateTagRequest
-): Promise<ActionResult<EndpointTag>> {
-	const previousTags = get(tagsStore);
-
-	// Optimistic update
-	tagsStore.update(tags => tags.map(t => (t.id === id ? { ...t, ...updates } : t)));
-
-	try {
-		const tag = await updateTagApi(id, updates);
-		tagsStore.update(tags => tags.map(t => (t.id === id ? tag : t)));
-		return { success: true, data: tag };
-	} catch (err) {
-		tagsStore.set(previousTags);
-		const message = handleApiError(err, 'update tag');
-		return { success: false, error: message };
-	}
-}
-
-/**
- * Delete a tag via API with optimistic update
- * Also removes tag reference from endpoints
- */
-export async function deleteTagAction(id: string): Promise<ActionResult<void>> {
-	const previousTags = get(tagsStore);
-	const previousEndpoints = get(endpointsStore);
-
-	// Optimistic delete (also unlink from endpoints)
-	tagsStore.update(tags => tags.filter(t => t.id !== id));
-	endpointsStore.update(endpoints =>
-		endpoints.map(e => (e.tagId === id ? { ...e, tagId: undefined } : e))
-	);
-
-	try {
-		await deleteTagApi(id);
-		return { success: true };
-	} catch (err) {
-		tagsStore.set(previousTags);
-		endpointsStore.set(previousEndpoints);
-		const message = handleApiError(err, 'delete tag');
 		return { success: false, error: message };
 	}
 }
@@ -533,10 +464,6 @@ export type {
 	CreateEndpointRequest,
 	UpdateEndpointRequest
 } from '$lib/api/endpoints';
-export type {
-	CreateTagRequest,
-	UpdateTagRequest
-} from '$lib/api/tags';
 export type {
 	CreateNamespaceRequest,
 	UpdateNamespaceRequest

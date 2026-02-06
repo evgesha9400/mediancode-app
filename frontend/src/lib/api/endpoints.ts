@@ -28,7 +28,7 @@ interface EndpointResponse {
 	method: string;
 	path: string;
 	description: string;
-	tagId: string | null;
+	tagName: string | null;
 	pathParams: EndpointParameterResponse[];
 	queryParamsObjectId: string | null;
 	requestBodyObjectId: string | null;
@@ -61,7 +61,7 @@ function transformEndpoint(response: EndpointResponse): ApiEndpoint {
 		method: response.method as HttpMethod,
 		path: response.path,
 		description: response.description,
-		tagId: response.tagId ?? undefined,
+		tagName: response.tagName ?? undefined,
 		pathParams: response.pathParams.map(transformParameter),
 		queryParamsObjectId: response.queryParamsObjectId ?? undefined,
 		requestBodyObjectId: response.requestBodyObjectId ?? undefined,
@@ -108,7 +108,7 @@ export interface CreateEndpointRequest {
 	method: HttpMethod;
 	path: string;
 	description?: string;
-	tagId?: string;
+	tagName?: string;
 	pathParams?: { name: string; type: string; description?: string; required?: boolean }[];
 	queryParamsObjectId?: string;
 	requestBodyObjectId?: string;
@@ -124,7 +124,7 @@ export interface UpdateEndpointRequest {
 	method?: HttpMethod;
 	path?: string;
 	description?: string;
-	tagId?: string | null;
+	tagName?: string | null;
 	pathParams?: { id?: string; name: string; type: string; description?: string; required?: boolean }[];
 	queryParamsObjectId?: string | null;
 	requestBodyObjectId?: string | null;

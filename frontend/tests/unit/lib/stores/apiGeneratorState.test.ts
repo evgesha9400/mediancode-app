@@ -3,7 +3,7 @@ import { get } from 'svelte/store';
 import { createApiGeneratorState } from '$lib/stores/apiGeneratorState.svelte';
 import {
 	apiMetadataStore,
-	tagsStore,
+	apisStore,
 	endpointsStore,
 	updateEndpoint,
 	initialApiMetadata
@@ -12,18 +12,21 @@ import { fieldsStore } from '$lib/stores/fields';
 import { initialFields } from '$lib/stores/initialData';
 import { seedIdGenerator } from '$lib/utils/ids';
 import * as toastsModule from '$lib/stores/toasts';
-import { createMockEndpoint } from '../../../shared/testUtils';
+import { createMockEndpoint, createMockApi } from '../../../shared/testUtils';
 
 // Mock the toasts store
 vi.mock('$lib/stores/toasts', () => ({
 	showToast: vi.fn()
 }));
 
+// Test API ID for the legacy API generator (deprecated)
+const LEGACY_API_ID = 'legacy-api-generator';
+
 describe('apiGeneratorState - Initialization', () => {
 	beforeEach(() => {
-		// Reset stores
+		// Reset stores - apiGeneratorState uses a legacy API ID
 		apiMetadataStore.set(initialApiMetadata);
-		tagsStore.set([]);
+		apisStore.set([createMockApi({ id: LEGACY_API_ID, tags: [] })]);
 		endpointsStore.set([]);
 		seedIdGenerator({ counter: 0, timestamp: 1000000 });
 		vi.clearAllMocks();
@@ -71,9 +74,9 @@ describe('apiGeneratorState - Metadata Operations', () => {
 	});
 });
 
-describe('apiGeneratorState - Tag Operations', () => {
+describe('apiGeneratorState - Tag Operations (Embedded in API)', () => {
 	beforeEach(() => {
-		tagsStore.set([]);
+		apisStore.set([createMockApi({ id: LEGACY_API_ID, tags: [] })]);
 		endpointsStore.set([]);
 		seedIdGenerator({ counter: 0, timestamp: 1000000 });
 		vi.clearAllMocks();
@@ -89,10 +92,10 @@ describe('apiGeneratorState - Tag Operations', () => {
 
 		state.handleCreateTag();
 
-		const tags = get(tagsStore);
-		expect(tags).toHaveLength(1);
-		expect(tags[0].name).toBe('Users');
-		expect(state.editedEndpoint?.tagId).toBe(tags[0].id);
+		const api = get(apisStore).find(a => a.id === LEGACY_API_ID);
+		expect(api?.tags).toHaveLength(1);
+		expect(api?.tags[0].name).toBe('Users');
+		expect(state.editedEndpoint?.tagName).toBe('Users');
 		expect(toastsModule.showToast).toHaveBeenCalledWith('Tag "Users" created', 'success');
 	});
 
@@ -104,12 +107,12 @@ describe('apiGeneratorState - Tag Operations', () => {
 
 		state.handleCreateTag();
 
-		const tags = get(tagsStore);
-		expect(tags).toHaveLength(0);
+		const api = get(apisStore).find(a => a.id === LEGACY_API_ID);
+		expect(api?.tags).toHaveLength(0);
 		expect(toastsModule.showToast).not.toHaveBeenCalled();
 	});
 
-	it('should select an existing tag', () => {
+	it('should select an existing tag by name', () => {
 		const state = createApiGeneratorState();
 
 		// Create a tag first
@@ -117,13 +120,10 @@ describe('apiGeneratorState - Tag Operations', () => {
 		state.tagInputValue = 'Users';
 		state.handleCreateTag();
 
-		const tags = get(tagsStore);
-		const tagId = tags[0].id;
+		// Select the tag by name
+		state.handleTagSelect('Users');
 
-		// Select the tag
-		state.handleTagSelect(tagId);
-
-		expect(state.editedEndpoint?.tagId).toBe(tagId);
+		expect(state.editedEndpoint?.tagName).toBe('Users');
 		expect(state.tagInputValue).toBe('Users');
 		expect(state.tagDropdownOpen).toBe(false);
 	});
@@ -131,12 +131,12 @@ describe('apiGeneratorState - Tag Operations', () => {
 	it('should clear tag selection', () => {
 		const state = createApiGeneratorState();
 
-		state.editedEndpoint = createMockEndpoint({ id: 'endpoint-1', path: '/test', tagId: 'some-tag' });
+		state.editedEndpoint = createMockEndpoint({ id: 'endpoint-1', path: '/test', tagName: 'some-tag' });
 		state.tagInputValue = 'Users';
 
 		state.handleTagSelect(undefined);
 
-		expect(state.editedEndpoint?.tagId).toBeUndefined();
+		expect(state.editedEndpoint?.tagName).toBeUndefined();
 		expect(state.tagInputValue).toBe('');
 	});
 
@@ -148,17 +148,18 @@ describe('apiGeneratorState - Tag Operations', () => {
 		state.tagInputValue = 'Users';
 		state.handleCreateTag();
 
-		const tags = get(tagsStore);
-		const tag = tags[0];
+		const api = get(apisStore).find(a => a.id === LEGACY_API_ID);
+		const tag = api?.tags[0];
 
 		// Click delete
-		state.handleDeleteTagClick(new Event('click'), tag);
+		state.handleDeleteTagClick(new Event('click'), tag!);
 		expect(state.tagToDelete).toEqual(tag);
 
 		// Confirm delete
 		state.confirmDeleteTag();
 
-		expect(get(tagsStore)).toHaveLength(0);
+		const updatedApi = get(apisStore).find(a => a.id === LEGACY_API_ID);
+		expect(updatedApi?.tags).toHaveLength(0);
 		expect(state.tagToDelete).toBeNull();
 		expect(toastsModule.showToast).toHaveBeenCalledWith(expect.stringContaining('deleted'), 'success');
 	});
@@ -171,18 +172,19 @@ describe('apiGeneratorState - Tag Operations', () => {
 		state.tagInputValue = 'Users';
 		state.handleCreateTag();
 
-		const tags = get(tagsStore);
-		const tag = tags[0];
+		const api = get(apisStore).find(a => a.id === LEGACY_API_ID);
+		const tag = api?.tags[0];
 
 		// Click delete
-		state.handleDeleteTagClick(new Event('click'), tag);
+		state.handleDeleteTagClick(new Event('click'), tag!);
 		expect(state.tagToDelete).toEqual(tag);
 
 		// Cancel
 		state.cancelDeleteTag();
 
 		expect(state.tagToDelete).toBeNull();
-		expect(get(tagsStore)).toHaveLength(1); // Tag still exists
+		const updatedApi = get(apisStore).find(a => a.id === LEGACY_API_ID);
+		expect(updatedApi?.tags).toHaveLength(1); // Tag still exists
 	});
 
 	it('should not resurrect deleted tag on Undo', () => {
@@ -197,8 +199,8 @@ describe('apiGeneratorState - Tag Operations', () => {
 		state.tagInputValue = 'Users';
 		state.handleCreateTag();
 
-		const tags = get(tagsStore);
-		const tag = tags[0];
+		const api = get(apisStore).find(a => a.id === LEGACY_API_ID);
+		const tag = api?.tags[0];
 
 		// Save to persist the tag assignment
 		state.handleSave();
@@ -208,22 +210,22 @@ describe('apiGeneratorState - Tag Operations', () => {
 		state.openEndpoint(savedEndpoint);
 
 		// Verify tag is assigned to both
-		expect(state.editedEndpoint?.tagId).toBe(tag.id);
-		expect(state.selectedEndpoint?.tagId).toBe(tag.id);
+		expect(state.editedEndpoint?.tagName).toBe('Users');
+		expect(state.selectedEndpoint?.tagName).toBe('Users');
 
 		// Delete the tag
-		state.handleDeleteTagClick(new Event('click'), tag);
+		state.handleDeleteTagClick(new Event('click'), tag!);
 		state.confirmDeleteTag();
 
 		// Verify tag is removed from both edited and selected endpoints
-		expect(state.editedEndpoint?.tagId).toBeUndefined();
-		expect(state.selectedEndpoint?.tagId).toBeUndefined();
+		expect(state.editedEndpoint?.tagName).toBeUndefined();
+		expect(state.selectedEndpoint?.tagName).toBeUndefined();
 
 		// Press Undo - should NOT resurrect the deleted tag
 		state.handleUndo();
 
 		// editedEndpoint should still have no tag (selectedEndpoint was also cleared)
-		expect(state.editedEndpoint?.tagId).toBeUndefined();
+		expect(state.editedEndpoint?.tagName).toBeUndefined();
 	});
 
 	it('should count endpoints using tag', () => {
@@ -237,6 +239,7 @@ describe('apiGeneratorState - Tag Operations', () => {
 
 describe('apiGeneratorState - Endpoint Operations', () => {
 	beforeEach(() => {
+		apisStore.set([createMockApi({ id: LEGACY_API_ID, tags: [] })]);
 		endpointsStore.set([]);
 		seedIdGenerator({ counter: 0, timestamp: 1000000 });
 		vi.clearAllMocks();
@@ -307,6 +310,7 @@ describe('apiGeneratorState - Endpoint Operations', () => {
 
 describe('apiGeneratorState - Drawer Operations', () => {
 	beforeEach(() => {
+		apisStore.set([createMockApi({ id: LEGACY_API_ID, tags: [] })]);
 		endpointsStore.set([]);
 		seedIdGenerator({ counter: 0, timestamp: 1000000 });
 		vi.clearAllMocks();
@@ -412,6 +416,7 @@ describe('apiGeneratorState - Drawer Operations', () => {
 
 describe('apiGeneratorState - Path and Parameter Operations', () => {
 	beforeEach(() => {
+		apisStore.set([createMockApi({ id: LEGACY_API_ID, tags: [] })]);
 		endpointsStore.set([]);
 		seedIdGenerator({ counter: 0, timestamp: 1000000 });
 		vi.clearAllMocks();
@@ -618,7 +623,7 @@ describe('apiGeneratorState - Code Generation', () => {
 
 describe('apiGeneratorState - Derived State', () => {
 	beforeEach(() => {
-		tagsStore.set([]);
+		apisStore.set([createMockApi({ id: LEGACY_API_ID, tags: [] })]);
 		vi.clearAllMocks();
 	});
 
@@ -634,14 +639,15 @@ describe('apiGeneratorState - Derived State', () => {
 		state.tagInputValue = 'users'; // Case-insensitive
 
 		// In component, exactTagMatch would be derived - we verify the logic
-		const tags = get(tagsStore);
-		const match = tags.find(t => t.name.toLowerCase() === state.tagInputValue.toLowerCase().trim());
+		const api = get(apisStore).find(a => a.id === LEGACY_API_ID);
+		const match = api?.tags.find(t => t.name.toLowerCase() === state.tagInputValue.toLowerCase().trim());
 		expect(match).toBeDefined();
 	});
 });
 
 describe('apiGeneratorState - Body Field Selection Operations', () => {
 	beforeEach(() => {
+		apisStore.set([createMockApi({ id: LEGACY_API_ID, tags: [] })]);
 		endpointsStore.set([]);
 		fieldsStore.set(initialFields);
 		seedIdGenerator({ counter: 0, timestamp: 1000000 });
@@ -773,6 +779,7 @@ describe('apiGeneratorState - Body Field Selection Operations', () => {
 
 describe('apiGeneratorState - Response Shape Configuration', () => {
 	beforeEach(() => {
+		apisStore.set([createMockApi({ id: LEGACY_API_ID, tags: [] })]);
 		endpointsStore.set([]);
 		fieldsStore.set(initialFields);
 		seedIdGenerator({ counter: 0, timestamp: 1000000 });

@@ -11,19 +11,17 @@
  */
 
 import { get } from 'svelte/store';
-import type { Api, ApiEndpoint, EndpointTag, EndpointParameter, ResponseShape } from '$lib/types';
+import type { Api, ApiTag, ApiEndpoint, EndpointParameter, ResponseShape } from '$lib/types';
 import {
 	apisStore,
-	tagsStore,
 	endpointsStore,
 	addApi,
 	updateApi,
 	getApiById,
-	getTagById,
-	addTag,
+	getTagByName,
 	addEndpoint,
-	getEndpointCountByTag,
-	deleteTagWithCleanup,
+	getEndpointCountByTagName,
+	deleteTagFromApi,
 	updateEndpoint,
 	deleteEndpoint,
 	reconcilePathParams,
@@ -62,7 +60,7 @@ export interface ApiDetailState {
 	editedApi: Api | null;
 
 	// Reactive filtered data for this API
-	readonly tags: EndpointTag[];
+	readonly tags: ApiTag[];
 	readonly endpoints: ApiEndpoint[];
 
 	// Drawer state
@@ -73,7 +71,7 @@ export interface ApiDetailState {
 	// Tag combobox state
 	tagInputValue: string;
 	tagDropdownOpen: boolean;
-	tagToDelete: EndpointTag | null;
+	tagToDelete: ApiTag | null;
 
 	// Endpoint deletion confirmation state
 	showEndpointDeleteConfirm: boolean;
@@ -85,7 +83,7 @@ export interface ApiDetailState {
 	readonly hasApiChanges: boolean;
 	readonly hasEndpointChanges: boolean;
 	readonly hasAnyChanges: boolean;
-	readonly exactTagMatch: EndpointTag | undefined;
+	readonly exactTagMatch: ApiTag | undefined;
 
 	// API metadata actions
 	handleApiUpdate: (updates: Partial<Api>) => void;
@@ -102,9 +100,9 @@ export interface ApiDetailState {
 	cancelClose: () => void;
 
 	// Tag actions
-	handleTagSelect: (tagId: string | undefined) => void;
+	handleTagSelect: (tagName: string | undefined) => void;
 	handleCreateTag: () => void;
-	handleDeleteTagClick: (e: Event, tag: EndpointTag) => void;
+	handleDeleteTagClick: (e: Event, tag: ApiTag) => void;
 	confirmDeleteTag: () => void;
 	cancelDeleteTag: () => void;
 
@@ -145,7 +143,7 @@ export interface ApiDetailState {
 	handleGenerateCode: () => void;
 
 	// Helper
-	getEndpointsUsingTag: (tagId: string) => number;
+	getEndpointsUsingTag: (tagName: string) => number;
 }
 
 /**
@@ -171,6 +169,7 @@ function createDefaultApi(id: string, namespaceId: string): Api {
 		description: '',
 		baseUrl: '/api/v1',
 		serverUrl: '',
+		tags: [],
 		createdAt: now,
 		updatedAt: now
 	};
@@ -207,11 +206,9 @@ export function createApiDetailState(config: ApiDetailStateConfig): ApiDetailSta
 
 	// Subscribe to stores - these will update reactively
 	let allApis = $state(get(apisStore));
-	let allTags = $state(get(tagsStore));
 	let allEndpoints = $state(get(endpointsStore));
 
 	// Draft state for new APIs (local only, not in stores)
-	let draftTags = $state<EndpointTag[]>([]);
 	let draftEndpoints = $state<ApiEndpoint[]>([]);
 
 	// Track if a new API has been saved (transitions from draft to saved)
@@ -235,13 +232,11 @@ export function createApiDetailState(config: ApiDetailStateConfig): ApiDetailSta
 		}
 	});
 
-	// Derived filtered state for this specific API
+	// Derived tags from the edited API (embedded in API, not separate store)
+	let tags = $derived(editedApi?.tags ?? []);
+
+	// Derived filtered state for endpoints
 	// For new APIs that haven't been saved, use draft state; otherwise use store
-	let tags = $derived(
-		(isNewApi && !hasBeenSaved)
-			? draftTags
-			: allTags.filter(t => t.apiId === actualApiId)
-	);
 	let endpoints = $derived(
 		(isNewApi && !hasBeenSaved)
 			? draftEndpoints
@@ -250,7 +245,6 @@ export function createApiDetailState(config: ApiDetailStateConfig): ApiDetailSta
 
 	// Subscribe to store updates
 	apisStore.subscribe(value => allApis = value);
-	tagsStore.subscribe(value => allTags = value);
 	endpointsStore.subscribe(value => allEndpoints = value);
 
 	// Drawer state
@@ -261,7 +255,7 @@ export function createApiDetailState(config: ApiDetailStateConfig): ApiDetailSta
 	// Tag combobox state
 	let tagInputValue = $state('');
 	let tagDropdownOpen = $state(false);
-	let tagToDelete = $state<EndpointTag | null>(null);
+	let tagToDelete = $state<ApiTag | null>(null);
 
 	// Endpoint deletion confirmation state
 	let showEndpointDeleteConfirm = $state(false);
@@ -292,15 +286,12 @@ export function createApiDetailState(config: ApiDetailStateConfig): ApiDetailSta
 
 	// Derived: Check if input matches an existing tag exactly
 	let exactTagMatch = $derived(
-		tags.find((t: EndpointTag) => t.name.toLowerCase() === tagInputValue.toLowerCase().trim())
+		tags.find((t: ApiTag) => t.name.toLowerCase() === tagInputValue.toLowerCase().trim())
 	);
 
-	// Helper to find tag by ID (checks both draft and store)
-	function findTagById(tagId: string): EndpointTag | undefined {
-		if (isNewApi) {
-			return draftTags.find(t => t.id === tagId);
-		}
-		return getTagById(tagId);
+	// Helper to find tag by name (from editedApi's embedded tags)
+	function findTagByName(tagName: string): ApiTag | undefined {
+		return editedApi?.tags?.find(t => t.name === tagName);
 	}
 
 	// ============================================================================
@@ -316,13 +307,8 @@ export function createApiDetailState(config: ApiDetailStateConfig): ApiDetailSta
 		if (!editedApi) return false;
 
 		if (isNewApi && !hasBeenSaved) {
-			// Commit new API and all draft data to stores
+			// Commit new API to store
 			addApi(editedApi);
-
-			// Add all draft tags to store
-			for (const tag of draftTags) {
-				addTag(tag);
-			}
 
 			// Add all draft endpoints to store
 			for (const endpoint of draftEndpoints) {
@@ -333,7 +319,6 @@ export function createApiDetailState(config: ApiDetailStateConfig): ApiDetailSta
 			hasBeenSaved = true;
 
 			// Clear draft arrays (data is now in stores)
-			draftTags = [];
 			draftEndpoints = [];
 
 			showToast(MESSAGES.API_CREATED, 'success');
@@ -356,7 +341,6 @@ export function createApiDetailState(config: ApiDetailStateConfig): ApiDetailSta
 		if (isNewApi) {
 			// Reset to default for new APIs
 			editedApi = createDefaultApi(actualApiId, namespaceId);
-			draftTags = [];
 			draftEndpoints = [];
 		} else if (storedApi) {
 			editedApi = deepClone(storedApi);
@@ -403,78 +387,69 @@ export function createApiDetailState(config: ApiDetailStateConfig): ApiDetailSta
 	// Tag Operations
 	// ============================================================================
 
-	function getEndpointsUsingTag(tagId: string): number {
-		if (isNewApi) {
-			return draftEndpoints.filter(e => e.tagId === tagId).length;
+	function getEndpointsUsingTag(tagName: string): number {
+		if (isNewApi && !hasBeenSaved) {
+			return draftEndpoints.filter(e => e.tagName === tagName).length;
 		}
-		return getEndpointCountByTag(tagId);
+		return getEndpointCountByTagName(actualApiId, tagName);
 	}
 
-	function handleTagSelect(tagId: string | undefined): void {
+	function handleTagSelect(tagName: string | undefined): void {
 		if (!editedEndpoint) return;
 
-		editedEndpoint = { ...editedEndpoint, tagId };
-		tagInputValue = tagId ? (findTagById(tagId)?.name || '') : '';
+		editedEndpoint = { ...editedEndpoint, tagName };
+		tagInputValue = tagName ?? '';
 		tagDropdownOpen = false;
 	}
 
 	function handleCreateTag(): void {
-		if (!editedEndpoint || !tagInputValue.trim() || exactTagMatch) return;
+		if (!editedEndpoint || !editedApi || !tagInputValue.trim() || exactTagMatch) return;
 
-		const newTag: EndpointTag = {
-			id: generateId('tag'),
-			namespaceId,
-			apiId: actualApiId,
+		const newTag: ApiTag = {
 			name: tagInputValue.trim(),
 			description: ''
 		};
 
-		if (isNewApi) {
-			// Add to draft state
-			draftTags = [...draftTags, newTag];
-		} else {
-			// Add to store immediately
-			addTag(newTag);
-		}
+		// Add tag to editedApi's embedded tags array
+		const updatedTags = [...(editedApi.tags || []), newTag];
+		editedApi = { ...editedApi, tags: updatedTags };
 
-		editedEndpoint = { ...editedEndpoint, tagId: newTag.id };
+		// Set the new tag on the endpoint
+		editedEndpoint = { ...editedEndpoint, tagName: newTag.name };
 		tagDropdownOpen = false;
 		showToast(MESSAGES.TAG_CREATED(newTag.name), 'success');
 	}
 
-	function handleDeleteTagClick(e: Event, tag: EndpointTag): void {
+	function handleDeleteTagClick(e: Event, tag: ApiTag): void {
 		e.stopPropagation();
 		tagToDelete = tag;
 	}
 
 	function confirmDeleteTag(): void {
-		if (!tagToDelete) return;
+		if (!tagToDelete || !editedApi) return;
 
-		if (isNewApi) {
-			// Remove from draft state
-			draftTags = draftTags.filter(t => t.id !== tagToDelete!.id);
+		const tagName = tagToDelete.name;
 
-			// Clear tag from any endpoints using it
+		// Remove tag from editedApi's embedded tags
+		const updatedTags = editedApi.tags?.filter(t => t.name !== tagName) ?? [];
+		editedApi = { ...editedApi, tags: updatedTags };
+
+		// Clear tag from any endpoints using it (in draft state)
+		if (isNewApi && !hasBeenSaved) {
 			draftEndpoints = draftEndpoints.map(e =>
-				e.tagId === tagToDelete!.id ? { ...e, tagId: undefined } : e
+				e.tagName === tagName ? { ...e, tagName: undefined } : e
 			);
-
-			showToast(`Tag "${tagToDelete.name}" deleted`, 'success');
-		} else {
-			// Delete from store
-			const result = deleteTagWithCleanup(tagToDelete.id);
-			if (result.success && result.error) {
-				showToast(result.error, 'success');
-			}
 		}
+
+		showToast(`Tag "${tagName}" deleted`, 'success');
 
 		// If current endpoint uses this tag, clear it
-		if (editedEndpoint?.tagId === tagToDelete.id) {
-			editedEndpoint = { ...editedEndpoint, tagId: undefined };
+		if (editedEndpoint?.tagName === tagName) {
+			editedEndpoint = { ...editedEndpoint, tagName: undefined };
 			tagInputValue = '';
 		}
-		if (selectedEndpoint?.tagId === tagToDelete.id) {
-			selectedEndpoint = { ...selectedEndpoint, tagId: undefined };
+		if (selectedEndpoint?.tagName === tagName) {
+			selectedEndpoint = { ...selectedEndpoint, tagName: undefined };
 		}
 
 		tagToDelete = null;
@@ -491,7 +466,7 @@ export function createApiDetailState(config: ApiDetailStateConfig): ApiDetailSta
 	function handleAddEndpoint(): void {
 		const newEndpoint = createDefaultEndpointLocal(namespaceId, actualApiId);
 
-		if (isNewApi) {
+		if (isNewApi && !hasBeenSaved) {
 			// Add to draft state
 			draftEndpoints = [...draftEndpoints, newEndpoint];
 		} else {
@@ -511,7 +486,7 @@ export function createApiDetailState(config: ApiDetailStateConfig): ApiDetailSta
 
 		const endpointId = editedEndpoint.id;
 
-		if (isNewApi) {
+		if (isNewApi && !hasBeenSaved) {
 			// Remove from draft state
 			draftEndpoints = draftEndpoints.filter(e => e.id !== endpointId);
 			showToast(MESSAGES.ENDPOINT_DELETED, 'success');
@@ -537,7 +512,7 @@ export function createApiDetailState(config: ApiDetailStateConfig): ApiDetailSta
 
 	function handleDuplicateEndpoint(endpointId: string): void {
 		// Find the endpoint to duplicate
-		const original = isNewApi
+		const original = isNewApi && !hasBeenSaved
 			? draftEndpoints.find(e => e.id === endpointId)
 			: allEndpoints.find(e => e.id === endpointId);
 
@@ -557,7 +532,7 @@ export function createApiDetailState(config: ApiDetailStateConfig): ApiDetailSta
 			}))
 		};
 
-		if (isNewApi) {
+		if (isNewApi && !hasBeenSaved) {
 			draftEndpoints = [...draftEndpoints, duplicated];
 		} else {
 			addEndpoint(duplicated);
@@ -577,7 +552,7 @@ export function createApiDetailState(config: ApiDetailStateConfig): ApiDetailSta
 		editedEndpoint = deepClone(normalized);
 		drawerOpen = true;
 
-		tagInputValue = normalized.tagId ? (findTagById(normalized.tagId)?.name || '') : '';
+		tagInputValue = normalized.tagName ?? '';
 		tagDropdownOpen = false;
 	}
 
@@ -594,7 +569,7 @@ export function createApiDetailState(config: ApiDetailStateConfig): ApiDetailSta
 	function handleSaveEndpoint(): boolean {
 		if (!editedEndpoint || !selectedEndpoint) return false;
 
-		if (isNewApi) {
+		if (isNewApi && !hasBeenSaved) {
 			// Update in draft state
 			draftEndpoints = draftEndpoints.map(e =>
 				e.id === editedEndpoint!.id ? editedEndpoint! : e
@@ -615,9 +590,7 @@ export function createApiDetailState(config: ApiDetailStateConfig): ApiDetailSta
 
 		editedEndpoint = deepClone(selectedEndpoint);
 
-		tagInputValue = editedEndpoint?.tagId
-			? (findTagById(editedEndpoint.tagId)?.name || '')
-			: '';
+		tagInputValue = editedEndpoint?.tagName ?? '';
 	}
 
 	function handleCancelEndpoint(): void {
@@ -788,7 +761,7 @@ export function createApiDetailState(config: ApiDetailStateConfig): ApiDetailSta
 		set tagDropdownOpen(v: boolean) { tagDropdownOpen = v; },
 
 		get tagToDelete() { return tagToDelete; },
-		set tagToDelete(v: EndpointTag | null) { tagToDelete = v; },
+		set tagToDelete(v: ApiTag | null) { tagToDelete = v; },
 
 		get showEndpointDeleteConfirm() { return showEndpointDeleteConfirm; },
 		set showEndpointDeleteConfirm(v: boolean) { showEndpointDeleteConfirm = v; },

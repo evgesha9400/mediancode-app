@@ -2,19 +2,17 @@ import { describe, it, expect, beforeEach } from 'vitest';
 import { get } from 'svelte/store';
 import {
 	apiMetadataStore,
-	tagsStore,
+	apisStore,
 	endpointsStore,
 	updateApiMetadata,
-	getTagById,
+	getApiById,
+	getTagByName,
 	getEndpointById,
-	getEndpointCountByTag,
+	getEndpointCountByTagName,
 	getTotalEndpointCount,
-	getTotalTagCount,
-	createTag,
-	addTag,
-	updateTag,
-	deleteTagWithCleanup,
-	deleteTag,
+	addTagToApi,
+	updateTagInApi,
+	deleteTagFromApi,
 	createDefaultEndpoint,
 	addEndpoint,
 	updateEndpoint,
@@ -27,8 +25,8 @@ import {
 } from '$lib/stores/apis';
 import { seedIdGenerator } from '$lib/utils/ids';
 import { GLOBAL_NAMESPACE_ID } from '$lib/stores/initialData';
-import type { EndpointTag } from '$lib/types';
-import { createMockEndpoint, createMockTag } from '../../../shared/testUtils';
+import type { ApiTag } from '$lib/types';
+import { createMockEndpoint, createMockApi } from '../../../shared/testUtils';
 
 // Test API ID for all endpoint and tag operations
 const TEST_API_ID = 'api-test-1';
@@ -49,115 +47,117 @@ describe('apis store - Metadata Operations', () => {
 	});
 });
 
-describe('apis store - Tag Operations', () => {
+describe('apis store - Tag Operations (Embedded in API)', () => {
 	beforeEach(() => {
 		// Reset stores and ID generator
-		tagsStore.set([]);
+		apisStore.set([createMockApi({ id: TEST_API_ID, tags: [] })]);
 		endpointsStore.set([]);
 		seedIdGenerator({ counter: 0, timestamp: 1000000 });
 	});
 
-	it('should create a new tag with uniqueness guard', () => {
-		const tag = createTag('Users', GLOBAL_NAMESPACE_ID, TEST_API_ID, 'User management');
+	it('should add a new tag to API with uniqueness guard', () => {
+		const tag = addTagToApi(TEST_API_ID, 'Users', 'User management');
 
 		expect(tag).toBeDefined();
-		expect(tag?.id).toBe('tag-1000000-0');
 		expect(tag?.name).toBe('Users');
 		expect(tag?.description).toBe('User management');
 
-		const tags = get(tagsStore);
-		expect(tags).toHaveLength(1);
+		const api = get(apisStore).find(a => a.id === TEST_API_ID);
+		expect(api?.tags).toHaveLength(1);
 	});
 
 	it('should prevent duplicate tag creation (case-insensitive)', () => {
-		createTag('Users', GLOBAL_NAMESPACE_ID, TEST_API_ID);
-		const duplicate = createTag('users', GLOBAL_NAMESPACE_ID, TEST_API_ID);
+		addTagToApi(TEST_API_ID, 'Users');
+		const duplicate = addTagToApi(TEST_API_ID, 'users');
 
 		expect(duplicate).toBeUndefined();
 
-		const tags = get(tagsStore);
-		expect(tags).toHaveLength(1);
+		const api = get(apisStore).find(a => a.id === TEST_API_ID);
+		expect(api?.tags).toHaveLength(1);
 	});
 
 	it('should trim tag names', () => {
-		const tag = createTag('  Users  ', GLOBAL_NAMESPACE_ID, TEST_API_ID);
+		const tag = addTagToApi(TEST_API_ID, '  Users  ');
 
 		expect(tag?.name).toBe('Users');
 	});
 
-	it('should get tag by ID', () => {
-		const created = createTag('Users', GLOBAL_NAMESPACE_ID, TEST_API_ID);
-		const found = getTagById(created!.id);
+	it('should get tag by name', () => {
+		addTagToApi(TEST_API_ID, 'Users', 'User management');
+		const found = getTagByName(TEST_API_ID, 'Users');
 
-		expect(found).toEqual(created);
+		expect(found).toBeDefined();
+		expect(found?.name).toBe('Users');
 	});
 
 	it('should return undefined for non-existent tag', () => {
-		const found = getTagById('non-existent');
+		const found = getTagByName(TEST_API_ID, 'non-existent');
 
 		expect(found).toBeUndefined();
 	});
 
 	it('should update a tag', () => {
-		const tag = createTag('Users', GLOBAL_NAMESPACE_ID, TEST_API_ID);
-		updateTag(tag!.id, { description: 'Updated description' });
+		addTagToApi(TEST_API_ID, 'Users');
+		updateTagInApi(TEST_API_ID, 'Users', { description: 'Updated description' });
 
-		const updated = getTagById(tag!.id);
+		const updated = getTagByName(TEST_API_ID, 'Users');
 		expect(updated?.description).toBe('Updated description');
 	});
 
 	it('should delete tag and detach from endpoints', () => {
-		const tag = createTag('Users', GLOBAL_NAMESPACE_ID, TEST_API_ID)!;
+		addTagToApi(TEST_API_ID, 'Users');
 
-		// Create endpoints using this tag
+		// Create endpoints using this tag (by name)
 		const endpoint1 = createDefaultEndpoint(GLOBAL_NAMESPACE_ID, TEST_API_ID);
-		updateEndpoint(endpoint1.id, { tagId: tag.id });
+		updateEndpoint(endpoint1.id, { tagName: 'Users' });
 
 		const endpoint2 = createDefaultEndpoint(GLOBAL_NAMESPACE_ID, TEST_API_ID);
-		updateEndpoint(endpoint2.id, { tagId: tag.id });
+		updateEndpoint(endpoint2.id, { tagName: 'Users' });
 
-		const result = deleteTagWithCleanup(tag.id);
+		const result = deleteTagFromApi(TEST_API_ID, 'Users');
 
 		expect(result.success).toBe(true);
 		expect(result.error).toContain('deleted and removed from 2 endpoints');
 
 		// Tag should be deleted
-		expect(getTagById(tag.id)).toBeUndefined();
+		expect(getTagByName(TEST_API_ID, 'Users')).toBeUndefined();
 
-		// Endpoints should have tagId cleared
-		expect(getEndpointById(endpoint1.id)?.tagId).toBeUndefined();
-		expect(getEndpointById(endpoint2.id)?.tagId).toBeUndefined();
+		// Endpoints should have tagName cleared
+		expect(getEndpointById(endpoint1.id)?.tagName).toBeUndefined();
+		expect(getEndpointById(endpoint2.id)?.tagName).toBeUndefined();
 	});
 
 	it('should handle deleting tag with no endpoints', () => {
-		const tag = createTag('Users', GLOBAL_NAMESPACE_ID, TEST_API_ID)!;
-		const result = deleteTagWithCleanup(tag.id);
+		addTagToApi(TEST_API_ID, 'Users');
+		const result = deleteTagFromApi(TEST_API_ID, 'Users');
 
 		expect(result.success).toBe(true);
 		expect(result.error).toBe('Tag "Users" deleted');
 	});
 
 	it('should handle deleting non-existent tag', () => {
-		const result = deleteTagWithCleanup('non-existent');
+		const result = deleteTagFromApi(TEST_API_ID, 'non-existent');
 
 		expect(result.success).toBe(false);
 		expect(result.error).toContain('not found');
 	});
 
-	it('should count total tags', () => {
-		expect(getTotalTagCount()).toBe(0);
+	it('should count tags in API', () => {
+		const api = get(apisStore).find(a => a.id === TEST_API_ID);
+		expect(api?.tags.length).toBe(0);
 
-		createTag('Users', GLOBAL_NAMESPACE_ID, TEST_API_ID);
-		createTag('Posts', GLOBAL_NAMESPACE_ID, TEST_API_ID);
+		addTagToApi(TEST_API_ID, 'Users');
+		addTagToApi(TEST_API_ID, 'Posts');
 
-		expect(getTotalTagCount()).toBe(2);
+		const updatedApi = get(apisStore).find(a => a.id === TEST_API_ID);
+		expect(updatedApi?.tags.length).toBe(2);
 	});
 });
 
 describe('apis store - Endpoint Operations', () => {
 	beforeEach(() => {
+		apisStore.set([createMockApi({ id: TEST_API_ID, tags: [] })]);
 		endpointsStore.set([]);
-		tagsStore.set([]);
 		seedIdGenerator({ counter: 0, timestamp: 1000000 });
 	});
 
@@ -181,20 +181,20 @@ describe('apis store - Endpoint Operations', () => {
 		expect(found).toEqual(created);
 	});
 
-	it('should count endpoints by tag', () => {
-		const tag = createTag('Users', GLOBAL_NAMESPACE_ID, TEST_API_ID)!;
+	it('should count endpoints by tag name', () => {
+		addTagToApi(TEST_API_ID, 'Users');
 
-		expect(getEndpointCountByTag(tag.id)).toBe(0);
+		expect(getEndpointCountByTagName(TEST_API_ID, 'Users')).toBe(0);
 
 		const endpoint1 = createDefaultEndpoint(GLOBAL_NAMESPACE_ID, TEST_API_ID);
-		updateEndpoint(endpoint1.id, { tagId: tag.id });
+		updateEndpoint(endpoint1.id, { tagName: 'Users' });
 
-		expect(getEndpointCountByTag(tag.id)).toBe(1);
+		expect(getEndpointCountByTagName(TEST_API_ID, 'Users')).toBe(1);
 
 		const endpoint2 = createDefaultEndpoint(GLOBAL_NAMESPACE_ID, TEST_API_ID);
-		updateEndpoint(endpoint2.id, { tagId: tag.id });
+		updateEndpoint(endpoint2.id, { tagName: 'Users' });
 
-		expect(getEndpointCountByTag(tag.id)).toBe(2);
+		expect(getEndpointCountByTagName(TEST_API_ID, 'Users')).toBe(2);
 	});
 
 	it('should update an endpoint', () => {
@@ -254,6 +254,7 @@ describe('apis store - Endpoint Operations', () => {
 
 describe('apis store - Path Parameter Operations', () => {
 	beforeEach(() => {
+		apisStore.set([createMockApi({ id: TEST_API_ID, tags: [] })]);
 		endpointsStore.set([]);
 		seedIdGenerator({ counter: 0, timestamp: 1000000 });
 	});
@@ -347,35 +348,8 @@ describe('apis store - Path Parameter Operations', () => {
 
 describe('apis store - Legacy Functions', () => {
 	beforeEach(() => {
-		tagsStore.set([]);
+		apisStore.set([createMockApi({ id: TEST_API_ID, tags: [] })]);
 		endpointsStore.set([]);
-	});
-
-	it('should support legacy addTag function', () => {
-		const tag = createMockTag({
-			id: 'custom-id',
-			name: 'Custom',
-			description: 'Test'
-		});
-
-		addTag(tag);
-
-		const tags = get(tagsStore);
-		expect(tags).toHaveLength(1);
-		expect(tags[0]).toEqual(tag);
-	});
-
-	it('should support legacy deleteTag function', () => {
-		const tag = createMockTag({
-			id: 'test-id',
-			name: 'Test',
-			description: ''
-		});
-
-		addTag(tag);
-		deleteTag(tag.id);
-
-		expect(getTagById(tag.id)).toBeUndefined();
 	});
 
 	it('should support legacy addEndpoint function', () => {
@@ -384,7 +358,7 @@ describe('apis store - Legacy Functions', () => {
 			method: 'POST',
 			path: '/test',
 			description: 'Test endpoint',
-			tagId: undefined
+			tagName: undefined
 		});
 
 		addEndpoint(endpoint);

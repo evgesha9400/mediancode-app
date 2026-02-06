@@ -25,6 +25,9 @@ export * from './layout';
 // Namespace components
 export * from './namespace';
 
+// Clerk wrapper components
+export * from './clerk';
+
 // API Generator components
 export * from './api-generator';
 

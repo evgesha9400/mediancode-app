@@ -12,19 +12,18 @@
  */
 
 import { get } from 'svelte/store';
-import type { ApiMetadata, ApiEndpoint, EndpointTag, EndpointParameter, ResponseShape } from '$lib/types';
+import type { ApiMetadata, ApiEndpoint, ApiTag, EndpointParameter, ResponseShape } from '$lib/types';
 import {
 	apiMetadataStore,
 	apisStore,
-	tagsStore,
 	endpointsStore,
 	updateApiMetadata,
 	addEndpoint,
-	getTagById,
+	getTagByName,
 	getEndpointById,
-	getEndpointCountByTag,
-	createTag,
-	deleteTagWithCleanup,
+	getEndpointCountByTagName,
+	addTagToApi,
+	deleteTagFromApi,
 	createDefaultEndpoint,
 	updateEndpoint,
 	duplicateEndpoint,
@@ -61,7 +60,7 @@ const MESSAGES = {
 export interface ApiGeneratorState {
 	// Reactive store subscriptions
 	readonly metadata: ApiMetadata;
-	readonly tags: EndpointTag[];
+	readonly tags: ApiTag[];
 	readonly endpoints: ApiEndpoint[];
 
 	// Drawer state
@@ -72,22 +71,22 @@ export interface ApiGeneratorState {
 	// Tag combobox state
 	tagInputValue: string;
 	tagDropdownOpen: boolean;
-	tagToDelete: EndpointTag | null;
+	tagToDelete: ApiTag | null;
 
 	// Endpoint deletion confirmation state
 	showEndpointDeleteConfirm: boolean;
 
 	// Derived state
 	readonly hasChanges: boolean;
-	readonly exactTagMatch: EndpointTag | undefined;
+	readonly exactTagMatch: ApiTag | undefined;
 
 	// Metadata actions
 	handleMetadataUpdate: (updates: Partial<ApiMetadata>) => void;
 
 	// Tag actions
-	handleTagSelect: (tagId: string | undefined) => void;
+	handleTagSelect: (tagName: string | undefined) => void;
 	handleCreateTag: () => void;
-	handleDeleteTagClick: (e: Event, tag: EndpointTag) => void;
+	handleDeleteTagClick: (e: Event, tag: ApiTag) => void;
 	confirmDeleteTag: () => void;
 	cancelDeleteTag: () => void;
 
@@ -128,7 +127,7 @@ export interface ApiGeneratorState {
 	handleGenerateCode: () => void;
 
 	// Helper
-	getEndpointsUsingTag: (tagId: string) => number;
+	getEndpointsUsingTag: (tagName: string) => number;
 }
 
 /**
@@ -138,17 +137,17 @@ export function createApiGeneratorState(): ApiGeneratorState {
 	// Subscribe to stores - these will update reactively
 	// We use direct store subscriptions instead of $effect for testability
 	let metadata = $state(get(apiMetadataStore));
-	let allTags = $state(get(tagsStore));
+	let allApis = $state(get(apisStore));
 	let allEndpoints = $state(get(endpointsStore));
 	let currentNamespaceId = $state(get(activeNamespaceId));
 
-	// Derived filtered state based on active namespace
-	let tags = $derived(allTags.filter(t => t.namespaceId === currentNamespaceId));
+	// Get tags from the legacy API (or empty array if it doesn't exist)
+	let tags = $derived(allApis.find(a => a.id === LEGACY_API_ID)?.tags ?? []);
 	let endpoints = $derived(allEndpoints.filter(e => e.namespaceId === currentNamespaceId));
 
 	// Subscribe to store updates and update local state
 	apiMetadataStore.subscribe(value => metadata = value);
-	tagsStore.subscribe(value => allTags = value);
+	apisStore.subscribe(value => allApis = value);
 	endpointsStore.subscribe(value => allEndpoints = value);
 	activeNamespaceId.subscribe(value => currentNamespaceId = value);
 
@@ -160,7 +159,7 @@ export function createApiGeneratorState(): ApiGeneratorState {
 	// Tag combobox state
 	let tagInputValue = $state('');
 	let tagDropdownOpen = $state(false);
-	let tagToDelete = $state<EndpointTag | null>(null);
+	let tagToDelete = $state<ApiTag | null>(null);
 
 	// Endpoint deletion confirmation state
 	let showEndpointDeleteConfirm = $state(false);
@@ -174,7 +173,7 @@ export function createApiGeneratorState(): ApiGeneratorState {
 
 	// Derived: Check if input matches an existing tag exactly
 	let exactTagMatch = $derived(
-		tags.find((t: EndpointTag) => t.name.toLowerCase() === tagInputValue.toLowerCase().trim())
+		tags.find((t: ApiTag) => t.name.toLowerCase() === tagInputValue.toLowerCase().trim())
 	);
 
 	// ============================================================================
@@ -189,34 +188,34 @@ export function createApiGeneratorState(): ApiGeneratorState {
 	// Tag Operations
 	// ============================================================================
 
-	function getEndpointsUsingTag(tagId: string): number {
-		return getEndpointCountByTag(tagId);
+	function getEndpointsUsingTag(tagName: string): number {
+		return getEndpointCountByTagName(LEGACY_API_ID, tagName);
 	}
 
-	function handleTagSelect(tagId: string | undefined): void {
+	function handleTagSelect(tagName: string | undefined): void {
 		if (!editedEndpoint) return;
 
-		editedEndpoint = { ...editedEndpoint, tagId };
-		tagInputValue = tagId ? (getTagById(tagId)?.name || '') : '';
+		editedEndpoint = { ...editedEndpoint, tagName };
+		tagInputValue = tagName ?? '';
 		tagDropdownOpen = false;
 	}
 
 	function handleCreateTag(): void {
 		if (!editedEndpoint || !tagInputValue.trim() || exactTagMatch) return;
 
-		const newTag = createTag(tagInputValue.trim(), currentNamespaceId, LEGACY_API_ID);
+		const newTag = addTagToApi(LEGACY_API_ID, tagInputValue.trim());
 
 		if (!newTag) {
 			showToast('Tag already exists', 'error');
 			return;
 		}
 
-		editedEndpoint = { ...editedEndpoint, tagId: newTag.id };
+		editedEndpoint = { ...editedEndpoint, tagName: newTag.name };
 		tagDropdownOpen = false;
 		showToast(MESSAGES.TAG_CREATED(newTag.name), 'success');
 	}
 
-	function handleDeleteTagClick(e: Event, tag: EndpointTag): void {
+	function handleDeleteTagClick(e: Event, tag: ApiTag): void {
 		e.stopPropagation();
 		tagToDelete = tag;
 	}
@@ -224,16 +223,17 @@ export function createApiGeneratorState(): ApiGeneratorState {
 	function confirmDeleteTag(): void {
 		if (!tagToDelete) return;
 
-		const result = deleteTagWithCleanup(tagToDelete.id);
+		const tagName = tagToDelete.name;
+		const result = deleteTagFromApi(LEGACY_API_ID, tagName);
 
 		// If current endpoint uses this tag, clear it from both edited and selected
 		// to prevent Undo from resurrecting the deleted tag reference
-		if (editedEndpoint?.tagId === tagToDelete.id) {
-			editedEndpoint = { ...editedEndpoint, tagId: undefined };
+		if (editedEndpoint?.tagName === tagName) {
+			editedEndpoint = { ...editedEndpoint, tagName: undefined };
 			tagInputValue = '';
 		}
-		if (selectedEndpoint?.tagId === tagToDelete.id) {
-			selectedEndpoint = { ...selectedEndpoint, tagId: undefined };
+		if (selectedEndpoint?.tagName === tagName) {
+			selectedEndpoint = { ...selectedEndpoint, tagName: undefined };
 		}
 
 		tagToDelete = null;
@@ -304,7 +304,7 @@ export function createApiGeneratorState(): ApiGeneratorState {
 		drawerOpen = true;
 
 		// Initialize tag input
-		tagInputValue = normalized.tagId ? (getTagById(normalized.tagId)?.name || '') : '';
+		tagInputValue = normalized.tagName ?? '';
 		tagDropdownOpen = false;
 	}
 
@@ -335,9 +335,7 @@ export function createApiGeneratorState(): ApiGeneratorState {
 		editedEndpoint = deepClone(selectedEndpoint);
 
 		// Sync tag input with restored endpoint
-		tagInputValue = editedEndpoint?.tagId
-			? (getTagById(editedEndpoint.tagId)?.name || '')
-			: '';
+		tagInputValue = editedEndpoint?.tagName ?? '';
 	}
 
 	function handleCancel(): void {
@@ -455,7 +453,7 @@ export function createApiGeneratorState(): ApiGeneratorState {
 		// Gather all data from stores for code generation
 		const requestPayload = {
 			metadata: get(apiMetadataStore),
-			tags: get(tagsStore),
+			apis: get(apisStore),
 			endpoints: get(endpointsStore),
 			objects: get(objectsStore),
 			fields: get(fieldsStore),
@@ -498,7 +496,7 @@ export function createApiGeneratorState(): ApiGeneratorState {
 		set tagDropdownOpen(v: boolean) { tagDropdownOpen = v; },
 
 		get tagToDelete() { return tagToDelete; },
-		set tagToDelete(v: EndpointTag | null) { tagToDelete = v; },
+		set tagToDelete(v: ApiTag | null) { tagToDelete = v; },
 
 		get showEndpointDeleteConfirm() { return showEndpointDeleteConfirm; },
 		set showEndpointDeleteConfirm(v: boolean) { showEndpointDeleteConfirm = v; },

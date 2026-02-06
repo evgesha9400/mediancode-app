@@ -1,9 +1,9 @@
 <script module lang="ts">
-  import type { ApiEndpoint, EndpointTag } from '$lib/types';
+  import type { ApiEndpoint, ApiTag } from '$lib/types';
 
   export interface EndpointItemProps {
     endpoint: ApiEndpoint;
-    tags: EndpointTag[];
+    tags: ApiTag[];
     onClick: () => void;
   }
 </script>
@@ -15,7 +15,8 @@
 
   let { endpoint, tags, onClick }: Props = $props();
 
-  const tagName = $derived(tags.find(t => t.id === endpoint.tagId)?.name);
+  // Tags are now referenced by name, not by ID
+  const tagName = $derived(endpoint.tagName);
   const namespaceName = $derived(getNamespaceById(endpoint.namespaceId)?.name ?? '');
 
   // Swagger/OpenAPI color scheme for HTTP methods

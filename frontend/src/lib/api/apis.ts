@@ -5,7 +5,15 @@
  */
 
 import { apiGet, apiPost, apiPut, apiDelete } from './client';
-import type { Api } from '$lib/types';
+import type { Api, ApiTag } from '$lib/types';
+
+/**
+ * Backend tag embedded in API response
+ */
+interface ApiTagResponse {
+	name: string;
+	description: string;
+}
 
 /**
  * Backend API response for Api entity
@@ -18,8 +26,19 @@ interface ApiResponse {
 	description: string;
 	baseUrl: string;
 	serverUrl: string;
+	tags: ApiTagResponse[];
 	createdAt: string;
 	updatedAt: string;
+}
+
+/**
+ * Transform backend tag to frontend ApiTag type
+ */
+function transformTag(response: ApiTagResponse): ApiTag {
+	return {
+		name: response.name,
+		description: response.description
+	};
 }
 
 /**
@@ -34,6 +53,7 @@ function transformApi(response: ApiResponse): Api {
 		description: response.description,
 		baseUrl: response.baseUrl,
 		serverUrl: response.serverUrl,
+		tags: (response.tags || []).map(transformTag),
 		createdAt: response.createdAt,
 		updatedAt: response.updatedAt
 	};
@@ -63,6 +83,14 @@ export async function getApi(id: string): Promise<Api> {
 // ============================================================================
 
 /**
+ * Tag data for API requests
+ */
+export interface ApiTagRequest {
+	name: string;
+	description?: string;
+}
+
+/**
  * Request payload for creating an API
  */
 export interface CreateApiRequest {
@@ -72,6 +100,7 @@ export interface CreateApiRequest {
 	description?: string;
 	baseUrl?: string;
 	serverUrl?: string;
+	tags?: ApiTagRequest[];
 }
 
 /**
@@ -83,6 +112,7 @@ export interface UpdateApiRequest {
 	description?: string;
 	baseUrl?: string;
 	serverUrl?: string;
+	tags?: ApiTagRequest[];
 }
 
 // ============================================================================

@@ -19,8 +19,9 @@ interface FieldReferenceResponse {
  * Backend API response for Validator entity
  */
 interface ValidatorResponse {
-	name: string;
+	id: string;
 	namespaceId: string;
+	name: string;
 	type: 'string' | 'numeric' | 'collection';
 	description: string;
 	category: 'inline' | 'custom';

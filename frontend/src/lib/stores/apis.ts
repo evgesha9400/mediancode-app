@@ -1,5 +1,5 @@
 import { writable, get } from 'svelte/store';
-import type { Api, ApiMetadata, EndpointTag, ApiEndpoint, EndpointParameter, DeletionResult } from '$lib/types';
+import type { Api, ApiMetadata, ApiTag, ApiEndpoint, EndpointParameter, DeletionResult } from '$lib/types';
 import { extractPathParameters } from '$lib/utils/urlParser';
 import { generateId, generateParamId, deepClone } from '$lib/utils/ids';
 import { GLOBAL_NAMESPACE_ID } from './initialData';
@@ -25,9 +25,6 @@ export const initialApiMetadata: ApiMetadata = {
 // Store for API metadata (legacy - deprecated, use apisStore instead)
 export const apiMetadataStore = writable<ApiMetadata>(initialApiMetadata);
 
-// Store for endpoint tags
-export const tagsStore = writable<EndpointTag[]>([]);
-
 // Store for API endpoints
 export const endpointsStore = writable<ApiEndpoint[]>([]);
 
@@ -48,6 +45,7 @@ export function createApi(namespaceId: string): Api {
 		description: '',
 		baseUrl: '/api/v1',
 		serverUrl: '',
+		tags: [],
 		createdAt: now,
 		updatedAt: now
 	};
@@ -73,7 +71,7 @@ export function updateApi(id: string, updates: Partial<Api>): void {
 }
 
 /**
- * Delete an API and all its endpoints and tags
+ * Delete an API and all its endpoints
  */
 export function deleteApi(id: string): DeletionResult {
 	const api = getApiById(id);
@@ -88,10 +86,7 @@ export function deleteApi(id: string): DeletionResult {
 	// Delete all endpoints belonging to this API
 	endpointsStore.update(endpoints => endpoints.filter(e => e.apiId !== id));
 
-	// Delete all tags belonging to this API
-	tagsStore.update(tags => tags.filter(t => t.apiId !== id));
-
-	// Delete the API
+	// Delete the API (tags are embedded so they get deleted with the API)
 	apisStore.update(apis => apis.filter(a => a.id !== id));
 
 	return {
@@ -137,10 +132,11 @@ export function getEndpointCountByApi(apiId: string): number {
 }
 
 /**
- * Get tag count for a specific API
+ * Get tag count for a specific API (from embedded tags array)
  */
 export function getTagCountByApi(apiId: string): number {
-	return get(tagsStore).filter(t => t.apiId === apiId).length;
+	const api = getApiById(apiId);
+	return api?.tags?.length ?? 0;
 }
 
 /**
@@ -151,10 +147,11 @@ export function getEndpointsByApi(apiId: string): ApiEndpoint[] {
 }
 
 /**
- * Get all tags for a specific API
+ * Get all tags for a specific API (from embedded tags array)
  */
-export function getTagsByApi(apiId: string): EndpointTag[] {
-	return get(tagsStore).filter(t => t.apiId === apiId);
+export function getTagsByApi(apiId: string): ApiTag[] {
+	const api = getApiById(apiId);
+	return api?.tags ?? [];
 }
 
 // ============================================================================
@@ -173,10 +170,11 @@ export function updateApiMetadata(updates: Partial<ApiMetadata>): void {
 // ============================================================================
 
 /**
- * Get a tag by its ID
+ * Get a tag by name from a specific API
  */
-export function getTagById(id: string): EndpointTag | undefined {
-	return get(tagsStore).find(t => t.id === id);
+export function getTagByName(apiId: string, tagName: string): ApiTag | undefined {
+	const api = getApiById(apiId);
+	return api?.tags?.find(t => t.name === tagName);
 }
 
 /**
@@ -187,10 +185,10 @@ export function getEndpointById(id: string): ApiEndpoint | undefined {
 }
 
 /**
- * Count endpoints using a specific tag
+ * Count endpoints using a specific tag name in an API
  */
-export function getEndpointCountByTag(tagId: string): number {
-	return get(endpointsStore).filter(e => e.tagId === tagId).length;
+export function getEndpointCountByTagName(apiId: string, tagName: string): number {
+	return get(endpointsStore).filter(e => e.apiId === apiId && e.tagName === tagName).length;
 }
 
 /**
@@ -201,29 +199,15 @@ export function getTotalEndpointCount(): number {
 }
 
 /**
- * Get total number of tags
+ * Get total number of tags across all APIs
  */
 export function getTotalTagCount(): number {
-	return get(tagsStore).length;
+	return get(apisStore).reduce((total, api) => total + (api.tags?.length ?? 0), 0);
 }
 
 // ============================================================================
 // Namespace Filtering
 // ============================================================================
-
-/**
- * Get all tags for a specific namespace
- */
-export function getTagsByNamespace(namespaceId: string): EndpointTag[] {
-	return get(tagsStore).filter(t => t.namespaceId === namespaceId);
-}
-
-/**
- * Get the count of tags in a specific namespace
- */
-export function getTagCountByNamespace(namespaceId: string): number {
-	return get(tagsStore).filter(t => t.namespaceId === namespaceId).length;
-}
 
 /**
  * Get all endpoints for a specific namespace
@@ -240,102 +224,117 @@ export function getEndpointCountByNamespace(namespaceId: string): number {
 }
 
 // ============================================================================
-// Tag Lifecycle Operations
+// Tag Operations (now embedded in API)
 // ============================================================================
 
 /**
- * Create a new tag with uniqueness guard
+ * Add a tag to an API
  *
+ * @param apiId - The API to add the tag to
  * @param name - The name for the new tag
- * @param namespaceId - The namespace to create the tag in
- * @param apiId - The API this tag belongs to
  * @param description - Optional description for the tag
- * @returns The created tag, or undefined if a tag with that name already exists in the API
+ * @returns The created tag, or undefined if a tag with that name already exists
  */
-export function createTag(name: string, namespaceId: string, apiId: string, description: string = ''): EndpointTag | undefined {
+export function addTagToApi(apiId: string, name: string, description: string = ''): ApiTag | undefined {
+	const api = getApiById(apiId);
+	if (!api) return undefined;
+
 	const trimmedName = name.trim();
 
-	// Check for existing tag with same name in the same API (case-insensitive)
-	const existingTag = get(tagsStore).find(
-		t => t.name.toLowerCase() === trimmedName.toLowerCase() && t.apiId === apiId
+	// Check for existing tag with same name (case-insensitive)
+	const existingTag = api.tags?.find(
+		t => t.name.toLowerCase() === trimmedName.toLowerCase()
 	);
 
 	if (existingTag) {
 		return undefined;
 	}
 
-	const newTag: EndpointTag = {
-		id: generateId('tag'),
-		namespaceId,
-		apiId,
+	const newTag: ApiTag = {
 		name: trimmedName,
 		description
 	};
 
-	tagsStore.update(tags => [...tags, newTag]);
+	const updatedTags = [...(api.tags || []), newTag];
+	updateApi(apiId, { tags: updatedTags });
+
 	return newTag;
 }
 
 /**
- * Add a pre-constructed tag (legacy support)
+ * Update a tag in an API
  */
-export function addTag(tag: EndpointTag): void {
-	tagsStore.update(tags => [...tags, tag]);
+export function updateTagInApi(apiId: string, tagName: string, updates: Partial<ApiTag>): void {
+	const api = getApiById(apiId);
+	if (!api) return;
+
+	const updatedTags = api.tags?.map(tag =>
+		tag.name === tagName ? { ...tag, ...updates } : tag
+	) ?? [];
+
+	// If name changed, update endpoints referencing the old name
+	if (updates.name && updates.name !== tagName) {
+		endpointsStore.update(endpoints =>
+			endpoints.map(endpoint =>
+				endpoint.apiId === apiId && endpoint.tagName === tagName
+					? { ...endpoint, tagName: updates.name }
+					: endpoint
+			)
+		);
+	}
+
+	updateApi(apiId, { tags: updatedTags });
 }
 
 /**
- * Update a tag's properties
- */
-export function updateTag(id: string, updates: Partial<EndpointTag>): void {
-	tagsStore.update(tags =>
-		tags.map(tag => (tag.id === id ? { ...tag, ...updates } : tag))
-	);
-}
-
-/**
- * Delete a tag and detach it from all endpoints
+ * Delete a tag from an API and remove it from all endpoints
  *
- * @param tagId - The ID of the tag to delete
+ * @param apiId - The API containing the tag
+ * @param tagName - The name of the tag to delete
  * @returns DeletionResult with success status and informational message
  */
-export function deleteTagWithCleanup(tagId: string): DeletionResult {
-	const tag = getTagById(tagId);
+export function deleteTagFromApi(apiId: string, tagName: string): DeletionResult {
+	const api = getApiById(apiId);
 
-	if (!tag) {
+	if (!api) {
 		return {
 			success: false,
-			error: `Tag with ID "${tagId}" not found.`
+			error: `API with ID "${apiId}" not found.`
 		};
 	}
 
-	const affectedCount = getEndpointCountByTag(tagId);
+	const tag = api.tags?.find(t => t.name === tagName);
+	if (!tag) {
+		return {
+			success: false,
+			error: `Tag "${tagName}" not found in API.`
+		};
+	}
+
+	const affectedCount = getEndpointCountByTagName(apiId, tagName);
 
 	// Remove tag from all endpoints that use it
 	endpointsStore.update(endpoints =>
 		endpoints.map(endpoint =>
-			endpoint.tagId === tagId ? { ...endpoint, tagId: undefined } : endpoint
+			endpoint.apiId === apiId && endpoint.tagName === tagName
+				? { ...endpoint, tagName: undefined }
+				: endpoint
 		)
 	);
 
-	// Delete the tag
-	tagsStore.update(tags => tags.filter(t => t.id !== tagId));
+	// Remove tag from API
+	const updatedTags = api.tags?.filter(t => t.name !== tagName) ?? [];
+	updateApi(apiId, { tags: updatedTags });
 
 	// Return success with informational message
 	const message = affectedCount > 0
-		? `Tag "${tag.name}" deleted and removed from ${affectedCount} endpoint${affectedCount > 1 ? 's' : ''}`
-		: `Tag "${tag.name}" deleted`;
+		? `Tag "${tagName}" deleted and removed from ${affectedCount} endpoint${affectedCount > 1 ? 's' : ''}`
+		: `Tag "${tagName}" deleted`;
 
 	return {
 		success: true,
 		error: message // Using 'error' field for the message to match DeletionResult interface
 	};
-}
-
-/**
- * Legacy function for compatibility
- */
-export function deleteTag(id: string): void {
-	tagsStore.update(tags => tags.filter(tag => tag.id !== id));
 }
 
 // ============================================================================
@@ -357,7 +356,7 @@ export function createDefaultEndpoint(namespaceId: string, apiId: string): ApiEn
 		method: 'GET',
 		path: '/',
 		description: '',
-		tagId: undefined,
+		tagName: undefined,
 		pathParams: [],
 		queryParamsObjectId: undefined,
 		requestBodyObjectId: undefined,
@@ -577,16 +576,15 @@ export function deletePathParameter(endpointId: string, paramId: string): void {
  *
  * Migration steps:
  * 1. If apisStore is empty but apiMetadataStore has data, create a default API
- * 2. Update all existing endpoints and tags with the new apiId
+ * 2. Update all existing endpoints with the new apiId
  */
 export function migrateToMultipleApis(): void {
 	const apis = get(apisStore);
 	const metadata = get(apiMetadataStore);
 	const endpoints = get(endpointsStore);
-	const tags = get(tagsStore);
 
 	// Only migrate if we have no APIs but have metadata or endpoints
-	if (apis.length === 0 && (metadata.title || endpoints.length > 0 || tags.length > 0)) {
+	if (apis.length === 0 && (metadata.title || endpoints.length > 0)) {
 		const now = new Date().toISOString();
 		const defaultApiId = generateId('api');
 
@@ -599,6 +597,7 @@ export function migrateToMultipleApis(): void {
 			description: metadata.description,
 			baseUrl: metadata.baseUrl,
 			serverUrl: metadata.serverUrl,
+			tags: [],
 			createdAt: now,
 			updatedAt: now
 		};
@@ -612,14 +611,6 @@ export function migrateToMultipleApis(): void {
 			);
 		}
 
-		// Update all tags with the new apiId
-		if (tags.length > 0) {
-			tagsStore.update(t =>
-				t.map(tag => ({ ...tag, apiId: tag.apiId || defaultApiId }))
-			);
-		}
-
 		console.log('Migration complete: Migrated to multiple APIs model');
 	}
 }
-

@@ -13,6 +13,24 @@ export interface ClerkState {
   user: User | null;
 }
 
+// Organization types for Clerk Organizations support
+export interface Organization {
+  id: string;
+  name: string;
+  slug?: string;
+  imageUrl?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface OrganizationMembership {
+  id: string;
+  role: string;
+  organization: Organization;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export interface NavItem {
   href: string;
   label: string;
@@ -91,6 +109,15 @@ export type HttpMethod = 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
 export type ResponseShape = 'object' | 'list';
 export type ResponseItemShape = 'object'; // Only objects allowed in lists
 
+/**
+ * Embedded tag definition within an API
+ * Tags are stored as JSONB array in the apis table
+ */
+export interface ApiTag {
+  name: string;
+  description: string;
+}
+
 export interface Api {
   id: string;
   namespaceId: string;
@@ -99,6 +126,7 @@ export interface Api {
   description: string;
   baseUrl: string;
   serverUrl: string;
+  tags: ApiTag[];  // Embedded tags array
   createdAt: string;
   updatedAt: string;
 }
@@ -114,6 +142,10 @@ export interface ApiMetadata {
   serverUrl: string;
 }
 
+/**
+ * @deprecated EndpointTag is deprecated. Tags are now embedded in Api as ApiTag[].
+ * This type is kept for backward compatibility during migration.
+ */
 export interface EndpointTag {
   id: string;
   namespaceId: string;
@@ -137,7 +169,7 @@ export interface ApiEndpoint {
   method: HttpMethod;
   path: string;
   description: string;
-  tagId?: string;
+  tagName?: string;  // Tag name reference (string, not UUID)
   pathParams: EndpointParameter[];
   queryParamsObjectId?: string; // Select ONE object for query parameters (optional)
   requestBodyObjectId?: string; // Select ONE object for request body (optional - only POST/PUT/PATCH methods)

@@ -2,12 +2,14 @@
   import { getTotalFieldCount, getTotalApiCount } from '$lib/stores/fields';
   import { getTotalValidatorCount } from '$lib/stores/validators';
   import { getTotalTypeCount } from '$lib/stores/types';
+  import { getTotalObjectCount } from '$lib/stores/objects';
   import { clerkState } from '$lib/clerk';
   import { StatCard } from '$lib/components';
 
   $: totalTypes = getTotalTypeCount();
   $: totalFields = getTotalFieldCount();
   $: totalValidators = getTotalValidatorCount();
+  $: totalObjects = getTotalObjectCount();
   $: totalApis = getTotalApiCount();
   $: userName = $clerkState.user?.firstName || $clerkState.user?.fullName || 'Developer';
 </script>
@@ -29,6 +31,7 @@
         <div class="w-40"><StatCard title="Types" value={totalTypes} icon="fa-shapes" /></div>
         <div class="w-40"><StatCard title="Validators" value={totalValidators} icon="fa-check-circle" /></div>
         <div class="w-40"><StatCard title="Fields" value={totalFields} icon="fa-table-list" /></div>
+        <div class="w-40"><StatCard title="Objects" value={totalObjects} icon="fa-cubes" /></div>
       </div>
     </section>
 

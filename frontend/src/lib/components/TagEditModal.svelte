@@ -7,7 +7,7 @@
   @component
 -->
 <script module lang="ts">
-  import type { EndpointTag } from '$lib/types';
+  import type { ApiTag } from '$lib/types';
 
   export interface TagEditModalProps {
     /**
@@ -18,7 +18,7 @@
     /**
      * Tag being edited (undefined for new tag)
      */
-    tag?: EndpointTag;
+    tag?: ApiTag;
 
     /**
      * Callback when save is clicked with updated tag data

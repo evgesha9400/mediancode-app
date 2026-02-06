@@ -11,11 +11,10 @@ import { listNamespaces } from '$lib/api/namespaces';
 import { listApis } from '$lib/api/apis';
 import { listFields } from '$lib/api/fields';
 import { listObjects } from '$lib/api/objects';
-import { listTags } from '$lib/api/tags';
 import { listEndpoints } from '$lib/api/endpoints';
 import { listValidators } from '$lib/api/validators';
 import { namespacesStore, activeNamespaceId } from './namespaces';
-import { apisStore, tagsStore, endpointsStore } from './apis';
+import { apisStore, endpointsStore } from './apis';
 import { fieldsStore } from './fields';
 import { objectsStore } from './objects';
 import { validatorsStore } from './validators';
@@ -65,12 +64,12 @@ export async function loadStoresFromApi(): Promise<void> {
 
 	try {
 		// Fetch all data in parallel for better performance
-		const [namespaces, apis, fields, objects, tags, endpoints, validators] = await Promise.all([
+		// Note: Tags are now embedded in APIs, so no separate listTags call
+		const [namespaces, apis, fields, objects, endpoints, validators] = await Promise.all([
 			listNamespaces(),
 			listApis(),
 			listFields(),
 			listObjects(),
-			listTags(),
 			listEndpoints(),
 			listValidators()
 		]);
@@ -80,7 +79,6 @@ export async function loadStoresFromApi(): Promise<void> {
 		apisStore.set(apis);
 		fieldsStore.set(fields);
 		objectsStore.set(objects);
-		tagsStore.set(tags);
 		endpointsStore.set(endpoints);
 		validatorsStore.set(validators);
 
@@ -127,11 +125,11 @@ export function resetStores(): void {
 	});
 
 	// Reset stores to empty arrays
+	// Note: Tags are now embedded in APIs, so no separate tagsStore reset
 	namespacesStore.set([]);
 	apisStore.set([]);
 	fieldsStore.set([]);
 	objectsStore.set([]);
-	tagsStore.set([]);
 	endpointsStore.set([]);
 	validatorsStore.set([]);
 	activeNamespaceId.set(GLOBAL_NAMESPACE_ID);

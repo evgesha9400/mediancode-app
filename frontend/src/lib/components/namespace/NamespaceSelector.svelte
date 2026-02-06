@@ -75,7 +75,7 @@
 
   {#if isOpen}
     <div
-      class="absolute top-full left-0 mt-1 w-56 bg-white rounded-lg shadow-xl border border-mono-200 z-50 overflow-hidden"
+      class="absolute top-full right-0 mt-1 w-56 bg-white rounded-lg shadow-xl border border-mono-200 z-50 overflow-hidden"
       role="listbox"
     >
       <div class="p-2 border-b border-mono-100 bg-mono-50">

@@ -11,6 +11,8 @@ import type { FieldType, TypeName } from '$lib/stores/types';
  * Backend API response for Type entity
  */
 interface TypeResponse {
+	id: string;
+	namespaceId: string;
 	name: string;
 	category: 'primitive' | 'abstract';
 	pythonType: string;
