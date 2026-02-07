@@ -16,7 +16,7 @@ import type { Page, APIRequestContext } from '@playwright/test';
 /**
  * API base URL - defaults to dev API
  */
-const API_BASE_URL = process.env.E2E_API_BASE_URL || 'https://dev.api.mediancode.com/v1';
+const API_BASE_URL = process.env.E2E_API_BASE_URL || 'https://api.dev.mediancode.com/v1';
 
 /**
  * Generic API response wrapper

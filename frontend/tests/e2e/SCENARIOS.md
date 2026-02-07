@@ -11,7 +11,7 @@ The E2E test system consists of two main test suites:
 | **App CRUD** | Tests entity CRUD lifecycle | Merge to develop + nightly | Pre-authenticated |
 | **Auth Flows** | Tests signup, password change, org creation | Nightly only | Fresh (unauthenticated) |
 
-Both suites run against the real dev backend (`dev.api.mediancode.com`) - no mocking.
+Both suites run against the real dev backend (`api.dev.mediancode.com`) - no mocking.
 
 ## Test Data Conventions
 
@@ -41,7 +41,7 @@ Use the helper functions from `tests/e2e/helpers/test-data.ts` to generate uniqu
 - Environment variables:
   - `E2E_TEST_USER_EMAIL`
   - `E2E_TEST_USER_PASSWORD`
-  - `E2E_API_BASE_URL` (defaults to `https://dev.api.mediancode.com/v1`)
+  - `E2E_API_BASE_URL` (defaults to `https://api.dev.mediancode.com/v1`)
 
 ### Scenarios
 
@@ -227,7 +227,7 @@ Use the helper functions from `tests/e2e/helpers/test-data.ts` to generate uniqu
 # Set environment variables
 export E2E_TEST_USER_EMAIL="your-test-user@example.com"
 export E2E_TEST_USER_PASSWORD="your-test-password"
-export E2E_API_BASE_URL="https://dev.api.mediancode.com/v1"
+export E2E_API_BASE_URL="https://api.dev.mediancode.com/v1"
 
 # Run setup + CRUD tests
 bunx playwright test --project=setup --project=app-crud

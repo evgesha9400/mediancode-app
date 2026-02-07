@@ -24,7 +24,7 @@ const __dirname = path.dirname(__filename);
  * 4. app-crud: Tests entity CRUD lifecycle against dev backend
  * 5. auth-flows: Tests signup, password change, org creation
  *
- * Backend integration tests run against dev.api.mediancode.com
+ * Backend integration tests run against api.dev.mediancode.com
  * and require:
  * - E2E_TEST_USER_EMAIL: Pre-created test user email
  * - E2E_TEST_USER_PASSWORD: Test user password
@@ -179,9 +179,9 @@ export default defineConfig({
 			...process.env,
 			PUBLIC_CLERK_PUBLISHABLE_KEY:
 				process.env.PUBLIC_CLERK_PUBLISHABLE_KEY || 'pk_test_placeholder',
-			VITE_CLERK_MOCK_MODE: 'false',
+			PUBLIC_CLERK_MOCK_MODE: 'false',
 			// API base URL for backend integration
-			VITE_API_BASE_URL: process.env.E2E_API_BASE_URL || 'https://dev.api.mediancode.com/v1'
+			PUBLIC_API_BASE_URL: process.env.E2E_API_BASE_URL || 'https://api.dev.mediancode.com/v1'
 		}
 	}
 });

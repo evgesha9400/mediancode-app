@@ -7,10 +7,21 @@
  * - Uses environment-based API URL configuration
  */
 
+import { env } from '$env/dynamic/public';
 import { getClerk } from '$lib/clerk';
 import { getActiveOrganizationId } from '$lib/stores/organization';
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/v1';
+/**
+ * API Base URL - configured via environment variable at build time.
+ * Uses SvelteKit's PUBLIC_ prefix convention for client-exposed variables.
+ *
+ * Set PUBLIC_API_BASE_URL in:
+ * - .env.local for local development (defaults to localhost:8000)
+ * - Vercel Dashboard for deployed environments:
+ *   - Preview: https://api.dev.mediancode.com/v1
+ *   - Production: https://api.mediancode.com/v1
+ */
+const API_BASE_URL = env.PUBLIC_API_BASE_URL || 'http://localhost:8000/v1';
 
 /**
  * API error with status code and optional error details

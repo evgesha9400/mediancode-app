@@ -298,7 +298,7 @@ jobs:
         run: bun run build
         env:
           PUBLIC_CLERK_PUBLISHABLE_KEY: ${{ secrets.PUBLIC_CLERK_PUBLISHABLE_KEY }}
-          VITE_API_BASE_URL: ${{ secrets.E2E_API_BASE_URL }}
+          PUBLIC_API_BASE_URL: ${{ secrets.E2E_API_BASE_URL }}
 
       - name: Run E2E CRUD tests
         run: bunx playwright test --project=setup --project=app-crud

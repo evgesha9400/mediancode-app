@@ -1,4 +1,5 @@
 import { writable, type Writable } from 'svelte/store';
+import { env } from '$env/dynamic/public';
 import { initOrgState, refreshOrgState } from '$lib/stores/organization';
 
 export interface ClerkState {
@@ -47,12 +48,12 @@ let isMockMode = false;
 
 /**
  * Check if we should use mock mode for testing
- * Mock mode is enabled when VITE_CLERK_MOCK_MODE is set to 'true'
+ * Mock mode is enabled when PUBLIC_CLERK_MOCK_MODE is set to 'true'
  */
 function shouldUseMockMode(): boolean {
   if (typeof window === 'undefined') return false;
   return (window as any).__CLERK_MOCK_MODE__ === true ||
-         import.meta.env.VITE_CLERK_MOCK_MODE === 'true';
+         env.PUBLIC_CLERK_MOCK_MODE === 'true';
 }
 
 export async function initializeClerk(publishableKey: string): Promise<any> {

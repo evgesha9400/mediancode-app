@@ -5,7 +5,7 @@
  *
  * This setup:
  * 1. Verifies MSW service worker exists (infrastructure ready for future use)
- * 2. Sets up Clerk mock mode for E2E tests (via VITE_CLERK_MOCK_MODE)
+ * 2. Sets up Clerk mock mode for E2E tests (via PUBLIC_CLERK_MOCK_MODE)
  *
  * MSW Status (Decision D1 - Infrastructure Ready):
  * - MSW infrastructure is fully configured and ready
@@ -45,5 +45,5 @@ export default async function globalSetup() {
 	}
 
 	console.log('✅ MSW service worker verified');
-	console.log('✅ Clerk mock mode enabled via VITE_CLERK_MOCK_MODE');
+	console.log('✅ Clerk mock mode enabled via PUBLIC_CLERK_MOCK_MODE');
 }
