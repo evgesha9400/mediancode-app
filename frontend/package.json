@@ -21,6 +21,8 @@
     "test:e2e": "playwright test",
     "test:e2e:smoke": "playwright test --project chromium-smoke",
     "test:e2e:full": "playwright test --project chromium-full",
+    "test:e2e:crud": "bunx tsx scripts/check-e2e-env.ts && playwright test --project=setup --project=app-crud",
+    "test:e2e:auth": "bunx tsx scripts/check-e2e-env.ts --auth && playwright test --project=auth-flows",
     "test:e2e:ui": "playwright test --ui",
     "lint:api": "spectral lint api-spec.yaml --fail-severity=warn"
   },
