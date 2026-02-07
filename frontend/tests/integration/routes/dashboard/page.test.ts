@@ -8,7 +8,7 @@
  * Location mirrors: src/routes/dashboard/+page.svelte
  */
 
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, beforeEach } from 'vitest';
 import { get } from 'svelte/store';
 import {
 	fieldsStore,
@@ -16,8 +16,43 @@ import {
 	getTotalApiCount
 } from '$lib/stores/fields';
 import { validatorsStore, getTotalValidatorCount } from '$lib/stores/validators';
+import {
+	initialFields,
+	initialInlineValidators,
+	initialCustomValidators
+} from '$lib/stores/initialData';
+import type { Validator } from '$lib/stores/validators';
+
+// Helper to transform ValidatorBase to Validator with usage info
+function createValidatorWithUsage(
+	base: typeof initialInlineValidators[0],
+	fields: typeof initialFields
+): Validator {
+	const fieldsUsingValidator = fields
+		.filter(f => f.validators.some(v => v.name === base.name))
+		.map(f => ({ name: f.name, fieldId: f.id }));
+
+	return {
+		...base,
+		usedInFields: fieldsUsingValidator.length,
+		fieldsUsingValidator
+	};
+}
 
 describe('Dashboard Page - Store Integration', () => {
+	// Set up stores with initial fixture data before each test
+	beforeEach(() => {
+		// Populate fields store
+		fieldsStore.set([...initialFields]);
+
+		// Populate validators store with usage info calculated from fields
+		const allValidatorBases = [...initialInlineValidators, ...initialCustomValidators];
+		const validatorsWithUsage = allValidatorBases.map(base =>
+			createValidatorWithUsage(base, initialFields)
+		);
+		validatorsStore.set(validatorsWithUsage);
+	});
+
 	describe('Stat Card Data Sources', () => {
 		it('getTotalFieldCount returns count from fieldsStore', () => {
 			const storeFields = get(fieldsStore);

@@ -1,17 +1,34 @@
 /**
  * Global Vitest Setup
- * 
+ *
  * This file runs before all tests and sets up the testing environment.
  * It configures:
  * - Testing Library matchers (@testing-library/jest-dom)
  * - Fetch polyfill (whatwg-fetch)
  * - MSW (Mock Service Worker) for API mocking
+ * - SvelteKit environment variable mocks
  */
 
 import '@testing-library/jest-dom/vitest';
 import 'whatwg-fetch';
-import { afterAll, afterEach, beforeAll } from 'vitest';
+import { afterAll, afterEach, beforeAll, vi } from 'vitest';
 import { server } from '../shared/msw/server';
+
+// Mock SvelteKit's $env/dynamic/public module
+vi.mock('$env/dynamic/public', () => ({
+	env: {
+		PUBLIC_CLERK_PUBLISHABLE_KEY: 'pk_test_placeholder',
+		PUBLIC_CLERK_MOCK_MODE: 'true',
+		PUBLIC_API_BASE_URL: 'http://localhost:3000/api'
+	}
+}));
+
+// Mock SvelteKit's $env/static/public module
+vi.mock('$env/static/public', () => ({
+	PUBLIC_CLERK_PUBLISHABLE_KEY: 'pk_test_placeholder',
+	PUBLIC_CLERK_MOCK_MODE: 'true',
+	PUBLIC_API_BASE_URL: 'http://localhost:3000/api'
+}));
 
 // Start MSW server before all tests
 beforeAll(() => {
