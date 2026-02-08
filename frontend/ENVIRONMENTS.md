@@ -59,6 +59,36 @@ We use **two environments**:
 | `develop` | Development | `dev.mediancode.com` |
 | `main` | Production | `app.mediancode.com` |
 
+### GitHub Actions CI
+
+CI tests run on every push to `develop` and `main`. Configuration lives in Settings > Secrets and variables > Actions.
+
+**Repository Variables** (visible, not masked in logs):
+
+| Variable | Value | Used By |
+|----------|-------|---------|
+| `PUBLIC_CLERK_PUBLISHABLE_KEY` | Clerk Dev publishable key (`pk_test_...`) | All Playwright tests |
+| `E2E_API_BASE_URL` | `https://api.dev.mediancode.com/v1` | CRUD tests |
+
+**Repository Secrets** (hidden, masked in logs):
+
+| Secret | Description | Used By |
+|--------|-------------|---------|
+| `CLERK_SECRET_KEY` | Clerk Dev secret key | All Playwright tests (testing token) |
+| `E2E_TEST_USER_EMAIL` | Pre-created test user email | CRUD tests |
+| `E2E_TEST_USER_PASSWORD` | Test user password | CRUD tests |
+
+**Test matrix by branch:**
+
+| Job | `develop` | `main` | Backend target |
+|-----|-----------|--------|----------------|
+| Lint & Type Check | push, PR | PR | None |
+| Unit & Integration | push, PR | PR | None |
+| Smoke (Playwright) | push, PR | PR | None |
+| CRUD (Playwright) | push, schedule, manual | -- | `api.dev.mediancode.com` |
+
+> **Note:** CRUD tests only run against the dev backend. They create, modify, and delete real data, so they are not run against production.
+
 ## Local Development
 
 Local development does not require environment variables for the API URL - it defaults to `http://localhost:8000/v1`.
@@ -76,3 +106,4 @@ When setting up a new service or updating configuration:
 - [ ] **Clerk**: Ensure Development and Production instances have correct redirect URLs
 - [ ] **Railway**: Ensure CORS allows `dev.mediancode.com` (dev) and `app.mediancode.com` (prod)
 - [ ] **GitHub**: Branch protection on `main`, deploy workflows for both branches
+- [ ] **GitHub Actions**: Set repository variables (`PUBLIC_CLERK_PUBLISHABLE_KEY`, `E2E_API_BASE_URL`) and secrets (`CLERK_SECRET_KEY`, `E2E_TEST_USER_EMAIL`, `E2E_TEST_USER_PASSWORD`)

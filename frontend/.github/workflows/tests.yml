@@ -38,12 +38,12 @@ jobs:
       - name: Run SvelteKit sync
         run: bun run prepare
         env:
-          PUBLIC_CLERK_PUBLISHABLE_KEY: ${{ secrets.PUBLIC_CLERK_PUBLISHABLE_KEY || 'pk_test_placeholder' }}
+          PUBLIC_CLERK_PUBLISHABLE_KEY: ${{ vars.PUBLIC_CLERK_PUBLISHABLE_KEY || 'pk_test_placeholder' }}
 
       - name: Run svelte-check
         run: bun run check
         env:
-          PUBLIC_CLERK_PUBLISHABLE_KEY: ${{ secrets.PUBLIC_CLERK_PUBLISHABLE_KEY || 'pk_test_placeholder' }}
+          PUBLIC_CLERK_PUBLISHABLE_KEY: ${{ vars.PUBLIC_CLERK_PUBLISHABLE_KEY || 'pk_test_placeholder' }}
 
       - name: Validate fixtures schema
         run: bun run test:fixtures:validate
@@ -144,14 +144,14 @@ jobs:
         run: bun run build
         env:
           # SvelteKit uses PUBLIC_ prefix for client-side env vars
-          PUBLIC_CLERK_PUBLISHABLE_KEY: ${{ secrets.PUBLIC_CLERK_PUBLISHABLE_KEY || 'pk_test_placeholder' }}
+          PUBLIC_CLERK_PUBLISHABLE_KEY: ${{ vars.PUBLIC_CLERK_PUBLISHABLE_KEY || 'pk_test_placeholder' }}
 
       - name: Run Playwright smoke tests
         run: bun run test:e2e:smoke
         env:
           CI: true
           PLAYWRIGHT_BASE_URL: http://localhost:4173
-          PUBLIC_CLERK_PUBLISHABLE_KEY: ${{ secrets.PUBLIC_CLERK_PUBLISHABLE_KEY }}
+          PUBLIC_CLERK_PUBLISHABLE_KEY: ${{ vars.PUBLIC_CLERK_PUBLISHABLE_KEY }}
           CLERK_SECRET_KEY: ${{ secrets.CLERK_SECRET_KEY }}
 
       - name: Upload test results
@@ -209,8 +209,8 @@ jobs:
       - name: Build application
         run: bun run build
         env:
-          PUBLIC_CLERK_PUBLISHABLE_KEY: ${{ secrets.PUBLIC_CLERK_PUBLISHABLE_KEY }}
-          PUBLIC_API_BASE_URL: ${{ secrets.E2E_API_BASE_URL }}
+          PUBLIC_CLERK_PUBLISHABLE_KEY: ${{ vars.PUBLIC_CLERK_PUBLISHABLE_KEY }}
+          PUBLIC_API_BASE_URL: ${{ vars.E2E_API_BASE_URL }}
 
       - name: Run E2E CRUD tests
         run: bunx playwright test --project=setup --project=crud
@@ -219,8 +219,8 @@ jobs:
           PLAYWRIGHT_BASE_URL: http://localhost:4173
           E2E_TEST_USER_EMAIL: ${{ secrets.E2E_TEST_USER_EMAIL }}
           E2E_TEST_USER_PASSWORD: ${{ secrets.E2E_TEST_USER_PASSWORD }}
-          E2E_API_BASE_URL: ${{ secrets.E2E_API_BASE_URL }}
-          PUBLIC_CLERK_PUBLISHABLE_KEY: ${{ secrets.PUBLIC_CLERK_PUBLISHABLE_KEY }}
+          E2E_API_BASE_URL: ${{ vars.E2E_API_BASE_URL }}
+          PUBLIC_CLERK_PUBLISHABLE_KEY: ${{ vars.PUBLIC_CLERK_PUBLISHABLE_KEY }}
           CLERK_SECRET_KEY: ${{ secrets.CLERK_SECRET_KEY }}
 
       - name: Upload test results
