@@ -24,7 +24,8 @@ export default defineConfig(({ mode }) => ({
 			'**/.svelte-kit/**',
 			'**/build/**',
 			'**/dist/**',
-			'tests/e2e/**'
+			'tests/e2e/**',
+			'tests/smoke/**'
 		],
 
 		// Coverage configuration
