@@ -2,7 +2,7 @@
  * Fields CRUD Lifecycle Test
  *
  * Single continuous flow following TESTING_PHILOSOPHY.md:
- * Clean slate → Create 3 fields → Search → Filter → Sort → Read → Update → Delete all → Empty
+ * Clean slate → Create 3 fields → Search → Filter (checkbox + toggle) → Sort (single + multi) → Read → Update → Delete all → Empty
  */
 
 import { authenticatedTest as test, expect } from '../fixtures';
@@ -22,7 +22,8 @@ const FIELD_B = {
 	name: 'e2e_retry_count',
 	type: 'int',
 	description: 'Number of retry attempts for failed operations',
-	defaultValue: '3'
+	defaultValue: '3',
+	validators: ['ge']
 };
 
 const FIELD_C = {
@@ -35,6 +36,10 @@ const FIELD_C = {
 // Alphabetical order by name
 const SORTED_ASC = [FIELD_A.name, FIELD_B.name, FIELD_C.name];
 const SORTED_DESC = [...SORTED_ASC].reverse();
+
+// Multi-column sort: type asc then name asc
+// bool < int < str (alphabetical), and each type has one field so secondary sort doesn't reorder
+const SORTED_BY_TYPE_THEN_NAME = [FIELD_A.name, FIELD_B.name, FIELD_C.name];
 
 // Updated values for the update step
 const UPDATED_DESCRIPTION = 'Primary contact email for all account communications';
@@ -76,6 +81,16 @@ test('Field lifecycle: create, search, filter, sort, update, delete', async ({ p
 	await fields.clearFilters();
 	expect(await fields.getRowCount()).toBe(3);
 
+	// --- Toggle "Has validators only": only FIELD_B has validators ---
+	await fields.openFilters();
+	await fields.toggleFilterSwitch('Has validators only');
+	expect(await fields.getRowCount()).toBe(1);
+	expect(await fields.hasField(FIELD_B.name)).toBe(true);
+
+	// --- Clear filters: all 3 return ---
+	await fields.clearFilters();
+	expect(await fields.getRowCount()).toBe(3);
+
 	// --- Sort by name ascending ---
 	await fields.sortByColumn('name');
 	expect(await fields.getVisibleFieldNames()).toEqual(SORTED_ASC);
@@ -84,6 +99,11 @@ test('Field lifecycle: create, search, filter, sort, update, delete', async ({ p
 	await fields.sortByColumn('name');
 	expect(await fields.getVisibleFieldNames()).toEqual(SORTED_DESC);
 
+	// --- Multi-column sort: type asc, then shift+name asc ---
+	await fields.sortByColumn('type');
+	await fields.sortByColumn('name', true);
+	expect(await fields.getVisibleFieldNames()).toEqual(SORTED_BY_TYPE_THEN_NAME);
+
 	// --- Read: open field C and verify all values ---
 	await fields.clickRow(FIELD_C.name);
 	expect(await fields.isDrawerOpen()).toBe(true);
@@ -91,6 +111,14 @@ test('Field lifecycle: create, search, filter, sort, update, delete', async ({ p
 	expect(await fields.getFieldType()).toBe(FIELD_C.type);
 	expect(await fields.getFieldDescription()).toBe(FIELD_C.description);
 	expect(await fields.getDefaultValue()).toBe(FIELD_C.defaultValue);
+	await fields.closeDrawer();
+
+	// --- Read: open field B and verify values + validator ---
+	await fields.clickRow(FIELD_B.name);
+	expect(await fields.isDrawerOpen()).toBe(true);
+	expect(await fields.getFieldName()).toBe(FIELD_B.name);
+	expect(await fields.getFieldType()).toBe(FIELD_B.type);
+	expect(await fields.getValidatorCount()).toBe(1);
 	await fields.closeDrawer();
 
 	// --- Update field C ---

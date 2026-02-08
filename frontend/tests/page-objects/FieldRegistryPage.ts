@@ -362,7 +362,7 @@ export class FieldRegistryPage {
 	 * Toggle a filter switch by label
 	 */
 	async toggleFilterSwitch(label: string) {
-		const toggle = this.page.locator('label').filter({ hasText: label }).locator('button[role="switch"]');
+		const toggle = this.page.locator('label').filter({ hasText: label }).locator('input[type="checkbox"]');
 		await toggle.click();
 		await this.delay();
 	}
@@ -546,6 +546,7 @@ export class FieldRegistryPage {
 		type?: string;
 		description?: string;
 		defaultValue?: string;
+		validators?: string[];
 	}) {
 		await this.openCreateDrawer();
 
@@ -561,6 +562,12 @@ export class FieldRegistryPage {
 
 		if (options.defaultValue) {
 			await this.setDefaultValue(options.defaultValue);
+		}
+
+		if (options.validators) {
+			for (const name of options.validators) {
+				await this.addValidator(name);
+			}
 		}
 
 		await this.create();
