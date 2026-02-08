@@ -65,7 +65,7 @@ export class TypesPage {
 	 * Navigate to the types page
 	 */
 	async goto() {
-		await this.page.goto('/types');
+		await this.page.goto('/types', { waitUntil: 'networkidle' });
 		await this.pageTitle.waitFor({ state: 'visible' });
 	}
 

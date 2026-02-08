@@ -114,7 +114,7 @@ export class ObjectBuilderPage {
 	 * Navigate to the object builder page
 	 */
 	async goto() {
-		await this.page.goto('/object-builder');
+		await this.page.goto('/object-builder', { waitUntil: 'networkidle' });
 		await this.pageTitle.waitFor({ state: 'visible' });
 	}
 

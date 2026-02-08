@@ -91,6 +91,9 @@ export async function initializeClerk(publishableKey: string): Promise<any> {
       fallbackRedirectUrl: '/dashboard'
     });
 
+    // Expose on window for @clerk/testing compatibility (ESM import doesn't set this)
+    (window as any).Clerk = clerkInstance;
+
     // Update store with initial state
     clerkState.set({
       isLoaded: true,
@@ -123,6 +126,7 @@ export async function initializeClerk(publishableKey: string): Promise<any> {
     // Fall back to mock mode if real initialization fails
     isMockMode = true;
     clerkInstance = createMockClerk();
+    (window as any).Clerk = clerkInstance;
     clerkState.set({
       isLoaded: true,
       isSignedIn: false,
@@ -141,8 +145,10 @@ function createMockClerk() {
   const mockOrganizations: any[] = [];
 
   return {
+    loaded: true,
     user: null,
     session: null,
+    client: null,
     organization: mockOrganization,
     mountSignIn: (element: HTMLElement) => {
       element.innerHTML = `

@@ -103,7 +103,7 @@ export class ValidatorsPage {
 	 * Navigate to the validators page
 	 */
 	async goto() {
-		await this.page.goto('/validators');
+		await this.page.goto('/validators', { waitUntil: 'networkidle' });
 		await this.pageTitle.waitFor({ state: 'visible' });
 	}
 

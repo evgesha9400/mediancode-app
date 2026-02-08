@@ -1,209 +1,129 @@
 /**
  * Fields CRUD Lifecycle Test
  *
- * Tests the complete lifecycle of field entities:
- * 1. Create a new field
- * 2. Verify field appears in list
- * 3. Update field properties
- * 4. Verify updates are persisted
- * 5. Delete field
- * 6. Verify field is removed
- *
- * This test is self-contained - it creates its own test data and cleans up after itself.
- * Uses unique names with e2e_ prefix for easy identification.
- *
- * @tags app-crud
+ * Single continuous flow following TESTING_PHILOSOPHY.md:
+ * Clean slate → Create 3 fields → Search → Filter → Sort → Read → Update → Delete all → Empty
  */
 
-import { test, expect } from '@playwright/test';
+import { authenticatedTest as test, expect } from '../fixtures';
 import { FieldRegistryPage } from '../../page-objects';
-import { fieldName, testFieldData, isE2ETestData, E2EApiClient } from '../../helpers';
+import { E2EApiClient } from '../../helpers';
 
-test.describe('Fields CRUD Lifecycle', () => {
-	let fieldRegistryPage: FieldRegistryPage;
-	let createdFieldName: string;
+// --- Test data: 3 fields with different types, names that sort distinctly ---
 
-	test.beforeAll(() => {
-		// Generate unique field name for this test run
-		createdFieldName = fieldName('crud');
-	});
+const FIELD_A = {
+	name: 'e2e_is_active',
+	type: 'bool',
+	description: 'Whether the user account is currently active',
+	defaultValue: 'true'
+};
 
-	test.beforeEach(async ({ page }) => {
-		fieldRegistryPage = new FieldRegistryPage(page);
-	});
+const FIELD_B = {
+	name: 'e2e_retry_count',
+	type: 'int',
+	description: 'Number of retry attempts for failed operations',
+	defaultValue: '3'
+};
 
-	test.describe.serial('Field Lifecycle', () => {
-		test('Step 1: Create new field', async ({ page }) => {
-			await fieldRegistryPage.goto();
+const FIELD_C = {
+	name: 'e2e_user_email',
+	type: 'str',
+	description: 'User email address for account notifications',
+	defaultValue: 'user@example.com'
+};
 
-			// Get initial count
-			const initialCount = await fieldRegistryPage.getRowCount();
+// Alphabetical order by name
+const SORTED_ASC = [FIELD_A.name, FIELD_B.name, FIELD_C.name];
+const SORTED_DESC = [...SORTED_ASC].reverse();
 
-			// Create new field
-			await fieldRegistryPage.createNewField({
-				name: createdFieldName,
-				type: 'str',
-				description: 'E2E test field for CRUD lifecycle',
-				defaultValue: 'test_default_value'
-			});
+// Updated values for the update step
+const UPDATED_DESCRIPTION = 'Primary contact email for all account communications';
+const UPDATED_DEFAULT = 'contact@example.com';
 
-			// Verify drawer closed
-			const isDrawerOpen = await fieldRegistryPage.isDrawerOpen();
-			expect(isDrawerOpen).toBe(false);
+test('Field lifecycle: create, search, filter, sort, update, delete', async ({ page }) => {
+	// --- Clean slate ---
+	const api = await E2EApiClient.fromPage(page);
+	await api.deleteAllFields();
 
-			// Verify field appears in list
-			const hasField = await fieldRegistryPage.hasField(createdFieldName);
-			expect(hasField).toBe(true);
+	const fields = new FieldRegistryPage(page);
+	await fields.goto();
 
-			// Verify count increased
-			const newCount = await fieldRegistryPage.getRowCount();
-			expect(newCount).toBe(initialCount + 1);
-		});
+	// --- Verify empty state ---
+	expect(await fields.getRowCount()).toBe(0);
 
-		test('Step 2: Read and verify field details', async ({ page }) => {
-			await fieldRegistryPage.goto();
+	// --- Create 3 fields ---
+	await fields.createNewField(FIELD_A);
+	await fields.createNewField(FIELD_B);
+	await fields.createNewField(FIELD_C);
+	expect(await fields.getRowCount()).toBe(3);
 
-			// Search for the created field to ensure it's visible
-			await fieldRegistryPage.search(createdFieldName);
+	// --- Search: find one field ---
+	await fields.search('retry');
+	expect(await fields.getRowCount()).toBe(1);
+	expect(await fields.hasField(FIELD_B.name)).toBe(true);
 
-			// Open the field
-			await fieldRegistryPage.clickRow(createdFieldName);
+	// --- Clear search: all 3 return ---
+	await fields.clearSearch();
+	expect(await fields.getRowCount()).toBe(3);
 
-			// Verify drawer opened with correct data
-			const isDrawerOpen = await fieldRegistryPage.isDrawerOpen();
-			expect(isDrawerOpen).toBe(true);
+	// --- Filter by type "int": only retry_count ---
+	await fields.openFilters();
+	await fields.toggleFilterCheckbox('int');
+	expect(await fields.getRowCount()).toBe(1);
+	expect(await fields.hasField(FIELD_B.name)).toBe(true);
 
-			// Verify field name
-			const name = await fieldRegistryPage.getFieldName();
-			expect(name).toBe(createdFieldName);
+	// --- Clear filter: all 3 return ---
+	await fields.clearFilters();
+	expect(await fields.getRowCount()).toBe(3);
 
-			// Verify type
-			const type = await fieldRegistryPage.getFieldType();
-			expect(type).toBe('str');
+	// --- Sort by name ascending ---
+	await fields.sortByColumn('name');
+	expect(await fields.getVisibleFieldNames()).toEqual(SORTED_ASC);
 
-			// Verify description
-			const description = await fieldRegistryPage.getFieldDescription();
-			expect(description).toContain('E2E test field');
+	// --- Sort by name descending (click again) ---
+	await fields.sortByColumn('name');
+	expect(await fields.getVisibleFieldNames()).toEqual(SORTED_DESC);
 
-			// Verify default value
-			const defaultValue = await fieldRegistryPage.getDefaultValue();
-			expect(defaultValue).toBe('test_default_value');
+	// --- Read: open field C and verify all values ---
+	await fields.clickRow(FIELD_C.name);
+	expect(await fields.isDrawerOpen()).toBe(true);
+	expect(await fields.getFieldName()).toBe(FIELD_C.name);
+	expect(await fields.getFieldType()).toBe(FIELD_C.type);
+	expect(await fields.getFieldDescription()).toBe(FIELD_C.description);
+	expect(await fields.getDefaultValue()).toBe(FIELD_C.defaultValue);
+	await fields.closeDrawer();
 
-			// Close drawer
-			await fieldRegistryPage.closeDrawer();
-		});
+	// --- Update field C ---
+	await fields.clickRow(FIELD_C.name);
+	await fields.setFieldDescription(UPDATED_DESCRIPTION);
+	await fields.setDefaultValue(UPDATED_DEFAULT);
+	expect(await fields.isSaveEnabled()).toBe(true);
+	await fields.save();
+	expect(await fields.isDrawerOpen()).toBe(false);
 
-		test('Step 3: Update field', async ({ page }) => {
-			await fieldRegistryPage.goto();
+	// --- Verify update persisted ---
+	await fields.clickRow(FIELD_C.name);
+	expect(await fields.getFieldDescription()).toBe(UPDATED_DESCRIPTION);
+	expect(await fields.getDefaultValue()).toBe(UPDATED_DEFAULT);
+	await fields.closeDrawer();
 
-			// Search for the field
-			await fieldRegistryPage.search(createdFieldName);
+	// --- Delete all fields one by one ---
+	await fields.clickRow(FIELD_C.name);
+	expect(await fields.isDeleteEnabled()).toBe(true);
+	await fields.clickDelete();
+	await expect(fields.deleteConfirmButton).toBeVisible();
+	await fields.confirmDelete();
+	expect(await fields.getRowCount()).toBe(2);
 
-			// Open the field
-			await fieldRegistryPage.clickRow(createdFieldName);
-			expect(await fieldRegistryPage.isDrawerOpen()).toBe(true);
+	await fields.clickRow(FIELD_B.name);
+	await fields.clickDelete();
+	await fields.confirmDelete();
+	expect(await fields.getRowCount()).toBe(1);
 
-			// Update description
-			const newDescription = `Updated description at ${new Date().toISOString()}`;
-			await fieldRegistryPage.setFieldDescription(newDescription);
+	await fields.clickRow(FIELD_A.name);
+	await fields.clickDelete();
+	await fields.confirmDelete();
 
-			// Update default value
-			const newDefaultValue = 'updated_default_value';
-			await fieldRegistryPage.setDefaultValue(newDefaultValue);
-
-			// Verify save button is enabled
-			const isSaveEnabled = await fieldRegistryPage.isSaveEnabled();
-			expect(isSaveEnabled).toBe(true);
-
-			// Save changes
-			await fieldRegistryPage.save();
-
-			// Verify drawer closed after save
-			const isDrawerOpen = await fieldRegistryPage.isDrawerOpen();
-			expect(isDrawerOpen).toBe(false);
-		});
-
-		test('Step 4: Verify updates persisted', async ({ page }) => {
-			await fieldRegistryPage.goto();
-
-			// Search for the field
-			await fieldRegistryPage.search(createdFieldName);
-
-			// Open the field
-			await fieldRegistryPage.clickRow(createdFieldName);
-
-			// Verify updated values
-			const description = await fieldRegistryPage.getFieldDescription();
-			expect(description).toContain('Updated description');
-
-			const defaultValue = await fieldRegistryPage.getDefaultValue();
-			expect(defaultValue).toBe('updated_default_value');
-
-			// Close drawer
-			await fieldRegistryPage.closeDrawer();
-		});
-
-		test('Step 5: Delete field', async ({ page }) => {
-			await fieldRegistryPage.goto();
-
-			// Get initial count
-			const initialCount = await fieldRegistryPage.getRowCount();
-
-			// Search for the field
-			await fieldRegistryPage.search(createdFieldName);
-
-			// Open the field
-			await fieldRegistryPage.clickRow(createdFieldName);
-
-			// Check if delete is enabled (field shouldn't have references)
-			const isDeleteEnabled = await fieldRegistryPage.isDeleteEnabled();
-
-			if (isDeleteEnabled) {
-				// Click delete
-				await fieldRegistryPage.clickDelete();
-
-				// Verify confirmation appears
-				await expect(fieldRegistryPage.deleteConfirmButton).toBeVisible();
-
-				// Confirm delete
-				await fieldRegistryPage.confirmDelete();
-
-				// Wait for deletion to complete
-				await page.waitForTimeout(500);
-
-				// Clear search to see full list
-				await fieldRegistryPage.clearSearch();
-
-				// Verify field is removed
-				const hasField = await fieldRegistryPage.hasField(createdFieldName);
-				expect(hasField).toBe(false);
-			} else {
-				// If delete is disabled, the field has references - skip this step
-				test.skip();
-			}
-		});
-
-		test('Step 6: Verify field is removed', async ({ page }) => {
-			await fieldRegistryPage.goto();
-
-			// Search for the deleted field
-			await fieldRegistryPage.search(createdFieldName);
-
-			// Should show empty state or no results
-			const hasField = await fieldRegistryPage.hasField(createdFieldName);
-			expect(hasField).toBe(false);
-		});
-	});
-
-	test.afterAll(async ({ request }) => {
-		// Cleanup: If test failed partway through, ensure field is deleted
-		// Use API client to clean up any remaining test data
-		try {
-			const apiClient = new E2EApiClient(request);
-			await apiClient.cleanupFields((field) => isE2ETestData(field.name));
-		} catch (error) {
-			// Cleanup errors are non-fatal
-			console.log('Cleanup note:', error);
-		}
-	});
+	// --- Verify empty state ---
+	expect(await fields.getRowCount()).toBe(0);
 });

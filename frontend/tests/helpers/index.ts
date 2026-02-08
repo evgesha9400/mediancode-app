@@ -33,21 +33,8 @@ export type {
 	ApiEndpoint
 } from './api-client';
 
-// Clerk Admin API for auth flow cleanup
-export {
-	listUsers,
-	getUser,
-	getUserByEmail,
-	deleteUser,
-	deleteUserByEmail,
-	listOrganizations,
-	getOrganization,
-	getOrganizationByName,
-	deleteOrganization,
-	deleteOrganizationByName,
-	cleanupUsers,
-	cleanupOrganizations,
-	cleanupE2ETestUsers,
-	cleanupE2ETestOrganizations
-} from './clerk-admin';
-export type { ClerkUser, ClerkOrganization } from './clerk-admin';
+// Backend health check
+export { assertBackendHealthy } from './health-check';
+
+// E2E delay configuration
+export { ACTION_DELAY_MS } from './e2e-delays';

@@ -1,19 +1,16 @@
 #!/usr/bin/env tsx
 /**
- * Pre-flight check for E2E CRUD and Auth tests
+ * Pre-flight check for E2E CRUD tests
  *
  * Validates that required environment variables are set before running tests.
  * Usage:
- *   tsx scripts/check-e2e-env.ts        # Check CRUD test requirements
- *   tsx scripts/check-e2e-env.ts --auth # Check auth-flows test requirements
+ *   tsx scripts/check-e2e-env.ts
  */
 
 import * as dotenv from 'dotenv';
 
 // Load .env file
 dotenv.config();
-
-const isAuthMode = process.argv.includes('--auth');
 
 interface EnvRequirement {
 	name: string;
@@ -22,7 +19,7 @@ interface EnvRequirement {
 	example: string;
 }
 
-const crudRequirements: EnvRequirement[] = [
+const requirements: EnvRequirement[] = [
 	{
 		name: 'E2E_TEST_USER_EMAIL',
 		required: true,
@@ -48,18 +45,6 @@ const crudRequirements: EnvRequirement[] = [
 		example: 'pk_test_xxx'
 	}
 ];
-
-const authRequirements: EnvRequirement[] = [
-	...crudRequirements,
-	{
-		name: 'CLERK_SECRET_KEY',
-		required: true,
-		description: 'Clerk secret key (for user cleanup after tests)',
-		example: 'sk_test_xxx'
-	}
-];
-
-const requirements = isAuthMode ? authRequirements : crudRequirements;
 
 console.log('\n🔍 Checking E2E test environment...\n');
 

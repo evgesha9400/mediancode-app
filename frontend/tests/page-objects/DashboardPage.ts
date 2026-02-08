@@ -8,7 +8,7 @@
  */
 
 import { type Page, type Locator } from '@playwright/test';
-import { getStatCardTestId } from '../../../src/lib/utils/testIds';
+import { getStatCardTestId } from '../../src/lib/utils/testIds';
 
 export const STAT_CARD_TITLES = {
 	types: 'Types',
@@ -78,7 +78,7 @@ export class DashboardPage {
 	 * Navigate to the dashboard
 	 */
 	async goto() {
-		await this.page.goto('/dashboard');
+		await this.page.goto('/dashboard', { waitUntil: 'networkidle' });
 	}
 
 	/**

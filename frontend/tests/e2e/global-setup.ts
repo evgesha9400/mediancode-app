@@ -28,6 +28,7 @@
 
 import * as fs from 'fs';
 import * as path from 'path';
+import { clerkSetup } from '@clerk/testing/playwright';
 
 export default async function globalSetup() {
 	console.log('🔧 Playwright Global Setup: Verifying MSW service worker...');
@@ -45,5 +46,12 @@ export default async function globalSetup() {
 	}
 
 	console.log('✅ MSW service worker verified');
-	console.log('✅ Clerk mock mode enabled via PUBLIC_CLERK_MOCK_MODE');
+
+	// Obtain Clerk testing token (sets process.env.CLERK_FAPI and CLERK_TESTING_TOKEN)
+	// This must run before setupClerkTestingToken() is called in test fixtures
+	await clerkSetup({
+		publishableKey: process.env.PUBLIC_CLERK_PUBLISHABLE_KEY,
+		secretKey: process.env.CLERK_SECRET_KEY
+	});
+	console.log('✅ Clerk testing token obtained');
 }

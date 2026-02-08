@@ -2,34 +2,19 @@
  * API Client for E2E Tests
  *
  * Provides direct API calls for test setup, verification, and cleanup.
- * Uses the auth token from Playwright session to authenticate requests.
- *
- * This client is used to:
- * 1. Set up test data before tests
- * 2. Verify data state during tests
- * 3. Clean up test data after tests
- * 4. Bypass UI when direct API manipulation is faster
+ * Extracts the Clerk JWT from the browser page to authenticate requests.
  */
 
 import type { Page, APIRequestContext } from '@playwright/test';
 
-/**
- * API base URL - defaults to dev API
- */
 const API_BASE_URL = process.env.E2E_API_BASE_URL || 'https://api.dev.mediancode.com/v1';
 
-/**
- * Generic API response wrapper
- */
 interface ApiResponse<T> {
 	data?: T;
 	error?: string;
 	status: number;
 }
 
-/**
- * Field entity from the API
- */
 export interface ApiField {
 	id: string;
 	name: string;
@@ -40,9 +25,6 @@ export interface ApiField {
 	namespace_id?: string;
 }
 
-/**
- * Object entity from the API
- */
 export interface ApiObject {
 	id: string;
 	name: string;
@@ -51,9 +33,6 @@ export interface ApiObject {
 	fields?: Array<{ field_id: string; required: boolean }>;
 }
 
-/**
- * API entity from the API
- */
 export interface ApiEntity {
 	id: string;
 	name: string;
@@ -61,18 +40,12 @@ export interface ApiEntity {
 	version?: string;
 }
 
-/**
- * Namespace entity from the API
- */
 export interface ApiNamespace {
 	id: string;
 	name: string;
 	description?: string;
 }
 
-/**
- * Endpoint entity from the API
- */
 export interface ApiEndpoint {
 	id: string;
 	name: string;
@@ -82,370 +55,127 @@ export interface ApiEndpoint {
 	description?: string;
 }
 
-/**
- * E2E API Client
- *
- * Provides methods to interact with the backend API directly.
- * Requires an authenticated Playwright request context.
- */
 export class E2EApiClient {
 	private request: APIRequestContext;
 	private baseUrl: string;
+	private authToken: string;
 
-	constructor(request: APIRequestContext, baseUrl: string = API_BASE_URL) {
+	constructor(request: APIRequestContext, authToken: string, baseUrl: string = API_BASE_URL) {
 		this.request = request;
+		this.authToken = authToken;
 		this.baseUrl = baseUrl;
 	}
 
 	/**
-	 * Create a new E2EApiClient from a Playwright page
-	 * Extracts cookies/auth from the page context
+	 * Create from a Playwright page. Extracts the Clerk JWT so API calls are authenticated.
 	 */
 	static async fromPage(page: Page): Promise<E2EApiClient> {
-		const request = page.context().request;
-		return new E2EApiClient(request);
-	}
-
-	// ============================================================================
-	// Fields API
-	// ============================================================================
-
-	async listFields(): Promise<ApiResponse<ApiField[]>> {
-		const response = await this.request.get(`${this.baseUrl}/fields`);
-		return {
-			status: response.status(),
-			data: response.ok() ? await response.json() : undefined,
-			error: response.ok() ? undefined : await response.text()
-		};
-	}
-
-	async createField(field: Omit<ApiField, 'id'>): Promise<ApiResponse<ApiField>> {
-		const response = await this.request.post(`${this.baseUrl}/fields`, {
-			data: field
+		const token = await page.evaluate(async () => {
+			const clerk = (window as any).Clerk;
+			if (!clerk?.session) throw new Error('Clerk session not available');
+			return clerk.session.getToken();
 		});
-		return {
-			status: response.status(),
-			data: response.ok() ? await response.json() : undefined,
-			error: response.ok() ? undefined : await response.text()
-		};
+		if (!token) throw new Error('Failed to get Clerk session token from page');
+		return new E2EApiClient(page.context().request, token);
 	}
 
-	async getField(id: string): Promise<ApiResponse<ApiField>> {
-		const response = await this.request.get(`${this.baseUrl}/fields/${id}`);
-		return {
-			status: response.status(),
-			data: response.ok() ? await response.json() : undefined,
-			error: response.ok() ? undefined : await response.text()
-		};
+	// ---- internal helpers ----
+
+	private opts(extra?: Record<string, unknown>) {
+		return { headers: { Authorization: `Bearer ${this.authToken}` }, ...extra };
 	}
 
-	async updateField(id: string, field: Partial<ApiField>): Promise<ApiResponse<ApiField>> {
-		const response = await this.request.patch(`${this.baseUrl}/fields/${id}`, {
-			data: field
-		});
-		return {
-			status: response.status(),
-			data: response.ok() ? await response.json() : undefined,
-			error: response.ok() ? undefined : await response.text()
-		};
+	private async get<T>(path: string): Promise<ApiResponse<T>> {
+		const r = await this.request.get(`${this.baseUrl}${path}`, this.opts());
+		return { status: r.status(), data: r.ok() ? await r.json() : undefined, error: r.ok() ? undefined : await r.text() };
 	}
 
-	async deleteField(id: string): Promise<ApiResponse<void>> {
-		const response = await this.request.delete(`${this.baseUrl}/fields/${id}`);
-		return {
-			status: response.status(),
-			error: response.ok() ? undefined : await response.text()
-		};
+	private async post<T>(path: string, data: unknown): Promise<ApiResponse<T>> {
+		const r = await this.request.post(`${this.baseUrl}${path}`, this.opts({ data }));
+		return { status: r.status(), data: r.ok() ? await r.json() : undefined, error: r.ok() ? undefined : await r.text() };
 	}
 
-	// ============================================================================
-	// Objects API
-	// ============================================================================
-
-	async listObjects(): Promise<ApiResponse<ApiObject[]>> {
-		const response = await this.request.get(`${this.baseUrl}/objects`);
-		return {
-			status: response.status(),
-			data: response.ok() ? await response.json() : undefined,
-			error: response.ok() ? undefined : await response.text()
-		};
+	private async patch<T>(path: string, data: unknown): Promise<ApiResponse<T>> {
+		const r = await this.request.patch(`${this.baseUrl}${path}`, this.opts({ data }));
+		return { status: r.status(), data: r.ok() ? await r.json() : undefined, error: r.ok() ? undefined : await r.text() };
 	}
 
-	async createObject(object: Omit<ApiObject, 'id'>): Promise<ApiResponse<ApiObject>> {
-		const response = await this.request.post(`${this.baseUrl}/objects`, {
-			data: object
-		});
-		return {
-			status: response.status(),
-			data: response.ok() ? await response.json() : undefined,
-			error: response.ok() ? undefined : await response.text()
-		};
+	private async del(path: string): Promise<ApiResponse<void>> {
+		const r = await this.request.delete(`${this.baseUrl}${path}`, this.opts());
+		return { status: r.status(), error: r.ok() ? undefined : await r.text() };
 	}
 
-	async getObject(id: string): Promise<ApiResponse<ApiObject>> {
-		const response = await this.request.get(`${this.baseUrl}/objects/${id}`);
-		return {
-			status: response.status(),
-			data: response.ok() ? await response.json() : undefined,
-			error: response.ok() ? undefined : await response.text()
-		};
+	// ---- Fields ----
+
+	async listFields() { return this.get<ApiField[]>('/fields'); }
+	async createField(field: Omit<ApiField, 'id'>) { return this.post<ApiField>('/fields', field); }
+	async getField(id: string) { return this.get<ApiField>(`/fields/${id}`); }
+	async updateField(id: string, field: Partial<ApiField>) { return this.patch<ApiField>(`/fields/${id}`, field); }
+	async deleteField(id: string) { return this.del(`/fields/${id}`); }
+
+	// ---- Objects ----
+
+	async listObjects() { return this.get<ApiObject[]>('/objects'); }
+	async createObject(obj: Omit<ApiObject, 'id'>) { return this.post<ApiObject>('/objects', obj); }
+	async getObject(id: string) { return this.get<ApiObject>(`/objects/${id}`); }
+	async updateObject(id: string, obj: Partial<ApiObject>) { return this.patch<ApiObject>(`/objects/${id}`, obj); }
+	async deleteObject(id: string) { return this.del(`/objects/${id}`); }
+
+	// ---- APIs ----
+
+	async listApis() { return this.get<ApiEntity[]>('/apis'); }
+	async createApi(api: Omit<ApiEntity, 'id'>) { return this.post<ApiEntity>('/apis', api); }
+	async getApi(id: string) { return this.get<ApiEntity>(`/apis/${id}`); }
+	async updateApi(id: string, api: Partial<ApiEntity>) { return this.patch<ApiEntity>(`/apis/${id}`, api); }
+	async deleteApi(id: string) { return this.del(`/apis/${id}`); }
+
+	// ---- Namespaces ----
+
+	async listNamespaces() { return this.get<ApiNamespace[]>('/namespaces'); }
+	async createNamespace(ns: Omit<ApiNamespace, 'id'>) { return this.post<ApiNamespace>('/namespaces', ns); }
+	async getNamespace(id: string) { return this.get<ApiNamespace>(`/namespaces/${id}`); }
+	async updateNamespace(id: string, ns: Partial<ApiNamespace>) { return this.patch<ApiNamespace>(`/namespaces/${id}`, ns); }
+	async deleteNamespace(id: string) { return this.del(`/namespaces/${id}`); }
+
+	// ---- Endpoints ----
+
+	async listEndpoints(apiId?: string) { return this.get<ApiEndpoint[]>(apiId ? `/endpoints?api_id=${apiId}` : '/endpoints'); }
+	async createEndpoint(ep: Omit<ApiEndpoint, 'id'>) { return this.post<ApiEndpoint>('/endpoints', ep); }
+	async getEndpoint(id: string) { return this.get<ApiEndpoint>(`/endpoints/${id}`); }
+	async updateEndpoint(id: string, ep: Partial<ApiEndpoint>) { return this.patch<ApiEndpoint>(`/endpoints/${id}`, ep); }
+	async deleteEndpoint(id: string) { return this.del(`/endpoints/${id}`); }
+
+	// ---- Bulk cleanup (call at start of tests) ----
+
+	async deleteAllFields(): Promise<number> {
+		const { data } = await this.listFields();
+		if (!data?.length) return 0;
+		let n = 0;
+		for (const f of data) { const r = await this.deleteField(f.id); if (r.status === 200 || r.status === 204) n++; }
+		return n;
 	}
 
-	async updateObject(id: string, object: Partial<ApiObject>): Promise<ApiResponse<ApiObject>> {
-		const response = await this.request.patch(`${this.baseUrl}/objects/${id}`, {
-			data: object
-		});
-		return {
-			status: response.status(),
-			data: response.ok() ? await response.json() : undefined,
-			error: response.ok() ? undefined : await response.text()
-		};
+	async deleteAllObjects(): Promise<number> {
+		const { data } = await this.listObjects();
+		if (!data?.length) return 0;
+		let n = 0;
+		for (const o of data) { const r = await this.deleteObject(o.id); if (r.status === 200 || r.status === 204) n++; }
+		return n;
 	}
 
-	async deleteObject(id: string): Promise<ApiResponse<void>> {
-		const response = await this.request.delete(`${this.baseUrl}/objects/${id}`);
-		return {
-			status: response.status(),
-			error: response.ok() ? undefined : await response.text()
-		};
+	async deleteAllApis(): Promise<number> {
+		const { data } = await this.listApis();
+		if (!data?.length) return 0;
+		let n = 0;
+		for (const a of data) { const r = await this.deleteApi(a.id); if (r.status === 200 || r.status === 204) n++; }
+		return n;
 	}
 
-	// ============================================================================
-	// APIs API
-	// ============================================================================
-
-	async listApis(): Promise<ApiResponse<ApiEntity[]>> {
-		const response = await this.request.get(`${this.baseUrl}/apis`);
-		return {
-			status: response.status(),
-			data: response.ok() ? await response.json() : undefined,
-			error: response.ok() ? undefined : await response.text()
-		};
-	}
-
-	async createApi(api: Omit<ApiEntity, 'id'>): Promise<ApiResponse<ApiEntity>> {
-		const response = await this.request.post(`${this.baseUrl}/apis`, {
-			data: api
-		});
-		return {
-			status: response.status(),
-			data: response.ok() ? await response.json() : undefined,
-			error: response.ok() ? undefined : await response.text()
-		};
-	}
-
-	async getApi(id: string): Promise<ApiResponse<ApiEntity>> {
-		const response = await this.request.get(`${this.baseUrl}/apis/${id}`);
-		return {
-			status: response.status(),
-			data: response.ok() ? await response.json() : undefined,
-			error: response.ok() ? undefined : await response.text()
-		};
-	}
-
-	async updateApi(id: string, api: Partial<ApiEntity>): Promise<ApiResponse<ApiEntity>> {
-		const response = await this.request.patch(`${this.baseUrl}/apis/${id}`, {
-			data: api
-		});
-		return {
-			status: response.status(),
-			data: response.ok() ? await response.json() : undefined,
-			error: response.ok() ? undefined : await response.text()
-		};
-	}
-
-	async deleteApi(id: string): Promise<ApiResponse<void>> {
-		const response = await this.request.delete(`${this.baseUrl}/apis/${id}`);
-		return {
-			status: response.status(),
-			error: response.ok() ? undefined : await response.text()
-		};
-	}
-
-	// ============================================================================
-	// Namespaces API
-	// ============================================================================
-
-	async listNamespaces(): Promise<ApiResponse<ApiNamespace[]>> {
-		const response = await this.request.get(`${this.baseUrl}/namespaces`);
-		return {
-			status: response.status(),
-			data: response.ok() ? await response.json() : undefined,
-			error: response.ok() ? undefined : await response.text()
-		};
-	}
-
-	async createNamespace(namespace: Omit<ApiNamespace, 'id'>): Promise<ApiResponse<ApiNamespace>> {
-		const response = await this.request.post(`${this.baseUrl}/namespaces`, {
-			data: namespace
-		});
-		return {
-			status: response.status(),
-			data: response.ok() ? await response.json() : undefined,
-			error: response.ok() ? undefined : await response.text()
-		};
-	}
-
-	async getNamespace(id: string): Promise<ApiResponse<ApiNamespace>> {
-		const response = await this.request.get(`${this.baseUrl}/namespaces/${id}`);
-		return {
-			status: response.status(),
-			data: response.ok() ? await response.json() : undefined,
-			error: response.ok() ? undefined : await response.text()
-		};
-	}
-
-	async updateNamespace(
-		id: string,
-		namespace: Partial<ApiNamespace>
-	): Promise<ApiResponse<ApiNamespace>> {
-		const response = await this.request.patch(`${this.baseUrl}/namespaces/${id}`, {
-			data: namespace
-		});
-		return {
-			status: response.status(),
-			data: response.ok() ? await response.json() : undefined,
-			error: response.ok() ? undefined : await response.text()
-		};
-	}
-
-	async deleteNamespace(id: string): Promise<ApiResponse<void>> {
-		const response = await this.request.delete(`${this.baseUrl}/namespaces/${id}`);
-		return {
-			status: response.status(),
-			error: response.ok() ? undefined : await response.text()
-		};
-	}
-
-	// ============================================================================
-	// Endpoints API
-	// ============================================================================
-
-	async listEndpoints(apiId?: string): Promise<ApiResponse<ApiEndpoint[]>> {
-		const url = apiId ? `${this.baseUrl}/endpoints?api_id=${apiId}` : `${this.baseUrl}/endpoints`;
-		const response = await this.request.get(url);
-		return {
-			status: response.status(),
-			data: response.ok() ? await response.json() : undefined,
-			error: response.ok() ? undefined : await response.text()
-		};
-	}
-
-	async createEndpoint(endpoint: Omit<ApiEndpoint, 'id'>): Promise<ApiResponse<ApiEndpoint>> {
-		const response = await this.request.post(`${this.baseUrl}/endpoints`, {
-			data: endpoint
-		});
-		return {
-			status: response.status(),
-			data: response.ok() ? await response.json() : undefined,
-			error: response.ok() ? undefined : await response.text()
-		};
-	}
-
-	async getEndpoint(id: string): Promise<ApiResponse<ApiEndpoint>> {
-		const response = await this.request.get(`${this.baseUrl}/endpoints/${id}`);
-		return {
-			status: response.status(),
-			data: response.ok() ? await response.json() : undefined,
-			error: response.ok() ? undefined : await response.text()
-		};
-	}
-
-	async updateEndpoint(
-		id: string,
-		endpoint: Partial<ApiEndpoint>
-	): Promise<ApiResponse<ApiEndpoint>> {
-		const response = await this.request.patch(`${this.baseUrl}/endpoints/${id}`, {
-			data: endpoint
-		});
-		return {
-			status: response.status(),
-			data: response.ok() ? await response.json() : undefined,
-			error: response.ok() ? undefined : await response.text()
-		};
-	}
-
-	async deleteEndpoint(id: string): Promise<ApiResponse<void>> {
-		const response = await this.request.delete(`${this.baseUrl}/endpoints/${id}`);
-		return {
-			status: response.status(),
-			error: response.ok() ? undefined : await response.text()
-		};
-	}
-
-	// ============================================================================
-	// Cleanup Utilities
-	// ============================================================================
-
-	/**
-	 * Delete all entities matching a filter predicate
-	 * Useful for cleaning up E2E test data
-	 */
-	async cleanupFields(filter: (field: ApiField) => boolean): Promise<number> {
-		const response = await this.listFields();
-		if (!response.data) return 0;
-
-		const toDelete = response.data.filter(filter);
-		let deleted = 0;
-
-		for (const field of toDelete) {
-			const result = await this.deleteField(field.id);
-			if (result.status === 200 || result.status === 204) {
-				deleted++;
-			}
-		}
-
-		return deleted;
-	}
-
-	async cleanupObjects(filter: (obj: ApiObject) => boolean): Promise<number> {
-		const response = await this.listObjects();
-		if (!response.data) return 0;
-
-		const toDelete = response.data.filter(filter);
-		let deleted = 0;
-
-		for (const obj of toDelete) {
-			const result = await this.deleteObject(obj.id);
-			if (result.status === 200 || result.status === 204) {
-				deleted++;
-			}
-		}
-
-		return deleted;
-	}
-
-	async cleanupApis(filter: (api: ApiEntity) => boolean): Promise<number> {
-		const response = await this.listApis();
-		if (!response.data) return 0;
-
-		const toDelete = response.data.filter(filter);
-		let deleted = 0;
-
-		for (const api of toDelete) {
-			const result = await this.deleteApi(api.id);
-			if (result.status === 200 || result.status === 204) {
-				deleted++;
-			}
-		}
-
-		return deleted;
-	}
-
-	async cleanupNamespaces(filter: (ns: ApiNamespace) => boolean): Promise<number> {
-		const response = await this.listNamespaces();
-		if (!response.data) return 0;
-
-		const toDelete = response.data.filter(filter);
-		let deleted = 0;
-
-		for (const ns of toDelete) {
-			const result = await this.deleteNamespace(ns.id);
-			if (result.status === 200 || result.status === 204) {
-				deleted++;
-			}
-		}
-
-		return deleted;
+	async deleteAllNamespaces(): Promise<number> {
+		const { data } = await this.listNamespaces();
+		if (!data?.length) return 0;
+		let n = 0;
+		for (const ns of data) { const r = await this.deleteNamespace(ns.id); if (r.status === 200 || r.status === 204) n++; }
+		return n;
 	}
 }

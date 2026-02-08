@@ -3,9 +3,12 @@
  *
  * Encapsulates interactions with the fields page (/field-registry).
  * Handles search, filter, sort, view details, edit, and delete operations.
+ *
+ * All inter-action delays are controlled by E2E_ACTION_DELAY env var (default: 300ms).
  */
 
 import { type Page, type Locator, expect } from '@playwright/test';
+import { ACTION_DELAY_MS } from '../helpers/e2e-delays';
 
 export class FieldRegistryPage {
 	readonly page: Page;
@@ -117,12 +120,18 @@ export class FieldRegistryPage {
 		this.createDrawer = page.locator('[class*="fixed"][class*="right-0"]').filter({ has: page.locator('text=Create Field') });
 	}
 
+	/** Single configurable delay used after every action. */
+	private async delay() {
+		await this.page.waitForTimeout(ACTION_DELAY_MS);
+	}
+
 	/**
 	 * Navigate to the fields page
 	 */
 	async goto() {
-		await this.page.goto('/field-registry');
+		await this.page.goto('/field-registry', { waitUntil: 'networkidle' });
 		await this.pageTitle.waitFor({ state: 'visible' });
+		await this.delay();
 	}
 
 	/**
@@ -130,8 +139,7 @@ export class FieldRegistryPage {
 	 */
 	async search(query: string) {
 		await this.searchInput.fill(query);
-		// Wait for results to update
-		await this.page.waitForTimeout(300);
+		await this.delay();
 	}
 
 	/**
@@ -139,7 +147,7 @@ export class FieldRegistryPage {
 	 */
 	async clearSearch() {
 		await this.searchInput.clear();
-		await this.page.waitForTimeout(300);
+		await this.delay();
 	}
 
 	/**
@@ -155,8 +163,7 @@ export class FieldRegistryPage {
 	async clickRow(fieldName: string) {
 		const row = this.tableRows.filter({ hasText: fieldName }).first();
 		await row.click();
-		// Wait for drawer to open
-		await this.page.waitForTimeout(300);
+		await this.delay();
 	}
 
 	/**
@@ -172,9 +179,7 @@ export class FieldRegistryPage {
 	async closeDrawer() {
 		if (await this.isDrawerOpen()) {
 			await this.drawerCloseButton.click();
-			// Wait for drawer close animation to complete
-			await this.page.waitForTimeout(500);
-			// Wait for the form input to be hidden
+			await this.delay();
 			await this.fieldNameInput.waitFor({ state: 'hidden', timeout: 5000 });
 		}
 	}
@@ -191,6 +196,7 @@ export class FieldRegistryPage {
 	 */
 	async setFieldName(name: string) {
 		await this.fieldNameInput.fill(name);
+		await this.delay();
 	}
 
 	/**
@@ -205,6 +211,7 @@ export class FieldRegistryPage {
 	 */
 	async setFieldType(type: string) {
 		await this.fieldTypeSelect.selectOption(type);
+		await this.delay();
 	}
 
 	/**
@@ -219,6 +226,7 @@ export class FieldRegistryPage {
 	 */
 	async setFieldDescription(description: string) {
 		await this.fieldDescriptionTextarea.fill(description);
+		await this.delay();
 	}
 
 	/**
@@ -233,6 +241,7 @@ export class FieldRegistryPage {
 	 */
 	async setDefaultValue(value: string) {
 		await this.fieldDefaultValueInput.fill(value);
+		await this.delay();
 	}
 
 	/**
@@ -261,8 +270,9 @@ export class FieldRegistryPage {
 	 */
 	async save() {
 		await this.saveButton.click();
-		// Wait for save to complete and drawer to close (closeDelay is 300ms + animation time)
-		await this.page.waitForTimeout(600);
+		// Double delay: save triggers close animation which takes longer
+		await this.delay();
+		await this.delay();
 	}
 
 	/**
@@ -270,6 +280,7 @@ export class FieldRegistryPage {
 	 */
 	async undo() {
 		await this.undoButton.click();
+		await this.delay();
 	}
 
 	/**
@@ -277,6 +288,7 @@ export class FieldRegistryPage {
 	 */
 	async clickDelete() {
 		await this.deleteButton.click();
+		await this.delay();
 	}
 
 	/**
@@ -284,7 +296,7 @@ export class FieldRegistryPage {
 	 */
 	async confirmDelete() {
 		await this.deleteConfirmButton.click();
-		await this.page.waitForTimeout(300);
+		await this.delay();
 	}
 
 	/**
@@ -292,6 +304,7 @@ export class FieldRegistryPage {
 	 */
 	async cancelDelete() {
 		await this.deleteCancelButton.click();
+		await this.delay();
 	}
 
 	/**
@@ -299,23 +312,17 @@ export class FieldRegistryPage {
 	 * @param validatorName - Optional name of specific validator to select. If not provided, selects first available.
 	 */
 	async addValidator(validatorName?: string) {
-		// Click the input to open the dropdown
 		await this.validatorSelectorInput.click();
+		await this.delay();
 
-		// Wait for dropdown to populate
-		await this.page.waitForTimeout(200);
-
-		// Select a validator
 		if (validatorName) {
 			const option = this.validatorDropdownOptions.filter({ hasText: validatorName });
 			await option.first().click();
 		} else {
-			// Select first available validator if no specific name provided
 			await this.validatorDropdownOptions.first().click();
 		}
 
-		// Wait for selection to complete
-		await this.page.waitForTimeout(100);
+		await this.delay();
 	}
 
 	/**
@@ -331,6 +338,7 @@ export class FieldRegistryPage {
 	async removeValidator(index: number) {
 		const removeButton = this.validatorRows.nth(index).getByRole('button', { name: 'Remove validator' });
 		await removeButton.click();
+		await this.delay();
 	}
 
 	/**
@@ -338,7 +346,7 @@ export class FieldRegistryPage {
 	 */
 	async openFilters() {
 		await this.filterButton.click();
-		await this.page.waitForTimeout(200);
+		await this.delay();
 	}
 
 	/**
@@ -347,6 +355,7 @@ export class FieldRegistryPage {
 	async toggleFilterCheckbox(label: string) {
 		const checkbox = this.page.locator('label').filter({ hasText: label }).locator('input[type="checkbox"]');
 		await checkbox.click();
+		await this.delay();
 	}
 
 	/**
@@ -355,6 +364,7 @@ export class FieldRegistryPage {
 	async toggleFilterSwitch(label: string) {
 		const toggle = this.page.locator('label').filter({ hasText: label }).locator('button[role="switch"]');
 		await toggle.click();
+		await this.delay();
 	}
 
 	/**
@@ -362,6 +372,7 @@ export class FieldRegistryPage {
 	 */
 	async clearFilters() {
 		await this.clearFiltersButton.click();
+		await this.delay();
 	}
 
 	/**
@@ -370,8 +381,6 @@ export class FieldRegistryPage {
 	async sortByColumn(column: 'name' | 'type' | 'defaultValue' | 'usedInApis', withShift = false) {
 		const clickOptions = withShift ? { modifiers: ['Shift'] as ('Shift' | 'Alt' | 'Control' | 'Meta')[] } : undefined;
 
-		// Get fresh locator each time to avoid stale elements
-		// Click the button inside the th, which contains the label text
 		const headerMap = {
 			name: () => this.table.locator('thead th button').filter({ hasText: 'Field Name' }),
 			type: () => this.table.locator('thead th button').filter({ hasText: 'Type' }),
@@ -380,7 +389,7 @@ export class FieldRegistryPage {
 		};
 
 		await headerMap[column]().click(clickOptions);
-		await this.page.waitForTimeout(300);
+		await this.delay();
 	}
 
 	/**
@@ -493,8 +502,7 @@ export class FieldRegistryPage {
 	 */
 	async openCreateDrawer() {
 		await this.addFieldButton.click();
-		// Wait for drawer to open
-		await this.page.waitForTimeout(300);
+		await this.delay();
 	}
 
 	/**
@@ -516,10 +524,10 @@ export class FieldRegistryPage {
 	 */
 	async create() {
 		await this.createButton.click();
-		// Wait for create to complete and drawer to close (closeDelay is 300ms + animation time)
-		await this.page.waitForTimeout(600);
-		// Additionally wait for drawer to actually be hidden
+		// Double delay: create triggers close animation which takes longer
+		await this.delay();
 		await this.createDrawer.waitFor({ state: 'hidden', timeout: 5000 }).catch(() => {});
+		await this.delay();
 	}
 
 	/**
@@ -527,8 +535,7 @@ export class FieldRegistryPage {
 	 */
 	async cancelCreate() {
 		await this.cancelButton.click();
-		// Wait for drawer close animation
-		await this.page.waitForTimeout(500);
+		await this.delay();
 	}
 
 	/**

@@ -94,7 +94,7 @@ export class ApisPage {
 	 * Navigate to the APIs page
 	 */
 	async goto() {
-		await this.page.goto('/apis');
+		await this.page.goto('/apis', { waitUntil: 'networkidle' });
 		await this.pageTitle.waitFor({ state: 'visible' });
 	}
 
