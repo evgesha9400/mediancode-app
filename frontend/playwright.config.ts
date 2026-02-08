@@ -53,6 +53,7 @@ export default defineConfig({
 	reporter: [
 		['html', { outputFolder: 'playwright-report' }],
 		['list'],
+		['./tests/helpers/failure-reporter.ts'],
 		...(process.env.CI ? [['github'] as const] : [])
 	],
 
@@ -115,7 +116,7 @@ export default defineConfig({
 	webServer: {
 		command: `bun run build && bun run preview -- --host ${PREVIEW_HOST} --port ${PREVIEW_PORT}`,
 		port: PREVIEW_PORT,
-		reuseExistingServer: !process.env.CI,
+		reuseExistingServer: false,
 		stdout: 'ignore',
 		stderr: 'pipe',
 		env: {
