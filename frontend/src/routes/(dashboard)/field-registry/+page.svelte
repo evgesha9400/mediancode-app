@@ -40,6 +40,7 @@
   let previousFieldType = $state<string | null>(null);
   let isCreating = $state(false);
   let isSaving = $state(false);
+  let isDeleting = $state(false);
 
   let primitiveTypes = $derived(getPrimitiveTypes());
 
@@ -264,19 +265,19 @@
   }
 
   async function handleDelete() {
-    if (!editedField || isSaving) return;
+    if (!editedField || isDeleting) return;
 
     const fieldName = editedField.name;
-    isSaving = true;
+    isDeleting = true;
 
     const result = await deleteFieldAction(editedField.id);
 
     if (result.success) {
       closeDrawer();
-      isSaving = false;
+      isDeleting = false;
       showToast(`Field "${fieldName}" deleted successfully`, 'success', 3000);
     } else {
-      isSaving = false;
+      isDeleting = false;
       showToast(result.error || 'Failed to delete field', 'error', 5000);
     }
   }
@@ -690,10 +691,10 @@
             <button
               type="button"
               onclick={handleDelete}
-              disabled={isSaving}
-              class="flex-1 px-3 py-1.5 rounded-md text-sm font-medium transition-colors {isSaving ? 'bg-red-400 text-white cursor-not-allowed' : 'bg-red-600 text-white hover:bg-red-700 cursor-pointer'}"
+              disabled={isDeleting}
+              class="flex-1 px-3 py-1.5 rounded-md text-sm font-medium transition-colors {isDeleting ? 'bg-red-400 text-white cursor-not-allowed' : 'bg-red-600 text-white hover:bg-red-700 cursor-pointer'}"
             >
-              {#if isSaving}
+              {#if isDeleting}
                 <i class="fa-solid fa-spinner fa-spin mr-1"></i>
                 Deleting...
               {:else}
@@ -703,8 +704,8 @@
             <button
               type="button"
               onclick={() => listState.showDeleteConfirm = false}
-              disabled={isSaving}
-              class="flex-1 px-3 py-1.5 border rounded-md text-sm font-medium transition-colors {isSaving ? 'border-mono-200 text-mono-400 cursor-not-allowed bg-mono-50' : 'border-mono-300 text-mono-700 hover:bg-mono-50 cursor-pointer'}"
+              disabled={isDeleting}
+              class="flex-1 px-3 py-1.5 border rounded-md text-sm font-medium transition-colors {isDeleting ? 'border-mono-200 text-mono-400 cursor-not-allowed bg-mono-50' : 'border-mono-300 text-mono-700 hover:bg-mono-50 cursor-pointer'}"
             >
               Cancel
             </button>

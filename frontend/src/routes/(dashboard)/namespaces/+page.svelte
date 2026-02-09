@@ -56,6 +56,7 @@
   let newNamespaceDescription = $state('');
   let createErrors = $state<Record<string, string>>({});
   let isSaving = $state(false);
+  let isDeleting = $state(false);
 
   // Create list view state (owns all reactive state)
   const listState = createListViewState<Namespace, NamespaceFilterState>({
@@ -163,19 +164,19 @@
   }
 
   async function handleDelete() {
-    if (!editedNamespace || isSaving) return;
+    if (!editedNamespace || isDeleting) return;
 
     const namespaceName = editedNamespace.name;
-    isSaving = true;
+    isDeleting = true;
 
     const result = await deleteNamespaceAction(editedNamespace.id);
 
     if (result.success) {
       closeDrawer();
-      isSaving = false;
+      isDeleting = false;
       showToast(`Namespace "${namespaceName}" deleted successfully`, 'success', 3000);
     } else {
-      isSaving = false;
+      isDeleting = false;
       showToast(result.error || 'Failed to delete namespace', 'error', 5000);
     }
   }
@@ -472,14 +473,21 @@
             <button
               type="button"
               onclick={handleDelete}
-              class="flex-1 px-3 py-1.5 bg-red-600 text-white rounded-md hover:bg-red-700 text-sm font-medium"
+              disabled={isDeleting}
+              class="flex-1 px-3 py-1.5 rounded-md text-sm font-medium transition-colors {isDeleting ? 'bg-red-400 text-white cursor-not-allowed' : 'bg-red-600 text-white hover:bg-red-700 cursor-pointer'}"
             >
-              Yes, Delete
+              {#if isDeleting}
+                <i class="fa-solid fa-spinner fa-spin mr-1"></i>
+                Deleting...
+              {:else}
+                Yes, Delete
+              {/if}
             </button>
             <button
               type="button"
               onclick={() => listState.showDeleteConfirm = false}
-              class="flex-1 px-3 py-1.5 border border-mono-300 text-mono-700 rounded-md hover:bg-mono-50 text-sm font-medium"
+              disabled={isDeleting}
+              class="flex-1 px-3 py-1.5 border rounded-md text-sm font-medium transition-colors {isDeleting ? 'border-mono-200 text-mono-400 cursor-not-allowed bg-mono-50' : 'border-mono-300 text-mono-700 hover:bg-mono-50 cursor-pointer'}"
             >
               Cancel
             </button>

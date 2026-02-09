@@ -70,7 +70,6 @@ median-code/
 ├── api-spec.yaml                    # OpenAPI 3.0 specification
 ├── tsconfig.json                    # TypeScript configuration
 ├── CLAUDE.md                        # AI assistant guidance
-├── AGENTS.md                        # AI agent guidance
 └── README.md                        # This file
 ```
 
