@@ -141,20 +141,15 @@ export async function updateFieldAction(
 }
 
 /**
- * Delete a field via API with optimistic update
+ * Delete a field via API (pessimistic delete - waits for server confirmation)
  */
 export async function deleteFieldAction(id: string): Promise<ActionResult<void>> {
-	const previousFields = get(fieldsStore);
-
-	// Optimistic delete
-	fieldsStore.update(fields => fields.filter(f => f.id !== id));
-
 	try {
 		await deleteFieldApi(id);
+		// Only update store after successful API response
+		fieldsStore.update(fields => fields.filter(f => f.id !== id));
 		return { success: true };
 	} catch (err) {
-		// Rollback on failure
-		fieldsStore.set(previousFields);
 		const message = handleApiError(err, 'delete field');
 		return { success: false, error: message };
 	}
@@ -206,19 +201,15 @@ export async function updateObjectAction(
 }
 
 /**
- * Delete an object via API with optimistic update
+ * Delete an object via API (pessimistic delete - waits for server confirmation)
  */
 export async function deleteObjectAction(id: string): Promise<ActionResult<void>> {
-	const previousObjects = get(objectsStore);
-
-	// Optimistic delete
-	objectsStore.update(objects => objects.filter(o => o.id !== id));
-
 	try {
 		await deleteObjectApi(id);
+		// Only update store after successful API response
+		objectsStore.update(objects => objects.filter(o => o.id !== id));
 		return { success: true };
 	} catch (err) {
-		objectsStore.set(previousObjects);
 		const message = handleApiError(err, 'delete object');
 		return { success: false, error: message };
 	}
@@ -276,25 +267,18 @@ export async function updateApiAction(
 }
 
 /**
- * Delete an API via API with optimistic update
+ * Delete an API via API (pessimistic delete - waits for server confirmation)
  * Also removes associated endpoints from local stores
  * Note: Tags are now embedded in APIs, so they are deleted with the API
  */
 export async function deleteApiAction(id: string): Promise<ActionResult<void>> {
-	const previousApis = get(apisStore);
-	const previousEndpoints = get(endpointsStore);
-
-	// Optimistic delete (including related endpoints)
-	apisStore.update(apis => apis.filter(a => a.id !== id));
-	endpointsStore.update(endpoints => endpoints.filter(e => e.apiId !== id));
-
 	try {
 		await deleteApiApi(id);
+		// Only update stores after successful API response
+		apisStore.update(apis => apis.filter(a => a.id !== id));
+		endpointsStore.update(endpoints => endpoints.filter(e => e.apiId !== id));
 		return { success: true };
 	} catch (err) {
-		// Rollback all stores
-		apisStore.set(previousApis);
-		endpointsStore.set(previousEndpoints);
 		const message = handleApiError(err, 'delete API');
 		return { success: false, error: message };
 	}
@@ -352,19 +336,15 @@ export async function updateEndpointAction(
 }
 
 /**
- * Delete an endpoint via API with optimistic update
+ * Delete an endpoint via API (pessimistic delete - waits for server confirmation)
  */
 export async function deleteEndpointAction(id: string): Promise<ActionResult<void>> {
-	const previousEndpoints = get(endpointsStore);
-
-	// Optimistic delete
-	endpointsStore.update(endpoints => endpoints.filter(e => e.id !== id));
-
 	try {
 		await deleteEndpointApi(id);
+		// Only update store after successful API response
+		endpointsStore.update(endpoints => endpoints.filter(e => e.id !== id));
 		return { success: true };
 	} catch (err) {
-		endpointsStore.set(previousEndpoints);
 		const message = handleApiError(err, 'delete endpoint');
 		return { success: false, error: message };
 	}
@@ -416,29 +396,21 @@ export async function updateNamespaceAction(
 }
 
 /**
- * Delete a namespace via API with optimistic update
+ * Delete a namespace via API (pessimistic delete - waits for server confirmation)
  */
 export async function deleteNamespaceAction(id: string): Promise<ActionResult<void>> {
-	const previousNamespaces = get(namespacesStore);
 	const wasActive = get(activeNamespaceId) === id;
-
-	// Optimistic delete
-	namespacesStore.update(namespaces => namespaces.filter(ns => ns.id !== id));
-
-	// If this was the active namespace, switch to global
-	if (wasActive) {
-		activeNamespaceId.set(GLOBAL_NAMESPACE_ID);
-	}
 
 	try {
 		await deleteNamespaceApi(id);
+		// Only update stores after successful API response
+		namespacesStore.update(namespaces => namespaces.filter(ns => ns.id !== id));
+		// If this was the active namespace, switch to global
+		if (wasActive) {
+			activeNamespaceId.set(GLOBAL_NAMESPACE_ID);
+		}
 		return { success: true };
 	} catch (err) {
-		// Rollback
-		namespacesStore.set(previousNamespaces);
-		if (wasActive) {
-			activeNamespaceId.set(id);
-		}
 		const message = handleApiError(err, 'delete namespace');
 		return { success: false, error: message };
 	}

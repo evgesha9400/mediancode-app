@@ -690,14 +690,21 @@
             <button
               type="button"
               onclick={handleDelete}
-              class="flex-1 px-3 py-1.5 bg-red-600 text-white rounded-md hover:bg-red-700 text-sm font-medium"
+              disabled={isSaving}
+              class="flex-1 px-3 py-1.5 rounded-md text-sm font-medium transition-colors {isSaving ? 'bg-red-400 text-white cursor-not-allowed' : 'bg-red-600 text-white hover:bg-red-700 cursor-pointer'}"
             >
-              Yes, Delete
+              {#if isSaving}
+                <i class="fa-solid fa-spinner fa-spin mr-1"></i>
+                Deleting...
+              {:else}
+                Yes, Delete
+              {/if}
             </button>
             <button
               type="button"
               onclick={() => listState.showDeleteConfirm = false}
-              class="flex-1 px-3 py-1.5 border border-mono-300 text-mono-700 rounded-md hover:bg-mono-50 text-sm font-medium"
+              disabled={isSaving}
+              class="flex-1 px-3 py-1.5 border rounded-md text-sm font-medium transition-colors {isSaving ? 'border-mono-200 text-mono-400 cursor-not-allowed bg-mono-50' : 'border-mono-300 text-mono-700 hover:bg-mono-50 cursor-pointer'}"
             >
               Cancel
             </button>
