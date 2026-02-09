@@ -4,7 +4,12 @@
  * Encapsulates interactions with the fields page (/field-registry).
  * Handles search, filter, sort, view details, edit, and delete operations.
  *
- * All inter-action delays are controlled by E2E_ACTION_DELAY env var (default: 300ms).
+ * Actions that involve API calls or UI transitions (drawer open/close, confirmation
+ * dialogs) wait for the actual state change rather than using fixed timeouts.
+ * This makes tests reliable regardless of network latency to the backend.
+ *
+ * Purely client-side operations (form fills, search, filter, sort) use a
+ * configurable delay for visual pacing (E2E_ACTION_DELAY env var, default: 300ms).
  */
 
 import { type Page, type Locator, expect } from '@playwright/test';
@@ -158,12 +163,12 @@ export class FieldRegistryPage {
 	}
 
 	/**
-	 * Click a table row by field name
+	 * Click a table row by field name and wait for the edit drawer to open.
 	 */
 	async clickRow(fieldName: string) {
 		const row = this.tableRows.filter({ hasText: fieldName }).first();
 		await row.click();
-		await this.delay();
+		await this.drawer.waitFor({ state: 'visible', timeout: 5000 });
 	}
 
 	/**
@@ -266,13 +271,14 @@ export class FieldRegistryPage {
 	}
 
 	/**
-	 * Click save button
+	 * Click save button and wait for drawer to close.
+	 * The save triggers an API call, then closes the drawer on success.
+	 * We wait for the drawer to actually disappear rather than using fixed timeouts,
+	 * since the API round-trip time varies (especially in CI hitting a remote backend).
 	 */
 	async save() {
 		await this.saveButton.click();
-		// Double delay: save triggers close animation which takes longer
-		await this.delay();
-		await this.delay();
+		await this.drawer.waitFor({ state: 'hidden', timeout: 10000 });
 	}
 
 	/**
@@ -284,36 +290,40 @@ export class FieldRegistryPage {
 	}
 
 	/**
-	 * Click delete button (first step)
+	 * Click delete button and wait for confirmation UI to appear.
 	 */
 	async clickDelete() {
 		await this.deleteButton.click();
-		await this.delay();
+		await this.deleteConfirmButton.waitFor({ state: 'visible', timeout: 5000 });
 	}
 
 	/**
-	 * Confirm delete
+	 * Confirm delete and wait for drawer to close.
+	 * The delete triggers a DELETE API call, then closes the drawer on success.
+	 * We wait for the drawer to actually disappear rather than using fixed timeouts,
+	 * since the API round-trip time varies (especially in CI hitting a remote backend).
 	 */
 	async confirmDelete() {
 		await this.deleteConfirmButton.click();
-		await this.delay();
+		await this.drawer.waitFor({ state: 'hidden', timeout: 10000 });
 	}
 
 	/**
-	 * Cancel delete
+	 * Cancel delete and wait for normal delete button to reappear.
 	 */
 	async cancelDelete() {
 		await this.deleteCancelButton.click();
-		await this.delay();
+		await this.deleteButton.waitFor({ state: 'visible', timeout: 5000 });
 	}
 
 	/**
-	 * Add a validator using the dropdown selector
+	 * Add a validator using the dropdown selector.
+	 * Waits for dropdown options to appear before selecting.
 	 * @param validatorName - Optional name of specific validator to select. If not provided, selects first available.
 	 */
 	async addValidator(validatorName?: string) {
 		await this.validatorSelectorInput.click();
-		await this.delay();
+		await this.validatorDropdownOptions.first().waitFor({ state: 'visible', timeout: 5000 });
 
 		if (validatorName) {
 			const option = this.validatorDropdownOptions.filter({ hasText: validatorName });
@@ -342,11 +352,11 @@ export class FieldRegistryPage {
 	}
 
 	/**
-	 * Open filter panel
+	 * Open filter panel and wait for it to appear.
 	 */
 	async openFilters() {
 		await this.filterButton.click();
-		await this.delay();
+		await this.filterPanel.waitFor({ state: 'visible', timeout: 5000 });
 	}
 
 	/**
@@ -498,11 +508,11 @@ export class FieldRegistryPage {
 	// ============================================================================
 
 	/**
-	 * Click the Add Field button to open creation drawer
+	 * Click the Add Field button and wait for the creation drawer to open.
 	 */
 	async openCreateDrawer() {
 		await this.addFieldButton.click();
-		await this.delay();
+		await this.createDrawer.waitFor({ state: 'visible', timeout: 5000 });
 	}
 
 	/**
@@ -520,22 +530,22 @@ export class FieldRegistryPage {
 	}
 
 	/**
-	 * Click create button
+	 * Click create button and wait for drawer to close.
+	 * The create triggers a POST API call, then closes the drawer on success.
+	 * We wait for the drawer to actually disappear rather than using fixed timeouts,
+	 * since the API round-trip time varies (especially in CI hitting a remote backend).
 	 */
 	async create() {
 		await this.createButton.click();
-		// Double delay: create triggers close animation which takes longer
-		await this.delay();
-		await this.createDrawer.waitFor({ state: 'hidden', timeout: 5000 }).catch(() => {});
-		await this.delay();
+		await this.createDrawer.waitFor({ state: 'hidden', timeout: 10000 });
 	}
 
 	/**
-	 * Cancel creation (close drawer without creating)
+	 * Cancel creation and wait for drawer to close.
 	 */
 	async cancelCreate() {
 		await this.cancelButton.click();
-		await this.delay();
+		await this.createDrawer.waitFor({ state: 'hidden', timeout: 5000 });
 	}
 
 	/**

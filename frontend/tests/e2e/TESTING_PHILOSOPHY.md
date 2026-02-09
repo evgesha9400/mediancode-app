@@ -148,12 +148,90 @@ Every entity lifecycle test follows this exact structure:
 | Cross-entity setup | Hidden dependencies. Field test breaks when namespace API changes. |
 | Cleanup at end | Hides failures. Creates flaky subsequent runs. |
 | Testing features in isolation | Misses real user workflows. Wastes time duplicating setup. |
+| Fixed delays after API actions | Works locally, breaks in CI. Use `waitFor()` for state transitions. |
 
 ---
 
-## Timing Control
+## Timing Control: Wait for State, Not for Time
 
-All page object delays are controlled by a single env var:
+**The #1 cause of flaky E2E tests is waiting a fixed duration instead of waiting for the actual state change.** Our CRUD tests run against a deployed backend (`api.dev.mediancode.com`). Network latency varies between local dev (~50ms) and CI (~300-800ms). A fixed 300ms delay that works locally will fail in CI.
+
+### The Two-Tier Rule
+
+Every page object method falls into one of two categories:
+
+#### Tier 1: State-based waits (mandatory for transitions)
+
+Any action that triggers a **UI transition** or an **API round-trip** MUST wait for the resulting state change using Playwright's `waitFor()`. Never use a fixed delay for these.
+
+```ts
+// CORRECT — wait for the actual state change
+async clickRow(fieldName: string) {
+  const row = this.tableRows.filter({ hasText: fieldName }).first();
+  await row.click();
+  await this.drawer.waitFor({ state: 'visible', timeout: 5000 });
+}
+
+async save() {
+  await this.saveButton.click();
+  await this.drawer.waitFor({ state: 'hidden', timeout: 10000 });
+}
+
+async confirmDelete() {
+  await this.deleteConfirmButton.click();
+  await this.drawer.waitFor({ state: 'hidden', timeout: 10000 });
+}
+
+// WRONG — blind timeout that breaks in CI
+async clickRow(fieldName: string) {
+  await row.click();
+  await this.delay(); // 300ms might not be enough for drawer animation
+}
+```
+
+**Actions that require state-based waits:**
+
+| Action | Wait for |
+|---|---|
+| Click table row (open drawer) | `drawer.waitFor({ state: 'visible' })` |
+| Open create drawer | `createDrawer.waitFor({ state: 'visible' })` |
+| Save (PUT API call) | `drawer.waitFor({ state: 'hidden' })` |
+| Create (POST API call) | `createDrawer.waitFor({ state: 'hidden' })` |
+| Confirm delete (DELETE API call) | `drawer.waitFor({ state: 'hidden' })` |
+| Click delete (show confirm UI) | `deleteConfirmButton.waitFor({ state: 'visible' })` |
+| Cancel delete (hide confirm UI) | `deleteButton.waitFor({ state: 'visible' })` |
+| Cancel create (close drawer) | `createDrawer.waitFor({ state: 'hidden' })` |
+| Close drawer | `fieldNameInput.waitFor({ state: 'hidden' })` |
+| Open filter panel | `filterPanel.waitFor({ state: 'visible' })` |
+| Open dropdown | `dropdownOptions.first().waitFor({ state: 'visible' })` |
+
+**Timeout values:**
+- `10000` (10s) for actions involving API round-trips (create, save, delete)
+- `5000` (5s) for purely local UI transitions (drawer open/close, dropdowns)
+
+#### Tier 2: Pacing delays (for instant client-side operations)
+
+Actions that are **purely client-side and instantaneous** (form fills, search, filter toggles, sort clicks) use a configurable `this.delay()` for visual pacing. These never fail due to timing — they just make headed mode watchable.
+
+```ts
+// OK — client-side operation, delay is just visual pacing
+async search(query: string) {
+  await this.searchInput.fill(query);
+  await this.delay();
+}
+
+async setFieldName(name: string) {
+  await this.fieldNameInput.fill(name);
+  await this.delay();
+}
+
+async sortByColumn(column: string) {
+  await headerMap[column]().click();
+  await this.delay();
+}
+```
+
+The delay is controlled by `E2E_ACTION_DELAY` env var:
 
 ```
 E2E_ACTION_DELAY=300    # default — enough for animations
@@ -161,9 +239,14 @@ E2E_ACTION_DELAY=1500   # observation mode — watch in --headed
 E2E_ACTION_DELAY=100    # fast CI
 ```
 
-No hardcoded `waitForTimeout` values anywhere. Every page object method calls `this.delay()` which reads `ACTION_DELAY_MS` from the env.
+### How to Decide: Tier 1 or Tier 2?
 
-No test-level timeouts. `actionTimeout: 3000` catches stuck actions. The total test duration is deterministic: sum of actions + delays.
+Ask: **"Does this action cause something to appear, disappear, or involve an API call?"**
+
+- **Yes** → Tier 1: use `waitFor({ state: 'visible' | 'hidden' })`
+- **No** → Tier 2: use `this.delay()`
+
+When in doubt, use Tier 1. A `waitFor` on an already-visible element resolves instantly, so it's never slower than a delay. It's only more reliable.
 
 ---
 
@@ -204,4 +287,18 @@ When adding a test for a new entity (e.g., objects):
 4. **Use only page object methods.** If a method doesn't exist, add it to the page object first.
 5. **Call `api.deleteAll{Entity}()` at the start.** If the method doesn't exist, add it to `E2EApiClient`.
 6. **No afterAll, no afterEach, no try/catch, no retries in the spec file.**
-7. **Run with `E2E_ACTION_DELAY=1500 --headed` first** to visually verify the flow makes sense.
+7. **Follow the two-tier timing rule** in every page object method. If it opens/closes a drawer or makes an API call, use `waitFor`. If it fills a form or toggles a filter, use `this.delay()`. See "Timing Control" above.
+8. **Run with `E2E_ACTION_DELAY=1500 --headed` first** to visually verify the flow makes sense.
+
+### Page Object Checklist
+
+When building a new page object, verify every method:
+
+- [ ] `clickRow()` / open detail → waits for drawer/panel to be `visible`
+- [ ] `create()` / `save()` → waits for drawer to be `hidden` (timeout: 10s for API)
+- [ ] `confirmDelete()` → waits for drawer to be `hidden` (timeout: 10s for API)
+- [ ] `clickDelete()` → waits for confirmation UI to be `visible`
+- [ ] `openCreateDrawer()` → waits for create drawer to be `visible`
+- [ ] `openFilters()` → waits for filter panel to be `visible`
+- [ ] `openDropdown()` → waits for dropdown options to be `visible`
+- [ ] Form fills / search / filter / sort → uses `this.delay()` only
