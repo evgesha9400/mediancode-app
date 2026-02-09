@@ -138,9 +138,8 @@
       description: editedNamespace.description
     });
 
-    isSaving = false;
-
     if (!result.success) {
+      isSaving = false;
       if (result.error?.includes('already exists')) {
         listState.validationErrors = { name: result.error };
       } else {
@@ -153,6 +152,7 @@
     listState.originalItem = JSON.parse(JSON.stringify(result.data!));
     showToast(`Namespace "${namespaceName}" updated successfully`, 'success', 3000);
     closeDrawer();
+    isSaving = false;
   }
 
   function handleUndo() {
@@ -170,12 +170,12 @@
 
     const result = await deleteNamespaceAction(editedNamespace.id);
 
-    isSaving = false;
-
     if (result.success) {
       closeDrawer();
+      isSaving = false;
       showToast(`Namespace "${namespaceName}" deleted successfully`, 'success', 3000);
     } else {
+      isSaving = false;
       showToast(result.error || 'Failed to delete namespace', 'error', 5000);
     }
   }

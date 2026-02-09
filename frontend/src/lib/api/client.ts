@@ -92,9 +92,10 @@ export async function apiClient<T>(
 ): Promise<T> {
 	const { body, skipAuth = false, ...fetchOptions } = options;
 
-	// Build headers
+	// Build headers — only set Content-Type when there's a body to avoid
+	// unnecessary CORS preflights on GET/DELETE requests
 	const headers: HeadersInit = {
-		'Content-Type': 'application/json',
+		...(body ? { 'Content-Type': 'application/json' } : {}),
 		...(options.headers || {})
 	};
 

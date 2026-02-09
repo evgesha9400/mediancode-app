@@ -206,9 +206,8 @@
       validators: editedField.validators
     });
 
-    isSaving = false;
-
     if (!result.success) {
+      isSaving = false;
       if (result.error?.includes('already exists')) {
         listState.validationErrors = { name: result.error };
       } else {
@@ -221,6 +220,7 @@
     listState.originalItem = JSON.parse(JSON.stringify(result.data!));
     showToast(`Field "${fieldName}" updated successfully`, 'success', 3000);
     closeDrawer();
+    isSaving = false;
   }
 
   async function handleCreate() {
@@ -237,9 +237,8 @@
       validators: editedField.validators
     });
 
-    isSaving = false;
-
     if (!result.success) {
+      isSaving = false;
       if (result.error?.includes('already exists')) {
         listState.validationErrors = { name: result.error };
       } else {
@@ -253,6 +252,7 @@
     // Close drawer after successful creation (matches object builder behavior)
     isCreating = false;
     closeDrawer();
+    isSaving = false;
   }
 
   function handleUndo() {
@@ -271,12 +271,12 @@
 
     const result = await deleteFieldAction(editedField.id);
 
-    isSaving = false;
-
     if (result.success) {
       closeDrawer();
+      isSaving = false;
       showToast(`Field "${fieldName}" deleted successfully`, 'success', 3000);
     } else {
+      isSaving = false;
       showToast(result.error || 'Failed to delete field', 'error', 5000);
     }
   }

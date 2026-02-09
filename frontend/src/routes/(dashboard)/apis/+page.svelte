@@ -91,12 +91,12 @@
 
     const result = await deleteApiAction(selectedApi.id);
 
-    isDeleting = false;
-
     if (result.success) {
       listState.closeDrawer();
+      isDeleting = false;
       showToast(`API "${apiTitle}" deleted successfully`, 'success', 3000);
     } else {
+      isDeleting = false;
       showToast(result.error || 'Failed to delete API', 'error', 5000);
     }
   }

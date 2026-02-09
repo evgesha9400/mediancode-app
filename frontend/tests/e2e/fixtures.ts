@@ -36,8 +36,18 @@ export const authenticatedTest = base.extend<
 	],
 	_clerkAuth: [
 		async ({ page }, use) => {
-			// Log failed network requests for debugging
+			// Track successful API responses to filter spurious requestfailed events.
+			// Chromium can emit both 'response' and 'requestfailed' (ERR_ABORTED)
+			// for the same CORS request during HTTP/2 stream cleanup.
+			const succeededRequests = new Set<string>();
+
+			// Log failed network requests for debugging (skip if already succeeded)
 			page.on('requestfailed', (req) => {
+				const key = `${req.method()} ${req.url()}`;
+				if (succeededRequests.has(key)) {
+					succeededRequests.delete(key);
+					return; // Already got a successful response — this is just cleanup noise
+				}
 				console.log(`[NET FAIL] ${req.method()} ${req.url()} — ${req.failure()?.errorText}`);
 			});
 
@@ -45,6 +55,8 @@ export const authenticatedTest = base.extend<
 			page.on('response', (resp) => {
 				const url = resp.url();
 				if (url.includes('api.dev.mediancode.com') || url.includes('localhost:8000')) {
+					const key = `${resp.request().method()} ${url}`;
+					if (resp.ok()) succeededRequests.add(key);
 					console.log(
 						`[API RESP] ${resp.request().method()} ${url} → ${resp.status()}`
 					);

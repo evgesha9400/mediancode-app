@@ -147,9 +147,8 @@
       fields: cleanObject.fields
     });
 
-    isSaving = false;
-
     if (!result.success) {
+      isSaving = false;
       if (result.error?.includes('already exists')) {
         listState.validationErrors = { name: result.error };
       } else {
@@ -162,6 +161,7 @@
     listState.originalItem = JSON.parse(JSON.stringify(result.data!));
     showToast(`Object "${objectName}" updated successfully`, 'success', 3000);
     closeDrawer();
+    isSaving = false;
   }
 
   async function handleCreate() {
@@ -176,9 +176,8 @@
       fields: editedObject.fields
     });
 
-    isSaving = false;
-
     if (!result.success) {
+      isSaving = false;
       if (result.error?.includes('already exists')) {
         listState.validationErrors = { name: result.error };
       } else {
@@ -192,6 +191,7 @@
     // Close drawer after successful creation
     isCreating = false;
     closeDrawer();
+    isSaving = false;
   }
 
   function handleUndo() {
@@ -209,12 +209,12 @@
 
     const result = await deleteObjectAction(editedObject.id);
 
-    isSaving = false;
-
     if (result.success) {
       closeDrawer();
+      isSaving = false;
       showToast(`Object "${objectName}" deleted successfully`, 'success', 3000);
     } else {
+      isSaving = false;
       showToast(result.error || 'Failed to delete object', 'error', 5000);
     }
   }
