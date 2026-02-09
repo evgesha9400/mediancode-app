@@ -39,5 +39,5 @@ bun run test:e2e:crud
 
 - `E2E_TEST_USER_EMAIL` - Pre-created test user email
 - `E2E_TEST_USER_PASSWORD` - Test user password
-- `E2E_API_BASE_URL` - Backend API URL
+- `PUBLIC_API_BASE_URL` - Backend API URL
 - `CLERK_SECRET_KEY` - Required for setup project (`@clerk/testing` token)

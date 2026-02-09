@@ -36,18 +36,18 @@ export const authenticatedTest = base.extend<
 	],
 	_clerkAuth: [
 		async ({ page }, use) => {
-			// Log failed network requests to diagnose issues
+			// Log failed network requests for debugging
 			page.on('requestfailed', (req) => {
 				console.log(`[NET FAIL] ${req.method()} ${req.url()} — ${req.failure()?.errorText}`);
 			});
 
-			// Log API preflight & response headers for CORS debugging
+			// Log API responses for debugging
 			page.on('response', (resp) => {
 				const url = resp.url();
-				if (url.includes('api.dev.mediancode.com')) {
-					const status = resp.status();
-					const headers = resp.headers();
-					console.log(`[API RESP] ${resp.request().method()} ${url} → ${status} | acao=${headers['access-control-allow-origin']} | acah=${headers['access-control-allow-headers']}`);
+				if (url.includes('api.dev.mediancode.com') || url.includes('localhost:8000')) {
+					console.log(
+						`[API RESP] ${resp.request().method()} ${url} → ${resp.status()}`
+					);
 				}
 			});
 

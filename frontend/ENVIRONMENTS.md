@@ -68,7 +68,7 @@ CI tests run on every push to `develop` and `main`. Configuration lives in Setti
 | Variable | Value | Used By |
 |----------|-------|---------|
 | `PUBLIC_CLERK_PUBLISHABLE_KEY` | Clerk Dev publishable key (`pk_test_...`) | All Playwright tests |
-| `E2E_API_BASE_URL` | `https://api.dev.mediancode.com/v1` | CRUD tests |
+| `PUBLIC_API_BASE_URL` | `https://api.dev.mediancode.com/v1` | Build + CRUD tests |
 
 **Repository Secrets** (hidden, masked in logs):
 
@@ -106,4 +106,4 @@ When setting up a new service or updating configuration:
 - [ ] **Clerk**: Ensure Development and Production instances have correct redirect URLs
 - [ ] **Railway**: Ensure CORS allows `dev.mediancode.com` (dev) and `app.mediancode.com` (prod)
 - [ ] **GitHub**: Branch protection on `main`, deploy workflows for both branches
-- [ ] **GitHub Actions**: Set repository variables (`PUBLIC_CLERK_PUBLISHABLE_KEY`, `E2E_API_BASE_URL`) and secrets (`CLERK_SECRET_KEY`, `E2E_TEST_USER_EMAIL`, `E2E_TEST_USER_PASSWORD`)
+- [ ] **GitHub Actions**: Set repository variables (`PUBLIC_CLERK_PUBLISHABLE_KEY`, `PUBLIC_API_BASE_URL`) and secrets (`CLERK_SECRET_KEY`, `E2E_TEST_USER_EMAIL`, `E2E_TEST_USER_PASSWORD`)

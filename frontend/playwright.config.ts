@@ -124,7 +124,7 @@ export default defineConfig({
 			PUBLIC_CLERK_PUBLISHABLE_KEY:
 				process.env.PUBLIC_CLERK_PUBLISHABLE_KEY || 'pk_test_placeholder',
 			PUBLIC_CLERK_MOCK_MODE: 'false',
-			PUBLIC_API_BASE_URL: process.env.E2E_API_BASE_URL || 'https://api.dev.mediancode.com/v1'
+			PUBLIC_API_BASE_URL: process.env.PUBLIC_API_BASE_URL || 'http://localhost:8000/v1'
 		}
 	}
 });

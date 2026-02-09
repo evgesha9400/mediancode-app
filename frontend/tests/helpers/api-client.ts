@@ -7,7 +7,7 @@
 
 import type { Page, APIRequestContext } from '@playwright/test';
 
-const API_BASE_URL = process.env.E2E_API_BASE_URL || 'https://api.dev.mediancode.com/v1';
+const API_BASE_URL = process.env.PUBLIC_API_BASE_URL || 'http://localhost:8000/v1';
 
 interface ApiResponse<T> {
 	data?: T;

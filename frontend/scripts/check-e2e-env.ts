@@ -33,9 +33,9 @@ const requirements: EnvRequirement[] = [
 		example: 'SecurePassword123!'
 	},
 	{
-		name: 'E2E_API_BASE_URL',
+		name: 'PUBLIC_API_BASE_URL',
 		required: false,
-		description: 'Backend API URL (defaults to dev)',
+		description: 'Backend API URL (defaults to localhost)',
 		example: 'http://localhost:8000/v1 or https://api.dev.mediancode.com/v1'
 	},
 	{
@@ -94,13 +94,13 @@ if (missing.length > 0) {
 	console.error('```\n');
 
 	console.error('💡 Tip: For local development, you can run the backend locally:');
-	console.error('   E2E_API_BASE_URL=http://localhost:8000/v1\n');
+	console.error('   PUBLIC_API_BASE_URL=http://localhost:8000/v1\n');
 
 	process.exit(1);
 }
 
 // Show which backend we're testing against
-const apiUrl = process.env.E2E_API_BASE_URL || 'https://api.dev.mediancode.com/v1';
+const apiUrl = process.env.PUBLIC_API_BASE_URL || 'https://api.dev.mediancode.com/v1';
 const isLocal = apiUrl.includes('localhost') || apiUrl.includes('127.0.0.1');
 
 console.log(`🎯 Testing against: ${apiUrl}`);

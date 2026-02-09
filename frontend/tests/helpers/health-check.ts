@@ -4,7 +4,7 @@
  * Verifies the configured backend API is available and healthy before
  * running test scenarios that depend on backend connectivity.
  *
- * Checks the /health endpoint of E2E_API_BASE_URL. If the backend does
+ * Checks the /health endpoint of PUBLIC_API_BASE_URL. If the backend does
  * not respond with HTTP 200, throws an error that terminates the test
  * scenario with a clear diagnostic message including the URL attempted.
  */
@@ -12,15 +12,15 @@
 /**
  * Backend API base URL - must match the value used by E2EApiClient
  */
-const API_BASE_URL = process.env.E2E_API_BASE_URL || 'https://api.dev.mediancode.com/v1';
+const API_BASE_URL = process.env.PUBLIC_API_BASE_URL || 'http://localhost:8000/v1';
 
 /**
  * Derive the health endpoint URL from the API base URL.
  *
  * The /health endpoint lives at the root of the API server, not under
  * the versioned path. For example:
- *   E2E_API_BASE_URL=http://localhost:8000/v1 -> http://localhost:8000/health
- *   E2E_API_BASE_URL=https://api.dev.mediancode.com/v1 -> https://api.dev.mediancode.com/health
+ *   PUBLIC_API_BASE_URL=http://localhost:8000/v1 -> http://localhost:8000/health
+ *   PUBLIC_API_BASE_URL=https://api.dev.mediancode.com/v1 -> https://api.dev.mediancode.com/health
  */
 function getHealthUrl(): string {
 	const url = new URL(API_BASE_URL);
@@ -43,10 +43,10 @@ export async function assertBackendHealthy(): Promise<void> {
 	const isLocal = parsed.hostname === 'localhost' || parsed.hostname === '127.0.0.1';
 	if (!isLocal && parsed.protocol === 'http:') {
 		throw new Error(
-			`E2E_API_BASE_URL uses http:// for a remote host (${parsed.hostname}).\n` +
+			`PUBLIC_API_BASE_URL uses http:// for a remote host (${parsed.hostname}).\n` +
 				`  Browsers block CORS preflight requests that redirect (http→https),\n` +
 				`  which causes silent fetch failures in the app.\n\n` +
-				`  Fix: Change E2E_API_BASE_URL to use https://\n` +
+				`  Fix: Change PUBLIC_API_BASE_URL to use https://\n` +
 				`  Current: ${API_BASE_URL}\n` +
 				`  Expected: ${API_BASE_URL.replace('http://', 'https://')}`
 		);
