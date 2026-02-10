@@ -78,7 +78,7 @@ export class DashboardPage {
 	 * Navigate to the dashboard
 	 */
 	async goto() {
-		await this.page.goto('/dashboard', { waitUntil: 'networkidle' });
+		await this.page.goto('/dashboard');
 	}
 
 	/**

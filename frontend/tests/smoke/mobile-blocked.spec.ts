@@ -7,7 +7,7 @@
  * @tags smoke
  */
 
-import { test, expect } from '@playwright/test';
+import { test, expect } from './fixtures';
 import { MobileBlockedPage } from '../page-objects';
 
 const mobileConfig = {

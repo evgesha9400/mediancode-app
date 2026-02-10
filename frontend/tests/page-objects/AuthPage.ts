@@ -4,6 +4,12 @@
  * Encapsulates interactions with authentication pages (/signin, /signup).
  * Used by smoke tests for visual regression.
  * Real auth flow is handled by @clerk/testing in the CRUD setup project.
+ *
+ * Clerk rendering modes:
+ * - Real Clerk: renders when Clerk FAPI is reachable (email input visible)
+ * - Mock fallback: renders when Clerk FAPI is unreachable (mock component visible)
+ *
+ * Both modes indicate the page loaded and Clerk initialization completed.
  */
 
 import { type Page, type Locator, expect } from '@playwright/test';
@@ -11,13 +17,21 @@ import { type Page, type Locator, expect } from '@playwright/test';
 export class AuthPage {
 	readonly page: Page;
 
-	// Email input — present on both signin and signup, confirms Clerk form is rendered
+	// Email input — present when real Clerk form renders
 	readonly emailInput: Locator;
+
+	// Clerk component container — present when real Clerk mounts
+	readonly clerkComponent: Locator;
+
+	// Mock fallback — present when Clerk FAPI is unreachable and app falls back
+	readonly mockComponent: Locator;
 
 	constructor(page: Page) {
 		this.page = page;
 
 		this.emailInput = page.getByRole('textbox', { name: 'Email address' });
+		this.clerkComponent = page.locator('.cl-component');
+		this.mockComponent = page.locator('[data-testid^="clerk-mock-"]');
 	}
 
 	/**
@@ -35,11 +49,16 @@ export class AuthPage {
 	}
 
 	/**
-	 * Wait for the Clerk form to be fully loaded and interactive.
-	 * Waits for the container, then for a concrete form element
-	 * (input field or OAuth button) to confirm rendering is complete.
+	 * Wait for the Clerk auth form to be fully loaded and rendered.
+	 *
+	 * Waits for either:
+	 * - Real Clerk email input (when Clerk FAPI is reachable)
+	 * - Mock fallback component (when Clerk FAPI is unreachable)
+	 *
+	 * Both indicate that Clerk initialization completed and the page is stable
+	 * for visual regression comparison.
 	 */
 	async waitForFullyLoaded() {
-		await expect(this.emailInput).toBeVisible();
+		await expect(this.emailInput.or(this.mockComponent)).toBeVisible({ timeout: 10_000 });
 	}
 }

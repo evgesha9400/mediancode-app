@@ -9,7 +9,7 @@
  * @tags smoke
  */
 
-import { test, expect } from '@playwright/test';
+import { test, expect } from './fixtures';
 import { DashboardPage } from '../page-objects';
 
 test.describe('Dashboard - Smoke Tests', () => {
