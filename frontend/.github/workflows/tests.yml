@@ -180,10 +180,10 @@ jobs:
           retention-days: 30
 
   # ============================================
-  # Job 4: E2E CRUD Tests (Backend Integration)
+  # Job 4: Playwright E2E Tests (Backend Integration)
   # ============================================
   e2e-crud:
-    name: E2E CRUD Tests
+    name: Playwright E2E Tests
     needs: playwright-smoke
     runs-on: ubuntu-latest
     timeout-minutes: 30
