@@ -53,6 +53,7 @@ jobs:
   # ============================================
   unit-integration:
     name: Unit & Integration Tests
+    needs: lint-and-typecheck
     runs-on: ubuntu-latest
     timeout-minutes: 15
 
@@ -122,6 +123,7 @@ jobs:
   # ============================================
   playwright-smoke:
     name: Playwright Smoke Tests
+    needs: unit-integration
     runs-on: ubuntu-latest
     timeout-minutes: 15
 
@@ -183,6 +185,7 @@ jobs:
   # ============================================
   e2e-crud:
     name: E2E CRUD Tests
+    needs: playwright-smoke
     runs-on: ubuntu-latest
     timeout-minutes: 30
     # Run on merge to develop and nightly
@@ -253,7 +256,7 @@ jobs:
   all-tests:
     name: All Tests
     runs-on: ubuntu-latest
-    needs: [lint-and-typecheck, unit-integration, playwright-smoke]
+    needs: [lint-and-typecheck, unit-integration, playwright-smoke, e2e-crud]
     if: always()
 
     steps:
@@ -265,4 +268,12 @@ jobs:
             echo "One or more test jobs failed"
             exit 1
           fi
+
+          # E2E CRUD is conditional — skipped is acceptable
+          if [ "${{ needs.e2e-crud.result }}" != "success" ] &&
+             [ "${{ needs.e2e-crud.result }}" != "skipped" ]; then
+            echo "E2E CRUD tests failed"
+            exit 1
+          fi
+
           echo "All tests passed!"

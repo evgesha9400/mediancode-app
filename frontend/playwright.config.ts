@@ -75,9 +75,6 @@ export default defineConfig({
 		viewport: { width: 1280, height: 720 }
 	},
 
-	// Snapshot path template
-	snapshotPathTemplate: 'tests/e2e/__screenshots__/{testFilePath}/{arg}{ext}',
-
 	// Configure projects
 	projects: [
 		{
