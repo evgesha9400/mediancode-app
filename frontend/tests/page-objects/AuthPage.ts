@@ -12,7 +12,7 @@
  * Both modes indicate the page loaded and Clerk initialization completed.
  */
 
-import { type Page, type Locator, expect } from '@playwright/test';
+import { type Page, type Locator } from '@playwright/test';
 
 export class AuthPage {
 	readonly page: Page;
@@ -57,8 +57,10 @@ export class AuthPage {
 	 *
 	 * Both indicate that Clerk initialization completed and the page is stable
 	 * for visual regression comparison.
+	 *
+	 * Uses the default action timeout (bounded by the test timeout) — no hardcoded value.
 	 */
 	async waitForFullyLoaded() {
-		await expect(this.emailInput.or(this.mockComponent)).toBeVisible({ timeout: 10_000 });
+		await this.emailInput.or(this.mockComponent).waitFor({ state: 'visible' });
 	}
 }

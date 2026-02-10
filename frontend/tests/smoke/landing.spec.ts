@@ -7,7 +7,7 @@
  * @tags smoke
  */
 
-import { test, expect } from './fixtures';
+import { test, expect } from '@playwright/test';
 import { LandingPage } from '../page-objects';
 
 test.describe('Landing Page - Smoke Tests', () => {
@@ -30,11 +30,12 @@ test.describe('Landing Page - Smoke Tests', () => {
 	});
 
 	test('should display navigation elements', async () => {
-		// Logo should be visible
+		// Static elements — no Clerk dependency
 		await expect(landingPage.logo).toBeVisible();
+		await expect(landingPage.header).toBeVisible();
 
-		// Sign in button should be visible
-		await expect(landingPage.signInButton).toBeVisible();
+		// Sign-in button depends on Clerk loading ($clerkState.isLoaded)
+		// and is tested separately in "should navigate to sign in page"
 	});
 
 	test('should display all major sections', async () => {

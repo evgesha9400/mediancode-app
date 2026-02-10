@@ -117,9 +117,19 @@ export class LandingPage {
 	}
 
 	/**
+	 * Wait for Clerk to finish loading so auth-dependent nav elements appear.
+	 * The sign-in/sign-up buttons are behind {#if $clerkState.isLoaded} in +page.svelte.
+	 * Uses the default action timeout (bounded by the test timeout) — no hardcoded value.
+	 */
+	async waitForClerkLoaded() {
+		await this.signInButton.waitFor({ state: 'visible' });
+	}
+
+	/**
 	 * Navigate to sign in from the header
 	 */
 	async navigateToSignIn() {
+		await this.waitForClerkLoaded();
 		await this.signInButton.click();
 	}
 

@@ -7,7 +7,7 @@
  * @tags smoke
  */
 
-import { test, expect } from './fixtures';
+import { test, expect } from '@playwright/test';
 import { AuthPage } from '../page-objects';
 
 test.describe('Authentication - Smoke Tests', () => {
