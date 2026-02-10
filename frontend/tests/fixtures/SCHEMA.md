@@ -2,7 +2,7 @@
 
 > This document explains the structure and relationships of all test fixtures. It serves as the contract between the mock API and the UI expectations.
 
-**Last Updated:** 2025-11-24
+**Last Updated:** 2026-02-10
 
 ## Entity Relationships
 
@@ -12,19 +12,21 @@ User
                   └─ has many → Permission
 
 Field
+  ├─ belongs to → Namespace
   ├─ has one → Type (PrimitiveTypeName)
   ├─ has many → FieldValidator
   │              └─ references → Validator (by name)
   └─ used in many → ApiEndpoint
 
 Validator
-  ├─ has one → category (string, numeric)
-  ├─ has one → type (inline, custom)
+  ├─ has one → type (string, numeric)
+  ├─ has one → category (inline, custom)
+  ├─ belongs to → Namespace
   └─ used in many → Field
 
 Type
   ├─ has one → category (primitive, abstract)
-  ├─ has many → compatibleTypes
+  ├─ has many → compatibleTypes (validator type compatibility)
   └─ used in many → Field
 
 ApiEndpoint
@@ -92,10 +94,11 @@ interface FieldType extends TypeBase {
 
 ```typescript
 interface ValidatorBase {
-  name: string;                       // Validator name (unique)
-  category: 'string' | 'numeric';     // Validator category
+  name: string;                       // Validator name (unique within namespace)
+  namespaceId: string;                // Namespace this validator belongs to
+  type: 'string' | 'numeric';        // Validator type (matches compatible field types)
   description: string;                // Human-readable description
-  type: 'inline' | 'custom';          // Inline (Pydantic built-in) or custom
+  category: 'inline' | 'custom';     // Inline (Pydantic built-in) or custom
   parameterType: string;              // Type of parameter expected
   exampleUsage: string;               // Code example
   docsUrl: string;                    // Documentation URL
@@ -111,18 +114,18 @@ interface Validator extends ValidatorBase {
 ```
 
 **Invariants:**
-- `name` must be unique
-- `category` must match compatible type's `compatibleTypes`
+- `name` must be unique within namespace
+- `type` must match compatible type's `compatibleTypes`
 - Inline validators map to Pydantic Field constraints
 - Custom validators use `@field_validator` decorator
 
 **Test Data:**
-- 8 inline validators
-- 2 custom validators
-- Total: 10 validators
+- 8 inline validators (global namespace)
+- 3 custom validators (2 global: `email_format`, `url_format` + 1 user: `product_name_format`)
+- Total: 11 validators across all namespaces (10 in global namespace)
 
-**Validator Categories:**
-- **string:** `max_length`, `min_length`, `pattern`, `email_format`, `url_format`
+**Validator Types:**
+- **string:** `max_length`, `min_length`, `pattern`, `email_format`, `url_format`, `product_name_format`
 - **numeric:** `gt`, `ge`, `lt`, `le`, `multiple_of`
 
 ### Field
@@ -134,8 +137,9 @@ interface FieldValidator {
 }
 
 interface Field {
-  id: string;                        // Unique identifier (field-1, field-2, etc.)
-  name: string;                      // Field name (unique)
+  id: string;                        // Unique identifier (UUID)
+  namespaceId: string;               // Namespace this field belongs to
+  name: string;                      // Field name (unique within namespace)
   type: PrimitiveTypeName;           // Field type
   description?: string;              // Optional description
   defaultValue?: string;             // Optional default value (as string)
@@ -145,25 +149,30 @@ interface Field {
 ```
 
 **Invariants:**
-- `id` must be unique
-- `name` must be unique
+- `id` must be unique (UUID format)
+- `name` must be unique within namespace (case-insensitive)
 - `type` must be a valid `PrimitiveTypeName`
 - All validators in `validators[]` must be compatible with field's `type`
 - `usedInApis[]` references must exist in `mockApis`
 
 **Test Data:**
-- 8 fields total
-- Field IDs: `field-1` through `field-8`
+- 13 fields total (10 global + 3 user namespace)
+- Field IDs use well-known UUIDs (SEED_FIELD_IDS)
 - Coverage of all primitive types
 - Various validator combinations
 
-**Field Types Distribution:**
-- `str`: 3 fields (email, username, password)
-- `int`: 1 field (age)
-- `float`: 1 field (balance)
-- `bool`: 1 field (is_active)
-- `datetime`: 1 field (created_at)
+**Field Types Distribution (global namespace):**
+- `str`: 5 fields (email, username, password, status, website, phone)
+- `int`: 0 fields
+- `float`: 1 field (price)
+- `bool`: 0 fields
+- `datetime`: 2 fields (created_at, updated_at)
 - `uuid`: 1 field (user_id)
+
+**User Namespace Fields:**
+- `str`: 1 field (product_name)
+- `int`: 1 field (quantity)
+- `float`: 1 field (product_price)
 
 ### ApiEndpoint
 

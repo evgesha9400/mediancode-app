@@ -208,7 +208,7 @@ describe('Dashboard Page - Store Integration', () => {
 		it('provides expected initial validator count for stat card', () => {
 			// Dashboard shows this value in "Validators" stat card
 			const validatorCount = getTotalValidatorCount();
-			expect(validatorCount).toBe(12); // 8 inline + 4 custom (3 global + 1 user namespace)
+			expect(validatorCount).toBe(11); // 8 inline + 3 custom (2 global + 1 user namespace)
 		});
 
 		it('provides expected initial API count for stat card', () => {

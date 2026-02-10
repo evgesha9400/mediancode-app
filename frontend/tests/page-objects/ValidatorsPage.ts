@@ -307,7 +307,7 @@ export class ValidatorsPage {
 	}
 
 	/**
-	 * Get validator types visible in the table (column 1: string, numeric, collection)
+	 * Get validator types visible in the table (column 1: string, numeric)
 	 */
 	async getVisibleTypes(): Promise<string[]> {
 		const types: string[] = [];
