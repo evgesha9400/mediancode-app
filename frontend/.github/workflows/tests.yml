@@ -187,9 +187,8 @@ jobs:
     needs: playwright-smoke
     runs-on: ubuntu-latest
     timeout-minutes: 30
-    # Run on merge to develop and nightly
+    # Run nightly and on manual trigger only (expensive, hits external backend)
     if: |
-      (github.event_name == 'push' && github.ref == 'refs/heads/develop') ||
       github.event_name == 'schedule' ||
       github.event_name == 'workflow_dispatch'
 
