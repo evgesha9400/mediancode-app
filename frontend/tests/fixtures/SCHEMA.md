@@ -18,13 +18,13 @@ Field
   └─ used in many → ApiEndpoint
 
 Validator
-  ├─ has one → category (string, numeric, collection)
+  ├─ has one → category (string, numeric)
   ├─ has one → type (inline, custom)
   └─ used in many → Field
 
 Type
   ├─ has one → category (primitive, abstract)
-  ├─ has many → validatorCategories
+  ├─ has many → compatibleTypes
   └─ used in many → Field
 
 ApiEndpoint
@@ -62,7 +62,7 @@ interface MockUser {
 
 ```typescript
 type PrimitiveTypeName = 'str' | 'int' | 'float' | 'bool' | 'datetime' | 'uuid';
-type AbstractTypeName = 'numeric' | 'collection';
+type AbstractTypeName = 'numeric';
 type TypeName = PrimitiveTypeName | AbstractTypeName;
 
 interface TypeBase {
@@ -70,7 +70,7 @@ interface TypeBase {
   category: 'primitive' | 'abstract'; // Type category
   pythonType: string;                 // Python type mapping
   description: string;                // Human-readable description
-  validatorCategories: string[];      // Compatible validator categories
+  compatibleTypes: string[];           // Compatible validator types
 }
 
 interface FieldType extends TypeBase {
@@ -80,25 +80,25 @@ interface FieldType extends TypeBase {
 
 **Invariants:**
 - Primitive types: `str`, `int`, `float`, `bool`, `datetime`, `uuid`
-- Abstract types: `numeric`, `collection`
-- `validatorCategories` determines which validators can be applied
+- Abstract types: `numeric`
+- `compatibleTypes` determines which validators can be applied
 
 **Test Data:**
 - 6 primitive types
-- 2 abstract types
-- Total: 8 types
+- 1 abstract type
+- Total: 7 types
 
 ### Validator
 
 ```typescript
 interface ValidatorBase {
   name: string;                       // Validator name (unique)
-  category: 'string' | 'numeric' | 'collection'; // Validator category
+  category: 'string' | 'numeric';     // Validator category
   description: string;                // Human-readable description
   type: 'inline' | 'custom';          // Inline (Pydantic built-in) or custom
   parameterType: string;              // Type of parameter expected
   exampleUsage: string;               // Code example
-  pydanticDocsUrl: string;            // Documentation URL
+  docsUrl: string;                    // Documentation URL
 }
 
 interface Validator extends ValidatorBase {
@@ -112,7 +112,7 @@ interface Validator extends ValidatorBase {
 
 **Invariants:**
 - `name` must be unique
-- `category` must match compatible type's `validatorCategories`
+- `category` must match compatible type's `compatibleTypes`
 - Inline validators map to Pydantic Field constraints
 - Custom validators use `@field_validator` decorator
 
@@ -122,9 +122,8 @@ interface Validator extends ValidatorBase {
 - Total: 10 validators
 
 **Validator Categories:**
-- **string:** `min_length`, `max_length`, `regex`, `email_format`, `phone_number`
-- **numeric:** `gt`, `lt`, `ge`, `le`, `positive_number`
-- **collection:** (none in current fixtures)
+- **string:** `max_length`, `min_length`, `pattern`, `email_format`, `url_format`
+- **numeric:** `gt`, `ge`, `lt`, `le`, `multiple_of`
 
 ### Field
 

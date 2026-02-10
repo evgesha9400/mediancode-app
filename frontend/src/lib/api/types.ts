@@ -17,7 +17,7 @@ interface TypeResponse {
 	category: 'primitive' | 'abstract';
 	pythonType: string;
 	description: string;
-	validatorCategories: string[];
+	compatibleTypes: string[];
 	usedInFields: number;
 }
 
@@ -26,11 +26,12 @@ interface TypeResponse {
  */
 function transformType(response: TypeResponse): FieldType {
 	return {
+		id: response.id,
 		name: response.name as TypeName,
 		category: response.category,
 		pythonType: response.pythonType,
 		description: response.description,
-		validatorCategories: response.validatorCategories,
+		compatibleTypes: response.compatibleTypes,
 		usedInFields: response.usedInFields
 	};
 }

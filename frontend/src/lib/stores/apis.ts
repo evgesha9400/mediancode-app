@@ -13,7 +13,7 @@ export const apisStore = writable<Api[]>([]);
 
 // Initial empty state for API metadata (legacy - deprecated)
 export const initialApiMetadata: ApiMetadata = {
-	id: 'api-metadata-global',
+	id: '30000000-0000-0000-0000-000000000000',
 	namespaceId: GLOBAL_NAMESPACE_ID,
 	title: '',
 	version: '1.0.0',

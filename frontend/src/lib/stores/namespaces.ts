@@ -132,7 +132,8 @@ export function createNamespace(name: string, description: string = ''): Namespa
 		id: generateId('namespace'),
 		name: trimmedName,
 		description,
-		locked: false
+		locked: false,
+		isDefault: false
 	};
 
 	namespacesStore.update(namespaces => [...namespaces, newNamespace]);

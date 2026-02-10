@@ -19,7 +19,7 @@ describe('objects store - Basic Operations', () => {
 	beforeEach(() => {
 		// Reset store to empty for predictable tests
 		objectsStore.set([]);
-		seedIdGenerator({ counter: 0, timestamp: 1000000 });
+		seedIdGenerator({ counter: 0 });
 	});
 
 	it('should start with empty objects', () => {
@@ -43,14 +43,14 @@ describe('objects store - Basic Operations', () => {
 describe('objects store - createObject', () => {
 	beforeEach(() => {
 		objectsStore.set([]);
-		seedIdGenerator({ counter: 0, timestamp: 1000000 });
+		seedIdGenerator({ counter: 0 });
 	});
 
 	it('should create a new object with default options', () => {
 		const object = createObject('TestObject');
 
 		expect(object).toBeDefined();
-		expect(object?.id).toBe('object-1000000-0');
+		expect(object?.id).toBe('00000000-0000-4000-a000-000000000000');
 		expect(object?.name).toBe('TestObject');
 		expect(object?.namespaceId).toBe(GLOBAL_NAMESPACE_ID);
 		expect(object?.fields).toEqual([]);
@@ -76,8 +76,8 @@ describe('objects store - createObject', () => {
 
 	it('should create an object with fields', () => {
 		const fields = [
-			{ fieldId: 'field-1', required: true },
-			{ fieldId: 'field-2', required: false }
+			{ fieldId: 'aaaaaaaa-0000-0000-0000-000000000001', required: true },
+			{ fieldId: 'aaaaaaaa-0000-0000-0000-000000000002', required: false }
 		];
 		const object = createObject('TestObject', GLOBAL_NAMESPACE_ID, {
 			fields
@@ -91,17 +91,17 @@ describe('objects store - createObject', () => {
 		const object = createObject('TestObject', 'custom-namespace', {
 			description: 'A test object',
 			fields: [
-				{ fieldId: 'field-1', required: true },
-				{ fieldId: 'field-2', required: false }
+				{ fieldId: 'aaaaaaaa-0000-0000-0000-000000000001', required: true },
+				{ fieldId: 'aaaaaaaa-0000-0000-0000-000000000002', required: false }
 			],
-			usedInApis: ['api-1', 'api-2']
+			usedInApis: ['aaaaaaaa-0000-0000-0000-000000000003', 'aaaaaaaa-0000-0000-0000-000000000004']
 		});
 
 		expect(object?.name).toBe('TestObject');
 		expect(object?.namespaceId).toBe('custom-namespace');
 		expect(object?.description).toBe('A test object');
 		expect(object?.fields).toHaveLength(2);
-		expect(object?.usedInApis).toEqual(['api-1', 'api-2']);
+		expect(object?.usedInApis).toEqual(['aaaaaaaa-0000-0000-0000-000000000003', 'aaaaaaaa-0000-0000-0000-000000000004']);
 	});
 
 	it('should trim object names', () => {
@@ -152,7 +152,7 @@ describe('objects store - createObject', () => {
 describe('objects store - Namespace Filtering', () => {
 	beforeEach(() => {
 		objectsStore.set([]);
-		seedIdGenerator({ counter: 0, timestamp: 1000000 });
+		seedIdGenerator({ counter: 0 });
 
 		// Create objects in different namespaces
 		createObject('GlobalObject', GLOBAL_NAMESPACE_ID);
@@ -181,7 +181,7 @@ describe('objects store - Namespace Filtering', () => {
 describe('objects store - Search', () => {
 	beforeEach(() => {
 		objectsStore.set([]);
-		seedIdGenerator({ counter: 0, timestamp: 1000000 });
+		seedIdGenerator({ counter: 0 });
 
 		createObject('UserProfile', GLOBAL_NAMESPACE_ID, { description: 'User profile data' });
 		createObject('AdminSettings', GLOBAL_NAMESPACE_ID);
@@ -223,14 +223,14 @@ describe('objects store - Search', () => {
 describe('objects store - CRUD Operations', () => {
 	beforeEach(() => {
 		objectsStore.set([]);
-		seedIdGenerator({ counter: 0, timestamp: 1000000 });
+		seedIdGenerator({ counter: 0 });
 	});
 
 	it('should update an object', () => {
 		const object = createObject('TestObject');
 		updateObject(object!.id, {
 			description: 'Updated description',
-			fields: [{ fieldId: 'field-1', required: true }]
+			fields: [{ fieldId: 'aaaaaaaa-0000-0000-0000-000000000001', required: true }]
 		});
 
 		const updated = getObjectById(object!.id);
@@ -256,7 +256,7 @@ describe('objects store - CRUD Operations', () => {
 
 	it('should not delete objects used in APIs', () => {
 		const object = createObject('TestObject', GLOBAL_NAMESPACE_ID, {
-			usedInApis: ['api-1']
+			usedInApis: ['aaaaaaaa-0000-0000-0000-000000000003']
 		});
 
 		const result = deleteObject(object!.id);
@@ -269,7 +269,7 @@ describe('objects store - CRUD Operations', () => {
 describe('objects store - Namespace Assignment', () => {
 	beforeEach(() => {
 		objectsStore.set([]);
-		seedIdGenerator({ counter: 0, timestamp: 1000000 });
+		seedIdGenerator({ counter: 0 });
 	});
 
 	it('should assign object to specified namespace during creation', () => {

@@ -24,18 +24,37 @@ const __dirname = path.dirname(__filename);
 
 export const AUTH_FILE = path.join(__dirname, '..', '.auth', 'user.json');
 
+/**
+ * Validate all environment variables required by setup and CRUD tests.
+ * Reports each missing variable individually for easy diagnosis.
+ * Since the crud project depends on setup (via Playwright dependencies),
+ * failing here prevents CRUD tests from running with missing credentials.
+ */
 function getTestCredentials(): { email: string; password: string } {
-	const email = process.env.E2E_TEST_USER_EMAIL;
-	const password = process.env.E2E_TEST_USER_PASSWORD;
+	const required: Record<string, string | undefined> = {
+		E2E_TEST_USER_EMAIL: process.env.E2E_TEST_USER_EMAIL,
+		E2E_TEST_USER_PASSWORD: process.env.E2E_TEST_USER_PASSWORD,
+		PUBLIC_API_BASE_URL: process.env.PUBLIC_API_BASE_URL
+	};
 
-	if (!email || !password) {
+	const missing = Object.entries(required)
+		.filter(([, value]) => !value)
+		.map(([key]) => key);
+
+	if (missing.length > 0) {
+		const varList = missing.map((v) => `  - ${v}`).join('\n');
 		throw new Error(
-			'E2E_TEST_USER_EMAIL and E2E_TEST_USER_PASSWORD environment variables are required.\n' +
-				'These should be set to credentials of a pre-created test user in Clerk dev environment.'
+			`Missing required environment variables for E2E tests:\n${varList}\n\n` +
+				`Set these in your .env file (see .env for documentation).\n` +
+				`In CI, set them as GitHub Actions secrets/variables.\n\n` +
+				`Note: CRUD tests depend on this setup project and will be skipped.`
 		);
 	}
 
-	return { email, password };
+	return {
+		email: required.E2E_TEST_USER_EMAIL!,
+		password: required.E2E_TEST_USER_PASSWORD!
+	};
 }
 
 setup('authenticate test user', async ({ page }) => {

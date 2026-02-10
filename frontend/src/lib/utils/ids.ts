@@ -1,8 +1,11 @@
 /**
  * ID Generation and Object Cloning Utilities
  *
- * Provides deterministic ID generation and type-safe deep cloning for stores and tests.
- * All IDs are prefixed and use a counter to ensure uniqueness and determinism.
+ * Provides UUID generation and type-safe deep cloning for stores and tests.
+ * All IDs are UUIDs to match the backend's UUID-based ID system.
+ *
+ * In production, IDs use crypto.randomUUID() for true randomness.
+ * In tests, seedIdGenerator() enables deterministic UUID generation.
  */
 
 /**
@@ -11,58 +14,87 @@
  */
 export interface IdGeneratorState {
 	counter: number;
-	timestamp: number;
+	seeded: boolean;
 }
 
 let idState: IdGeneratorState = {
 	counter: 0,
-	timestamp: Date.now()
+	seeded: false
 };
 
 /**
- * Seed the ID generator with a specific state (primarily for testing)
+ * Build a deterministic UUID from a counter value.
+ * Produces UUIDs in the format: `00000000-0000-4000-a000-{counter padded to 12 digits}`
+ * The "4" in position 13 marks it as a v4 UUID, "a" in position 17 is a valid variant.
  *
- * @param state - Optional state to seed with. If not provided, resets to defaults.
+ * @param counter - Numeric counter to encode into the UUID
+ */
+function deterministicUuid(counter: number): string {
+	const hex = counter.toString(16).padStart(12, '0');
+	return `00000000-0000-4000-a000-${hex}`;
+}
+
+/**
+ * Seed the ID generator with a specific state (primarily for testing)
+ * When seeded, generateId produces deterministic UUIDs based on a counter.
+ *
+ * @param state - Optional state to seed with. If not provided, resets to random mode.
  *
  * @example
  * // In tests:
- * seedIdGenerator({ counter: 0, timestamp: 1000000 });
- * const id1 = generateId('test'); // "test-1000000-0"
- * const id2 = generateId('test'); // "test-1000000-1"
+ * seedIdGenerator({ counter: 0 });
+ * const id1 = generateId(); // "00000000-0000-4000-a000-000000000000"
+ * const id2 = generateId(); // "00000000-0000-4000-a000-000000000001"
  */
 export function seedIdGenerator(state?: Partial<IdGeneratorState>): void {
-	idState = {
-		counter: state?.counter ?? 0,
-		timestamp: state?.timestamp ?? Date.now()
-	};
+	if (state) {
+		idState = {
+			counter: state.counter ?? 0,
+			seeded: true
+		};
+	} else {
+		idState = {
+			counter: 0,
+			seeded: false
+		};
+	}
 }
 
 /**
- * Generate a unique, deterministic ID with a prefix
+ * Generate a unique UUID.
  *
- * @param prefix - Prefix for the ID (e.g., 'endpoint', 'tag', 'param')
- * @returns A unique ID string in format: `{prefix}-{timestamp}-{counter}`
+ * In production (not seeded): uses crypto.randomUUID() for true randomness.
+ * In tests (seeded): produces deterministic UUIDs from a counter.
+ *
+ * @param _prefix - Deprecated. Kept for backward compatibility but ignored.
+ *                  All IDs are now UUIDs regardless of entity type.
+ * @returns A UUID string
  *
  * @example
- * generateId('endpoint') // "endpoint-1234567890-0"
- * generateId('tag')      // "tag-1234567890-1"
- * generateId('param')    // "param-1234567890-2"
+ * generateId()           // "a1b2c3d4-e5f6-4a7b-8c9d-0e1f2a3b4c5d" (random)
+ * generateId('endpoint') // same - prefix is ignored
  */
-export function generateId(prefix: string): string {
-	return `${prefix}-${idState.timestamp}-${idState.counter++}`;
+export function generateId(_prefix?: string): string {
+	if (idState.seeded) {
+		return deterministicUuid(idState.counter++);
+	}
+	return crypto.randomUUID();
 }
 
 /**
- * Generate a unique ID specifically for parameters
+ * Generate a unique UUID specifically for parameters
  * Uses the same deterministic counter as generateId for consistent, reproducible IDs
  *
- * @returns A unique parameter ID in format: `param-{timestamp}-{counter}`
+ * @returns A UUID string
  *
  * @example
- * generateParamId() // "param-1234567890-0"
+ * generateParamId() // "00000000-0000-4000-a000-000000000000" (seeded)
  */
 export function generateParamId(): string {
-	return `param-${idState.timestamp}-${idState.counter++}`;
+	if (idState.seeded) {
+		return deterministicUuid(idState.counter++);
+	}
+	return crypto.randomUUID();
 }
 
 /**

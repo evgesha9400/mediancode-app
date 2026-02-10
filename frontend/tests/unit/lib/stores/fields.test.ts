@@ -19,7 +19,7 @@ describe('fields store - Basic Operations', () => {
 	beforeEach(() => {
 		// Reset store to empty for predictable tests
 		fieldsStore.set([]);
-		seedIdGenerator({ counter: 0, timestamp: 1000000 });
+		seedIdGenerator({ counter: 0 });
 	});
 
 	it('should start with empty fields', () => {
@@ -43,14 +43,14 @@ describe('fields store - Basic Operations', () => {
 describe('fields store - createField', () => {
 	beforeEach(() => {
 		fieldsStore.set([]);
-		seedIdGenerator({ counter: 0, timestamp: 1000000 });
+		seedIdGenerator({ counter: 0 });
 	});
 
 	it('should create a new field with default options', () => {
 		const field = createField('test_field', 'str');
 
 		expect(field).toBeDefined();
-		expect(field?.id).toBe('field-1000000-0');
+		expect(field?.id).toBe('00000000-0000-4000-a000-000000000000');
 		expect(field?.name).toBe('test_field');
 		expect(field?.type).toBe('str');
 		expect(field?.namespaceId).toBe(GLOBAL_NAMESPACE_ID);
@@ -98,7 +98,7 @@ describe('fields store - createField', () => {
 			description: 'A test field',
 			defaultValue: '42',
 			validators: [{ name: 'min', params: { value: 0 } }],
-			usedInApis: ['api-1']
+			usedInApis: ['aaaaaaaa-0000-0000-0000-000000000001']
 		});
 
 		expect(field?.name).toBe('test_field');
@@ -107,7 +107,7 @@ describe('fields store - createField', () => {
 		expect(field?.description).toBe('A test field');
 		expect(field?.defaultValue).toBe('42');
 		expect(field?.validators).toHaveLength(1);
-		expect(field?.usedInApis).toEqual(['api-1']);
+		expect(field?.usedInApis).toEqual(['aaaaaaaa-0000-0000-0000-000000000001']);
 	});
 
 	it('should trim field names', () => {
@@ -143,7 +143,7 @@ describe('fields store - createField', () => {
 describe('fields store - Namespace Filtering', () => {
 	beforeEach(() => {
 		fieldsStore.set([]);
-		seedIdGenerator({ counter: 0, timestamp: 1000000 });
+		seedIdGenerator({ counter: 0 });
 
 		// Create fields in different namespaces
 		createField('global_field', 'str', GLOBAL_NAMESPACE_ID);
@@ -172,7 +172,7 @@ describe('fields store - Namespace Filtering', () => {
 describe('fields store - Search', () => {
 	beforeEach(() => {
 		fieldsStore.set([]);
-		seedIdGenerator({ counter: 0, timestamp: 1000000 });
+		seedIdGenerator({ counter: 0 });
 
 		createField('email', 'str', GLOBAL_NAMESPACE_ID, { description: 'User email address' });
 		createField('phone_number', 'str', GLOBAL_NAMESPACE_ID);
@@ -222,7 +222,7 @@ describe('fields store - Search', () => {
 describe('fields store - CRUD Operations', () => {
 	beforeEach(() => {
 		fieldsStore.set([]);
-		seedIdGenerator({ counter: 0, timestamp: 1000000 });
+		seedIdGenerator({ counter: 0 });
 	});
 
 	it('should update a field', () => {
@@ -252,7 +252,7 @@ describe('fields store - CRUD Operations', () => {
 
 	it('should not delete fields used in APIs', () => {
 		const field = createField('test_field', 'str', GLOBAL_NAMESPACE_ID, {
-			usedInApis: ['api-1']
+			usedInApis: ['aaaaaaaa-0000-0000-0000-000000000001']
 		});
 
 		const result = deleteField(field!.id);

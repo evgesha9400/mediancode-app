@@ -40,7 +40,7 @@ import { showToast } from './toasts';
 import { deepClone, generateParamId } from '$lib/utils/ids';
 
 // Legacy API ID for backwards compatibility
-const LEGACY_API_ID = 'legacy-api-generator';
+const LEGACY_API_ID = 'ffffffff-0000-0000-0000-000000000001';
 
 /**
  * Toast message constants

@@ -101,6 +101,7 @@ export default defineConfig({
 		{
 			name: 'crud',
 			testDir: './tests/e2e/crud',
+			dependencies: ['setup'],
 			use: {
 				...devices['Desktop Chrome'],
 				actionTimeout: 3_000,

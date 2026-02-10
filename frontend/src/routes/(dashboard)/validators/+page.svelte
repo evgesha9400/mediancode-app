@@ -279,14 +279,14 @@
         </div>
 
         <div>
-          <h3 class="text-sm text-mono-500 mb-1 font-medium">Pydantic Documentation</h3>
+          <h3 class="text-sm text-mono-500 mb-1 font-medium">Documentation</h3>
           <a
-            href={selectedValidator.pydanticDocsUrl}
+            href={selectedValidator.docsUrl}
             target="_blank"
             rel="noopener noreferrer"
             class="text-sm text-mono-900 underline hover:text-mono-600 transition-colors"
           >
-            View in Pydantic Docs <i class="fa-solid fa-arrow-up-right-from-square text-xs"></i>
+            View Docs <i class="fa-solid fa-arrow-up-right-from-square text-xs"></i>
           </a>
         </div>
 

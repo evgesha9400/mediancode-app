@@ -142,7 +142,7 @@ describe('Dashboard Page - Store Integration', () => {
 	describe('Validator Categories', () => {
 		it('validators have valid type values', () => {
 			const validators = get(validatorsStore);
-			const validTypes = ['string', 'numeric', 'collection'];
+			const validTypes = ['string', 'numeric'];
 
 			validators.forEach((validator) => {
 				expect(validTypes).toContain(validator.type);
@@ -208,7 +208,7 @@ describe('Dashboard Page - Store Integration', () => {
 		it('provides expected initial validator count for stat card', () => {
 			// Dashboard shows this value in "Validators" stat card
 			const validatorCount = getTotalValidatorCount();
-			expect(validatorCount).toBe(15); // 11 inline + 4 custom (3 global + 1 user namespace)
+			expect(validatorCount).toBe(12); // 8 inline + 4 custom (3 global + 1 user namespace)
 		});
 
 		it('provides expected initial API count for stat card', () => {

@@ -22,12 +22,12 @@ interface ValidatorResponse {
 	id: string;
 	namespaceId: string;
 	name: string;
-	type: 'string' | 'numeric' | 'collection';
+	type: 'string' | 'numeric';
 	description: string;
 	category: 'inline' | 'custom';
 	parameterType: string;
 	exampleUsage: string;
-	pydanticDocsUrl: string;
+	docsUrl: string;
 	usedInFields: number;
 	fieldsUsingValidator: FieldReferenceResponse[];
 }
@@ -44,7 +44,7 @@ function transformValidator(response: ValidatorResponse): Validator {
 		category: response.category,
 		parameterType: response.parameterType,
 		exampleUsage: response.exampleUsage,
-		pydanticDocsUrl: response.pydanticDocsUrl,
+		docsUrl: response.docsUrl,
 		usedInFields: response.usedInFields,
 		fieldsUsingValidator: response.fieldsUsingValidator
 	};

@@ -20,7 +20,7 @@ vi.mock('$lib/stores/toasts', () => ({
 }));
 
 // Test API ID for the legacy API generator (deprecated)
-const LEGACY_API_ID = 'legacy-api-generator';
+const LEGACY_API_ID = 'ffffffff-0000-0000-0000-000000000001';
 
 describe('apiGeneratorState - Initialization', () => {
 	beforeEach(() => {
@@ -28,7 +28,7 @@ describe('apiGeneratorState - Initialization', () => {
 		apiMetadataStore.set(initialApiMetadata);
 		apisStore.set([createMockApi({ id: LEGACY_API_ID, tags: [] })]);
 		endpointsStore.set([]);
-		seedIdGenerator({ counter: 0, timestamp: 1000000 });
+		seedIdGenerator({ counter: 0 });
 		vi.clearAllMocks();
 	});
 
@@ -78,7 +78,7 @@ describe('apiGeneratorState - Tag Operations (Embedded in API)', () => {
 	beforeEach(() => {
 		apisStore.set([createMockApi({ id: LEGACY_API_ID, tags: [] })]);
 		endpointsStore.set([]);
-		seedIdGenerator({ counter: 0, timestamp: 1000000 });
+		seedIdGenerator({ counter: 0 });
 		vi.clearAllMocks();
 	});
 
@@ -86,7 +86,7 @@ describe('apiGeneratorState - Tag Operations (Embedded in API)', () => {
 		const state = createApiGeneratorState();
 
 		// Simulate opening an endpoint first
-		const endpoint = createMockEndpoint({ id: 'endpoint-1', path: '/test' });
+		const endpoint = createMockEndpoint({ id: 'bbbbbbbb-0000-0000-0000-000000000001', path: '/test' });
 		state.editedEndpoint = endpoint;
 		state.tagInputValue = 'Users';
 
@@ -102,7 +102,7 @@ describe('apiGeneratorState - Tag Operations (Embedded in API)', () => {
 	it('should not create tag if input is empty', () => {
 		const state = createApiGeneratorState();
 
-		state.editedEndpoint = createMockEndpoint({ id: 'endpoint-1', path: '/test' });
+		state.editedEndpoint = createMockEndpoint({ id: 'bbbbbbbb-0000-0000-0000-000000000001', path: '/test' });
 		state.tagInputValue = '   ';
 
 		state.handleCreateTag();
@@ -116,7 +116,7 @@ describe('apiGeneratorState - Tag Operations (Embedded in API)', () => {
 		const state = createApiGeneratorState();
 
 		// Create a tag first
-		state.editedEndpoint = createMockEndpoint({ id: 'endpoint-1', path: '/test' });
+		state.editedEndpoint = createMockEndpoint({ id: 'bbbbbbbb-0000-0000-0000-000000000001', path: '/test' });
 		state.tagInputValue = 'Users';
 		state.handleCreateTag();
 
@@ -131,7 +131,7 @@ describe('apiGeneratorState - Tag Operations (Embedded in API)', () => {
 	it('should clear tag selection', () => {
 		const state = createApiGeneratorState();
 
-		state.editedEndpoint = createMockEndpoint({ id: 'endpoint-1', path: '/test', tagName: 'some-tag' });
+		state.editedEndpoint = createMockEndpoint({ id: 'bbbbbbbb-0000-0000-0000-000000000001', path: '/test', tagName: 'some-tag' });
 		state.tagInputValue = 'Users';
 
 		state.handleTagSelect(undefined);
@@ -144,7 +144,7 @@ describe('apiGeneratorState - Tag Operations (Embedded in API)', () => {
 		const state = createApiGeneratorState();
 
 		// Create a tag
-		state.editedEndpoint = createMockEndpoint({ id: 'endpoint-1', path: '/test' });
+		state.editedEndpoint = createMockEndpoint({ id: 'bbbbbbbb-0000-0000-0000-000000000001', path: '/test' });
 		state.tagInputValue = 'Users';
 		state.handleCreateTag();
 
@@ -168,7 +168,7 @@ describe('apiGeneratorState - Tag Operations (Embedded in API)', () => {
 		const state = createApiGeneratorState();
 
 		// Create a tag
-		state.editedEndpoint = createMockEndpoint({ id: 'endpoint-1', path: '/test' });
+		state.editedEndpoint = createMockEndpoint({ id: 'bbbbbbbb-0000-0000-0000-000000000001', path: '/test' });
 		state.tagInputValue = 'Users';
 		state.handleCreateTag();
 
@@ -241,7 +241,7 @@ describe('apiGeneratorState - Endpoint Operations', () => {
 	beforeEach(() => {
 		apisStore.set([createMockApi({ id: LEGACY_API_ID, tags: [] })]);
 		endpointsStore.set([]);
-		seedIdGenerator({ counter: 0, timestamp: 1000000 });
+		seedIdGenerator({ counter: 0 });
 		vi.clearAllMocks();
 	});
 
@@ -252,7 +252,7 @@ describe('apiGeneratorState - Endpoint Operations', () => {
 
 		const endpoints = get(endpointsStore);
 		expect(endpoints).toHaveLength(1);
-		expect(endpoints[0].id).toBe('endpoint-1000000-0');
+		expect(endpoints[0].id).toBe('00000000-0000-4000-a000-000000000000');
 		expect(state.drawerOpen).toBe(true);
 		expect(state.selectedEndpoint).toEqual(endpoints[0]);
 		// No toast for endpoint creation - only for delete/update
@@ -312,14 +312,14 @@ describe('apiGeneratorState - Drawer Operations', () => {
 	beforeEach(() => {
 		apisStore.set([createMockApi({ id: LEGACY_API_ID, tags: [] })]);
 		endpointsStore.set([]);
-		seedIdGenerator({ counter: 0, timestamp: 1000000 });
+		seedIdGenerator({ counter: 0 });
 		vi.clearAllMocks();
 	});
 
 	it('should open endpoint in drawer', () => {
 		const state = createApiGeneratorState();
 
-		const endpoint = createMockEndpoint({ id: 'endpoint-1', path: '/test' });
+		const endpoint = createMockEndpoint({ id: 'bbbbbbbb-0000-0000-0000-000000000001', path: '/test' });
 
 		state.openEndpoint(endpoint);
 
@@ -332,7 +332,7 @@ describe('apiGeneratorState - Drawer Operations', () => {
 	it('should track changes', () => {
 		const state = createApiGeneratorState();
 
-		const endpoint = createMockEndpoint({ id: 'endpoint-1', path: '/test' });
+		const endpoint = createMockEndpoint({ id: 'bbbbbbbb-0000-0000-0000-000000000001', path: '/test' });
 
 		state.openEndpoint(endpoint);
 
@@ -387,7 +387,7 @@ describe('apiGeneratorState - Drawer Operations', () => {
 	it('should close drawer', () => {
 		const state = createApiGeneratorState();
 
-		const endpoint = createMockEndpoint({ id: 'endpoint-1', path: '/test' });
+		const endpoint = createMockEndpoint({ id: 'bbbbbbbb-0000-0000-0000-000000000001', path: '/test' });
 
 		state.openEndpoint(endpoint);
 		expect(state.drawerOpen).toBe(true);
@@ -401,7 +401,7 @@ describe('apiGeneratorState - Drawer Operations', () => {
 	it('should handle cancel', () => {
 		const state = createApiGeneratorState();
 
-		const endpoint = createMockEndpoint({ id: 'endpoint-1', path: '/test' });
+		const endpoint = createMockEndpoint({ id: 'bbbbbbbb-0000-0000-0000-000000000001', path: '/test' });
 
 		state.openEndpoint(endpoint);
 		state.editedEndpoint!.description = 'Changed';
@@ -418,7 +418,7 @@ describe('apiGeneratorState - Path and Parameter Operations', () => {
 	beforeEach(() => {
 		apisStore.set([createMockApi({ id: LEGACY_API_ID, tags: [] })]);
 		endpointsStore.set([]);
-		seedIdGenerator({ counter: 0, timestamp: 1000000 });
+		seedIdGenerator({ counter: 0 });
 		vi.clearAllMocks();
 	});
 
@@ -529,10 +529,10 @@ describe('apiGeneratorState - Path and Parameter Operations', () => {
 		const endpoint = get(endpointsStore)[0];
 		state.openEndpoint(endpoint);
 
-		state.handleSelectQueryParamsObject('object-123');
+		state.handleSelectQueryParamsObject('eeeeeeee-0000-0000-0000-000000000123');
 
 		// Changes should only be in editedEndpoint, not in the store
-		expect(state.editedEndpoint?.queryParamsObjectId).toBe('object-123');
+		expect(state.editedEndpoint?.queryParamsObjectId).toBe('eeeeeeee-0000-0000-0000-000000000123');
 
 		// Store should still have the original (no query params object)
 		const storeEndpoint = get(endpointsStore)[0];
@@ -546,7 +546,7 @@ describe('apiGeneratorState - Path and Parameter Operations', () => {
 		const endpoint = get(endpointsStore)[0];
 		state.openEndpoint(endpoint);
 
-		state.handleSelectQueryParamsObject('object-456');
+		state.handleSelectQueryParamsObject('eeeeeeee-0000-0000-0000-000000000456');
 
 		// Verify store unchanged
 		expect(get(endpointsStore)[0].queryParamsObjectId).toBeUndefined();
@@ -556,7 +556,7 @@ describe('apiGeneratorState - Path and Parameter Operations', () => {
 		state.handleSave();
 
 		// Now store should have the query params object
-		expect(get(endpointsStore)[0].queryParamsObjectId).toBe('object-456');
+		expect(get(endpointsStore)[0].queryParamsObjectId).toBe('eeeeeeee-0000-0000-0000-000000000456');
 		expect(state.drawerOpen).toBe(false);
 	});
 
@@ -566,10 +566,10 @@ describe('apiGeneratorState - Path and Parameter Operations', () => {
 		state.handleAddEndpoint();
 		const endpoint = get(endpointsStore)[0];
 		state.openEndpoint(endpoint);
-		state.handleSelectQueryParamsObject('object-789');
+		state.handleSelectQueryParamsObject('eeeeeeee-0000-0000-0000-000000000789');
 
 		// Verify object is selected
-		expect(state.editedEndpoint?.queryParamsObjectId).toBe('object-789');
+		expect(state.editedEndpoint?.queryParamsObjectId).toBe('eeeeeeee-0000-0000-0000-000000000789');
 
 		// Clear the selection
 		state.handleSelectQueryParamsObject(undefined);
@@ -587,10 +587,10 @@ describe('apiGeneratorState - Path and Parameter Operations', () => {
 		state.handleAddEndpoint();
 		const endpoint = get(endpointsStore)[0];
 		state.openEndpoint(endpoint);
-		state.handleSelectQueryParamsObject('object-999');
+		state.handleSelectQueryParamsObject('eeeeeeee-0000-0000-0000-000000000999');
 
 		// Verify editedEndpoint has the object
-		expect(state.editedEndpoint?.queryParamsObjectId).toBe('object-999');
+		expect(state.editedEndpoint?.queryParamsObjectId).toBe('eeeeeeee-0000-0000-0000-000000000999');
 
 		// Cancel without saving
 		state.handleCancel();
@@ -650,7 +650,7 @@ describe('apiGeneratorState - Body Field Selection Operations', () => {
 		apisStore.set([createMockApi({ id: LEGACY_API_ID, tags: [] })]);
 		endpointsStore.set([]);
 		fieldsStore.set(initialFields);
-		seedIdGenerator({ counter: 0, timestamp: 1000000 });
+		seedIdGenerator({ counter: 0 });
 		vi.clearAllMocks();
 	});
 
@@ -663,9 +663,9 @@ describe('apiGeneratorState - Body Field Selection Operations', () => {
 
 		expect(state.editedEndpoint?.requestBodyObjectId).toBeUndefined();
 
-		state.handleSelectRequestBodyObject('object-1');
+		state.handleSelectRequestBodyObject('eeeeeeee-0000-0000-0000-000000000001');
 
-		expect(state.editedEndpoint?.requestBodyObjectId).toBe('object-1');
+		expect(state.editedEndpoint?.requestBodyObjectId).toBe('eeeeeeee-0000-0000-0000-000000000001');
 	});
 
 	it('should clear request body object selection', () => {
@@ -675,8 +675,8 @@ describe('apiGeneratorState - Body Field Selection Operations', () => {
 		const endpoint = get(endpointsStore)[0];
 		state.openEndpoint(endpoint);
 
-		state.handleSelectRequestBodyObject('object-1');
-		expect(state.editedEndpoint?.requestBodyObjectId).toBe('object-1');
+		state.handleSelectRequestBodyObject('eeeeeeee-0000-0000-0000-000000000001');
+		expect(state.editedEndpoint?.requestBodyObjectId).toBe('eeeeeeee-0000-0000-0000-000000000001');
 
 		state.handleSelectRequestBodyObject(undefined);
 		expect(state.editedEndpoint?.requestBodyObjectId).toBeUndefined();
@@ -689,11 +689,11 @@ describe('apiGeneratorState - Body Field Selection Operations', () => {
 		const endpoint = get(endpointsStore)[0];
 		state.openEndpoint(endpoint);
 
-		state.handleSelectRequestBodyObject('object-1');
-		expect(state.editedEndpoint?.requestBodyObjectId).toBe('object-1');
+		state.handleSelectRequestBodyObject('eeeeeeee-0000-0000-0000-000000000001');
+		expect(state.editedEndpoint?.requestBodyObjectId).toBe('eeeeeeee-0000-0000-0000-000000000001');
 
-		state.handleSelectRequestBodyObject('object-2');
-		expect(state.editedEndpoint?.requestBodyObjectId).toBe('object-2');
+		state.handleSelectRequestBodyObject('eeeeeeee-0000-0000-0000-000000000002');
+		expect(state.editedEndpoint?.requestBodyObjectId).toBe('eeeeeeee-0000-0000-0000-000000000002');
 	});
 
 	it('should select response body object by ID', () => {
@@ -705,9 +705,9 @@ describe('apiGeneratorState - Body Field Selection Operations', () => {
 
 		expect(state.editedEndpoint?.responseBodyObjectId).toBeUndefined();
 
-		state.handleSelectResponseBodyObject('object-3');
+		state.handleSelectResponseBodyObject('eeeeeeee-0000-0000-0000-000000000003');
 
-		expect(state.editedEndpoint?.responseBodyObjectId).toBe('object-3');
+		expect(state.editedEndpoint?.responseBodyObjectId).toBe('eeeeeeee-0000-0000-0000-000000000003');
 	});
 
 	it('should clear response body object selection', () => {
@@ -717,8 +717,8 @@ describe('apiGeneratorState - Body Field Selection Operations', () => {
 		const endpoint = get(endpointsStore)[0];
 		state.openEndpoint(endpoint);
 
-		state.handleSelectResponseBodyObject('object-3');
-		expect(state.editedEndpoint?.responseBodyObjectId).toBe('object-3');
+		state.handleSelectResponseBodyObject('eeeeeeee-0000-0000-0000-000000000003');
+		expect(state.editedEndpoint?.responseBodyObjectId).toBe('eeeeeeee-0000-0000-0000-000000000003');
 
 		state.handleSelectResponseBodyObject(undefined);
 		expect(state.editedEndpoint?.responseBodyObjectId).toBeUndefined();
@@ -731,11 +731,11 @@ describe('apiGeneratorState - Body Field Selection Operations', () => {
 		const endpoint = get(endpointsStore)[0];
 		state.openEndpoint(endpoint);
 
-		state.handleSelectResponseBodyObject('object-3');
-		expect(state.editedEndpoint?.responseBodyObjectId).toBe('object-3');
+		state.handleSelectResponseBodyObject('eeeeeeee-0000-0000-0000-000000000003');
+		expect(state.editedEndpoint?.responseBodyObjectId).toBe('eeeeeeee-0000-0000-0000-000000000003');
 
-		state.handleSelectResponseBodyObject('object-4');
-		expect(state.editedEndpoint?.responseBodyObjectId).toBe('object-4');
+		state.handleSelectResponseBodyObject('eeeeeeee-0000-0000-0000-000000000004');
+		expect(state.editedEndpoint?.responseBodyObjectId).toBe('eeeeeeee-0000-0000-0000-000000000004');
 	});
 
 	it('should toggle envelope setting', () => {
@@ -761,8 +761,8 @@ describe('apiGeneratorState - Body Field Selection Operations', () => {
 		const endpoint = get(endpointsStore)[0];
 		state.openEndpoint(endpoint);
 
-		state.handleSelectRequestBodyObject('object-1');
-		state.handleSelectResponseBodyObject('object-2');
+		state.handleSelectRequestBodyObject('eeeeeeee-0000-0000-0000-000000000001');
+		state.handleSelectResponseBodyObject('eeeeeeee-0000-0000-0000-000000000002');
 
 		vi.clearAllMocks();
 		const result = state.handleSave();
@@ -771,8 +771,8 @@ describe('apiGeneratorState - Body Field Selection Operations', () => {
 		expect(toastsModule.showToast).toHaveBeenCalledWith('Endpoint saved successfully', 'success');
 
 		const savedEndpoint = get(endpointsStore)[0];
-		expect(savedEndpoint.requestBodyObjectId).toBe('object-1');
-		expect(savedEndpoint.responseBodyObjectId).toBe('object-2');
+		expect(savedEndpoint.requestBodyObjectId).toBe('eeeeeeee-0000-0000-0000-000000000001');
+		expect(savedEndpoint.responseBodyObjectId).toBe('eeeeeeee-0000-0000-0000-000000000002');
 		expect(state.drawerOpen).toBe(false);
 	});
 });
@@ -782,7 +782,7 @@ describe('apiGeneratorState - Response Shape Configuration', () => {
 		apisStore.set([createMockApi({ id: LEGACY_API_ID, tags: [] })]);
 		endpointsStore.set([]);
 		fieldsStore.set(initialFields);
-		seedIdGenerator({ counter: 0, timestamp: 1000000 });
+		seedIdGenerator({ counter: 0 });
 		vi.clearAllMocks();
 	});
 
@@ -795,17 +795,17 @@ describe('apiGeneratorState - Response Shape Configuration', () => {
 			state.openEndpoint(endpoint);
 
 			// Start with object shape and select an object
-			state.handleSelectResponseBodyObject('object-1');
+			state.handleSelectResponseBodyObject('eeeeeeee-0000-0000-0000-000000000001');
 
 			expect(state.editedEndpoint?.responseShape).toBe('object');
-			expect(state.editedEndpoint?.responseBodyObjectId).toBe('object-1');
+			expect(state.editedEndpoint?.responseBodyObjectId).toBe('eeeeeeee-0000-0000-0000-000000000001');
 
 			// Switch to list
 			state.handleSetResponseShape('list');
 
 			expect(state.editedEndpoint?.responseShape).toBe('list');
 			// Object selection is kept for list of objects
-			expect(state.editedEndpoint?.responseBodyObjectId).toBe('object-1');
+			expect(state.editedEndpoint?.responseBodyObjectId).toBe('eeeeeeee-0000-0000-0000-000000000001');
 		});
 
 		it('should switch from list to object shape', () => {
@@ -817,17 +817,17 @@ describe('apiGeneratorState - Response Shape Configuration', () => {
 
 			// Start with list shape and select an object
 			state.handleSetResponseShape('list');
-			state.handleSelectResponseBodyObject('object-1');
+			state.handleSelectResponseBodyObject('eeeeeeee-0000-0000-0000-000000000001');
 
 			expect(state.editedEndpoint?.responseShape).toBe('list');
-			expect(state.editedEndpoint?.responseBodyObjectId).toBe('object-1');
+			expect(state.editedEndpoint?.responseBodyObjectId).toBe('eeeeeeee-0000-0000-0000-000000000001');
 
 			// Switch back to object
 			state.handleSetResponseShape('object');
 
 			expect(state.editedEndpoint?.responseShape).toBe('object');
 			// Object selection is kept as both shapes use the same object
-			expect(state.editedEndpoint?.responseBodyObjectId).toBe('object-1');
+			expect(state.editedEndpoint?.responseBodyObjectId).toBe('eeeeeeee-0000-0000-0000-000000000001');
 		});
 	});
 
@@ -874,8 +874,8 @@ describe('apiGeneratorState - Response Shape Configuration', () => {
 			state.openEndpoint(endpoint);
 
 			// Select an object
-			state.handleSelectResponseBodyObject('object-1');
-			expect(state.editedEndpoint?.responseBodyObjectId).toBe('object-1');
+			state.handleSelectResponseBodyObject('eeeeeeee-0000-0000-0000-000000000001');
+			expect(state.editedEndpoint?.responseBodyObjectId).toBe('eeeeeeee-0000-0000-0000-000000000001');
 
 			// Reset
 			state.handleResetResponseDefaults();

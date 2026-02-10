@@ -34,14 +34,13 @@
     {
       type: 'checkbox-group',
       key: 'selectedValidatorCategories',
-      label: 'Validator Categories',
+      label: 'Compatible Types',
       options: [
         { label: 'String', value: 'string' },
-        { label: 'Numeric', value: 'numeric' },
-        { label: 'Collection', value: 'collection' }
+        { label: 'Numeric', value: 'numeric' }
       ],
       predicate: (item: FieldType, selected: string[]) =>
-        item.validatorCategories.some(cat => selected.includes(cat))
+        item.compatibleTypes.some(cat => selected.includes(cat))
     },
     {
       type: 'toggle',

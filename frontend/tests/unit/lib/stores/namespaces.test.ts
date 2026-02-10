@@ -26,7 +26,7 @@ describe('namespaces store - Basic Operations', () => {
 		// Reset stores to initial state
 		namespacesStore.set([...initialNamespaces]);
 		activeNamespaceId.set(GLOBAL_NAMESPACE_ID);
-		seedIdGenerator({ counter: 0, timestamp: 1000000 });
+		seedIdGenerator({ counter: 0 });
 	});
 
 	it('should have global namespace by default', () => {
@@ -63,14 +63,14 @@ describe('namespaces store - CRUD Operations', () => {
 	beforeEach(() => {
 		namespacesStore.set([...initialNamespaces]);
 		activeNamespaceId.set(GLOBAL_NAMESPACE_ID);
-		seedIdGenerator({ counter: 0, timestamp: 1000000 });
+		seedIdGenerator({ counter: 0 });
 	});
 
 	it('should create a new namespace', () => {
 		const namespace = createNamespace('development', 'Dev environment');
 
 		expect(namespace).toBeDefined();
-		expect(namespace?.id).toBe('namespace-1000000-0');
+		expect(namespace?.id).toBe('00000000-0000-4000-a000-000000000000');
 		expect(namespace?.name).toBe('development');
 		expect(namespace?.description).toBe('Dev environment');
 		expect(namespace?.locked).toBe(false);
@@ -141,7 +141,7 @@ describe('namespaces store - Active Namespace', () => {
 	beforeEach(() => {
 		namespacesStore.set([...initialNamespaces]);
 		activeNamespaceId.set(GLOBAL_NAMESPACE_ID);
-		seedIdGenerator({ counter: 0, timestamp: 1000000 });
+		seedIdGenerator({ counter: 0 });
 	});
 
 	it('should set active namespace', () => {
@@ -171,7 +171,7 @@ describe('namespaces store - Active Namespace', () => {
 describe('namespaces store - Search', () => {
 	beforeEach(() => {
 		namespacesStore.set([...initialNamespaces]);
-		seedIdGenerator({ counter: 0, timestamp: 1000000 });
+		seedIdGenerator({ counter: 0 });
 		createNamespace('development', 'Dev environment');
 		createNamespace('staging', 'Staging environment');
 		createNamespace('production', 'Prod environment');
@@ -216,7 +216,7 @@ describe('namespaces store - Entity Count', () => {
 		objectsStore.set([]);
 		endpointsStore.set([]);
 		apisStore.set([]);
-		seedIdGenerator({ counter: 0, timestamp: 1000000 });
+		seedIdGenerator({ counter: 0 });
 	});
 
 	it('should count entities in a namespace', () => {
@@ -227,7 +227,7 @@ describe('namespaces store - Entity Count', () => {
 		fieldsStore.update(fields => [
 			...fields,
 			{
-				id: 'field-1',
+				id: 'aaaaaaaa-0000-0000-0000-000000000001',
 				namespaceId: GLOBAL_NAMESPACE_ID,
 				name: 'test_field',
 				type: 'str' as const,
@@ -248,7 +248,7 @@ describe('namespaces store - Entity Count', () => {
 		fieldsStore.update(fields => [
 			...fields,
 			{
-				id: 'field-1',
+				id: 'aaaaaaaa-0000-0000-0000-000000000001',
 				namespaceId: GLOBAL_NAMESPACE_ID,
 				name: 'test_field',
 				type: 'str' as const,
@@ -260,9 +260,9 @@ describe('namespaces store - Entity Count', () => {
 		endpointsStore.update(endpoints => [
 			...endpoints,
 			{
-				id: 'endpoint-1',
+				id: 'bbbbbbbb-0000-0000-0000-000000000001',
 				namespaceId: GLOBAL_NAMESPACE_ID,
-				apiId: 'api-test-1',
+				apiId: 'cccccccc-0000-0000-0000-000000000001',
 				method: 'GET' as const,
 				path: '/test',
 				description: '',
@@ -289,7 +289,7 @@ describe('namespaces store - Entity Count', () => {
 		fieldsStore.update(fields => [
 			...fields,
 			{
-				id: 'field-1',
+				id: 'aaaaaaaa-0000-0000-0000-000000000002',
 				namespaceId: namespace!.id,
 				name: 'test_field',
 				type: 'str' as const,

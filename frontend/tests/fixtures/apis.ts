@@ -1,7 +1,9 @@
 /**
  * API Fixtures
- * 
+ *
  * Mock API endpoint data for testing API-related features.
+ *
+ * ID Format: All IDs use UUIDs to match the backend's UUID-based ID system.
  */
 
 export interface ApiEndpoint {
@@ -17,37 +19,49 @@ export interface ApiEndpoint {
 
 export const mockApis: ApiEndpoint[] = [
 	{
-		id: 'api-1',
+		id: '30000000-0000-0000-0000-000000000001',
 		name: 'Create User',
 		method: 'POST',
 		path: '/api/users',
 		description: 'Creates a new user account',
-		usedFields: ['field-1', 'field-2', 'field-4', 'field-6', 'field-8'],
+		usedFields: [
+			'10000000-0000-0000-0000-000000000001', // email
+			'10000000-0000-0000-0000-000000000002', // username
+			'10000000-0000-0000-0000-000000000004', // user_id
+			'10000000-0000-0000-0000-000000000006', // updated_at
+			'10000000-0000-0000-0000-000000000008'  // status
+		],
 		createdAt: '2025-01-01T00:00:00Z',
 		updatedAt: '2025-01-01T00:00:00Z'
 	},
 	{
-		id: 'api-2',
+		id: '30000000-0000-0000-0000-000000000002',
 		name: 'Get User',
 		method: 'GET',
 		path: '/api/users/{id}',
 		description: 'Retrieves user information by ID',
-		usedFields: ['field-1', 'field-6', 'field-8'],
+		usedFields: [
+			'10000000-0000-0000-0000-000000000001', // email
+			'10000000-0000-0000-0000-000000000006', // updated_at
+			'10000000-0000-0000-0000-000000000008'  // status
+		],
 		createdAt: '2025-01-02T00:00:00Z',
 		updatedAt: '2025-01-02T00:00:00Z'
 	},
 	{
-		id: 'api-3',
+		id: '30000000-0000-0000-0000-000000000003',
 		name: 'Update User',
 		method: 'PUT',
 		path: '/api/users/{id}',
 		description: 'Updates existing user information',
-		usedFields: ['field-8'],
+		usedFields: [
+			'10000000-0000-0000-0000-000000000008'  // status
+		],
 		createdAt: '2025-01-03T00:00:00Z',
 		updatedAt: '2025-01-03T00:00:00Z'
 	},
 	{
-		id: 'api-4',
+		id: '30000000-0000-0000-0000-000000000004',
 		name: 'Delete User',
 		method: 'DELETE',
 		path: '/api/users/{id}',

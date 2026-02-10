@@ -161,7 +161,7 @@ export function deleteValidator(validatorName: string): DeletionResult {
  */
 export function createValidator(
 	name: string,
-	type: 'string' | 'numeric' | 'collection',
+	type: 'string' | 'numeric',
 	description: string,
 	namespaceId: string = GLOBAL_NAMESPACE_ID
 ): Validator | undefined {
@@ -184,7 +184,7 @@ export function createValidator(
 		category: 'custom',
 		parameterType: '',
 		exampleUsage: '',
-		pydanticDocsUrl: '',
+		docsUrl: '',
 		usedInFields: 0,
 		fieldsUsingValidator: []
 	};

@@ -3,17 +3,25 @@ import { seedIdGenerator, generateId, generateParamId, deepClone } from '$lib/ut
 
 describe('ids utility - generateId', () => {
 	beforeEach(() => {
-		seedIdGenerator({ counter: 0, timestamp: 1000000 });
+		seedIdGenerator({ counter: 0 });
 	});
 
-	it('should generate deterministic IDs with prefix', () => {
+	it('should generate deterministic UUIDs when seeded', () => {
 		const id1 = generateId('endpoint');
 		const id2 = generateId('endpoint');
 		const id3 = generateId('tag');
 
-		expect(id1).toBe('endpoint-1000000-0');
-		expect(id2).toBe('endpoint-1000000-1');
-		expect(id3).toBe('tag-1000000-2');
+		expect(id1).toBe('00000000-0000-4000-a000-000000000000');
+		expect(id2).toBe('00000000-0000-4000-a000-000000000001');
+		expect(id3).toBe('00000000-0000-4000-a000-000000000002');
+	});
+
+	it('should ignore the prefix parameter (backward compatibility)', () => {
+		const id1 = generateId('endpoint');
+		seedIdGenerator({ counter: 0 });
+		const id2 = generateId('different-prefix');
+
+		expect(id1).toBe(id2);
 	});
 
 	it('should produce same IDs after reseeding with same values', () => {
@@ -23,7 +31,7 @@ describe('ids utility - generateId', () => {
 		firstRun.push(generateId('test'));
 
 		// Reset to same seed
-		seedIdGenerator({ counter: 0, timestamp: 1000000 });
+		seedIdGenerator({ counter: 0 });
 
 		const secondRun: string[] = [];
 		secondRun.push(generateId('test'));
@@ -32,21 +40,28 @@ describe('ids utility - generateId', () => {
 
 		expect(firstRun).toEqual(secondRun);
 	});
+
+	it('should generate valid UUID format', () => {
+		const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;
+		const id = generateId();
+
+		expect(id).toMatch(uuidRegex);
+	});
 });
 
 describe('ids utility - generateParamId', () => {
 	beforeEach(() => {
-		seedIdGenerator({ counter: 0, timestamp: 1000000 });
+		seedIdGenerator({ counter: 0 });
 	});
 
-	it('should generate deterministic param IDs', () => {
+	it('should generate deterministic param UUIDs', () => {
 		const id1 = generateParamId();
 		const id2 = generateParamId();
 		const id3 = generateParamId();
 
-		expect(id1).toBe('param-1000000-0');
-		expect(id2).toBe('param-1000000-1');
-		expect(id3).toBe('param-1000000-2');
+		expect(id1).toBe('00000000-0000-4000-a000-000000000000');
+		expect(id2).toBe('00000000-0000-4000-a000-000000000001');
+		expect(id3).toBe('00000000-0000-4000-a000-000000000002');
 	});
 
 	it('should share counter with generateId', () => {
@@ -54,9 +69,9 @@ describe('ids utility - generateParamId', () => {
 		const paramId = generateParamId(); // Uses counter 1
 		const tagId = generateId('tag'); // Uses counter 2
 
-		expect(endpointId).toBe('endpoint-1000000-0');
-		expect(paramId).toBe('param-1000000-1');
-		expect(tagId).toBe('tag-1000000-2');
+		expect(endpointId).toBe('00000000-0000-4000-a000-000000000000');
+		expect(paramId).toBe('00000000-0000-4000-a000-000000000001');
+		expect(tagId).toBe('00000000-0000-4000-a000-000000000002');
 	});
 
 	it('should produce same param IDs after reseeding with same values', () => {
@@ -66,7 +81,7 @@ describe('ids utility - generateParamId', () => {
 		firstRun.push(generateParamId());
 
 		// Reset to same seed
-		seedIdGenerator({ counter: 0, timestamp: 1000000 });
+		seedIdGenerator({ counter: 0 });
 
 		const secondRun: string[] = [];
 		secondRun.push(generateParamId());
@@ -80,23 +95,38 @@ describe('ids utility - generateParamId', () => {
 describe('ids utility - seedIdGenerator', () => {
 	it('should reset counter when seeded', () => {
 		// Generate some IDs
+		seedIdGenerator({ counter: 0 });
 		generateId('test');
 		generateId('test');
 		generateId('test');
 
-		// Reset
-		seedIdGenerator({ counter: 0, timestamp: 2000000 });
+		// Reset with counter 0
+		seedIdGenerator({ counter: 0 });
 
 		const id = generateId('test');
-		expect(id).toBe('test-2000000-0');
+		expect(id).toBe('00000000-0000-4000-a000-000000000000');
 	});
 
-	it('should use current timestamp if not provided', () => {
+	it('should start from specified counter value', () => {
 		seedIdGenerator({ counter: 5 });
 
 		const id = generateId('test');
-		// Should have counter 5 and some timestamp
-		expect(id).toMatch(/^test-\d+-5$/);
+		expect(id).toBe('00000000-0000-4000-a000-000000000005');
+	});
+
+	it('should generate random UUIDs when not seeded', () => {
+		seedIdGenerator(); // Reset to random mode
+
+		const id1 = generateId();
+		const id2 = generateId();
+
+		// Should be valid UUIDs
+		const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;
+		expect(id1).toMatch(uuidRegex);
+		expect(id2).toMatch(uuidRegex);
+
+		// Should be different (random)
+		expect(id1).not.toBe(id2);
 	});
 });
 

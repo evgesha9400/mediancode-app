@@ -13,11 +13,13 @@ import { listFields } from '$lib/api/fields';
 import { listObjects } from '$lib/api/objects';
 import { listEndpoints } from '$lib/api/endpoints';
 import { listValidators } from '$lib/api/validators';
+import { listTypes } from '$lib/api/types';
 import { namespacesStore, activeNamespaceId } from './namespaces';
 import { apisStore, endpointsStore } from './apis';
 import { fieldsStore } from './fields';
 import { objectsStore } from './objects';
 import { validatorsStore } from './validators';
+import { typesBaseStore } from './types';
 import { GLOBAL_NAMESPACE_ID } from './initialData';
 
 /**
@@ -65,13 +67,14 @@ export async function loadStoresFromApi(): Promise<void> {
 	try {
 		// Fetch all data in parallel for better performance
 		// Note: Tags are now embedded in APIs, so no separate listTags call
-		const [namespaces, apis, fields, objects, endpoints, validators] = await Promise.all([
+		const [namespaces, apis, fields, objects, endpoints, validators, types] = await Promise.all([
 			listNamespaces(),
 			listApis(),
 			listFields(),
 			listObjects(),
 			listEndpoints(),
-			listValidators()
+			listValidators(),
+			listTypes()
 		]);
 
 		// Update stores with fetched data
@@ -81,6 +84,7 @@ export async function loadStoresFromApi(): Promise<void> {
 		objectsStore.set(objects);
 		endpointsStore.set(endpoints);
 		validatorsStore.set(validators);
+		typesBaseStore.set(types);
 
 		// Set active namespace to global if it exists, otherwise first namespace
 		const globalNamespace = namespaces.find(ns => ns.id === GLOBAL_NAMESPACE_ID);
@@ -132,6 +136,7 @@ export function resetStores(): void {
 	objectsStore.set([]);
 	endpointsStore.set([]);
 	validatorsStore.set([]);
+	typesBaseStore.set([]);
 	activeNamespaceId.set(GLOBAL_NAMESPACE_ID);
 
 	console.log('[Store Loader] Stores reset to initial state');

@@ -29,7 +29,7 @@ import type { ApiTag } from '$lib/types';
 import { createMockEndpoint, createMockApi } from '../../../shared/testUtils';
 
 // Test API ID for all endpoint and tag operations
-const TEST_API_ID = 'api-test-1';
+const TEST_API_ID = 'cccccccc-0000-0000-0000-000000000001';
 
 describe('apis store - Metadata Operations', () => {
 	beforeEach(() => {
@@ -52,7 +52,7 @@ describe('apis store - Tag Operations (Embedded in API)', () => {
 		// Reset stores and ID generator
 		apisStore.set([createMockApi({ id: TEST_API_ID, tags: [] })]);
 		endpointsStore.set([]);
-		seedIdGenerator({ counter: 0, timestamp: 1000000 });
+		seedIdGenerator({ counter: 0 });
 	});
 
 	it('should add a new tag to API with uniqueness guard', () => {
@@ -158,13 +158,13 @@ describe('apis store - Endpoint Operations', () => {
 	beforeEach(() => {
 		apisStore.set([createMockApi({ id: TEST_API_ID, tags: [] })]);
 		endpointsStore.set([]);
-		seedIdGenerator({ counter: 0, timestamp: 1000000 });
+		seedIdGenerator({ counter: 0 });
 	});
 
 	it('should create a default endpoint', () => {
 		const endpoint = createDefaultEndpoint(GLOBAL_NAMESPACE_ID, TEST_API_ID);
 
-		expect(endpoint.id).toBe('endpoint-1000000-0');
+		expect(endpoint.id).toBe('00000000-0000-4000-a000-000000000000');
 		expect(endpoint.method).toBe('GET');
 		expect(endpoint.path).toBe('/');
 		expect(endpoint.pathParams).toHaveLength(0);
@@ -210,8 +210,8 @@ describe('apis store - Endpoint Operations', () => {
 		const original = createDefaultEndpoint(GLOBAL_NAMESPACE_ID, TEST_API_ID);
 		updateEndpoint(original.id, {
 			path: '/users/{user_id}',
-			pathParams: [{ id: 'param-1', name: 'user_id', type: 'integer', description: '', required: true }],
-			queryParamsObjectId: 'object-123'
+			pathParams: [{ id: 'dddddddd-0000-0000-0000-000000000001', name: 'user_id', type: 'integer', description: '', required: true }],
+			queryParamsObjectId: 'eeeeeeee-0000-0000-0000-000000000001'
 		});
 
 		const duplicated = duplicateEndpoint(original.id);
@@ -219,12 +219,12 @@ describe('apis store - Endpoint Operations', () => {
 		expect(duplicated).toBeDefined();
 		expect(duplicated!.id).not.toBe(original.id);
 		expect(duplicated!.path).toBe('/users/{user_id}-copy');
-		expect(duplicated!.pathParams[0].id).not.toBe('param-1');
-		expect(duplicated!.queryParamsObjectId).toBe('object-123');
+		expect(duplicated!.pathParams[0].id).not.toBe('dddddddd-0000-0000-0000-000000000001');
+		expect(duplicated!.queryParamsObjectId).toBe('eeeeeeee-0000-0000-0000-000000000001');
 
 		// Original should be unchanged
 		const originalCheck = getEndpointById(original.id);
-		expect(originalCheck?.pathParams[0].id).toBe('param-1');
+		expect(originalCheck?.pathParams[0].id).toBe('dddddddd-0000-0000-0000-000000000001');
 	});
 
 	it('should delete an endpoint', () => {
@@ -256,7 +256,7 @@ describe('apis store - Path Parameter Operations', () => {
 	beforeEach(() => {
 		apisStore.set([createMockApi({ id: TEST_API_ID, tags: [] })]);
 		endpointsStore.set([]);
-		seedIdGenerator({ counter: 0, timestamp: 1000000 });
+		seedIdGenerator({ counter: 0 });
 	});
 
 	it('should update endpoint path and extract path parameters', () => {
@@ -354,7 +354,7 @@ describe('apis store - Legacy Functions', () => {
 
 	it('should support legacy addEndpoint function', () => {
 		const endpoint = createMockEndpoint({
-			id: 'custom-endpoint',
+			id: 'bbbbbbbb-0000-0000-0000-000000000099',
 			method: 'POST',
 			path: '/test',
 			description: 'Test endpoint',

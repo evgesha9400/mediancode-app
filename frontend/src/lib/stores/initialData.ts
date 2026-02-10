@@ -11,6 +11,9 @@
  * - Any data changes happen in ONE place
  *
  * Pattern: This follows CLAUDE.md rules - shared data belongs in a central module.
+ *
+ * ID Format: All IDs use UUIDs to match the backend's UUID-based ID system.
+ * Seed data uses well-known UUIDs for predictability and cross-referencing.
  */
 
 import type { PrimitiveTypeName } from './types';
@@ -20,22 +23,24 @@ import type { ObjectDefinition, Namespace } from '$lib/types';
 // Namespace Data
 // ============================================================================
 
-/** Global namespace ID constant - used across all seed data */
-export const GLOBAL_NAMESPACE_ID = 'namespace-global';
-export const USER_NAMESPACE_ID = 'namespace-user';
+/** Global namespace UUID - matches backend well-known UUID */
+export const GLOBAL_NAMESPACE_ID = '00000000-0000-0000-0000-000000000001';
+export const USER_NAMESPACE_ID = '00000000-0000-0000-0000-000000000002';
 
 export const initialNamespaces: Namespace[] = [
 	{
 		id: GLOBAL_NAMESPACE_ID,
 		name: 'global',
 		description: 'Immutable global templates and examples',
-		locked: true
+		locked: true,
+		isDefault: false
 	},
 	{
 		id: USER_NAMESPACE_ID,
 		name: 'user',
 		description: 'User-created entities for testing namespace isolation',
-		locked: false
+		locked: false,
+		isDefault: true
 	}
 ];
 
@@ -45,6 +50,81 @@ export const initialNamespaces: Namespace[] = [
 export function cloneNamespaces(namespaces: Namespace[] = initialNamespaces): Namespace[] {
 	return namespaces.map(ns => ({ ...ns }));
 }
+
+// ============================================================================
+// Well-Known Built-in UUIDs (from backend)
+// ============================================================================
+
+/**
+ * Built-in type UUIDs - these match the backend's well-known type IDs.
+ * Used for referencing primitive types throughout the application.
+ */
+export const BUILTIN_TYPE_IDS = {
+	str: '00000000-0000-0000-0001-000000000001',
+	int: '00000000-0000-0000-0001-000000000002',
+	float: '00000000-0000-0000-0001-000000000003',
+	bool: '00000000-0000-0000-0001-000000000004',
+	datetime: '00000000-0000-0000-0001-000000000005',
+	uuid: '00000000-0000-0000-0001-000000000006'
+} as const;
+
+/**
+ * Built-in validator UUIDs - these match the backend's well-known validator IDs.
+ * Used for referencing built-in validators throughout the application.
+ */
+export const BUILTIN_VALIDATOR_IDS = {
+	max_length: '00000000-0000-0000-0002-000000000001',
+	min_length: '00000000-0000-0000-0002-000000000002',
+	pattern: '00000000-0000-0000-0002-000000000003',
+	email_format: '00000000-0000-0000-0002-000000000004',
+	url_format: '00000000-0000-0000-0002-000000000005',
+	gt: '00000000-0000-0000-0002-000000000006',
+	ge: '00000000-0000-0000-0002-000000000007',
+	lt: '00000000-0000-0000-0002-000000000008',
+	le: '00000000-0000-0000-0002-000000000009',
+	multiple_of: '00000000-0000-0000-0002-000000000010'
+} as const;
+
+// ============================================================================
+// Seed Data UUIDs
+// ============================================================================
+
+/** Seed field UUIDs - used for local development and testing */
+const SEED_FIELD_IDS = {
+	email: '10000000-0000-0000-0000-000000000001',
+	username: '10000000-0000-0000-0000-000000000002',
+	password: '10000000-0000-0000-0000-000000000003',
+	user_id: '10000000-0000-0000-0000-000000000004',
+	created_at: '10000000-0000-0000-0000-000000000005',
+	updated_at: '10000000-0000-0000-0000-000000000006',
+	price: '10000000-0000-0000-0000-000000000007',
+	status: '10000000-0000-0000-0000-000000000008',
+	website: '10000000-0000-0000-0000-000000000009',
+	phone: '10000000-0000-0000-0000-00000000000a',
+	product_name: '10000000-0000-0000-0000-00000000000b',
+	quantity: '10000000-0000-0000-0000-00000000000c',
+	product_price: '10000000-0000-0000-0000-00000000000d'
+} as const;
+
+/** Seed object UUIDs - used for local development and testing */
+const SEED_OBJECT_IDS = {
+	user: '20000000-0000-0000-0000-000000000001',
+	product: '20000000-0000-0000-0000-000000000002',
+	order: '20000000-0000-0000-0000-000000000003',
+	customer: '20000000-0000-0000-0000-000000000004',
+	payment: '20000000-0000-0000-0000-000000000005',
+	address: '20000000-0000-0000-0000-000000000006',
+	company: '20000000-0000-0000-0000-000000000007',
+	invoice: '20000000-0000-0000-0000-000000000008',
+	product_catalog_item: '20000000-0000-0000-0000-000000000009'
+} as const;
+
+/** Seed API UUIDs - used for local development and testing */
+const SEED_API_IDS = {
+	api_1: '30000000-0000-0000-0000-000000000001',
+	api_2: '30000000-0000-0000-0000-000000000002',
+	api_3: '30000000-0000-0000-0000-000000000003'
+} as const;
 
 // ============================================================================
 // Field Data
@@ -68,7 +148,7 @@ export interface Field {
 
 export const initialFields: Field[] = [
 	{
-		id: 'field-1',
+		id: SEED_FIELD_IDS.email,
 		namespaceId: GLOBAL_NAMESPACE_ID,
 		name: 'email',
 		type: 'str',
@@ -78,10 +158,10 @@ export const initialFields: Field[] = [
 			{ name: 'max_length', params: { value: 255 } },
 			{ name: 'email_format' }
 		],
-		usedInApis: ['api-1', 'api-2']
+		usedInApis: [SEED_API_IDS.api_1, SEED_API_IDS.api_2]
 	},
 	{
-		id: 'field-2',
+		id: SEED_FIELD_IDS.username,
 		namespaceId: GLOBAL_NAMESPACE_ID,
 		name: 'username',
 		type: 'str',
@@ -91,10 +171,10 @@ export const initialFields: Field[] = [
 			{ name: 'min_length', params: { value: 3 } },
 			{ name: 'max_length', params: { value: 50 } }
 		],
-		usedInApis: ['api-1']
+		usedInApis: [SEED_API_IDS.api_1]
 	},
 	{
-		id: 'field-3',
+		id: SEED_FIELD_IDS.password,
 		namespaceId: GLOBAL_NAMESPACE_ID,
 		name: 'password',
 		type: 'str',
@@ -107,17 +187,17 @@ export const initialFields: Field[] = [
 		usedInApis: []
 	},
 	{
-		id: 'field-4',
+		id: SEED_FIELD_IDS.user_id,
 		namespaceId: GLOBAL_NAMESPACE_ID,
 		name: 'user_id',
 		type: 'uuid',
 		description: 'Unique identifier for user',
 		defaultValue: 'uuid.uuid4()',
 		validators: [],
-		usedInApis: ['api-1']
+		usedInApis: [SEED_API_IDS.api_1]
 	},
 	{
-		id: 'field-5',
+		id: SEED_FIELD_IDS.created_at,
 		namespaceId: GLOBAL_NAMESPACE_ID,
 		name: 'created_at',
 		type: 'datetime',
@@ -127,17 +207,17 @@ export const initialFields: Field[] = [
 		usedInApis: []
 	},
 	{
-		id: 'field-6',
+		id: SEED_FIELD_IDS.updated_at,
 		namespaceId: GLOBAL_NAMESPACE_ID,
 		name: 'updated_at',
 		type: 'datetime',
 		description: 'Timestamp when the record was last updated',
 		defaultValue: 'datetime.now()',
 		validators: [],
-		usedInApis: ['api-1', 'api-2']
+		usedInApis: [SEED_API_IDS.api_1, SEED_API_IDS.api_2]
 	},
 	{
-		id: 'field-7',
+		id: SEED_FIELD_IDS.price,
 		namespaceId: GLOBAL_NAMESPACE_ID,
 		name: 'price',
 		type: 'float',
@@ -147,17 +227,17 @@ export const initialFields: Field[] = [
 		usedInApis: []
 	},
 	{
-		id: 'field-8',
+		id: SEED_FIELD_IDS.status,
 		namespaceId: GLOBAL_NAMESPACE_ID,
 		name: 'status',
 		type: 'str',
 		description: 'Current status of the entity',
 		defaultValue: "'active'",
 		validators: [],
-		usedInApis: ['api-1', 'api-2', 'api-3']
+		usedInApis: [SEED_API_IDS.api_1, SEED_API_IDS.api_2, SEED_API_IDS.api_3]
 	},
 	{
-		id: 'field-9',
+		id: SEED_FIELD_IDS.website,
 		namespaceId: GLOBAL_NAMESPACE_ID,
 		name: 'website',
 		type: 'str',
@@ -171,20 +251,18 @@ export const initialFields: Field[] = [
 		usedInApis: []
 	},
 	{
-		id: 'field-10',
+		id: SEED_FIELD_IDS.phone,
 		namespaceId: GLOBAL_NAMESPACE_ID,
 		name: 'phone',
 		type: 'str',
 		description: 'Contact phone number',
 		defaultValue: '',
-		validators: [
-			{ name: 'phone_number' }
-		],
+		validators: [],
 		usedInApis: []
 	},
 	// User namespace fields for testing isolation
 	{
-		id: 'field-user-1',
+		id: SEED_FIELD_IDS.product_name,
 		namespaceId: USER_NAMESPACE_ID,
 		name: 'product_name',
 		type: 'str',
@@ -197,7 +275,7 @@ export const initialFields: Field[] = [
 		usedInApis: []
 	},
 	{
-		id: 'field-user-2',
+		id: SEED_FIELD_IDS.quantity,
 		namespaceId: USER_NAMESPACE_ID,
 		name: 'quantity',
 		type: 'int',
@@ -209,7 +287,7 @@ export const initialFields: Field[] = [
 		usedInApis: []
 	},
 	{
-		id: 'field-user-3',
+		id: SEED_FIELD_IDS.product_price,
 		namespaceId: USER_NAMESPACE_ID,
 		name: 'product_price',
 		type: 'float',
@@ -229,12 +307,12 @@ export const initialFields: Field[] = [
 export interface ValidatorBase {
 	name: string;
 	namespaceId: string;
-	type: 'string' | 'numeric' | 'collection';
+	type: 'string' | 'numeric';
 	description: string;
 	category: 'inline' | 'custom';
 	parameterType: string;
 	exampleUsage: string;
-	pydanticDocsUrl: string;
+	docsUrl: string;
 }
 
 export const initialInlineValidators: ValidatorBase[] = [
@@ -246,7 +324,7 @@ export const initialInlineValidators: ValidatorBase[] = [
 		category: 'inline',
 		parameterType: 'Integer',
 		exampleUsage: 'Field(..., min_length=3)',
-		pydanticDocsUrl: 'https://docs.pydantic.dev/latest/api/fields/#pydantic.fields.Field'
+		docsUrl: 'https://docs.pydantic.dev/latest/api/fields/#pydantic.fields.Field'
 	},
 	{
 		name: 'max_length',
@@ -256,17 +334,17 @@ export const initialInlineValidators: ValidatorBase[] = [
 		category: 'inline',
 		parameterType: 'Integer',
 		exampleUsage: 'Field(..., max_length=100)',
-		pydanticDocsUrl: 'https://docs.pydantic.dev/latest/api/fields/#pydantic.fields.Field'
+		docsUrl: 'https://docs.pydantic.dev/latest/api/fields/#pydantic.fields.Field'
 	},
 	{
-		name: 'regex',
+		name: 'pattern',
 		namespaceId: GLOBAL_NAMESPACE_ID,
 		type: 'string',
 		description: 'Validates against regex pattern. Ensures string values match a specific regular expression pattern.',
 		category: 'inline',
 		parameterType: 'String (regex pattern)',
 		exampleUsage: 'Field(..., pattern=r"^[A-Za-z0-9]+$")',
-		pydanticDocsUrl: 'https://docs.pydantic.dev/latest/api/fields/#pydantic.fields.Field'
+		docsUrl: 'https://docs.pydantic.dev/latest/api/fields/#pydantic.fields.Field'
 	},
 	{
 		name: 'gt',
@@ -276,7 +354,7 @@ export const initialInlineValidators: ValidatorBase[] = [
 		category: 'inline',
 		parameterType: 'Number',
 		exampleUsage: 'Field(..., gt=0)',
-		pydanticDocsUrl: 'https://docs.pydantic.dev/latest/api/fields/#pydantic.fields.Field'
+		docsUrl: 'https://docs.pydantic.dev/latest/api/fields/#pydantic.fields.Field'
 	},
 	{
 		name: 'ge',
@@ -286,7 +364,7 @@ export const initialInlineValidators: ValidatorBase[] = [
 		category: 'inline',
 		parameterType: 'Number',
 		exampleUsage: 'Field(..., ge=0)',
-		pydanticDocsUrl: 'https://docs.pydantic.dev/latest/api/fields/#pydantic.fields.Field'
+		docsUrl: 'https://docs.pydantic.dev/latest/api/fields/#pydantic.fields.Field'
 	},
 	{
 		name: 'lt',
@@ -296,7 +374,7 @@ export const initialInlineValidators: ValidatorBase[] = [
 		category: 'inline',
 		parameterType: 'Number',
 		exampleUsage: 'Field(..., lt=100)',
-		pydanticDocsUrl: 'https://docs.pydantic.dev/latest/api/fields/#pydantic.fields.Field'
+		docsUrl: 'https://docs.pydantic.dev/latest/api/fields/#pydantic.fields.Field'
 	},
 	{
 		name: 'le',
@@ -306,7 +384,7 @@ export const initialInlineValidators: ValidatorBase[] = [
 		category: 'inline',
 		parameterType: 'Number',
 		exampleUsage: 'Field(..., le=100)',
-		pydanticDocsUrl: 'https://docs.pydantic.dev/latest/api/fields/#pydantic.fields.Field'
+		docsUrl: 'https://docs.pydantic.dev/latest/api/fields/#pydantic.fields.Field'
 	},
 	{
 		name: 'multiple_of',
@@ -316,37 +394,7 @@ export const initialInlineValidators: ValidatorBase[] = [
 		category: 'inline',
 		parameterType: 'Number',
 		exampleUsage: 'Field(..., multiple_of=5)',
-		pydanticDocsUrl: 'https://docs.pydantic.dev/latest/api/fields/#pydantic.fields.Field'
-	},
-	{
-		name: 'min_items',
-		namespaceId: GLOBAL_NAMESPACE_ID,
-		type: 'collection',
-		description: 'Minimum items in collection. Ensures lists or arrays contain at least a specified number of items.',
-		category: 'inline',
-		parameterType: 'Integer',
-		exampleUsage: 'Field(..., min_length=1)',
-		pydanticDocsUrl: 'https://docs.pydantic.dev/latest/api/fields/#pydantic.fields.Field'
-	},
-	{
-		name: 'max_items',
-		namespaceId: GLOBAL_NAMESPACE_ID,
-		type: 'collection',
-		description: 'Maximum items in collection. Limits the number of items allowed in lists or arrays.',
-		category: 'inline',
-		parameterType: 'Integer',
-		exampleUsage: 'Field(..., max_length=10)',
-		pydanticDocsUrl: 'https://docs.pydantic.dev/latest/api/fields/#pydantic.fields.Field'
-	},
-	{
-		name: 'unique_items',
-		namespaceId: GLOBAL_NAMESPACE_ID,
-		type: 'collection',
-		description: 'Ensures unique items in collection. Validates that all items in a list or array are distinct.',
-		category: 'inline',
-		parameterType: 'Boolean',
-		exampleUsage: 'Field(..., unique_items=True)',
-		pydanticDocsUrl: 'https://docs.pydantic.dev/latest/api/fields/#pydantic.fields.Field'
+		docsUrl: 'https://docs.pydantic.dev/latest/api/fields/#pydantic.fields.Field'
 	}
 ];
 
@@ -359,17 +407,7 @@ export const initialCustomValidators: ValidatorBase[] = [
 		category: 'custom',
 		parameterType: 'String',
 		exampleUsage: '@field_validator("email")\ndef validate_email(cls, v):\n    if not re.match(r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$", v):\n        raise ValueError("Invalid email format")\n    return v',
-		pydanticDocsUrl: 'https://docs.pydantic.dev/latest/concepts/validators/'
-	},
-	{
-		name: 'phone_number',
-		namespaceId: GLOBAL_NAMESPACE_ID,
-		type: 'string',
-		description: 'Validates phone number format. Custom validator that ensures phone numbers match standard international formats.',
-		category: 'custom',
-		parameterType: 'String',
-		exampleUsage: '@field_validator("phone")\ndef validate_phone(cls, v):\n    if not re.match(r"^\\+?[1-9]\\d{1,14}$", v):\n        raise ValueError("Invalid phone number")\n    return v',
-		pydanticDocsUrl: 'https://docs.pydantic.dev/latest/concepts/validators/'
+		docsUrl: 'https://docs.pydantic.dev/latest/concepts/validators/'
 	},
 	{
 		name: 'url_format',
@@ -379,7 +417,7 @@ export const initialCustomValidators: ValidatorBase[] = [
 		category: 'custom',
 		parameterType: 'String',
 		exampleUsage: '@field_validator("website")\ndef validate_url(cls, v):\n    if not v.startswith(("http://", "https://")):\n        raise ValueError("Invalid URL format")\n    return v',
-		pydanticDocsUrl: 'https://docs.pydantic.dev/latest/concepts/validators/'
+		docsUrl: 'https://docs.pydantic.dev/latest/concepts/validators/'
 	},
 	// User namespace validators for testing isolation
 	{
@@ -390,7 +428,7 @@ export const initialCustomValidators: ValidatorBase[] = [
 		category: 'custom',
 		parameterType: 'String',
 		exampleUsage: '@field_validator("product_name")\ndef validate_product_name(cls, v):\n    if not v.strip():\n        raise ValueError("Product name cannot be empty")\n    return v.strip()',
-		pydanticDocsUrl: 'https://docs.pydantic.dev/latest/concepts/validators/'
+		docsUrl: 'https://docs.pydantic.dev/latest/concepts/validators/'
 	}
 ];
 
@@ -424,118 +462,118 @@ export function cloneValidatorBases(validators: ValidatorBase[]): ValidatorBase[
 
 export const initialObjects: ObjectDefinition[] = [
 	{
-		id: 'object-1',
+		id: SEED_OBJECT_IDS.user,
 		namespaceId: GLOBAL_NAMESPACE_ID,
 		name: 'User',
 		description: 'User account information',
 		fields: [
-			{ fieldId: 'field-4', required: true },  // user_id
-			{ fieldId: 'field-2', required: true },  // username
-			{ fieldId: 'field-1', required: true },  // email
-			{ fieldId: 'field-3', required: true },  // password
-			{ fieldId: 'field-5', required: true },  // created_at
-			{ fieldId: 'field-6', required: false }  // updated_at
+			{ fieldId: SEED_FIELD_IDS.user_id, required: true },   // user_id
+			{ fieldId: SEED_FIELD_IDS.username, required: true },   // username
+			{ fieldId: SEED_FIELD_IDS.email, required: true },      // email
+			{ fieldId: SEED_FIELD_IDS.password, required: true },   // password
+			{ fieldId: SEED_FIELD_IDS.created_at, required: true }, // created_at
+			{ fieldId: SEED_FIELD_IDS.updated_at, required: false } // updated_at
 		],
-		usedInApis: ['api-1']
+		usedInApis: [SEED_API_IDS.api_1]
 	},
 	{
-		id: 'object-2',
+		id: SEED_OBJECT_IDS.product,
 		namespaceId: GLOBAL_NAMESPACE_ID,
 		name: 'Product',
 		description: 'Product catalog item',
 		fields: [
-			{ fieldId: 'field-7', required: true },  // price
-			{ fieldId: 'field-8', required: true },  // status
-			{ fieldId: 'field-5', required: true },  // created_at
-			{ fieldId: 'field-6', required: false }  // updated_at
+			{ fieldId: SEED_FIELD_IDS.price, required: true },      // price
+			{ fieldId: SEED_FIELD_IDS.status, required: true },     // status
+			{ fieldId: SEED_FIELD_IDS.created_at, required: true }, // created_at
+			{ fieldId: SEED_FIELD_IDS.updated_at, required: false } // updated_at
 		],
 		usedInApis: []
 	},
 	{
-		id: 'object-3',
+		id: SEED_OBJECT_IDS.order,
 		namespaceId: GLOBAL_NAMESPACE_ID,
 		name: 'Order',
 		description: 'Customer order details',
 		fields: [
-			{ fieldId: 'field-4', required: true },  // user_id (repurposed as order_id)
-			{ fieldId: 'field-8', required: true },  // status
-			{ fieldId: 'field-7', required: true },  // price (total)
-			{ fieldId: 'field-5', required: true },  // created_at
-			{ fieldId: 'field-6', required: false }  // updated_at
+			{ fieldId: SEED_FIELD_IDS.user_id, required: true },    // user_id (repurposed as order_id)
+			{ fieldId: SEED_FIELD_IDS.status, required: true },     // status
+			{ fieldId: SEED_FIELD_IDS.price, required: true },      // price (total)
+			{ fieldId: SEED_FIELD_IDS.created_at, required: true }, // created_at
+			{ fieldId: SEED_FIELD_IDS.updated_at, required: false } // updated_at
 		],
-		usedInApis: ['api-2']
+		usedInApis: [SEED_API_IDS.api_2]
 	},
 	{
-		id: 'object-4',
+		id: SEED_OBJECT_IDS.customer,
 		namespaceId: GLOBAL_NAMESPACE_ID,
 		name: 'Customer',
 		description: 'Customer profile information',
 		fields: [
-			{ fieldId: 'field-1', required: true },  // email
-			{ fieldId: 'field-10', required: false }, // phone
-			{ fieldId: 'field-5', required: true },  // created_at
+			{ fieldId: SEED_FIELD_IDS.email, required: true },      // email
+			{ fieldId: SEED_FIELD_IDS.phone, required: false },     // phone
+			{ fieldId: SEED_FIELD_IDS.created_at, required: true }, // created_at
 		],
 		usedInApis: []
 	},
 	{
-		id: 'object-5',
+		id: SEED_OBJECT_IDS.payment,
 		namespaceId: GLOBAL_NAMESPACE_ID,
 		name: 'Payment',
 		description: 'Payment transaction record',
 		fields: [
-			{ fieldId: 'field-7', required: true },  // price (amount)
-			{ fieldId: 'field-8', required: true },  // status
-			{ fieldId: 'field-5', required: true },  // created_at
+			{ fieldId: SEED_FIELD_IDS.price, required: true },      // price (amount)
+			{ fieldId: SEED_FIELD_IDS.status, required: true },     // status
+			{ fieldId: SEED_FIELD_IDS.created_at, required: true }, // created_at
 		],
-		usedInApis: ['api-3']
+		usedInApis: [SEED_API_IDS.api_3]
 	},
 	{
-		id: 'object-6',
+		id: SEED_OBJECT_IDS.address,
 		namespaceId: GLOBAL_NAMESPACE_ID,
 		name: 'Address',
 		description: 'Physical address information',
 		fields: [
-			{ fieldId: 'field-9', required: false }, // website (repurposed)
-			{ fieldId: 'field-10', required: false }, // phone
+			{ fieldId: SEED_FIELD_IDS.website, required: false }, // website (repurposed)
+			{ fieldId: SEED_FIELD_IDS.phone, required: false },   // phone
 		],
 		usedInApis: []
 	},
 	{
-		id: 'object-7',
+		id: SEED_OBJECT_IDS.company,
 		namespaceId: GLOBAL_NAMESPACE_ID,
 		name: 'Company',
 		description: 'Company profile',
 		fields: [
-			{ fieldId: 'field-9', required: true },  // website
-			{ fieldId: 'field-10', required: false }, // phone
-			{ fieldId: 'field-1', required: true },  // email
-			{ fieldId: 'field-5', required: true },  // created_at
+			{ fieldId: SEED_FIELD_IDS.website, required: true },    // website
+			{ fieldId: SEED_FIELD_IDS.phone, required: false },     // phone
+			{ fieldId: SEED_FIELD_IDS.email, required: true },      // email
+			{ fieldId: SEED_FIELD_IDS.created_at, required: true }, // created_at
 		],
 		usedInApis: []
 	},
 	{
-		id: 'object-8',
+		id: SEED_OBJECT_IDS.invoice,
 		namespaceId: GLOBAL_NAMESPACE_ID,
 		name: 'Invoice',
 		description: 'Billing invoice',
 		fields: [
-			{ fieldId: 'field-7', required: true },  // price (total)
-			{ fieldId: 'field-8', required: true },  // status
-			{ fieldId: 'field-5', required: true },  // created_at
-			{ fieldId: 'field-6', required: false }  // updated_at
+			{ fieldId: SEED_FIELD_IDS.price, required: true },      // price (total)
+			{ fieldId: SEED_FIELD_IDS.status, required: true },     // status
+			{ fieldId: SEED_FIELD_IDS.created_at, required: true }, // created_at
+			{ fieldId: SEED_FIELD_IDS.updated_at, required: false } // updated_at
 		],
 		usedInApis: []
 	},
 	// User namespace objects for testing isolation
 	{
-		id: 'object-user-1',
+		id: SEED_OBJECT_IDS.product_catalog_item,
 		namespaceId: USER_NAMESPACE_ID,
 		name: 'ProductCatalogItem',
 		description: 'Product catalog item in user namespace',
 		fields: [
-			{ fieldId: 'field-user-1', required: true },  // product_name
-			{ fieldId: 'field-user-2', required: true },  // quantity
-			{ fieldId: 'field-user-3', required: true }   // product_price
+			{ fieldId: SEED_FIELD_IDS.product_name, required: true },  // product_name
+			{ fieldId: SEED_FIELD_IDS.quantity, required: true },      // quantity
+			{ fieldId: SEED_FIELD_IDS.product_price, required: true }  // product_price
 		],
 		usedInApis: []
 	}

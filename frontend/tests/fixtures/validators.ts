@@ -38,11 +38,11 @@ export const mockValidators: Validator[] = mockValidatorBases.map((base, index) 
 	fieldsUsingValidator:
 		index % 2 === 0
 			? [
-					{ name: 'email', fieldId: 'field-1' },
-					{ name: 'username', fieldId: 'field-2' },
-					{ name: 'password', fieldId: 'field-3' }
+					{ name: 'email', fieldId: '10000000-0000-0000-0000-000000000001' },
+					{ name: 'username', fieldId: '10000000-0000-0000-0000-000000000002' },
+					{ name: 'password', fieldId: '10000000-0000-0000-0000-000000000003' }
 				]
-			: [{ name: 'username', fieldId: 'field-2' }]
+			: [{ name: 'username', fieldId: '10000000-0000-0000-0000-000000000002' }]
 }));
 
 /**
@@ -56,7 +56,7 @@ export function getValidatorByName(name: string): Validator | undefined {
  * Get validators by type
  */
 export function getValidatorsByType(
-	type: 'string' | 'numeric' | 'collection'
+	type: 'string' | 'numeric'
 ): Validator[] {
 	return mockValidators.filter((validator) => validator.type === type);
 }

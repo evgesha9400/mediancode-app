@@ -9,6 +9,10 @@ import { fieldsStore } from '$lib/stores/fields';
 import { initialFields } from '$lib/stores/initialData';
 import type { ResponseShape, ResponseItemShape } from '$lib/types';
 
+// Seed field IDs (UUIDs from initialData.ts)
+const FIELD_EMAIL = '10000000-0000-0000-0000-000000000001';
+const FIELD_USERNAME = '10000000-0000-0000-0000-000000000002';
+
 describe('examples - getExampleValueForType', () => {
 	it('should return correct example for string types', () => {
 		expect(getExampleValueForType('str')).toBe('string');
@@ -78,10 +82,10 @@ describe('examples - buildObjectFromFieldIds', () => {
 	});
 
 	it('should build object from multiple field IDs', () => {
-		const obj = buildObjectFromFieldIds(['field-1', 'field-2']);
+		const obj = buildObjectFromFieldIds([FIELD_EMAIL, FIELD_USERNAME]);
 
-		// field-1 is 'email' with type 'str'
-		// field-2 is another field from initialFields
+		// FIELD_EMAIL is 'email' with type 'str'
+		// FIELD_USERNAME is 'username' with type 'str'
 		expect(obj).toHaveProperty('email');
 		expect(typeof obj.email).toBe('string');
 		expect(Object.keys(obj).length).toBeGreaterThan(0);
@@ -95,10 +99,10 @@ describe('examples - buildObjectFromFieldIds', () => {
 	});
 
 	it('should skip non-existent field IDs gracefully', () => {
-		const obj = buildObjectFromFieldIds(['field-1', 'non-existent-field', 'field-2']);
+		const obj = buildObjectFromFieldIds([FIELD_EMAIL, 'non-existent-field', FIELD_USERNAME]);
 
-		// Should include field-1 and field-2, skip non-existent
-		expect(obj).toHaveProperty('email'); // field-1 is 'email'
+		// Should include email and username fields, skip non-existent
+		expect(obj).toHaveProperty('email'); // FIELD_EMAIL is 'email'
 		expect(obj).not.toHaveProperty('non-existent-field');
 	});
 
@@ -109,9 +113,9 @@ describe('examples - buildObjectFromFieldIds', () => {
 	});
 
 	it('should use correct example values based on field types', () => {
-		const obj = buildObjectFromFieldIds(['field-1']);
+		const obj = buildObjectFromFieldIds([FIELD_EMAIL]);
 
-		// field-1 is 'email' with type 'str'
+		// FIELD_EMAIL is 'email' with type 'str'
 		expect(obj.email).toBe('string');
 	});
 });
@@ -122,13 +126,13 @@ describe('examples - buildRequestPreview', () => {
 	});
 
 	it('should generate request preview JSON string', () => {
-		const preview = buildRequestPreview(['field-1', 'field-2']);
+		const preview = buildRequestPreview([FIELD_EMAIL, FIELD_USERNAME]);
 
 		// Should be valid JSON
 		expect(() => JSON.parse(preview)).not.toThrow();
 
 		const parsed = JSON.parse(preview);
-		expect(parsed).toHaveProperty('email'); // field-1
+		expect(parsed).toHaveProperty('email'); // FIELD_EMAIL
 		expect(typeof parsed).toBe('object');
 	});
 
@@ -140,7 +144,7 @@ describe('examples - buildRequestPreview', () => {
 	});
 
 	it('should format JSON with indentation', () => {
-		const preview = buildRequestPreview(['field-1']);
+		const preview = buildRequestPreview([FIELD_EMAIL]);
 
 		// Should have newlines (formatted with 2 spaces)
 		expect(preview).toContain('\n');
@@ -148,7 +152,7 @@ describe('examples - buildRequestPreview', () => {
 	});
 
 	it('should handle non-existent fields gracefully', () => {
-		const preview = buildRequestPreview(['field-1', 'non-existent']);
+		const preview = buildRequestPreview([FIELD_EMAIL, 'non-existent']);
 
 		expect(() => JSON.parse(preview)).not.toThrow();
 		const parsed = JSON.parse(preview);
@@ -165,22 +169,22 @@ describe('examples - buildResponsePreview', () => {
 	describe('object shape', () => {
 		it('should generate object shape without envelope', () => {
 			const shape: ResponseShape = 'object';
-			const fieldIds = ['field-1', 'field-2'];
+			const fieldIds = [FIELD_EMAIL, FIELD_USERNAME];
 			const preview = buildResponsePreview(shape, fieldIds, undefined, 'object', false);
 
 			const parsed = JSON.parse(preview);
-			expect(parsed).toHaveProperty('email'); // field-1
+			expect(parsed).toHaveProperty('email'); // FIELD_EMAIL
 			expect(parsed).not.toHaveProperty('data'); // No envelope
 		});
 
 		it('should generate object shape with envelope', () => {
 			const shape: ResponseShape = 'object';
-			const fieldIds = ['field-1', 'field-2'];
+			const fieldIds = [FIELD_EMAIL, FIELD_USERNAME];
 			const preview = buildResponsePreview(shape, fieldIds, undefined, 'object', true);
 
 			const parsed = JSON.parse(preview);
 			expect(parsed).toHaveProperty('data');
-			expect(parsed.data).toHaveProperty('email'); // field-1 inside data
+			expect(parsed.data).toHaveProperty('email'); // FIELD_EMAIL inside data
 		});
 
 		it('should handle empty fields for object shape', () => {
@@ -204,7 +208,7 @@ describe('examples - buildResponsePreview', () => {
 		it('should generate list of objects without envelope', () => {
 			const shape: ResponseShape = 'list';
 			const itemShape: ResponseItemShape = 'object';
-			const fieldIds = ['field-1', 'field-2'];
+			const fieldIds = [FIELD_EMAIL, FIELD_USERNAME];
 			const preview = buildResponsePreview(shape, fieldIds, undefined, itemShape, false);
 
 			const parsed = JSON.parse(preview);
@@ -217,7 +221,7 @@ describe('examples - buildResponsePreview', () => {
 		it('should generate list of objects with envelope', () => {
 			const shape: ResponseShape = 'list';
 			const itemShape: ResponseItemShape = 'object';
-			const fieldIds = ['field-1', 'field-2'];
+			const fieldIds = [FIELD_EMAIL, FIELD_USERNAME];
 			const preview = buildResponsePreview(shape, fieldIds, undefined, itemShape, true);
 
 			const parsed = JSON.parse(preview);
@@ -251,7 +255,7 @@ describe('examples - buildResponsePreview', () => {
 			const shapes: ResponseShape[] = ['object', 'list'];
 
 			shapes.forEach(shape => {
-				const preview = buildResponsePreview(shape, ['field-1'], undefined, 'object', true);
+				const preview = buildResponsePreview(shape, [FIELD_EMAIL], undefined, 'object', true);
 				const parsed = JSON.parse(preview);
 				expect(parsed).toHaveProperty('data');
 			});
@@ -259,7 +263,7 @@ describe('examples - buildResponsePreview', () => {
 
 		it('should format JSON with proper indentation', () => {
 			const shape: ResponseShape = 'object';
-			const preview = buildResponsePreview(shape, ['field-1'], undefined, 'object', true);
+			const preview = buildResponsePreview(shape, [FIELD_EMAIL], undefined, 'object', true);
 
 			// Should have newlines and indentation
 			expect(preview).toContain('\n');
@@ -268,23 +272,23 @@ describe('examples - buildResponsePreview', () => {
 
 		it('should handle mixed scenarios correctly', () => {
 			// Object with envelope
-			let preview = buildResponsePreview('object', ['field-1'], undefined, 'object', true);
+			let preview = buildResponsePreview('object', [FIELD_EMAIL], undefined, 'object', true);
 			let parsed = JSON.parse(preview);
 			expect(parsed.data).toHaveProperty('email');
 
 			// Object without envelope
-			preview = buildResponsePreview('object', ['field-1', 'field-2'], undefined, 'object', false);
+			preview = buildResponsePreview('object', [FIELD_EMAIL, FIELD_USERNAME], undefined, 'object', false);
 			parsed = JSON.parse(preview);
 			expect(parsed).toHaveProperty('email');
 			expect(parsed).toHaveProperty('username');
 
 			// List of objects with envelope
-			preview = buildResponsePreview('list', ['field-1'], undefined, 'object', true);
+			preview = buildResponsePreview('list', [FIELD_EMAIL], undefined, 'object', true);
 			parsed = JSON.parse(preview);
 			expect(parsed.data).toHaveLength(2);
 
 			// List of objects without envelope
-			preview = buildResponsePreview('list', ['field-1', 'field-2'], undefined, 'object', false);
+			preview = buildResponsePreview('list', [FIELD_EMAIL, FIELD_USERNAME], undefined, 'object', false);
 			parsed = JSON.parse(preview);
 			expect(parsed).toHaveLength(2);
 			expect(parsed[0]).toHaveProperty('email');

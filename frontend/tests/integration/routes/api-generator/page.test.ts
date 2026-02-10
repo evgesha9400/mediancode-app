@@ -30,7 +30,7 @@ import type { ApiTag } from '$lib/types';
 import { createMockEndpoint, createMockApi } from '../../../shared/testUtils';
 import { GLOBAL_NAMESPACE_ID } from '$lib/stores/initialData';
 
-const TEST_API_ID = 'api-test-1';
+const TEST_API_ID = 'cccccccc-0000-0000-0000-000000000001';
 
 describe('API Generator Page - Store Integration', () => {
 	// Reset stores before each test
@@ -78,9 +78,9 @@ describe('API Generator Page - Store Integration', () => {
 		it('counts endpoints using a specific tag by name', () => {
 			addTagToApi(TEST_API_ID, 'Users', '');
 
-			addEndpoint(createMockEndpoint({ id: 'endpoint-1', path: '/users', tagName: 'Users' }));
-			addEndpoint(createMockEndpoint({ id: 'endpoint-2', method: 'POST', path: '/users', tagName: 'Users' }));
-			addEndpoint(createMockEndpoint({ id: 'endpoint-3', path: '/posts', tagName: undefined }));
+			addEndpoint(createMockEndpoint({ id: 'bbbbbbbb-0000-0000-0000-000000000001', path: '/users', tagName: 'Users' }));
+			addEndpoint(createMockEndpoint({ id: 'bbbbbbbb-0000-0000-0000-000000000002', method: 'POST', path: '/users', tagName: 'Users' }));
+			addEndpoint(createMockEndpoint({ id: 'bbbbbbbb-0000-0000-0000-000000000003', path: '/posts', tagName: undefined }));
 
 			expect(getEndpointCountByTagName(TEST_API_ID, 'Users')).toBe(2);
 		});
@@ -272,8 +272,8 @@ describe('API Generator Page - Store Integration', () => {
 		it('allows multiple endpoints to share the same tag', () => {
 			addTagToApi(TEST_API_ID, 'Users', '');
 
-			addEndpoint(createMockEndpoint({ id: 'endpoint-1', path: '/users', tagName: 'Users' }));
-			addEndpoint(createMockEndpoint({ id: 'endpoint-2', method: 'POST', path: '/users', tagName: 'Users' }));
+			addEndpoint(createMockEndpoint({ id: 'bbbbbbbb-0000-0000-0000-000000000001', path: '/users', tagName: 'Users' }));
+			addEndpoint(createMockEndpoint({ id: 'bbbbbbbb-0000-0000-0000-000000000002', method: 'POST', path: '/users', tagName: 'Users' }));
 
 			const endpoints = get(endpointsStore);
 			expect(endpoints.filter(e => e.tagName === 'Users')).toHaveLength(2);

@@ -6,6 +6,8 @@
 
 import { apiGet, apiPost, apiPut, apiDelete } from './client';
 import type { Field, FieldValidator } from '$lib/stores/initialData';
+import { BUILTIN_TYPE_IDS } from '$lib/stores/initialData';
+import type { PrimitiveTypeName } from '$lib/stores/types';
 
 /**
  * Backend field validator response
@@ -16,13 +18,21 @@ interface FieldValidatorResponse {
 }
 
 /**
+ * Reverse lookup map: type UUID -> type name
+ * Built from BUILTIN_TYPE_IDS for resolving type_id in field responses.
+ */
+const TYPE_ID_TO_NAME: Record<string, PrimitiveTypeName> = Object.fromEntries(
+	Object.entries(BUILTIN_TYPE_IDS).map(([name, id]) => [id, name as PrimitiveTypeName])
+) as Record<string, PrimitiveTypeName>;
+
+/**
  * Backend API response for Field entity
  */
 interface FieldResponse {
 	id: string;
 	namespaceId: string;
 	name: string;
-	type: string;
+	typeId: string;
 	description: string | null;
 	defaultValue: string | null;
 	validators: FieldValidatorResponse[];
@@ -40,14 +50,20 @@ function transformFieldValidator(response: FieldValidatorResponse): FieldValidat
 }
 
 /**
- * Transform backend response to frontend Field type
+ * Transform backend response to frontend Field type.
+ * Resolves typeId (UUID) to a PrimitiveTypeName using the built-in type lookup.
  */
 function transformField(response: FieldResponse): Field {
+	const typeName = TYPE_ID_TO_NAME[response.typeId];
+	if (!typeName) {
+		console.warn(`Unknown type_id "${response.typeId}" for field "${response.name}", defaulting to "str"`);
+	}
+
 	return {
 		id: response.id,
 		namespaceId: response.namespaceId,
 		name: response.name,
-		type: response.type as Field['type'],
+		type: typeName ?? 'str',
 		description: response.description ?? undefined,
 		defaultValue: response.defaultValue ?? undefined,
 		validators: response.validators.map(transformFieldValidator),
@@ -84,7 +100,7 @@ export async function getField(id: string): Promise<Field> {
 export interface CreateFieldRequest {
 	namespaceId: string;
 	name: string;
-	type: string;
+	typeId: string;
 	description?: string;
 	defaultValue?: string;
 	validators: { name: string; params?: Record<string, unknown> }[];
@@ -95,7 +111,7 @@ export interface CreateFieldRequest {
  */
 export interface UpdateFieldRequest {
 	name?: string;
-	type?: string;
+	typeId?: string;
 	description?: string;
 	defaultValue?: string;
 	validators?: { name: string; params?: Record<string, unknown> }[];

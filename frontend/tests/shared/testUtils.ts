@@ -18,9 +18,9 @@ import { GLOBAL_NAMESPACE_ID } from '$lib/stores/initialData';
  */
 export function createMockEndpoint(overrides: Partial<ApiEndpoint> = {}): ApiEndpoint {
 	return {
-		id: 'endpoint-1',
+		id: 'bbbbbbbb-0000-0000-0000-000000000001',
 		namespaceId: GLOBAL_NAMESPACE_ID,
-		apiId: 'api-test-1',
+		apiId: 'cccccccc-0000-0000-0000-000000000001',
 		method: 'GET',
 		path: '/test',
 		description: '',
@@ -58,7 +58,7 @@ export function createMockTag(overrides: Partial<ApiTag> = {}): ApiTag {
  */
 export function createMockApi(overrides: Partial<Api> = {}): Api {
 	return {
-		id: 'api-test-1',
+		id: 'cccccccc-0000-0000-0000-000000000001',
 		namespaceId: GLOBAL_NAMESPACE_ID,
 		title: 'Test API',
 		version: '1.0.0',

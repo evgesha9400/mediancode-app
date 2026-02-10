@@ -2,7 +2,7 @@
   import { fieldsStore, searchFields, type Field, type FieldValidator } from '$lib/stores/fields';
   import { createFieldAction, updateFieldAction, deleteFieldAction } from '$lib/stores/actions';
   import { validatorsStore, getValidatorsByFieldType, getValidatorsByFieldTypeAndNamespace, type Validator } from '$lib/stores/validators';
-  import { getPrimitiveTypes, type PrimitiveTypeName } from '$lib/stores/types';
+  import { getPrimitiveTypes, getTypeIdByName, type PrimitiveTypeName } from '$lib/stores/types';
   import { showToast } from '$lib/stores/toasts';
   import { activeNamespaceId, namespacesStore, getNamespaceById } from '$lib/stores/namespaces';
   import { buildDeletionTooltip } from '$lib/utils/references';
@@ -199,9 +199,16 @@
     const fieldName = editedField.name;
     isSaving = true;
 
+    const typeId = getTypeIdByName(editedField.type);
+    if (!typeId) {
+      showToast(`Unknown type "${editedField.type}"`, 'error', 5000);
+      isSaving = false;
+      return;
+    }
+
     const result = await updateFieldAction(editedField.id, {
       name: editedField.name,
-      type: editedField.type,
+      typeId,
       description: editedField.description,
       defaultValue: editedField.defaultValue,
       validators: editedField.validators
@@ -229,10 +236,17 @@
 
     isSaving = true;
 
+    const typeId = getTypeIdByName(editedField.type);
+    if (!typeId) {
+      showToast(`Unknown type "${editedField.type}"`, 'error', 5000);
+      isSaving = false;
+      return;
+    }
+
     const result = await createFieldAction({
       namespaceId: editedField.namespaceId,
       name: editedField.name,
-      type: editedField.type,
+      typeId,
       description: editedField.description,
       defaultValue: editedField.defaultValue,
       validators: editedField.validators

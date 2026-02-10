@@ -1,17 +1,19 @@
 import { writable, derived, get } from 'svelte/store';
 import { fieldsStore } from './fields';
 import type { Field } from './fields';
+import { BUILTIN_TYPE_IDS } from './initialData';
 
 export type PrimitiveTypeName = 'str' | 'int' | 'float' | 'bool' | 'datetime' | 'uuid';
-export type AbstractTypeName = 'numeric' | 'collection';
+export type AbstractTypeName = 'numeric';
 export type TypeName = PrimitiveTypeName | AbstractTypeName;
 
 export interface TypeBase {
+	id: string;
 	name: TypeName;
 	category: 'primitive' | 'abstract';
 	pythonType: string;
 	description: string;
-	validatorCategories: string[]; // Compatible validator categories
+	compatibleTypes: string[]; // Compatible validator categories
 }
 
 export interface FieldType extends TypeBase {
@@ -20,70 +22,71 @@ export interface FieldType extends TypeBase {
 
 const primitiveTypes: TypeBase[] = [
 	{
+		id: BUILTIN_TYPE_IDS.str,
 		name: 'str',
 		category: 'primitive',
 		pythonType: 'str',
 		description: 'String type for text data',
-		validatorCategories: ['string']
+		compatibleTypes: ['string']
 	},
 	{
+		id: BUILTIN_TYPE_IDS.int,
 		name: 'int',
 		category: 'primitive',
 		pythonType: 'int',
 		description: 'Integer type for whole numbers',
-		validatorCategories: ['numeric']
+		compatibleTypes: ['numeric']
 	},
 	{
+		id: BUILTIN_TYPE_IDS.float,
 		name: 'float',
 		category: 'primitive',
 		pythonType: 'float',
 		description: 'Float type for decimal numbers',
-		validatorCategories: ['numeric']
+		compatibleTypes: ['numeric']
 	},
 	{
+		id: BUILTIN_TYPE_IDS.bool,
 		name: 'bool',
 		category: 'primitive',
 		pythonType: 'bool',
 		description: 'Boolean type for true/false values',
-		validatorCategories: []
+		compatibleTypes: []
 	},
 	{
+		id: BUILTIN_TYPE_IDS.datetime,
 		name: 'datetime',
 		category: 'primitive',
 		pythonType: 'datetime',
 		description: 'DateTime type for date and time values',
-		validatorCategories: []
+		compatibleTypes: []
 	},
 	{
+		id: BUILTIN_TYPE_IDS.uuid,
 		name: 'uuid',
 		category: 'primitive',
 		pythonType: 'UUID',
 		description: 'UUID type for unique identifiers',
-		validatorCategories: []
+		compatibleTypes: []
 	}
 ];
 
 const abstractTypes: TypeBase[] = [
 	{
+		id: '00000000-0000-0000-0001-000000000007',
 		name: 'numeric',
 		category: 'abstract',
 		pythonType: 'int | float',
 		description: 'Abstract grouping for numeric types (int, float)',
-		validatorCategories: ['numeric']
-	},
-	{
-		name: 'collection',
-		category: 'abstract',
-		pythonType: 'List | Set | Dict | Tuple',
-		description: 'Abstract grouping for collection types (lists, sets, dicts, tuples)',
-		validatorCategories: ['collection']
+		compatibleTypes: ['numeric']
 	}
 ];
 
 const allTypesBase: TypeBase[] = [...primitiveTypes, ...abstractTypes];
 
 // Base store for type definitions (without usage data)
-const typesBaseStore = writable<TypeBase[]>(allTypesBase);
+// Exported for the loader to populate with API data
+export const typesBaseStore = writable<TypeBase[]>(allTypesBase);
 
 // Derived store that calculates type usage dynamically based on fieldsStore
 export const typesStore = derived(
@@ -101,9 +104,6 @@ export const typesStore = derived(
 			else if (typeBase.category === 'abstract') {
 				if (typeBase.name === 'numeric') {
 					usedInFields = $fields.filter(field => field.type === 'int' || field.type === 'float').length;
-				} else if (typeBase.name === 'collection') {
-					// Currently no collection types in fields, but ready for future expansion
-					usedInFields = 0;
 				}
 			}
 
@@ -141,5 +141,14 @@ export function searchTypes(types: FieldType[], query: string): FieldType[] {
 // Get validator categories compatible with a specific field type
 export function getValidatorCategoriesForType(typeName: PrimitiveTypeName): string[] {
 	const type = get(typesStore).find(t => t.name === typeName);
-	return type?.validatorCategories || [];
+	return type?.compatibleTypes || [];
+}
+
+/**
+ * Get the UUID for a type by its name.
+ * Uses the types store data (populated from API) for the name -> UUID mapping.
+ */
+export function getTypeIdByName(typeName: PrimitiveTypeName): string | undefined {
+	const type = get(typesStore).find(t => t.name === typeName && t.category === 'primitive');
+	return type?.id;
 }

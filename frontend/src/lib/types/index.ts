@@ -98,6 +98,7 @@ export interface Namespace {
   name: string;
   description?: string;
   locked: boolean; // true for immutable global namespace
+  isDefault: boolean; // true for the user's default namespace
 }
 
 // API Generator types

@@ -308,6 +308,9 @@
               {#if namespace.locked}
                 <i class="fa-solid fa-lock text-mono-400 text-xs" title="Locked"></i>
               {/if}
+              {#if namespace.isDefault}
+                <span class="px-1.5 py-0.5 text-xs rounded bg-mono-900 text-white">Default</span>
+              {/if}
             </div>
           </td>
           <td class="px-6 py-4 text-sm text-mono-500">
@@ -412,7 +415,7 @@
         <!-- Status -->
         <div>
           <h3 class="text-sm text-mono-700 mb-2 font-medium">Status</h3>
-          <div class="bg-mono-50 rounded-md p-3">
+          <div class="bg-mono-50 rounded-md p-3 space-y-2">
             {#if isLocked}
               <div class="flex items-center space-x-2 text-mono-600">
                 <i class="fa-solid fa-lock"></i>
@@ -422,6 +425,12 @@
               <div class="flex items-center space-x-2 text-green-600">
                 <i class="fa-solid fa-unlock"></i>
                 <span class="text-sm">This namespace can be edited and deleted.</span>
+              </div>
+            {/if}
+            {#if editedNamespace.isDefault}
+              <div class="flex items-center space-x-2 text-mono-700">
+                <i class="fa-solid fa-star"></i>
+                <span class="text-sm">This is your default namespace.</span>
               </div>
             {/if}
           </div>

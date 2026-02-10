@@ -64,7 +64,7 @@ function validateFieldValidators() {
 			}
 
 			// Check type compatibility
-			if (!fieldType.validatorCategories.includes(validator.type)) {
+			if (!fieldType.compatibleTypes.includes(validator.type)) {
 				addError(
 					'Field',
 					field.id,
