@@ -10,7 +10,7 @@
  */
 
 import { test as base } from '@playwright/test';
-import { setupClerkTestingToken, clerk } from '@clerk/testing/playwright';
+import { clerk } from '@clerk/testing/playwright';
 import { assertBackendHealthy } from '../helpers';
 
 export const test = base.extend<{}, { _backendHealthy: void }>({

@@ -3,11 +3,15 @@
  *
  * Provides direct API calls for test setup, verification, and cleanup.
  * Extracts the Clerk JWT from the browser page to authenticate requests.
+ *
+ * Uses native fetch (not Playwright's APIRequestContext) to avoid
+ * interference with Clerk's route interception on the browser context.
  */
 
-import type { Page, APIRequestContext } from '@playwright/test';
+import type { Page } from '@playwright/test';
 
 const API_BASE_URL = process.env.PUBLIC_API_BASE_URL || 'http://localhost:8000/v1';
+const API_TIMEOUT = 30_000;
 
 interface ApiResponse<T> {
 	data?: T;
@@ -56,12 +60,10 @@ export interface ApiEndpoint {
 }
 
 export class E2EApiClient {
-	private request: APIRequestContext;
 	private baseUrl: string;
 	private authToken: string;
 
-	constructor(request: APIRequestContext, authToken: string, baseUrl: string = API_BASE_URL) {
-		this.request = request;
+	constructor(authToken: string, baseUrl: string = API_BASE_URL) {
 		this.authToken = authToken;
 		this.baseUrl = baseUrl;
 	}
@@ -76,33 +78,51 @@ export class E2EApiClient {
 			return clerk.session.getToken();
 		});
 		if (!token) throw new Error('Failed to get Clerk session token from page');
-		return new E2EApiClient(page.context().request, token);
+
+		return new E2EApiClient(token);
 	}
 
 	// ---- internal helpers ----
 
-	private opts(extra?: Record<string, unknown>) {
-		return { headers: { Authorization: `Bearer ${this.authToken}` }, ...extra };
+	private headers() {
+		return { Authorization: `Bearer ${this.authToken}`, 'Content-Type': 'application/json' };
 	}
 
 	private async get<T>(path: string): Promise<ApiResponse<T>> {
-		const r = await this.request.get(`${this.baseUrl}${path}`, this.opts());
-		return { status: r.status(), data: r.ok() ? await r.json() : undefined, error: r.ok() ? undefined : await r.text() };
+		const r = await fetch(`${this.baseUrl}${path}`, {
+			headers: this.headers(),
+			signal: AbortSignal.timeout(API_TIMEOUT)
+		});
+		return { status: r.status, data: r.ok ? ((await r.json()) as T) : undefined, error: r.ok ? undefined : await r.text() };
 	}
 
 	private async post<T>(path: string, data: unknown): Promise<ApiResponse<T>> {
-		const r = await this.request.post(`${this.baseUrl}${path}`, this.opts({ data }));
-		return { status: r.status(), data: r.ok() ? await r.json() : undefined, error: r.ok() ? undefined : await r.text() };
+		const r = await fetch(`${this.baseUrl}${path}`, {
+			method: 'POST',
+			headers: this.headers(),
+			body: JSON.stringify(data),
+			signal: AbortSignal.timeout(API_TIMEOUT)
+		});
+		return { status: r.status, data: r.ok ? ((await r.json()) as T) : undefined, error: r.ok ? undefined : await r.text() };
 	}
 
 	private async patch<T>(path: string, data: unknown): Promise<ApiResponse<T>> {
-		const r = await this.request.patch(`${this.baseUrl}${path}`, this.opts({ data }));
-		return { status: r.status(), data: r.ok() ? await r.json() : undefined, error: r.ok() ? undefined : await r.text() };
+		const r = await fetch(`${this.baseUrl}${path}`, {
+			method: 'PATCH',
+			headers: this.headers(),
+			body: JSON.stringify(data),
+			signal: AbortSignal.timeout(API_TIMEOUT)
+		});
+		return { status: r.status, data: r.ok ? ((await r.json()) as T) : undefined, error: r.ok ? undefined : await r.text() };
 	}
 
 	private async del(path: string): Promise<ApiResponse<void>> {
-		const r = await this.request.delete(`${this.baseUrl}${path}`, this.opts());
-		return { status: r.status(), error: r.ok() ? undefined : await r.text() };
+		const r = await fetch(`${this.baseUrl}${path}`, {
+			method: 'DELETE',
+			headers: this.headers(),
+			signal: AbortSignal.timeout(API_TIMEOUT)
+		});
+		return { status: r.status, error: r.ok ? undefined : await r.text() };
 	}
 
 	// ---- Fields ----

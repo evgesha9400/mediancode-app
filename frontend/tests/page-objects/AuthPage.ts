@@ -2,7 +2,7 @@
  * Auth Page Object
  *
  * Encapsulates interactions with authentication pages (/signin, /signup).
- * Used by smoke tests for visual regression.
+ * Used by smoke tests for structural verification.
  * Real auth flow is handled by @clerk/testing in the CRUD setup project.
  *
  * Clerk rendering modes:
@@ -10,6 +10,9 @@
  * - Mock fallback: renders when Clerk FAPI is unreachable (mock component visible)
  *
  * Both modes indicate the page loaded and Clerk initialization completed.
+ *
+ * Note: Clerk's CSS class names (e.g., `.cl-component`) are NOT stable across
+ * SDK versions. Use role-based and content-based locators instead.
  */
 
 import { type Page, type Locator } from '@playwright/test';
@@ -20,8 +23,8 @@ export class AuthPage {
 	// Email input — present when real Clerk form renders
 	readonly emailInput: Locator;
 
-	// Clerk component container — present when real Clerk mounts
-	readonly clerkComponent: Locator;
+	// Continue button — present when real Clerk form renders
+	readonly continueButton: Locator;
 
 	// Mock fallback — present when Clerk FAPI is unreachable and app falls back
 	readonly mockComponent: Locator;
@@ -30,7 +33,7 @@ export class AuthPage {
 		this.page = page;
 
 		this.emailInput = page.getByRole('textbox', { name: 'Email address' });
-		this.clerkComponent = page.locator('.cl-component');
+		this.continueButton = page.getByRole('button', { name: /continue/i });
 		this.mockComponent = page.locator('[data-testid^="clerk-mock-"]');
 	}
 
@@ -55,12 +58,19 @@ export class AuthPage {
 	 * - Real Clerk email input (when Clerk FAPI is reachable)
 	 * - Mock fallback component (when Clerk FAPI is unreachable)
 	 *
-	 * Both indicate that Clerk initialization completed and the page is stable
-	 * for visual regression comparison.
+	 * Both indicate that Clerk initialization completed and the page is stable.
 	 *
 	 * Uses the default action timeout (bounded by the test timeout) — no hardcoded value.
 	 */
 	async waitForFullyLoaded() {
 		await this.emailInput.or(this.mockComponent).waitFor({ state: 'visible' });
+	}
+
+	/**
+	 * Check if real Clerk form rendered (as opposed to mock fallback).
+	 * Useful for conditional assertions in smoke tests.
+	 */
+	async isRealClerk(): Promise<boolean> {
+		return this.emailInput.isVisible();
 	}
 }
