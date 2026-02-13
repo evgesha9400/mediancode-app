@@ -88,7 +88,7 @@
               <i class="fa-solid {item.icon} w-5"></i>
               <span>{item.label}</span>
             </div>
-            <ul class="mt-0.5 space-y-0.5 ml-7">
+            <ul class="mt-0.5 space-y-0.5 ml-7 border-l border-mono-700 pl-3">
               {#each item.children as child}
                 <li>
                   {#if child.disabled}
