@@ -19,6 +19,7 @@
     FieldSelectorDropdown,
     NamespaceSelector
   } from '$lib/components';
+  import { storeLoadingState, reloadStores } from '$lib/stores/loader';
   import { page } from '$app/state';
   import { goto } from '$app/navigation';
   import { createListViewState } from '$lib/stores/listViewState.svelte';
@@ -252,6 +253,7 @@
   let deleteTooltip = $derived(editedObject && hasReferences
     ? buildDeletionTooltip('object', 'API', editedObject!.usedInApis.map(api => ({ name: api })))
     : '');
+  let hasLoadError = $derived($storeLoadingState.storeErrors.includes('Objects'));
 </script>
 
 <PageHeader title="Objects">
@@ -348,10 +350,21 @@
     {/snippet}
 
     {#snippet empty()}
-      <EmptyState
-        title="No objects found"
-        message="Try adjusting your search query"
-      />
+      {#if hasLoadError}
+        <EmptyState
+          icon="fa-circle-exclamation"
+          variant="error"
+          title="Failed to load objects"
+          message="Something went wrong while fetching object data"
+          actionLabel="Retry"
+          onAction={reloadStores}
+        />
+      {:else}
+        <EmptyState
+          title="No objects found"
+          message="Try adjusting your search query"
+        />
+      {/if}
     {/snippet}
   </Table>
 

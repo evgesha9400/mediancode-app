@@ -22,6 +22,7 @@
     Tooltip,
     NamespaceSelector
   } from '$lib/components';
+  import { storeLoadingState, reloadStores } from '$lib/stores/loader';
   import { page } from '$app/state';
   import { goto } from '$app/navigation';
   import { createListViewState } from '$lib/stores/listViewState.svelte';
@@ -70,6 +71,7 @@
   let sorts = $derived(listState.sorts);
 
   let isDeleting = $state(false);
+  let hasLoadError = $derived($storeLoadingState.storeErrors.includes('APIs'));
 
   function isSelected(api: Api): boolean {
     return selectedApi?.id === api.id;
@@ -220,10 +222,21 @@
     {/snippet}
 
     {#snippet empty()}
-      <EmptyState
-        title="No APIs found"
-        message="Create your first API by clicking the 'New API' button above"
-      />
+      {#if hasLoadError}
+        <EmptyState
+          icon="fa-circle-exclamation"
+          variant="error"
+          title="Failed to load APIs"
+          message="Something went wrong while fetching API data"
+          actionLabel="Retry"
+          onAction={reloadStores}
+        />
+      {:else}
+        <EmptyState
+          title="No APIs found"
+          message="Create your first API by clicking the 'New API' button above"
+        />
+      {/if}
     {/snippet}
   </Table>
 

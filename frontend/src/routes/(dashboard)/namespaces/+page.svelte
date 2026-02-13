@@ -21,6 +21,7 @@
     Tooltip
   } from '$lib/components';
   import type { FilterConfig, Namespace } from '$lib/types';
+  import { storeLoadingState, reloadStores } from '$lib/stores/loader';
   import { page } from '$app/state';
   import { goto } from '$app/navigation';
   import { createListViewState } from '$lib/stores/listViewState.svelte';
@@ -223,6 +224,7 @@
     closeCreateModal();
   }
 
+  let hasLoadError = $derived($storeLoadingState.storeErrors.includes('Namespaces'));
   let isLocked = $derived(editedNamespace?.locked ?? false);
   let hasEntities = $derived(() => {
     if (!editedNamespace) return false;
@@ -340,10 +342,21 @@
     {/snippet}
 
     {#snippet empty()}
-      <EmptyState
-        title="No namespaces found"
-        message="Try adjusting your search query or create a new namespace"
-      />
+      {#if hasLoadError}
+        <EmptyState
+          icon="fa-circle-exclamation"
+          variant="error"
+          title="Failed to load namespaces"
+          message="Something went wrong while fetching namespace data"
+          actionLabel="Retry"
+          onAction={reloadStores}
+        />
+      {:else}
+        <EmptyState
+          title="No namespaces found"
+          message="Try adjusting your search query or create a new namespace"
+        />
+      {/if}
     {/snippet}
   </Table>
 

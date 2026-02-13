@@ -4,6 +4,7 @@
   import { getTotalTypeCount } from '$lib/stores/types';
   import { getTotalObjectCount } from '$lib/stores/objects';
   import { clerkState } from '$lib/clerk';
+  import { storeLoadingState, reloadStores } from '$lib/stores/loader';
   import { StatCard } from '$lib/components';
 
   $: totalTypes = getTotalTypeCount();
@@ -12,6 +13,15 @@
   $: totalObjects = getTotalObjectCount();
   $: totalApis = getTotalApiCount();
   $: userName = $clerkState.user?.firstName || $clerkState.user?.fullName || 'Developer';
+  $: errors = $storeLoadingState.storeErrors;
+
+  function hasError(storeName: string): boolean {
+    return errors.includes(storeName);
+  }
+
+  function handleRetry() {
+    reloadStores();
+  }
 </script>
 
 <!-- Header -->
@@ -28,10 +38,10 @@
     <section>
       <h2 class="text-xs uppercase tracking-wider text-mono-400 mb-3 font-medium">Core Components</h2>
       <div class="flex flex-wrap gap-6">
-        <div class="w-40"><StatCard title="Types" value={totalTypes} icon="fa-shapes" /></div>
-        <div class="w-40"><StatCard title="Validators" value={totalValidators} icon="fa-check-circle" /></div>
-        <div class="w-40"><StatCard title="Fields" value={totalFields} icon="fa-table-list" /></div>
-        <div class="w-40"><StatCard title="Objects" value={totalObjects} icon="fa-cubes" /></div>
+        <div class="w-40"><StatCard title="Types" value={totalTypes} icon="fa-shapes" error={hasError('Types')} onRetry={handleRetry} /></div>
+        <div class="w-40"><StatCard title="Validators" value={totalValidators} icon="fa-check-circle" error={hasError('Validators')} onRetry={handleRetry} /></div>
+        <div class="w-40"><StatCard title="Fields" value={totalFields} icon="fa-table-list" error={hasError('Fields')} onRetry={handleRetry} /></div>
+        <div class="w-40"><StatCard title="Objects" value={totalObjects} icon="fa-cubes" error={hasError('Objects')} onRetry={handleRetry} /></div>
       </div>
     </section>
 
@@ -39,7 +49,7 @@
     <section>
       <h2 class="text-xs uppercase tracking-wider text-mono-400 mb-3 font-medium">APIs</h2>
       <div class="flex flex-wrap gap-6">
-        <div class="w-40"><StatCard title="Generated APIs" value={totalApis} icon="fa-code" /></div>
+        <div class="w-40"><StatCard title="Generated APIs" value={totalApis} icon="fa-code" error={hasError('APIs')} onRetry={handleRetry} /></div>
       </div>
     </section>
 

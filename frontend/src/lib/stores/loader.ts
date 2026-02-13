@@ -3,7 +3,8 @@
  *
  * Loads all store data from the backend API when the user is authenticated.
  * This module provides functions to initialize stores with backend data and
- * tracks loading state.
+ * tracks loading state. Uses Promise.allSettled so that individual store
+ * failures don't block the entire dashboard.
  */
 
 import { writable, get } from 'svelte/store';
@@ -28,7 +29,7 @@ import { GLOBAL_NAMESPACE_ID } from './initialData';
 export interface LoadingState {
 	isLoading: boolean;
 	isLoaded: boolean;
-	error: string | null;
+	storeErrors: string[];
 }
 
 /**
@@ -37,18 +38,20 @@ export interface LoadingState {
 export const storeLoadingState = writable<LoadingState>({
 	isLoading: false,
 	isLoaded: false,
-	error: null
+	storeErrors: []
 });
+
+/** Store names in the same order as the Promise.allSettled calls */
+const STORE_NAMES = ['Namespaces', 'APIs', 'Fields', 'Objects', 'Endpoints', 'Validators', 'Types'] as const;
 
 /**
  * Load all store data from the backend API
  *
  * This function fetches all entities from the backend and populates
- * the corresponding Svelte stores. It should be called when the user
- * is authenticated.
+ * the corresponding Svelte stores. Uses Promise.allSettled so that
+ * individual endpoint failures don't prevent other stores from loading.
  *
- * @returns Promise that resolves when all data is loaded
- * @throws Error if any API call fails
+ * @returns Promise that resolves when all fetches have settled
  */
 export async function loadStoresFromApi(): Promise<void> {
 	const currentState = get(storeLoadingState);
@@ -61,57 +64,64 @@ export async function loadStoresFromApi(): Promise<void> {
 	storeLoadingState.set({
 		isLoading: true,
 		isLoaded: false,
-		error: null
+		storeErrors: []
 	});
 
-	try {
-		// Fetch all data in parallel for better performance
-		// Note: Tags are now embedded in APIs, so no separate listTags call
-		const [namespaces, apis, fields, objects, endpoints, validators, types] = await Promise.all([
-			listNamespaces(),
-			listApis(),
-			listFields(),
-			listObjects(),
-			listEndpoints(),
-			listValidators(),
-			listTypes()
-		]);
+	const results = await Promise.allSettled([
+		listNamespaces(),
+		listApis(),
+		listFields(),
+		listObjects(),
+		listEndpoints(),
+		listValidators(),
+		listTypes()
+	]);
 
-		// Update stores with fetched data
-		namespacesStore.set(namespaces);
-		apisStore.set(apis);
-		fieldsStore.set(fields);
-		objectsStore.set(objects);
-		endpointsStore.set(endpoints);
-		validatorsStore.set(validators);
-		typesBaseStore.set(types);
+	// Extract values, defaulting failures to empty arrays
+	const namespaces = results[0].status === 'fulfilled' ? results[0].value : [];
+	const apis = results[1].status === 'fulfilled' ? results[1].value : [];
+	const fields = results[2].status === 'fulfilled' ? results[2].value : [];
+	const objects = results[3].status === 'fulfilled' ? results[3].value : [];
+	const endpoints = results[4].status === 'fulfilled' ? results[4].value : [];
+	const validators = results[5].status === 'fulfilled' ? results[5].value : [];
+	const types = results[6].status === 'fulfilled' ? results[6].value : [];
 
-		// Set active namespace to global if it exists, otherwise first namespace
-		const globalNamespace = namespaces.find(ns => ns.id === GLOBAL_NAMESPACE_ID);
-		if (globalNamespace) {
-			activeNamespaceId.set(GLOBAL_NAMESPACE_ID);
-		} else if (namespaces.length > 0) {
-			activeNamespaceId.set(namespaces[0].id);
+	// Collect per-store errors
+	const storeErrors: string[] = [];
+	results.forEach((result, i) => {
+		if (result.status === 'rejected') {
+			storeErrors.push(STORE_NAMES[i]);
+			console.error(`[Store Loader] Failed to load ${STORE_NAMES[i]}:`, result.reason);
 		}
+	});
 
-		storeLoadingState.set({
-			isLoading: false,
-			isLoaded: true,
-			error: null
-		});
+	// Always populate stores (empty array on failure)
+	namespacesStore.set(namespaces);
+	apisStore.set(apis);
+	fieldsStore.set(fields);
+	objectsStore.set(objects);
+	endpointsStore.set(endpoints);
+	validatorsStore.set(validators);
+	typesBaseStore.set(types);
 
+	// Set active namespace to global if it exists, otherwise first namespace
+	const globalNamespace = namespaces.find(ns => ns.id === GLOBAL_NAMESPACE_ID);
+	if (globalNamespace) {
+		activeNamespaceId.set(GLOBAL_NAMESPACE_ID);
+	} else if (namespaces.length > 0) {
+		activeNamespaceId.set(namespaces[0].id);
+	}
+
+	storeLoadingState.set({
+		isLoading: false,
+		isLoaded: true,
+		storeErrors
+	});
+
+	if (storeErrors.length > 0) {
+		console.warn(`[Store Loader] Loaded with errors in: ${storeErrors.join(', ')}`);
+	} else {
 		console.log('[Store Loader] Successfully loaded all store data from API');
-	} catch (error) {
-		const errorMessage = error instanceof Error ? error.message : 'Failed to load data from API';
-
-		storeLoadingState.set({
-			isLoading: false,
-			isLoaded: false,
-			error: errorMessage
-		});
-
-		console.error('[Store Loader] Failed to load store data:', error);
-		throw error;
 	}
 }
 
@@ -125,11 +135,10 @@ export function resetStores(): void {
 	storeLoadingState.set({
 		isLoading: false,
 		isLoaded: false,
-		error: null
+		storeErrors: []
 	});
 
 	// Reset stores to empty arrays
-	// Note: Tags are now embedded in APIs, so no separate tagsStore reset
 	namespacesStore.set([]);
 	apisStore.set([]);
 	fieldsStore.set([]);

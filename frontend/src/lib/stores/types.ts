@@ -95,11 +95,9 @@ const abstractTypes: TypeBase[] = [
 	}
 ];
 
-const allTypesBase: TypeBase[] = [...primitiveTypes, ...abstractTypes];
-
 // Base store for type definitions (without usage data)
-// Exported for the loader to populate with API data
-export const typesBaseStore = writable<TypeBase[]>(allTypesBase);
+// Starts empty — populated by the loader with API data
+export const typesBaseStore = writable<TypeBase[]>([]);
 
 // Derived store that calculates type usage dynamically based on fieldsStore
 export const typesStore = derived(
@@ -126,7 +124,7 @@ export const typesStore = derived(
 );
 
 export function getTotalTypeCount(): number {
-	return allTypesBase.length;
+	return get(typesBaseStore).length;
 }
 
 export function getPrimitiveTypes(): FieldType[] {

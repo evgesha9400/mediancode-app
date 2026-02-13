@@ -18,6 +18,7 @@
     NamespaceSelector
   } from '$lib/components';
   import type { FilterConfig } from '$lib/types';
+  import { storeLoadingState, reloadStores } from '$lib/stores/loader';
   import { page } from '$app/state';
   import { goto } from '$app/navigation';
   import { createListViewState } from '$lib/stores/listViewState.svelte';
@@ -120,6 +121,7 @@
   let deleteTooltip = $derived(selectedValidator && hasReferences
     ? buildDeletionTooltip('validator', 'field', selectedValidator!.fieldsUsingValidator)
     : '');
+  let hasLoadError = $derived($storeLoadingState.storeErrors.includes('Validators'));
 </script>
 
 <PageHeader title="Validators">
@@ -227,10 +229,21 @@
     {/snippet}
 
     {#snippet empty()}
-      <EmptyState
-        title="No validators found"
-        message="Try adjusting your search query"
-      />
+      {#if hasLoadError}
+        <EmptyState
+          icon="fa-circle-exclamation"
+          variant="error"
+          title="Failed to load validators"
+          message="Something went wrong while fetching validator data"
+          actionLabel="Retry"
+          onAction={reloadStores}
+        />
+      {:else}
+        <EmptyState
+          title="No validators found"
+          message="Try adjusting your search query"
+        />
+      {/if}
     {/snippet}
   </Table>
 

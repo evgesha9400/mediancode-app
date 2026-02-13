@@ -22,6 +22,7 @@
     ValidatorSelectorDropdown
   } from '$lib/components';
   import type { FilterConfig } from '$lib/types';
+  import { storeLoadingState, reloadStores } from '$lib/stores/loader';
   import { page } from '$app/state';
   import { goto } from '$app/navigation';
   import { createListViewState } from '$lib/stores/listViewState.svelte';
@@ -328,6 +329,7 @@
   let deleteTooltip = $derived(editedField && hasReferences
     ? buildDeletionTooltip('field', 'API', editedField!.usedInApis.map(api => ({ name: api })))
     : '');
+  let hasLoadError = $derived($storeLoadingState.storeErrors.includes('Fields'));
 </script>
 
 <PageHeader title="Fields">
@@ -451,10 +453,21 @@
     {/snippet}
 
     {#snippet empty()}
-      <EmptyState
-        title="No fields found"
-        message="Try adjusting your search query"
-      />
+      {#if hasLoadError}
+        <EmptyState
+          icon="fa-circle-exclamation"
+          variant="error"
+          title="Failed to load fields"
+          message="Something went wrong while fetching field data"
+          actionLabel="Retry"
+          onAction={reloadStores}
+        />
+      {:else}
+        <EmptyState
+          title="No fields found"
+          message="Try adjusting your search query"
+        />
+      {/if}
     {/snippet}
   </Table>
 

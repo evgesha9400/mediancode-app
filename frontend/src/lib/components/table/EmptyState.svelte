@@ -29,17 +29,41 @@
      * Descriptive message to display below the title
      */
     message: string;
+
+    /**
+     * Optional action button label
+     */
+    actionLabel?: string;
+
+    /**
+     * Optional action button callback
+     */
+    onAction?: () => void;
+
+    /**
+     * Visual variant - 'error' colors the icon and title red
+     * @default 'default'
+     */
+    variant?: 'default' | 'error';
   }
 </script>
 
 <script lang="ts">
   interface Props extends EmptyStateProps {}
 
-  let { icon = 'fa-search', title, message }: Props = $props();
+  let { icon = 'fa-search', title, message, actionLabel, onAction, variant = 'default' }: Props = $props();
 </script>
 
 <div class="flex flex-col items-center justify-center py-12 px-6">
-  <i class="fa-solid {icon} text-4xl text-mono-300 mb-4"></i>
-  <h3 class="text-lg font-medium text-mono-900 mb-2">{title}</h3>
+  <i class="fa-solid {icon} text-4xl {variant === 'error' ? 'text-red-400' : 'text-mono-300'} mb-4"></i>
+  <h3 class="text-lg font-medium {variant === 'error' ? 'text-red-600' : 'text-mono-900'} mb-2">{title}</h3>
   <p class="text-sm text-mono-500">{message}</p>
+  {#if actionLabel && onAction}
+    <button
+      onclick={onAction}
+      class="mt-4 px-4 py-2 text-sm bg-mono-900 text-white rounded-md hover:bg-mono-800 transition-colors"
+    >
+      {actionLabel}
+    </button>
+  {/if}
 </div>

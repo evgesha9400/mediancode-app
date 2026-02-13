@@ -9,6 +9,7 @@
     EmptyState
   } from '$lib/components';
   import type { FilterConfig } from '$lib/types';
+  import { storeLoadingState, reloadStores } from '$lib/stores/loader';
   import { page } from '$app/state';
   import { goto } from '$app/navigation';
   import { createListViewState } from '$lib/stores/listViewState.svelte';
@@ -42,8 +43,7 @@
   let filteredTypes = $derived(state.results);
   let sorts = $derived(state.sorts);
   let activeFiltersCount = $derived(state.activeFiltersCount);
-
-
+  let hasLoadError = $derived($storeLoadingState.storeErrors.includes('Types'));
 </script>
 
 <PageHeader title="Types" />
@@ -73,13 +73,13 @@
       <tr>
         <SortableColumn
           column="name"
-          label="Type Name"
+          label="Name"
           {sorts}
           onSort={state.handleSort}
         />
         <SortableColumn
           column="pythonType"
-          label="Type"
+          label="Python Type"
           {sorts}
           onSort={state.handleSort}
         />
@@ -90,7 +90,7 @@
         </th>
         <SortableColumn
           column="usedInFields"
-          label="Used In Fields"
+          label="Used in Fields"
           {sorts}
           onSort={state.handleSort}
         />
@@ -104,9 +104,9 @@
             <div class="text-sm text-mono-900 font-medium font-mono">{type.name}</div>
           </td>
           <td class="px-6 py-4 whitespace-nowrap">
-            <code class="text-sm text-mono-700 bg-mono-50 px-2 py-1 rounded font-mono">
+            <span class="px-2 py-1 text-xs rounded-full bg-mono-900 text-white">
               {type.pythonType}
-            </code>
+            </span>
           </td>
           <td class="px-6 py-4 text-sm text-mono-500">
             {type.description}
@@ -124,9 +124,20 @@
     {/snippet}
 
     {#snippet empty()}
-      <EmptyState
-        title="No types found"
-        message="Try adjusting your search query"
-      />
+      {#if hasLoadError}
+        <EmptyState
+          icon="fa-circle-exclamation"
+          variant="error"
+          title="Failed to load types"
+          message="Something went wrong while fetching type data"
+          actionLabel="Retry"
+          onAction={reloadStores}
+        />
+      {:else}
+        <EmptyState
+          title="No types found"
+          message="Try adjusting your search query"
+        />
+      {/if}
     {/snippet}
   </Table>
