@@ -12,10 +12,10 @@ export type TypeName = PrimitiveTypeName | AbstractTypeName;
 export interface TypeBase {
 	id: string;
 	name: TypeName;
-	category: 'primitive' | 'abstract';
 	pythonType: string;
 	description: string;
-	compatibleTypes: string[];
+	importPath: string | null;
+	parentTypeId: string | null;
 }
 
 export interface FieldType extends TypeBase {
@@ -26,50 +26,50 @@ export const mockPrimitiveTypes: TypeBase[] = [
 	{
 		id: '00000000-0000-0000-0001-000000000001',
 		name: 'str',
-		category: 'primitive',
 		pythonType: 'str',
 		description: 'String type for text data',
-		compatibleTypes: ['string']
+		importPath: null,
+		parentTypeId: null
 	},
 	{
 		id: '00000000-0000-0000-0001-000000000002',
 		name: 'int',
-		category: 'primitive',
 		pythonType: 'int',
 		description: 'Integer type for whole numbers',
-		compatibleTypes: ['numeric']
+		importPath: null,
+		parentTypeId: null
 	},
 	{
 		id: '00000000-0000-0000-0001-000000000003',
 		name: 'float',
-		category: 'primitive',
 		pythonType: 'float',
 		description: 'Float type for decimal numbers',
-		compatibleTypes: ['numeric']
+		importPath: null,
+		parentTypeId: null
 	},
 	{
 		id: '00000000-0000-0000-0001-000000000004',
 		name: 'bool',
-		category: 'primitive',
 		pythonType: 'bool',
 		description: 'Boolean type for true/false values',
-		compatibleTypes: []
+		importPath: null,
+		parentTypeId: null
 	},
 	{
 		id: '00000000-0000-0000-0001-000000000005',
 		name: 'datetime',
-		category: 'primitive',
 		pythonType: 'datetime',
 		description: 'Datetime type for date and time values',
-		compatibleTypes: []
+		importPath: null,
+		parentTypeId: null
 	},
 	{
 		id: '00000000-0000-0000-0001-000000000006',
 		name: 'uuid',
-		category: 'primitive',
 		pythonType: 'UUID',
 		description: 'UUID type for unique identifiers',
-		compatibleTypes: []
+		importPath: null,
+		parentTypeId: null
 	}
 ];
 
@@ -77,10 +77,10 @@ export const mockAbstractTypes: TypeBase[] = [
 	{
 		id: '00000000-0000-0000-0001-000000000007',
 		name: 'numeric',
-		category: 'abstract',
 		pythonType: 'int | float',
 		description: 'Abstract numeric type (int or float)',
-		compatibleTypes: ['numeric']
+		importPath: null,
+		parentTypeId: null
 	}
 ];
 
@@ -99,8 +99,15 @@ export function getTypeByName(name: TypeName): TypeBase | undefined {
 }
 
 /**
- * Get types by category
+ * Get primitive types (all types except abstract ones like 'numeric')
  */
-export function getTypesByCategory(category: 'primitive' | 'abstract'): TypeBase[] {
-	return mockTypes.filter((type) => type.category === category);
+export function getPrimitiveTypes(): TypeBase[] {
+	return mockPrimitiveTypes;
+}
+
+/**
+ * Get abstract types (like 'numeric')
+ */
+export function getAbstractTypes(): TypeBase[] {
+	return mockAbstractTypes;
 }

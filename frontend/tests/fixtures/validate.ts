@@ -56,6 +56,18 @@ function validateFieldValidators() {
 			return;
 		}
 
+		// Static validator compatibility mapping (same as src/lib/stores/types.ts)
+		const validatorCompatibility: Record<string, string[]> = {
+			str: ['string'],
+			int: ['numeric'],
+			float: ['numeric'],
+			bool: [],
+			datetime: [],
+			uuid: [],
+			numeric: ['numeric']
+		};
+		const compatibleTypes = validatorCompatibility[fieldType.name] || [];
+
 		field.validators.forEach((fv) => {
 			const validator = mockValidators.find((v) => v.name === fv.name);
 			if (!validator) {
@@ -64,7 +76,7 @@ function validateFieldValidators() {
 			}
 
 			// Check type compatibility
-			if (!fieldType.compatibleTypes.includes(validator.type)) {
+			if (!compatibleTypes.includes(validator.type)) {
 				addError(
 					'Field',
 					field.id,

@@ -30,7 +30,6 @@ export class TypesPage {
 
 	// Sortable columns
 	readonly nameColumnHeader: Locator;
-	readonly categoryColumnHeader: Locator;
 	readonly pythonTypeColumnHeader: Locator;
 	readonly usedInFieldsColumnHeader: Locator;
 
@@ -56,7 +55,6 @@ export class TypesPage {
 
 		// Sortable columns - scoped to table to avoid conflicts with filter panel
 		this.nameColumnHeader = this.table.locator('thead th').filter({ hasText: 'Type Name' });
-		this.categoryColumnHeader = this.table.locator('thead th').filter({ hasText: /^Category$/i });
 		this.pythonTypeColumnHeader = this.table.locator('thead th').filter({ hasText: /^Type$/i });
 		this.usedInFieldsColumnHeader = this.table.locator('thead th').filter({ hasText: 'Used In Fields' });
 	}
@@ -126,14 +124,13 @@ export class TypesPage {
 	/**
 	 * Sort by column (click column header)
 	 */
-	async sortByColumn(column: 'name' | 'category' | 'pythonType' | 'usedInFields', withShift = false) {
+	async sortByColumn(column: 'name' | 'pythonType' | 'usedInFields', withShift = false) {
 		const clickOptions = withShift ? { modifiers: ['Shift'] as ('Shift' | 'Alt' | 'Control' | 'Meta')[] } : undefined;
 
 		// Get fresh locator each time to avoid stale elements
 		// Click the button inside the th, which contains the label text
 		const headerMap = {
 			name: () => this.table.locator('thead th button').filter({ hasText: 'Type Name' }),
-			category: () => this.table.locator('thead th button').filter({ hasText: 'Category' }),
 			pythonType: () => this.table.locator('thead th button').filter({ hasText: 'Type' }).nth(1),
 			usedInFields: () => this.table.locator('thead th button').filter({ hasText: 'Used In Fields' })
 		};
@@ -158,21 +155,6 @@ export class TypesPage {
 	}
 
 	/**
-	 * Get type categories visible in the table
-	 */
-	async getVisibleCategories(): Promise<string[]> {
-		const categories: string[] = [];
-		const count = await this.tableRows.count();
-		for (let i = 0; i < count; i++) {
-			const row = this.tableRows.nth(i);
-			const categoryCell = row.locator('td').nth(1);
-			const category = await categoryCell.textContent();
-			if (category) categories.push(category.trim().toLowerCase());
-		}
-		return categories;
-	}
-
-	/**
 	 * Get Python types visible in the table
 	 */
 	async getVisiblePythonTypes(): Promise<string[]> {
@@ -180,7 +162,7 @@ export class TypesPage {
 		const count = await this.tableRows.count();
 		for (let i = 0; i < count; i++) {
 			const row = this.tableRows.nth(i);
-			const typeCell = row.locator('td').nth(2);
+			const typeCell = row.locator('td').nth(1);
 			const text = await typeCell.textContent();
 			if (text) pythonTypes.push(text.trim());
 		}
@@ -195,7 +177,7 @@ export class TypesPage {
 		const count = await this.tableRows.count();
 		for (let i = 0; i < count; i++) {
 			const row = this.tableRows.nth(i);
-			const countSpan = row.locator('td').nth(4).locator('span').first();
+			const countSpan = row.locator('td').nth(3).locator('span').first();
 			const text = await countSpan.textContent();
 			counts.push(parseInt(text?.trim() ?? '0', 10));
 		}
@@ -222,7 +204,7 @@ export class TypesPage {
 	 */
 	async getPythonType(rowIndex: number): Promise<string> {
 		const row = this.tableRows.nth(rowIndex);
-		const typeCell = row.locator('td').nth(2);
+		const typeCell = row.locator('td').nth(1);
 		const text = await typeCell.textContent();
 		return text?.trim() ?? '';
 	}
@@ -232,7 +214,7 @@ export class TypesPage {
 	 */
 	async getUsedInFieldsCount(rowIndex: number): Promise<number> {
 		const row = this.tableRows.nth(rowIndex);
-		const countSpan = row.locator('td').nth(4).locator('span').first();
+		const countSpan = row.locator('td').nth(3).locator('span').first();
 		const text = await countSpan.textContent();
 		return parseInt(text?.trim() ?? '0', 10);
 	}

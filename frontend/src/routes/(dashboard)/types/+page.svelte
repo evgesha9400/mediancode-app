@@ -15,33 +15,10 @@
 
   // Filter state type
   type TypeFilterState = {
-    selectedCategories: string[];
-    selectedValidatorCategories: string[];
     onlyUsedInFields: boolean;
   };
 
   let filterConfig: FilterConfig = [
-    {
-      type: 'checkbox-group',
-      key: 'selectedCategories',
-      label: 'Category',
-      options: [
-        { label: 'Primitive', value: 'primitive' },
-        { label: 'Abstract', value: 'abstract' }
-      ],
-      predicate: (item: FieldType, selected: string[]) => selected.includes(item.category)
-    },
-    {
-      type: 'checkbox-group',
-      key: 'selectedValidatorCategories',
-      label: 'Compatible Types',
-      options: [
-        { label: 'String', value: 'string' },
-        { label: 'Numeric', value: 'numeric' }
-      ],
-      predicate: (item: FieldType, selected: string[]) =>
-        item.compatibleTypes.some(cat => selected.includes(cat))
-    },
     {
       type: 'toggle',
       key: 'onlyUsedInFields',
@@ -66,11 +43,7 @@
   let sorts = $derived(state.sorts);
   let activeFiltersCount = $derived(state.activeFiltersCount);
 
-  function getCategoryBadgeClass(category: 'primitive' | 'abstract'): string {
-    return category === 'primitive'
-      ? 'bg-mono-900 text-white'
-      : 'bg-mono-200 text-mono-700';
-  }
+
 </script>
 
 <PageHeader title="Types" />
@@ -105,12 +78,6 @@
           onSort={state.handleSort}
         />
         <SortableColumn
-          column="category"
-          label="Category"
-          {sorts}
-          onSort={state.handleSort}
-        />
-        <SortableColumn
           column="pythonType"
           label="Type"
           {sorts}
@@ -135,11 +102,6 @@
         <tr class="hover:bg-mono-50 transition-colors">
           <td class="px-6 py-4 whitespace-nowrap">
             <div class="text-sm text-mono-900 font-medium font-mono">{type.name}</div>
-          </td>
-          <td class="px-6 py-4 whitespace-nowrap">
-            <span class="px-2 py-1 text-xs rounded-full capitalize {getCategoryBadgeClass(type.category)}">
-              {type.category}
-            </span>
           </td>
           <td class="px-6 py-4 whitespace-nowrap">
             <code class="text-sm text-mono-700 bg-mono-50 px-2 py-1 rounded font-mono">

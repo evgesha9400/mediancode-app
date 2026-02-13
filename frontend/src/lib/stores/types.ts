@@ -1,6 +1,5 @@
 import { writable, derived, get } from 'svelte/store';
 import { fieldsStore } from './fields';
-import type { Field } from './fields';
 import { BUILTIN_TYPE_IDS } from './initialData';
 
 export type PrimitiveTypeName = 'str' | 'int' | 'float' | 'bool' | 'datetime' | 'uuid';
@@ -10,11 +9,25 @@ export type TypeName = PrimitiveTypeName | AbstractTypeName;
 export interface TypeBase {
 	id: string;
 	name: TypeName;
-	category: 'primitive' | 'abstract';
 	pythonType: string;
 	description: string;
-	compatibleTypes: string[]; // Compatible validator categories
+	importPath: string | null;
+	parentTypeId: string | null;
 }
+
+/**
+ * Static mapping from type name to compatible validator categories.
+ * This relationship is inherent to Python types and does not change at runtime.
+ */
+const VALIDATOR_COMPATIBILITY: Record<string, string[]> = {
+	str: ['string'],
+	int: ['numeric'],
+	float: ['numeric'],
+	bool: [],
+	datetime: [],
+	uuid: [],
+	numeric: ['numeric']
+};
 
 export interface FieldType extends TypeBase {
 	usedInFields: number;
@@ -24,50 +37,50 @@ const primitiveTypes: TypeBase[] = [
 	{
 		id: BUILTIN_TYPE_IDS.str,
 		name: 'str',
-		category: 'primitive',
 		pythonType: 'str',
 		description: 'String type for text data',
-		compatibleTypes: ['string']
+		importPath: null,
+		parentTypeId: null
 	},
 	{
 		id: BUILTIN_TYPE_IDS.int,
 		name: 'int',
-		category: 'primitive',
 		pythonType: 'int',
 		description: 'Integer type for whole numbers',
-		compatibleTypes: ['numeric']
+		importPath: null,
+		parentTypeId: null
 	},
 	{
 		id: BUILTIN_TYPE_IDS.float,
 		name: 'float',
-		category: 'primitive',
 		pythonType: 'float',
 		description: 'Float type for decimal numbers',
-		compatibleTypes: ['numeric']
+		importPath: null,
+		parentTypeId: null
 	},
 	{
 		id: BUILTIN_TYPE_IDS.bool,
 		name: 'bool',
-		category: 'primitive',
 		pythonType: 'bool',
 		description: 'Boolean type for true/false values',
-		compatibleTypes: []
+		importPath: null,
+		parentTypeId: null
 	},
 	{
 		id: BUILTIN_TYPE_IDS.datetime,
 		name: 'datetime',
-		category: 'primitive',
 		pythonType: 'datetime',
 		description: 'DateTime type for date and time values',
-		compatibleTypes: []
+		importPath: null,
+		parentTypeId: null
 	},
 	{
 		id: BUILTIN_TYPE_IDS.uuid,
 		name: 'uuid',
-		category: 'primitive',
 		pythonType: 'UUID',
 		description: 'UUID type for unique identifiers',
-		compatibleTypes: []
+		importPath: null,
+		parentTypeId: null
 	}
 ];
 
@@ -75,10 +88,10 @@ const abstractTypes: TypeBase[] = [
 	{
 		id: '00000000-0000-0000-0001-000000000007',
 		name: 'numeric',
-		category: 'abstract',
 		pythonType: 'int | float',
 		description: 'Abstract grouping for numeric types (int, float)',
-		compatibleTypes: ['numeric']
+		importPath: null,
+		parentTypeId: null
 	}
 ];
 
@@ -96,15 +109,12 @@ export const typesStore = derived(
 		return $typesBase.map(typeBase => {
 			let usedInFields = 0;
 
-			// For primitive types, count direct usage
-			if (typeBase.category === 'primitive') {
+			// For the abstract 'numeric' type, count usage of all related primitive types
+			if (typeBase.name === 'numeric') {
+				usedInFields = $fields.filter(field => field.type === 'int' || field.type === 'float').length;
+			} else {
+				// For all other types, count direct usage
 				usedInFields = $fields.filter(field => field.type === typeBase.name).length;
-			}
-			// For abstract types, count usage of all related primitive types
-			else if (typeBase.category === 'abstract') {
-				if (typeBase.name === 'numeric') {
-					usedInFields = $fields.filter(field => field.type === 'int' || field.type === 'float').length;
-				}
 			}
 
 			return {
@@ -120,7 +130,8 @@ export function getTotalTypeCount(): number {
 }
 
 export function getPrimitiveTypes(): FieldType[] {
-	return get(typesStore).filter(t => t.category === 'primitive');
+	const primitiveNames: TypeName[] = ['str', 'int', 'float', 'bool', 'datetime', 'uuid'];
+	return get(typesStore).filter(t => primitiveNames.includes(t.name));
 }
 
 export function searchTypes(types: FieldType[], query: string): FieldType[] {
@@ -133,15 +144,13 @@ export function searchTypes(types: FieldType[], query: string): FieldType[] {
 	return types.filter(type =>
 		type.name.toLowerCase().includes(lowerQuery) ||
 		type.pythonType.toLowerCase().includes(lowerQuery) ||
-		type.description.toLowerCase().includes(lowerQuery) ||
-		type.category.toLowerCase().includes(lowerQuery)
+		type.description.toLowerCase().includes(lowerQuery)
 	);
 }
 
 // Get validator categories compatible with a specific field type
 export function getValidatorCategoriesForType(typeName: PrimitiveTypeName): string[] {
-	const type = get(typesStore).find(t => t.name === typeName);
-	return type?.compatibleTypes || [];
+	return VALIDATOR_COMPATIBILITY[typeName] || [];
 }
 
 /**
@@ -149,6 +158,6 @@ export function getValidatorCategoriesForType(typeName: PrimitiveTypeName): stri
  * Uses the types store data (populated from API) for the name -> UUID mapping.
  */
 export function getTypeIdByName(typeName: PrimitiveTypeName): string | undefined {
-	const type = get(typesStore).find(t => t.name === typeName && t.category === 'primitive');
+	const type = get(typesStore).find(t => t.name === typeName);
 	return type?.id;
 }

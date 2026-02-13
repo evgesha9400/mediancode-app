@@ -25,8 +25,8 @@ Validator
   └─ used in many → Field
 
 Type
-  ├─ has one → category (primitive, abstract)
-  ├─ has many → compatibleTypes (validator type compatibility)
+  ├─ has one → importPath (Python import path, nullable)
+  ├─ has one → parentTypeId (parent type UUID, nullable)
   └─ used in many → Field
 
 ApiEndpoint
@@ -69,10 +69,10 @@ type TypeName = PrimitiveTypeName | AbstractTypeName;
 
 interface TypeBase {
   name: TypeName;                    // Type name
-  category: 'primitive' | 'abstract'; // Type category
   pythonType: string;                 // Python type mapping
   description: string;                // Human-readable description
-  compatibleTypes: string[];           // Compatible validator types
+  importPath: string | null;          // Python import path (null for built-in types)
+  parentTypeId: string | null;        // Parent type UUID (null for top-level types)
 }
 
 interface FieldType extends TypeBase {
@@ -83,7 +83,7 @@ interface FieldType extends TypeBase {
 **Invariants:**
 - Primitive types: `str`, `int`, `float`, `bool`, `datetime`, `uuid`
 - Abstract types: `numeric`
-- `compatibleTypes` determines which validators can be applied
+- Validator compatibility is determined by a static mapping in the types store
 
 **Test Data:**
 - 6 primitive types
@@ -115,7 +115,7 @@ interface Validator extends ValidatorBase {
 
 **Invariants:**
 - `name` must be unique within namespace
-- `type` must match compatible type's `compatibleTypes`
+- `type` must be compatible with the field type's validator categories
 - Inline validators map to Pydantic Field constraints
 - Custom validators use `@field_validator` decorator
 

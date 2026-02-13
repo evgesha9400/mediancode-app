@@ -14,10 +14,10 @@ interface TypeResponse {
 	id: string;
 	namespaceId: string;
 	name: string;
-	category: 'primitive' | 'abstract';
 	pythonType: string;
 	description: string;
-	compatibleTypes: string[];
+	importPath: string | null;
+	parentTypeId: string | null;
 	usedInFields: number;
 }
 
@@ -28,10 +28,10 @@ function transformType(response: TypeResponse): FieldType {
 	return {
 		id: response.id,
 		name: response.name as TypeName,
-		category: response.category,
 		pythonType: response.pythonType,
 		description: response.description,
-		compatibleTypes: response.compatibleTypes,
+		importPath: response.importPath,
+		parentTypeId: response.parentTypeId,
 		usedInFields: response.usedInFields
 	};
 }
