@@ -2,11 +2,11 @@ import { writable, get } from 'svelte/store';
 import type { PrimitiveTypeName } from './types';
 import { checkFieldDeletion } from '$lib/utils/references';
 import type { DeletionResult } from '$lib/types';
-import { GLOBAL_NAMESPACE_ID, type Field, type FieldValidator } from './initialData';
+import { GLOBAL_NAMESPACE_ID, type Field, type FieldConstraint } from './initialData';
 import { generateId } from '$lib/utils/ids';
 
 // Re-export types from initialData for backwards compatibility
-export type { Field, FieldValidator } from './initialData';
+export type { Field, FieldConstraint } from './initialData';
 
 // Initialize with empty array - data will be loaded from API via loader.ts
 export const fieldsStore = writable<Field[]>([]);
@@ -60,7 +60,7 @@ export function searchFields(fields: Field[], query: string): Field[] {
 		field.name.toLowerCase().includes(lowerQuery) ||
 		field.type.toLowerCase().includes(lowerQuery) ||
 		field.description?.toLowerCase().includes(lowerQuery) ||
-		field.validators.some(v => v.name.toLowerCase().includes(lowerQuery))
+		field.constraints.some(c => c.name.toLowerCase().includes(lowerQuery))
 	);
 }
 
@@ -140,7 +140,7 @@ export function createField(
 		namespaceId,
 		name: trimmedName,
 		type,
-		validators: options.validators ?? [],
+		constraints: options.constraints ?? [],
 		usedInApis: options.usedInApis ?? [],
 		description: options.description ?? '',
 		defaultValue: options.defaultValue ?? ''

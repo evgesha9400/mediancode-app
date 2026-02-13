@@ -13,13 +13,13 @@ import { listApis } from '$lib/api/apis';
 import { listFields } from '$lib/api/fields';
 import { listObjects } from '$lib/api/objects';
 import { listEndpoints } from '$lib/api/endpoints';
-import { listValidators } from '$lib/api/validators';
+import { listConstraints } from '$lib/api/constraints';
 import { listTypes } from '$lib/api/types';
 import { namespacesStore, activeNamespaceId } from './namespaces';
 import { apisStore, endpointsStore } from './apis';
 import { fieldsStore } from './fields';
 import { objectsStore } from './objects';
-import { validatorsStore } from './validators';
+import { constraintsStore } from './constraints';
 import { typesBaseStore } from './types';
 import { GLOBAL_NAMESPACE_ID } from './initialData';
 
@@ -42,7 +42,7 @@ export const storeLoadingState = writable<LoadingState>({
 });
 
 /** Store names in the same order as the Promise.allSettled calls */
-const STORE_NAMES = ['Namespaces', 'APIs', 'Fields', 'Objects', 'Endpoints', 'Validators', 'Types'] as const;
+const STORE_NAMES = ['Namespaces', 'APIs', 'Fields', 'Objects', 'Endpoints', 'Constraints', 'Types'] as const;
 
 /**
  * Load all store data from the backend API
@@ -73,7 +73,7 @@ export async function loadStoresFromApi(): Promise<void> {
 		listFields(),
 		listObjects(),
 		listEndpoints(),
-		listValidators(),
+		listConstraints(),
 		listTypes()
 	]);
 
@@ -83,7 +83,7 @@ export async function loadStoresFromApi(): Promise<void> {
 	const fields = results[2].status === 'fulfilled' ? results[2].value : [];
 	const objects = results[3].status === 'fulfilled' ? results[3].value : [];
 	const endpoints = results[4].status === 'fulfilled' ? results[4].value : [];
-	const validators = results[5].status === 'fulfilled' ? results[5].value : [];
+	const constraints = results[5].status === 'fulfilled' ? results[5].value : [];
 	const types = results[6].status === 'fulfilled' ? results[6].value : [];
 
 	// Collect per-store errors
@@ -101,7 +101,7 @@ export async function loadStoresFromApi(): Promise<void> {
 	fieldsStore.set(fields);
 	objectsStore.set(objects);
 	endpointsStore.set(endpoints);
-	validatorsStore.set(validators);
+	constraintsStore.set(constraints);
 	typesBaseStore.set(types);
 
 	// Set active namespace to global if it exists, otherwise first namespace
@@ -144,7 +144,7 @@ export function resetStores(): void {
 	fieldsStore.set([]);
 	objectsStore.set([]);
 	endpointsStore.set([]);
-	validatorsStore.set([]);
+	constraintsStore.set([]);
 	typesBaseStore.set([]);
 	activeNamespaceId.set(GLOBAL_NAMESPACE_ID);
 

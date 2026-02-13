@@ -15,27 +15,26 @@ import {
 	getTotalFieldCount,
 	getTotalApiCount
 } from '$lib/stores/fields';
-import { validatorsStore, getTotalValidatorCount } from '$lib/stores/validators';
+import { constraintsStore, getTotalConstraintCount } from '$lib/stores/constraints';
 import {
 	initialFields,
-	initialInlineValidators,
-	initialCustomValidators
+	initialConstraints
 } from '$lib/stores/initialData';
-import type { Validator } from '$lib/stores/validators';
+import type { Constraint } from '$lib/stores/constraints';
 
-// Helper to transform ValidatorBase to Validator with usage info
-function createValidatorWithUsage(
-	base: typeof initialInlineValidators[0],
+// Helper to transform ConstraintBase to Constraint with usage info
+function createConstraintWithUsage(
+	base: typeof initialConstraints[0],
 	fields: typeof initialFields
-): Validator {
-	const fieldsUsingValidator = fields
-		.filter(f => f.validators.some(v => v.name === base.name))
+): Constraint {
+	const fieldsUsingConstraint = fields
+		.filter(f => f.constraints.some(c => c.name === base.name))
 		.map(f => ({ name: f.name, fieldId: f.id }));
 
 	return {
 		...base,
-		usedInFields: fieldsUsingValidator.length,
-		fieldsUsingValidator
+		usedInFields: fieldsUsingConstraint.length,
+		fieldsUsingConstraint
 	};
 }
 
@@ -45,12 +44,11 @@ describe('Dashboard Page - Store Integration', () => {
 		// Populate fields store
 		fieldsStore.set([...initialFields]);
 
-		// Populate validators store with usage info calculated from fields
-		const allValidatorBases = [...initialInlineValidators, ...initialCustomValidators];
-		const validatorsWithUsage = allValidatorBases.map(base =>
-			createValidatorWithUsage(base, initialFields)
+		// Populate constraints store with usage info calculated from fields
+		const constraintsWithUsage = initialConstraints.map(base =>
+			createConstraintWithUsage(base, initialFields)
 		);
-		validatorsStore.set(validatorsWithUsage);
+		constraintsStore.set(constraintsWithUsage);
 	});
 
 	describe('Stat Card Data Sources', () => {
@@ -62,12 +60,12 @@ describe('Dashboard Page - Store Integration', () => {
 			expect(totalCount).toBeGreaterThan(0);
 		});
 
-		it('getTotalValidatorCount returns combined inline and custom count', () => {
-			const totalCount = getTotalValidatorCount();
-			const storeValidators = get(validatorsStore);
+		it('getTotalConstraintCount returns combined constraint count', () => {
+			const totalCount = getTotalConstraintCount();
+			const storeConstraints = get(constraintsStore);
 
-			// Store has all validators with usage info
-			expect(storeValidators.length).toBe(totalCount);
+			// Store has all constraints with usage info
+			expect(storeConstraints.length).toBe(totalCount);
 			expect(totalCount).toBeGreaterThan(0);
 		});
 
@@ -98,27 +96,28 @@ describe('Dashboard Page - Store Integration', () => {
 				expect(field).toHaveProperty('id');
 				expect(field).toHaveProperty('name');
 				expect(field).toHaveProperty('type');
-				expect(field).toHaveProperty('validators');
+				expect(field).toHaveProperty('constraints');
 				expect(field).toHaveProperty('usedInApis');
-				expect(Array.isArray(field.validators)).toBe(true);
+				expect(Array.isArray(field.constraints)).toBe(true);
 				expect(Array.isArray(field.usedInApis)).toBe(true);
 			});
 		});
 
-		it('validatorsStore contains validators with usage info', () => {
-			const validators = get(validatorsStore);
+		it('constraintsStore contains constraints with usage info', () => {
+			const constraints = get(constraintsStore);
 
-			expect(Array.isArray(validators)).toBe(true);
-			expect(validators.length).toBeGreaterThan(0);
+			expect(Array.isArray(constraints)).toBe(true);
+			expect(constraints.length).toBeGreaterThan(0);
 
-			validators.forEach((validator) => {
-				expect(validator).toHaveProperty('name');
-				expect(validator).toHaveProperty('category');
-				expect(validator).toHaveProperty('type');
-				expect(validator).toHaveProperty('usedInFields');
-				expect(validator).toHaveProperty('fieldsUsingValidator');
-				expect(typeof validator.usedInFields).toBe('number');
-				expect(Array.isArray(validator.fieldsUsingValidator)).toBe(true);
+			constraints.forEach((constraint) => {
+				expect(constraint).toHaveProperty('name');
+				expect(constraint).toHaveProperty('parameterType');
+				expect(constraint).toHaveProperty('compatibleTypes');
+				expect(constraint).toHaveProperty('usedInFields');
+				expect(constraint).toHaveProperty('fieldsUsingConstraint');
+				expect(typeof constraint.usedInFields).toBe('number');
+				expect(Array.isArray(constraint.fieldsUsingConstraint)).toBe(true);
+				expect(Array.isArray(constraint.compatibleTypes)).toBe(true);
 			});
 		});
 
@@ -139,59 +138,45 @@ describe('Dashboard Page - Store Integration', () => {
 		});
 	});
 
-	describe('Validator Categories', () => {
-		it('validators have valid type values', () => {
-			const validators = get(validatorsStore);
-			const validTypes = ['string', 'numeric'];
+	describe('Constraint Properties', () => {
+		it('constraints have valid parameterType values', () => {
+			const constraints = get(constraintsStore);
 
-			validators.forEach((validator) => {
-				expect(validTypes).toContain(validator.type);
+			constraints.forEach((constraint) => {
+				expect(typeof constraint.parameterType).toBe('string');
+				expect(constraint.parameterType.length).toBeGreaterThan(0);
 			});
 		});
 
-		it('validators have valid category values', () => {
-			const validators = get(validatorsStore);
-			const validCategories = ['inline', 'custom'];
+		it('constraints have compatibleTypes arrays', () => {
+			const constraints = get(constraintsStore);
 
-			validators.forEach((validator) => {
-				expect(validCategories).toContain(validator.category);
+			constraints.forEach((constraint) => {
+				expect(Array.isArray(constraint.compatibleTypes)).toBe(true);
+				expect(constraint.compatibleTypes.length).toBeGreaterThan(0);
 			});
-		});
-
-		it('inline validators exist in store', () => {
-			const validators = get(validatorsStore);
-			const inlineValidators = validators.filter((v) => v.category === 'inline');
-
-			expect(inlineValidators.length).toBeGreaterThan(0);
-		});
-
-		it('custom validators exist in store', () => {
-			const validators = get(validatorsStore);
-			const customValidators = validators.filter((v) => v.category === 'custom');
-
-			expect(customValidators.length).toBeGreaterThan(0);
 		});
 	});
 
-	describe('Validator-Field Relationship', () => {
-		it('validators track which fields use them', () => {
-			const validators = get(validatorsStore);
+	describe('Constraint-Field Relationship', () => {
+		it('constraints track which fields use them', () => {
+			const constraints = get(constraintsStore);
 			const fields = get(fieldsStore);
 
-			// Find a validator that's used by at least one field
-			const usedValidator = validators.find((v) => v.usedInFields > 0);
+			// Find a constraint that's used by at least one field
+			const usedConstraint = constraints.find((c) => c.usedInFields > 0);
 
-			if (usedValidator) {
+			if (usedConstraint) {
 				// Verify the field count matches
-				expect(usedValidator.fieldsUsingValidator.length).toBe(usedValidator.usedInFields);
+				expect(usedConstraint.fieldsUsingConstraint.length).toBe(usedConstraint.usedInFields);
 
-				// Verify each field actually has this validator
-				usedValidator.fieldsUsingValidator.forEach((fieldRef) => {
+				// Verify each field actually has this constraint
+				usedConstraint.fieldsUsingConstraint.forEach((fieldRef) => {
 					const field = fields.find((f) => f.id === fieldRef.fieldId);
 					expect(field).toBeDefined();
 					if (field) {
-						const hasValidator = field.validators.some((v) => v.name === usedValidator.name);
-						expect(hasValidator).toBe(true);
+						const hasConstraint = field.constraints.some((c) => c.name === usedConstraint.name);
+						expect(hasConstraint).toBe(true);
 					}
 				});
 			}
@@ -205,10 +190,10 @@ describe('Dashboard Page - Store Integration', () => {
 			expect(fieldCount).toBe(13); // 10 global + 3 user namespace fields
 		});
 
-		it('provides expected initial validator count for stat card', () => {
-			// Dashboard shows this value in "Validators" stat card
-			const validatorCount = getTotalValidatorCount();
-			expect(validatorCount).toBe(11); // 8 inline + 3 custom (2 global + 1 user namespace)
+		it('provides expected initial constraint count for stat card', () => {
+			// Dashboard shows this value in "Constraints" stat card
+			const constraintCount = getTotalConstraintCount();
+			expect(constraintCount).toBe(10); // All constraints from initialConstraints
 		});
 
 		it('provides expected initial API count for stat card', () => {

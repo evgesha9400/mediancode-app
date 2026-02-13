@@ -13,14 +13,14 @@ import { http, HttpResponse } from 'msw';
 import {
 	mockUsers,
 	mockFields,
-	mockValidators,
+	mockConstraints,
 	mockTypes,
 	mockApis,
 	mockPermissions,
 	mockRoles,
 	getUserById,
 	getFieldById,
-	getValidatorByName,
+	getConstraintByName,
 	getTypeByName,
 	getApiById
 } from '../../fixtures';
@@ -88,36 +88,29 @@ export const handlers = [
 	}),
 
 	// ============================================
-	// Validator Endpoints
+	// Constraint Endpoints
 	// ============================================
-	http.get('/api/validators', () => {
-		return HttpResponse.json(mockValidators);
+	http.get('/api/constraints', () => {
+		return HttpResponse.json(mockConstraints);
 	}),
 
-	http.get('/api/validators/:name', ({ params }) => {
-		const validator = getValidatorByName(params.name as string);
-		if (!validator) {
+	http.get('/api/constraints/:name', ({ params }) => {
+		const constraint = getConstraintByName(params.name as string);
+		if (!constraint) {
 			return new HttpResponse(null, { status: 404 });
 		}
-		return HttpResponse.json(validator);
+		return HttpResponse.json(constraint);
 	}),
 
-	http.post('/api/validators', async ({ request }) => {
-		const newValidator = await request.json();
-		return HttpResponse.json(newValidator, { status: 201 });
+	http.post('/api/constraints', async ({ request }) => {
+		const newConstraint = await request.json();
+		return HttpResponse.json(newConstraint, { status: 201 });
 	}),
 
-	http.delete('/api/validators/:name', ({ params }) => {
-		const validator = getValidatorByName(params.name as string);
-		if (!validator) {
+	http.delete('/api/constraints/:name', ({ params }) => {
+		const constraint = getConstraintByName(params.name as string);
+		if (!constraint) {
 			return new HttpResponse(null, { status: 404 });
-		}
-		// Only custom validators can be deleted
-		if (validator.category !== 'custom') {
-			return new HttpResponse(
-				JSON.stringify({ error: 'Cannot delete inline validators' }),
-				{ status: 400 }
-			);
 		}
 		return new HttpResponse(null, { status: 204 });
 	}),

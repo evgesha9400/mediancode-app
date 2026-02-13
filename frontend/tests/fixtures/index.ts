@@ -1,17 +1,17 @@
 /**
  * Fixtures Index
- * 
+ *
  * Central export point for all test fixtures.
  * Import fixtures from this file to ensure consistency across all tests.
- * 
+ *
  * Usage:
- *   import { mockFields, mockValidators, getFieldById } from 'tests/fixtures';
+ *   import { mockFields, mockConstraints, getFieldById } from 'tests/fixtures';
  */
 
 // Export all fixtures
 export * from './users';
 export * from './types';
-export * from './validators';
+export * from './constraints';
 export * from './fields';
 export * from './apis';
 export * from './permissions';
@@ -41,15 +41,13 @@ export {
 } from './types';
 
 export {
-	mockValidators,
-	mockInlineValidators,
-	mockCustomValidators,
-	getValidatorByName,
-	getValidatorsByCategory,
-	getValidatorsByType,
-	type Validator,
-	type ValidatorBase
-} from './validators';
+	mockConstraints,
+	mockConstraintBases,
+	getConstraintByName,
+	getConstraintsByCompatibleType,
+	type Constraint,
+	type ConstraintBase
+} from './constraints';
 
 export {
 	mockFields,
@@ -59,7 +57,7 @@ export {
 	getFieldsUsedInApi,
 	getUnusedFields,
 	type Field,
-	type FieldValidator
+	type FieldConstraint
 } from './fields';
 
 export {

@@ -5,14 +5,14 @@
  */
 
 import { apiGet, apiPost, apiPut, apiDelete } from './client';
-import type { Field, FieldValidator } from '$lib/stores/initialData';
+import type { Field, FieldConstraint } from '$lib/stores/initialData';
 import { BUILTIN_TYPE_IDS } from '$lib/stores/initialData';
 import type { PrimitiveTypeName } from '$lib/stores/types';
 
 /**
- * Backend field validator response
+ * Backend field constraint response
  */
-interface FieldValidatorResponse {
+interface FieldConstraintResponse {
 	name: string;
 	params: Record<string, unknown> | null;
 }
@@ -35,14 +35,14 @@ interface FieldResponse {
 	typeId: string;
 	description: string | null;
 	defaultValue: string | null;
-	validators: FieldValidatorResponse[];
+	constraints: FieldConstraintResponse[];
 	usedInApis: string[];
 }
 
 /**
- * Transform backend field validator to frontend type
+ * Transform backend field constraint to frontend type
  */
-function transformFieldValidator(response: FieldValidatorResponse): FieldValidator {
+function transformFieldConstraint(response: FieldConstraintResponse): FieldConstraint {
 	return {
 		name: response.name,
 		params: response.params ?? undefined
@@ -66,7 +66,7 @@ function transformField(response: FieldResponse): Field {
 		type: typeName ?? 'str',
 		description: response.description ?? undefined,
 		defaultValue: response.defaultValue ?? undefined,
-		validators: response.validators.map(transformFieldValidator),
+		constraints: response.constraints.map(transformFieldConstraint),
 		usedInApis: response.usedInApis
 	};
 }
@@ -103,7 +103,7 @@ export interface CreateFieldRequest {
 	typeId: string;
 	description?: string;
 	defaultValue?: string;
-	validators: { name: string; params?: Record<string, unknown> }[];
+	constraints: { name: string; params?: Record<string, unknown> }[];
 }
 
 /**
@@ -114,7 +114,7 @@ export interface UpdateFieldRequest {
 	typeId?: string;
 	description?: string;
 	defaultValue?: string;
-	validators?: { name: string; params?: Record<string, unknown> }[];
+	constraints?: { name: string; params?: Record<string, unknown> }[];
 }
 
 // ============================================================================

@@ -25,7 +25,7 @@ export interface ApiField {
 	type: string;
 	description?: string;
 	default_value?: string;
-	validators?: string[];
+	constraints?: string[];
 	namespace_id?: string;
 }
 

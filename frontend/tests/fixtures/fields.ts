@@ -9,11 +9,11 @@
  * Single source of truth: src/lib/stores/initialData.ts
  */
 
-import { initialFields, cloneFields, type Field, type FieldValidator } from '../../src/lib/stores/initialData';
+import { initialFields, cloneFields, type Field, type FieldConstraint } from '../../src/lib/stores/initialData';
 import type { PrimitiveTypeName } from './types';
 
 // Re-export types from centralized module
-export type { Field, FieldValidator } from '../../src/lib/stores/initialData';
+export type { Field, FieldConstraint } from '../../src/lib/stores/initialData';
 
 /**
  * Mock fields - uses centralized data

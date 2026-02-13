@@ -1,7 +1,7 @@
 <script lang="ts">
-  import { fieldsStore, searchFields, type Field, type FieldValidator } from '$lib/stores/fields';
+  import { fieldsStore, searchFields, type Field, type FieldConstraint } from '$lib/stores/fields';
   import { createFieldAction, updateFieldAction, deleteFieldAction } from '$lib/stores/actions';
-  import { validatorsStore, getValidatorsByFieldType, getValidatorsByFieldTypeAndNamespace, type Validator } from '$lib/stores/validators';
+  import { constraintsStore, getConstraintsByFieldType, type Constraint } from '$lib/stores/constraints';
   import { getPrimitiveTypes, getTypeIdByName, type PrimitiveTypeName } from '$lib/stores/types';
   import { showToast } from '$lib/stores/toasts';
   import { activeNamespaceId, namespacesStore, getNamespaceById } from '$lib/stores/namespaces';
@@ -19,7 +19,7 @@
     DrawerFooter,
     Tooltip,
     NamespaceSelector,
-    ValidatorSelectorDropdown
+    ConstraintSelectorDropdown
   } from '$lib/components';
   import type { FilterConfig } from '$lib/types';
   import { storeLoadingState, reloadStores } from '$lib/stores/loader';
@@ -34,7 +34,7 @@
   type FieldFilterState = {
     selectedTypes: string[];
     onlyUsedInApis: boolean;
-    onlyHasValidators: boolean;
+    onlyHasConstraints: boolean;
   };
 
   // Form tracking
@@ -64,10 +64,10 @@
       },
       {
         type: 'toggle',
-        key: 'onlyHasValidators',
+        key: 'onlyHasConstraints',
         label: 'Validation',
-        toggleLabel: 'Has validators only',
-        predicate: (item: Field) => item.validators.length > 0
+        toggleLabel: 'Has constraints only',
+        predicate: (item: Field) => item.constraints.length > 0
       }
     ];
   });
@@ -107,27 +107,27 @@
   let activeFiltersCount = $derived(listState.activeFiltersCount);
   let hasChanges = $derived(listState.hasChanges);
 
-  let validators = $derived($validatorsStore);
-  // Filter validators by field's namespace AND type compatibility
-  let availableValidators = $derived(
+  let constraints = $derived($constraintsStore);
+  // Filter constraints by field's type compatibility
+  let availableConstraints = $derived(
     editedField
-      ? getValidatorsByFieldTypeAndNamespace(editedField.type, editedField.namespaceId)
+      ? getConstraintsByFieldType(editedField.type)
       : []
   );
 
-  // Derive selected validator names for the ValidatorSelectorDropdown
-  let selectedValidatorNames = $derived(editedField?.validators.map(v => v.name) ?? []);
+  // Derive selected constraint names for the ConstraintSelectorDropdown
+  let selectedConstraintNames = $derived(editedField?.constraints.map(v => v.name) ?? []);
 
   function handleTypeChange(newType: string) {
     if (!editedField) return;
 
     const typedNewType = newType as PrimitiveTypeName;
 
-    // If type actually changed, reset validators and default value
+    // If type actually changed, reset constraints and default value
     if (previousFieldType !== null && previousFieldType !== typedNewType) {
       listState.editedItem = {
         ...editedField,
-        validators: [],
+        constraints: [],
         defaultValue: ''
       };
     }
@@ -153,7 +153,7 @@
       namespaceId: $activeNamespaceId,
       name: '',
       type: firstType as PrimitiveTypeName,
-      validators: [],
+      constraints: [],
       usedInApis: [],
       description: '',
       defaultValue: ''
@@ -212,7 +212,7 @@
       typeId,
       description: editedField.description,
       defaultValue: editedField.defaultValue,
-      validators: editedField.validators
+      constraints: editedField.constraints
     });
 
     if (!result.success) {
@@ -250,7 +250,7 @@
       typeId,
       description: editedField.description,
       defaultValue: editedField.defaultValue,
-      validators: editedField.validators
+      constraints: editedField.constraints
     });
 
     if (!result.success) {
@@ -297,32 +297,32 @@
     }
   }
 
-  function addValidator(validatorName: string) {
+  function addConstraint(constraintName: string) {
     if (!editedField) return;
 
     listState.editedItem = {
       ...editedField,
-      validators: [...editedField.validators, { name: validatorName, params: {} }]
+      constraints: [...editedField.constraints, { name: constraintName, params: {} }]
     };
   }
 
-  function removeValidator(index: number) {
+  function removeConstraint(index: number) {
     if (!editedField) return;
     listState.editedItem = {
       ...editedField,
-      validators: editedField.validators.filter((_, i) => i !== index)
+      constraints: editedField.constraints.filter((_, i) => i !== index)
     };
   }
 
-  function formatValidatorPill(validator: FieldValidator): string {
-    if (!validator.params || Object.keys(validator.params).length === 0) {
-      return validator.name;
+  function formatConstraintPill(constraint: FieldConstraint): string {
+    if (!constraint.params || Object.keys(constraint.params).length === 0) {
+      return constraint.name;
     }
-    const value = validator.params.value;
+    const value = constraint.params.value;
     if (value !== undefined) {
-      return `${validator.name}: ${value}`;
+      return `${constraint.name}: ${value}`;
     }
-    return validator.name;
+    return constraint.name;
   }
 
   let hasReferences = $derived(editedField ? editedField.usedInApis.length > 0 : false);
@@ -389,7 +389,7 @@
         />
         <th scope="col" class="px-6 py-3 text-left text-xs text-mono-500 tracking-wider font-medium">
           <div class="flex items-center space-x-1">
-            <span>Validators</span>
+            <span>Constraints</span>
           </div>
         </th>
         <SortableColumn
@@ -425,11 +425,11 @@
             <span class="text-sm text-mono-600">{field.namespaceName}</span>
           </td>
           <td class="px-6 py-4 text-sm text-mono-500">
-            {#if field.validators.length > 0}
+            {#if field.constraints.length > 0}
               <div class="flex flex-wrap gap-1">
-                {#each field.validators as validator}
+                {#each field.constraints as constraint}
                   <span class="px-2 py-0.5 text-xs rounded-full bg-mono-100">
-                    {formatValidatorPill(validator)}
+                    {formatConstraintPill(constraint)}
                   </span>
                 {/each}
               </div>
@@ -556,40 +556,40 @@
           />
         </div>
 
-        <!-- Validators -->
+        <!-- Constraints -->
         <div>
-          <h3 class="text-sm text-mono-700 mb-2 font-medium">Validators ({editedField.validators.length})</h3>
+          <h3 class="text-sm text-mono-700 mb-2 font-medium">Constraints ({editedField.constraints.length})</h3>
 
           <div class="space-y-2">
-            <!-- Validator Selector Dropdown -->
-            <ValidatorSelectorDropdown
-              availableValidators={availableValidators}
-              selectedValidatorNames={selectedValidatorNames}
-              onSelect={addValidator}
-              placeholder="Add validator to field..."
+            <!-- Constraint Selector Dropdown -->
+            <ConstraintSelectorDropdown
+              availableConstraints={availableConstraints}
+              selectedConstraintNames={selectedConstraintNames}
+              onSelect={addConstraint}
+              placeholder="Add constraint to field..."
             />
 
-            <!-- Selected Validators -->
-            {#if editedField.validators.length === 0}
+            <!-- Selected Constraints -->
+            {#if editedField.constraints.length === 0}
               <div class="p-3 bg-mono-50 rounded border border-mono-200">
-                <p class="text-xs text-mono-500">No validators selected</p>
+                <p class="text-xs text-mono-500">No constraints selected</p>
               </div>
             {:else}
               <div class="p-2 bg-mono-50 rounded border border-mono-200 space-y-2">
-                {#each editedField.validators as validator, index}
-                  {@const validatorMeta = validators.find(v => v.name === validator.name)}
-                  {#if validatorMeta}
+                {#each editedField.constraints as constraint, index}
+                  {@const constraintMeta = constraints.find(v => v.name === constraint.name)}
+                  {#if constraintMeta}
                     <div class="flex items-center space-x-2 p-2 bg-white rounded border border-mono-200">
-                      <!-- Validator Name and Type -->
+                      <!-- Constraint Name and Type -->
                       <div class="flex items-center space-x-2">
-                        <span class="font-mono text-sm text-mono-700">{validatorMeta.name}</span>
-                        <span class="text-xs text-mono-500 bg-mono-100 px-2 py-0.5 rounded">{validatorMeta.type}</span>
+                        <span class="font-mono text-sm text-mono-700">{constraintMeta.name}</span>
+                        <span class="text-xs text-mono-500 bg-mono-100 px-2 py-0.5 rounded">{constraintMeta.parameterType}</span>
                       </div>
 
                       <!-- Description (if available) -->
-                      {#if validatorMeta.description}
+                      {#if constraintMeta.description}
                         <div class="flex-1 text-xs text-mono-500">
-                          {validatorMeta.description}
+                          {constraintMeta.description}
                         </div>
                       {:else}
                         <div class="flex-1"></div>
@@ -598,27 +598,27 @@
                       <!-- Delete Button (aligned to the right) -->
                       <button
                         type="button"
-                        onclick={() => removeValidator(index)}
+                        onclick={() => removeConstraint(index)}
                         class="text-red-700 hover:text-red-600 transition-colors"
-                        title="Remove validator"
-                        aria-label="Remove validator"
+                        title="Remove constraint"
+                        aria-label="Remove constraint"
                       >
                         <i class="fa-solid fa-xmark"></i>
                       </button>
                     </div>
                   {:else}
-                    <!-- Missing validator fallback - validator was deleted from registry -->
+                    <!-- Missing constraint fallback - constraint was deleted from registry -->
                     <div class="flex items-center gap-2 py-1.5">
                       <i class="fa-solid fa-triangle-exclamation text-red-500 text-sm"></i>
                       <span class="flex-1 text-sm text-red-700">
-                        Validator not found <span class="font-mono text-xs text-red-500">({validator.name})</span>
+                        Constraint not found <span class="font-mono text-xs text-red-500">({constraint.name})</span>
                       </span>
                       <button
                         type="button"
-                        onclick={() => removeValidator(index)}
+                        onclick={() => removeConstraint(index)}
                         class="p-1 text-red-700 hover:text-red-600 hover:bg-red-100 rounded transition-colors"
-                        title="Remove missing validator reference"
-                        aria-label="Remove validator"
+                        title="Remove missing constraint reference"
+                        aria-label="Remove constraint"
                       >
                         <i class="fa-solid fa-xmark"></i>
                       </button>

@@ -16,10 +16,10 @@ export interface TypeBase {
 }
 
 /**
- * Static mapping from type name to compatible validator categories.
- * This relationship is inherent to Python types and does not change at runtime.
+ * @deprecated Constraint compatibility is now driven by constraint.compatibleTypes from the backend.
+ * Kept temporarily for any code that still references it during migration.
  */
-const VALIDATOR_COMPATIBILITY: Record<string, string[]> = {
+const CONSTRAINT_COMPATIBILITY: Record<string, string[]> = {
 	str: ['string'],
 	int: ['numeric'],
 	float: ['numeric'],
@@ -146,9 +146,9 @@ export function searchTypes(types: FieldType[], query: string): FieldType[] {
 	);
 }
 
-// Get validator categories compatible with a specific field type
-export function getValidatorCategoriesForType(typeName: PrimitiveTypeName): string[] {
-	return VALIDATOR_COMPATIBILITY[typeName] || [];
+// Get constraint categories compatible with a specific field type
+export function getConstraintCategoriesForType(typeName: PrimitiveTypeName): string[] {
+	return CONSTRAINT_COMPATIBILITY[typeName] || [];
 }
 
 /**

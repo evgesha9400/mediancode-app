@@ -24,7 +24,7 @@ const FIELD_B = {
 	type: 'int',
 	description: 'Number of retry attempts for failed operations',
 	defaultValue: '3',
-	validators: ['ge']
+	constraints: ['ge']
 };
 
 const FIELD_C = {
@@ -91,9 +91,9 @@ test('Field lifecycle: create, search, filter, sort, update, delete', async ({ p
 	await fields.clearFilters();
 	expect(await fields.getRowCount()).toBe(4);
 
-	// --- Toggle "Has validators only": only FIELD_B has validators ---
+	// --- Toggle "Has constraints only": only FIELD_B has constraints ---
 	await fields.openFilters();
-	await fields.toggleFilterSwitch('Has validators only');
+	await fields.toggleFilterSwitch('Has constraints only');
 	expect(await fields.getRowCount()).toBe(1);
 	expect(await fields.hasField(FIELD_B.name)).toBe(true);
 
@@ -126,12 +126,12 @@ test('Field lifecycle: create, search, filter, sort, update, delete', async ({ p
 	expect(await fields.getDefaultValue()).toBe(FIELD_C.defaultValue);
 	await fields.closeDrawer();
 
-	// --- Read: open field B and verify values + validator ---
+	// --- Read: open field B and verify values + constraint ---
 	await fields.clickRow(FIELD_B.name);
 	expect(await fields.isDrawerOpen()).toBe(true);
 	expect(await fields.getFieldName()).toBe(FIELD_B.name);
 	expect(await fields.getFieldType()).toBe(FIELD_B.type);
-	expect(await fields.getValidatorCount()).toBe(1);
+	expect(await fields.getConstraintCount()).toBe(1);
 	await fields.closeDrawer();
 
 	// --- Update field C ---

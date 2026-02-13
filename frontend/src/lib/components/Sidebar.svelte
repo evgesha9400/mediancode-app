@@ -21,7 +21,16 @@
 
   const coreComponentItems: NavItem[] = [
     { href: '/types', label: 'Types', icon: 'fa-shapes' },
-    { href: '/validators', label: 'Validators', icon: 'fa-check-circle' },
+    {
+      href: '/validators',
+      label: 'Validators',
+      icon: 'fa-check-circle',
+      children: [
+        { href: '/validators/constraints', label: 'Constraints', icon: 'fa-shield-halved' },
+        { href: '/validators/field-validators', label: 'Field Validators', icon: 'fa-input-text' },
+        { href: '/validators/model-validators', label: 'Model Validators', icon: 'fa-diagram-project' }
+      ]
+    },
     { href: '/field-registry', label: 'Fields', icon: 'fa-table-list' },
     { href: '/object-builder', label: 'Objects', icon: 'fa-cubes' },
     { href: '/apis', label: 'APIs', icon: 'fa-code' }
@@ -32,7 +41,15 @@
   ];
 
   function isActive(href: string): boolean {
-    return activeRoute === href;
+    if (activeRoute === href) return true;
+    if (href !== '/' && activeRoute.startsWith(href)) return true;
+    return false;
+  }
+
+  // A parent with children is "expanded" if any child route is active
+  function isExpanded(item: NavItem): boolean {
+    if (!item.children) return false;
+    return item.children.some(child => isActive(child.href));
   }
 </script>
 
@@ -65,7 +82,34 @@
     <ul class="space-y-1">
       {#each coreComponentItems as item}
         <li>
-          {#if item.disabled}
+          {#if item.children}
+            <!-- Parent item with nested children -->
+            <div class="flex items-center space-x-2 px-2 py-1.5 rounded-md">
+              <i class="fa-solid {item.icon} w-5"></i>
+              <span>{item.label}</span>
+            </div>
+            <ul class="mt-0.5 space-y-0.5 ml-7">
+              {#each item.children as child}
+                <li>
+                  {#if child.disabled}
+                    <span
+                      class="flex items-center space-x-2 px-2 py-1.5 rounded-md text-mono-600 cursor-not-allowed select-none"
+                      title="Under construction"
+                    >
+                      <span>{child.label}</span>
+                    </span>
+                  {:else}
+                    <a
+                      href={child.href}
+                      class="flex items-center space-x-2 px-2 py-1.5 rounded-md cursor-pointer {isActive(child.href) ? 'bg-mono-800' : 'hover:bg-mono-800'}"
+                    >
+                      <span>{child.label}</span>
+                    </a>
+                  {/if}
+                </li>
+              {/each}
+            </ul>
+          {:else if item.disabled}
             <button
               type="button"
               class="w-full flex items-center space-x-2 px-2 py-1.5 rounded-md hover:bg-mono-800 cursor-pointer text-left"

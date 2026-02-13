@@ -1,6 +1,6 @@
 <script lang="ts">
   import { getTotalFieldCount, getTotalApiCount } from '$lib/stores/fields';
-  import { getTotalValidatorCount } from '$lib/stores/validators';
+  import { getTotalConstraintCount } from '$lib/stores/constraints';
   import { getTotalTypeCount } from '$lib/stores/types';
   import { getTotalObjectCount } from '$lib/stores/objects';
   import { clerkState } from '$lib/clerk';
@@ -9,7 +9,7 @@
 
   $: totalTypes = getTotalTypeCount();
   $: totalFields = getTotalFieldCount();
-  $: totalValidators = getTotalValidatorCount();
+  $: totalConstraints = getTotalConstraintCount();
   $: totalObjects = getTotalObjectCount();
   $: totalApis = getTotalApiCount();
   $: userName = $clerkState.user?.firstName || $clerkState.user?.fullName || 'Developer';
@@ -39,7 +39,7 @@
       <h2 class="text-xs uppercase tracking-wider text-mono-400 mb-3 font-medium">Core Components</h2>
       <div class="flex flex-wrap gap-6">
         <div class="w-40"><StatCard title="Types" value={totalTypes} icon="fa-shapes" error={hasError('Types')} onRetry={handleRetry} /></div>
-        <div class="w-40"><StatCard title="Validators" value={totalValidators} icon="fa-check-circle" error={hasError('Validators')} onRetry={handleRetry} /></div>
+        <div class="w-40"><StatCard title="Constraints" value={totalConstraints} icon="fa-check-circle" error={hasError('Constraints')} onRetry={handleRetry} /></div>
         <div class="w-40"><StatCard title="Fields" value={totalFields} icon="fa-table-list" error={hasError('Fields')} onRetry={handleRetry} /></div>
         <div class="w-40"><StatCard title="Objects" value={totalObjects} icon="fa-cubes" error={hasError('Objects')} onRetry={handleRetry} /></div>
       </div>

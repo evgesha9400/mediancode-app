@@ -37,6 +37,7 @@ export interface NavItem {
   icon: string;
   active?: boolean;
   disabled?: boolean;
+  children?: NavItem[];
 }
 
 // Filter types for search components
@@ -73,7 +74,7 @@ export type FilterConfig = FilterSection[];
 export interface Reference {
   id: string;
   name: string;
-  type: 'field' | 'api' | 'validator';
+  type: 'field' | 'api' | 'constraint';
 }
 
 export interface DeletionResult {

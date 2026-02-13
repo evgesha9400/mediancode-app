@@ -220,7 +220,7 @@ describe('namespaces store - Entity Count', () => {
 	});
 
 	it('should count entities in a namespace', () => {
-		// Get initial count (validators store has inline validators that are always present)
+		// Get initial count (constraints store has constraints that are always present)
 		const initialCount = getNamespaceEntityCount(GLOBAL_NAMESPACE_ID);
 
 		// Add a field to global namespace
@@ -231,7 +231,7 @@ describe('namespaces store - Entity Count', () => {
 				namespaceId: GLOBAL_NAMESPACE_ID,
 				name: 'test_field',
 				type: 'str' as const,
-				validators: [],
+				constraints: [],
 				usedInApis: []
 			}
 		]);
@@ -240,9 +240,9 @@ describe('namespaces store - Entity Count', () => {
 	});
 
 	it('should get detailed entity counts', () => {
-		// Get initial validator count (inline validators always exist)
+		// Get initial constraint count (constraints always exist)
 		const initialDetails = getNamespaceEntityDetails(GLOBAL_NAMESPACE_ID);
-		const initialValidatorCount = initialDetails.validators;
+		const initialConstraintCount = initialDetails.constraints;
 
 		// Add entities
 		fieldsStore.update(fields => [
@@ -252,7 +252,7 @@ describe('namespaces store - Entity Count', () => {
 				namespaceId: GLOBAL_NAMESPACE_ID,
 				name: 'test_field',
 				type: 'str' as const,
-				validators: [],
+				constraints: [],
 				usedInApis: []
 			}
 		]);
@@ -276,10 +276,10 @@ describe('namespaces store - Entity Count', () => {
 
 		expect(details.fields).toBe(1);
 		expect(details.endpoints).toBe(1);
-		expect(details.validators).toBe(initialValidatorCount); // Inline validators still present
+		expect(details.constraints).toBe(initialConstraintCount); // Constraints still present
 		expect(details.objects).toBe(0);
 		expect(details.apis).toBe(0);
-		expect(details.total).toBe(2 + initialValidatorCount);
+		expect(details.total).toBe(2 + initialConstraintCount);
 	});
 
 	it('should not delete namespace with entities', () => {
@@ -293,7 +293,7 @@ describe('namespaces store - Entity Count', () => {
 				namespaceId: namespace!.id,
 				name: 'test_field',
 				type: 'str' as const,
-				validators: [],
+				constraints: [],
 				usedInApis: []
 			}
 		]);

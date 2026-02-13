@@ -104,7 +104,7 @@
             <div class="text-sm text-mono-900 font-medium font-mono">{type.name}</div>
           </td>
           <td class="px-6 py-4 whitespace-nowrap">
-            <span class="px-2 py-1 text-xs rounded-full bg-mono-900 text-white">
+            <span class="px-2 py-0.5 text-xs rounded-full bg-mono-200 text-mono-700">
               {type.pythonType}
             </span>
           </td>

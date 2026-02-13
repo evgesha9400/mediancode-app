@@ -12,8 +12,9 @@ import { getStatCardTestId } from '../../src/lib/utils/testIds';
 
 export const STAT_CARD_TITLES = {
 	types: 'Types',
-	validators: 'Validators',
+	constraints: 'Constraints',
 	fields: 'Fields',
+	objects: 'Objects',
 	generatedApis: 'Generated APIs',
 	creditsAvailable: 'Credits Available',
 	creditsUsed: 'Credits Used'
@@ -33,7 +34,8 @@ export class DashboardPage {
 	readonly typesCard: Locator;
 	readonly fieldsCard: Locator;
 	readonly generatedApisCard: Locator;
-	readonly validatorsCard: Locator;
+	readonly constraintsCard: Locator;
+	readonly objectsCard: Locator;
 	readonly creditsAvailableCard: Locator;
 	readonly creditsUsedCard: Locator;
 
@@ -42,7 +44,7 @@ export class DashboardPage {
 	readonly dashboardNavLink: Locator;
 	readonly fieldsNavLink: Locator;
 	readonly typesNavLink: Locator;
-	readonly validatorsNavLink: Locator;
+	readonly constraintsNavLink: Locator;
 
 	// Sign out
 	readonly signOutButton: Locator;
@@ -59,7 +61,8 @@ export class DashboardPage {
 		this.typesCard = this.getStatCardLocator(STAT_CARD_TITLES.types);
 		this.fieldsCard = this.getStatCardLocator(STAT_CARD_TITLES.fields);
 		this.generatedApisCard = this.getStatCardLocator(STAT_CARD_TITLES.generatedApis);
-		this.validatorsCard = this.getStatCardLocator(STAT_CARD_TITLES.validators);
+		this.constraintsCard = this.getStatCardLocator(STAT_CARD_TITLES.constraints);
+		this.objectsCard = this.getStatCardLocator(STAT_CARD_TITLES.objects);
 		this.creditsAvailableCard = this.getStatCardLocator(STAT_CARD_TITLES.creditsAvailable);
 		this.creditsUsedCard = this.getStatCardLocator(STAT_CARD_TITLES.creditsUsed);
 
@@ -68,7 +71,7 @@ export class DashboardPage {
 		this.dashboardNavLink = page.getByRole('link', { name: /dashboard/i });
 		this.fieldsNavLink = page.locator('a[href="/field-registry"]');
 		this.typesNavLink = page.locator('a[href="/types"]');
-		this.validatorsNavLink = page.locator('a[href="/validators"]');
+		this.constraintsNavLink = page.locator('[data-testid="dashboard-sidebar"] a[href="/validators/constraints"]');
 
 		// Sign out - use role-based selector
 		this.signOutButton = page.getByRole('button', { name: /sign out/i });
@@ -97,12 +100,12 @@ export class DashboardPage {
 	/**
 	 * Navigate to a specific section via sidebar
 	 */
-	async navigateTo(section: 'dashboard' | 'field-registry' | 'types' | 'validators') {
+	async navigateTo(section: 'dashboard' | 'field-registry' | 'types' | 'constraints') {
 		const linkMap = {
 			dashboard: this.dashboardNavLink,
 			'field-registry': this.fieldsNavLink,
 			types: this.typesNavLink,
-			validators: this.validatorsNavLink
+			constraints: this.constraintsNavLink
 		};
 
 		await linkMap[section].click();

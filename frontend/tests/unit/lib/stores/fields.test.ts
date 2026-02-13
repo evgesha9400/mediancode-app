@@ -54,7 +54,7 @@ describe('fields store - createField', () => {
 		expect(field?.name).toBe('test_field');
 		expect(field?.type).toBe('str');
 		expect(field?.namespaceId).toBe(GLOBAL_NAMESPACE_ID);
-		expect(field?.validators).toEqual([]);
+		expect(field?.constraints).toEqual([]);
 		expect(field?.usedInApis).toEqual([]);
 		expect(field?.description).toBe('');
 		expect(field?.defaultValue).toBe('');
@@ -84,20 +84,20 @@ describe('fields store - createField', () => {
 		expect(field?.defaultValue).toBe('default_value');
 	});
 
-	it('should create a field with validators', () => {
-		const validators = [{ name: 'min_length', params: { value: 5 } }];
+	it('should create a field with constraints', () => {
+		const constraints = [{ name: 'min_length', params: { value: 5 } }];
 		const field = createField('test_field', 'str', GLOBAL_NAMESPACE_ID, {
-			validators
+			constraints
 		});
 
-		expect(field?.validators).toEqual(validators);
+		expect(field?.constraints).toEqual(constraints);
 	});
 
 	it('should create a field with all options', () => {
 		const field = createField('test_field', 'int', 'custom-namespace', {
 			description: 'A test field',
 			defaultValue: '42',
-			validators: [{ name: 'min', params: { value: 0 } }],
+			constraints: [{ name: 'min', params: { value: 0 } }],
 			usedInApis: ['aaaaaaaa-0000-0000-0000-000000000001']
 		});
 
@@ -106,7 +106,7 @@ describe('fields store - createField', () => {
 		expect(field?.namespaceId).toBe('custom-namespace');
 		expect(field?.description).toBe('A test field');
 		expect(field?.defaultValue).toBe('42');
-		expect(field?.validators).toHaveLength(1);
+		expect(field?.constraints).toHaveLength(1);
 		expect(field?.usedInApis).toEqual(['aaaaaaaa-0000-0000-0000-000000000001']);
 	});
 

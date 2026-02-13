@@ -41,31 +41,31 @@ export function buildDeletionTooltip(
 }
 
 /**
- * Checks if a validator can be deleted safely
- * A validator cannot be deleted if it's currently used in any fields
+ * Checks if a constraint can be deleted safely
+ * A constraint cannot be deleted if it's currently used in any fields
  * Only checks references within the same namespace when namespaceId is provided
  *
- * @param validatorName - The name of the validator to check
- * @param fieldsUsingValidator - Array of fields using this validator
+ * @param constraintName - The name of the constraint to check
+ * @param fieldsUsingConstraint - Array of fields using this constraint
  * @param namespaceId - Optional namespace to filter references by (only checks same-namespace references)
  * @returns DeletionResult indicating whether deletion is safe
  */
-export function checkValidatorDeletion(
-  validatorName: string,
-  fieldsUsingValidator: Array<{ name: string; fieldId: string }>,
+export function checkConstraintDeletion(
+  constraintName: string,
+  fieldsUsingConstraint: Array<{ name: string; fieldId: string }>,
   namespaceId?: string
 ): DeletionResult {
   // Filter by namespace if provided
-  let filteredFields = fieldsUsingValidator;
+  let filteredFields = fieldsUsingConstraint;
   if (namespaceId) {
     const allFields = get(fieldsStore);
     const sameNamespaceFieldIds = new Set(
       allFields.filter(f => f.namespaceId === namespaceId).map(f => f.id)
     );
-    filteredFields = fieldsUsingValidator.filter(f => sameNamespaceFieldIds.has(f.fieldId));
+    filteredFields = fieldsUsingConstraint.filter(f => sameNamespaceFieldIds.has(f.fieldId));
   }
 
-  // If no fields are using this validator (in the same namespace), deletion is safe
+  // If no fields are using this constraint (in the same namespace), deletion is safe
   if (filteredFields.length === 0) {
     return { success: true };
   }
@@ -87,7 +87,7 @@ export function checkValidatorDeletion(
   const remainingCount = fieldCount - 3;
   const remainingText = remainingCount > 0 ? ` and ${remainingCount} more` : '';
 
-  const error = `Cannot delete validator "${validatorName}" because it is used in ${fieldCount} field${fieldCount > 1 ? 's' : ''}: ${fieldNames}${remainingText}. Remove this validator from all fields before deleting.`;
+  const error = `Cannot delete constraint "${constraintName}" because it is used in ${fieldCount} field${fieldCount > 1 ? 's' : ''}: ${fieldNames}${remainingText}. Remove this constraint from all fields before deleting.`;
 
   return {
     success: false,

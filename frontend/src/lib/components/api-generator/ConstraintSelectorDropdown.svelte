@@ -1,41 +1,41 @@
 <script module lang="ts">
-  import type { Validator } from '$lib/stores/validators';
+  import type { Constraint } from '$lib/stores/constraints';
 
-  export interface ValidatorSelectorDropdownProps {
-    availableValidators: Validator[];
-    selectedValidatorNames: string[];
-    onSelect: (validatorName: string) => void;
+  export interface ConstraintSelectorDropdownProps {
+    availableConstraints: Constraint[];
+    selectedConstraintNames: string[];
+    onSelect: (constraintName: string) => void;
     placeholder?: string;
   }
 </script>
 
 <script lang="ts">
-  interface Props extends ValidatorSelectorDropdownProps {}
+  interface Props extends ConstraintSelectorDropdownProps {}
 
-  let { availableValidators, selectedValidatorNames, onSelect, placeholder = 'Add validator...' }: Props = $props();
+  let { availableConstraints, selectedConstraintNames, onSelect, placeholder = 'Add constraint...' }: Props = $props();
 
   let searchQuery = $state('');
   let dropdownOpen = $state(false);
   let blurTimeoutId: ReturnType<typeof setTimeout> | null = null;
 
-  // Filter validators based on search query and exclude already selected
-  const filteredValidators = $derived.by(() => {
+  // Filter constraints based on search query and exclude already selected
+  const filteredConstraints = $derived.by(() => {
     const lowerQuery = searchQuery.toLowerCase().trim();
 
-    return availableValidators
-      .filter(validator => !selectedValidatorNames.includes(validator.name))
-      .filter(validator => {
+    return availableConstraints
+      .filter(constraint => !selectedConstraintNames.includes(constraint.name))
+      .filter(constraint => {
         if (!lowerQuery) return true;
         return (
-          validator.name.toLowerCase().includes(lowerQuery) ||
-          validator.type.toLowerCase().includes(lowerQuery) ||
-          validator.description?.toLowerCase().includes(lowerQuery)
+          constraint.name.toLowerCase().includes(lowerQuery) ||
+          constraint.parameterType.toLowerCase().includes(lowerQuery) ||
+          constraint.description?.toLowerCase().includes(lowerQuery)
         );
       });
   });
 
-  function handleSelect(validatorName: string): void {
-    onSelect(validatorName);
+  function handleSelect(constraintName: string): void {
+    onSelect(constraintName);
     searchQuery = '';
     dropdownOpen = false;
   }
@@ -80,22 +80,22 @@
     <i class="fa-solid fa-search absolute right-3 top-1/2 -translate-y-1/2 text-mono-400 text-xs pointer-events-none"></i>
   </div>
 
-  {#if dropdownOpen && filteredValidators.length > 0}
+  {#if dropdownOpen && filteredConstraints.length > 0}
     <div class="absolute z-10 w-full mt-1 bg-white border border-mono-300 rounded-md shadow-lg max-h-60 overflow-auto">
-      {#each filteredValidators as validator (validator.name)}
+      {#each filteredConstraints as constraint (constraint.name)}
         <button
           type="button"
-          onclick={() => handleSelect(validator.name)}
+          onclick={() => handleSelect(constraint.name)}
           class="w-full px-3 py-2 text-left hover:bg-mono-50 border-b border-mono-100 last:border-b-0 transition-colors"
         >
           <div class="flex items-start justify-between">
             <div class="flex-1">
               <div class="flex items-center space-x-2">
-                <span class="font-mono text-sm text-mono-700">{validator.name}</span>
-                <span class="text-xs text-mono-500 bg-mono-100 px-2 py-0.5 rounded">{validator.type}</span>
+                <span class="font-mono text-sm text-mono-700">{constraint.name}</span>
+                <span class="text-xs text-mono-500 bg-mono-100 px-2 py-0.5 rounded">{constraint.parameterType}</span>
               </div>
-              {#if validator.description}
-                <p class="text-xs text-mono-500 mt-1">{validator.description}</p>
+              {#if constraint.description}
+                <p class="text-xs text-mono-500 mt-1">{constraint.description}</p>
               {/if}
             </div>
           </div>
@@ -104,16 +104,16 @@
     </div>
   {/if}
 
-  {#if dropdownOpen && filteredValidators.length === 0 && searchQuery.trim()}
+  {#if dropdownOpen && filteredConstraints.length === 0 && searchQuery.trim()}
     <div class="absolute z-10 w-full mt-1 bg-white border border-mono-300 rounded-md shadow-lg">
       <div class="px-3 py-2 text-sm text-mono-500">
-        No validators found matching "{searchQuery}" in this namespace
+        No constraints found matching "{searchQuery}"
       </div>
     </div>
-  {:else if dropdownOpen && filteredValidators.length === 0 && !searchQuery.trim()}
+  {:else if dropdownOpen && filteredConstraints.length === 0 && !searchQuery.trim()}
     <div class="absolute z-10 w-full mt-1 bg-white border border-mono-300 rounded-md shadow-lg">
       <div class="px-3 py-2 text-sm text-mono-500">
-        All available validators are already selected
+        All available constraints are already selected
       </div>
     </div>
   {/if}

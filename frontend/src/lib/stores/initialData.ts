@@ -69,10 +69,10 @@ export const BUILTIN_TYPE_IDS = {
 } as const;
 
 /**
- * Built-in validator UUIDs - these match the backend's well-known validator IDs.
- * Used for referencing built-in validators throughout the application.
+ * Built-in constraint UUIDs - these match the backend's well-known constraint IDs.
+ * Used for referencing built-in constraints throughout the application.
  */
-export const BUILTIN_VALIDATOR_IDS = {
+export const BUILTIN_CONSTRAINT_IDS = {
 	max_length: '00000000-0000-0000-0002-000000000001',
 	min_length: '00000000-0000-0000-0002-000000000002',
 	pattern: '00000000-0000-0000-0002-000000000003',
@@ -130,7 +130,7 @@ const SEED_API_IDS = {
 // Field Data
 // ============================================================================
 
-export interface FieldValidator {
+export interface FieldConstraint {
 	name: string;
 	params?: Record<string, any>;
 }
@@ -142,7 +142,7 @@ export interface Field {
 	type: PrimitiveTypeName;
 	description?: string;
 	defaultValue?: string;
-	validators: FieldValidator[];
+	constraints: FieldConstraint[];
 	usedInApis: string[];
 }
 
@@ -154,7 +154,7 @@ export const initialFields: Field[] = [
 		type: 'str',
 		description: 'User email address',
 		defaultValue: '',
-		validators: [
+		constraints: [
 			{ name: 'max_length', params: { value: 255 } },
 			{ name: 'email_format' }
 		],
@@ -167,7 +167,7 @@ export const initialFields: Field[] = [
 		type: 'str',
 		description: 'Unique username for the user account',
 		defaultValue: '',
-		validators: [
+		constraints: [
 			{ name: 'min_length', params: { value: 3 } },
 			{ name: 'max_length', params: { value: 50 } }
 		],
@@ -180,7 +180,7 @@ export const initialFields: Field[] = [
 		type: 'str',
 		description: 'Encrypted user password',
 		defaultValue: '',
-		validators: [
+		constraints: [
 			{ name: 'min_length', params: { value: 8 } },
 			{ name: 'max_length', params: { value: 128 } }
 		],
@@ -193,7 +193,7 @@ export const initialFields: Field[] = [
 		type: 'uuid',
 		description: 'Unique identifier for user',
 		defaultValue: 'uuid.uuid4()',
-		validators: [],
+		constraints: [],
 		usedInApis: [SEED_API_IDS.api_1]
 	},
 	{
@@ -203,7 +203,7 @@ export const initialFields: Field[] = [
 		type: 'datetime',
 		description: 'Timestamp when the record was created',
 		defaultValue: 'datetime.now()',
-		validators: [],
+		constraints: [],
 		usedInApis: []
 	},
 	{
@@ -213,7 +213,7 @@ export const initialFields: Field[] = [
 		type: 'datetime',
 		description: 'Timestamp when the record was last updated',
 		defaultValue: 'datetime.now()',
-		validators: [],
+		constraints: [],
 		usedInApis: [SEED_API_IDS.api_1, SEED_API_IDS.api_2]
 	},
 	{
@@ -223,7 +223,7 @@ export const initialFields: Field[] = [
 		type: 'float',
 		description: 'Product or service price',
 		defaultValue: '0.0',
-		validators: [],
+		constraints: [],
 		usedInApis: []
 	},
 	{
@@ -233,7 +233,7 @@ export const initialFields: Field[] = [
 		type: 'str',
 		description: 'Current status of the entity',
 		defaultValue: "'active'",
-		validators: [],
+		constraints: [],
 		usedInApis: [SEED_API_IDS.api_1, SEED_API_IDS.api_2, SEED_API_IDS.api_3]
 	},
 	{
@@ -243,7 +243,7 @@ export const initialFields: Field[] = [
 		type: 'str',
 		description: 'Company website URL',
 		defaultValue: '',
-		validators: [
+		constraints: [
 			{ name: 'min_length', params: { value: 5 } },
 			{ name: 'max_length', params: { value: 255 } },
 			{ name: 'url_format' }
@@ -257,7 +257,7 @@ export const initialFields: Field[] = [
 		type: 'str',
 		description: 'Contact phone number',
 		defaultValue: '',
-		validators: [],
+		constraints: [],
 		usedInApis: []
 	},
 	// User namespace fields for testing isolation
@@ -268,7 +268,7 @@ export const initialFields: Field[] = [
 		type: 'str',
 		description: 'Product name in user namespace',
 		defaultValue: '',
-		validators: [
+		constraints: [
 			{ name: 'min_length', params: { value: 2 } },
 			{ name: 'max_length', params: { value: 100 } }
 		],
@@ -281,7 +281,7 @@ export const initialFields: Field[] = [
 		type: 'int',
 		description: 'Product quantity in user namespace',
 		defaultValue: '0',
-		validators: [
+		constraints: [
 			{ name: 'ge', params: { value: 0 } }
 		],
 		usedInApis: []
@@ -293,7 +293,7 @@ export const initialFields: Field[] = [
 		type: 'float',
 		description: 'Product price in user namespace',
 		defaultValue: '0.0',
-		validators: [
+		constraints: [
 			{ name: 'gt', params: { value: 0 } }
 		],
 		usedInApis: []
@@ -301,134 +301,109 @@ export const initialFields: Field[] = [
 ];
 
 // ============================================================================
-// Validator Data
+// Constraint Data
 // ============================================================================
 
-export interface ValidatorBase {
-	name: string;
+export interface ConstraintBase {
+	id: string;
 	namespaceId: string;
-	type: 'string' | 'numeric';
+	name: string;
 	description: string;
-	category: 'inline' | 'custom';
 	parameterType: string;
-	exampleUsage: string;
-	docsUrl: string;
+	docsUrl: string | null;
+	compatibleTypes: string[];
 }
 
-export const initialInlineValidators: ValidatorBase[] = [
+export const initialConstraints: ConstraintBase[] = [
 	{
-		name: 'min_length',
+		id: BUILTIN_CONSTRAINT_IDS.max_length,
 		namespaceId: GLOBAL_NAMESPACE_ID,
-		type: 'string',
-		description: 'Validates minimum string length. This validator ensures that string fields meet a minimum character count requirement.',
-		category: 'inline',
-		parameterType: 'Integer',
-		exampleUsage: 'Field(..., min_length=3)',
-		docsUrl: 'https://docs.pydantic.dev/latest/api/fields/#pydantic.fields.Field'
-	},
-	{
 		name: 'max_length',
-		namespaceId: GLOBAL_NAMESPACE_ID,
-		type: 'string',
-		description: 'Validates maximum string length. Prevents string fields from exceeding a specified character limit.',
-		category: 'inline',
-		parameterType: 'Integer',
-		exampleUsage: 'Field(..., max_length=100)',
-		docsUrl: 'https://docs.pydantic.dev/latest/api/fields/#pydantic.fields.Field'
+		description: 'Validates that length does not exceed maximum',
+		parameterType: 'int',
+		docsUrl: 'https://docs.pydantic.dev/latest/api/fields/#pydantic.fields.Field',
+		compatibleTypes: ['str']
 	},
 	{
+		id: BUILTIN_CONSTRAINT_IDS.min_length,
+		namespaceId: GLOBAL_NAMESPACE_ID,
+		name: 'min_length',
+		description: 'Validates minimum string length',
+		parameterType: 'int',
+		docsUrl: 'https://docs.pydantic.dev/latest/api/fields/#pydantic.fields.Field',
+		compatibleTypes: ['str']
+	},
+	{
+		id: BUILTIN_CONSTRAINT_IDS.pattern,
+		namespaceId: GLOBAL_NAMESPACE_ID,
 		name: 'pattern',
-		namespaceId: GLOBAL_NAMESPACE_ID,
-		type: 'string',
-		description: 'Validates against regex pattern. Ensures string values match a specific regular expression pattern.',
-		category: 'inline',
-		parameterType: 'String (regex pattern)',
-		exampleUsage: 'Field(..., pattern=r"^[A-Za-z0-9]+$")',
-		docsUrl: 'https://docs.pydantic.dev/latest/api/fields/#pydantic.fields.Field'
+		description: 'Validates against regex pattern',
+		parameterType: 'str',
+		docsUrl: 'https://docs.pydantic.dev/latest/api/fields/#pydantic.fields.Field',
+		compatibleTypes: ['str']
 	},
 	{
-		name: 'gt',
+		id: BUILTIN_CONSTRAINT_IDS.email_format,
 		namespaceId: GLOBAL_NAMESPACE_ID,
-		type: 'numeric',
-		description: 'Greater than validation. Ensures numeric values are strictly greater than a specified threshold.',
-		category: 'inline',
-		parameterType: 'Number',
-		exampleUsage: 'Field(..., gt=0)',
-		docsUrl: 'https://docs.pydantic.dev/latest/api/fields/#pydantic.fields.Field'
-	},
-	{
-		name: 'ge',
-		namespaceId: GLOBAL_NAMESPACE_ID,
-		type: 'numeric',
-		description: 'Greater than or equal validation. Ensures numeric values are greater than or equal to a specified minimum.',
-		category: 'inline',
-		parameterType: 'Number',
-		exampleUsage: 'Field(..., ge=0)',
-		docsUrl: 'https://docs.pydantic.dev/latest/api/fields/#pydantic.fields.Field'
-	},
-	{
-		name: 'lt',
-		namespaceId: GLOBAL_NAMESPACE_ID,
-		type: 'numeric',
-		description: 'Less than validation. Ensures numeric values are strictly less than a specified maximum.',
-		category: 'inline',
-		parameterType: 'Number',
-		exampleUsage: 'Field(..., lt=100)',
-		docsUrl: 'https://docs.pydantic.dev/latest/api/fields/#pydantic.fields.Field'
-	},
-	{
-		name: 'le',
-		namespaceId: GLOBAL_NAMESPACE_ID,
-		type: 'numeric',
-		description: 'Less than or equal validation. Ensures numeric values are less than or equal to a specified maximum.',
-		category: 'inline',
-		parameterType: 'Number',
-		exampleUsage: 'Field(..., le=100)',
-		docsUrl: 'https://docs.pydantic.dev/latest/api/fields/#pydantic.fields.Field'
-	},
-	{
-		name: 'multiple_of',
-		namespaceId: GLOBAL_NAMESPACE_ID,
-		type: 'numeric',
-		description: 'Multiple of validation. Ensures numeric values are multiples of a specified number.',
-		category: 'inline',
-		parameterType: 'Number',
-		exampleUsage: 'Field(..., multiple_of=5)',
-		docsUrl: 'https://docs.pydantic.dev/latest/api/fields/#pydantic.fields.Field'
-	}
-];
-
-export const initialCustomValidators: ValidatorBase[] = [
-	{
 		name: 'email_format',
-		namespaceId: GLOBAL_NAMESPACE_ID,
-		type: 'string',
-		description: 'Validates email address format. Custom validator that ensures email addresses are properly formatted and valid.',
-		category: 'custom',
-		parameterType: 'String',
-		exampleUsage: '@field_validator("email")\ndef validate_email(cls, v):\n    if not re.match(r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$", v):\n        raise ValueError("Invalid email format")\n    return v',
-		docsUrl: 'https://docs.pydantic.dev/latest/concepts/validators/'
+		description: 'Validates email address format',
+		parameterType: 'None',
+		docsUrl: 'https://docs.pydantic.dev/latest/concepts/validators/',
+		compatibleTypes: ['str']
 	},
 	{
+		id: BUILTIN_CONSTRAINT_IDS.url_format,
+		namespaceId: GLOBAL_NAMESPACE_ID,
 		name: 'url_format',
-		namespaceId: GLOBAL_NAMESPACE_ID,
-		type: 'string',
-		description: 'Validates URL format. Custom validator that ensures URLs are properly formatted and valid.',
-		category: 'custom',
-		parameterType: 'String',
-		exampleUsage: '@field_validator("website")\ndef validate_url(cls, v):\n    if not v.startswith(("http://", "https://")):\n        raise ValueError("Invalid URL format")\n    return v',
-		docsUrl: 'https://docs.pydantic.dev/latest/concepts/validators/'
+		description: 'Validates URL format',
+		parameterType: 'None',
+		docsUrl: 'https://docs.pydantic.dev/latest/concepts/validators/',
+		compatibleTypes: ['str']
 	},
-	// User namespace validators for testing isolation
 	{
-		name: 'product_name_format',
-		namespaceId: USER_NAMESPACE_ID,
-		type: 'string',
-		description: 'Validates product name format in user namespace. Ensures product names follow company standards.',
-		category: 'custom',
-		parameterType: 'String',
-		exampleUsage: '@field_validator("product_name")\ndef validate_product_name(cls, v):\n    if not v.strip():\n        raise ValueError("Product name cannot be empty")\n    return v.strip()',
-		docsUrl: 'https://docs.pydantic.dev/latest/concepts/validators/'
+		id: BUILTIN_CONSTRAINT_IDS.gt,
+		namespaceId: GLOBAL_NAMESPACE_ID,
+		name: 'gt',
+		description: 'Greater than validation',
+		parameterType: 'number',
+		docsUrl: 'https://docs.pydantic.dev/latest/api/fields/#pydantic.fields.Field',
+		compatibleTypes: ['int', 'float']
+	},
+	{
+		id: BUILTIN_CONSTRAINT_IDS.ge,
+		namespaceId: GLOBAL_NAMESPACE_ID,
+		name: 'ge',
+		description: 'Greater than or equal validation',
+		parameterType: 'number',
+		docsUrl: 'https://docs.pydantic.dev/latest/api/fields/#pydantic.fields.Field',
+		compatibleTypes: ['int', 'float']
+	},
+	{
+		id: BUILTIN_CONSTRAINT_IDS.lt,
+		namespaceId: GLOBAL_NAMESPACE_ID,
+		name: 'lt',
+		description: 'Less than validation',
+		parameterType: 'number',
+		docsUrl: 'https://docs.pydantic.dev/latest/api/fields/#pydantic.fields.Field',
+		compatibleTypes: ['int', 'float']
+	},
+	{
+		id: BUILTIN_CONSTRAINT_IDS.le,
+		namespaceId: GLOBAL_NAMESPACE_ID,
+		name: 'le',
+		description: 'Less than or equal validation',
+		parameterType: 'number',
+		docsUrl: 'https://docs.pydantic.dev/latest/api/fields/#pydantic.fields.Field',
+		compatibleTypes: ['int', 'float']
+	},
+	{
+		id: BUILTIN_CONSTRAINT_IDS.multiple_of,
+		namespaceId: GLOBAL_NAMESPACE_ID,
+		name: 'multiple_of',
+		description: 'Multiple of validation',
+		parameterType: 'number',
+		docsUrl: 'https://docs.pydantic.dev/latest/api/fields/#pydantic.fields.Field',
+		compatibleTypes: ['int', 'float']
 	}
 ];
 
@@ -442,16 +417,16 @@ export const initialCustomValidators: ValidatorBase[] = [
 export function cloneFields(fields: Field[] = initialFields): Field[] {
 	return fields.map(field => ({
 		...field,
-		validators: field.validators.map(v => ({ ...v, params: v.params ? { ...v.params } : undefined })),
+		constraints: field.constraints.map(c => ({ ...c, params: c.params ? { ...c.params } : undefined })),
 		usedInApis: [...field.usedInApis]
 	}));
 }
 
 /**
- * Create a deep clone of validator bases for test isolation
+ * Create a deep clone of constraint bases for test isolation
  */
-export function cloneValidatorBases(validators: ValidatorBase[]): ValidatorBase[] {
-	return validators.map(v => ({ ...v }));
+export function cloneConstraintBases(constraints: ConstraintBase[]): ConstraintBase[] {
+	return constraints.map(c => ({ ...c, compatibleTypes: [...c.compatibleTypes] }));
 }
 
 // ============================================================================

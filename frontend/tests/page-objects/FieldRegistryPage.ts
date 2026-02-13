@@ -51,10 +51,10 @@ export class FieldRegistryPage {
 	readonly fieldDescriptionTextarea: Locator;
 	readonly fieldDefaultValueInput: Locator;
 
-	// Drawer validators section
-	readonly validatorSelectorInput: Locator;
-	readonly validatorDropdownOptions: Locator;
-	readonly validatorRows: Locator;
+	// Drawer constraints section
+	readonly constraintSelectorInput: Locator;
+	readonly constraintDropdownOptions: Locator;
+	readonly constraintRows: Locator;
 
 	// Drawer actions
 	readonly saveButton: Locator;
@@ -105,11 +105,11 @@ export class FieldRegistryPage {
 		this.fieldDescriptionTextarea = page.locator('#field-registry-description');
 		this.fieldDefaultValueInput = page.locator('#field-registry-default-value');
 
-		// Drawer validators section - uses ValidatorSelectorDropdown component
-		this.validatorSelectorInput = page.getByPlaceholder('Add validator to field...');
-		this.validatorDropdownOptions = page.locator('.absolute.z-10 button');
-		// Individual validator rows - identified by having a "Remove validator" button
-		this.validatorRows = page.locator('.flex.items-center.space-x-2.p-2.bg-white').filter({ has: page.getByRole('button', { name: 'Remove validator' }) });
+		// Drawer constraints section - uses ConstraintSelectorDropdown component
+		this.constraintSelectorInput = page.getByPlaceholder('Add constraint to field...');
+		this.constraintDropdownOptions = page.locator('.absolute.z-10 button');
+		// Individual constraint rows - identified by having a "Remove constraint" button
+		this.constraintRows = page.locator('.flex.items-center.space-x-2.p-2.bg-white').filter({ has: page.getByRole('button', { name: 'Remove constraint' }) });
 
 		// Drawer actions
 		this.saveButton = page.getByRole('button', { name: 'Save Changes' });
@@ -317,36 +317,36 @@ export class FieldRegistryPage {
 	}
 
 	/**
-	 * Add a validator using the dropdown selector.
+	 * Add a constraint using the dropdown selector.
 	 * Waits for dropdown options to appear before selecting.
-	 * @param validatorName - Optional name of specific validator to select. If not provided, selects first available.
+	 * @param constraintName - Optional name of specific constraint to select. If not provided, selects first available.
 	 */
-	async addValidator(validatorName?: string) {
-		await this.validatorSelectorInput.click();
-		await this.validatorDropdownOptions.first().waitFor({ state: 'visible', timeout: 5000 });
+	async addConstraint(constraintName?: string) {
+		await this.constraintSelectorInput.click();
+		await this.constraintDropdownOptions.first().waitFor({ state: 'visible', timeout: 5000 });
 
-		if (validatorName) {
-			const option = this.validatorDropdownOptions.filter({ hasText: validatorName });
+		if (constraintName) {
+			const option = this.constraintDropdownOptions.filter({ hasText: constraintName });
 			await option.first().click();
 		} else {
-			await this.validatorDropdownOptions.first().click();
+			await this.constraintDropdownOptions.first().click();
 		}
 
 		await this.delay();
 	}
 
 	/**
-	 * Get validator count
+	 * Get constraint count
 	 */
-	async getValidatorCount(): Promise<number> {
-		return await this.validatorRows.count();
+	async getConstraintCount(): Promise<number> {
+		return await this.constraintRows.count();
 	}
 
 	/**
-	 * Remove validator by index (0-based)
+	 * Remove constraint by index (0-based)
 	 */
-	async removeValidator(index: number) {
-		const removeButton = this.validatorRows.nth(index).getByRole('button', { name: 'Remove validator' });
+	async removeConstraint(index: number) {
+		const removeButton = this.constraintRows.nth(index).getByRole('button', { name: 'Remove constraint' });
 		await removeButton.click();
 		await this.delay();
 	}
@@ -556,7 +556,7 @@ export class FieldRegistryPage {
 		type?: string;
 		description?: string;
 		defaultValue?: string;
-		validators?: string[];
+		constraints?: string[];
 	}) {
 		await this.openCreateDrawer();
 
@@ -574,9 +574,9 @@ export class FieldRegistryPage {
 			await this.setDefaultValue(options.defaultValue);
 		}
 
-		if (options.validators) {
-			for (const name of options.validators) {
-				await this.addValidator(name);
+		if (options.constraints) {
+			for (const name of options.constraints) {
+				await this.addConstraint(name);
 			}
 		}
 

@@ -1,6 +1,6 @@
 /**
  * Fixture Validation Script
- * 
+ *
  * Validates that all fixtures maintain data integrity and consistency.
  * Run with: bun run test:fixtures:validate
  */
@@ -8,7 +8,7 @@
 import {
 	mockUsers,
 	mockFields,
-	mockValidators,
+	mockConstraints,
 	mockTypes,
 	mockApis,
 	mockPermissions,
@@ -47,8 +47,8 @@ function validateUniqueness<T extends { id: string }>(
 	}
 }
 
-// Validate field-validator compatibility
-function validateFieldValidators() {
+// Validate field-constraint compatibility
+function validateFieldConstraints() {
 	mockFields.forEach((field) => {
 		const fieldType = mockTypes.find((t) => t.name === field.type);
 		if (!fieldType) {
@@ -56,32 +56,20 @@ function validateFieldValidators() {
 			return;
 		}
 
-		// Static validator compatibility mapping (same as src/lib/stores/types.ts)
-		const validatorCompatibility: Record<string, string[]> = {
-			str: ['string'],
-			int: ['numeric'],
-			float: ['numeric'],
-			bool: [],
-			datetime: [],
-			uuid: [],
-			numeric: ['numeric']
-		};
-		const compatibleTypes = validatorCompatibility[fieldType.name] || [];
-
-		field.validators.forEach((fv) => {
-			const validator = mockValidators.find((v) => v.name === fv.name);
-			if (!validator) {
-				addError('Field', field.id, 'validators', 'Validator not found: ' + fv.name);
+		field.constraints.forEach((fc) => {
+			const constraint = mockConstraints.find((c) => c.name === fc.name);
+			if (!constraint) {
+				addError('Field', field.id, 'constraints', 'Constraint not found: ' + fc.name);
 				return;
 			}
 
-			// Check type compatibility
-			if (!compatibleTypes.includes(validator.type)) {
+			// Check type compatibility using compatibleTypes array
+			if (!constraint.compatibleTypes.includes(fieldType.name)) {
 				addError(
 					'Field',
 					field.id,
-					'validators',
-					'Validator incompatible: ' + fv.name
+					'constraints',
+					'Constraint incompatible: ' + fc.name
 				);
 			}
 		});
@@ -152,11 +140,11 @@ function validate() {
 	validateUniqueness(mockRoles, 'Role');
 
 	// Entities identified by name
-	validateUniquenessByName(mockValidators, 'Validator');
+	validateUniquenessByName(mockConstraints, 'Constraint');
 	validateUniquenessByName(mockTypes, 'Type');
 
 	// Relationship checks
-	validateFieldValidators();
+	validateFieldConstraints();
 	validateFieldApiRelationships();
 	validateRolePermissions();
 

@@ -192,49 +192,49 @@ Every occurrence of "validator" in code identifiers, API paths, UI labels, file 
 
 ### 1.2 Merge Types + Constraints into "Reference Data" Page
 
-Currently, Types and Constraints (formerly Validators) are on separate routes (`/types` and `/validators`). They are both read-only reference data with no namespace scoping. They should be merged into a single page.
+Types and Constraints (formerly Validators) are both read-only reference data with no namespace scoping. They remain as separate pages but are organized under a nested sidebar navigation structure. Types keeps its own route (`/types`), and Constraints lives under `/validators/constraints` alongside the future Field Validators and Model Validators pages.
 
-#### 1.2.1 Route Changes
+#### 1.2.1 Route Structure (Already Implemented)
 
-**DELETE: `src/routes/(dashboard)/types/+page.svelte`** (entire route directory)
-**DELETE: `src/routes/(dashboard)/validators/+page.svelte`** (entire route directory)
-**CREATE: `src/routes/(dashboard)/reference-data/+page.svelte`** (new combined page)
+The validators section uses nested routes with separate pages (NOT tabs):
 
-The new Reference Data page will have:
-- A tabbed interface (or a toggle/segmented control) to switch between "Types" and "Constraints" views
-- Each tab shows its own table with search, filter, sort, and (for constraints) a detail drawer
-- Types tab: same columns as current types page (Type Name, Python Type, Description, Used In Fields)
-- Constraints tab: same columns as current validators page minus "Namespace" column (Name, Type, Category, Description, Used In Fields)
-- No namespace selector on this page (reference data is global)
-- No create/edit/delete for types (read-only table)
-- Constraints: read-only detail drawer, delete only for custom constraints (same behavior as current validators page)
+```
+src/routes/(dashboard)/
+├── types/+page.svelte                          # Types page (standalone)
+└── validators/
+    ├── constraints/+page.svelte                 # Constraints page (standalone, has own PageHeader)
+    ├── field-validators/+page.svelte            # Field Validators (under construction)
+    └── model-validators/+page.svelte            # Model Validators (under construction)
+```
 
-#### 1.2.2 Sidebar Navigation Changes
+Each page is self-contained with its own `PageHeader`, following the same pattern as every other dashboard page.
+
+#### 1.2.2 Sidebar Navigation (Already Implemented)
 
 **File: `src/lib/components/Sidebar.svelte`**
 
-Current `coreComponentItems`:
+The Sidebar uses nested `NavItem` children to show sub-items under "Validators":
+
 ```typescript
 const coreComponentItems: NavItem[] = [
   { href: '/types', label: 'Types', icon: 'fa-shapes' },
-  { href: '/validators', label: 'Validators', icon: 'fa-check-circle' },
+  {
+    href: '/validators',
+    label: 'Validators',
+    icon: 'fa-check-circle',
+    children: [
+      { href: '/validators/constraints', label: 'Constraints', icon: 'fa-shield-halved' },
+      { href: '/validators/field-validators', label: 'Field Validators', icon: 'fa-input-text', disabled: true },
+      { href: '/validators/model-validators', label: 'Model Validators', icon: 'fa-diagram-project', disabled: true }
+    ]
+  },
   { href: '/field-registry', label: 'Fields', icon: 'fa-table-list' },
   { href: '/object-builder', label: 'Objects', icon: 'fa-cubes' },
   { href: '/apis', label: 'APIs', icon: 'fa-code' }
 ];
 ```
 
-New `coreComponentItems`:
-```typescript
-const coreComponentItems: NavItem[] = [
-  { href: '/reference-data', label: 'Reference Data', icon: 'fa-book' },
-  { href: '/field-registry', label: 'Fields', icon: 'fa-table-list' },
-  { href: '/object-builder', label: 'Objects', icon: 'fa-cubes' },
-  { href: '/apis', label: 'APIs', icon: 'fa-code' }
-];
-```
-
-Two nav items collapse into one. Icon choice TBD (`fa-book`, `fa-database`, or `fa-layer-group`).
+The `NavItem` type supports `children?: NavItem[]` for nested navigation. Disabled children show "Under construction" on hover.
 
 #### 1.2.3 Dashboard Stat Card Changes
 
@@ -263,7 +263,7 @@ Types and constraints are global reference data. They should not be filtered by 
 
 #### 1.3.2 Page Changes
 
-**File: `src/routes/(dashboard)/reference-data/+page.svelte`** (the new merged page)
+**File: `src/routes/(dashboard)/validators/constraints/+page.svelte`**
 - No `NamespaceSelector` component
 - No namespace filtering on the data
 - Display all constraints regardless of namespace
@@ -320,26 +320,20 @@ Types and constraints are global reference data. They should not be filtered by 
 
 #### Page Objects
 
-**File: `tests/page-objects/ValidatorsPage.ts` -> RENAME to `tests/page-objects/ConstraintsPage.ts`**
-- Rename class: `ValidatorsPage` -> `ConstraintsPage`
-- Update `goto()`: `/validators` -> `/reference-data` (with constraints tab active)
-- Update all selectors referencing "Validators" text -> "Constraints"
-- Rename all properties: `validatorNameDisplay` -> `constraintNameDisplay`, etc.
+**File: `tests/page-objects/ConstraintsPage.ts`** (already renamed from ValidatorsPage)
+- Page title locator: `heading { name: 'Constraints' }` (each page has its own PageHeader)
+- `goto()` navigates to `/validators/constraints`
+- No tab-related locators (tabs have been removed)
 
 **File: `tests/page-objects/TypesPage.ts`**
-- Update `goto()`: `/types` -> `/reference-data` (with types tab active)
-- May need to adjust selectors for the tabbed interface
+- No route changes needed (Types stays at `/types`)
 
-**File: `tests/page-objects/DashboardPage.ts`**
-- Rename `validatorsCard` -> `constraintsCard`
-- Rename `validatorsNavLink` -> `referenceDataNavLink`
-- Update `STAT_CARD_TITLES.validators` -> `STAT_CARD_TITLES.constraints`
-- Update `navigateTo()` map: remove `'validators'` and `'types'`, add `'reference-data'`
-- Update `href` selectors: `/validators` -> `/reference-data`, `/types` -> `/reference-data`
+**File: `tests/page-objects/DashboardPage.ts`** (already updated)
+- `constraintsNavLink` uses sidebar-scoped selector: `[data-testid="dashboard-sidebar"] a[href="/validators/constraints"]`
+- Stat card titles already use "Constraints"
 
 **File: `tests/page-objects/index.ts`**
-- Remove `ValidatorsPage` export, add `ConstraintsPage`
-- Keep `TypesPage` (may still be needed for the types tab)
+- Already exports `ConstraintsPage` (ValidatorsPage removed)
 
 #### Test Files
 
@@ -551,12 +545,9 @@ Objects are referenced by the API generator for request/response body selection.
 
 **File: `CLAUDE.md`**
 - Update project structure section:
-  - Remove `/types/` and `/validators/` route entries
-  - Add `/reference-data/` route entry
-- Update route list:
-  - Remove `/types` and `/validators`
-  - Add `/reference-data` (Reference Data: types and constraints)
-- Update "Dashboard Routes" section
+  - Keep `/types/` route entry
+  - Update `/validators/` to show nested routes (`constraints/`, `field-validators/`, `model-validators/`)
+- Update "Dashboard Routes" section to reflect nested validator routes
 - Update all mentions of "validators" -> "constraints" in the document
 - Update store file references: `validators.ts` -> `constraints.ts`
 - Update component references: `ValidatorSelectorDropdown` -> `ConstraintSelectorDropdown`
@@ -599,14 +590,12 @@ Objects are referenced by the API generator for request/response body selection.
 
 | Path | Reason |
 |---|---|
-| `src/routes/(dashboard)/validators/+page.svelte` | Replaced by `/reference-data` combined page |
-| `src/routes/(dashboard)/types/+page.svelte` | Replaced by `/reference-data` combined page |
+| `src/routes/(dashboard)/validators/+page.svelte` | Removed redirect hack (was `goto('/validators/constraints')`) |
+| `src/routes/(dashboard)/validators/+layout.svelte` | Removed tab layout (navigation moved to Sidebar) |
 
 ### Files to CREATE
 
-| Path | Description |
-|---|---|
-| `src/routes/(dashboard)/reference-data/+page.svelte` | New combined Types + Constraints page with tab interface |
+_No new files needed for Phase 1 route changes. Pages already exist as nested routes under `/validators/`._
 
 ### Files to MODIFY (by phase)
 
@@ -676,9 +665,9 @@ Objects are referenced by the API generator for request/response body selection.
 4. Update API client layer
 5. Update utility functions
 6. Update component internals
-7. Create new `/reference-data` route page
-8. Delete old `/types` and `/validators` route pages
-9. Update Sidebar navigation
+7. Constraints page already exists at `/validators/constraints` (no new route needed)
+8. Tab layout and redirect hack already removed
+9. Sidebar already updated with nested navigation
 10. Update Dashboard stat cards
 11. Remove namespace scoping from constraints
 12. Update all test files

@@ -30,7 +30,7 @@
   type NamespaceWithCounts = Namespace & {
     entityCount: number;
     fieldCount: number;
-    validatorCount: number;
+    constraintCount: number;
     objectCount: number;
     endpointCount: number;
   };
@@ -72,7 +72,7 @@
       return {
         entityCount: details.total,
         fieldCount: details.fields,
-        validatorCount: details.validators,
+        constraintCount: details.constraints,
         objectCount: details.objects,
         endpointCount: details.endpoints
       };
@@ -406,8 +406,8 @@
                 <span class="text-mono-900 font-medium">{details.fields}</span>
               </div>
               <div class="flex justify-between text-sm">
-                <span class="text-mono-600">Validators</span>
-                <span class="text-mono-900 font-medium">{details.validators}</span>
+                <span class="text-mono-600">Constraints</span>
+                <span class="text-mono-900 font-medium">{details.constraints}</span>
               </div>
               <div class="flex justify-between text-sm">
                 <span class="text-mono-600">Objects</span>

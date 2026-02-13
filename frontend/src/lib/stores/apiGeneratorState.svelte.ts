@@ -35,7 +35,7 @@ import {
 import { activeNamespaceId } from './namespaces';
 import { fieldsStore, getFieldById } from './fields';
 import { objectsStore } from './objects';
-import { validatorsStore } from './validators';
+import { constraintsStore } from './constraints';
 import { showToast } from './toasts';
 import { deepClone, generateParamId } from '$lib/utils/ids';
 
@@ -457,7 +457,7 @@ export function createApiGeneratorState(): ApiGeneratorState {
 			endpoints: get(endpointsStore),
 			objects: get(objectsStore),
 			fields: get(fieldsStore),
-			validators: get(validatorsStore)
+			constraints: get(constraintsStore)
 		};
 
 		// Log the payload for development/testing
