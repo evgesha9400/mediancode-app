@@ -201,6 +201,7 @@ export interface ObjectDefinition {
 
 export interface FieldConstraintValue {
   name: string;
+  constraintId: string;
   params?: Record<string, any>;
 }
 

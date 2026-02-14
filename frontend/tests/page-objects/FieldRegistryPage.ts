@@ -47,7 +47,8 @@ export class FieldRegistryPage {
 
 	// Drawer form fields
 	readonly fieldNameInput: Locator;
-	readonly fieldTypeSelect: Locator;
+	readonly typeSearchInput: Locator;
+	readonly typeDropdownOptions: Locator;
 	readonly fieldDescriptionTextarea: Locator;
 	readonly fieldDefaultValueInput: Locator;
 
@@ -101,13 +102,14 @@ export class FieldRegistryPage {
 
 		// Drawer form fields (using prefixed IDs to avoid conflicts)
 		this.fieldNameInput = page.locator('#field-registry-name');
-		this.fieldTypeSelect = page.locator('#field-registry-type');
+		this.typeSearchInput = page.getByPlaceholder('Search types...');
+		this.typeDropdownOptions = this.typeSearchInput.locator('..').locator('..').locator('.absolute.z-10 button');
 		this.fieldDescriptionTextarea = page.locator('#field-registry-description');
 		this.fieldDefaultValueInput = page.locator('#field-registry-default-value');
 
 		// Drawer field constraints section - uses FieldConstraintSelectorDropdown component
 		this.constraintSelectorInput = page.getByPlaceholder('Add field constraint...');
-		this.constraintDropdownOptions = page.locator('.absolute.z-10 button');
+		this.constraintDropdownOptions = this.constraintSelectorInput.locator('..').locator('..').locator('.absolute.z-10 button');
 		// Individual field constraint rows - identified by having a "Remove field constraint" button
 		this.constraintRows = page.locator('.flex.items-center.space-x-2.p-2.bg-white').filter({ has: page.getByRole('button', { name: 'Remove field constraint' }) });
 
@@ -205,17 +207,24 @@ export class FieldRegistryPage {
 	}
 
 	/**
-	 * Get field type from drawer
+	 * Get field type from drawer.
+	 * When the type dropdown is closed, the input displays the selected type name.
 	 */
 	async getFieldType(): Promise<string> {
-		return await this.fieldTypeSelect.inputValue();
+		return await this.typeSearchInput.inputValue();
 	}
 
 	/**
-	 * Set field type in drawer
+	 * Set field type in drawer using the searchable type dropdown.
+	 * Opens the dropdown, searches for the type, and selects the matching option.
+	 * Uses exact text matching on the type name span to avoid partial matches
+	 * (e.g., 'int' matching 'constr_int').
 	 */
 	async setFieldType(type: string) {
-		await this.fieldTypeSelect.selectOption(type);
+		await this.typeSearchInput.fill(type);
+		await this.typeDropdownOptions.first().waitFor({ state: 'visible', timeout: 5000 });
+		const nameSpan = this.typeDropdownOptions.locator('span.font-mono').getByText(type, { exact: true });
+		await nameSpan.first().click();
 		await this.delay();
 	}
 
@@ -360,10 +369,10 @@ export class FieldRegistryPage {
 	}
 
 	/**
-	 * Toggle a filter checkbox by label
+	 * Toggle a filter checkbox by label (exact match to avoid substring collisions)
 	 */
 	async toggleFilterCheckbox(label: string) {
-		const checkbox = this.page.locator('label').filter({ hasText: label }).locator('input[type="checkbox"]');
+		const checkbox = this.page.getByRole('checkbox', { name: label, exact: true });
 		await checkbox.click();
 		await this.delay();
 	}

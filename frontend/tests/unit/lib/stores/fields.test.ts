@@ -85,7 +85,7 @@ describe('fields store - createField', () => {
 	});
 
 	it('should create a field with constraints', () => {
-		const constraints = [{ name: 'min_length', params: { value: 5 } }];
+		const constraints = [{ name: 'min_length', constraintId: 'test-constraint-id', params: { value: 5 } }];
 		const field = createField('test_field', 'str', GLOBAL_NAMESPACE_ID, {
 			constraints
 		});
@@ -97,7 +97,7 @@ describe('fields store - createField', () => {
 		const field = createField('test_field', 'int', 'custom-namespace', {
 			description: 'A test field',
 			defaultValue: '42',
-			constraints: [{ name: 'min', params: { value: 0 } }],
+			constraints: [{ name: 'min', constraintId: 'test-min-id', params: { value: 0 } }],
 			usedInApis: ['aaaaaaaa-0000-0000-0000-000000000001']
 		});
 

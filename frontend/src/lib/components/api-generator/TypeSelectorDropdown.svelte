@@ -7,13 +7,14 @@
     onSelect: (typeName: string) => void;
     placeholder?: string;
     error?: boolean;
+    id?: string;
   }
 </script>
 
 <script lang="ts">
   interface Props extends TypeSelectorDropdownProps {}
 
-  let { availableTypes, selectedTypeName, onSelect, placeholder = 'Select type...', error = false }: Props = $props();
+  let { availableTypes, selectedTypeName, onSelect, placeholder = 'Select type...', error = false, id }: Props = $props();
 
   let searchQuery = $state('');
   let dropdownOpen = $state(false);
@@ -74,6 +75,7 @@
 <div class="relative">
   <div class="relative">
     <input
+      {id}
       type="text"
       value={displayValue}
       oninput={(e) => { searchQuery = e.currentTarget.value; }}

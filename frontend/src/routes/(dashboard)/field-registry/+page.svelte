@@ -299,9 +299,12 @@
   function addFieldConstraint(constraintName: string) {
     if (!editedField) return;
 
+    const constraint = fieldConstraints.find(fc => fc.name === constraintName);
+    if (!constraint) return;
+
     listState.editedItem = {
       ...editedField,
-      constraints: [...editedField.constraints, { name: constraintName, params: {} }]
+      constraints: [...editedField.constraints, { name: constraintName, constraintId: constraint.id, params: {} }]
     };
   }
 
@@ -509,10 +512,11 @@
 
         <!-- Type -->
         <div>
-          <label class="block text-sm text-mono-700 mb-1 font-medium">
+          <label for="field-registry-type" class="block text-sm text-mono-700 mb-1 font-medium">
             Type <span class="text-red-500">*</span>
           </label>
           <TypeSelectorDropdown
+            id="field-registry-type"
             availableTypes={selectableTypes}
             selectedTypeName={editedField.type}
             onSelect={(typeName) => {

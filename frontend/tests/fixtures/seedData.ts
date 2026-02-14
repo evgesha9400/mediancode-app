@@ -131,7 +131,7 @@ export const initialFields: Field[] = [
 		description: 'User email address',
 		defaultValue: '',
 		constraints: [
-			{ name: 'max_length', params: { value: 255 } }
+			{ name: 'max_length', constraintId: BUILTIN_FIELD_CONSTRAINT_IDS.max_length, params: { value: 255 } }
 		],
 		usedInApis: [SEED_API_IDS.api_1, SEED_API_IDS.api_2]
 	},
@@ -143,8 +143,8 @@ export const initialFields: Field[] = [
 		description: 'Unique username for the user account',
 		defaultValue: '',
 		constraints: [
-			{ name: 'min_length', params: { value: 3 } },
-			{ name: 'max_length', params: { value: 50 } }
+			{ name: 'min_length', constraintId: BUILTIN_FIELD_CONSTRAINT_IDS.min_length, params: { value: 3 } },
+			{ name: 'max_length', constraintId: BUILTIN_FIELD_CONSTRAINT_IDS.max_length, params: { value: 50 } }
 		],
 		usedInApis: [SEED_API_IDS.api_1]
 	},
@@ -156,8 +156,8 @@ export const initialFields: Field[] = [
 		description: 'Encrypted user password',
 		defaultValue: '',
 		constraints: [
-			{ name: 'min_length', params: { value: 8 } },
-			{ name: 'max_length', params: { value: 128 } }
+			{ name: 'min_length', constraintId: BUILTIN_FIELD_CONSTRAINT_IDS.min_length, params: { value: 8 } },
+			{ name: 'max_length', constraintId: BUILTIN_FIELD_CONSTRAINT_IDS.max_length, params: { value: 128 } }
 		],
 		usedInApis: []
 	},
@@ -219,8 +219,8 @@ export const initialFields: Field[] = [
 		description: 'Company website URL',
 		defaultValue: '',
 		constraints: [
-			{ name: 'min_length', params: { value: 5 } },
-			{ name: 'max_length', params: { value: 255 } }
+			{ name: 'min_length', constraintId: BUILTIN_FIELD_CONSTRAINT_IDS.min_length, params: { value: 5 } },
+			{ name: 'max_length', constraintId: BUILTIN_FIELD_CONSTRAINT_IDS.max_length, params: { value: 255 } }
 		],
 		usedInApis: []
 	},
@@ -243,8 +243,8 @@ export const initialFields: Field[] = [
 		description: 'Product name in user namespace',
 		defaultValue: '',
 		constraints: [
-			{ name: 'min_length', params: { value: 2 } },
-			{ name: 'max_length', params: { value: 100 } }
+			{ name: 'min_length', constraintId: BUILTIN_FIELD_CONSTRAINT_IDS.min_length, params: { value: 2 } },
+			{ name: 'max_length', constraintId: BUILTIN_FIELD_CONSTRAINT_IDS.max_length, params: { value: 100 } }
 		],
 		usedInApis: []
 	},
@@ -256,7 +256,7 @@ export const initialFields: Field[] = [
 		description: 'Product quantity in user namespace',
 		defaultValue: '0',
 		constraints: [
-			{ name: 'ge', params: { value: 0 } }
+			{ name: 'ge', constraintId: BUILTIN_FIELD_CONSTRAINT_IDS.ge, params: { value: 0 } }
 		],
 		usedInApis: []
 	},
@@ -268,7 +268,7 @@ export const initialFields: Field[] = [
 		description: 'Product price in user namespace',
 		defaultValue: '0.0',
 		constraints: [
-			{ name: 'gt', params: { value: 0 } }
+			{ name: 'gt', constraintId: BUILTIN_FIELD_CONSTRAINT_IDS.gt, params: { value: 0 } }
 		],
 		usedInApis: []
 	}

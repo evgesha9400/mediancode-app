@@ -14,6 +14,7 @@ import { typesBaseStore } from '$lib/stores/types';
  */
 interface FieldConstraintValueResponse {
 	name: string;
+	constraintId: string;
 	params: Record<string, unknown> | null;
 }
 
@@ -49,6 +50,7 @@ interface FieldResponse {
 function transformFieldConstraintValue(response: FieldConstraintValueResponse): FieldConstraintValue {
 	return {
 		name: response.name,
+		constraintId: response.constraintId,
 		params: response.params ?? undefined
 	};
 }
@@ -109,7 +111,7 @@ export interface CreateFieldRequest {
 	typeId: string;
 	description?: string;
 	defaultValue?: string;
-	constraints: { name: string; params?: Record<string, unknown> }[];
+	constraints: { name: string; constraintId: string; params?: Record<string, unknown> }[];
 }
 
 /**
@@ -120,7 +122,7 @@ export interface UpdateFieldRequest {
 	typeId?: string;
 	description?: string;
 	defaultValue?: string;
-	constraints?: { name: string; params?: Record<string, unknown> }[];
+	constraints?: { name: string; constraintId: string; params?: Record<string, unknown> }[];
 }
 
 // ============================================================================
