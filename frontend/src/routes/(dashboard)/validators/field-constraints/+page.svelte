@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { constraintsStore, deleteConstraint, searchConstraints, type Constraint } from '$lib/stores/constraints';
+  import { fieldConstraintsStore, deleteFieldConstraint, searchFieldConstraints, type FieldConstraint } from '$lib/stores/fieldConstraints';
   import { showToast } from '$lib/stores/toasts';
   import { buildDeletionTooltip } from '$lib/utils/references';
   import {
@@ -22,16 +22,16 @@
   import { createListViewState } from '$lib/stores/listViewState.svelte';
 
   // Filter state type
-  type ConstraintFilterState = {
+  type FieldConstraintFilterState = {
     selectedCompatibleTypes: string[];
     onlyUsedInFields: boolean;
   };
 
-  // Build filter config from constraints (reactive to store changes)
+  // Build filter config from field constraints (reactive to store changes)
   let filterConfig = $derived.by((): FilterConfig => {
-    const constraints = $constraintsStore;
+    const fieldConstraints = $fieldConstraintsStore;
     const uniqueTypes = Array.from(
-      new Set(constraints.flatMap(c => c.compatibleTypes))
+      new Set(fieldConstraints.flatMap(c => c.compatibleTypes))
     ).sort();
 
     return [
@@ -40,7 +40,7 @@
         key: 'selectedCompatibleTypes',
         label: 'Applies To',
         options: uniqueTypes.map(t => ({ label: t, value: t })),
-        predicate: (item: Constraint, selected: string[]) =>
+        predicate: (item: FieldConstraint, selected: string[]) =>
           item.compatibleTypes.some(ct => selected.includes(ct))
       },
       {
@@ -48,20 +48,20 @@
         key: 'onlyUsedInFields',
         label: 'Usage',
         toggleLabel: 'Used in fields only',
-        predicate: (item: Constraint) => item.usedInFields > 0
+        predicate: (item: FieldConstraint) => item.usedInFields > 0
       }
     ];
   });
 
   // Create list view state (owns all reactive state)
-  // Constraints are global reference data -- no namespace filtering
-  const state = createListViewState<Constraint, ConstraintFilterState>({
-    itemsStore: () => $constraintsStore,
-    searchFn: searchConstraints,
+  // Field constraints are global reference data -- no namespace filtering
+  const state = createListViewState<FieldConstraint, FieldConstraintFilterState>({
+    itemsStore: () => $fieldConstraintsStore,
+    searchFn: searchFieldConstraints,
     filterSections: () => filterConfig,
     numericColumns: new Set(['usedInFields']),
     urlScope: { page, goto },
-    getItemId: (constraint) => constraint.name,
+    getItemId: (fc) => fc.name,
     drawerConfig: {
       trackEdits: false,
       allowDelete: true,
@@ -70,26 +70,26 @@
   });
 
   // Convenience aliases for template bindings
-  let selectedConstraint = $derived(state.selectedItem);
+  let selectedFieldConstraint = $derived(state.selectedItem);
   let showDeleteConfirm = $derived(state.showDeleteConfirm);
-  let filteredConstraints = $derived(state.results);
+  let filteredFieldConstraints = $derived(state.results);
   let sorts = $derived(state.sorts);
   let activeFiltersCount = $derived(state.activeFiltersCount);
 
-  function isSelected(constraint: Constraint): boolean {
-    return selectedConstraint?.name === constraint.name;
+  function isSelected(fc: FieldConstraint): boolean {
+    return selectedFieldConstraint?.name === fc.name;
   }
 
   function handleDelete() {
-    if (!selectedConstraint) return;
+    if (!selectedFieldConstraint) return;
 
-    const constraintName = selectedConstraint.name;
-    const result = deleteConstraint(selectedConstraint.name);
+    const fcName = selectedFieldConstraint.name;
+    const result = deleteFieldConstraint(selectedFieldConstraint.name);
     if (result.success) {
       state.closeDrawer();
-      showToast(`Constraint "${constraintName}" deleted successfully`, 'success', 3000);
+      showToast(`Field constraint "${fcName}" deleted successfully`, 'success', 3000);
     } else {
-      showToast(result.error || 'Failed to delete constraint', 'error', 5000);
+      showToast(result.error || 'Failed to delete field constraint', 'error', 5000);
     }
   }
 
@@ -97,20 +97,20 @@
     goto(`/field-registry?highlight=${fieldId}`);
   }
 
-  let hasReferences = $derived(selectedConstraint ? selectedConstraint.fieldsUsingConstraint.length > 0 : false);
-  let deleteTooltip = $derived(selectedConstraint && hasReferences
-    ? buildDeletionTooltip('constraint', 'field', selectedConstraint!.fieldsUsingConstraint)
+  let hasReferences = $derived(selectedFieldConstraint ? selectedFieldConstraint.fieldsUsingConstraint.length > 0 : false);
+  let deleteTooltip = $derived(selectedFieldConstraint && hasReferences
+    ? buildDeletionTooltip('field constraint', 'field', selectedFieldConstraint!.fieldsUsingConstraint)
     : '');
-  let hasLoadError = $derived($storeLoadingState.storeErrors.includes('Constraints'));
+  let hasLoadError = $derived($storeLoadingState.storeErrors.includes('Field Constraints'));
 </script>
 
-<PageHeader title="Constraints" />
+<PageHeader title="Field Constraints" />
 
 <SearchBar
   bind:searchQuery={state.query}
-  placeholder="Search constraints..."
-  resultsCount={filteredConstraints.length}
-  resultLabel="constraint"
+  placeholder="Search field constraints..."
+  resultsCount={filteredFieldConstraints.length}
+  resultLabel="field constraint"
   showFilter={true}
   active={state.filtersOpen || activeFiltersCount > 0}
   onFilterClick={state.toggleFilters}
@@ -126,7 +126,7 @@
   {/snippet}
 </SearchBar>
 
-<Table isEmpty={filteredConstraints.length === 0}>
+<Table isEmpty={filteredFieldConstraints.length === 0}>
   {#snippet header()}
     <tr>
       <SortableColumn
@@ -166,25 +166,25 @@
   {/snippet}
 
   {#snippet body()}
-    {#each filteredConstraints as constraint}
+    {#each filteredFieldConstraints as fc}
       <tr
-        onclick={() => state.selectItem(constraint)}
-        class="cursor-pointer transition-colors {isSelected(constraint) ? 'bg-mono-100' : 'hover:bg-mono-50'}"
+        onclick={() => state.selectItem(fc)}
+        class="cursor-pointer transition-colors {isSelected(fc) ? 'bg-mono-100' : 'hover:bg-mono-50'}"
       >
         <td class="px-6 py-4 whitespace-nowrap">
-          <div class="text-sm text-mono-900 font-medium">{constraint.name}</div>
+          <div class="text-sm text-mono-900 font-medium">{fc.name}</div>
         </td>
         <td class="px-6 py-4 text-sm text-mono-500 max-w-xs truncate">
-          {constraint.description.split('.')[0]}.
+          {fc.description.split('.')[0]}.
         </td>
         <td class="px-6 py-4 whitespace-nowrap">
           <code class="px-2 py-1 text-xs rounded bg-mono-100 text-mono-800 font-mono">
-            {constraint.parameterType}
+            {fc.parameterType}
           </code>
         </td>
         <td class="px-6 py-4">
           <div class="flex flex-wrap gap-1">
-            {#each constraint.compatibleTypes as ctype}
+            {#each fc.compatibleTypes as ctype}
               <span class="px-2 py-0.5 text-xs rounded-full bg-mono-200 text-mono-700">
                 {ctype}
               </span>
@@ -192,9 +192,9 @@
           </div>
         </td>
         <td class="px-6 py-4 whitespace-nowrap text-sm">
-          {#if constraint.docsUrl}
+          {#if fc.docsUrl}
             <a
-              href={constraint.docsUrl}
+              href={fc.docsUrl}
               target="_blank"
               rel="noopener noreferrer"
               onclick={(e) => e.stopPropagation()}
@@ -210,7 +210,7 @@
         <td class="px-6 py-4 whitespace-nowrap">
           <div class="flex items-center space-x-2">
             <span class="px-2 py-1 text-xs rounded-full bg-mono-200 text-mono-700">
-              {constraint.usedInFields}
+              {fc.usedInFields}
             </span>
             <span class="text-sm text-mono-600">fields</span>
           </div>
@@ -224,14 +224,14 @@
       <EmptyState
         icon="fa-circle-exclamation"
         variant="error"
-        title="Failed to load constraints"
-        message="Something went wrong while fetching constraint data"
+        title="Failed to load field constraints"
+        message="Something went wrong while fetching field constraint data"
         actionLabel="Retry"
         onAction={reloadStores}
       />
     {:else}
       <EmptyState
-        title="No constraints found"
+        title="No field constraints found"
         message="Try adjusting your search query"
       />
     {/if}
@@ -239,32 +239,32 @@
 </Table>
 
 <Drawer open={state.drawerOpen}>
-  <DrawerHeader title="Constraint Details" onClose={state.closeDrawer} />
+  <DrawerHeader title="Field Constraint Details" onClose={state.closeDrawer} />
 
   <DrawerContent>
-    {#if selectedConstraint}
+    {#if selectedFieldConstraint}
       <div class="space-y-6">
         <div>
           <h3 class="text-sm text-mono-500 mb-1 font-medium">Name</h3>
-          <p class="text-mono-900">{selectedConstraint.name}</p>
+          <p class="text-mono-900">{selectedFieldConstraint.name}</p>
         </div>
 
         <div>
           <h3 class="text-sm text-mono-500 mb-1 font-medium">Description</h3>
-          <p class="text-mono-900">{selectedConstraint.description}</p>
+          <p class="text-mono-900">{selectedFieldConstraint.description}</p>
         </div>
 
         <div>
           <h3 class="text-sm text-mono-500 mb-1 font-medium">Parameter Type</h3>
           <code class="px-2 py-1 text-xs rounded bg-mono-100 text-mono-800 font-mono">
-            {selectedConstraint.parameterType}
+            {selectedFieldConstraint.parameterType}
           </code>
         </div>
 
         <div>
           <h3 class="text-sm text-mono-500 mb-1 font-medium">Compatible Types</h3>
           <div class="flex flex-wrap gap-1.5 mt-1">
-            {#each selectedConstraint.compatibleTypes as ctype}
+            {#each selectedFieldConstraint.compatibleTypes as ctype}
               <span class="px-2 py-1 text-xs rounded-full bg-mono-200 text-mono-700">
                 {ctype}
               </span>
@@ -272,11 +272,11 @@
           </div>
         </div>
 
-        {#if selectedConstraint.docsUrl}
+        {#if selectedFieldConstraint.docsUrl}
           <div>
             <h3 class="text-sm text-mono-500 mb-1 font-medium">Documentation</h3>
             <a
-              href={selectedConstraint.docsUrl}
+              href={selectedFieldConstraint.docsUrl}
               target="_blank"
               rel="noopener noreferrer"
               class="text-sm text-mono-900 underline hover:text-mono-600 transition-colors"
@@ -288,11 +288,11 @@
 
         <div>
           <h3 class="text-sm text-mono-500 mb-2 font-medium">
-            Used In Fields ({selectedConstraint.usedInFields})
+            Used In Fields ({selectedFieldConstraint.usedInFields})
           </h3>
-          {#if selectedConstraint.fieldsUsingConstraint.length > 0}
+          {#if selectedFieldConstraint.fieldsUsingConstraint.length > 0}
             <div class="space-y-2">
-              {#each selectedConstraint.fieldsUsingConstraint as field}
+              {#each selectedFieldConstraint.fieldsUsingConstraint as field}
                 <button
                   type="button"
                   onclick={() => navigateToField(field.fieldId)}
@@ -319,7 +319,7 @@
     {/if}
   </DrawerContent>
 
-  {#if selectedConstraint}
+  {#if selectedFieldConstraint}
     <DrawerFooter>
       {#if !showDeleteConfirm}
         <Tooltip text={deleteTooltip} position="top">
@@ -330,12 +330,12 @@
             class="w-full px-4 py-2 rounded-md flex items-center justify-center transition-colors font-medium {hasReferences ? 'bg-mono-200 text-mono-400 cursor-not-allowed' : 'bg-mono-100 text-red-700 hover:bg-red-50 cursor-pointer'}"
           >
             <i class="fa-solid fa-xmark mr-2"></i>
-            <span>Delete Constraint</span>
+            <span>Delete Field Constraint</span>
           </button>
         </Tooltip>
       {:else}
         <div class="bg-red-50 border border-red-200 rounded-md p-3">
-          <p class="text-sm text-red-800 mb-2">Are you sure you want to delete this constraint?</p>
+          <p class="text-sm text-red-800 mb-2">Are you sure you want to delete this field constraint?</p>
           <div class="flex space-x-2">
             <button
               type="button"

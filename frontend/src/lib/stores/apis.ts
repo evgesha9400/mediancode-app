@@ -2,7 +2,7 @@ import { writable, get } from 'svelte/store';
 import type { Api, ApiMetadata, ApiTag, ApiEndpoint, EndpointParameter, DeletionResult } from '$lib/types';
 import { extractPathParameters } from '$lib/utils/urlParser';
 import { generateId, generateParamId, deepClone } from '$lib/utils/ids';
-import { GLOBAL_NAMESPACE_ID } from './initialData';
+import { GLOBAL_NAMESPACE_ID } from '$lib/constants';
 
 // ============================================================================
 // Stores

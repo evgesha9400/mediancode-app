@@ -1,7 +1,7 @@
 import { writable, get } from 'svelte/store';
 import type { DeletionResult, ObjectDefinition } from '$lib/types';
 import { checkObjectDeletion } from '$lib/utils/references';
-import { GLOBAL_NAMESPACE_ID } from './initialData';
+import { GLOBAL_NAMESPACE_ID } from '$lib/constants';
 import { generateId } from '$lib/utils/ids';
 
 // Re-export types from types for backwards compatibility

@@ -12,7 +12,7 @@ export type { ApiRequestOptions } from './client';
 export * from './namespaces';
 export * from './apis';
 export * from './types';
-export * from './constraints';
+export * from './fieldConstraints';
 export * from './fields';
 export * from './objects';
 export * from './endpoints';

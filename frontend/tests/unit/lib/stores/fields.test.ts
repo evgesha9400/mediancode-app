@@ -12,7 +12,7 @@ import {
 	createField,
 	type Field
 } from '$lib/stores/fields';
-import { GLOBAL_NAMESPACE_ID } from '$lib/stores/initialData';
+import { GLOBAL_NAMESPACE_ID } from '$lib/constants';
 import { seedIdGenerator } from '$lib/utils/ids';
 
 describe('fields store - Basic Operations', () => {

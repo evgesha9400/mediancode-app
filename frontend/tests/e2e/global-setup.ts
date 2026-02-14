@@ -21,7 +21,7 @@
  * - Browser worker available in tests/shared/msw/browser.ts
  *
  * CURRENT STATE: MSW is NOT started because the app uses Svelte stores (not API calls).
- * Data flows from src/lib/stores/initialData.ts → stores → components.
+ * Data flows from API → stores → components.
  *
  * FUTURE: When API endpoints are added, enable MSW by:
  * 1. Import startMSW from tests/shared/msw/browser.ts

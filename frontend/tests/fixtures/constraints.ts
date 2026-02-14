@@ -1,35 +1,32 @@
 /**
- * Constraint Fixtures
+ * Field Constraint Fixtures
  *
- * Mock constraints for testing constraint-related features.
+ * Mock field constraints for testing field constraint-related features.
  *
- * IMPORTANT: This module now imports from the centralized initialData module
- * to ensure consistency between runtime stores and test fixtures.
- *
- * Single source of truth: src/lib/stores/initialData.ts
+ * Single source of truth for test seed data: tests/fixtures/seedData.ts
  */
 
 import {
-	initialConstraints,
-	cloneConstraintBases,
-	type ConstraintBase
-} from '../../src/lib/stores/initialData';
+	initialFieldConstraints,
+	cloneFieldConstraintBases
+} from './seedData';
+import type { FieldConstraintBase } from '../../src/lib/types';
 
 // Re-export types from centralized module
-export type { ConstraintBase } from '../../src/lib/stores/initialData';
+export type { FieldConstraintBase } from '../../src/lib/types';
 
-export interface Constraint extends ConstraintBase {
+export interface FieldConstraint extends FieldConstraintBase {
 	usedInFields: number;
 	fieldsUsingConstraint: Array<{ name: string; fieldId: string }>;
 }
 
 /**
- * Mock constraints - uses centralized data
+ * Mock field constraints - uses centralized data
  * We clone the data to ensure test isolation
  */
-export const mockConstraintBases = cloneConstraintBases(initialConstraints);
+export const mockFieldConstraintBases = cloneFieldConstraintBases(initialFieldConstraints);
 
-export const mockConstraints: Constraint[] = mockConstraintBases.map((base, index) => ({
+export const mockFieldConstraints: FieldConstraint[] = mockFieldConstraintBases.map((base, index) => ({
 	...base,
 	usedInFields: index % 2 === 0 ? 3 : 1,
 	fieldsUsingConstraint:
@@ -43,15 +40,15 @@ export const mockConstraints: Constraint[] = mockConstraintBases.map((base, inde
 }));
 
 /**
- * Get a constraint by name
+ * Get a field constraint by name
  */
-export function getConstraintByName(name: string): Constraint | undefined {
-	return mockConstraints.find((constraint) => constraint.name === name);
+export function getFieldConstraintByName(name: string): FieldConstraint | undefined {
+	return mockFieldConstraints.find((fc) => fc.name === name);
 }
 
 /**
- * Get constraints by compatible type
+ * Get field constraints by compatible type
  */
-export function getConstraintsByCompatibleType(typeName: string): Constraint[] {
-	return mockConstraints.filter((constraint) => constraint.compatibleTypes.includes(typeName));
+export function getFieldConstraintsByCompatibleType(typeName: string): FieldConstraint[] {
+	return mockFieldConstraints.filter((fc) => fc.compatibleTypes.includes(typeName));
 }

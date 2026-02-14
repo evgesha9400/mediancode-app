@@ -29,7 +29,7 @@ test.describe('Dashboard - Smoke Tests', () => {
 		await expect(dashboardPage.typesCard).toBeVisible();
 		await expect(dashboardPage.fieldsCard).toBeVisible();
 		await expect(dashboardPage.generatedApisCard).toBeVisible();
-		await expect(dashboardPage.constraintsCard).toBeVisible();
+		await expect(dashboardPage.fieldConstraintsCard).toBeVisible();
 		await expect(dashboardPage.creditsAvailableCard).toBeVisible();
 		await expect(dashboardPage.creditsUsedCard).toBeVisible();
 	});
@@ -39,6 +39,6 @@ test.describe('Dashboard - Smoke Tests', () => {
 		await expect(dashboardPage.dashboardNavLink).toBeVisible();
 		await expect(dashboardPage.fieldsNavLink).toBeVisible();
 		await expect(dashboardPage.typesNavLink).toBeVisible();
-		await expect(dashboardPage.constraintsNavLink).toBeVisible();
+		await expect(dashboardPage.fieldConstraintsNavLink).toBeVisible();
 	});
 });

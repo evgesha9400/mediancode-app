@@ -13,14 +13,14 @@ import { http, HttpResponse } from 'msw';
 import {
 	mockUsers,
 	mockFields,
-	mockConstraints,
+	mockFieldConstraints,
 	mockTypes,
 	mockApis,
 	mockPermissions,
 	mockRoles,
 	getUserById,
 	getFieldById,
-	getConstraintByName,
+	getFieldConstraintByName,
 	getTypeByName,
 	getApiById
 } from '../../fixtures';
@@ -88,28 +88,28 @@ export const handlers = [
 	}),
 
 	// ============================================
-	// Constraint Endpoints
+	// Field Constraint Endpoints
 	// ============================================
-	http.get('/api/constraints', () => {
-		return HttpResponse.json(mockConstraints);
+	http.get('/api/field-constraints', () => {
+		return HttpResponse.json(mockFieldConstraints);
 	}),
 
-	http.get('/api/constraints/:name', ({ params }) => {
-		const constraint = getConstraintByName(params.name as string);
-		if (!constraint) {
+	http.get('/api/field-constraints/:name', ({ params }) => {
+		const fieldConstraint = getFieldConstraintByName(params.name as string);
+		if (!fieldConstraint) {
 			return new HttpResponse(null, { status: 404 });
 		}
-		return HttpResponse.json(constraint);
+		return HttpResponse.json(fieldConstraint);
 	}),
 
-	http.post('/api/constraints', async ({ request }) => {
-		const newConstraint = await request.json();
-		return HttpResponse.json(newConstraint, { status: 201 });
+	http.post('/api/field-constraints', async ({ request }) => {
+		const newFieldConstraint = await request.json();
+		return HttpResponse.json(newFieldConstraint, { status: 201 });
 	}),
 
-	http.delete('/api/constraints/:name', ({ params }) => {
-		const constraint = getConstraintByName(params.name as string);
-		if (!constraint) {
+	http.delete('/api/field-constraints/:name', ({ params }) => {
+		const fieldConstraint = getFieldConstraintByName(params.name as string);
+		if (!fieldConstraint) {
 			return new HttpResponse(null, { status: 404 });
 		}
 		return new HttpResponse(null, { status: 204 });

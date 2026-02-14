@@ -1,7 +1,7 @@
 <script lang="ts">
-  import { fieldsStore, searchFields, type Field, type FieldConstraint } from '$lib/stores/fields';
+  import { fieldsStore, searchFields, type Field, type FieldConstraintValue } from '$lib/stores/fields';
   import { createFieldAction, updateFieldAction, deleteFieldAction } from '$lib/stores/actions';
-  import { constraintsStore, getConstraintsByFieldType, type Constraint } from '$lib/stores/constraints';
+  import { fieldConstraintsStore, getFieldConstraintsByFieldType, type FieldConstraint } from '$lib/stores/fieldConstraints';
   import { getPrimitiveTypes, getTypeIdByName, type PrimitiveTypeName } from '$lib/stores/types';
   import { showToast } from '$lib/stores/toasts';
   import { activeNamespaceId, namespacesStore, getNamespaceById } from '$lib/stores/namespaces';
@@ -19,7 +19,7 @@
     DrawerFooter,
     Tooltip,
     NamespaceSelector,
-    ConstraintSelectorDropdown
+    FieldConstraintSelectorDropdown
   } from '$lib/components';
   import type { FilterConfig } from '$lib/types';
   import { storeLoadingState, reloadStores } from '$lib/stores/loader';
@@ -107,16 +107,16 @@
   let activeFiltersCount = $derived(listState.activeFiltersCount);
   let hasChanges = $derived(listState.hasChanges);
 
-  let constraints = $derived($constraintsStore);
-  // Filter constraints by field's type compatibility
-  let availableConstraints = $derived(
+  let fieldConstraints = $derived($fieldConstraintsStore);
+  // Filter field constraints by field's type compatibility
+  let availableFieldConstraints = $derived(
     editedField
-      ? getConstraintsByFieldType(editedField.type)
+      ? getFieldConstraintsByFieldType(editedField.type)
       : []
   );
 
-  // Derive selected constraint names for the ConstraintSelectorDropdown
-  let selectedConstraintNames = $derived(editedField?.constraints.map(v => v.name) ?? []);
+  // Derive selected field constraint names for the FieldConstraintSelectorDropdown
+  let selectedFieldConstraintNames = $derived(editedField?.constraints.map(v => v.name) ?? []);
 
   function handleTypeChange(newType: string) {
     if (!editedField) return;
@@ -297,7 +297,7 @@
     }
   }
 
-  function addConstraint(constraintName: string) {
+  function addFieldConstraint(constraintName: string) {
     if (!editedField) return;
 
     listState.editedItem = {
@@ -306,7 +306,7 @@
     };
   }
 
-  function removeConstraint(index: number) {
+  function removeFieldConstraint(index: number) {
     if (!editedField) return;
     listState.editedItem = {
       ...editedField,
@@ -314,15 +314,15 @@
     };
   }
 
-  function formatConstraintPill(constraint: FieldConstraint): string {
-    if (!constraint.params || Object.keys(constraint.params).length === 0) {
-      return constraint.name;
+  function formatFieldConstraintPill(constraintValue: FieldConstraintValue): string {
+    if (!constraintValue.params || Object.keys(constraintValue.params).length === 0) {
+      return constraintValue.name;
     }
-    const value = constraint.params.value;
+    const value = constraintValue.params.value;
     if (value !== undefined) {
-      return `${constraint.name}: ${value}`;
+      return `${constraintValue.name}: ${value}`;
     }
-    return constraint.name;
+    return constraintValue.name;
   }
 
   let hasReferences = $derived(editedField ? editedField.usedInApis.length > 0 : false);
@@ -389,7 +389,7 @@
         />
         <th scope="col" class="px-6 py-3 text-left text-xs text-mono-500 tracking-wider font-medium">
           <div class="flex items-center space-x-1">
-            <span>Constraints</span>
+            <span>Field Constraints</span>
           </div>
         </th>
         <SortableColumn
@@ -427,9 +427,9 @@
           <td class="px-6 py-4 text-sm text-mono-500">
             {#if field.constraints.length > 0}
               <div class="flex flex-wrap gap-1">
-                {#each field.constraints as constraint}
+                {#each field.constraints as constraintValue}
                   <span class="px-2 py-0.5 text-xs rounded-full bg-mono-100">
-                    {formatConstraintPill(constraint)}
+                    {formatFieldConstraintPill(constraintValue)}
                   </span>
                 {/each}
               </div>
@@ -558,29 +558,29 @@
 
         <!-- Constraints -->
         <div>
-          <h3 class="text-sm text-mono-700 mb-2 font-medium">Constraints ({editedField.constraints.length})</h3>
+          <h3 class="text-sm text-mono-700 mb-2 font-medium">Field Constraints ({editedField.constraints.length})</h3>
 
           <div class="space-y-2">
-            <!-- Constraint Selector Dropdown -->
-            <ConstraintSelectorDropdown
-              availableConstraints={availableConstraints}
-              selectedConstraintNames={selectedConstraintNames}
-              onSelect={addConstraint}
-              placeholder="Add constraint to field..."
+            <!-- Field Constraint Selector Dropdown -->
+            <FieldConstraintSelectorDropdown
+              availableFieldConstraints={availableFieldConstraints}
+              selectedFieldConstraintNames={selectedFieldConstraintNames}
+              onSelect={addFieldConstraint}
+              placeholder="Add field constraint..."
             />
 
-            <!-- Selected Constraints -->
+            <!-- Selected Field Constraints -->
             {#if editedField.constraints.length === 0}
               <div class="p-3 bg-mono-50 rounded border border-mono-200">
-                <p class="text-xs text-mono-500">No constraints selected</p>
+                <p class="text-xs text-mono-500">No field constraints selected</p>
               </div>
             {:else}
               <div class="p-2 bg-mono-50 rounded border border-mono-200 space-y-2">
-                {#each editedField.constraints as constraint, index}
-                  {@const constraintMeta = constraints.find(v => v.name === constraint.name)}
+                {#each editedField.constraints as constraintValue, index}
+                  {@const constraintMeta = fieldConstraints.find(v => v.name === constraintValue.name)}
                   {#if constraintMeta}
                     <div class="flex items-center space-x-2 p-2 bg-white rounded border border-mono-200">
-                      <!-- Constraint Name and Type -->
+                      <!-- Field Constraint Name and Type -->
                       <div class="flex items-center space-x-2">
                         <span class="font-mono text-sm text-mono-700">{constraintMeta.name}</span>
                         <span class="text-xs text-mono-500 bg-mono-100 px-2 py-0.5 rounded">{constraintMeta.parameterType}</span>
@@ -598,27 +598,27 @@
                       <!-- Delete Button (aligned to the right) -->
                       <button
                         type="button"
-                        onclick={() => removeConstraint(index)}
+                        onclick={() => removeFieldConstraint(index)}
                         class="text-red-700 hover:text-red-600 transition-colors"
-                        title="Remove constraint"
-                        aria-label="Remove constraint"
+                        title="Remove field constraint"
+                        aria-label="Remove field constraint"
                       >
                         <i class="fa-solid fa-xmark"></i>
                       </button>
                     </div>
                   {:else}
-                    <!-- Missing constraint fallback - constraint was deleted from registry -->
+                    <!-- Missing field constraint fallback - constraint was deleted from registry -->
                     <div class="flex items-center gap-2 py-1.5">
                       <i class="fa-solid fa-triangle-exclamation text-red-500 text-sm"></i>
                       <span class="flex-1 text-sm text-red-700">
-                        Constraint not found <span class="font-mono text-xs text-red-500">({constraint.name})</span>
+                        Field constraint not found <span class="font-mono text-xs text-red-500">({constraintValue.name})</span>
                       </span>
                       <button
                         type="button"
-                        onclick={() => removeConstraint(index)}
+                        onclick={() => removeFieldConstraint(index)}
                         class="p-1 text-red-700 hover:text-red-600 hover:bg-red-100 rounded transition-colors"
-                        title="Remove missing constraint reference"
-                        aria-label="Remove constraint"
+                        title="Remove missing field constraint reference"
+                        aria-label="Remove field constraint"
                       >
                         <i class="fa-solid fa-xmark"></i>
                       </button>

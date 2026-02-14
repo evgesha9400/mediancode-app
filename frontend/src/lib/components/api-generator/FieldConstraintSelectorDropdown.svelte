@@ -1,41 +1,41 @@
 <script module lang="ts">
-  import type { Constraint } from '$lib/stores/constraints';
+  import type { FieldConstraint } from '$lib/stores/fieldConstraints';
 
-  export interface ConstraintSelectorDropdownProps {
-    availableConstraints: Constraint[];
-    selectedConstraintNames: string[];
-    onSelect: (constraintName: string) => void;
+  export interface FieldConstraintSelectorDropdownProps {
+    availableFieldConstraints: FieldConstraint[];
+    selectedFieldConstraintNames: string[];
+    onSelect: (fieldConstraintName: string) => void;
     placeholder?: string;
   }
 </script>
 
 <script lang="ts">
-  interface Props extends ConstraintSelectorDropdownProps {}
+  interface Props extends FieldConstraintSelectorDropdownProps {}
 
-  let { availableConstraints, selectedConstraintNames, onSelect, placeholder = 'Add constraint...' }: Props = $props();
+  let { availableFieldConstraints, selectedFieldConstraintNames, onSelect, placeholder = 'Add constraint...' }: Props = $props();
 
   let searchQuery = $state('');
   let dropdownOpen = $state(false);
   let blurTimeoutId: ReturnType<typeof setTimeout> | null = null;
 
-  // Filter constraints based on search query and exclude already selected
-  const filteredConstraints = $derived.by(() => {
+  // Filter field constraints based on search query and exclude already selected
+  const filteredFieldConstraints = $derived.by(() => {
     const lowerQuery = searchQuery.toLowerCase().trim();
 
-    return availableConstraints
-      .filter(constraint => !selectedConstraintNames.includes(constraint.name))
-      .filter(constraint => {
+    return availableFieldConstraints
+      .filter(fc => !selectedFieldConstraintNames.includes(fc.name))
+      .filter(fc => {
         if (!lowerQuery) return true;
         return (
-          constraint.name.toLowerCase().includes(lowerQuery) ||
-          constraint.parameterType.toLowerCase().includes(lowerQuery) ||
-          constraint.description?.toLowerCase().includes(lowerQuery)
+          fc.name.toLowerCase().includes(lowerQuery) ||
+          fc.parameterType.toLowerCase().includes(lowerQuery) ||
+          fc.description?.toLowerCase().includes(lowerQuery)
         );
       });
   });
 
-  function handleSelect(constraintName: string): void {
-    onSelect(constraintName);
+  function handleSelect(fieldConstraintName: string): void {
+    onSelect(fieldConstraintName);
     searchQuery = '';
     dropdownOpen = false;
   }
@@ -80,22 +80,22 @@
     <i class="fa-solid fa-search absolute right-3 top-1/2 -translate-y-1/2 text-mono-400 text-xs pointer-events-none"></i>
   </div>
 
-  {#if dropdownOpen && filteredConstraints.length > 0}
+  {#if dropdownOpen && filteredFieldConstraints.length > 0}
     <div class="absolute z-10 w-full mt-1 bg-white border border-mono-300 rounded-md shadow-lg max-h-60 overflow-auto">
-      {#each filteredConstraints as constraint (constraint.name)}
+      {#each filteredFieldConstraints as fc (fc.name)}
         <button
           type="button"
-          onclick={() => handleSelect(constraint.name)}
+          onclick={() => handleSelect(fc.name)}
           class="w-full px-3 py-2 text-left hover:bg-mono-50 border-b border-mono-100 last:border-b-0 transition-colors"
         >
           <div class="flex items-start justify-between">
             <div class="flex-1">
               <div class="flex items-center space-x-2">
-                <span class="font-mono text-sm text-mono-700">{constraint.name}</span>
-                <span class="text-xs text-mono-500 bg-mono-100 px-2 py-0.5 rounded">{constraint.parameterType}</span>
+                <span class="font-mono text-sm text-mono-700">{fc.name}</span>
+                <span class="text-xs text-mono-500 bg-mono-100 px-2 py-0.5 rounded">{fc.parameterType}</span>
               </div>
-              {#if constraint.description}
-                <p class="text-xs text-mono-500 mt-1">{constraint.description}</p>
+              {#if fc.description}
+                <p class="text-xs text-mono-500 mt-1">{fc.description}</p>
               {/if}
             </div>
           </div>
@@ -104,16 +104,16 @@
     </div>
   {/if}
 
-  {#if dropdownOpen && filteredConstraints.length === 0 && searchQuery.trim()}
+  {#if dropdownOpen && filteredFieldConstraints.length === 0 && searchQuery.trim()}
     <div class="absolute z-10 w-full mt-1 bg-white border border-mono-300 rounded-md shadow-lg">
       <div class="px-3 py-2 text-sm text-mono-500">
-        No constraints found matching "{searchQuery}"
+        No field constraints found matching "{searchQuery}"
       </div>
     </div>
-  {:else if dropdownOpen && filteredConstraints.length === 0 && !searchQuery.trim()}
+  {:else if dropdownOpen && filteredFieldConstraints.length === 0 && !searchQuery.trim()}
     <div class="absolute z-10 w-full mt-1 bg-white border border-mono-300 rounded-md shadow-lg">
       <div class="px-3 py-2 text-sm text-mono-500">
-        All available constraints are already selected
+        All available field constraints are already selected
       </div>
     </div>
   {/if}

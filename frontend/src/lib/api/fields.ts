@@ -5,25 +5,29 @@
  */
 
 import { apiGet, apiPost, apiPut, apiDelete } from './client';
-import type { Field, FieldConstraint } from '$lib/stores/initialData';
-import { BUILTIN_TYPE_IDS } from '$lib/stores/initialData';
+import type { Field, FieldConstraintValue } from '$lib/types';
+import { get } from 'svelte/store';
+import { typesBaseStore } from '$lib/stores/types';
 import type { PrimitiveTypeName } from '$lib/stores/types';
 
 /**
- * Backend field constraint response
+ * Backend field constraint value response
  */
-interface FieldConstraintResponse {
+interface FieldConstraintValueResponse {
 	name: string;
 	params: Record<string, unknown> | null;
 }
 
 /**
- * Reverse lookup map: type UUID -> type name
- * Built from BUILTIN_TYPE_IDS for resolving type_id in field responses.
+ * Build a type UUID -> type name lookup map from the types store.
+ * Called at runtime when transforming field responses.
  */
-const TYPE_ID_TO_NAME: Record<string, PrimitiveTypeName> = Object.fromEntries(
-	Object.entries(BUILTIN_TYPE_IDS).map(([name, id]) => [id, name as PrimitiveTypeName])
-) as Record<string, PrimitiveTypeName>;
+function buildTypeIdToNameMap(): Record<string, PrimitiveTypeName> {
+	const types = get(typesBaseStore);
+	return Object.fromEntries(
+		types.map(t => [t.id, t.name as PrimitiveTypeName])
+	);
+}
 
 /**
  * Backend API response for Field entity
@@ -35,14 +39,14 @@ interface FieldResponse {
 	typeId: string;
 	description: string | null;
 	defaultValue: string | null;
-	constraints: FieldConstraintResponse[];
+	constraints: FieldConstraintValueResponse[];
 	usedInApis: string[];
 }
 
 /**
- * Transform backend field constraint to frontend type
+ * Transform backend field constraint value to frontend type
  */
-function transformFieldConstraint(response: FieldConstraintResponse): FieldConstraint {
+function transformFieldConstraintValue(response: FieldConstraintValueResponse): FieldConstraintValue {
 	return {
 		name: response.name,
 		params: response.params ?? undefined
@@ -51,10 +55,10 @@ function transformFieldConstraint(response: FieldConstraintResponse): FieldConst
 
 /**
  * Transform backend response to frontend Field type.
- * Resolves typeId (UUID) to a PrimitiveTypeName using the built-in type lookup.
+ * Resolves typeId (UUID) to a PrimitiveTypeName using the types store.
  */
-function transformField(response: FieldResponse): Field {
-	const typeName = TYPE_ID_TO_NAME[response.typeId];
+function transformField(response: FieldResponse, typeMap: Record<string, PrimitiveTypeName>): Field {
+	const typeName = typeMap[response.typeId];
 	if (!typeName) {
 		console.warn(`Unknown type_id "${response.typeId}" for field "${response.name}", defaulting to "str"`);
 	}
@@ -66,7 +70,7 @@ function transformField(response: FieldResponse): Field {
 		type: typeName ?? 'str',
 		description: response.description ?? undefined,
 		defaultValue: response.defaultValue ?? undefined,
-		constraints: response.constraints.map(transformFieldConstraint),
+		constraints: response.constraints.map(transformFieldConstraintValue),
 		usedInApis: response.usedInApis
 	};
 }
@@ -79,7 +83,8 @@ function transformField(response: FieldResponse): Field {
 export async function listFields(namespaceId?: string): Promise<Field[]> {
 	const params = namespaceId ? `?namespaceId=${encodeURIComponent(namespaceId)}` : '';
 	const response = await apiGet<FieldResponse[]>(`/fields${params}`);
-	return response.map(transformField);
+	const typeMap = buildTypeIdToNameMap();
+	return response.map(r => transformField(r, typeMap));
 }
 
 /**
@@ -87,7 +92,8 @@ export async function listFields(namespaceId?: string): Promise<Field[]> {
  */
 export async function getField(id: string): Promise<Field> {
 	const response = await apiGet<FieldResponse>(`/fields/${id}`);
-	return transformField(response);
+	const typeMap = buildTypeIdToNameMap();
+	return transformField(response, typeMap);
 }
 
 // ============================================================================
@@ -129,7 +135,8 @@ export interface UpdateFieldRequest {
  */
 export async function createFieldApi(data: CreateFieldRequest): Promise<Field> {
 	const response = await apiPost<FieldResponse>('/fields', data);
-	return transformField(response);
+	const typeMap = buildTypeIdToNameMap();
+	return transformField(response, typeMap);
 }
 
 /**
@@ -141,7 +148,8 @@ export async function createFieldApi(data: CreateFieldRequest): Promise<Field> {
  */
 export async function updateFieldApi(id: string, data: UpdateFieldRequest): Promise<Field> {
 	const response = await apiPut<FieldResponse>(`/fields/${id}`, data);
-	return transformField(response);
+	const typeMap = buildTypeIdToNameMap();
+	return transformField(response, typeMap);
 }
 
 /**

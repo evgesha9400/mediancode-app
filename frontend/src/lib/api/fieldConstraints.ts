@@ -1,14 +1,14 @@
 /**
- * Constraints API Service
+ * Field Constraints API Service
  *
- * GET methods for constraint operations.
+ * GET methods for field constraint operations.
  */
 
 import { apiGet } from './client';
-import type { Constraint } from '$lib/stores/constraints';
+import type { FieldConstraint } from '$lib/stores/fieldConstraints';
 
 /**
- * Backend field reference for constraint usage
+ * Backend field reference for field constraint usage
  */
 interface FieldReferenceResponse {
 	name: string;
@@ -16,9 +16,9 @@ interface FieldReferenceResponse {
 }
 
 /**
- * Backend API response for Constraint entity
+ * Backend API response for FieldConstraint entity
  */
-interface ConstraintResponse {
+interface FieldConstraintResponse {
 	id: string;
 	namespaceId: string;
 	name: string;
@@ -31,9 +31,9 @@ interface ConstraintResponse {
 }
 
 /**
- * Transform backend response to frontend Constraint type
+ * Transform backend response to frontend FieldConstraint type
  */
-function transformConstraint(response: ConstraintResponse): Constraint {
+function transformFieldConstraint(response: FieldConstraintResponse): FieldConstraint {
 	return {
 		id: response.id,
 		namespaceId: response.namespaceId,
@@ -48,12 +48,12 @@ function transformConstraint(response: ConstraintResponse): Constraint {
 }
 
 /**
- * List all constraints, optionally filtered by namespace
+ * List all field constraints, optionally filtered by namespace
  *
  * @param namespaceId - Optional namespace ID to filter by
  */
-export async function listConstraints(namespaceId?: string): Promise<Constraint[]> {
+export async function listFieldConstraints(namespaceId?: string): Promise<FieldConstraint[]> {
 	const params = namespaceId ? `?namespaceId=${encodeURIComponent(namespaceId)}` : '';
-	const response = await apiGet<ConstraintResponse[]>(`/constraints${params}`);
-	return response.map(transformConstraint);
+	const response = await apiGet<FieldConstraintResponse[]>(`/field-constraints${params}`);
+	return response.map(transformFieldConstraint);
 }

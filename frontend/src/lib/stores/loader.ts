@@ -13,15 +13,15 @@ import { listApis } from '$lib/api/apis';
 import { listFields } from '$lib/api/fields';
 import { listObjects } from '$lib/api/objects';
 import { listEndpoints } from '$lib/api/endpoints';
-import { listConstraints } from '$lib/api/constraints';
+import { listFieldConstraints } from '$lib/api/fieldConstraints';
 import { listTypes } from '$lib/api/types';
 import { namespacesStore, activeNamespaceId } from './namespaces';
 import { apisStore, endpointsStore } from './apis';
 import { fieldsStore } from './fields';
 import { objectsStore } from './objects';
-import { constraintsStore } from './constraints';
+import { fieldConstraintsStore } from './fieldConstraints';
 import { typesBaseStore } from './types';
-import { GLOBAL_NAMESPACE_ID } from './initialData';
+import { GLOBAL_NAMESPACE_ID } from '$lib/constants';
 
 /**
  * Store loading state
@@ -41,15 +41,22 @@ export const storeLoadingState = writable<LoadingState>({
 	storeErrors: []
 });
 
-/** Store names in the same order as the Promise.allSettled calls */
-const STORE_NAMES = ['Namespaces', 'APIs', 'Fields', 'Objects', 'Endpoints', 'Constraints', 'Types'] as const;
+/** Store names for phase 1 (must load first — fields depend on types) */
+const PHASE1_STORE_NAMES = ['Types', 'Namespaces', 'Field Constraints'] as const;
+
+/** Store names for phase 2 (depend on phase 1 stores being populated) */
+const PHASE2_STORE_NAMES = ['Fields', 'Objects', 'APIs', 'Endpoints'] as const;
 
 /**
  * Load all store data from the backend API
  *
- * This function fetches all entities from the backend and populates
- * the corresponding Svelte stores. Uses Promise.allSettled so that
- * individual endpoint failures don't prevent other stores from loading.
+ * Uses two-phase loading: types, namespaces, and field constraints load first
+ * (phase 1), then fields, objects, APIs, and endpoints (phase 2). This ensures
+ * the types store is populated before transformField() runs, which needs to
+ * resolve typeId UUIDs to type names.
+ *
+ * Uses Promise.allSettled within each phase so that individual endpoint
+ * failures don't prevent other stores from loading.
  *
  * @returns Promise that resolves when all fetches have settled
  */
@@ -67,42 +74,57 @@ export async function loadStoresFromApi(): Promise<void> {
 		storeErrors: []
 	});
 
-	const results = await Promise.allSettled([
+	const storeErrors: string[] = [];
+
+	// Phase 1: Load types, namespaces, and field constraints first
+	// Types MUST be in the store before fields are transformed
+	const phase1Results = await Promise.allSettled([
+		listTypes(),
 		listNamespaces(),
-		listApis(),
-		listFields(),
-		listObjects(),
-		listEndpoints(),
-		listConstraints(),
-		listTypes()
+		listFieldConstraints()
 	]);
 
-	// Extract values, defaulting failures to empty arrays
-	const namespaces = results[0].status === 'fulfilled' ? results[0].value : [];
-	const apis = results[1].status === 'fulfilled' ? results[1].value : [];
-	const fields = results[2].status === 'fulfilled' ? results[2].value : [];
-	const objects = results[3].status === 'fulfilled' ? results[3].value : [];
-	const endpoints = results[4].status === 'fulfilled' ? results[4].value : [];
-	const constraints = results[5].status === 'fulfilled' ? results[5].value : [];
-	const types = results[6].status === 'fulfilled' ? results[6].value : [];
+	const types = phase1Results[0].status === 'fulfilled' ? phase1Results[0].value : [];
+	const namespaces = phase1Results[1].status === 'fulfilled' ? phase1Results[1].value : [];
+	const fieldConstraints = phase1Results[2].status === 'fulfilled' ? phase1Results[2].value : [];
 
-	// Collect per-store errors
-	const storeErrors: string[] = [];
-	results.forEach((result, i) => {
+	phase1Results.forEach((result, i) => {
 		if (result.status === 'rejected') {
-			storeErrors.push(STORE_NAMES[i]);
-			console.error(`[Store Loader] Failed to load ${STORE_NAMES[i]}:`, result.reason);
+			storeErrors.push(PHASE1_STORE_NAMES[i]);
+			console.error(`[Store Loader] Failed to load ${PHASE1_STORE_NAMES[i]}:`, result.reason);
 		}
 	});
 
-	// Always populate stores (empty array on failure)
+	// Populate phase 1 stores before phase 2 starts
+	typesBaseStore.set(types);
 	namespacesStore.set(namespaces);
-	apisStore.set(apis);
+	fieldConstraintsStore.set(fieldConstraints);
+
+	// Phase 2: Load entities that depend on phase 1 stores
+	const phase2Results = await Promise.allSettled([
+		listFields(),
+		listObjects(),
+		listApis(),
+		listEndpoints()
+	]);
+
+	const fields = phase2Results[0].status === 'fulfilled' ? phase2Results[0].value : [];
+	const objects = phase2Results[1].status === 'fulfilled' ? phase2Results[1].value : [];
+	const apis = phase2Results[2].status === 'fulfilled' ? phase2Results[2].value : [];
+	const endpoints = phase2Results[3].status === 'fulfilled' ? phase2Results[3].value : [];
+
+	phase2Results.forEach((result, i) => {
+		if (result.status === 'rejected') {
+			storeErrors.push(PHASE2_STORE_NAMES[i]);
+			console.error(`[Store Loader] Failed to load ${PHASE2_STORE_NAMES[i]}:`, result.reason);
+		}
+	});
+
+	// Populate phase 2 stores
 	fieldsStore.set(fields);
 	objectsStore.set(objects);
+	apisStore.set(apis);
 	endpointsStore.set(endpoints);
-	constraintsStore.set(constraints);
-	typesBaseStore.set(types);
 
 	// Set active namespace to global if it exists, otherwise first namespace
 	const globalNamespace = namespaces.find(ns => ns.id === GLOBAL_NAMESPACE_ID);
@@ -144,7 +166,7 @@ export function resetStores(): void {
 	fieldsStore.set([]);
 	objectsStore.set([]);
 	endpointsStore.set([]);
-	constraintsStore.set([]);
+	fieldConstraintsStore.set([]);
 	typesBaseStore.set([]);
 	activeNamespaceId.set(GLOBAL_NAMESPACE_ID);
 

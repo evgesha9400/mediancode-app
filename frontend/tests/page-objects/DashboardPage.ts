@@ -12,7 +12,7 @@ import { getStatCardTestId } from '../../src/lib/utils/testIds';
 
 export const STAT_CARD_TITLES = {
 	types: 'Types',
-	constraints: 'Constraints',
+	fieldConstraints: 'Field Constraints',
 	fields: 'Fields',
 	objects: 'Objects',
 	generatedApis: 'Generated APIs',
@@ -34,7 +34,7 @@ export class DashboardPage {
 	readonly typesCard: Locator;
 	readonly fieldsCard: Locator;
 	readonly generatedApisCard: Locator;
-	readonly constraintsCard: Locator;
+	readonly fieldConstraintsCard: Locator;
 	readonly objectsCard: Locator;
 	readonly creditsAvailableCard: Locator;
 	readonly creditsUsedCard: Locator;
@@ -44,7 +44,7 @@ export class DashboardPage {
 	readonly dashboardNavLink: Locator;
 	readonly fieldsNavLink: Locator;
 	readonly typesNavLink: Locator;
-	readonly constraintsNavLink: Locator;
+	readonly fieldConstraintsNavLink: Locator;
 
 	// Sign out
 	readonly signOutButton: Locator;
@@ -61,7 +61,7 @@ export class DashboardPage {
 		this.typesCard = this.getStatCardLocator(STAT_CARD_TITLES.types);
 		this.fieldsCard = this.getStatCardLocator(STAT_CARD_TITLES.fields);
 		this.generatedApisCard = this.getStatCardLocator(STAT_CARD_TITLES.generatedApis);
-		this.constraintsCard = this.getStatCardLocator(STAT_CARD_TITLES.constraints);
+		this.fieldConstraintsCard = this.getStatCardLocator(STAT_CARD_TITLES.fieldConstraints);
 		this.objectsCard = this.getStatCardLocator(STAT_CARD_TITLES.objects);
 		this.creditsAvailableCard = this.getStatCardLocator(STAT_CARD_TITLES.creditsAvailable);
 		this.creditsUsedCard = this.getStatCardLocator(STAT_CARD_TITLES.creditsUsed);
@@ -71,7 +71,7 @@ export class DashboardPage {
 		this.dashboardNavLink = page.getByRole('link', { name: /dashboard/i });
 		this.fieldsNavLink = page.locator('a[href="/field-registry"]');
 		this.typesNavLink = page.locator('a[href="/types"]');
-		this.constraintsNavLink = page.locator('[data-testid="dashboard-sidebar"] a[href="/validators/constraints"]');
+		this.fieldConstraintsNavLink = page.locator('[data-testid="dashboard-sidebar"] a[href="/validators/field-constraints"]');
 
 		// Sign out - use role-based selector
 		this.signOutButton = page.getByRole('button', { name: /sign out/i });
@@ -100,12 +100,12 @@ export class DashboardPage {
 	/**
 	 * Navigate to a specific section via sidebar
 	 */
-	async navigateTo(section: 'dashboard' | 'field-registry' | 'types' | 'constraints') {
+	async navigateTo(section: 'dashboard' | 'field-registry' | 'types' | 'field-constraints') {
 		const linkMap = {
 			dashboard: this.dashboardNavLink,
 			'field-registry': this.fieldsNavLink,
 			types: this.typesNavLink,
-			constraints: this.constraintsNavLink
+			'field-constraints': this.fieldConstraintsNavLink
 		};
 
 		await linkMap[section].click();

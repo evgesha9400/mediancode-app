@@ -6,10 +6,10 @@ import {
 	buildResponsePreview
 } from '$lib/utils/examples';
 import { fieldsStore } from '$lib/stores/fields';
-import { initialFields } from '$lib/stores/initialData';
+import { initialFields } from '../../../fixtures/seedData';
 import type { ResponseShape, ResponseItemShape } from '$lib/types';
 
-// Seed field IDs (UUIDs from initialData.ts)
+// Seed field IDs (UUIDs from tests/fixtures/seedData.ts)
 const FIELD_EMAIL = '10000000-0000-0000-0000-000000000001';
 const FIELD_USERNAME = '10000000-0000-0000-0000-000000000002';
 

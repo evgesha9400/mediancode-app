@@ -15,7 +15,7 @@ import {
 	setActiveNamespace,
 	GLOBAL_NAMESPACE_ID
 } from '$lib/stores/namespaces';
-import { initialNamespaces } from '$lib/stores/initialData';
+import { initialNamespaces } from '../../../fixtures/seedData';
 import { seedIdGenerator } from '$lib/utils/ids';
 import { fieldsStore } from '$lib/stores/fields';
 import { objectsStore } from '$lib/stores/objects';
@@ -242,7 +242,7 @@ describe('namespaces store - Entity Count', () => {
 	it('should get detailed entity counts', () => {
 		// Get initial constraint count (constraints always exist)
 		const initialDetails = getNamespaceEntityDetails(GLOBAL_NAMESPACE_ID);
-		const initialConstraintCount = initialDetails.constraints;
+		const initialConstraintCount = initialDetails.fieldConstraints;
 
 		// Add entities
 		fieldsStore.update(fields => [
@@ -276,7 +276,7 @@ describe('namespaces store - Entity Count', () => {
 
 		expect(details.fields).toBe(1);
 		expect(details.endpoints).toBe(1);
-		expect(details.constraints).toBe(initialConstraintCount); // Constraints still present
+		expect(details.fieldConstraints).toBe(initialConstraintCount); // Constraints still present
 		expect(details.objects).toBe(0);
 		expect(details.apis).toBe(0);
 		expect(details.total).toBe(2 + initialConstraintCount);

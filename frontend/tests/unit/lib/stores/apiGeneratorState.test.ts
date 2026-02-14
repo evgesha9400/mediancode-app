@@ -9,7 +9,7 @@ import {
 	initialApiMetadata
 } from '$lib/stores/apis';
 import { fieldsStore } from '$lib/stores/fields';
-import { initialFields } from '$lib/stores/initialData';
+import { initialFields } from '../../../fixtures/seedData';
 import { seedIdGenerator } from '$lib/utils/ids';
 import * as toastsModule from '$lib/stores/toasts';
 import { createMockEndpoint, createMockApi } from '../../../shared/testUtils';

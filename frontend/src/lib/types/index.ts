@@ -74,7 +74,7 @@ export type FilterConfig = FilterSection[];
 export interface Reference {
   id: string;
   name: string;
-  type: 'field' | 'api' | 'constraint';
+  type: 'field' | 'api' | 'field-constraint';
 }
 
 export interface DeletionResult {
@@ -195,4 +195,36 @@ export interface ObjectDefinition {
   description?: string;
   fields: ObjectFieldReference[];
   usedInApis: string[];
+}
+
+// Field types
+// Note: PrimitiveTypeName is imported as a type to avoid circular runtime deps
+// (types/index.ts -> stores/types.ts -> stores/fields.ts -> types/index.ts)
+import type { PrimitiveTypeName } from '$lib/stores/types';
+
+export interface FieldConstraintValue {
+  name: string;
+  params?: Record<string, any>;
+}
+
+export interface Field {
+  id: string;
+  namespaceId: string;
+  name: string;
+  type: PrimitiveTypeName;
+  description?: string;
+  defaultValue?: string;
+  constraints: FieldConstraintValue[];
+  usedInApis: string[];
+}
+
+// Field constraint types
+export interface FieldConstraintBase {
+  id: string;
+  namespaceId: string;
+  name: string;
+  description: string;
+  parameterType: string;
+  docsUrl: string | null;
+  compatibleTypes: string[];
 }

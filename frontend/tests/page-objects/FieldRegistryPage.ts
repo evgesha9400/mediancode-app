@@ -51,7 +51,7 @@ export class FieldRegistryPage {
 	readonly fieldDescriptionTextarea: Locator;
 	readonly fieldDefaultValueInput: Locator;
 
-	// Drawer constraints section
+	// Drawer field constraints section
 	readonly constraintSelectorInput: Locator;
 	readonly constraintDropdownOptions: Locator;
 	readonly constraintRows: Locator;
@@ -105,11 +105,11 @@ export class FieldRegistryPage {
 		this.fieldDescriptionTextarea = page.locator('#field-registry-description');
 		this.fieldDefaultValueInput = page.locator('#field-registry-default-value');
 
-		// Drawer constraints section - uses ConstraintSelectorDropdown component
-		this.constraintSelectorInput = page.getByPlaceholder('Add constraint to field...');
+		// Drawer field constraints section - uses FieldConstraintSelectorDropdown component
+		this.constraintSelectorInput = page.getByPlaceholder('Add field constraint...');
 		this.constraintDropdownOptions = page.locator('.absolute.z-10 button');
-		// Individual constraint rows - identified by having a "Remove constraint" button
-		this.constraintRows = page.locator('.flex.items-center.space-x-2.p-2.bg-white').filter({ has: page.getByRole('button', { name: 'Remove constraint' }) });
+		// Individual field constraint rows - identified by having a "Remove field constraint" button
+		this.constraintRows = page.locator('.flex.items-center.space-x-2.p-2.bg-white').filter({ has: page.getByRole('button', { name: 'Remove field constraint' }) });
 
 		// Drawer actions
 		this.saveButton = page.getByRole('button', { name: 'Save Changes' });
@@ -343,10 +343,10 @@ export class FieldRegistryPage {
 	}
 
 	/**
-	 * Remove constraint by index (0-based)
+	 * Remove field constraint by index (0-based)
 	 */
 	async removeConstraint(index: number) {
-		const removeButton = this.constraintRows.nth(index).getByRole('button', { name: 'Remove constraint' });
+		const removeButton = this.constraintRows.nth(index).getByRole('button', { name: 'Remove field constraint' });
 		await removeButton.click();
 		await this.delay();
 	}

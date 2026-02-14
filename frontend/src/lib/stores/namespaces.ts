@@ -1,9 +1,9 @@
 import { writable, derived, get } from 'svelte/store';
 import type { Namespace, DeletionResult } from '$lib/types';
-import { GLOBAL_NAMESPACE_ID } from './initialData';
+import { GLOBAL_NAMESPACE_ID } from '$lib/constants';
 import { generateId } from '$lib/utils/ids';
 import { fieldsStore } from './fields';
-import { constraintsStore } from './constraints';
+import { fieldConstraintsStore } from './fieldConstraints';
 import { objectsStore } from './objects';
 import { endpointsStore, apisStore } from './apis';
 
@@ -69,12 +69,12 @@ export function searchNamespaces(namespaces: Namespace[], query: string): Namesp
  */
 export function getNamespaceEntityCount(namespaceId: string): number {
 	const fields = get(fieldsStore).filter(f => f.namespaceId === namespaceId);
-	const constraints = get(constraintsStore).filter(v => v.namespaceId === namespaceId);
+	const fieldConstraints = get(fieldConstraintsStore).filter(v => v.namespaceId === namespaceId);
 	const objects = get(objectsStore).filter(o => o.namespaceId === namespaceId);
 	const endpoints = get(endpointsStore).filter(e => e.namespaceId === namespaceId);
 	const apis = get(apisStore).filter(a => a.namespaceId === namespaceId);
 
-	return fields.length + constraints.length + objects.length + endpoints.length + apis.length;
+	return fields.length + fieldConstraints.length + objects.length + endpoints.length + apis.length;
 }
 
 /**
@@ -83,25 +83,25 @@ export function getNamespaceEntityCount(namespaceId: string): number {
  */
 export function getNamespaceEntityDetails(namespaceId: string): {
 	fields: number;
-	constraints: number;
+	fieldConstraints: number;
 	objects: number;
 	endpoints: number;
 	apis: number;
 	total: number;
 } {
 	const fields = get(fieldsStore).filter(f => f.namespaceId === namespaceId).length;
-	const constraints = get(constraintsStore).filter(v => v.namespaceId === namespaceId).length;
+	const fieldConstraints = get(fieldConstraintsStore).filter(v => v.namespaceId === namespaceId).length;
 	const objects = get(objectsStore).filter(o => o.namespaceId === namespaceId).length;
 	const endpoints = get(endpointsStore).filter(e => e.namespaceId === namespaceId).length;
 	const apis = get(apisStore).filter(a => a.namespaceId === namespaceId).length;
 
 	return {
 		fields,
-		constraints,
+		fieldConstraints,
 		objects,
 		endpoints,
 		apis,
-		total: fields + constraints + objects + endpoints + apis
+		total: fields + fieldConstraints + objects + endpoints + apis
 	};
 }
 
@@ -191,7 +191,7 @@ export function deleteNamespace(id: string): DeletionResult {
 		const details = getNamespaceEntityDetails(id);
 		const parts: string[] = [];
 		if (details.fields > 0) parts.push(`${details.fields} field${details.fields > 1 ? 's' : ''}`);
-		if (details.constraints > 0) parts.push(`${details.constraints} constraint${details.constraints > 1 ? 's' : ''}`);
+		if (details.fieldConstraints > 0) parts.push(`${details.fieldConstraints} field constraint${details.fieldConstraints > 1 ? 's' : ''}`);
 		if (details.objects > 0) parts.push(`${details.objects} object${details.objects > 1 ? 's' : ''}`);
 		if (details.endpoints > 0) parts.push(`${details.endpoints} endpoint${details.endpoints > 1 ? 's' : ''}`);
 		if (details.apis > 0) parts.push(`${details.apis} API${details.apis > 1 ? 's' : ''}`);
@@ -225,4 +225,4 @@ export function setActiveNamespace(namespaceId: string): void {
 }
 
 // Re-export the global namespace ID constant
-export { GLOBAL_NAMESPACE_ID } from './initialData';
+export { GLOBAL_NAMESPACE_ID } from '$lib/constants';

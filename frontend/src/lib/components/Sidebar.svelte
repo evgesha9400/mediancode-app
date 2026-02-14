@@ -26,7 +26,7 @@
       label: 'Validators',
       icon: 'fa-check-circle',
       children: [
-        { href: '/validators/constraints', label: 'Constraints', icon: 'fa-shield-halved' },
+        { href: '/validators/field-constraints', label: 'Field Constraints', icon: 'fa-shield-halved' },
         { href: '/validators/field-validators', label: 'Field Validators', icon: 'fa-input-text' },
         { href: '/validators/model-validators', label: 'Model Validators', icon: 'fa-diagram-project' }
       ]

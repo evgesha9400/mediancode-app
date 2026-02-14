@@ -1,219 +1,118 @@
 # Frontend Migration Plan: Align with Backend Schema Changes
 
-This document describes the complete migration plan for the Median Code frontend to align with backend schema changes. The migration is split into three sequential phases, each building on the previous.
+This document describes the migration plan for the Median Code frontend to align with backend schema changes. The migration is split into three sequential phases, each building on the previous.
 
 **Key backend changes driving this migration:**
-1. "Validators" are renamed to "Constraints" (the entity concept, API endpoints, and all references)
-2. Types lose `category` and `compatibleTypes` (already removed in commit `8d34a75`); types and constraints become "reference data" (read-only, no namespace scoping)
+1. "Validators" are renamed to "Field Constraints" (the entity concept, API endpoints, and all references)
+2. Types lose `category` and `compatibleTypes` (already removed in commit `8d34a75`); types and field constraints become "reference data" (read-only, no namespace scoping)
 3. Fields gain `constraints` (renamed from `validators`) and become a full CRUD entity with constraint integration
 4. Objects remain a CRUD entity with field references (minor naming updates only)
+
+**Naming convention (deviation from original plan):**
+The original plan specified `Constraint` / `constraintsStore`. The actual implementation uses `FieldConstraint` / `fieldConstraintsStore` throughout. This is intentional -- it distinguishes field-level constraints from future model-level constraints and aligns with the backend API endpoint `/field-constraints`. The generic `'constraint'` string is only used in the `Reference` type union (`'field' | 'api' | 'constraint'`).
 
 ---
 
 ## Table of Contents
 
-- [Phase 1: Types + Constraints (Reference Data)](#phase-1-types--constraints-reference-data)
-- [Phase 2: Fields (CRUD with Constraints)](#phase-2-fields-crud-with-constraints)
-- [Phase 3: Objects (CRUD with Field References)](#phase-3-objects-crud-with-field-references)
-- [Cross-Cutting Concerns](#cross-cutting-concerns)
-- [File Impact Summary](#file-impact-summary)
+- [Phase 1: Types + Field Constraints (Reference Data)](#phase-1-types--field-constraints-reference-data) -- **COMPLETED**
+- [Phase 2: Fields (CRUD with Constraints)](#phase-2-fields-crud-with-constraints) -- **COMPLETED**
+- [Phase 3: Objects (CRUD with Field References)](#phase-3-objects-crud-with-field-references) -- **COMPLETED**
+- [Cross-Cutting Concerns](#cross-cutting-concerns) -- **PARTIALLY COMPLETE**
+- [Follow-Up: Remove initialData Hardcoded Lookups](#follow-up-remove-initialdata-hardcoded-lookups) -- **NOT STARTED**
 
 ---
 
-## Phase 1: Types + Constraints (Reference Data)
+## Phase 1: Types + Field Constraints (Reference Data) -- COMPLETED
 
 ### Overview
 
-Phase 1 renames the "validators" entity to "constraints" throughout the entire codebase, merges the separate `/types` and `/validators` (now `/constraints`) pages into a single "Reference Data" page, and removes namespace scoping from both entities (they are global/read-only).
+Phase 1 renamed the "validators" entity to "field constraints" throughout the entire codebase, organized the `/validators` section with nested sidebar navigation (Field Constraints, Field Validators, Model Validators), and updated all references.
 
-### 1.1 Rename: Validators to Constraints
+### 1.1 Rename: Validators to Field Constraints -- COMPLETED
 
-Every occurrence of "validator" in code identifiers, API paths, UI labels, file names, and comments must change to "constraint". This is the single largest rename in the migration.
+All occurrences of "validator" in code identifiers, API paths, UI labels, file names, and comments have been changed to "fieldConstraint" / "field constraint".
 
-#### 1.1.1 Type/Interface Definitions
+#### Files Renamed
 
-**File: `src/lib/stores/initialData.ts`**
-- Rename `ValidatorBase` interface to `ConstraintBase`
-- Rename fields inside `ConstraintBase`:
-  - `type: 'string' | 'numeric'` stays (constraint type is still string/numeric)
-  - `category: 'inline' | 'custom'` stays (constraint category is still inline/custom)
-  - `exampleUsage: string` stays
-- Rename exported constants:
-  - `BUILTIN_VALIDATOR_IDS` -> `BUILTIN_CONSTRAINT_IDS`
-  - `initialInlineValidators` -> `initialInlineConstraints`
-  - `initialCustomValidators` -> `initialCustomConstraints`
-- Rename functions:
-  - `cloneValidatorBases()` -> `cloneConstraintBases()`
-- Rename `FieldValidator` interface to `FieldConstraint`
-  - Inside `Field` interface: `validators: FieldValidator[]` -> `constraints: FieldConstraint[]`
-- Update all seed field data: `validators: [...]` -> `constraints: [...]`
+| Original Path | New Path |
+|---|---|
+| `src/lib/stores/validators.ts` | `src/lib/stores/fieldConstraints.ts` |
+| `src/lib/api/validators.ts` | `src/lib/api/fieldConstraints.ts` |
+| `src/lib/components/api-generator/ValidatorSelectorDropdown.svelte` | `src/lib/components/api-generator/FieldConstraintSelectorDropdown.svelte` |
+| `tests/fixtures/validators.ts` | `tests/fixtures/constraints.ts` |
+| `tests/page-objects/ValidatorsPage.ts` | `tests/page-objects/ConstraintsPage.ts` (class: `FieldConstraintsPage`) |
+| `src/routes/(dashboard)/validators/constraints/+page.svelte` | `src/routes/(dashboard)/validators/field-constraints/+page.svelte` |
 
-**File: `src/lib/stores/validators.ts` -> RENAME to `src/lib/stores/constraints.ts`**
-- Rename entire file
-- Rename `Validator` interface to `Constraint` (extends `ConstraintBase`)
-  - `usedInFields: number` stays
-  - `fieldsUsingValidator` -> `fieldsUsingConstraint`
-- Rename store: `validatorsStore` -> `constraintsStore`
-- Rename all exported functions:
-  - `getTotalValidatorCount()` -> `getTotalConstraintCount()`
-  - `getValidatorsByNamespace()` -> `getConstraintsByNamespace()`
-  - `getValidatorCountByNamespace()` -> `getConstraintCountByNamespace()`
-  - `searchValidators()` -> `searchConstraints()`
-  - `getValidatorsByFieldType()` -> `getConstraintsByFieldType()`
-  - `getValidatorsByFieldTypeAndNamespace()` -> `getConstraintsByFieldTypeAndNamespace()`
-  - `deleteValidator()` -> `deleteConstraint()`
-  - `createValidator()` -> `createConstraint()`
-  - `addValidator()` -> `addConstraint()`
-- Update internal references (the `category === 'inline'` check in deleteConstraint, etc.)
+#### Files Deleted
 
-**File: `src/lib/types/index.ts`**
-- In `Reference` interface: update `type: 'field' | 'api' | 'validator'` -> `type: 'field' | 'api' | 'constraint'`
+| Path | Reason |
+|---|---|
+| `src/routes/(dashboard)/validators/+page.svelte` | Removed redirect hack |
+| `src/routes/(dashboard)/validators/+layout.svelte` | Removed tab layout (navigation moved to Sidebar) |
 
-**File: `src/lib/stores/types.ts`**
-- Rename `VALIDATOR_COMPATIBILITY` -> `CONSTRAINT_COMPATIBILITY`
-- Rename `getValidatorCategoriesForType()` -> `getConstraintCategoriesForType()`
-- All comments referencing "validator" -> "constraint"
+#### Key Naming Mappings (all completed)
 
-#### 1.1.2 API Client Layer
+| Original | New |
+|---|---|
+| `ValidatorBase` | `FieldConstraintBase` |
+| `Validator` | `FieldConstraint` |
+| `FieldValidator` (value type) | `FieldConstraintValue` |
+| `validatorsStore` | `fieldConstraintsStore` |
+| `BUILTIN_VALIDATOR_IDS` | `BUILTIN_FIELD_CONSTRAINT_IDS` |
+| `VALIDATOR_COMPATIBILITY` | `FIELD_CONSTRAINT_COMPATIBILITY` |
+| `ValidatorSelectorDropdown` | `FieldConstraintSelectorDropdown` |
+| `listValidators()` | `listFieldConstraints()` |
+| `getTotalValidatorCount()` | `getTotalFieldConstraintCount()` |
+| `getValidatorsByFieldType()` | `getFieldConstraintsByFieldType()` |
+| `checkValidatorDeletion()` | `checkFieldConstraintDeletion()` |
+| API endpoint `/validators` | `/field-constraints` |
+| Reference type `'validator'` | `'constraint'` |
 
-**File: `src/lib/api/validators.ts` -> RENAME to `src/lib/api/constraints.ts`**
-- Rename file
-- Rename `ValidatorResponse` interface to `ConstraintResponse`
-- Rename `FieldReferenceResponse` fields: `fieldsUsingValidator` -> `fieldsUsingConstraint`
-- Rename `transformValidator()` -> `transformConstraint()`
-- Rename `listValidators()` -> `listConstraints()`
-- Change API endpoint: `/validators` -> `/constraints`
-- Update import of `Validator` to `Constraint` from store
+#### All Modified Source Files (completed)
 
-**File: `src/lib/api/index.ts`**
-- Change `export * from './validators'` -> `export * from './constraints'`
+1. `src/lib/types/index.ts` -- Reference type: `'constraint'`
+2. `src/lib/stores/initialData.ts` -- All validator->fieldConstraint renames
+3. `src/lib/stores/fieldConstraints.ts` -- All internal renames
+4. `src/lib/stores/types.ts` -- `FIELD_CONSTRAINT_COMPATIBILITY`, `getFieldConstraintCategoriesForType()`
+5. `src/lib/stores/fields.ts` -- Re-exports `Field`, `FieldConstraintValue`; `searchFields()` uses `field.constraints`
+6. `src/lib/stores/loader.ts` -- Imports `listFieldConstraints`, `fieldConstraintsStore`
+7. `src/lib/stores/namespaces.ts` -- `fieldConstraintsStore`, entity details return `fieldConstraints`
+8. `src/lib/stores/apiGeneratorState.svelte.ts` -- Imports `fieldConstraintsStore`
+9. `src/lib/stores/apiDetailState.svelte.ts` -- Imports `fieldConstraintsStore`
+10. `src/lib/api/fieldConstraints.ts` -- `FieldConstraintResponse`, endpoint `/field-constraints`
+11. `src/lib/api/fields.ts` -- `FieldConstraintValueResponse`, `field.constraints`
+12. `src/lib/api/index.ts` -- Exports from `./fieldConstraints`
+13. `src/lib/utils/references.ts` -- `checkFieldConstraintDeletion()`
+14. `src/lib/components/api-generator/FieldConstraintSelectorDropdown.svelte` -- All internal renames
+15. `src/lib/components/api-generator/index.ts` -- Exports `FieldConstraintSelectorDropdown`
+16. `src/lib/components/Sidebar.svelte` -- Nested navigation with "Field Constraints" child item
 
-**File: `src/lib/api/fields.ts`**
-- Rename `FieldValidatorResponse` -> `FieldConstraintResponse`
-- Rename `transformFieldValidator()` -> `transformFieldConstraint()`
-- In `FieldResponse`: `validators` -> `constraints`
-- In `transformField()`: `validators: response.validators.map(...)` -> `constraints: response.constraints.map(...)`
-- In `CreateFieldRequest`: `validators` -> `constraints`
-- In `UpdateFieldRequest`: `validators` -> `constraints`
+#### All Modified Route Pages (completed)
 
-#### 1.1.3 Store Layer
+17. `src/routes/(dashboard)/validators/field-constraints/+page.svelte` -- Field Constraints page
+18. `src/routes/(dashboard)/field-registry/+page.svelte` -- All fieldConstraint references
+19. `src/routes/(dashboard)/dashboard/+page.svelte` -- Stat card: "Field Constraints"
+20. `src/routes/(dashboard)/namespaces/+page.svelte` -- `fieldConstraintCount`, "Field Constraints" label
 
-**File: `src/lib/stores/loader.ts`**
-- Change import: `listValidators` -> `listConstraints` (from `$lib/api/constraints`)
-- Change import: `validatorsStore` -> `constraintsStore` (from `./constraints`)
-- In `loadStoresFromApi()`: rename `validators` variable in destructuring and `.set()` call
-- In `resetStores()`: `validatorsStore.set([])` -> `constraintsStore.set([])`
+#### All Modified Test Files (completed)
 
-**File: `src/lib/stores/fields.ts`**
-- Update re-export: `export type { Field, FieldValidator }` -> `export type { Field, FieldConstraint }`
-- The `searchFields()` function references `field.validators.some(v => ...)` -> `field.constraints.some(c => ...)`
+21. `tests/fixtures/constraints.ts` -- `FieldConstraint`, `mockFieldConstraints`, `getFieldConstraintByName()`
+22. `tests/fixtures/index.ts` -- Updated imports/exports
+23. `tests/fixtures/fields.ts` -- Re-exports `FieldConstraintValue`
+24. `tests/fixtures/validate.ts` -- Uses `mockFieldConstraints`
+25. `tests/page-objects/ConstraintsPage.ts` -- Class `FieldConstraintsPage`, navigates to `/validators/field-constraints`
+26. `tests/page-objects/DashboardPage.ts` -- `fieldConstraintsCard`, `fieldConstraintsNavLink`
+27. `tests/page-objects/FieldRegistryPage.ts` -- `constraintSelectorInput`, `constraintDropdownOptions`
+28. `tests/page-objects/index.ts` -- Exports `FieldConstraintsPage`, `ConstraintsPage`
+29. `tests/shared/msw/handlers.ts` -- `mockFieldConstraints`, endpoint `/field-constraints`
+30. `tests/integration/routes/dashboard/page.test.ts` -- All fieldConstraint references
+31. `tests/unit/lib/stores/namespaces.test.ts` -- `fieldConstraintsStore`
+32. `tests/smoke/dashboard.spec.ts` -- Updated selectors
 
-**File: `src/lib/stores/namespaces.ts`**
-- Change import: `validatorsStore` -> `constraintsStore` (from `./constraints`)
-- In `getNamespaceEntityCount()`: `validators` -> `constraints`
-- In `getNamespaceEntityDetails()`: rename return field `validators` -> `constraints`
-- In `deleteNamespace()`: update error message string `validator` -> `constraint`
+### 1.2 Sidebar Navigation -- COMPLETED
 
-**File: `src/lib/stores/actions.ts`**
-- No direct validator actions exist yet (validators are read-only), but update any re-exports
-- In `CreateFieldRequest` and `UpdateFieldRequest` re-exports: field already references these from `$lib/api/fields` which will be updated
-
-**File: `src/lib/stores/apiGeneratorState.svelte.ts`**
-- Change import: `validatorsStore` -> `constraintsStore` (from `./constraints`)
-- In `generatePayload()` or wherever validators store is read: update variable name
-
-**File: `src/lib/stores/apiDetailState.svelte.ts`**
-- Change import: `validatorsStore` -> `constraintsStore` (from `./constraints`)
-- Update any references to the validators store
-
-#### 1.1.4 Utility Layer
-
-**File: `src/lib/utils/references.ts`**
-- Rename `checkValidatorDeletion()` -> `checkConstraintDeletion()`
-- Update all internal string literals: `"validator"` -> `"constraint"`, `"Validator"` -> `"Constraint"`
-- Update parameter names: `validatorName` -> `constraintName`, `fieldsUsingValidator` -> `fieldsUsingConstraint`
-- In `buildDeletionTooltip()`: the function is generic, no rename needed for the function itself, but callers will pass different strings
-
-#### 1.1.5 Component Layer
-
-**File: `src/lib/components/api-generator/ValidatorSelectorDropdown.svelte` -> RENAME to `ConstraintSelectorDropdown.svelte`**
-- Rename file
-- Rename `ValidatorSelectorDropdownProps` -> `ConstraintSelectorDropdownProps`
-- Change import: `type Validator` -> `type Constraint` (from `$lib/stores/constraints`)
-- Rename props:
-  - `availableValidators` -> `availableConstraints`
-  - `selectedValidatorNames` -> `selectedConstraintNames`
-- Rename internal variables: `filteredValidators` -> `filteredConstraints`
-- Update all UI text: "validator" -> "constraint", "No validators found" -> "No constraints found"
-
-**File: `src/lib/components/api-generator/index.ts`**
-- Rename export: `ValidatorSelectorDropdown` -> `ConstraintSelectorDropdown`
-- Rename type export: `ValidatorSelectorDropdownProps` -> `ConstraintSelectorDropdownProps`
-
-**File: `src/lib/components/index.ts`**
-- No direct change needed (re-exports from `./api-generator` which handles it)
-
-**File: `src/lib/components/Sidebar.svelte`**
-- Change nav item: `{ href: '/validators', label: 'Validators', icon: 'fa-check-circle' }`
-  -> This will change based on the merged page design (see section 1.2)
-
-#### 1.1.6 Route Pages
-
-**File: `src/routes/(dashboard)/validators/+page.svelte` -> This entire route is DELETED**
-- The standalone validators page is removed and replaced by the combined Reference Data page (see section 1.2)
-
-**File: `src/routes/(dashboard)/field-registry/+page.svelte`**
-- All imports referencing validators -> constraints:
-  - `validatorsStore` -> `constraintsStore`
-  - `getValidatorsByFieldType` -> `getConstraintsByFieldType`
-  - `getValidatorsByFieldTypeAndNamespace` -> `getConstraintsByFieldTypeAndNamespace`
-  - `type Validator` -> `type Constraint`
-  - `type FieldValidator` -> `type FieldConstraint`
-  - `ValidatorSelectorDropdown` -> `ConstraintSelectorDropdown`
-- Rename all template variables:
-  - `validators` -> `constraints`
-  - `availableValidators` -> `availableConstraints`
-  - `selectedValidatorNames` -> `selectedConstraintNames`
-  - `addValidator()` -> `addConstraint()`
-  - `removeValidator()` -> `removeConstraint()`
-  - `formatValidatorPill()` -> `formatConstraintPill()`
-- Update all UI labels: "Validators" -> "Constraints", "validator" -> "constraint"
-- Update filter config: `onlyHasValidators` -> `onlyHasConstraints`
-- Update `editedField.validators` -> `editedField.constraints` throughout template
-
-**File: `src/routes/(dashboard)/dashboard/+page.svelte`**
-- Change import: `getTotalValidatorCount` -> `getTotalConstraintCount` (from `$lib/stores/constraints`)
-- Rename variable: `totalValidators` -> `totalConstraints`
-- Update StatCard: `title="Validators"` -> `title="Constraints"`
-
-**File: `src/routes/(dashboard)/namespaces/+page.svelte`**
-- Rename derived property: `validatorCount` -> `constraintCount`
-- Update label in drawer details: "Validators" -> "Constraints"
-
-### 1.2 Merge Types + Constraints into "Reference Data" Page
-
-Types and Constraints (formerly Validators) are both read-only reference data with no namespace scoping. They remain as separate pages but are organized under a nested sidebar navigation structure. Types keeps its own route (`/types`), and Constraints lives under `/validators/constraints` alongside the future Field Validators and Model Validators pages.
-
-#### 1.2.1 Route Structure (Already Implemented)
-
-The validators section uses nested routes with separate pages (NOT tabs):
-
-```
-src/routes/(dashboard)/
-├── types/+page.svelte                          # Types page (standalone)
-└── validators/
-    ├── constraints/+page.svelte                 # Constraints page (standalone, has own PageHeader)
-    ├── field-validators/+page.svelte            # Field Validators (under construction)
-    └── model-validators/+page.svelte            # Model Validators (under construction)
-```
-
-Each page is self-contained with its own `PageHeader`, following the same pattern as every other dashboard page.
-
-#### 1.2.2 Sidebar Navigation (Already Implemented)
-
-**File: `src/lib/components/Sidebar.svelte`**
-
-The Sidebar uses nested `NavItem` children to show sub-items under "Validators":
+The Sidebar uses nested `NavItem` children:
 
 ```typescript
 const coreComponentItems: NavItem[] = [
@@ -223,7 +122,7 @@ const coreComponentItems: NavItem[] = [
     label: 'Validators',
     icon: 'fa-check-circle',
     children: [
-      { href: '/validators/constraints', label: 'Constraints', icon: 'fa-shield-halved' },
+      { href: '/validators/field-constraints', label: 'Field Constraints', icon: 'fa-shield-halved' },
       { href: '/validators/field-validators', label: 'Field Validators', icon: 'fa-input-text', disabled: true },
       { href: '/validators/model-validators', label: 'Model Validators', icon: 'fa-diagram-project', disabled: true }
     ]
@@ -234,472 +133,88 @@ const coreComponentItems: NavItem[] = [
 ];
 ```
 
-The `NavItem` type supports `children?: NavItem[]` for nested navigation. Disabled children show "Under construction" on hover.
+### 1.3 Route Structure -- COMPLETED
 
-#### 1.2.3 Dashboard Stat Card Changes
-
-**File: `src/routes/(dashboard)/dashboard/+page.svelte`**
-
-Currently shows separate "Types" and "Constraints" stat cards. Options:
-- **Option A**: Keep both stat cards but relabel "Validators" -> "Constraints"
-- **Option B**: Merge into a single "Reference Data" stat card showing combined count
-
-Recommended: **Option A** -- keep separate stat cards for Types and Constraints. They are distinct entity counts. Just rename "Validators" to "Constraints".
-
-### 1.3 Remove Namespace Scoping from Types and Constraints
-
-Types and constraints are global reference data. They should not be filtered by namespace.
-
-#### 1.3.1 Store Changes
-
-**File: `src/lib/stores/constraints.ts` (formerly validators.ts)**
-- Remove `getConstraintsByNamespace()` function (or keep but deprecate)
-- Remove `getConstraintCountByNamespace()` function
-- `getConstraintsByFieldTypeAndNamespace()` -> simplify to `getConstraintsByFieldType()` (remove namespace filter)
-  - Or keep both but the page will not pass namespaceId
-
-**File: `src/lib/stores/types.ts`**
-- Types have no namespace concept currently (they are hardcoded). No change needed.
-
-#### 1.3.2 Page Changes
-
-**File: `src/routes/(dashboard)/validators/constraints/+page.svelte`**
-- No `NamespaceSelector` component
-- No namespace filtering on the data
-- Display all constraints regardless of namespace
-
-#### 1.3.3 Namespace Entity Counting
-
-**File: `src/lib/stores/namespaces.ts`**
-- Remove constraints from `getNamespaceEntityCount()` and `getNamespaceEntityDetails()`
-- These functions should no longer count constraints as namespace-scoped entities
-- Update the return type of `getNamespaceEntityDetails()` to remove the `constraints` field
-
-**File: `src/routes/(dashboard)/namespaces/+page.svelte`**
-- Remove the constraints count display from namespace detail drawer
-- Remove `constraintCount` from the derived namespace data
-
-### 1.4 API Endpoint Changes
-
-**File: `src/lib/api/constraints.ts` (formerly validators.ts)**
-- Endpoint path changes: `/validators` -> `/constraints`
-- Response shape may change (confirm with backend):
-  - `ValidatorResponse.category` field: confirm if still present or renamed
-  - `ValidatorResponse.fieldsUsingValidator` -> `fieldsUsingConstraint`
-
-**File: `src/lib/api/types.ts`**
-- No endpoint change (still `/types`)
-- `TypeResponse` may lose fields (confirm with backend): `category`, `compatibleTypes` are already removed per commit `8d34a75`
-
-### 1.5 Test Changes for Phase 1
-
-#### Test Fixtures
-
-**File: `tests/fixtures/validators.ts` -> RENAME to `tests/fixtures/constraints.ts`**
-- Rename `ValidatorBase` -> `ConstraintBase`
-- Rename `Validator` -> `Constraint`
-- Rename all exports: `mockValidators` -> `mockConstraints`, `mockInlineValidators` -> `mockInlineConstraints`, etc.
-- Rename functions: `getValidatorByName` -> `getConstraintByName`, `getValidatorsByType` -> `getConstraintsByType`, `getValidatorsByCategory` -> `getConstraintsByCategory`
-- Update `fieldsUsingValidator` -> `fieldsUsingConstraint` in mock data
-
-**File: `tests/fixtures/index.ts`**
-- Update all imports and re-exports from `./constraints` instead of `./validators`
-- Rename all exported names accordingly
-
-**File: `tests/fixtures/types.ts`**
-- No rename needed. May need to remove `category`/`compatibleTypes` if they were present (they are not currently).
-
-**File: `tests/fixtures/fields.ts`**
-- Update mock field data: `validators` -> `constraints` in the `Field` interface references
-- Re-export `FieldConstraint` instead of `FieldValidator`
-
-**File: `tests/fixtures/validate.ts`**
-- Rename all `mockValidators` -> `mockConstraints`
-- Rename `validatorCompatibility` -> `constraintCompatibility`
-- Update all validation logic to use constraint naming
-
-#### Page Objects
-
-**File: `tests/page-objects/ConstraintsPage.ts`** (already renamed from ValidatorsPage)
-- Page title locator: `heading { name: 'Constraints' }` (each page has its own PageHeader)
-- `goto()` navigates to `/validators/constraints`
-- No tab-related locators (tabs have been removed)
-
-**File: `tests/page-objects/TypesPage.ts`**
-- No route changes needed (Types stays at `/types`)
-
-**File: `tests/page-objects/DashboardPage.ts`** (already updated)
-- `constraintsNavLink` uses sidebar-scoped selector: `[data-testid="dashboard-sidebar"] a[href="/validators/constraints"]`
-- Stat card titles already use "Constraints"
-
-**File: `tests/page-objects/index.ts`**
-- Already exports `ConstraintsPage` (ValidatorsPage removed)
-
-#### Test Files
-
-**File: `tests/shared/msw/handlers.ts`**
-- Rename all `mockValidators` imports -> `mockConstraints`
-- Rename `getValidatorByName` -> `getConstraintByName`
-- Update endpoint paths: `/api/validators` -> `/api/constraints`
-- Rename handler comments
-
-**File: `tests/integration/routes/dashboard/page.test.ts`**
-- Change import: `validatorsStore, getTotalValidatorCount` -> `constraintsStore, getTotalConstraintCount`
-- Rename: `initialInlineValidators` -> `initialInlineConstraints`, `initialCustomValidators` -> `initialCustomConstraints`
-- Rename helper: `createValidatorWithUsage()` -> `createConstraintWithUsage()`
-- Update all test descriptions: "validator" -> "constraint"
-- Update property assertions: `'category'`, `'validators'` -> `'constraints'`
-- Update expected values: validator count test
-
-**File: `tests/unit/lib/stores/fields.test.ts`**
-- Update any references to `validators` property on fields -> `constraints`
-
-**File: `tests/unit/lib/stores/namespaces.test.ts`**
-- Update `validatorsStore` import -> `constraintsStore`
-- Update entity count assertions
-
-**File: `tests/smoke/dashboard.spec.ts`**
-- Update: `dashboardPage.validatorsCard` -> `dashboardPage.constraintsCard`
-- Update: `dashboardPage.validatorsNavLink` -> `dashboardPage.referenceDataNavLink`
-
-**File: `tests/helpers/api-client.ts`**
-- In `ApiField` interface: `validators?: string[]` -> `constraints?: string[]`
+```
+src/routes/(dashboard)/
+├── types/+page.svelte                              # Types page (standalone)
+└── validators/
+    ├── field-constraints/+page.svelte               # Field Constraints page
+    ├── field-validators/+page.svelte                # Field Validators (under construction)
+    └── model-validators/+page.svelte                # Model Validators (under construction)
+```
 
 ---
 
-## Phase 2: Fields (CRUD with Constraints)
+## Phase 2: Fields (CRUD with Constraints) -- COMPLETED
 
-### Overview
-
-Phase 2 updates the Fields entity to use "constraints" (renamed from "validators") and ensures the full CRUD lifecycle works with the renamed constraint integration. The route stays at `/field-registry` but internal naming is fully updated.
-
-### 2.1 Field Interface Updates
-
-These changes were partially initiated in Phase 1 (renaming `validators` to `constraints` on the `Field` type). Phase 2 ensures the full CRUD flow works end-to-end.
-
-#### 2.1.1 Type Definitions (completed in Phase 1, verified here)
-
-**File: `src/lib/stores/initialData.ts`**
-- `Field.validators` -> `Field.constraints` (done in Phase 1)
-- `FieldValidator` -> `FieldConstraint` (done in Phase 1)
-
-**File: `src/lib/stores/fields.ts`**
-- Re-export: `export type { Field, FieldConstraint }` (done in Phase 1)
-- `searchFields()`: update `field.validators.some(...)` -> `field.constraints.some(...)` (done in Phase 1)
-- `createField()`: update `validators: options.validators ?? []` -> `constraints: options.constraints ?? []`
-
-#### 2.1.2 API Client (completed in Phase 1, verified here)
-
-**File: `src/lib/api/fields.ts`**
-- `FieldValidatorResponse` -> `FieldConstraintResponse` (done in Phase 1)
-- `FieldResponse.validators` -> `FieldResponse.constraints` (done in Phase 1)
-- `CreateFieldRequest.validators` -> `CreateFieldRequest.constraints` (done in Phase 1)
-- `UpdateFieldRequest.validators` -> `UpdateFieldRequest.constraints` (done in Phase 1)
-
-#### 2.1.3 Actions Layer
-
-**File: `src/lib/stores/actions.ts`**
-- `CreateFieldRequest` and `UpdateFieldRequest` type re-exports will automatically pick up the constraint rename from `$lib/api/fields`
-- No additional changes needed beyond what Phase 1 already handles
-
-### 2.2 Field Registry Page Updates
-
-**File: `src/routes/(dashboard)/field-registry/+page.svelte`**
-
-All the import and variable renames were done in Phase 1. Phase 2 focuses on verifying the full CRUD flow:
-
-**Create flow:**
-- `createFieldDraft()` returns `{ ...constraints: [] }` instead of `{ ...validators: [] }`
-- `handleCreate()` sends `constraints: editedField.constraints` instead of `validators: editedField.validators`
-
-**Edit flow:**
-- `handleSave()` sends `constraints: editedField.constraints` instead of `validators: editedField.validators`
-- `handleTypeChange()` resets `constraints: []` instead of `validators: []`
-
-**Drawer template:**
-- Section header: "Constraints (N)" instead of "Validators (N)"
-- `ConstraintSelectorDropdown` component with renamed props
-- Constraint pills display using `formatConstraintPill()` instead of `formatValidatorPill()`
-- "No constraints selected" instead of "No validators selected"
-- Remove constraint button label: "Remove constraint" instead of "Remove validator"
-- Missing constraint fallback: "Constraint not found" instead of "Validator not found"
-
-**Filter config:**
-- `onlyHasConstraints` filter key (renamed in Phase 1)
-- Toggle label: "Has constraints only" instead of "Has validators only"
-
-**Table columns:**
-- Column header: "Constraints" instead of "Validators"
-- The constraint pill rendering in the table body uses `field.constraints` instead of `field.validators`
-
-### 2.3 Constraint Selector Dropdown Component
-
-**File: `src/lib/components/api-generator/ConstraintSelectorDropdown.svelte` (renamed in Phase 1)**
-
-Verify all internal logic works:
-- Filtering constraints by search query
-- Excluding already-selected constraints
-- Displaying constraint name, type, and description in dropdown
-- Empty state messages reference "constraints"
-
-### 2.4 Test Changes for Phase 2
-
-**File: `tests/page-objects/FieldRegistryPage.ts`**
-- Rename properties:
-  - `validatorSelectorInput` -> `constraintSelectorInput`
-  - `validatorDropdownOptions` -> `constraintDropdownOptions`
-  - `validatorRows` -> `constraintRows`
-- Update selectors referencing "validator" text -> "constraint"
-- Update `goto()` URL: stays at `/field-registry` (no route change)
-
-**File: `tests/e2e/crud/fields.spec.ts`**
-- Update any test assertions referencing "validators" -> "constraints"
-- Update any test data creation using `validators` field -> `constraints` field
-
-**File: `tests/unit/lib/stores/fields.test.ts`**
-- Update all `validators` property references -> `constraints`
-- Update `FieldValidator` type references -> `FieldConstraint`
-
-**File: `tests/integration/routes/dashboard/page.test.ts`**
-- Field structure assertions: `expect(field).toHaveProperty('validators')` -> `expect(field).toHaveProperty('constraints')`
+All field CRUD flows use `constraints` property (renamed from `validators`). The `FieldConstraintSelectorDropdown` component works correctly with the renamed props. Field Registry page fully updated with:
+- `field.constraints` property throughout
+- `FieldConstraintSelectorDropdown` component
+- Filter key `onlyHasConstraints`
+- UI labels: "Field Constraints" in table columns, drawer sections, and pills
 
 ---
 
-## Phase 3: Objects (CRUD with Field References)
+## Phase 3: Objects (CRUD with Field References) -- COMPLETED
 
-### Overview
-
-Phase 3 covers the Objects entity. The Objects page and store are already well-structured with full CRUD support. The main changes in Phase 3 are minimal since the object entity itself is not being renamed. The key integration point is that objects reference fields (which now have `constraints` instead of `validators`), so any code that reads through from objects to field details needs to use the updated field interface.
-
-### 3.1 Object Interface -- No Changes Required
-
-**File: `src/lib/types/index.ts`**
-- `ObjectDefinition` interface: no changes needed
-- `ObjectFieldReference` interface: no changes needed
-
-**File: `src/lib/stores/objects.ts`**
-- No interface changes needed
-- No function rename needed
-
-**File: `src/lib/api/objects.ts`**
-- No changes needed (endpoints stay at `/objects`, response shape unchanged)
-
-### 3.2 Object Builder Page -- Minor Updates
-
-**File: `src/routes/(dashboard)/object-builder/+page.svelte`**
-
-The object builder page references `fieldsStore` and `getFieldById()` to display field details in the drawer. Since the `Field` interface now has `constraints` instead of `validators`, any place in the object builder that displays field details must use the updated property name.
-
-**Specific changes:**
-- In the drawer field list, if field type/description is shown, no change needed (these properties are unchanged)
-- If the field's constraints are displayed anywhere in the object builder (currently they are NOT -- the object builder only shows field name, type, description, and required toggle), no change needed
-- The `FieldSelectorDropdown` component displays field name, type, and description -- no constraint references
-
-**Conclusion: No code changes needed in the object builder page for Phase 3.** The object builder does not display field constraints directly. It only references `fieldId` and `required`.
-
-### 3.3 Object Builder -- Verify CRUD Flow
-
-Verify the following still works with the updated field interface:
-1. **Create object**: Select fields from the namespace-scoped field dropdown. Fields now have `constraints` instead of `validators` but the dropdown only uses `field.name`, `field.type`, `field.description`.
-2. **Edit object**: Same field dropdown behavior.
-3. **Delete object**: Reference checking uses `usedInApis` which is unchanged.
-
-### 3.4 API Generator Integration
-
-Objects are referenced by the API generator for request/response body selection. These references use `objectId` and do not traverse into field constraints.
-
-**Files that reference objects and fields together:**
-
-**File: `src/lib/components/api-generator/ResponseBodyEditor.svelte`**
-- References `objectsStore`, `getObjectById()`, `getFieldById()`
-- Displays field names and types from objects
-- Does NOT display field constraints -- no changes needed
-
-**File: `src/lib/components/api-generator/RequestBodyEditor.svelte`**
-- Same pattern as ResponseBodyEditor -- no changes needed
-
-**File: `src/lib/components/api-generator/QueryParametersEditor.svelte`**
-- Same pattern -- no changes needed
-
-**File: `src/lib/utils/examples.ts`**
-- Generates example JSON from objects and fields
-- References `getFieldById()` and uses `field.type` -- does NOT use `field.validators`/`field.constraints`
-- No changes needed
-
-### 3.5 Test Changes for Phase 3
-
-**File: `tests/page-objects/ObjectBuilderPage.ts`**
-- No changes needed (object builder does not reference validators/constraints directly)
-
-**File: `tests/unit/lib/stores/objects.test.ts`**
-- No changes needed (object store tests do not reference validators/constraints)
-
-**File: `tests/fixtures/index.ts`**
-- Already updated in Phase 1 to export `FieldConstraint` instead of `FieldValidator`
+No code changes were needed. The object builder does not reference field constraints directly -- it only uses `fieldId` and `required`. API generator components reference fields by name/type/description without traversing into constraints.
 
 ---
 
 ## Cross-Cutting Concerns
 
-### CC.1 CLAUDE.md Updates
+### CC.1 CLAUDE.md Updates -- NOT DONE
 
 **File: `CLAUDE.md`**
-- Update project structure section:
-  - Keep `/types/` route entry
-  - Update `/validators/` to show nested routes (`constraints/`, `field-validators/`, `model-validators/`)
-- Update "Dashboard Routes" section to reflect nested validator routes
-- Update all mentions of "validators" -> "constraints" in the document
-- Update store file references: `validators.ts` -> `constraints.ts`
-- Update component references: `ValidatorSelectorDropdown` -> `ConstraintSelectorDropdown`
-- Update the Directory Structure Reference to reflect file renames
+- [ ] Update project structure section: show nested routes under `validators/` (`field-constraints/`, `field-validators/`, `model-validators/`)
+- [ ] Update "Dashboard Routes" section to list nested validator routes
+- [ ] Update store file references: `validators.ts` -> `fieldConstraints.ts`
+- [ ] Update component references: `ValidatorSelectorDropdown` -> `FieldConstraintSelectorDropdown`
+- [ ] Update the Directory Structure Reference to show `fieldConstraints.ts` instead of `validators.ts`
 
-### CC.2 API Spec
-
-**File: `api-spec.yaml`** (if maintained in this repo)
-- Update endpoint paths: `/validators` -> `/constraints`
-- Update schema names: `ValidatorResponse` -> `ConstraintResponse`
-- Update field names in schemas
-
-### CC.3 Prototypes Page
-
-**File: `src/routes/(dashboard)/prototypes/response-body/+page.svelte`**
-- References `fieldsStore` and `objectsStore` but does NOT reference validators/constraints
-- No changes needed
-
-### CC.4 Fixtures Schema Documentation
+### CC.2 Test Fixtures Schema Documentation -- NOT DONE
 
 **File: `tests/fixtures/SCHEMA.md`**
-- Update entity names: validators -> constraints
-- Update field property names
+- [ ] Update all "validator" references to "field constraint" (~30 occurrences)
+- [ ] Update type/interface names: `ValidatorBase` -> `FieldConstraintBase`, `Validator` -> `FieldConstraint`
+- [ ] Update property names: `fieldsUsingValidator` -> `fieldsUsingFieldConstraint`
+- [ ] Update `FieldValidator` -> `FieldConstraintValue`
+- [ ] Update `Field.validators` -> `Field.constraints`
+- [ ] Update seed data descriptions
+- [ ] Update fixture import examples at bottom
+
+### CC.3 API Spec -- DEFERRED
+
+**File: `api-spec.yaml`** (if maintained in this repo)
+- Endpoint and schema updates will be done when the backend API spec is finalized
+
+### CC.4 Prototypes Page -- NO CHANGES NEEDED
+
+`src/routes/(dashboard)/prototypes/response-body/+page.svelte` does not reference validators/constraints.
 
 ---
 
-## File Impact Summary
+## Follow-Up: Remove initialData Hardcoded Lookups -- NOT STARTED
 
-### Files to RENAME
+A separate implementation plan exists at `docs/remove-initialData-hardcoded-lookups.md`. This is a follow-up task that eliminates `src/lib/stores/initialData.ts` as a production dependency by:
 
-| Current Path | New Path |
-|---|---|
-| `src/lib/stores/validators.ts` | `src/lib/stores/constraints.ts` |
-| `src/lib/api/validators.ts` | `src/lib/api/constraints.ts` |
-| `src/lib/components/api-generator/ValidatorSelectorDropdown.svelte` | `src/lib/components/api-generator/ConstraintSelectorDropdown.svelte` |
-| `tests/fixtures/validators.ts` | `tests/fixtures/constraints.ts` |
-| `tests/page-objects/ValidatorsPage.ts` | `tests/page-objects/ConstraintsPage.ts` |
+1. Making types load before fields (sequential loading in `loader.ts`)
+2. Removing hardcoded type definitions from `types.ts`
+3. Resolving `typeId` from the types store instead of `BUILTIN_TYPE_IDS` map
+4. Moving `GLOBAL_NAMESPACE_ID` to `src/lib/constants.ts`
+5. Moving `Field`, `FieldConstraintValue`, `FieldConstraintBase` type definitions to `src/lib/types/index.ts`
+6. Moving seed data and clone helpers to `tests/fixtures/seedData.ts`
+7. Deleting `src/lib/stores/initialData.ts`
 
-### Files to DELETE
-
-| Path | Reason |
-|---|---|
-| `src/routes/(dashboard)/validators/+page.svelte` | Removed redirect hack (was `goto('/validators/constraints')`) |
-| `src/routes/(dashboard)/validators/+layout.svelte` | Removed tab layout (navigation moved to Sidebar) |
-
-### Files to CREATE
-
-_No new files needed for Phase 1 route changes. Pages already exist as nested routes under `/validators/`._
-
-### Files to MODIFY (by phase)
-
-#### Phase 1 Modifications (30+ files)
-
-**Source files:**
-1. `src/lib/types/index.ts` -- Reference type rename
-2. `src/lib/stores/initialData.ts` -- All validator->constraint renames, Field.validators->constraints
-3. `src/lib/stores/constraints.ts` (after rename) -- All internal renames
-4. `src/lib/stores/types.ts` -- VALIDATOR_COMPATIBILITY -> CONSTRAINT_COMPATIBILITY
-5. `src/lib/stores/fields.ts` -- Re-export rename, searchFields update
-6. `src/lib/stores/loader.ts` -- Import/usage renames
-7. `src/lib/stores/namespaces.ts` -- Import/count renames, remove constraint from entity counts
-8. `src/lib/stores/apiGeneratorState.svelte.ts` -- Import rename
-9. `src/lib/stores/apiDetailState.svelte.ts` -- Import rename
-10. `src/lib/api/constraints.ts` (after rename) -- All internal renames, endpoint path
-11. `src/lib/api/fields.ts` -- FieldValidatorResponse, CreateFieldRequest, UpdateFieldRequest renames
-12. `src/lib/api/index.ts` -- Export path
-13. `src/lib/utils/references.ts` -- Function rename, string literals
-14. `src/lib/components/api-generator/ConstraintSelectorDropdown.svelte` (after rename) -- All internal renames
-15. `src/lib/components/api-generator/index.ts` -- Export rename
-16. `src/lib/components/Sidebar.svelte` -- Nav items restructure
-17. `src/routes/(dashboard)/field-registry/+page.svelte` -- All validator->constraint renames
-18. `src/routes/(dashboard)/dashboard/+page.svelte` -- Import/label renames
-19. `src/routes/(dashboard)/namespaces/+page.svelte` -- Count/label renames
-
-**Test files:**
-20. `tests/fixtures/constraints.ts` (after rename) -- All renames
-21. `tests/fixtures/index.ts` -- Import/export renames
-22. `tests/fixtures/fields.ts` -- Type re-exports
-23. `tests/fixtures/validate.ts` -- All validator->constraint renames
-24. `tests/page-objects/ConstraintsPage.ts` (after rename) -- Class/selector renames
-25. `tests/page-objects/TypesPage.ts` -- goto() URL update
-26. `tests/page-objects/DashboardPage.ts` -- Property/selector renames
-27. `tests/page-objects/index.ts` -- Export renames
-28. `tests/shared/msw/handlers.ts` -- Import/endpoint renames
-29. `tests/integration/routes/dashboard/page.test.ts` -- All renames
-30. `tests/unit/lib/stores/fields.test.ts` -- Property renames
-31. `tests/unit/lib/stores/namespaces.test.ts` -- Import/assertion renames
-32. `tests/smoke/dashboard.spec.ts` -- Selector renames
-33. `tests/helpers/api-client.ts` -- ApiField.validators -> constraints
-
-**Documentation:**
-34. `CLAUDE.md` -- Route/file/naming updates
-
-#### Phase 2 Modifications (5 files, mostly verification)
-
-1. `src/routes/(dashboard)/field-registry/+page.svelte` -- Verify CRUD flow with constraints
-2. `src/lib/stores/fields.ts` -- Verify createField uses constraints
-3. `tests/page-objects/FieldRegistryPage.ts` -- Selector renames
-4. `tests/e2e/crud/fields.spec.ts` -- Assertion updates
-5. `tests/unit/lib/stores/fields.test.ts` -- Property assertion updates
-
-#### Phase 3 Modifications (0-2 files, verification only)
-
-1. Verify `src/routes/(dashboard)/object-builder/+page.svelte` -- no code changes expected
-2. Verify `src/lib/components/api-generator/ResponseBodyEditor.svelte` -- no code changes expected
+This is independent of the validator-to-constraint rename and can be done at any time.
 
 ---
 
-## Execution Order
+## Validation -- NOT YET RUN
 
-### Phase 1 (estimated: large)
-1. Rename files (stores, API, component, test fixtures, page objects)
-2. Update all type/interface definitions
-3. Update store implementations
-4. Update API client layer
-5. Update utility functions
-6. Update component internals
-7. Constraints page already exists at `/validators/constraints` (no new route needed)
-8. Tab layout and redirect hack already removed
-9. Sidebar already updated with nested navigation
-10. Update Dashboard stat cards
-11. Remove namespace scoping from constraints
-12. Update all test files
-13. Update CLAUDE.md
-14. Run `bun run svelte-check --tsconfig ./tsconfig.json`
-15. Run `bun run test` (unit/integration)
-16. Run `bunx playwright test` (E2E)
+Before committing the migration changes, run:
 
-### Phase 2 (estimated: small)
-1. Verify field CRUD with constraints (create, edit, delete flows)
-2. Update remaining test assertions
-3. Run full test suite
-
-### Phase 3 (estimated: minimal)
-1. Verify object CRUD with updated field interface
-2. Verify API generator integration
-3. Run full test suite
-
----
-
-## Open Questions for Backend Confirmation
-
-1. **Constraint API response shape**: Does the `/constraints` endpoint return the same fields as `/validators` (just renamed)?  Specifically:
-   - Is `category: 'inline' | 'custom'` still present?
-   - Is `fieldsUsingConstraint` (renamed from `fieldsUsingValidator`) still present?
-   - Is `exampleUsage` still present?
-   - Is `parameterType` still present?
-
-2. **Field API request shape**: Does `CreateFieldRequest` now use `constraints` instead of `validators` as the field name?
-
-3. **Types API**: Are there any additional changes to the `/types` endpoint response beyond the already-removed `category` and `compatibleTypes`?
-
-4. **Namespace scoping**: Confirm that constraints are NOT namespace-scoped (no `namespaceId` filter on the `/constraints` endpoint).
-
-5. **Constraint CRUD**: Are constraints still read-only from the frontend perspective? Or will the backend support full CRUD for constraints in the future?
+1. `bun run svelte-check --tsconfig ./tsconfig.json` -- must pass with 0 errors
+2. `bun run test` -- all unit/integration tests must pass
+3. `pkill -f "vite" 2>/dev/null && bunx playwright test --project=smoke` -- smoke tests pass

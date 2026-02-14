@@ -1,6 +1,5 @@
 import { writable, derived, get } from 'svelte/store';
 import { fieldsStore } from './fields';
-import { BUILTIN_TYPE_IDS } from './initialData';
 
 export type PrimitiveTypeName = 'str' | 'int' | 'float' | 'bool' | 'datetime' | 'uuid';
 export type AbstractTypeName = 'numeric';
@@ -15,85 +14,9 @@ export interface TypeBase {
 	parentTypeId: string | null;
 }
 
-/**
- * @deprecated Constraint compatibility is now driven by constraint.compatibleTypes from the backend.
- * Kept temporarily for any code that still references it during migration.
- */
-const CONSTRAINT_COMPATIBILITY: Record<string, string[]> = {
-	str: ['string'],
-	int: ['numeric'],
-	float: ['numeric'],
-	bool: [],
-	datetime: [],
-	uuid: [],
-	numeric: ['numeric']
-};
-
 export interface FieldType extends TypeBase {
 	usedInFields: number;
 }
-
-const primitiveTypes: TypeBase[] = [
-	{
-		id: BUILTIN_TYPE_IDS.str,
-		name: 'str',
-		pythonType: 'str',
-		description: 'String type for text data',
-		importPath: null,
-		parentTypeId: null
-	},
-	{
-		id: BUILTIN_TYPE_IDS.int,
-		name: 'int',
-		pythonType: 'int',
-		description: 'Integer type for whole numbers',
-		importPath: null,
-		parentTypeId: null
-	},
-	{
-		id: BUILTIN_TYPE_IDS.float,
-		name: 'float',
-		pythonType: 'float',
-		description: 'Float type for decimal numbers',
-		importPath: null,
-		parentTypeId: null
-	},
-	{
-		id: BUILTIN_TYPE_IDS.bool,
-		name: 'bool',
-		pythonType: 'bool',
-		description: 'Boolean type for true/false values',
-		importPath: null,
-		parentTypeId: null
-	},
-	{
-		id: BUILTIN_TYPE_IDS.datetime,
-		name: 'datetime',
-		pythonType: 'datetime',
-		description: 'DateTime type for date and time values',
-		importPath: null,
-		parentTypeId: null
-	},
-	{
-		id: BUILTIN_TYPE_IDS.uuid,
-		name: 'uuid',
-		pythonType: 'UUID',
-		description: 'UUID type for unique identifiers',
-		importPath: null,
-		parentTypeId: null
-	}
-];
-
-const abstractTypes: TypeBase[] = [
-	{
-		id: '00000000-0000-0000-0001-000000000007',
-		name: 'numeric',
-		pythonType: 'int | float',
-		description: 'Abstract grouping for numeric types (int, float)',
-		importPath: null,
-		parentTypeId: null
-	}
-];
 
 // Base store for type definitions (without usage data)
 // Starts empty — populated by the loader with API data
@@ -144,11 +67,6 @@ export function searchTypes(types: FieldType[], query: string): FieldType[] {
 		type.pythonType.toLowerCase().includes(lowerQuery) ||
 		type.description.toLowerCase().includes(lowerQuery)
 	);
-}
-
-// Get constraint categories compatible with a specific field type
-export function getConstraintCategoriesForType(typeName: PrimitiveTypeName): string[] {
-	return CONSTRAINT_COMPATIBILITY[typeName] || [];
 }
 
 /**

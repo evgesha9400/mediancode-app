@@ -1,30 +1,24 @@
 /**
- * Centralized Initial Data Module
+ * Seed Data for Tests
  *
- * This module serves as the single source of truth for all seed data used across
- * the application and tests. By centralizing data here, we ensure consistency
- * between runtime stores and test fixtures.
+ * Contains all well-known UUIDs, seed entity data, and clone helpers
+ * that were previously in src/lib/stores/initialData.ts.
  *
- * Usage:
- * - Stores import this data for initial state
- * - Test fixtures re-export or clone this data
- * - Any data changes happen in ONE place
- *
- * Pattern: This follows CLAUDE.md rules - shared data belongs in a central module.
- *
- * ID Format: All IDs use UUIDs to match the backend's UUID-based ID system.
- * Seed data uses well-known UUIDs for predictability and cross-referencing.
+ * This data is used exclusively by test fixtures to construct mock data.
+ * Production code does NOT import from this file.
  */
 
-import type { PrimitiveTypeName } from './types';
-import type { ObjectDefinition, Namespace } from '$lib/types';
+import type { PrimitiveTypeName } from '../../src/lib/stores/types';
+import type { Field, FieldConstraintValue, FieldConstraintBase, ObjectDefinition, Namespace } from '../../src/lib/types';
+import { GLOBAL_NAMESPACE_ID } from '../../src/lib/constants';
+
+// Re-export for convenience
+export { GLOBAL_NAMESPACE_ID } from '../../src/lib/constants';
 
 // ============================================================================
 // Namespace Data
 // ============================================================================
 
-/** Global namespace UUID - matches backend well-known UUID */
-export const GLOBAL_NAMESPACE_ID = '00000000-0000-0000-0000-000000000001';
 export const USER_NAMESPACE_ID = '00000000-0000-0000-0000-000000000002';
 
 export const initialNamespaces: Namespace[] = [
@@ -57,7 +51,7 @@ export function cloneNamespaces(namespaces: Namespace[] = initialNamespaces): Na
 
 /**
  * Built-in type UUIDs - these match the backend's well-known type IDs.
- * Used for referencing primitive types throughout the application.
+ * Used for referencing primitive types in test fixtures.
  */
 export const BUILTIN_TYPE_IDS = {
 	str: '00000000-0000-0000-0001-000000000001',
@@ -69,15 +63,13 @@ export const BUILTIN_TYPE_IDS = {
 } as const;
 
 /**
- * Built-in constraint UUIDs - these match the backend's well-known constraint IDs.
- * Used for referencing built-in constraints throughout the application.
+ * Built-in field constraint UUIDs - these match the backend's well-known field constraint IDs.
+ * Used for referencing built-in field constraints in test fixtures.
  */
-export const BUILTIN_CONSTRAINT_IDS = {
+export const BUILTIN_FIELD_CONSTRAINT_IDS = {
 	max_length: '00000000-0000-0000-0002-000000000001',
 	min_length: '00000000-0000-0000-0002-000000000002',
 	pattern: '00000000-0000-0000-0002-000000000003',
-	email_format: '00000000-0000-0000-0002-000000000004',
-	url_format: '00000000-0000-0000-0002-000000000005',
 	gt: '00000000-0000-0000-0002-000000000006',
 	ge: '00000000-0000-0000-0002-000000000007',
 	lt: '00000000-0000-0000-0002-000000000008',
@@ -90,7 +82,7 @@ export const BUILTIN_CONSTRAINT_IDS = {
 // ============================================================================
 
 /** Seed field UUIDs - used for local development and testing */
-const SEED_FIELD_IDS = {
+export const SEED_FIELD_IDS = {
 	email: '10000000-0000-0000-0000-000000000001',
 	username: '10000000-0000-0000-0000-000000000002',
 	password: '10000000-0000-0000-0000-000000000003',
@@ -107,7 +99,7 @@ const SEED_FIELD_IDS = {
 } as const;
 
 /** Seed object UUIDs - used for local development and testing */
-const SEED_OBJECT_IDS = {
+export const SEED_OBJECT_IDS = {
 	user: '20000000-0000-0000-0000-000000000001',
 	product: '20000000-0000-0000-0000-000000000002',
 	order: '20000000-0000-0000-0000-000000000003',
@@ -120,7 +112,7 @@ const SEED_OBJECT_IDS = {
 } as const;
 
 /** Seed API UUIDs - used for local development and testing */
-const SEED_API_IDS = {
+export const SEED_API_IDS = {
 	api_1: '30000000-0000-0000-0000-000000000001',
 	api_2: '30000000-0000-0000-0000-000000000002',
 	api_3: '30000000-0000-0000-0000-000000000003'
@@ -129,22 +121,6 @@ const SEED_API_IDS = {
 // ============================================================================
 // Field Data
 // ============================================================================
-
-export interface FieldConstraint {
-	name: string;
-	params?: Record<string, any>;
-}
-
-export interface Field {
-	id: string;
-	namespaceId: string;
-	name: string;
-	type: PrimitiveTypeName;
-	description?: string;
-	defaultValue?: string;
-	constraints: FieldConstraint[];
-	usedInApis: string[];
-}
 
 export const initialFields: Field[] = [
 	{
@@ -155,8 +131,7 @@ export const initialFields: Field[] = [
 		description: 'User email address',
 		defaultValue: '',
 		constraints: [
-			{ name: 'max_length', params: { value: 255 } },
-			{ name: 'email_format' }
+			{ name: 'max_length', params: { value: 255 } }
 		],
 		usedInApis: [SEED_API_IDS.api_1, SEED_API_IDS.api_2]
 	},
@@ -245,8 +220,7 @@ export const initialFields: Field[] = [
 		defaultValue: '',
 		constraints: [
 			{ name: 'min_length', params: { value: 5 } },
-			{ name: 'max_length', params: { value: 255 } },
-			{ name: 'url_format' }
+			{ name: 'max_length', params: { value: 255 } }
 		],
 		usedInApis: []
 	},
@@ -301,22 +275,12 @@ export const initialFields: Field[] = [
 ];
 
 // ============================================================================
-// Constraint Data
+// Field Constraint Data
 // ============================================================================
 
-export interface ConstraintBase {
-	id: string;
-	namespaceId: string;
-	name: string;
-	description: string;
-	parameterType: string;
-	docsUrl: string | null;
-	compatibleTypes: string[];
-}
-
-export const initialConstraints: ConstraintBase[] = [
+export const initialFieldConstraints: FieldConstraintBase[] = [
 	{
-		id: BUILTIN_CONSTRAINT_IDS.max_length,
+		id: BUILTIN_FIELD_CONSTRAINT_IDS.max_length,
 		namespaceId: GLOBAL_NAMESPACE_ID,
 		name: 'max_length',
 		description: 'Validates that length does not exceed maximum',
@@ -325,7 +289,7 @@ export const initialConstraints: ConstraintBase[] = [
 		compatibleTypes: ['str']
 	},
 	{
-		id: BUILTIN_CONSTRAINT_IDS.min_length,
+		id: BUILTIN_FIELD_CONSTRAINT_IDS.min_length,
 		namespaceId: GLOBAL_NAMESPACE_ID,
 		name: 'min_length',
 		description: 'Validates minimum string length',
@@ -334,7 +298,7 @@ export const initialConstraints: ConstraintBase[] = [
 		compatibleTypes: ['str']
 	},
 	{
-		id: BUILTIN_CONSTRAINT_IDS.pattern,
+		id: BUILTIN_FIELD_CONSTRAINT_IDS.pattern,
 		namespaceId: GLOBAL_NAMESPACE_ID,
 		name: 'pattern',
 		description: 'Validates against regex pattern',
@@ -343,25 +307,7 @@ export const initialConstraints: ConstraintBase[] = [
 		compatibleTypes: ['str']
 	},
 	{
-		id: BUILTIN_CONSTRAINT_IDS.email_format,
-		namespaceId: GLOBAL_NAMESPACE_ID,
-		name: 'email_format',
-		description: 'Validates email address format',
-		parameterType: 'None',
-		docsUrl: 'https://docs.pydantic.dev/latest/concepts/validators/',
-		compatibleTypes: ['str']
-	},
-	{
-		id: BUILTIN_CONSTRAINT_IDS.url_format,
-		namespaceId: GLOBAL_NAMESPACE_ID,
-		name: 'url_format',
-		description: 'Validates URL format',
-		parameterType: 'None',
-		docsUrl: 'https://docs.pydantic.dev/latest/concepts/validators/',
-		compatibleTypes: ['str']
-	},
-	{
-		id: BUILTIN_CONSTRAINT_IDS.gt,
+		id: BUILTIN_FIELD_CONSTRAINT_IDS.gt,
 		namespaceId: GLOBAL_NAMESPACE_ID,
 		name: 'gt',
 		description: 'Greater than validation',
@@ -370,7 +316,7 @@ export const initialConstraints: ConstraintBase[] = [
 		compatibleTypes: ['int', 'float']
 	},
 	{
-		id: BUILTIN_CONSTRAINT_IDS.ge,
+		id: BUILTIN_FIELD_CONSTRAINT_IDS.ge,
 		namespaceId: GLOBAL_NAMESPACE_ID,
 		name: 'ge',
 		description: 'Greater than or equal validation',
@@ -379,7 +325,7 @@ export const initialConstraints: ConstraintBase[] = [
 		compatibleTypes: ['int', 'float']
 	},
 	{
-		id: BUILTIN_CONSTRAINT_IDS.lt,
+		id: BUILTIN_FIELD_CONSTRAINT_IDS.lt,
 		namespaceId: GLOBAL_NAMESPACE_ID,
 		name: 'lt',
 		description: 'Less than validation',
@@ -388,7 +334,7 @@ export const initialConstraints: ConstraintBase[] = [
 		compatibleTypes: ['int', 'float']
 	},
 	{
-		id: BUILTIN_CONSTRAINT_IDS.le,
+		id: BUILTIN_FIELD_CONSTRAINT_IDS.le,
 		namespaceId: GLOBAL_NAMESPACE_ID,
 		name: 'le',
 		description: 'Less than or equal validation',
@@ -397,7 +343,7 @@ export const initialConstraints: ConstraintBase[] = [
 		compatibleTypes: ['int', 'float']
 	},
 	{
-		id: BUILTIN_CONSTRAINT_IDS.multiple_of,
+		id: BUILTIN_FIELD_CONSTRAINT_IDS.multiple_of,
 		namespaceId: GLOBAL_NAMESPACE_ID,
 		name: 'multiple_of',
 		description: 'Multiple of validation',
@@ -408,7 +354,130 @@ export const initialConstraints: ConstraintBase[] = [
 ];
 
 // ============================================================================
-// Helper Functions
+// Object Data
+// ============================================================================
+
+export const initialObjects: ObjectDefinition[] = [
+	{
+		id: SEED_OBJECT_IDS.user,
+		namespaceId: GLOBAL_NAMESPACE_ID,
+		name: 'User',
+		description: 'User account information',
+		fields: [
+			{ fieldId: SEED_FIELD_IDS.user_id, required: true },
+			{ fieldId: SEED_FIELD_IDS.username, required: true },
+			{ fieldId: SEED_FIELD_IDS.email, required: true },
+			{ fieldId: SEED_FIELD_IDS.password, required: true },
+			{ fieldId: SEED_FIELD_IDS.created_at, required: true },
+			{ fieldId: SEED_FIELD_IDS.updated_at, required: false }
+		],
+		usedInApis: [SEED_API_IDS.api_1]
+	},
+	{
+		id: SEED_OBJECT_IDS.product,
+		namespaceId: GLOBAL_NAMESPACE_ID,
+		name: 'Product',
+		description: 'Product catalog item',
+		fields: [
+			{ fieldId: SEED_FIELD_IDS.price, required: true },
+			{ fieldId: SEED_FIELD_IDS.status, required: true },
+			{ fieldId: SEED_FIELD_IDS.created_at, required: true },
+			{ fieldId: SEED_FIELD_IDS.updated_at, required: false }
+		],
+		usedInApis: []
+	},
+	{
+		id: SEED_OBJECT_IDS.order,
+		namespaceId: GLOBAL_NAMESPACE_ID,
+		name: 'Order',
+		description: 'Customer order details',
+		fields: [
+			{ fieldId: SEED_FIELD_IDS.user_id, required: true },
+			{ fieldId: SEED_FIELD_IDS.status, required: true },
+			{ fieldId: SEED_FIELD_IDS.price, required: true },
+			{ fieldId: SEED_FIELD_IDS.created_at, required: true },
+			{ fieldId: SEED_FIELD_IDS.updated_at, required: false }
+		],
+		usedInApis: [SEED_API_IDS.api_2]
+	},
+	{
+		id: SEED_OBJECT_IDS.customer,
+		namespaceId: GLOBAL_NAMESPACE_ID,
+		name: 'Customer',
+		description: 'Customer profile information',
+		fields: [
+			{ fieldId: SEED_FIELD_IDS.email, required: true },
+			{ fieldId: SEED_FIELD_IDS.phone, required: false },
+			{ fieldId: SEED_FIELD_IDS.created_at, required: true },
+		],
+		usedInApis: []
+	},
+	{
+		id: SEED_OBJECT_IDS.payment,
+		namespaceId: GLOBAL_NAMESPACE_ID,
+		name: 'Payment',
+		description: 'Payment transaction record',
+		fields: [
+			{ fieldId: SEED_FIELD_IDS.price, required: true },
+			{ fieldId: SEED_FIELD_IDS.status, required: true },
+			{ fieldId: SEED_FIELD_IDS.created_at, required: true },
+		],
+		usedInApis: [SEED_API_IDS.api_3]
+	},
+	{
+		id: SEED_OBJECT_IDS.address,
+		namespaceId: GLOBAL_NAMESPACE_ID,
+		name: 'Address',
+		description: 'Physical address information',
+		fields: [
+			{ fieldId: SEED_FIELD_IDS.website, required: false },
+			{ fieldId: SEED_FIELD_IDS.phone, required: false },
+		],
+		usedInApis: []
+	},
+	{
+		id: SEED_OBJECT_IDS.company,
+		namespaceId: GLOBAL_NAMESPACE_ID,
+		name: 'Company',
+		description: 'Company profile',
+		fields: [
+			{ fieldId: SEED_FIELD_IDS.website, required: true },
+			{ fieldId: SEED_FIELD_IDS.phone, required: false },
+			{ fieldId: SEED_FIELD_IDS.email, required: true },
+			{ fieldId: SEED_FIELD_IDS.created_at, required: true },
+		],
+		usedInApis: []
+	},
+	{
+		id: SEED_OBJECT_IDS.invoice,
+		namespaceId: GLOBAL_NAMESPACE_ID,
+		name: 'Invoice',
+		description: 'Billing invoice',
+		fields: [
+			{ fieldId: SEED_FIELD_IDS.price, required: true },
+			{ fieldId: SEED_FIELD_IDS.status, required: true },
+			{ fieldId: SEED_FIELD_IDS.created_at, required: true },
+			{ fieldId: SEED_FIELD_IDS.updated_at, required: false }
+		],
+		usedInApis: []
+	},
+	// User namespace objects for testing isolation
+	{
+		id: SEED_OBJECT_IDS.product_catalog_item,
+		namespaceId: USER_NAMESPACE_ID,
+		name: 'ProductCatalogItem',
+		description: 'Product catalog item in user namespace',
+		fields: [
+			{ fieldId: SEED_FIELD_IDS.product_name, required: true },
+			{ fieldId: SEED_FIELD_IDS.quantity, required: true },
+			{ fieldId: SEED_FIELD_IDS.product_price, required: true }
+		],
+		usedInApis: []
+	}
+];
+
+// ============================================================================
+// Clone Helpers
 // ============================================================================
 
 /**
@@ -423,136 +492,11 @@ export function cloneFields(fields: Field[] = initialFields): Field[] {
 }
 
 /**
- * Create a deep clone of constraint bases for test isolation
+ * Create a deep clone of field constraint bases for test isolation
  */
-export function cloneConstraintBases(constraints: ConstraintBase[]): ConstraintBase[] {
-	return constraints.map(c => ({ ...c, compatibleTypes: [...c.compatibleTypes] }));
+export function cloneFieldConstraintBases(fieldConstraints: FieldConstraintBase[]): FieldConstraintBase[] {
+	return fieldConstraints.map(c => ({ ...c, compatibleTypes: [...c.compatibleTypes] }));
 }
-
-// ============================================================================
-// Object Data
-// ============================================================================
-
-// Types imported from $lib/types (ObjectDefinition, ObjectFieldReference)
-
-export const initialObjects: ObjectDefinition[] = [
-	{
-		id: SEED_OBJECT_IDS.user,
-		namespaceId: GLOBAL_NAMESPACE_ID,
-		name: 'User',
-		description: 'User account information',
-		fields: [
-			{ fieldId: SEED_FIELD_IDS.user_id, required: true },   // user_id
-			{ fieldId: SEED_FIELD_IDS.username, required: true },   // username
-			{ fieldId: SEED_FIELD_IDS.email, required: true },      // email
-			{ fieldId: SEED_FIELD_IDS.password, required: true },   // password
-			{ fieldId: SEED_FIELD_IDS.created_at, required: true }, // created_at
-			{ fieldId: SEED_FIELD_IDS.updated_at, required: false } // updated_at
-		],
-		usedInApis: [SEED_API_IDS.api_1]
-	},
-	{
-		id: SEED_OBJECT_IDS.product,
-		namespaceId: GLOBAL_NAMESPACE_ID,
-		name: 'Product',
-		description: 'Product catalog item',
-		fields: [
-			{ fieldId: SEED_FIELD_IDS.price, required: true },      // price
-			{ fieldId: SEED_FIELD_IDS.status, required: true },     // status
-			{ fieldId: SEED_FIELD_IDS.created_at, required: true }, // created_at
-			{ fieldId: SEED_FIELD_IDS.updated_at, required: false } // updated_at
-		],
-		usedInApis: []
-	},
-	{
-		id: SEED_OBJECT_IDS.order,
-		namespaceId: GLOBAL_NAMESPACE_ID,
-		name: 'Order',
-		description: 'Customer order details',
-		fields: [
-			{ fieldId: SEED_FIELD_IDS.user_id, required: true },    // user_id (repurposed as order_id)
-			{ fieldId: SEED_FIELD_IDS.status, required: true },     // status
-			{ fieldId: SEED_FIELD_IDS.price, required: true },      // price (total)
-			{ fieldId: SEED_FIELD_IDS.created_at, required: true }, // created_at
-			{ fieldId: SEED_FIELD_IDS.updated_at, required: false } // updated_at
-		],
-		usedInApis: [SEED_API_IDS.api_2]
-	},
-	{
-		id: SEED_OBJECT_IDS.customer,
-		namespaceId: GLOBAL_NAMESPACE_ID,
-		name: 'Customer',
-		description: 'Customer profile information',
-		fields: [
-			{ fieldId: SEED_FIELD_IDS.email, required: true },      // email
-			{ fieldId: SEED_FIELD_IDS.phone, required: false },     // phone
-			{ fieldId: SEED_FIELD_IDS.created_at, required: true }, // created_at
-		],
-		usedInApis: []
-	},
-	{
-		id: SEED_OBJECT_IDS.payment,
-		namespaceId: GLOBAL_NAMESPACE_ID,
-		name: 'Payment',
-		description: 'Payment transaction record',
-		fields: [
-			{ fieldId: SEED_FIELD_IDS.price, required: true },      // price (amount)
-			{ fieldId: SEED_FIELD_IDS.status, required: true },     // status
-			{ fieldId: SEED_FIELD_IDS.created_at, required: true }, // created_at
-		],
-		usedInApis: [SEED_API_IDS.api_3]
-	},
-	{
-		id: SEED_OBJECT_IDS.address,
-		namespaceId: GLOBAL_NAMESPACE_ID,
-		name: 'Address',
-		description: 'Physical address information',
-		fields: [
-			{ fieldId: SEED_FIELD_IDS.website, required: false }, // website (repurposed)
-			{ fieldId: SEED_FIELD_IDS.phone, required: false },   // phone
-		],
-		usedInApis: []
-	},
-	{
-		id: SEED_OBJECT_IDS.company,
-		namespaceId: GLOBAL_NAMESPACE_ID,
-		name: 'Company',
-		description: 'Company profile',
-		fields: [
-			{ fieldId: SEED_FIELD_IDS.website, required: true },    // website
-			{ fieldId: SEED_FIELD_IDS.phone, required: false },     // phone
-			{ fieldId: SEED_FIELD_IDS.email, required: true },      // email
-			{ fieldId: SEED_FIELD_IDS.created_at, required: true }, // created_at
-		],
-		usedInApis: []
-	},
-	{
-		id: SEED_OBJECT_IDS.invoice,
-		namespaceId: GLOBAL_NAMESPACE_ID,
-		name: 'Invoice',
-		description: 'Billing invoice',
-		fields: [
-			{ fieldId: SEED_FIELD_IDS.price, required: true },      // price (total)
-			{ fieldId: SEED_FIELD_IDS.status, required: true },     // status
-			{ fieldId: SEED_FIELD_IDS.created_at, required: true }, // created_at
-			{ fieldId: SEED_FIELD_IDS.updated_at, required: false } // updated_at
-		],
-		usedInApis: []
-	},
-	// User namespace objects for testing isolation
-	{
-		id: SEED_OBJECT_IDS.product_catalog_item,
-		namespaceId: USER_NAMESPACE_ID,
-		name: 'ProductCatalogItem',
-		description: 'Product catalog item in user namespace',
-		fields: [
-			{ fieldId: SEED_FIELD_IDS.product_name, required: true },  // product_name
-			{ fieldId: SEED_FIELD_IDS.quantity, required: true },      // quantity
-			{ fieldId: SEED_FIELD_IDS.product_price, required: true }  // product_price
-		],
-		usedInApis: []
-	}
-];
 
 /**
  * Create a deep clone of objects data for test isolation

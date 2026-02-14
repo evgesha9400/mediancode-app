@@ -1,15 +1,15 @@
 /**
- * Constraints Page Object
+ * Field Constraints Page Object
  *
- * Encapsulates interactions with the constraints page (/validators/constraints).
+ * Encapsulates interactions with the field constraints page (/validators/field-constraints).
  * Handles search, filter, sort, view details drawer, and delete operations.
  *
- * The constraints page is a standalone page nested under /validators/ in the sidebar.
+ * The field constraints page is a standalone page nested under /validators/ in the sidebar.
  */
 
 import { type Page, type Locator } from '@playwright/test';
 
-export class ConstraintsPage {
+export class FieldConstraintsPage {
 	readonly page: Page;
 
 	// Header
@@ -39,10 +39,10 @@ export class ConstraintsPage {
 	readonly drawerCloseButton: Locator;
 
 	// Drawer details
-	readonly constraintNameDisplay: Locator;
-	readonly constraintDescriptionDisplay: Locator;
-	readonly constraintParameterTypeDisplay: Locator;
-	readonly constraintDocsLink: Locator;
+	readonly fieldConstraintNameDisplay: Locator;
+	readonly fieldConstraintDescriptionDisplay: Locator;
+	readonly fieldConstraintParameterTypeDisplay: Locator;
+	readonly fieldConstraintDocsLink: Locator;
 	readonly fieldReferenceButtons: Locator;
 
 	// Drawer actions
@@ -54,11 +54,11 @@ export class ConstraintsPage {
 		this.page = page;
 
 		// Header
-		this.pageTitle = page.getByRole('heading', { name: 'Constraints', level: 1 });
+		this.pageTitle = page.getByRole('heading', { name: 'Field Constraints', level: 1 });
 
 		// Search
-		this.searchInput = page.getByPlaceholder('Search constraints...');
-		this.resultsCount = page.locator('text=/\\d+ constraint/');
+		this.searchInput = page.getByPlaceholder('Search field constraints...');
+		this.resultsCount = page.locator('text=/\\d+ field constraint/');
 
 		// Filter
 		this.filterButton = page.locator('button').filter({ has: page.locator('i.fa-filter') });
@@ -68,7 +68,7 @@ export class ConstraintsPage {
 		// Table
 		this.table = page.locator('table');
 		this.tableRows = page.locator('tbody tr');
-		this.emptyState = page.locator('text=No constraints found');
+		this.emptyState = page.locator('text=No field constraints found');
 
 		// Sortable columns - scoped to table to avoid conflicts with drawer/filter panel
 		this.nameColumnHeader = this.table.locator('thead th').filter({ hasText: 'Name' });
@@ -76,32 +76,32 @@ export class ConstraintsPage {
 		this.usedInFieldsColumnHeader = this.table.locator('thead th').filter({ hasText: 'Used in Fields' });
 
 		// Drawer
-		this.drawer = page.locator('[class*="fixed"][class*="right-0"]').filter({ has: page.locator('text=Constraint Details') });
+		this.drawer = page.locator('[class*="fixed"][class*="right-0"]').filter({ has: page.locator('text=Field Constraint Details') });
 		this.drawerCloseButton = page.locator('button[aria-label="Close drawer"]');
 
 		// Drawer details (read-only display elements)
-		this.constraintNameDisplay = page.locator('h3:has-text("Name") + p');
-		this.constraintDescriptionDisplay = page.locator('h3:has-text("Description") + p');
-		this.constraintParameterTypeDisplay = page.locator('h3:has-text("Parameter Type") + code');
-		this.constraintDocsLink = page.locator('a').filter({ hasText: 'View Docs' });
+		this.fieldConstraintNameDisplay = page.locator('h3:has-text("Name") + p');
+		this.fieldConstraintDescriptionDisplay = page.locator('h3:has-text("Description") + p');
+		this.fieldConstraintParameterTypeDisplay = page.locator('h3:has-text("Parameter Type") + code');
+		this.fieldConstraintDocsLink = page.locator('a').filter({ hasText: 'View Docs' });
 		this.fieldReferenceButtons = page.locator('button').filter({ has: page.locator('i.fa-table-list') });
 
 		// Drawer actions
-		this.deleteButton = page.getByRole('button', { name: 'Delete Constraint' });
+		this.deleteButton = page.getByRole('button', { name: 'Delete Field Constraint' });
 		this.deleteConfirmButton = page.getByRole('button', { name: 'Yes, Delete' });
 		this.deleteCancelButton = page.getByRole('button', { name: 'Cancel' });
 	}
 
 	/**
-	 * Navigate to the constraints page
+	 * Navigate to the field constraints page
 	 */
 	async goto() {
-		await this.page.goto('/validators/constraints', { waitUntil: 'networkidle' });
+		await this.page.goto('/validators/field-constraints', { waitUntil: 'networkidle' });
 		await this.pageTitle.waitFor({ state: 'visible' });
 	}
 
 	/**
-	 * Search for constraints
+	 * Search for field constraints
 	 */
 	async search(query: string) {
 		await this.searchInput.fill(query);
@@ -124,10 +124,10 @@ export class ConstraintsPage {
 	}
 
 	/**
-	 * Click a table row by constraint name
+	 * Click a table row by field constraint name
 	 */
-	async clickRow(constraintName: string) {
-		const row = this.tableRows.filter({ hasText: constraintName }).first();
+	async clickRow(fieldConstraintName: string) {
+		const row = this.tableRows.filter({ hasText: fieldConstraintName }).first();
 		await row.click();
 		await this.page.waitForTimeout(300);
 	}
@@ -136,7 +136,7 @@ export class ConstraintsPage {
 	 * Check if drawer is open
 	 */
 	async isDrawerOpen(): Promise<boolean> {
-		return await this.constraintNameDisplay.isVisible();
+		return await this.fieldConstraintNameDisplay.isVisible();
 	}
 
 	/**
@@ -146,23 +146,23 @@ export class ConstraintsPage {
 		if (await this.isDrawerOpen()) {
 			await this.drawerCloseButton.click();
 			await this.page.waitForTimeout(500);
-			await this.constraintNameDisplay.waitFor({ state: 'hidden', timeout: 5000 });
+			await this.fieldConstraintNameDisplay.waitFor({ state: 'hidden', timeout: 5000 });
 		}
 	}
 
 	/**
-	 * Get constraint name from drawer
+	 * Get field constraint name from drawer
 	 */
-	async getConstraintName(): Promise<string> {
-		const text = await this.constraintNameDisplay.textContent();
+	async getFieldConstraintName(): Promise<string> {
+		const text = await this.fieldConstraintNameDisplay.textContent();
 		return text?.trim() ?? '';
 	}
 
 	/**
-	 * Get constraint description from drawer
+	 * Get field constraint description from drawer
 	 */
-	async getConstraintDescription(): Promise<string> {
-		const text = await this.constraintDescriptionDisplay.textContent();
+	async getFieldConstraintDescription(): Promise<string> {
+		const text = await this.fieldConstraintDescriptionDisplay.textContent();
 		return text?.trim() ?? '';
 	}
 
@@ -264,9 +264,9 @@ export class ConstraintsPage {
 	}
 
 	/**
-	 * Get all constraint names visible in the table
+	 * Get all field constraint names visible in the table
 	 */
-	async getVisibleConstraintNames(): Promise<string[]> {
+	async getVisibleFieldConstraintNames(): Promise<string[]> {
 		const names: string[] = [];
 		const count = await this.tableRows.count();
 		for (let i = 0; i < count; i++) {
@@ -294,11 +294,11 @@ export class ConstraintsPage {
 	}
 
 	/**
-	 * Check if a constraint exists in the table
+	 * Check if a field constraint exists in the table
 	 */
-	async hasConstraint(constraintName: string): Promise<boolean> {
-		const names = await this.getVisibleConstraintNames();
-		return names.includes(constraintName);
+	async hasFieldConstraint(fieldConstraintName: string): Promise<boolean> {
+		const names = await this.getVisibleFieldConstraintNames();
+		return names.includes(fieldConstraintName);
 	}
 
 	/**
@@ -308,3 +308,6 @@ export class ConstraintsPage {
 		return await this.emptyState.isVisible();
 	}
 }
+
+// Legacy alias for backward compatibility
+export const ConstraintsPage = FieldConstraintsPage;

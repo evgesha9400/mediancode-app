@@ -24,7 +24,7 @@ import {
 	initialApiMetadata
 } from '$lib/stores/apis';
 import { seedIdGenerator } from '$lib/utils/ids';
-import { GLOBAL_NAMESPACE_ID } from '$lib/stores/initialData';
+import { GLOBAL_NAMESPACE_ID } from '$lib/constants';
 import type { ApiTag } from '$lib/types';
 import { createMockEndpoint, createMockApi } from '../../../shared/testUtils';
 

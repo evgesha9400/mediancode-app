@@ -11,6 +11,6 @@ export { AuthPage } from './AuthPage';
 export { MobileBlockedPage } from './MobileBlockedPage';
 export { FieldRegistryPage } from './FieldRegistryPage';
 export { TypesPage } from './TypesPage';
-export { ConstraintsPage } from './ConstraintsPage';
+export { FieldConstraintsPage, ConstraintsPage } from './ConstraintsPage';
 export { ApisPage } from './ApisPage';
 export { ObjectBuilderPage } from './ObjectBuilderPage';

@@ -2,11 +2,12 @@ import { writable, get } from 'svelte/store';
 import type { PrimitiveTypeName } from './types';
 import { checkFieldDeletion } from '$lib/utils/references';
 import type { DeletionResult } from '$lib/types';
-import { GLOBAL_NAMESPACE_ID, type Field, type FieldConstraint } from './initialData';
+import { GLOBAL_NAMESPACE_ID } from '$lib/constants';
+import type { Field, FieldConstraintValue } from '$lib/types';
 import { generateId } from '$lib/utils/ids';
 
-// Re-export types from initialData for backwards compatibility
-export type { Field, FieldConstraint } from './initialData';
+// Re-export types for backwards compatibility
+export type { Field, FieldConstraintValue } from '$lib/types';
 
 // Initialize with empty array - data will be loaded from API via loader.ts
 export const fieldsStore = writable<Field[]>([]);

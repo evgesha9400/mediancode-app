@@ -3,17 +3,15 @@
  *
  * Mock field data for testing field registry features.
  *
- * IMPORTANT: This module now imports from the centralized initialData module
- * to ensure consistency between runtime stores and test fixtures.
- *
- * Single source of truth: src/lib/stores/initialData.ts
+ * Single source of truth for test seed data: tests/fixtures/seedData.ts
  */
 
-import { initialFields, cloneFields, type Field, type FieldConstraint } from '../../src/lib/stores/initialData';
+import { initialFields, cloneFields } from './seedData';
+import type { Field, FieldConstraintValue } from '../../src/lib/types';
 import type { PrimitiveTypeName } from './types';
 
 // Re-export types from centralized module
-export type { Field, FieldConstraint } from '../../src/lib/stores/initialData';
+export type { Field, FieldConstraintValue } from '../../src/lib/types';
 
 /**
  * Mock fields - uses centralized data

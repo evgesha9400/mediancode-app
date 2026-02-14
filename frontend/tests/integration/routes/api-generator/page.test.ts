@@ -28,7 +28,7 @@ import {
 } from '$lib/stores/apis';
 import type { ApiTag } from '$lib/types';
 import { createMockEndpoint, createMockApi } from '../../../shared/testUtils';
-import { GLOBAL_NAMESPACE_ID } from '$lib/stores/initialData';
+import { GLOBAL_NAMESPACE_ID } from '$lib/constants';
 
 const TEST_API_ID = 'cccccccc-0000-0000-0000-000000000001';
 

@@ -15,18 +15,18 @@ import {
 	getTotalFieldCount,
 	getTotalApiCount
 } from '$lib/stores/fields';
-import { constraintsStore, getTotalConstraintCount } from '$lib/stores/constraints';
+import { fieldConstraintsStore, getTotalFieldConstraintCount } from '$lib/stores/fieldConstraints';
 import {
 	initialFields,
-	initialConstraints
-} from '$lib/stores/initialData';
-import type { Constraint } from '$lib/stores/constraints';
+	initialFieldConstraints
+} from '../../../fixtures/seedData';
+import type { FieldConstraint } from '$lib/stores/fieldConstraints';
 
-// Helper to transform ConstraintBase to Constraint with usage info
-function createConstraintWithUsage(
-	base: typeof initialConstraints[0],
+// Helper to transform FieldConstraintBase to FieldConstraint with usage info
+function createFieldConstraintWithUsage(
+	base: typeof initialFieldConstraints[0],
 	fields: typeof initialFields
-): Constraint {
+): FieldConstraint {
 	const fieldsUsingConstraint = fields
 		.filter(f => f.constraints.some(c => c.name === base.name))
 		.map(f => ({ name: f.name, fieldId: f.id }));
@@ -44,11 +44,11 @@ describe('Dashboard Page - Store Integration', () => {
 		// Populate fields store
 		fieldsStore.set([...initialFields]);
 
-		// Populate constraints store with usage info calculated from fields
-		const constraintsWithUsage = initialConstraints.map(base =>
-			createConstraintWithUsage(base, initialFields)
+		// Populate field constraints store with usage info calculated from fields
+		const fieldConstraintsWithUsage = initialFieldConstraints.map(base =>
+			createFieldConstraintWithUsage(base, initialFields)
 		);
-		constraintsStore.set(constraintsWithUsage);
+		fieldConstraintsStore.set(fieldConstraintsWithUsage);
 	});
 
 	describe('Stat Card Data Sources', () => {
@@ -60,12 +60,12 @@ describe('Dashboard Page - Store Integration', () => {
 			expect(totalCount).toBeGreaterThan(0);
 		});
 
-		it('getTotalConstraintCount returns combined constraint count', () => {
-			const totalCount = getTotalConstraintCount();
-			const storeConstraints = get(constraintsStore);
+		it('getTotalFieldConstraintCount returns combined field constraint count', () => {
+			const totalCount = getTotalFieldConstraintCount();
+			const storeFieldConstraints = get(fieldConstraintsStore);
 
-			// Store has all constraints with usage info
-			expect(storeConstraints.length).toBe(totalCount);
+			// Store has all field constraints with usage info
+			expect(storeFieldConstraints.length).toBe(totalCount);
 			expect(totalCount).toBeGreaterThan(0);
 		});
 
@@ -103,21 +103,21 @@ describe('Dashboard Page - Store Integration', () => {
 			});
 		});
 
-		it('constraintsStore contains constraints with usage info', () => {
-			const constraints = get(constraintsStore);
+		it('fieldConstraintsStore contains field constraints with usage info', () => {
+			const fieldConstraints = get(fieldConstraintsStore);
 
-			expect(Array.isArray(constraints)).toBe(true);
-			expect(constraints.length).toBeGreaterThan(0);
+			expect(Array.isArray(fieldConstraints)).toBe(true);
+			expect(fieldConstraints.length).toBeGreaterThan(0);
 
-			constraints.forEach((constraint) => {
-				expect(constraint).toHaveProperty('name');
-				expect(constraint).toHaveProperty('parameterType');
-				expect(constraint).toHaveProperty('compatibleTypes');
-				expect(constraint).toHaveProperty('usedInFields');
-				expect(constraint).toHaveProperty('fieldsUsingConstraint');
-				expect(typeof constraint.usedInFields).toBe('number');
-				expect(Array.isArray(constraint.fieldsUsingConstraint)).toBe(true);
-				expect(Array.isArray(constraint.compatibleTypes)).toBe(true);
+			fieldConstraints.forEach((fc) => {
+				expect(fc).toHaveProperty('name');
+				expect(fc).toHaveProperty('parameterType');
+				expect(fc).toHaveProperty('compatibleTypes');
+				expect(fc).toHaveProperty('usedInFields');
+				expect(fc).toHaveProperty('fieldsUsingConstraint');
+				expect(typeof fc.usedInFields).toBe('number');
+				expect(Array.isArray(fc.fieldsUsingConstraint)).toBe(true);
+				expect(Array.isArray(fc.compatibleTypes)).toBe(true);
 			});
 		});
 
@@ -138,44 +138,44 @@ describe('Dashboard Page - Store Integration', () => {
 		});
 	});
 
-	describe('Constraint Properties', () => {
-		it('constraints have valid parameterType values', () => {
-			const constraints = get(constraintsStore);
+	describe('Field Constraint Properties', () => {
+		it('field constraints have valid parameterType values', () => {
+			const fieldConstraints = get(fieldConstraintsStore);
 
-			constraints.forEach((constraint) => {
-				expect(typeof constraint.parameterType).toBe('string');
-				expect(constraint.parameterType.length).toBeGreaterThan(0);
+			fieldConstraints.forEach((fc) => {
+				expect(typeof fc.parameterType).toBe('string');
+				expect(fc.parameterType.length).toBeGreaterThan(0);
 			});
 		});
 
-		it('constraints have compatibleTypes arrays', () => {
-			const constraints = get(constraintsStore);
+		it('field constraints have compatibleTypes arrays', () => {
+			const fieldConstraints = get(fieldConstraintsStore);
 
-			constraints.forEach((constraint) => {
-				expect(Array.isArray(constraint.compatibleTypes)).toBe(true);
-				expect(constraint.compatibleTypes.length).toBeGreaterThan(0);
+			fieldConstraints.forEach((fc) => {
+				expect(Array.isArray(fc.compatibleTypes)).toBe(true);
+				expect(fc.compatibleTypes.length).toBeGreaterThan(0);
 			});
 		});
 	});
 
-	describe('Constraint-Field Relationship', () => {
-		it('constraints track which fields use them', () => {
-			const constraints = get(constraintsStore);
+	describe('FieldConstraint-Field Relationship', () => {
+		it('field constraints track which fields use them', () => {
+			const fieldConstraints = get(fieldConstraintsStore);
 			const fields = get(fieldsStore);
 
-			// Find a constraint that's used by at least one field
-			const usedConstraint = constraints.find((c) => c.usedInFields > 0);
+			// Find a field constraint that's used by at least one field
+			const usedFieldConstraint = fieldConstraints.find((fc) => fc.usedInFields > 0);
 
-			if (usedConstraint) {
+			if (usedFieldConstraint) {
 				// Verify the field count matches
-				expect(usedConstraint.fieldsUsingConstraint.length).toBe(usedConstraint.usedInFields);
+				expect(usedFieldConstraint.fieldsUsingConstraint.length).toBe(usedFieldConstraint.usedInFields);
 
-				// Verify each field actually has this constraint
-				usedConstraint.fieldsUsingConstraint.forEach((fieldRef) => {
+				// Verify each field actually has this field constraint
+				usedFieldConstraint.fieldsUsingConstraint.forEach((fieldRef) => {
 					const field = fields.find((f) => f.id === fieldRef.fieldId);
 					expect(field).toBeDefined();
 					if (field) {
-						const hasConstraint = field.constraints.some((c) => c.name === usedConstraint.name);
+						const hasConstraint = field.constraints.some((c) => c.name === usedFieldConstraint.name);
 						expect(hasConstraint).toBe(true);
 					}
 				});
@@ -190,10 +190,10 @@ describe('Dashboard Page - Store Integration', () => {
 			expect(fieldCount).toBe(13); // 10 global + 3 user namespace fields
 		});
 
-		it('provides expected initial constraint count for stat card', () => {
-			// Dashboard shows this value in "Constraints" stat card
-			const constraintCount = getTotalConstraintCount();
-			expect(constraintCount).toBe(10); // All constraints from initialConstraints
+		it('provides expected initial field constraint count for stat card', () => {
+			// Dashboard shows this value in "Field Constraints" stat card
+			const fieldConstraintCount = getTotalFieldConstraintCount();
+			expect(fieldConstraintCount).toBe(8); // 8 field constraints (email_format and url_format removed)
 		});
 
 		it('provides expected initial API count for stat card', () => {

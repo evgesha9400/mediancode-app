@@ -8,7 +8,7 @@
 import {
 	mockUsers,
 	mockFields,
-	mockConstraints,
+	mockFieldConstraints,
 	mockTypes,
 	mockApis,
 	mockPermissions,
@@ -57,19 +57,19 @@ function validateFieldConstraints() {
 		}
 
 		field.constraints.forEach((fc) => {
-			const constraint = mockConstraints.find((c) => c.name === fc.name);
-			if (!constraint) {
-				addError('Field', field.id, 'constraints', 'Constraint not found: ' + fc.name);
+			const fieldConstraint = mockFieldConstraints.find((c) => c.name === fc.name);
+			if (!fieldConstraint) {
+				addError('Field', field.id, 'constraints', 'Field constraint not found: ' + fc.name);
 				return;
 			}
 
 			// Check type compatibility using compatibleTypes array
-			if (!constraint.compatibleTypes.includes(fieldType.name)) {
+			if (!fieldConstraint.compatibleTypes.includes(fieldType.name)) {
 				addError(
 					'Field',
 					field.id,
 					'constraints',
-					'Constraint incompatible: ' + fc.name
+					'Field constraint incompatible: ' + fc.name
 				);
 			}
 		});
@@ -140,7 +140,7 @@ function validate() {
 	validateUniqueness(mockRoles, 'Role');
 
 	// Entities identified by name
-	validateUniquenessByName(mockConstraints, 'Constraint');
+	validateUniquenessByName(mockFieldConstraints, 'FieldConstraint');
 	validateUniquenessByName(mockTypes, 'Type');
 
 	// Relationship checks

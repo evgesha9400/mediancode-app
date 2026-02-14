@@ -29,7 +29,7 @@ import {
 } from './apis';
 import { fieldsStore } from './fields';
 import { objectsStore } from './objects';
-import { constraintsStore } from './constraints';
+import { fieldConstraintsStore } from './fieldConstraints';
 import { showToast } from './toasts';
 import { deepClone, generateId, generateParamId } from '$lib/utils/ids';
 

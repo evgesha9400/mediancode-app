@@ -12,7 +12,7 @@ import {
 	createObject,
 	type ObjectDefinition
 } from '$lib/stores/objects';
-import { GLOBAL_NAMESPACE_ID } from '$lib/stores/initialData';
+import { GLOBAL_NAMESPACE_ID } from '$lib/constants';
 import { seedIdGenerator } from '$lib/utils/ids';
 
 describe('objects store - Basic Operations', () => {

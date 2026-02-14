@@ -5,7 +5,7 @@
  * Import fixtures from this file to ensure consistency across all tests.
  *
  * Usage:
- *   import { mockFields, mockConstraints, getFieldById } from 'tests/fixtures';
+ *   import { mockFields, mockFieldConstraints, getFieldById } from 'tests/fixtures';
  */
 
 // Export all fixtures
@@ -15,6 +15,7 @@ export * from './constraints';
 export * from './fields';
 export * from './apis';
 export * from './permissions';
+export * from './seedData';
 
 // Re-export commonly used fixtures as named exports for convenience
 export {
@@ -41,12 +42,12 @@ export {
 } from './types';
 
 export {
-	mockConstraints,
-	mockConstraintBases,
-	getConstraintByName,
-	getConstraintsByCompatibleType,
-	type Constraint,
-	type ConstraintBase
+	mockFieldConstraints,
+	mockFieldConstraintBases,
+	getFieldConstraintByName,
+	getFieldConstraintsByCompatibleType,
+	type FieldConstraint,
+	type FieldConstraintBase
 } from './constraints';
 
 export {
@@ -57,7 +58,7 @@ export {
 	getFieldsUsedInApi,
 	getUnusedFields,
 	type Field,
-	type FieldConstraint
+	type FieldConstraintValue
 } from './fields';
 
 export {
