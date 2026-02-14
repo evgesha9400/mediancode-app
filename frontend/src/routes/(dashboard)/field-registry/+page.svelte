@@ -2,7 +2,7 @@
   import { fieldsStore, searchFields, type Field, type FieldConstraintValue } from '$lib/stores/fields';
   import { createFieldAction, updateFieldAction, deleteFieldAction } from '$lib/stores/actions';
   import { fieldConstraintsStore, getFieldConstraintsByFieldType, type FieldConstraint } from '$lib/stores/fieldConstraints';
-  import { getPrimitiveTypes, getTypeIdByName, type PrimitiveTypeName } from '$lib/stores/types';
+  import { getSelectableTypes, getTypeIdByName } from '$lib/stores/types';
   import { showToast } from '$lib/stores/toasts';
   import { activeNamespaceId, namespacesStore, getNamespaceById } from '$lib/stores/namespaces';
   import { buildDeletionTooltip } from '$lib/utils/references';
@@ -19,7 +19,8 @@
     DrawerFooter,
     Tooltip,
     NamespaceSelector,
-    FieldConstraintSelectorDropdown
+    FieldConstraintSelectorDropdown,
+    TypeSelectorDropdown
   } from '$lib/components';
   import type { FilterConfig } from '$lib/types';
   import { storeLoadingState, reloadStores } from '$lib/stores/loader';
@@ -43,16 +44,16 @@
   let isSaving = $state(false);
   let isDeleting = $state(false);
 
-  let primitiveTypes = $derived(getPrimitiveTypes());
+  let selectableTypes = $derived(getSelectableTypes());
 
-  // Build filter config from primitive types (reactive to store changes)
+  // Build filter config from selectable types (reactive to store changes)
   let fieldFilterConfig = $derived.by((): FilterConfig => {
     return [
       {
         type: 'checkbox-group',
         key: 'selectedTypes',
         label: 'Field Type',
-        options: primitiveTypes.map(type => ({ label: type.name, value: type.name })),
+        options: selectableTypes.map(type => ({ label: type.name, value: type.name })),
         predicate: (item: Field, selected: string[]) => selected.includes(item.type)
       },
       {
@@ -121,10 +122,8 @@
   function handleTypeChange(newType: string) {
     if (!editedField) return;
 
-    const typedNewType = newType as PrimitiveTypeName;
-
     // If type actually changed, reset constraints and default value
-    if (previousFieldType !== null && previousFieldType !== typedNewType) {
+    if (previousFieldType !== null && previousFieldType !== newType) {
       listState.editedItem = {
         ...editedField,
         constraints: [],
@@ -132,7 +131,7 @@
       };
     }
 
-    previousFieldType = typedNewType;
+    previousFieldType = newType;
   }
 
   function selectField(field: Field) {
@@ -147,12 +146,12 @@
   }
 
   function createFieldDraft(): Field {
-    const firstType = primitiveTypes[0]?.name ?? 'str';
+    const firstType = selectableTypes[0]?.name ?? 'str';
     return {
       id: '',
       namespaceId: $activeNamespaceId,
       name: '',
-      type: firstType as PrimitiveTypeName,
+      type: firstType,
       constraints: [],
       usedInApis: [],
       description: '',
@@ -167,7 +166,7 @@
     listState.originalItem = null;
     listState.validationErrors = {};
     listState.drawerOpen = true;
-    previousFieldType = primitiveTypes[0]?.name ?? 'str';
+    previousFieldType = selectableTypes[0]?.name ?? 'str';
   }
 
   function isSelected(field: Field): boolean {
@@ -510,24 +509,20 @@
 
         <!-- Type -->
         <div>
-          <label for="field-registry-type" class="block text-sm text-mono-700 mb-1 font-medium">
+          <label class="block text-sm text-mono-700 mb-1 font-medium">
             Type <span class="text-red-500">*</span>
           </label>
-          <div class="relative">
-            <select
-              id="field-registry-type"
-              bind:value={editedField.type}
-              onchange={() => editedField && handleTypeChange(editedField.type)}
-              class="w-full appearance-none px-3 py-2 border border-mono-300 rounded-md focus:ring-2 focus:ring-mono-400 focus:border-transparent pr-8 {validationErrors.type ? 'border-red-500' : ''}"
-            >
-              {#each primitiveTypes as type}
-                <option value={type.name}>{type.name}</option>
-              {/each}
-            </select>
-            <div class="absolute inset-y-0 right-0 flex items-center px-2 pointer-events-none">
-              <i class="fa-solid fa-chevron-down text-mono-400"></i>
-            </div>
-          </div>
+          <TypeSelectorDropdown
+            availableTypes={selectableTypes}
+            selectedTypeName={editedField.type}
+            onSelect={(typeName) => {
+              if (!editedField) return;
+              listState.editedItem = { ...editedField, type: typeName };
+              handleTypeChange(typeName);
+            }}
+            placeholder="Search types..."
+            error={!!validationErrors.type}
+          />
           {#if validationErrors.type}
             <p class="text-xs text-red-500 mt-1">{validationErrors.type}</p>
           {/if}

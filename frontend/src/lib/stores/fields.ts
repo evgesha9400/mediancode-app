@@ -1,5 +1,4 @@
 import { writable, get } from 'svelte/store';
-import type { PrimitiveTypeName } from './types';
 import { checkFieldDeletion } from '$lib/utils/references';
 import type { DeletionResult } from '$lib/types';
 import { GLOBAL_NAMESPACE_ID } from '$lib/constants';
@@ -114,14 +113,14 @@ export function deleteField(id: string): DeletionResult {
  * Create a new field with uniqueness guard within the namespace
  *
  * @param name - The name for the new field
- * @param type - The primitive type for the field
+ * @param type - The type name for the field (primitive or constrained)
  * @param namespaceId - The namespace to create the field in (defaults to global)
  * @param options - Optional field properties (description, validators, etc.)
  * @returns The created field, or undefined if a field with that name already exists in the namespace
  */
 export function createField(
 	name: string,
-	type: PrimitiveTypeName,
+	type: string,
 	namespaceId: string = GLOBAL_NAMESPACE_ID,
 	options: Partial<Omit<Field, 'id' | 'name' | 'type' | 'namespaceId'>> = {}
 ): Field | undefined {

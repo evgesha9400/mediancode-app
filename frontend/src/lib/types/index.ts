@@ -198,9 +198,6 @@ export interface ObjectDefinition {
 }
 
 // Field types
-// Note: PrimitiveTypeName is imported as a type to avoid circular runtime deps
-// (types/index.ts -> stores/types.ts -> stores/fields.ts -> types/index.ts)
-import type { PrimitiveTypeName } from '$lib/stores/types';
 
 export interface FieldConstraintValue {
   name: string;
@@ -211,7 +208,7 @@ export interface Field {
   id: string;
   namespaceId: string;
   name: string;
-  type: PrimitiveTypeName;
+  type: string;
   description?: string;
   defaultValue?: string;
   constraints: FieldConstraintValue[];

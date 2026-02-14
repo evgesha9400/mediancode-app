@@ -8,7 +8,6 @@ import { apiGet, apiPost, apiPut, apiDelete } from './client';
 import type { Field, FieldConstraintValue } from '$lib/types';
 import { get } from 'svelte/store';
 import { typesBaseStore } from '$lib/stores/types';
-import type { PrimitiveTypeName } from '$lib/stores/types';
 
 /**
  * Backend field constraint value response
@@ -21,11 +20,12 @@ interface FieldConstraintValueResponse {
 /**
  * Build a type UUID -> type name lookup map from the types store.
  * Called at runtime when transforming field responses.
+ * Maps type UUIDs to type name strings (primitive or constrained).
  */
-function buildTypeIdToNameMap(): Record<string, PrimitiveTypeName> {
+function buildTypeIdToNameMap(): Record<string, string> {
 	const types = get(typesBaseStore);
 	return Object.fromEntries(
-		types.map(t => [t.id, t.name as PrimitiveTypeName])
+		types.map(t => [t.id, t.name])
 	);
 }
 
@@ -55,9 +55,9 @@ function transformFieldConstraintValue(response: FieldConstraintValueResponse): 
 
 /**
  * Transform backend response to frontend Field type.
- * Resolves typeId (UUID) to a PrimitiveTypeName using the types store.
+ * Resolves typeId (UUID) to a type name string using the types store.
  */
-function transformField(response: FieldResponse, typeMap: Record<string, PrimitiveTypeName>): Field {
+function transformField(response: FieldResponse, typeMap: Record<string, string>): Field {
 	const typeName = typeMap[response.typeId];
 	if (!typeName) {
 		console.warn(`Unknown type_id "${response.typeId}" for field "${response.name}", defaulting to "str"`);

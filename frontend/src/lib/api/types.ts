@@ -5,7 +5,7 @@
  */
 
 import { apiGet } from './client';
-import type { FieldType, TypeName } from '$lib/stores/types';
+import type { FieldType } from '$lib/stores/types';
 
 /**
  * Backend API response for Type entity
@@ -27,7 +27,7 @@ interface TypeResponse {
 function transformType(response: TypeResponse): FieldType {
 	return {
 		id: response.id,
-		name: response.name as TypeName,
+		name: response.name,
 		pythonType: response.pythonType,
 		description: response.description,
 		importPath: response.importPath,

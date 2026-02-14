@@ -17,7 +17,7 @@
   let { title, value, icon, trend, error = false, onRetry }: Props = $props();
 </script>
 
-<div class="bg-white rounded-lg border {error ? 'border-red-200' : 'border-mono-200'} p-6" data-testid={getStatCardTestId(title)}>
+<div class="bg-white rounded-lg border {error ? 'border-red-200' : 'border-mono-200'} p-6 h-full" data-testid={getStatCardTestId(title)}>
   <div class="flex items-center justify-between mb-4">
     <div class="w-12 h-12 {error ? 'bg-red-50' : 'bg-mono-100'} rounded-lg flex items-center justify-center">
       {#if error}

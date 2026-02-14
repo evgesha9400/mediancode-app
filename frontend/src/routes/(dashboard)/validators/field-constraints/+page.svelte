@@ -135,11 +135,6 @@
         {sorts}
         onSort={state.handleSort}
       />
-      <th scope="col" class="px-6 py-3 text-left text-xs text-mono-500 tracking-wider font-medium">
-        <div class="flex items-center space-x-1">
-          <span>Description</span>
-        </div>
-      </th>
       <SortableColumn
         column="parameterType"
         label="Parameter Type"
@@ -149,6 +144,11 @@
       <th scope="col" class="px-6 py-3 text-left text-xs text-mono-500 tracking-wider font-medium">
         <div class="flex items-center space-x-1">
           <span>Applies To</span>
+        </div>
+      </th>
+      <th scope="col" class="px-6 py-3 text-left text-xs text-mono-500 tracking-wider font-medium">
+        <div class="flex items-center space-x-1">
+          <span>Description</span>
         </div>
       </th>
       <th scope="col" class="px-6 py-3 text-left text-xs text-mono-500 tracking-wider font-medium">
@@ -174,13 +174,10 @@
         <td class="px-6 py-4 whitespace-nowrap">
           <div class="text-sm text-mono-900 font-medium">{fc.name}</div>
         </td>
-        <td class="px-6 py-4 text-sm text-mono-500 max-w-xs truncate">
-          {fc.description.split('.')[0]}.
-        </td>
         <td class="px-6 py-4 whitespace-nowrap">
-          <code class="px-2 py-1 text-xs rounded bg-mono-100 text-mono-800 font-mono">
+          <span class="px-2 py-0.5 text-xs rounded-full bg-mono-200 text-mono-700">
             {fc.parameterType}
-          </code>
+          </span>
         </td>
         <td class="px-6 py-4">
           <div class="flex flex-wrap gap-1">
@@ -190,6 +187,9 @@
               </span>
             {/each}
           </div>
+        </td>
+        <td class="px-6 py-4 text-sm text-mono-500 max-w-xs truncate">
+          {fc.description.split('.')[0]}.
         </td>
         <td class="px-6 py-4 whitespace-nowrap text-sm">
           {#if fc.docsUrl}

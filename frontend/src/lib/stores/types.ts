@@ -7,7 +7,7 @@ export type TypeName = PrimitiveTypeName | AbstractTypeName;
 
 export interface TypeBase {
 	id: string;
-	name: TypeName;
+	name: string;
 	pythonType: string;
 	description: string;
 	importPath: string | null;
@@ -51,8 +51,18 @@ export function getTotalTypeCount(): number {
 }
 
 export function getPrimitiveTypes(): FieldType[] {
-	const primitiveNames: TypeName[] = ['str', 'int', 'float', 'bool', 'datetime', 'uuid'];
+	const primitiveNames: string[] = ['str', 'int', 'float', 'bool', 'datetime', 'uuid'];
 	return get(typesStore).filter(t => primitiveNames.includes(t.name));
+}
+
+/**
+ * Get all types that can be selected for a field.
+ * Includes primitive types AND constrained types, but excludes abstract types (e.g., 'numeric').
+ * Abstract types are grouping/category types that cannot be directly assigned to a field.
+ */
+export function getSelectableTypes(): FieldType[] {
+	const abstractNames: string[] = ['numeric'];
+	return get(typesStore).filter(t => !abstractNames.includes(t.name));
 }
 
 export function searchTypes(types: FieldType[], query: string): FieldType[] {
@@ -72,8 +82,9 @@ export function searchTypes(types: FieldType[], query: string): FieldType[] {
 /**
  * Get the UUID for a type by its name.
  * Uses the types store data (populated from API) for the name -> UUID mapping.
+ * Accepts any type name string (primitive or constrained).
  */
-export function getTypeIdByName(typeName: PrimitiveTypeName): string | undefined {
+export function getTypeIdByName(typeName: string): string | undefined {
 	const type = get(typesStore).find(t => t.name === typeName);
 	return type?.id;
 }
