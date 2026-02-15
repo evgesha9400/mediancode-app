@@ -35,6 +35,7 @@ export type {
 
 // Backend health check
 export { assertBackendHealthy } from './health-check';
+export { assertFrontendHealthy } from './frontend-check';
 
 // E2E delay configuration
 export { ACTION_DELAY_MS } from './e2e-delays';

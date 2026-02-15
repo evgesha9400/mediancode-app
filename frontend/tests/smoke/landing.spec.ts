@@ -7,7 +7,7 @@
  * @tags smoke
  */
 
-import { test, expect } from '@playwright/test';
+import { test, expect } from './fixtures';
 import { LandingPage } from '../page-objects';
 
 test.describe('Landing Page - Smoke Tests', () => {

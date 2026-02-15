@@ -18,10 +18,13 @@
     "test:integration:watch": "vitest watch tests/integration",
     "test:coverage": "vitest run --coverage",
     "test:fixtures:validate": "tsx tests/fixtures/validate.ts",
-    "test:e2e": "playwright test",
-    "test:e2e:smoke": "playwright test --project=smoke",
-    "test:e2e:crud": "bunx tsx scripts/check-e2e-env.ts && playwright test --project=setup --project=crud",
-    "test:e2e:ui": "playwright test --ui",
+    "test:e2e": "playwright test --config=playwright.config.ts",
+    "test:e2e:full": "playwright test --config=playwright.config.ts",
+    "test:e2e:smoke": "playwright test --config=playwright.config.ts --project=smoke --max-failures=1",
+    "test:e2e:crud": "bunx tsx scripts/check-e2e-env.ts && playwright test --config=playwright.config.ts --project=setup --project=crud",
+    "test:e2e:smoke:ci": "playwright test --config=tests/config/playwright.config.ci.ts --project=smoke --max-failures=1",
+    "test:e2e:crud:ci": "bunx tsx scripts/check-e2e-env.ts && playwright test --config=tests/config/playwright.config.ci.ts --project=setup --project=crud",
+    "test:e2e:ui": "playwright test --config=playwright.config.ts --ui",
     "lint:api": "spectral lint api-spec.yaml --fail-severity=warn"
   },
   "devDependencies": {

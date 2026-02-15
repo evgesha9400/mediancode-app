@@ -189,6 +189,14 @@
       isValid = false;
     }
 
+    const emptyParamConstraint = editedField.constraints.find(
+      c => !c.params || c.params.value === undefined || c.params.value === ''
+    );
+    if (emptyParamConstraint) {
+      errors.constraints = `Constraint "${emptyParamConstraint.name}" requires a value`;
+      isValid = false;
+    }
+
     listState.validationErrors = errors;
     return isValid;
   }
@@ -314,6 +322,30 @@
       ...editedField,
       constraints: editedField.constraints.filter((_, i) => i !== index)
     };
+  }
+
+  function updateConstraintParam(index: number, rawValue: string, parameterType: string) {
+    if (!editedField) return;
+
+    let parsedValue: string | number | undefined;
+    if (rawValue === '') {
+      parsedValue = undefined;
+    } else if (parameterType === 'str') {
+      parsedValue = rawValue;
+    } else {
+      const num = parameterType === 'int' ? parseInt(rawValue, 10) : parseFloat(rawValue);
+      parsedValue = isNaN(num) ? undefined : num;
+    }
+
+    const updatedConstraints = editedField.constraints.map((c, i) => {
+      if (i !== index) return c;
+      return {
+        ...c,
+        params: parsedValue !== undefined ? { value: parsedValue } : {}
+      };
+    });
+
+    listState.editedItem = { ...editedField, constraints: updatedConstraints };
   }
 
   function formatFieldConstraintPill(constraintValue: FieldConstraintValue): string {
@@ -580,25 +612,26 @@
                   {#if constraintMeta}
                     <div class="flex items-center space-x-2 p-2 bg-white rounded border border-mono-200">
                       <!-- Field Constraint Name and Type -->
-                      <div class="flex items-center space-x-2">
+                      <div class="flex items-center space-x-2 shrink-0">
                         <span class="font-mono text-sm text-mono-700">{constraintMeta.name}</span>
                         <span class="text-xs text-mono-500 bg-mono-100 px-2 py-0.5 rounded">{constraintMeta.parameterType}</span>
                       </div>
 
-                      <!-- Description (if available) -->
-                      {#if constraintMeta.description}
-                        <div class="flex-1 text-xs text-mono-500">
-                          {constraintMeta.description}
-                        </div>
-                      {:else}
-                        <div class="flex-1"></div>
-                      {/if}
+                      <!-- Parameter Value Input -->
+                      <input
+                        type={constraintMeta.parameterType === 'str' ? 'text' : 'number'}
+                        step={constraintMeta.parameterType === 'int' ? '1' : 'any'}
+                        value={constraintValue.params?.value ?? ''}
+                        oninput={(e) => updateConstraintParam(index, e.currentTarget.value, constraintMeta.parameterType)}
+                        placeholder={constraintMeta.parameterType === 'str' ? 'e.g. ^[a-z]+$' : 'Value'}
+                        class="flex-1 min-w-0 px-2 py-1 border border-mono-300 rounded text-sm focus:ring-2 focus:ring-mono-400 focus:border-transparent"
+                      />
 
                       <!-- Delete Button (aligned to the right) -->
                       <button
                         type="button"
                         onclick={() => removeFieldConstraint(index)}
-                        class="text-red-700 hover:text-red-600 transition-colors"
+                        class="text-red-700 hover:text-red-600 transition-colors shrink-0"
                         title="Remove field constraint"
                         aria-label="Remove field constraint"
                       >
@@ -625,6 +658,9 @@
                   {/if}
                 {/each}
               </div>
+            {/if}
+            {#if validationErrors.constraints}
+              <p class="text-xs text-red-500 mt-1">{validationErrors.constraints}</p>
             {/if}
           </div>
         </div>

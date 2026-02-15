@@ -66,7 +66,9 @@ median-code/
 ├── svelte.config.js                 # SvelteKit configuration
 ├── vite.config.ts                   # Vite configuration
 ├── vitest.config.ts                 # Vitest configuration
-├── playwright.config.ts             # Playwright configuration
+├── playwright.config.ts             # Playwright local configuration
+├── tests/config/playwright.config.ci.ts      # Playwright CI configuration
+├── tests/config/playwright.config.shared.ts  # Shared Playwright settings
 ├── api-spec.yaml                    # OpenAPI 3.0 specification
 ├── tsconfig.json                    # TypeScript configuration
 ├── CLAUDE.md                        # AI assistant guidance
@@ -182,9 +184,14 @@ bun run test:integration:watch   # Watch mode for development
 
 # E2E tests
 bun run test:e2e                 # All E2E tests
-bun run test:e2e:smoke           # Smoke tests (fast, runs on PRs)
+bun run test:e2e:smoke           # Smoke tests (fast, fail-fast)
 bun run test:e2e:full            # Full suite with visual regression
+bun run test:e2e:crud            # Setup + CRUD backend integration tests
 bun run test:e2e:ui              # Interactive Playwright UI
+
+# CI-oriented E2E commands (managed preview server)
+bun run test:e2e:smoke:ci
+bun run test:e2e:crud:ci
 
 # Coverage
 bun run test:coverage            # Generate coverage report
@@ -192,6 +199,11 @@ bun run test:coverage            # Generate coverage report
 # Validation
 bun run test:fixtures:validate   # Validate fixture schema
 ```
+
+Local Playwright runs auto-start and auto-stop the frontend dev server
+on an isolated test port by default (`127.0.0.1:4175`).
+Use `PLAYWRIGHT_TEST_PORT` or `PLAYWRIGHT_BASE_URL` to override it.
+To choose local vs hosted backend, set `PUBLIC_API_BASE_URL` when running E2E commands.
 
 ### Test Infrastructure
 

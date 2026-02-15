@@ -178,6 +178,12 @@ bun run test:e2e:smoke
 bun run test:e2e:full
 ```
 
+### E2E CI Commands
+```bash
+bun run test:e2e:smoke:ci
+bun run test:e2e:crud:ci
+```
+
 ### Watch Mode (Unit)
 ```bash
 bun run test:unit:watch
@@ -226,7 +232,9 @@ When implementing tests as an LLM agent:
 ## Configuration Files
 
 - `vitest.config.ts` - Vitest configuration (extends vite.config.ts)
-- `playwright.config.ts` - Playwright configuration
+- `playwright.config.ts` - Playwright local configuration (manages dev server lifecycle)
+- `tests/config/playwright.config.ci.ts` - Playwright CI configuration (manages preview server)
+- `tests/config/playwright.config.shared.ts` - Shared Playwright settings
 - `tsconfig.vitest.json` - TypeScript config for tests
 - `tests/setup/vitestSetup.ts` - Global Vitest setup
 

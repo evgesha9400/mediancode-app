@@ -1,6 +1,6 @@
 # E2E Tests
 
-End-to-end tests that require a running backend (api.dev.mediancode.com).
+End-to-end tests that require a running frontend app and (for CRUD) a running backend (api.dev.mediancode.com or local).
 
 ## Directory Structure
 
@@ -8,13 +8,9 @@ End-to-end tests that require a running backend (api.dev.mediancode.com).
 tests/e2e/
 ├── setup/             # Authenticates test user (setup project)
 ├── crud/              # Entity CRUD lifecycle tests
-│   ├── fields.spec.ts
-│   ├── objects.spec.ts
-│   ├── apis.spec.ts
-│   ├── endpoints.spec.ts
-│   └── namespaces.spec.ts
+│   └── fields.spec.ts
 ├── global-setup.ts    # MSW service worker verification
-└── __screenshots__/   # Visual regression baselines
+└── fixtures.ts        # Shared Playwright fixtures
 ```
 
 ## Shared Resources (tests/)
@@ -31,9 +27,21 @@ tests/
 ## Running
 
 ```bash
+# Smoke tests
+bun run test:e2e:smoke
+
 # CRUD tests (requires setup project for auth)
 bun run test:e2e:crud
+
+# CI-style runs (Playwright manages preview server)
+bun run test:e2e:smoke:ci
+bun run test:e2e:crud:ci
 ```
+
+Local runs auto-start and auto-stop the frontend dev server on
+`127.0.0.1:4175` by default. Override with `PLAYWRIGHT_TEST_PORT` or
+`PLAYWRIGHT_BASE_URL` when needed.
+Set `PUBLIC_API_BASE_URL` when running commands to choose local vs hosted backend.
 
 ## Environment Variables
 
