@@ -11,11 +11,12 @@
 // Export all fixtures
 export * from './users';
 export * from './types';
-export * from './constraints';
+export * from './fieldConstraints';
 export * from './fields';
 export * from './apis';
 export * from './permissions';
 export * from './seedData';
+export * from './validators';
 
 // Re-export commonly used fixtures as named exports for convenience
 export {
@@ -48,7 +49,7 @@ export {
 	getFieldConstraintsByCompatibleType,
 	type FieldConstraint,
 	type FieldConstraintBase
-} from './constraints';
+} from './fieldConstraints';
 
 export {
 	mockFields,
@@ -77,3 +78,14 @@ export {
 	type Permission,
 	type Role
 } from './permissions';
+
+export {
+	mockInlineValidators,
+	mockCustomValidators,
+	mockValidatorBases,
+	mockValidators,
+	getValidatorByName,
+	getValidatorsByType,
+	getValidatorsByCategory,
+	type ValidatorBase
+} from './validators';

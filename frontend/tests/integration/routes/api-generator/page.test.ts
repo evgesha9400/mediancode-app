@@ -13,13 +13,11 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { get } from 'svelte/store';
 import {
-	apiMetadataStore,
 	apisStore,
 	endpointsStore,
 	addEndpoint,
 	updateEndpoint,
 	getTotalEndpointCount,
-	initialApiMetadata,
 	addTagToApi,
 	deleteTagFromApi,
 	getTagByName,
@@ -37,7 +35,6 @@ describe('API Generator Page - Store Integration', () => {
 	beforeEach(() => {
 		apisStore.set([createMockApi({ id: TEST_API_ID, tags: [] })]);
 		endpointsStore.set([]);
-		apiMetadataStore.set(initialApiMetadata);
 	});
 
 	describe('Tag Management (Embedded in API)', () => {

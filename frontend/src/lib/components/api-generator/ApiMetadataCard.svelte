@@ -1,9 +1,11 @@
 <script module lang="ts">
-  import type { ApiMetadata } from '$lib/types';
+  import type { Api } from '$lib/types';
+
+  type ApiMetadataField = 'title' | 'version' | 'description' | 'baseUrl' | 'serverUrl';
 
   export interface ApiMetadataCardProps {
-    metadata: ApiMetadata;
-    onUpdate: (updates: Partial<ApiMetadata>) => void;
+    metadata: Api;
+    onUpdate: (updates: Partial<Api>) => void;
   }
 </script>
 
@@ -14,7 +16,7 @@
 
   let { metadata, onUpdate }: Props = $props();
 
-  function handleInput(field: keyof ApiMetadata, value: string) {
+  function handleInput(field: ApiMetadataField, value: string) {
     onUpdate({ [field]: value });
   }
 </script>

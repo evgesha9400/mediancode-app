@@ -1,5 +1,5 @@
 import { writable, get } from 'svelte/store';
-import type { Api, ApiMetadata, ApiTag, ApiEndpoint, EndpointParameter, DeletionResult } from '$lib/types';
+import type { Api, ApiTag, ApiEndpoint, EndpointParameter, DeletionResult } from '$lib/types';
 import { extractPathParameters } from '$lib/utils/urlParser';
 import { generateId, generateParamId, deepClone } from '$lib/utils/ids';
 import { GLOBAL_NAMESPACE_ID } from '$lib/constants';
@@ -10,20 +10,6 @@ import { GLOBAL_NAMESPACE_ID } from '$lib/constants';
 
 // Store for multiple APIs
 export const apisStore = writable<Api[]>([]);
-
-// Initial empty state for API metadata (legacy - deprecated)
-export const initialApiMetadata: ApiMetadata = {
-	id: '30000000-0000-0000-0000-000000000000',
-	namespaceId: GLOBAL_NAMESPACE_ID,
-	title: '',
-	version: '1.0.0',
-	description: '',
-	baseUrl: '/api/v1',
-	serverUrl: ''
-};
-
-// Store for API metadata (legacy - deprecated, use apisStore instead)
-export const apiMetadataStore = writable<ApiMetadata>(initialApiMetadata);
 
 // Store for API endpoints
 export const endpointsStore = writable<ApiEndpoint[]>([]);
@@ -152,17 +138,6 @@ export function getEndpointsByApi(apiId: string): ApiEndpoint[] {
 export function getTagsByApi(apiId: string): ApiTag[] {
 	const api = getApiById(apiId);
 	return api?.tags ?? [];
-}
-
-// ============================================================================
-// API Metadata Operations
-// ============================================================================
-
-export function updateApiMetadata(updates: Partial<ApiMetadata>): void {
-	apiMetadataStore.update(metadata => ({
-		...metadata,
-		...updates
-	}));
 }
 
 // ============================================================================
@@ -566,51 +541,3 @@ export function deletePathParameter(endpointId: string, paramId: string): void {
 	updateEndpoint(endpointId, { pathParams: updatedParams });
 }
 
-// ============================================================================
-// Data Migration
-// ============================================================================
-
-/**
- * Migrate from single API metadata to multiple APIs model.
- * This should be called on app initialization.
- *
- * Migration steps:
- * 1. If apisStore is empty but apiMetadataStore has data, create a default API
- * 2. Update all existing endpoints with the new apiId
- */
-export function migrateToMultipleApis(): void {
-	const apis = get(apisStore);
-	const metadata = get(apiMetadataStore);
-	const endpoints = get(endpointsStore);
-
-	// Only migrate if we have no APIs but have metadata or endpoints
-	if (apis.length === 0 && (metadata.title || endpoints.length > 0)) {
-		const now = new Date().toISOString();
-		const defaultApiId = generateId('api');
-
-		// Create default API from existing metadata
-		const defaultApi: Api = {
-			id: defaultApiId,
-			namespaceId: metadata.namespaceId,
-			title: metadata.title || 'Default API',
-			version: metadata.version,
-			description: metadata.description,
-			baseUrl: metadata.baseUrl,
-			serverUrl: metadata.serverUrl,
-			tags: [],
-			createdAt: now,
-			updatedAt: now
-		};
-
-		apisStore.set([defaultApi]);
-
-		// Update all endpoints with the new apiId
-		if (endpoints.length > 0) {
-			endpointsStore.update(eps =>
-				eps.map(e => ({ ...e, apiId: e.apiId || defaultApiId }))
-			);
-		}
-
-		console.log('Migration complete: Migrated to multiple APIs model');
-	}
-}

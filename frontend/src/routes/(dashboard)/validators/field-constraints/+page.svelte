@@ -94,7 +94,7 @@
   }
 
   function navigateToField(fieldId: string) {
-    goto(`/field-registry?highlight=${fieldId}`);
+    goto(`/fields?highlight=${fieldId}`);
   }
 
   let hasReferences = $derived(selectedFieldConstraint ? selectedFieldConstraint.fieldsUsingConstraint.length > 0 : false);

@@ -1,7 +1,7 @@
 /**
  * Fields Page Object
  *
- * Encapsulates interactions with the fields page (/field-registry).
+ * Encapsulates interactions with the fields page (/fields).
  * Handles search, filter, sort, view details, edit, and delete operations.
  *
  * Actions that involve API calls or UI transitions (drawer open/close, confirmation
@@ -15,7 +15,7 @@
 import { type Page, type Locator, expect } from '@playwright/test';
 import { ACTION_DELAY_MS } from '../helpers/e2e-delays';
 
-export class FieldRegistryPage {
+export class FieldsPage {
 	readonly page: Page;
 
 	// Header
@@ -101,11 +101,11 @@ export class FieldRegistryPage {
 		this.drawerCloseButton = page.locator('button[aria-label="Close drawer"]');
 
 		// Drawer form fields (using prefixed IDs to avoid conflicts)
-		this.fieldNameInput = page.locator('#field-registry-name');
+		this.fieldNameInput = page.locator('#fields-name');
 		this.typeSearchInput = page.getByPlaceholder('Search types...');
 		this.typeDropdownOptions = this.typeSearchInput.locator('..').locator('..').locator('.absolute.z-10 button');
-		this.fieldDescriptionTextarea = page.locator('#field-registry-description');
-		this.fieldDefaultValueInput = page.locator('#field-registry-default-value');
+		this.fieldDescriptionTextarea = page.locator('#fields-description');
+		this.fieldDefaultValueInput = page.locator('#fields-default-value');
 
 		// Drawer field constraints section - uses FieldConstraintSelectorDropdown component
 		this.constraintSelectorInput = page.getByPlaceholder('Add field constraint...');
@@ -136,7 +136,7 @@ export class FieldRegistryPage {
 	 * Navigate to the fields page
 	 */
 	async goto() {
-		await this.page.goto('/field-registry', { waitUntil: 'networkidle' });
+		await this.page.goto('/fields', { waitUntil: 'networkidle' });
 		await this.pageTitle.waitFor({ state: 'visible' });
 		await this.delay();
 	}

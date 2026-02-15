@@ -133,29 +133,6 @@ export interface Api {
   updatedAt: string;
 }
 
-// Legacy single API metadata (deprecated, use Api instead)
-export interface ApiMetadata {
-  id: string;
-  namespaceId: string;
-  title: string;
-  version: string;
-  description: string;
-  baseUrl: string;
-  serverUrl: string;
-}
-
-/**
- * @deprecated EndpointTag is deprecated. Tags are now embedded in Api as ApiTag[].
- * This type is kept for backward compatibility during migration.
- */
-export interface EndpointTag {
-  id: string;
-  namespaceId: string;
-  apiId: string;
-  name: string;
-  description: string;
-}
-
 export interface EndpointParameter {
   id: string;
   name: string;

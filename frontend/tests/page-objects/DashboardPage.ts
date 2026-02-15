@@ -69,7 +69,7 @@ export class DashboardPage {
 		// Sidebar - use href-based navigation links
 		this.sidebar = page.locator('nav, aside').first();
 		this.dashboardNavLink = page.getByRole('link', { name: /dashboard/i });
-		this.fieldsNavLink = page.locator('a[href="/field-registry"]');
+		this.fieldsNavLink = page.locator('a[href="/fields"]');
 		this.typesNavLink = page.locator('a[href="/types"]');
 		this.fieldConstraintsNavLink = page.locator('[data-testid="dashboard-sidebar"] a[href="/validators/field-constraints"]');
 
@@ -100,10 +100,10 @@ export class DashboardPage {
 	/**
 	 * Navigate to a specific section via sidebar
 	 */
-	async navigateTo(section: 'dashboard' | 'field-registry' | 'types' | 'field-constraints') {
+	async navigateTo(section: 'dashboard' | 'fields' | 'types' | 'field-constraints') {
 		const linkMap = {
 			dashboard: this.dashboardNavLink,
-			'field-registry': this.fieldsNavLink,
+			'fields': this.fieldsNavLink,
 			types: this.typesNavLink,
 			'field-constraints': this.fieldConstraintsNavLink
 		};

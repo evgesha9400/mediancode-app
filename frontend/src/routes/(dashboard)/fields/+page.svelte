@@ -481,11 +481,11 @@
       <div class="space-y-4">
         <!-- Namespace (Read-only) -->
         <div>
-          <label for="field-registry-namespace" class="block text-sm text-mono-700 mb-1 font-medium">
+          <label for="fields-namespace" class="block text-sm text-mono-700 mb-1 font-medium">
             Namespace
           </label>
           <input
-            id="field-registry-namespace"
+            id="fields-namespace"
             type="text"
             value={getNamespaceById(editedField.namespaceId)?.name ?? ''}
             disabled
@@ -496,11 +496,11 @@
 
         <!-- Field Name -->
         <div>
-          <label for="field-registry-name" class="block text-sm text-mono-700 mb-1 font-medium">
+          <label for="fields-name" class="block text-sm text-mono-700 mb-1 font-medium">
             Field Name <span class="text-red-500">*</span>
           </label>
           <input
-            id="field-registry-name"
+            id="fields-name"
             type="text"
             bind:value={editedField.name}
             class="w-full px-3 py-2 border border-mono-300 rounded-md focus:ring-2 focus:ring-mono-400 focus:border-transparent {validationErrors.name ? 'border-red-500' : ''}"
@@ -512,11 +512,11 @@
 
         <!-- Type -->
         <div>
-          <label for="field-registry-type" class="block text-sm text-mono-700 mb-1 font-medium">
+          <label for="fields-type" class="block text-sm text-mono-700 mb-1 font-medium">
             Type <span class="text-red-500">*</span>
           </label>
           <TypeSelectorDropdown
-            id="field-registry-type"
+            id="fields-type"
             availableTypes={selectableTypes}
             selectedTypeName={editedField.type}
             onSelect={(typeName) => {
@@ -534,9 +534,9 @@
 
         <!-- Description -->
         <div>
-          <label for="field-registry-description" class="block text-sm text-mono-700 mb-1 font-medium">Description</label>
+          <label for="fields-description" class="block text-sm text-mono-700 mb-1 font-medium">Description</label>
           <textarea
-            id="field-registry-description"
+            id="fields-description"
             bind:value={editedField.description}
             rows="3"
             class="w-full px-3 py-2 border border-mono-300 rounded-md focus:ring-2 focus:ring-mono-400 focus:border-transparent"
@@ -545,9 +545,9 @@
 
         <!-- Default Value -->
         <div>
-          <label for="field-registry-default-value" class="block text-sm text-mono-700 mb-1 font-medium">Default Value</label>
+          <label for="fields-default-value" class="block text-sm text-mono-700 mb-1 font-medium">Default Value</label>
           <input
-            id="field-registry-default-value"
+            id="fields-default-value"
             type="text"
             bind:value={editedField.defaultValue}
             placeholder="None"

@@ -6,7 +6,7 @@
  */
 
 import { authenticatedTest as test, expect } from '../fixtures';
-import { FieldRegistryPage } from '../../page-objects';
+import { FieldsPage } from '../../page-objects';
 import { E2EApiClient } from '../../helpers';
 
 // --- Test data: 4 fields with different types, names that sort distinctly ---
@@ -59,7 +59,7 @@ test('Field lifecycle: create, search, filter, sort, update, delete', async ({ p
 	const api = await E2EApiClient.fromPage(page);
 	await api.deleteAllFields();
 
-	const fields = new FieldRegistryPage(page);
+	const fields = new FieldsPage(page);
 	await fields.goto();
 
 	// --- Verify empty state ---

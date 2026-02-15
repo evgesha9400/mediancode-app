@@ -308,6 +308,3 @@ export class FieldConstraintsPage {
 		return await this.emptyState.isVisible();
 	}
 }
-
-// Legacy alias for backward compatibility
-export const ConstraintsPage = FieldConstraintsPage;

@@ -31,14 +31,14 @@ tests/
 │   │   ├── landing.spec.ts
 │   │   ├── auth.spec.ts
 │   │   ├── dashboard.spec.ts
-│   │   ├── field-registry.spec.ts
+│   │   ├── fields.spec.ts
 │   │   ├── types.spec.ts
 │   │   ├── validators.spec.ts
 │   │   └── mobile-blocked.spec.ts
 │   ├── page-objects/        # Page object models
 │   │   ├── LandingPage.ts
 │   │   ├── DashboardPage.ts
-│   │   ├── FieldRegistryPage.ts
+│   │   ├── FieldsPage.ts
 │   │   ├── TypesPage.ts
 │   │   └── ValidatorsPage.ts
 │   └── fixtures/            # Re-exports shared fixtures for Playwright
@@ -87,7 +87,7 @@ For every route in `src/routes/`, there should be a corresponding integration te
 
 **Example:**
 - `src/routes/dashboard/+page.svelte` → `tests/integration/routes/dashboard/page.test.ts`
-- `src/routes/field-registry/+page.svelte` → `tests/integration/routes/field-registry/page.test.ts`
+- `src/routes/fields/+page.svelte` → `tests/integration/routes/fields/page.test.ts`
 - `src/routes/+layout.svelte` → `tests/integration/routes/layout.test.ts`
 
 **Naming Convention:**
@@ -102,7 +102,7 @@ E2E tests are NOT mirrored 1:1 with routes. Instead, they're organized by user-f
 - `landing.spec.ts` - Landing page interactions (hero, forms, navigation)
 - `auth.spec.ts` - Authentication flows (sign-in, sign-up, sign-out)
 - `dashboard.spec.ts` - Dashboard overview and navigation
-- `field-registry.spec.ts` - Field management workflows
+- `fields.spec.ts` - Field management workflows
 - `types.spec.ts` - Type definition workflows
 - `validators.spec.ts` - Validator management workflows
 - `mobile-blocked.spec.ts` - Mobile device detection and blocking
@@ -125,14 +125,14 @@ Each major route gets a page object model to encapsulate selectors and interacti
 - **Naming:** Descriptive feature name
 - **Examples:**
   - `landing.spec.ts`
-  - `field-registry.spec.ts`
+  - `fields.spec.ts`
 
 ### Page Objects
 - **Suffix:** `.ts` (no test suffix)
 - **Naming:** `{FeatureName}Page.ts`
 - **Examples:**
   - `DashboardPage.ts`
-  - `FieldRegistryPage.ts`
+  - `FieldsPage.ts`
 
 ## Test Organization Principles
 

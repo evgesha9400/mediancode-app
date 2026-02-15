@@ -44,8 +44,8 @@ For each domain entity listed below, trace its name through every layer of the c
    - Type: `FieldConstraint` (PascalCase)
    - API client file: `fieldConstraints.ts` (camelCase)
    - API path: `/field-constraints` (kebab-case)
-   - Test fixture: `constraints.ts` with `mockFieldConstraints` exports
-   - Page object: `ConstraintsPage.ts` with `FieldConstraintsPage` class
+   - Test fixture: `fieldConstraints.ts` with `mockFieldConstraints` exports
+   - Page object: `FieldConstraintsPage.ts` with `FieldConstraintsPage` class
 
 2. **The route directory name and sidebar href must match exactly.**
 
@@ -59,7 +59,7 @@ For each domain entity listed below, trace its name through every layer of the c
 
 7. **Type interface names should be the PascalCase version of the entity name.** Example: entity "field constraint" maps to `FieldConstraint`.
 
-8. **Page object class names should match the route directory name in PascalCase.** Example: route `field-registry` maps to `FieldRegistryPage`.
+8. **Page object class names should match the route directory name in PascalCase.** Example: route `fields` maps to `FieldsPage`.
 
 9. **Test fixture filenames should match the entity name.** Example: entity "field constraints" maps to `fieldConstraints.ts` (not `constraints.ts`).
 
@@ -92,7 +92,7 @@ The following entities have been identified in the codebase. Audit each one agai
 
 ### Entity: Field Constraints (formerly Validators)
 
-This entity has the **most significant naming inconsistency** in the codebase. The backend API spec calls this entity "Validators" while the frontend has been migrated to call it "Field Constraints."
+This entity was previously the **most significant naming inconsistency** in the codebase. As of 2026-02-15, all layers have been aligned to use "field constraints" consistently.
 
 | Layer | Current Name | Expected Name | Status |
 |---|---|---|---|
@@ -103,22 +103,16 @@ This entity has the **most significant naming inconsistency** in the codebase. T
 | Store variable | `fieldConstraintsStore` | `fieldConstraintsStore` | CONSISTENT |
 | Type interface | `FieldConstraint`, `FieldConstraintBase` | `FieldConstraint` | CONSISTENT |
 | API client file | `fieldConstraints.ts` | `fieldConstraints.ts` | CONSISTENT |
-| **API endpoint path** | **`/field-constraints`** | -- | **INCONSISTENT with API spec** |
-| **API spec path** | **`/validators`** | -- | **INCONSISTENT with frontend** |
-| **API spec schema** | **`ValidatorBase`** | `FieldConstraintBase` | **INCONSISTENT** |
-| **API spec field schema** | **`FieldValidator`** | `FieldConstraintValue` | **INCONSISTENT** |
+| API endpoint path | `/field-constraints` | `/field-constraints` | CONSISTENT |
+| API spec path | `/field-constraints` | `/field-constraints` | CONSISTENT |
+| API spec schema | `FieldConstraintResponse` | `FieldConstraintResponse` | CONSISTENT |
 | Actions layer | `(none -- no CRUD actions)` | -- | N/A (read-only entity) |
-| **Test fixture file** | **`constraints.ts`** | `fieldConstraints.ts` | **INCONSISTENT** |
-| **Test fixture exports** | `mockFieldConstraints` | `mockFieldConstraints` | CONSISTENT |
-| **Page object file** | **`ConstraintsPage.ts`** | `FieldConstraintsPage.ts` | **INCONSISTENT** |
+| Test fixture file | `fieldConstraints.ts` | `fieldConstraints.ts` | CONSISTENT |
+| Test fixture exports | `mockFieldConstraints` | `mockFieldConstraints` | CONSISTENT |
+| Page object file | `FieldConstraintsPage.ts` | `FieldConstraintsPage.ts` | CONSISTENT |
 | Page object class | `FieldConstraintsPage` | `FieldConstraintsPage` | CONSISTENT |
-| Page object alias export | `ConstraintsPage` (alias) | Should be removed | **INCONSISTENT** |
 
-**Critical Inconsistencies:**
-1. The **API spec** (`api-spec.yaml`) uses the path `/validators` and the schema name `ValidatorBase`, while the frontend consistently uses "field constraints" everywhere. The API client file (`src/lib/api/fieldConstraints.ts`) calls the endpoint `/field-constraints`, which does NOT match the API spec's `/validators` path. One side must change.
-2. The **test fixture file** is named `constraints.ts` instead of `fieldConstraints.ts`. The exports inside use the correct `mockFieldConstraints` naming but the file itself is inconsistent.
-3. The **page object file** is named `ConstraintsPage.ts` but the class inside is `FieldConstraintsPage`. The file should be renamed to `FieldConstraintsPage.ts`.
-4. The page object index re-exports both `FieldConstraintsPage` and a `ConstraintsPage` alias. The alias should be removed.
+**Status:** Fully consistent across all layers. Previously the API spec used `/validators` and `ValidatorBase` schema while the frontend used "field constraints" -- this was resolved by updating the API spec to match the frontend naming.
 
 ---
 
@@ -126,9 +120,9 @@ This entity has the **most significant naming inconsistency** in the codebase. T
 
 | Layer | Current Name | Expected Name | Status |
 |---|---|---|---|
-| **Route directory** | **`field-registry`** | `fields` | **INCONSISTENT** |
-| **Sidebar label** | **"Fields"** | -- | **Mismatch with route** |
-| **Sidebar href** | **`/field-registry`** | `/fields` | **INCONSISTENT** |
+| Route directory | `fields` | `fields` | CONSISTENT |
+| Sidebar label | "Fields" | "Fields" | CONSISTENT |
+| Sidebar href | `/fields` | `/fields` | CONSISTENT |
 | Store file | `fields.ts` | `fields.ts` | CONSISTENT |
 | Store variable | `fieldsStore` | `fieldsStore` | CONSISTENT |
 | Type interface | `Field` | `Field` | CONSISTENT |
@@ -137,14 +131,12 @@ This entity has the **most significant naming inconsistency** in the codebase. T
 | API spec path | `/fields` | `/fields` | CONSISTENT |
 | API spec schema | `Field` | `Field` | CONSISTENT |
 | Actions layer | `createFieldAction`, etc. | -- | CONSISTENT |
-| **Page object file** | **`FieldRegistryPage.ts`** | `FieldsPage.ts` | **INCONSISTENT** |
-| **Page object class** | **`FieldRegistryPage`** | `FieldsPage` | **INCONSISTENT** |
+| Page object file | `FieldsPage.ts` | `FieldsPage.ts` | CONSISTENT |
+| Page object class | `FieldsPage` | `FieldsPage` | CONSISTENT |
 | Test fixture file | `fields.ts` | `fields.ts` | CONSISTENT |
 | Test fixture exports | `mockFields` | `mockFields` | CONSISTENT |
 
-**Critical Inconsistencies:**
-1. The **route directory** is named `field-registry` while every other layer uses `fields`. The sidebar label says "Fields" but links to `/field-registry`. The store, type, API client, API path, API spec, and test fixtures all use `fields`. The route should be `fields` or the sidebar label should be "Field Registry" -- but `fields` is the overwhelming canonical name.
-2. The **page object** mirrors the route inconsistency: `FieldRegistryPage` instead of `FieldsPage`.
+**Status:** Fully consistent across all layers. Previously the route was `field-registry` and the page object was `FieldRegistryPage` -- these were renamed to `fields` and `FieldsPage` on 2026-02-15.
 
 ---
 
@@ -152,9 +144,9 @@ This entity has the **most significant naming inconsistency** in the codebase. T
 
 | Layer | Current Name | Expected Name | Status |
 |---|---|---|---|
-| **Route directory** | **`object-builder`** | `objects` | **INCONSISTENT** |
-| **Sidebar label** | **"Objects"** | -- | **Mismatch with route** |
-| **Sidebar href** | **`/object-builder`** | `/objects` | **INCONSISTENT** |
+| Route directory | `objects` | `objects` | CONSISTENT |
+| Sidebar label | "Objects" | "Objects" | CONSISTENT |
+| Sidebar href | `/objects` | `/objects` | CONSISTENT |
 | Store file | `objects.ts` | `objects.ts` | CONSISTENT |
 | Store variable | `objectsStore` | `objectsStore` | CONSISTENT |
 | Type interface | `ObjectDefinition` | `Object` or `ObjectDefinition` | SEE NOTES |
@@ -162,13 +154,11 @@ This entity has the **most significant naming inconsistency** in the codebase. T
 | API endpoint path | `/objects` | `/objects` | CONSISTENT |
 | API spec path | `/objects` | `/objects` | CONSISTENT |
 | Actions layer | `createObjectAction`, etc. | -- | CONSISTENT |
-| **Page object file** | **`ObjectBuilderPage.ts`** | `ObjectsPage.ts` | **INCONSISTENT** |
-| **Page object class** | **`ObjectBuilderPage`** | `ObjectsPage` | **INCONSISTENT** |
+| Page object file | `ObjectsPage.ts` | `ObjectsPage.ts` | CONSISTENT |
+| Page object class | `ObjectsPage` | `ObjectsPage` | CONSISTENT |
 | Test fixture file | (embedded in other fixtures) | `objects.ts` | N/A |
 
-**Critical Inconsistencies:**
-1. The **route directory** is named `object-builder` while every other layer uses `objects`. The sidebar label says "Objects" but links to `/object-builder`. The store, type, API client, API path, and API spec all use `objects`.
-2. The **page object** mirrors the route inconsistency: `ObjectBuilderPage` instead of `ObjectsPage`.
+**Status:** Fully consistent across all layers. Previously the route was `object-builder` and the page object was `ObjectBuilderPage` -- these were renamed to `objects` and `ObjectsPage` on 2026-02-15.
 
 **Notes:** The type interface is `ObjectDefinition` rather than `Object` to avoid collision with JavaScript's built-in `Object`. This is an acceptable deviation.
 
@@ -241,7 +231,7 @@ This entity has the **most significant naming inconsistency** in the codebase. T
 | API spec path | `/tags` | -- | SEE NOTES |
 | API spec schema | `Tag` | -- | SEE NOTES |
 
-**Notes:** Tags were migrated from a standalone entity (with their own `/tags` API endpoint) to being embedded within the `Api` entity as a JSONB array. The API spec still defines `/tags` as a standalone endpoint, but the frontend treats tags as part of the API. The deprecated `EndpointTag` type still exists in `src/lib/types/index.ts`. This is a migration-related inconsistency that should be tracked.
+**Notes:** Tags were migrated from a standalone entity (with their own `/tags` API endpoint) to being embedded within the `Api` entity as a JSONB array. The API spec still defines `/tags` as a standalone endpoint, but the frontend treats tags as part of the API. The deprecated `EndpointTag` type was removed from `src/lib/types/index.ts` on 2026-02-15.
 
 ---
 
@@ -282,28 +272,32 @@ This entity has the **most significant naming inconsistency** in the codebase. T
 
 ### CRITICAL (names diverge across core layers)
 
-| # | Entity | Problem | Affected Layers | Recommended Fix |
+All critical inconsistencies have been resolved as of 2026-02-15.
+
+| # | Entity | Problem | Status | Resolution Date |
 |---|---|---|---|---|
-| 1 | **Fields** | Route is `field-registry`, everything else is `fields` | Route, Sidebar href, Page object | Rename route to `fields`, update sidebar href to `/fields`, rename page object to `FieldsPage` |
-| 2 | **Objects** | Route is `object-builder`, everything else is `objects` | Route, Sidebar href, Page object | Rename route to `objects`, update sidebar href to `/objects`, rename page object to `ObjectsPage` |
-| 3 | **Field Constraints** | API spec uses `validators`/`ValidatorBase`, frontend uses `field-constraints`/`FieldConstraint` | API spec, API client endpoint path | Align API spec to use `/field-constraints` and `FieldConstraintBase` schema, OR update frontend API client to call `/validators` |
+| ~~1~~ | ~~**Fields**~~ | ~~Route was `field-registry`, everything else was `fields`~~ | RESOLVED | 2026-02-15 |
+| ~~2~~ | ~~**Objects**~~ | ~~Route was `object-builder`, everything else was `objects`~~ | RESOLVED | 2026-02-15 |
+| ~~3~~ | ~~**Field Constraints**~~ | ~~API spec used `validators`/`ValidatorBase`, frontend used `field-constraints`/`FieldConstraint`~~ | RESOLVED | 2026-02-15 |
 
 ### MODERATE (test infrastructure naming drift)
 
-| # | Entity | Problem | Affected File | Recommended Fix |
+All moderate inconsistencies have been resolved as of 2026-02-15.
+
+| # | Entity | Problem | Status | Resolution Date |
 |---|---|---|---|---|
-| 4 | **Field Constraints** | Test fixture file named `constraints.ts` instead of `fieldConstraints.ts` | `tests/fixtures/constraints.ts` | Rename to `fieldConstraints.ts`, update all imports |
-| 5 | **Field Constraints** | Page object file named `ConstraintsPage.ts` instead of `FieldConstraintsPage.ts` | `tests/page-objects/ConstraintsPage.ts` | Rename to `FieldConstraintsPage.ts`, remove `ConstraintsPage` alias |
-| 6 | **Fields** | Page object class named `FieldRegistryPage` instead of `FieldsPage` | `tests/page-objects/FieldRegistryPage.ts` | Rename file and class to `FieldsPage` |
-| 7 | **Objects** | Page object class named `ObjectBuilderPage` instead of `ObjectsPage` | `tests/page-objects/ObjectBuilderPage.ts` | Rename file and class to `ObjectsPage` |
+| ~~4~~ | ~~**Field Constraints**~~ | ~~Test fixture file named `constraints.ts` instead of `fieldConstraints.ts`~~ | RESOLVED | 2026-02-15 |
+| ~~5~~ | ~~**Field Constraints**~~ | ~~Page object file named `ConstraintsPage.ts` instead of `FieldConstraintsPage.ts`~~ | RESOLVED | 2026-02-15 |
+| ~~6~~ | ~~**Fields**~~ | ~~Page object class named `FieldRegistryPage` instead of `FieldsPage`~~ | RESOLVED | 2026-02-15 |
+| ~~7~~ | ~~**Objects**~~ | ~~Page object class named `ObjectBuilderPage` instead of `ObjectsPage`~~ | RESOLVED | 2026-02-15 |
 
 ### MINOR (legacy/deprecated naming)
 
-| # | Entity | Problem | Affected File | Recommended Fix |
+| # | Entity | Problem | Status | Details |
 |---|---|---|---|---|
-| 8 | **Tags** | Deprecated `EndpointTag` type still exists | `src/lib/types/index.ts` | Remove when migration is complete |
-| 9 | **APIs** | Deprecated `ApiMetadata` type and `apiMetadataStore` still exist | `src/lib/types/index.ts`, `src/lib/stores/apis.ts` | Remove when migration is complete |
-| 10 | **API Generator** | Deprecated `apiGeneratorState.svelte.ts` still exists | `src/lib/stores/apiGeneratorState.svelte.ts` | Remove when confirmed unused |
+| ~~8~~ | ~~**Tags**~~ | ~~Deprecated `EndpointTag` type existed~~ | RESOLVED | Removed on 2026-02-15 |
+| ~~9~~ | ~~**APIs**~~ | ~~Deprecated `ApiMetadata` type and `apiMetadataStore` still exist~~ | RESOLVED | Removed on 2026-02-15 |
+| ~~10~~ | ~~**API Generator**~~ | ~~Deprecated `apiGeneratorState.svelte.ts` existed~~ | RESOLVED | Deleted on 2026-02-15 |
 
 ---
 
@@ -386,14 +380,14 @@ This is the canonical name mapping. When adding a new entity, add it here first,
 |---|---|---|---|---|---|---|---|
 | types | `types` | `types.ts` | `typesStore` | `FieldType` | `types.ts` | `/types` | "Types" |
 | field-constraints | `validators/field-constraints` | `fieldConstraints.ts` | `fieldConstraintsStore` | `FieldConstraint` | `fieldConstraints.ts` | `/field-constraints` | "Field Constraints" |
-| fields | `fields` * | `fields.ts` | `fieldsStore` | `Field` | `fields.ts` | `/fields` | "Fields" |
-| objects | `objects` * | `objects.ts` | `objectsStore` | `ObjectDefinition` | `objects.ts` | `/objects` | "Objects" |
+| fields | `fields` | `fields.ts` | `fieldsStore` | `Field` | `fields.ts` | `/fields` | "Fields" |
+| objects | `objects` | `objects.ts` | `objectsStore` | `ObjectDefinition` | `objects.ts` | `/objects` | "Objects" |
 | apis | `apis` | `apis.ts` | `apisStore` | `Api` | `apis.ts` | `/apis` | "APIs" |
 | endpoints | (nested in apis) | `apis.ts` | `endpointsStore` | `ApiEndpoint` | `endpoints.ts` | `/endpoints` | (none) |
 | namespaces | `namespaces` | `namespaces.ts` | `namespacesStore` | `Namespace` | `namespaces.ts` | `/namespaces` | "Namespaces" |
 | tags | (embedded in api) | `apis.ts` | (in Api.tags) | `ApiTag` | (in apis.ts) | `/tags` * | (none) |
 
-Items marked with `*` indicate the **recommended** name that differs from the current implementation. See the inconsistencies table above.
+All primary entity names are now consistent across all layers. The `*` on tags `/tags` indicates the API spec still defines a standalone `/tags` endpoint, but the frontend treats tags as embedded within the Api entity (no dedicated route or store).
 
 ---
 
@@ -408,3 +402,8 @@ Use this section to record decisions about intentional naming deviations.
 | Endpoints | Type named `ApiEndpoint` not `Endpoint` | Clarifies these are API endpoint definitions, not generic endpoints | -- |
 | Endpoints | Store lives in `apis.ts` not `endpoints.ts` | Endpoints are always accessed in API context | -- |
 | Field Constraints | Route nested under `validators/` | Architectural decision: validators is a parent category containing field constraints, field validators, and model validators | -- |
+| Fields | Route renamed from `field-registry` to `fields` | Aligned route with canonical name used by all other layers (store, types, API client, API spec) | 2026-02-15 |
+| Objects | Route renamed from `object-builder` to `objects` | Aligned route with canonical name used by all other layers (store, types, API client, API spec) | 2026-02-15 |
+| Field Constraints | API spec updated from `/validators`+`ValidatorBase` to `/field-constraints`+`FieldConstraintResponse` | Backend API spec now matches frontend naming; test fixtures and page objects also renamed for consistency | 2026-02-15 |
+| Tags | Deprecated `EndpointTag` type removed | Migration to embedded tags within Api entity is complete | 2026-02-15 |
+| API Generator | Deprecated `apiGeneratorState.svelte.ts` deleted | File confirmed unused and removed | 2026-02-15 |

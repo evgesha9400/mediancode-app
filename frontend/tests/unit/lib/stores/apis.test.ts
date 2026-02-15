@@ -1,10 +1,8 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { get } from 'svelte/store';
 import {
-	apiMetadataStore,
 	apisStore,
 	endpointsStore,
-	updateApiMetadata,
 	getApiById,
 	getTagByName,
 	getEndpointById,
@@ -20,8 +18,7 @@ import {
 	deleteEndpoint,
 	updateEndpointPath,
 	updatePathParameter,
-	deletePathParameter,
-	initialApiMetadata
+	deletePathParameter
 } from '$lib/stores/apis';
 import { seedIdGenerator } from '$lib/utils/ids';
 import { GLOBAL_NAMESPACE_ID } from '$lib/constants';
@@ -30,22 +27,6 @@ import { createMockEndpoint, createMockApi } from '../../../shared/testUtils';
 
 // Test API ID for all endpoint and tag operations
 const TEST_API_ID = 'cccccccc-0000-0000-0000-000000000001';
-
-describe('apis store - Metadata Operations', () => {
-	beforeEach(() => {
-		// Reset stores to initial state
-		apiMetadataStore.set(initialApiMetadata);
-	});
-
-	it('should update API metadata', () => {
-		updateApiMetadata({ title: 'My API', version: '2.0.0' });
-
-		const metadata = get(apiMetadataStore);
-		expect(metadata.title).toBe('My API');
-		expect(metadata.version).toBe('2.0.0');
-		expect(metadata.baseUrl).toBe('/api/v1'); // Unchanged
-	});
-});
 
 describe('apis store - Tag Operations (Embedded in API)', () => {
 	beforeEach(() => {

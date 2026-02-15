@@ -1,13 +1,13 @@
 /**
- * Object Builder Page Object
+ * Objects Page Object
  *
- * Encapsulates interactions with the object builder page (/object-builder).
+ * Encapsulates interactions with the objects page (/objects).
  * Handles search, view details, edit, create, and delete operations for objects.
  */
 
 import { type Page, type Locator, expect } from '@playwright/test';
 
-export class ObjectBuilderPage {
+export class ObjectsPage {
 	readonly page: Page;
 
 	// Header
@@ -114,7 +114,7 @@ export class ObjectBuilderPage {
 	 * Navigate to the object builder page
 	 */
 	async goto() {
-		await this.page.goto('/object-builder', { waitUntil: 'networkidle' });
+		await this.page.goto('/objects', { waitUntil: 'networkidle' });
 		await this.pageTitle.waitFor({ state: 'visible' });
 	}
 

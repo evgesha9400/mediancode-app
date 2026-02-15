@@ -31,8 +31,8 @@
         { href: '/validators/model-validators', label: 'Model Validators', icon: 'fa-diagram-project' }
       ]
     },
-    { href: '/field-registry', label: 'Fields', icon: 'fa-table-list' },
-    { href: '/object-builder', label: 'Objects', icon: 'fa-cubes' },
+    { href: '/fields', label: 'Fields', icon: 'fa-table-list' },
+    { href: '/objects', label: 'Objects', icon: 'fa-cubes' },
     { href: '/apis', label: 'APIs', icon: 'fa-code' }
   ];
 

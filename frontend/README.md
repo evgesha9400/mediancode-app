@@ -23,8 +23,8 @@ median-code/
 │   │   │   ├── dashboard/           # Dashboard home
 │   │   │   ├── types/               # Types management
 │   │   │   ├── validators/          # Validators management
-│   │   │   ├── field-registry/      # Fields management
-│   │   │   ├── object-builder/      # Objects management
+│   │   │   ├── fields/              # Fields management
+│   │   │   ├── objects/             # Objects management
 │   │   │   ├── apis/                # APIs list
 │   │   │   │   └── [id]/            # API detail/edit
 │   │   │   ├── namespaces/          # Namespaces management
@@ -97,8 +97,8 @@ median-code/
 - `/dashboard` - Dashboard home with overview stats
 - `/types` - Types management (create, edit, delete types)
 - `/validators` - Validators management
-- `/field-registry` - Fields management
-- `/object-builder` - Objects management
+- `/fields` - Fields management
+- `/objects` - Objects management
 - `/apis` - APIs list view
 - `/apis/[id]` - API detail and edit view
 - `/namespaces` - Namespaces management
@@ -289,7 +289,7 @@ The dashboard uses Clerk for authentication with support for:
 - `/mobile-blocked` - Mobile blocking page
 
 **Protected Routes** (authentication required):
-- All `/dashboard/*` routes (dashboard, types, validators, field-registry, object-builder, apis, namespaces, api-generator)
+- All `/dashboard/*` routes (dashboard, types, validators, fields, objects, apis, namespaces, api-generator)
 
 ## Key Features
 
