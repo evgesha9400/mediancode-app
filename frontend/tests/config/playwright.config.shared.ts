@@ -40,6 +40,9 @@ export function createPlaywrightConfig(baseURL: string): PlaywrightTestConfig {
 		// Retry on CI only
 		retries: process.env.CI ? 2 : 0,
 
+		// Fail fast locally to avoid noisy cascades in IDE test explorers
+		maxFailures: process.env.CI ? undefined : 1,
+
 		// Run 2 workers in CI for smoke tests, 1 for CRUD/auth (sequential)
 		workers: process.env.CI ? 2 : undefined,
 

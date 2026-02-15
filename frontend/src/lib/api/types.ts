@@ -27,6 +27,7 @@ interface TypeResponse {
 function transformType(response: TypeResponse): FieldType {
 	return {
 		id: response.id,
+		namespaceId: response.namespaceId,
 		name: response.name,
 		pythonType: response.pythonType,
 		description: response.description,

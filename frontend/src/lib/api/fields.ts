@@ -10,12 +10,12 @@ import { get } from 'svelte/store';
 import { typesBaseStore } from '$lib/stores/types';
 
 /**
- * Backend field constraint value response
+ * Backend API response for field constraint value
  */
 interface FieldConstraintValueResponse {
 	name: string;
 	constraintId: string;
-	params: Record<string, unknown> | null;
+	value: string | null;
 }
 
 /**
@@ -45,13 +45,13 @@ interface FieldResponse {
 }
 
 /**
- * Transform backend field constraint value to frontend type
+ * Transform backend field constraint value to frontend type.
  */
 function transformFieldConstraintValue(response: FieldConstraintValueResponse): FieldConstraintValue {
 	return {
 		name: response.name,
 		constraintId: response.constraintId,
-		params: response.params ?? undefined
+		value: response.value
 	};
 }
 
@@ -111,7 +111,7 @@ export interface CreateFieldRequest {
 	typeId: string;
 	description?: string;
 	defaultValue?: string;
-	constraints: { name: string; constraintId: string; params?: Record<string, unknown> }[];
+	constraints: { constraintId: string; value: string | null }[];
 }
 
 /**
@@ -122,7 +122,7 @@ export interface UpdateFieldRequest {
 	typeId?: string;
 	description?: string;
 	defaultValue?: string;
-	constraints?: { name: string; constraintId: string; params?: Record<string, unknown> }[];
+	constraints?: { constraintId: string; value: string | null }[];
 }
 
 // ============================================================================

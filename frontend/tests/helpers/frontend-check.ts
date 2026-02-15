@@ -7,17 +7,17 @@
  */
 
 const DEFAULT_FRONTEND_PORT = process.env.PLAYWRIGHT_TEST_PORT || '4175';
-const FRONTEND_BASE_URL =
+const DEFAULT_FRONTEND_BASE_URL =
 	process.env.PLAYWRIGHT_BASE_URL || `http://127.0.0.1:${DEFAULT_FRONTEND_PORT}`;
 
-function getFrontendHealthUrl(): string {
-	const url = new URL(FRONTEND_BASE_URL);
+function getFrontendHealthUrl(baseUrl: string): string {
+	const url = new URL(baseUrl);
 	url.pathname = '/';
 	return url.toString();
 }
 
-export async function assertFrontendHealthy(): Promise<void> {
-	const healthUrl = getFrontendHealthUrl();
+export async function assertFrontendHealthy(baseUrl: string = DEFAULT_FRONTEND_BASE_URL): Promise<void> {
+	const healthUrl = getFrontendHealthUrl(baseUrl);
 
 	try {
 		const response = await fetch(healthUrl, {

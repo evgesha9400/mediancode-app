@@ -8,14 +8,6 @@ import { apiGet } from './client';
 import type { FieldConstraint } from '$lib/stores/fieldConstraints';
 
 /**
- * Backend field reference for field constraint usage
- */
-interface FieldReferenceResponse {
-	name: string;
-	fieldId: string;
-}
-
-/**
  * Backend API response for FieldConstraint entity
  */
 interface FieldConstraintResponse {
@@ -27,7 +19,6 @@ interface FieldConstraintResponse {
 	docsUrl: string | null;
 	compatibleTypes: string[];
 	usedInFields: number;
-	fieldsUsingConstraint: FieldReferenceResponse[];
 }
 
 /**
@@ -42,8 +33,7 @@ function transformFieldConstraint(response: FieldConstraintResponse): FieldConst
 		parameterType: response.parameterType,
 		docsUrl: response.docsUrl,
 		compatibleTypes: response.compatibleTypes,
-		usedInFields: response.usedInFields,
-		fieldsUsingConstraint: response.fieldsUsingConstraint
+		usedInFields: response.usedInFields
 	};
 }
 

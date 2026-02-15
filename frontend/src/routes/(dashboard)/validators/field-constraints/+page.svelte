@@ -1,5 +1,6 @@
 <script lang="ts">
   import { fieldConstraintsStore, deleteFieldConstraint, searchFieldConstraints, type FieldConstraint } from '$lib/stores/fieldConstraints';
+  import { fieldsStore } from '$lib/stores/fields';
   import { showToast } from '$lib/stores/toasts';
   import { buildDeletionTooltip } from '$lib/utils/references';
   import {
@@ -97,9 +98,17 @@
     goto(`/fields?highlight=${fieldId}`);
   }
 
-  let hasReferences = $derived(selectedFieldConstraint ? selectedFieldConstraint.fieldsUsingConstraint.length > 0 : false);
-  let deleteTooltip = $derived(selectedFieldConstraint && hasReferences
-    ? buildDeletionTooltip('field constraint', 'field', selectedFieldConstraint!.fieldsUsingConstraint)
+  // Compute field references reactively from fieldsStore
+  let fieldsUsingSelected = $derived(
+    selectedFieldConstraint
+      ? $fieldsStore.filter(f => f.constraints.some(c => c.constraintId === selectedFieldConstraint!.id))
+          .map(f => ({ name: f.name, fieldId: f.id }))
+      : []
+  );
+
+  let hasReferences = $derived(fieldsUsingSelected.length > 0);
+  let deleteTooltip = $derived(hasReferences
+    ? buildDeletionTooltip('field constraint', 'field', fieldsUsingSelected)
     : '');
   let hasLoadError = $derived($storeLoadingState.storeErrors.includes('Field Constraints'));
 </script>
@@ -288,11 +297,11 @@
 
         <div>
           <h3 class="text-sm text-mono-500 mb-2 font-medium">
-            Used In Fields ({selectedFieldConstraint.usedInFields})
+            Used In Fields ({fieldsUsingSelected.length})
           </h3>
-          {#if selectedFieldConstraint.fieldsUsingConstraint.length > 0}
+          {#if fieldsUsingSelected.length > 0}
             <div class="space-y-2">
-              {#each selectedFieldConstraint.fieldsUsingConstraint as field}
+              {#each fieldsUsingSelected as field}
                 <button
                   type="button"
                   onclick={() => navigateToField(field.fieldId)}

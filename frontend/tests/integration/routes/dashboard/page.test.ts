@@ -22,19 +22,16 @@ import {
 } from '../../../fixtures/seedData';
 import type { FieldConstraint } from '$lib/stores/fieldConstraints';
 
-// Helper to transform FieldConstraintBase to FieldConstraint with usage info
+// Helper to transform FieldConstraintBase to FieldConstraint with usage count
 function createFieldConstraintWithUsage(
 	base: typeof initialFieldConstraints[0],
 	fields: typeof initialFields
 ): FieldConstraint {
-	const fieldsUsingConstraint = fields
-		.filter(f => f.constraints.some(c => c.name === base.name))
-		.map(f => ({ name: f.name, fieldId: f.id }));
+	const usedInFields = fields.filter(f => f.constraints.some(c => c.name === base.name)).length;
 
 	return {
 		...base,
-		usedInFields: fieldsUsingConstraint.length,
-		fieldsUsingConstraint
+		usedInFields
 	};
 }
 
@@ -114,9 +111,7 @@ describe('Dashboard Page - Store Integration', () => {
 				expect(fc).toHaveProperty('parameterType');
 				expect(fc).toHaveProperty('compatibleTypes');
 				expect(fc).toHaveProperty('usedInFields');
-				expect(fc).toHaveProperty('fieldsUsingConstraint');
 				expect(typeof fc.usedInFields).toBe('number');
-				expect(Array.isArray(fc.fieldsUsingConstraint)).toBe(true);
 				expect(Array.isArray(fc.compatibleTypes)).toBe(true);
 			});
 		});
@@ -159,7 +154,7 @@ describe('Dashboard Page - Store Integration', () => {
 	});
 
 	describe('FieldConstraint-Field Relationship', () => {
-		it('field constraints track which fields use them', () => {
+		it('field constraints track usage count matching actual field references', () => {
 			const fieldConstraints = get(fieldConstraintsStore);
 			const fields = get(fieldsStore);
 
@@ -167,18 +162,11 @@ describe('Dashboard Page - Store Integration', () => {
 			const usedFieldConstraint = fieldConstraints.find((fc) => fc.usedInFields > 0);
 
 			if (usedFieldConstraint) {
-				// Verify the field count matches
-				expect(usedFieldConstraint.fieldsUsingConstraint.length).toBe(usedFieldConstraint.usedInFields);
-
-				// Verify each field actually has this field constraint
-				usedFieldConstraint.fieldsUsingConstraint.forEach((fieldRef) => {
-					const field = fields.find((f) => f.id === fieldRef.fieldId);
-					expect(field).toBeDefined();
-					if (field) {
-						const hasConstraint = field.constraints.some((c) => c.name === usedFieldConstraint.name);
-						expect(hasConstraint).toBe(true);
-					}
-				});
+				// Verify the usage count matches actual field references
+				const actualFieldsUsing = fields.filter(f =>
+					f.constraints.some(c => c.name === usedFieldConstraint.name)
+				);
+				expect(usedFieldConstraint.usedInFields).toBe(actualFieldsUsing.length);
 			}
 		});
 	});

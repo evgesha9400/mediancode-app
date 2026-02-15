@@ -8,7 +8,6 @@ export type { FieldConstraintBase } from '$lib/types';
 
 export interface FieldConstraint extends FieldConstraintBase {
 	usedInFields: number;
-	fieldsUsingConstraint: Array<{ name: string; fieldId: string }>;
 }
 
 // Main field constraints store - data will be loaded from API via loader.ts
@@ -68,7 +67,7 @@ export function deleteFieldConstraint(fieldConstraintName: string): DeletionResu
 	// Check if field constraint can be safely deleted
 	const deletionCheck = checkFieldConstraintDeletion(
 		fieldConstraintName,
-		fieldConstraint.fieldsUsingConstraint
+		fieldConstraint.usedInFields
 	);
 
 	if (!deletionCheck.success) {

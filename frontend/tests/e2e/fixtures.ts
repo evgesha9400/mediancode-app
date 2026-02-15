@@ -11,16 +11,9 @@
 
 import { test as base } from '@playwright/test';
 import { clerk } from '@clerk/testing/playwright';
-import { assertBackendHealthy, assertFrontendHealthy } from '../helpers';
+import { assertBackendHealthy } from '../helpers';
 
-export const test = base.extend<{}, { _frontendHealthy: void; _backendHealthy: void }>({
-	_frontendHealthy: [
-		async ({}, use) => {
-			await assertFrontendHealthy();
-			await use();
-		},
-		{ scope: 'worker', auto: true }
-	],
+export const test = base.extend<{}, { _backendHealthy: void }>({
 	_backendHealthy: [
 		async ({}, use) => {
 			await assertBackendHealthy();
@@ -32,15 +25,8 @@ export const test = base.extend<{}, { _frontendHealthy: void; _backendHealthy: v
 
 export const authenticatedTest = base.extend<
 	{ _clerkAuth: void },
-	{ _frontendHealthy: void; _backendHealthy: void }
+	{ _backendHealthy: void }
 >({
-	_frontendHealthy: [
-		async ({}, use) => {
-			await assertFrontendHealthy();
-			await use();
-		},
-		{ scope: 'worker', auto: true }
-	],
 	_backendHealthy: [
 		async ({}, use) => {
 			await assertBackendHealthy();

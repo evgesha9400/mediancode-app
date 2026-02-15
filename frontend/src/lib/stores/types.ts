@@ -7,6 +7,7 @@ export type TypeName = PrimitiveTypeName | AbstractTypeName;
 
 export interface TypeBase {
 	id: string;
+	namespaceId: string;
 	name: string;
 	pythonType: string;
 	description: string;

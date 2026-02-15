@@ -203,6 +203,7 @@ bun run test:fixtures:validate   # Validate fixture schema
 Local Playwright runs auto-start and auto-stop the frontend dev server
 on an isolated test port by default (`127.0.0.1:4175`).
 Use `PLAYWRIGHT_TEST_PORT` or `PLAYWRIGHT_BASE_URL` to override it.
+Local runs are fail-fast (`maxFailures=1`) to stop quickly in IDE explorers.
 To choose local vs hosted backend, set `PUBLIC_API_BASE_URL` when running E2E commands.
 
 ### Test Infrastructure

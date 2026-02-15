@@ -17,7 +17,6 @@ export type { FieldConstraintBase } from '../../src/lib/types';
 
 export interface FieldConstraint extends FieldConstraintBase {
 	usedInFields: number;
-	fieldsUsingConstraint: Array<{ name: string; fieldId: string }>;
 }
 
 /**
@@ -28,15 +27,7 @@ export const mockFieldConstraintBases = cloneFieldConstraintBases(initialFieldCo
 
 export const mockFieldConstraints: FieldConstraint[] = mockFieldConstraintBases.map((base, index) => ({
 	...base,
-	usedInFields: index % 2 === 0 ? 3 : 1,
-	fieldsUsingConstraint:
-		index % 2 === 0
-			? [
-					{ name: 'email', fieldId: '10000000-0000-0000-0000-000000000001' },
-					{ name: 'username', fieldId: '10000000-0000-0000-0000-000000000002' },
-					{ name: 'password', fieldId: '10000000-0000-0000-0000-000000000003' }
-				]
-			: [{ name: 'username', fieldId: '10000000-0000-0000-0000-000000000002' }]
+	usedInFields: index % 2 === 0 ? 3 : 1
 }));
 
 /**

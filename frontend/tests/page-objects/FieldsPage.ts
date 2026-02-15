@@ -345,6 +345,24 @@ export class FieldsPage {
 	}
 
 	/**
+	 * Set the parameter value for a constraint at the given index (0-based).
+	 * Each constraint row contains an input field for its parameter value.
+	 */
+	async setConstraintParamValue(index: number, value: string) {
+		const input = this.constraintRows.nth(index).locator('input');
+		await input.fill(value);
+		await this.delay();
+	}
+
+	/**
+	 * Get the parameter value from a constraint at the given index (0-based).
+	 */
+	async getConstraintParamValue(index: number): Promise<string> {
+		const input = this.constraintRows.nth(index).locator('input');
+		return await input.inputValue();
+	}
+
+	/**
 	 * Get constraint count
 	 */
 	async getConstraintCount(): Promise<number> {
@@ -558,14 +576,16 @@ export class FieldsPage {
 	}
 
 	/**
-	 * Create a new field with the given properties
+	 * Create a new field with the given properties.
+	 * Constraints can be provided as plain names (no param value) or as
+	 * `{ name, value }` objects to also set the parameter value.
 	 */
 	async createNewField(options: {
 		name: string;
 		type?: string;
 		description?: string;
 		defaultValue?: string;
-		constraints?: string[];
+		constraints?: (string | { name: string; value: string })[];
 	}) {
 		await this.openCreateDrawer();
 
@@ -584,8 +604,14 @@ export class FieldsPage {
 		}
 
 		if (options.constraints) {
-			for (const name of options.constraints) {
-				await this.addConstraint(name);
+			for (let i = 0; i < options.constraints.length; i++) {
+				const constraint = options.constraints[i];
+				if (typeof constraint === 'string') {
+					await this.addConstraint(constraint);
+				} else {
+					await this.addConstraint(constraint.name);
+					await this.setConstraintParamValue(i, constraint.value);
+				}
 			}
 		}
 

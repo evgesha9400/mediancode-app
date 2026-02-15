@@ -24,7 +24,7 @@ const FIELD_B = {
 	type: 'int',
 	description: 'Number of retry attempts for failed operations',
 	defaultValue: '3',
-	constraints: ['ge']
+	constraints: [{ name: 'ge', value: '0' }]
 };
 
 const FIELD_C = {
@@ -126,12 +126,13 @@ test('Field lifecycle: create, search, filter, sort, update, delete', async ({ p
 	expect(await fields.getDefaultValue()).toBe(FIELD_C.defaultValue);
 	await fields.closeDrawer();
 
-	// --- Read: open field B and verify values + constraint ---
+	// --- Read: open field B and verify values + constraint with param ---
 	await fields.clickRow(FIELD_B.name);
 	expect(await fields.isDrawerOpen()).toBe(true);
 	expect(await fields.getFieldName()).toBe(FIELD_B.name);
 	expect(await fields.getFieldType()).toBe(FIELD_B.type);
 	expect(await fields.getConstraintCount()).toBe(1);
+	expect(await fields.getConstraintParamValue(0)).toBe('0');
 	await fields.closeDrawer();
 
 	// --- Update field C ---

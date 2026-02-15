@@ -68,11 +68,13 @@ type AbstractTypeName = 'numeric';
 type TypeName = PrimitiveTypeName | AbstractTypeName;
 
 interface TypeBase {
-  name: TypeName;                    // Type name
-  pythonType: string;                 // Python type mapping
-  description: string;                // Human-readable description
-  importPath: string | null;          // Python import path (null for built-in types)
-  parentTypeId: string | null;        // Parent type UUID (null for top-level types)
+  id: string;                          // Unique identifier (UUID)
+  namespaceId: string;                 // Namespace this type belongs to
+  name: TypeName;                      // Type name
+  pythonType: string;                  // Python type mapping
+  description: string;                 // Human-readable description
+  importPath: string | null;           // Python import path (null for built-in types)
+  parentTypeId: string | null;         // Parent type UUID (null for top-level types)
 }
 
 interface FieldType extends TypeBase {
@@ -94,22 +96,17 @@ interface FieldType extends TypeBase {
 
 ```typescript
 interface FieldConstraintBase {
-  name: string;                       // Field constraint name (unique within namespace)
+  id: string;                         // Unique identifier (UUID)
   namespaceId: string;                // Namespace this field constraint belongs to
-  type: 'string' | 'numeric';        // Field constraint type (matches compatible field types)
+  name: string;                       // Field constraint name (unique within namespace)
   description: string;                // Human-readable description
-  category: 'inline' | 'custom';     // Inline (Pydantic built-in) or custom
-  parameterType: string;              // Type of parameter expected
-  exampleUsage: string;               // Code example
-  docsUrl: string;                    // Documentation URL
+  parameterType: string;              // Type of parameter expected (int, str, number)
+  docsUrl: string | null;             // Documentation URL
+  compatibleTypes: string[];          // Types this constraint can be applied to
 }
 
 interface FieldConstraint extends FieldConstraintBase {
-  usedInFields: number;                                // Count of fields using this field constraint
-  fieldsUsingFieldConstraint: Array<{                  // Fields using this field constraint
-    name: string;
-    fieldId: string;
-  }>;
+  usedInFields: number;               // Count of fields using this field constraint
 }
 ```
 
@@ -133,7 +130,8 @@ interface FieldConstraint extends FieldConstraintBase {
 ```typescript
 interface FieldConstraintValue {
   name: string;                      // Field constraint name
-  params?: Record<string, any>;      // Field constraint parameters
+  constraintId: string;              // Field constraint UUID
+  value: string | null;              // Constraint parameter value (string or null)
 }
 
 interface Field {

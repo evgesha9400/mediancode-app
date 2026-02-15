@@ -11,6 +11,7 @@ export type TypeName = PrimitiveTypeName | AbstractTypeName;
 
 export interface TypeBase {
 	id: string;
+	namespaceId: string;
 	name: TypeName;
 	pythonType: string;
 	description: string;
@@ -22,9 +23,12 @@ export interface FieldType extends TypeBase {
 	usedInFields: number;
 }
 
+const GLOBAL_NAMESPACE_ID = '00000000-0000-0000-0000-000000000001';
+
 export const mockPrimitiveTypes: TypeBase[] = [
 	{
 		id: '00000000-0000-0000-0001-000000000001',
+		namespaceId: GLOBAL_NAMESPACE_ID,
 		name: 'str',
 		pythonType: 'str',
 		description: 'String type for text data',
@@ -33,6 +37,7 @@ export const mockPrimitiveTypes: TypeBase[] = [
 	},
 	{
 		id: '00000000-0000-0000-0001-000000000002',
+		namespaceId: GLOBAL_NAMESPACE_ID,
 		name: 'int',
 		pythonType: 'int',
 		description: 'Integer type for whole numbers',
@@ -41,6 +46,7 @@ export const mockPrimitiveTypes: TypeBase[] = [
 	},
 	{
 		id: '00000000-0000-0000-0001-000000000003',
+		namespaceId: GLOBAL_NAMESPACE_ID,
 		name: 'float',
 		pythonType: 'float',
 		description: 'Float type for decimal numbers',
@@ -49,6 +55,7 @@ export const mockPrimitiveTypes: TypeBase[] = [
 	},
 	{
 		id: '00000000-0000-0000-0001-000000000004',
+		namespaceId: GLOBAL_NAMESPACE_ID,
 		name: 'bool',
 		pythonType: 'bool',
 		description: 'Boolean type for true/false values',
@@ -57,6 +64,7 @@ export const mockPrimitiveTypes: TypeBase[] = [
 	},
 	{
 		id: '00000000-0000-0000-0001-000000000005',
+		namespaceId: GLOBAL_NAMESPACE_ID,
 		name: 'datetime',
 		pythonType: 'datetime',
 		description: 'Datetime type for date and time values',
@@ -65,6 +73,7 @@ export const mockPrimitiveTypes: TypeBase[] = [
 	},
 	{
 		id: '00000000-0000-0000-0001-000000000006',
+		namespaceId: GLOBAL_NAMESPACE_ID,
 		name: 'uuid',
 		pythonType: 'UUID',
 		description: 'UUID type for unique identifiers',
@@ -76,6 +85,7 @@ export const mockPrimitiveTypes: TypeBase[] = [
 export const mockAbstractTypes: TypeBase[] = [
 	{
 		id: '00000000-0000-0000-0001-000000000007',
+		namespaceId: GLOBAL_NAMESPACE_ID,
 		name: 'numeric',
 		pythonType: 'int | float',
 		description: 'Abstract numeric type (int or float)',

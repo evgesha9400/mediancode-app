@@ -1,21 +1,8 @@
 /**
  * Smoke Test Fixtures
  *
- * Extends Playwright's base test with a fast frontend health check so smoke
- * runs fail early with a clear message when the app server is unreachable.
+ * Alias to Playwright base fixtures. Frontend preflight now runs once in
+ * global setup to fail the entire run early with a single clear error.
  */
 
-import { test as base, expect } from '@playwright/test';
-import { assertFrontendHealthy } from '../helpers';
-
-export const test = base.extend<{}, { _frontendHealthy: void }>({
-	_frontendHealthy: [
-		async ({}, use) => {
-			await assertFrontendHealthy();
-			await use();
-		},
-		{ scope: 'worker', auto: true }
-	]
-});
-
-export { expect };
+export { test, expect } from '@playwright/test';

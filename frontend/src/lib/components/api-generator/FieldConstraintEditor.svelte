@@ -68,7 +68,7 @@
               <input
                 type={constraintMeta.parameterType === 'str' ? 'text' : 'number'}
                 step={constraintMeta.parameterType === 'int' ? '1' : 'any'}
-                value={constraintValue.params?.value ?? ''}
+                value={constraintValue.value ?? ''}
                 oninput={(e) => onParamChange(index, e.currentTarget.value, constraintMeta.parameterType)}
                 placeholder={constraintMeta.parameterType === 'str' ? 'e.g. ^[a-z]+$' : 'Value'}
                 class="flex-1 min-w-0 px-2 py-1 border border-mono-300 rounded text-sm focus:ring-2 focus:ring-mono-400 focus:border-transparent"

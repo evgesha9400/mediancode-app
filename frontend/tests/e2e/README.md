@@ -41,6 +41,7 @@ bun run test:e2e:crud:ci
 Local runs auto-start and auto-stop the frontend dev server on
 `127.0.0.1:4175` by default. Override with `PLAYWRIGHT_TEST_PORT` or
 `PLAYWRIGHT_BASE_URL` when needed.
+Local runs are fail-fast (`maxFailures=1`) to avoid noisy cascades.
 Set `PUBLIC_API_BASE_URL` when running commands to choose local vs hosted backend.
 
 ## Environment Variables

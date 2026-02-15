@@ -121,7 +121,7 @@
     if (!listState.editedItem.name.trim()) errors.name = 'Field name is required';
     if (!listState.editedItem.type) errors.type = 'Type is required';
     const emptyParam = listState.editedItem.constraints.find(
-      c => !c.params || c.params.value === undefined || c.params.value === ''
+      c => c.value === null || c.value === ''
     );
     if (emptyParam) errors.constraints = `Constraint "${emptyParam.name}" requires a value`;
     return errors;
@@ -195,7 +195,7 @@
       typeId,
       description: listState.editedItem.description,
       defaultValue: listState.editedItem.defaultValue,
-      constraints: listState.editedItem.constraints
+      constraints: listState.editedItem.constraints.map(c => ({ constraintId: c.constraintId, value: c.value }))
     });
 
     if (!result.success) {
@@ -236,7 +236,7 @@
       typeId,
       description: listState.editedItem.description,
       defaultValue: listState.editedItem.defaultValue,
-      constraints: listState.editedItem.constraints
+      constraints: listState.editedItem.constraints.map(c => ({ constraintId: c.constraintId, value: c.value }))
     });
 
     if (!result.success) {
@@ -288,7 +288,7 @@
 
     listState.editedItem = {
       ...listState.editedItem,
-      constraints: [...listState.editedItem.constraints, { name: constraintName, constraintId: constraint.id, params: {} }]
+      constraints: [...listState.editedItem.constraints, { name: constraintName, constraintId: constraint.id, value: null }]
     };
   }
 
@@ -303,21 +303,11 @@
   function updateConstraintParam(index: number, rawValue: string, parameterType: string) {
     if (!listState.editedItem) return;
 
-    let parsedValue: string | number | undefined;
-    if (rawValue === '') {
-      parsedValue = undefined;
-    } else if (parameterType === 'str') {
-      parsedValue = rawValue;
-    } else {
-      const num = parameterType === 'int' ? parseInt(rawValue, 10) : parseFloat(rawValue);
-      parsedValue = isNaN(num) ? undefined : num;
-    }
-
     const updatedConstraints = listState.editedItem.constraints.map((c, i) => {
       if (i !== index) return c;
       return {
         ...c,
-        params: parsedValue !== undefined ? { value: parsedValue } : {}
+        value: rawValue === '' ? null : rawValue
       };
     });
 
@@ -325,12 +315,8 @@
   }
 
   function formatFieldConstraintPill(constraintValue: FieldConstraintValue): string {
-    if (!constraintValue.params || Object.keys(constraintValue.params).length === 0) {
-      return constraintValue.name;
-    }
-    const value = constraintValue.params.value;
-    if (value !== undefined) {
-      return `${constraintValue.name}: ${value}`;
+    if (constraintValue.value !== null) {
+      return `${constraintValue.name}: ${constraintValue.value}`;
     }
     return constraintValue.name;
   }

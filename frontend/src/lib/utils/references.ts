@@ -1,6 +1,5 @@
 import type { DeletionResult, Reference } from '$lib/types';
 import { get } from 'svelte/store';
-import { fieldsStore } from '$lib/stores/fields';
 import { apisStore } from '$lib/stores/apis';
 
 /**
@@ -43,56 +42,22 @@ export function buildDeletionTooltip(
 /**
  * Checks if a field constraint can be deleted safely
  * A field constraint cannot be deleted if it's currently used in any fields
- * Only checks references within the same namespace when namespaceId is provided
  *
  * @param fieldConstraintName - The name of the field constraint to check
- * @param fieldsUsingConstraint - Array of fields using this field constraint
- * @param namespaceId - Optional namespace to filter references by (only checks same-namespace references)
+ * @param usedInFields - Count of fields using this field constraint
  * @returns DeletionResult indicating whether deletion is safe
  */
 export function checkFieldConstraintDeletion(
   fieldConstraintName: string,
-  fieldsUsingConstraint: Array<{ name: string; fieldId: string }>,
-  namespaceId?: string
+  usedInFields: number
 ): DeletionResult {
-  // Filter by namespace if provided
-  let filteredFields = fieldsUsingConstraint;
-  if (namespaceId) {
-    const allFields = get(fieldsStore);
-    const sameNamespaceFieldIds = new Set(
-      allFields.filter(f => f.namespaceId === namespaceId).map(f => f.id)
-    );
-    filteredFields = fieldsUsingConstraint.filter(f => sameNamespaceFieldIds.has(f.fieldId));
-  }
-
-  // If no fields are using this field constraint (in the same namespace), deletion is safe
-  if (filteredFields.length === 0) {
+  if (usedInFields === 0) {
     return { success: true };
   }
 
-  // Build reference list for blocking fields
-  const references: Reference[] = filteredFields.map(field => ({
-    id: field.fieldId,
-    name: field.name,
-    type: 'field' as const
-  }));
-
-  // Generate user-friendly error message
-  const fieldCount = filteredFields.length;
-  const fieldNames = filteredFields
-    .slice(0, 3)
-    .map(f => `"${f.name}"`)
-    .join(', ');
-
-  const remainingCount = fieldCount - 3;
-  const remainingText = remainingCount > 0 ? ` and ${remainingCount} more` : '';
-
-  const error = `Cannot delete field constraint "${fieldConstraintName}" because it is used in ${fieldCount} field${fieldCount > 1 ? 's' : ''}: ${fieldNames}${remainingText}. Remove this field constraint from all fields before deleting.`;
-
   return {
     success: false,
-    error,
-    references
+    error: `Cannot delete field constraint "${fieldConstraintName}" because it is used in ${usedInFields} field${usedInFields > 1 ? 's' : ''}. Remove this field constraint from all fields before deleting.`
   };
 }
 

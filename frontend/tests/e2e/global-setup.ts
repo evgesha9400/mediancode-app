@@ -36,6 +36,8 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import { clerkSetup } from '@clerk/testing/playwright';
+import type { FullConfig } from '@playwright/test';
+import { assertFrontendHealthy } from '../helpers/frontend-check';
 
 /**
  * Validate that required Clerk environment variables are set.
@@ -89,12 +91,27 @@ function warnMissingTestCredentials(): void {
 	}
 }
 
-export default async function globalSetup() {
+function resolveBaseUrl(config: FullConfig): string {
+	for (const project of config.projects) {
+		const use = project.use as { baseURL?: string } | undefined;
+		if (use?.baseURL) return use.baseURL;
+	}
+
+	return process.env.PLAYWRIGHT_BASE_URL || 'http://127.0.0.1:4175';
+}
+
+export default async function globalSetup(config: FullConfig) {
 	// --- Pre-flight: validate environment variables ---
 	console.log('Playwright Global Setup: Validating environment...');
 	validateClerkEnvVars();
 	warnMissingTestCredentials();
 	console.log('Environment variables validated');
+
+	// --- Verify frontend base URL is reachable ---
+	const baseUrl = resolveBaseUrl(config);
+	console.log(`Playwright Global Setup: Verifying frontend server at ${baseUrl}...`);
+	await assertFrontendHealthy(baseUrl);
+	console.log('Frontend server verified');
 
 	// --- Verify MSW service worker ---
 	console.log('Playwright Global Setup: Verifying MSW service worker...');
