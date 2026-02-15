@@ -242,16 +242,10 @@ export async function updateApiAction(
 ): Promise<ActionResult<Api>> {
 	const previousApis = get(apisStore);
 
-	// Optimistic update - normalize tags to ensure description is always a string
-	// Destructure tags out and handle separately to avoid type conflicts
-	const { tags: updateTags, ...restUpdates } = updates;
-	const normalizedUpdates: Partial<Api> = { ...restUpdates };
-	if (updateTags !== undefined) {
-		normalizedUpdates.tags = updateTags.map(t => ({ name: t.name, description: t.description ?? '' }));
-	}
+	// Optimistic update
 	apisStore.update(apis =>
 		apis.map(a =>
-			a.id === id ? { ...a, ...normalizedUpdates, updatedAt: new Date().toISOString() } : a
+			a.id === id ? { ...a, ...updates, updatedAt: new Date().toISOString() } : a
 		)
 	);
 
@@ -269,7 +263,6 @@ export async function updateApiAction(
 /**
  * Delete an API via API (pessimistic delete - waits for server confirmation)
  * Also removes associated endpoints from local stores
- * Note: Tags are now embedded in APIs, so they are deleted with the API
  */
 export async function deleteApiAction(id: string): Promise<ActionResult<void>> {
 	try {

@@ -1,8 +1,8 @@
 import { writable, get } from 'svelte/store';
-import type { Api, ApiTag, ApiEndpoint, EndpointParameter, DeletionResult } from '$lib/types';
+import type { Api, ApiEndpoint, PathParam, DeletionResult } from '$lib/types';
 import { extractPathParameters } from '$lib/utils/urlParser';
-import { generateId, generateParamId, deepClone } from '$lib/utils/ids';
-import { GLOBAL_NAMESPACE_ID } from '$lib/constants';
+import { generateId, deepClone } from '$lib/utils/ids';
+import { fieldsStore } from './fields';
 
 // ============================================================================
 // Stores
@@ -31,7 +31,6 @@ export function createApi(namespaceId: string): Api {
 		description: '',
 		baseUrl: '/api/v1',
 		serverUrl: '',
-		tags: [],
 		createdAt: now,
 		updatedAt: now
 	};
@@ -72,7 +71,7 @@ export function deleteApi(id: string): DeletionResult {
 	// Delete all endpoints belonging to this API
 	endpointsStore.update(endpoints => endpoints.filter(e => e.apiId !== id));
 
-	// Delete the API (tags are embedded so they get deleted with the API)
+	// Delete the API
 	apisStore.update(apis => apis.filter(a => a.id !== id));
 
 	return {
@@ -118,39 +117,15 @@ export function getEndpointCountByApi(apiId: string): number {
 }
 
 /**
- * Get tag count for a specific API (from embedded tags array)
- */
-export function getTagCountByApi(apiId: string): number {
-	const api = getApiById(apiId);
-	return api?.tags?.length ?? 0;
-}
-
-/**
  * Get all endpoints for a specific API
  */
 export function getEndpointsByApi(apiId: string): ApiEndpoint[] {
 	return get(endpointsStore).filter(e => e.apiId === apiId);
 }
 
-/**
- * Get all tags for a specific API (from embedded tags array)
- */
-export function getTagsByApi(apiId: string): ApiTag[] {
-	const api = getApiById(apiId);
-	return api?.tags ?? [];
-}
-
 // ============================================================================
 // Selectors and Derived Queries
 // ============================================================================
-
-/**
- * Get a tag by name from a specific API
- */
-export function getTagByName(apiId: string, tagName: string): ApiTag | undefined {
-	const api = getApiById(apiId);
-	return api?.tags?.find(t => t.name === tagName);
-}
 
 /**
  * Get an endpoint by its ID
@@ -173,145 +148,6 @@ export function getTotalEndpointCount(): number {
 	return get(endpointsStore).length;
 }
 
-/**
- * Get total number of tags across all APIs
- */
-export function getTotalTagCount(): number {
-	return get(apisStore).reduce((total, api) => total + (api.tags?.length ?? 0), 0);
-}
-
-// ============================================================================
-// Namespace Filtering
-// ============================================================================
-
-/**
- * Get all endpoints for a specific namespace
- */
-export function getEndpointsByNamespace(namespaceId: string): ApiEndpoint[] {
-	return get(endpointsStore).filter(e => e.namespaceId === namespaceId);
-}
-
-/**
- * Get the count of endpoints in a specific namespace
- */
-export function getEndpointCountByNamespace(namespaceId: string): number {
-	return get(endpointsStore).filter(e => e.namespaceId === namespaceId).length;
-}
-
-// ============================================================================
-// Tag Operations (now embedded in API)
-// ============================================================================
-
-/**
- * Add a tag to an API
- *
- * @param apiId - The API to add the tag to
- * @param name - The name for the new tag
- * @param description - Optional description for the tag
- * @returns The created tag, or undefined if a tag with that name already exists
- */
-export function addTagToApi(apiId: string, name: string, description: string = ''): ApiTag | undefined {
-	const api = getApiById(apiId);
-	if (!api) return undefined;
-
-	const trimmedName = name.trim();
-
-	// Check for existing tag with same name (case-insensitive)
-	const existingTag = api.tags?.find(
-		t => t.name.toLowerCase() === trimmedName.toLowerCase()
-	);
-
-	if (existingTag) {
-		return undefined;
-	}
-
-	const newTag: ApiTag = {
-		name: trimmedName,
-		description
-	};
-
-	const updatedTags = [...(api.tags || []), newTag];
-	updateApi(apiId, { tags: updatedTags });
-
-	return newTag;
-}
-
-/**
- * Update a tag in an API
- */
-export function updateTagInApi(apiId: string, tagName: string, updates: Partial<ApiTag>): void {
-	const api = getApiById(apiId);
-	if (!api) return;
-
-	const updatedTags = api.tags?.map(tag =>
-		tag.name === tagName ? { ...tag, ...updates } : tag
-	) ?? [];
-
-	// If name changed, update endpoints referencing the old name
-	if (updates.name && updates.name !== tagName) {
-		endpointsStore.update(endpoints =>
-			endpoints.map(endpoint =>
-				endpoint.apiId === apiId && endpoint.tagName === tagName
-					? { ...endpoint, tagName: updates.name }
-					: endpoint
-			)
-		);
-	}
-
-	updateApi(apiId, { tags: updatedTags });
-}
-
-/**
- * Delete a tag from an API and remove it from all endpoints
- *
- * @param apiId - The API containing the tag
- * @param tagName - The name of the tag to delete
- * @returns DeletionResult with success status and informational message
- */
-export function deleteTagFromApi(apiId: string, tagName: string): DeletionResult {
-	const api = getApiById(apiId);
-
-	if (!api) {
-		return {
-			success: false,
-			error: `API with ID "${apiId}" not found.`
-		};
-	}
-
-	const tag = api.tags?.find(t => t.name === tagName);
-	if (!tag) {
-		return {
-			success: false,
-			error: `Tag "${tagName}" not found in API.`
-		};
-	}
-
-	const affectedCount = getEndpointCountByTagName(apiId, tagName);
-
-	// Remove tag from all endpoints that use it
-	endpointsStore.update(endpoints =>
-		endpoints.map(endpoint =>
-			endpoint.apiId === apiId && endpoint.tagName === tagName
-				? { ...endpoint, tagName: undefined }
-				: endpoint
-		)
-	);
-
-	// Remove tag from API
-	const updatedTags = api.tags?.filter(t => t.name !== tagName) ?? [];
-	updateApi(apiId, { tags: updatedTags });
-
-	// Return success with informational message
-	const message = affectedCount > 0
-		? `Tag "${tagName}" deleted and removed from ${affectedCount} endpoint${affectedCount > 1 ? 's' : ''}`
-		: `Tag "${tagName}" deleted`;
-
-	return {
-		success: true,
-		error: message // Using 'error' field for the message to match DeletionResult interface
-	};
-}
-
 // ============================================================================
 // Endpoint Lifecycle Operations
 // ============================================================================
@@ -319,14 +155,12 @@ export function deleteTagFromApi(apiId: string, tagName: string): DeletionResult
 /**
  * Create a new default endpoint
  *
- * @param namespaceId - The namespace to create the endpoint in
  * @param apiId - The API this endpoint belongs to
  * @returns The newly created endpoint
  */
-export function createDefaultEndpoint(namespaceId: string, apiId: string): ApiEndpoint {
+export function createDefaultEndpoint(apiId: string): ApiEndpoint {
 	const newEndpoint: ApiEndpoint = {
 		id: generateId('endpoint'),
-		namespaceId,
 		apiId,
 		method: 'GET',
 		path: '/',
@@ -377,7 +211,7 @@ export function normalizeEndpoint(endpoint: ApiEndpoint): ApiEndpoint {
 }
 
 /**
- * Duplicate an endpoint with new IDs for the endpoint and all parameters
+ * Duplicate an endpoint with a new ID
  *
  * @param endpointId - The ID of the endpoint to duplicate
  * @returns The duplicated endpoint, or undefined if original not found
@@ -397,7 +231,8 @@ export function duplicateEndpoint(endpointId: string): ApiEndpoint | undefined {
 		id: generateId('endpoint'),
 		path: `${original.path}-copy`,
 		expanded: false,
-		pathParams: original.pathParams.map(p => ({ ...p, id: generateParamId() }))
+		// PathParams are simple {name, fieldId} — just clone them directly
+		pathParams: original.pathParams.map(p => ({ ...p }))
 	};
 
 	endpointsStore.update(endpoints => [...endpoints, duplicated]);
@@ -437,13 +272,13 @@ export function deleteEndpoint(id: string): DeletionResult {
  */
 export interface PathReconciliationResult {
 	path: string;
-	pathParams: EndpointParameter[];
+	pathParams: PathParam[];
 }
 
 /**
  * Pure function to reconcile a path with its parameters.
  * Extracts parameter names from the path and merges with existing definitions.
- * This is the centralized domain logic for path/param reconciliation.
+ * For new params, attempts best-effort field matching by name.
  *
  * @param newPath - The new path (will be normalized to start with '/')
  * @param existingParams - Current path parameters to preserve definitions from
@@ -451,7 +286,7 @@ export interface PathReconciliationResult {
  */
 export function reconcilePathParams(
 	newPath: string,
-	existingParams: EndpointParameter[]
+	existingParams: PathParam[]
 ): PathReconciliationResult {
 	// Ensure path always starts with '/'
 	const path = newPath.startsWith('/') ? newPath : '/' + newPath;
@@ -460,21 +295,20 @@ export function reconcilePathParams(
 	const paramNames = extractPathParameters(path);
 
 	// Create new parameters for newly discovered param names
-	const pathParams: EndpointParameter[] = [];
+	const pathParams: PathParam[] = [];
+	const fields = get(fieldsStore);
 
 	paramNames.forEach(paramName => {
 		const existingParam = existingParams.find(p => p.name === paramName);
 		if (existingParam) {
-			// Keep existing parameter (preserves type, description, etc.)
+			// Keep existing parameter (preserves fieldId)
 			pathParams.push(existingParam);
 		} else {
-			// Create new parameter without a type (user needs to select)
+			// Best-effort: find a field whose name matches the param name
+			const matchedField = fields.find(f => f.name === paramName);
 			pathParams.push({
-				id: generateParamId(),
 				name: paramName,
-				type: '', // No type selected yet
-				description: '',
-				required: true // Path parameters are always required
+				fieldId: matchedField?.id ?? ''
 			});
 		}
 	});
@@ -511,33 +345,20 @@ export function updateEndpointPath(endpointId: string, newPath: string): ApiEndp
 }
 
 /**
- * Update a specific path parameter
+ * Update a specific path parameter's fieldId by param name
  */
 export function updatePathParameter(
 	endpointId: string,
-	paramId: string,
-	updates: Partial<EndpointParameter>
+	paramName: string,
+	fieldId: string
 ): void {
 	const endpoint = getEndpointById(endpointId);
 
 	if (!endpoint) return;
 
 	const updatedParams = endpoint.pathParams.map(p =>
-		p.id === paramId ? { ...p, ...updates } : p
+		p.name === paramName ? { ...p, fieldId } : p
 	);
 
 	updateEndpoint(endpointId, { pathParams: updatedParams });
 }
-
-/**
- * Delete a path parameter
- */
-export function deletePathParameter(endpointId: string, paramId: string): void {
-	const endpoint = getEndpointById(endpointId);
-
-	if (!endpoint) return;
-
-	const updatedParams = endpoint.pathParams.filter(p => p.id !== paramId);
-	updateEndpoint(endpointId, { pathParams: updatedParams });
-}
-

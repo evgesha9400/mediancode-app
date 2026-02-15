@@ -1,23 +1,18 @@
 <script module lang="ts">
-  import type { ApiEndpoint, ApiTag } from '$lib/types';
+  import type { ApiEndpoint } from '$lib/types';
 
   export interface EndpointItemProps {
     endpoint: ApiEndpoint;
-    tags: ApiTag[];
     onClick: () => void;
   }
 </script>
 
 <script lang="ts">
-  import { getNamespaceById } from '$lib/stores/namespaces';
-
   interface Props extends EndpointItemProps {}
 
-  let { endpoint, tags, onClick }: Props = $props();
+  let { endpoint, onClick }: Props = $props();
 
-  // Tags are now referenced by name, not by ID
   const tagName = $derived(endpoint.tagName);
-  const namespaceName = $derived(getNamespaceById(endpoint.namespaceId)?.name ?? '');
 
   // Swagger/OpenAPI color scheme for HTTP methods
   type MethodColors = {
@@ -85,11 +80,6 @@
     {/if}
   </div>
   <div class="flex items-center space-x-2">
-    {#if namespaceName}
-      <span class="px-2 py-1 text-xs rounded-full bg-white/60 text-mono-500 border border-mono-200">
-        {namespaceName}
-      </span>
-    {/if}
     {#if tagName}
       <span class="px-2 py-1 text-xs rounded-full bg-white/60 text-mono-700">
         {tagName}

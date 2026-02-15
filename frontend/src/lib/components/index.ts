@@ -36,12 +36,9 @@ export { default as DashboardLayout } from './DashboardLayout.svelte';
 export { default as Sidebar } from './Sidebar.svelte';
 export { default as StatCard } from './StatCard.svelte';
 export { default as ConfirmDialog } from './ConfirmDialog.svelte';
-export { default as TagEditModal } from './TagEditModal.svelte';
-
 // Standalone component types
 export type { DashboardLayoutProps } from './DashboardLayout.svelte';
 export type { SidebarProps } from './Sidebar.svelte';
 export type { StatCardProps } from './StatCard.svelte';
 export type { ToastContainerProps } from './toast/ToastContainer.svelte';
 export type { ConfirmDialogProps } from './ConfirmDialog.svelte';
-export type { TagEditModalProps } from './TagEditModal.svelte';

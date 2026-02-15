@@ -11,17 +11,15 @@
  */
 
 import { get } from 'svelte/store';
-import type { Api, ApiTag, ApiEndpoint, EndpointParameter, ResponseShape } from '$lib/types';
+import type { Api, ApiEndpoint, PathParam, ResponseShape } from '$lib/types';
 import {
 	apisStore,
 	endpointsStore,
 	addApi,
 	updateApi,
 	getApiById,
-	getTagByName,
 	addEndpoint,
 	getEndpointCountByTagName,
-	deleteTagFromApi,
 	updateEndpoint,
 	deleteEndpoint,
 	reconcilePathParams,
@@ -31,7 +29,7 @@ import { fieldsStore } from './fields';
 import { objectsStore } from './objects';
 import { fieldConstraintsStore } from './fieldConstraints';
 import { showToast } from './toasts';
-import { deepClone, generateId, generateParamId } from '$lib/utils/ids';
+import { deepClone, generateId } from '$lib/utils/ids';
 
 /**
  * Toast message constants
@@ -42,7 +40,6 @@ const MESSAGES = {
 	ENDPOINT_SAVED: 'Endpoint saved successfully',
 	ENDPOINT_DUPLICATED: 'Endpoint duplicated successfully',
 	ENDPOINT_DELETED: 'Endpoint deleted successfully',
-	TAG_CREATED: (name: string) => `Tag "${name}" created`,
 	CODE_GENERATION_SOON: 'Code generation coming soon',
 	UNSAVED_CHANGES: 'You have unsaved changes'
 } as const;
@@ -59,9 +56,12 @@ export interface ApiDetailState {
 	readonly api: Api | null;
 	editedApi: Api | null;
 
-	// Reactive filtered data for this API
-	readonly tags: ApiTag[];
+	// Derived tags (unique tagName values from endpoints)
+	readonly tags: string[];
 	readonly endpoints: ApiEndpoint[];
+
+	// The namespace ID for this API (derived from editedApi)
+	readonly apiNamespaceId: string;
 
 	// Drawer state
 	drawerOpen: boolean;
@@ -71,7 +71,6 @@ export interface ApiDetailState {
 	// Tag combobox state
 	tagInputValue: string;
 	tagDropdownOpen: boolean;
-	tagToDelete: ApiTag | null;
 
 	// Endpoint deletion confirmation state
 	showEndpointDeleteConfirm: boolean;
@@ -83,7 +82,6 @@ export interface ApiDetailState {
 	readonly hasApiChanges: boolean;
 	readonly hasEndpointChanges: boolean;
 	readonly hasAnyChanges: boolean;
-	readonly exactTagMatch: ApiTag | undefined;
 
 	// API metadata actions
 	handleApiUpdate: (updates: Partial<Api>) => void;
@@ -101,10 +99,6 @@ export interface ApiDetailState {
 
 	// Tag actions
 	handleTagSelect: (tagName: string | undefined) => void;
-	handleCreateTag: () => void;
-	handleDeleteTagClick: (e: Event, tag: ApiTag) => void;
-	confirmDeleteTag: () => void;
-	cancelDeleteTag: () => void;
 
 	// Endpoint list actions
 	handleAddEndpoint: () => void;
@@ -122,8 +116,7 @@ export interface ApiDetailState {
 
 	// Endpoint editing actions
 	handlePathChange: (newPath: string) => void;
-	handlePathParamUpdate: (paramId: string, updates: Partial<EndpointParameter>) => void;
-	handlePathParamDelete: (paramId: string) => void;
+	handlePathParamUpdate: (paramName: string, fieldId: string) => void;
 
 	// Query parameters object selection
 	handleSelectQueryParamsObject: (objectId: string | undefined) => void;
@@ -169,7 +162,6 @@ function createDefaultApi(id: string, namespaceId: string): Api {
 		description: '',
 		baseUrl: '/api/v1',
 		serverUrl: '',
-		tags: [],
 		createdAt: now,
 		updatedAt: now
 	};
@@ -178,10 +170,9 @@ function createDefaultApi(id: string, namespaceId: string): Api {
 /**
  * Creates a default endpoint object
  */
-function createDefaultEndpointLocal(namespaceId: string, apiId: string): ApiEndpoint {
+function createDefaultEndpointLocal(apiId: string): ApiEndpoint {
 	return {
 		id: generateId('endpoint'),
-		namespaceId,
 		apiId,
 		method: 'GET',
 		path: '/',
@@ -232,8 +223,18 @@ export function createApiDetailState(config: ApiDetailStateConfig): ApiDetailSta
 		}
 	});
 
-	// Derived tags from the edited API (embedded in API, not separate store)
-	let tags = $derived(editedApi?.tags ?? []);
+	// Derived: the namespace ID for this API
+	let apiNamespaceId = $derived(editedApi?.namespaceId ?? namespaceId);
+
+	// Derived tags: collect unique tagName values from endpoints
+	let tags = $derived.by(() => {
+		const currentEndpoints = (isNewApi && !hasBeenSaved) ? draftEndpoints : allEndpoints.filter(e => e.apiId === actualApiId);
+		const tagNames = new Set<string>();
+		for (const ep of currentEndpoints) {
+			if (ep.tagName) tagNames.add(ep.tagName);
+		}
+		return [...tagNames].sort();
+	});
 
 	// Derived filtered state for endpoints
 	// For new APIs that haven't been saved, use draft state; otherwise use store
@@ -255,7 +256,6 @@ export function createApiDetailState(config: ApiDetailStateConfig): ApiDetailSta
 	// Tag combobox state
 	let tagInputValue = $state('');
 	let tagDropdownOpen = $state(false);
-	let tagToDelete = $state<ApiTag | null>(null);
 
 	// Endpoint deletion confirmation state
 	let showEndpointDeleteConfirm = $state(false);
@@ -283,16 +283,6 @@ export function createApiDetailState(config: ApiDetailStateConfig): ApiDetailSta
 
 	// Derived: Any unsaved changes
 	let hasAnyChanges = $derived(hasApiChanges || hasEndpointChanges);
-
-	// Derived: Check if input matches an existing tag exactly
-	let exactTagMatch = $derived(
-		tags.find((t: ApiTag) => t.name.toLowerCase() === tagInputValue.toLowerCase().trim())
-	);
-
-	// Helper to find tag by name (from editedApi's embedded tags)
-	function findTagByName(tagName: string): ApiTag | undefined {
-		return editedApi?.tags?.find(t => t.name === tagName);
-	}
 
 	// ============================================================================
 	// API Metadata Operations
@@ -402,69 +392,12 @@ export function createApiDetailState(config: ApiDetailStateConfig): ApiDetailSta
 		tagDropdownOpen = false;
 	}
 
-	function handleCreateTag(): void {
-		if (!editedEndpoint || !editedApi || !tagInputValue.trim() || exactTagMatch) return;
-
-		const newTag: ApiTag = {
-			name: tagInputValue.trim(),
-			description: ''
-		};
-
-		// Add tag to editedApi's embedded tags array
-		const updatedTags = [...(editedApi.tags || []), newTag];
-		editedApi = { ...editedApi, tags: updatedTags };
-
-		// Set the new tag on the endpoint
-		editedEndpoint = { ...editedEndpoint, tagName: newTag.name };
-		tagDropdownOpen = false;
-		showToast(MESSAGES.TAG_CREATED(newTag.name), 'success');
-	}
-
-	function handleDeleteTagClick(e: Event, tag: ApiTag): void {
-		e.stopPropagation();
-		tagToDelete = tag;
-	}
-
-	function confirmDeleteTag(): void {
-		if (!tagToDelete || !editedApi) return;
-
-		const tagName = tagToDelete.name;
-
-		// Remove tag from editedApi's embedded tags
-		const updatedTags = editedApi.tags?.filter(t => t.name !== tagName) ?? [];
-		editedApi = { ...editedApi, tags: updatedTags };
-
-		// Clear tag from any endpoints using it (in draft state)
-		if (isNewApi && !hasBeenSaved) {
-			draftEndpoints = draftEndpoints.map(e =>
-				e.tagName === tagName ? { ...e, tagName: undefined } : e
-			);
-		}
-
-		showToast(`Tag "${tagName}" deleted`, 'success');
-
-		// If current endpoint uses this tag, clear it
-		if (editedEndpoint?.tagName === tagName) {
-			editedEndpoint = { ...editedEndpoint, tagName: undefined };
-			tagInputValue = '';
-		}
-		if (selectedEndpoint?.tagName === tagName) {
-			selectedEndpoint = { ...selectedEndpoint, tagName: undefined };
-		}
-
-		tagToDelete = null;
-	}
-
-	function cancelDeleteTag(): void {
-		tagToDelete = null;
-	}
-
 	// ============================================================================
 	// Endpoint List Operations
 	// ============================================================================
 
 	function handleAddEndpoint(): void {
-		const newEndpoint = createDefaultEndpointLocal(namespaceId, actualApiId);
+		const newEndpoint = createDefaultEndpointLocal(actualApiId);
 
 		if (isNewApi && !hasBeenSaved) {
 			// Add to draft state
@@ -521,15 +454,13 @@ export function createApiDetailState(config: ApiDetailStateConfig): ApiDetailSta
 			return;
 		}
 
-		// Create a copy with new IDs
+		// Create a copy with new ID
 		const duplicated: ApiEndpoint = {
 			...deepClone(original),
 			id: generateId('endpoint'),
 			path: original.path + '-copy',
-			pathParams: original.pathParams.map(p => ({
-				...p,
-				id: generateParamId()
-			}))
+			// PathParams are simple {name, fieldId} — just clone them
+			pathParams: original.pathParams.map(p => ({ ...p }))
 		};
 
 		if (isNewApi && !hasBeenSaved) {
@@ -613,19 +544,12 @@ export function createApiDetailState(config: ApiDetailStateConfig): ApiDetailSta
 		};
 	}
 
-	function handlePathParamUpdate(paramId: string, updates: Partial<EndpointParameter>): void {
+	function handlePathParamUpdate(paramName: string, fieldId: string): void {
 		if (!editedEndpoint) return;
 
 		const updatedParams = editedEndpoint.pathParams.map(p =>
-			p.id === paramId ? { ...p, ...updates } : p
+			p.name === paramName ? { ...p, fieldId } : p
 		);
-		editedEndpoint = { ...editedEndpoint, pathParams: updatedParams };
-	}
-
-	function handlePathParamDelete(paramId: string): void {
-		if (!editedEndpoint) return;
-
-		const updatedParams = editedEndpoint.pathParams.filter(p => p.id !== paramId);
 		editedEndpoint = { ...editedEndpoint, pathParams: updatedParams };
 	}
 
@@ -743,6 +667,9 @@ export function createApiDetailState(config: ApiDetailStateConfig): ApiDetailSta
 		get tags() { return tags; },
 		get endpoints() { return endpoints; },
 
+		// Namespace (readonly)
+		get apiNamespaceId() { return apiNamespaceId; },
+
 		// Drawer state (read/write)
 		get drawerOpen() { return drawerOpen; },
 		set drawerOpen(v: boolean) { drawerOpen = v; },
@@ -760,9 +687,6 @@ export function createApiDetailState(config: ApiDetailStateConfig): ApiDetailSta
 		get tagDropdownOpen() { return tagDropdownOpen; },
 		set tagDropdownOpen(v: boolean) { tagDropdownOpen = v; },
 
-		get tagToDelete() { return tagToDelete; },
-		set tagToDelete(v: ApiTag | null) { tagToDelete = v; },
-
 		get showEndpointDeleteConfirm() { return showEndpointDeleteConfirm; },
 		set showEndpointDeleteConfirm(v: boolean) { showEndpointDeleteConfirm = v; },
 
@@ -773,7 +697,6 @@ export function createApiDetailState(config: ApiDetailStateConfig): ApiDetailSta
 		get hasApiChanges() { return hasApiChanges; },
 		get hasEndpointChanges() { return hasEndpointChanges; },
 		get hasAnyChanges() { return hasAnyChanges; },
-		get exactTagMatch() { return exactTagMatch; },
 
 		// Actions
 		handleApiUpdate,
@@ -785,10 +708,6 @@ export function createApiDetailState(config: ApiDetailStateConfig): ApiDetailSta
 		handleDiscardAndClose,
 		cancelClose,
 		handleTagSelect,
-		handleCreateTag,
-		handleDeleteTagClick,
-		confirmDeleteTag,
-		cancelDeleteTag,
 		handleAddEndpoint,
 		handleDeleteEndpoint,
 		handleDeleteEndpointClick,
@@ -801,7 +720,6 @@ export function createApiDetailState(config: ApiDetailStateConfig): ApiDetailSta
 		handleCancelEndpoint,
 		handlePathChange,
 		handlePathParamUpdate,
-		handlePathParamDelete,
 		handleSelectQueryParamsObject,
 		handleSelectRequestBodyObject,
 		handleSelectResponseBodyObject,

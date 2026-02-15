@@ -6,7 +6,7 @@
 
 import { waitFor } from '@testing-library/svelte';
 import userEvent from '@testing-library/user-event';
-import type { ApiEndpoint, ApiTag, Api } from '$lib/types';
+import type { ApiEndpoint, Api } from '$lib/types';
 import { GLOBAL_NAMESPACE_ID } from '$lib/constants';
 
 /**
@@ -19,7 +19,6 @@ import { GLOBAL_NAMESPACE_ID } from '$lib/constants';
 export function createMockEndpoint(overrides: Partial<ApiEndpoint> = {}): ApiEndpoint {
 	return {
 		id: 'bbbbbbbb-0000-0000-0000-000000000001',
-		namespaceId: GLOBAL_NAMESPACE_ID,
 		apiId: 'cccccccc-0000-0000-0000-000000000001',
 		method: 'GET',
 		path: '/test',
@@ -31,21 +30,6 @@ export function createMockEndpoint(overrides: Partial<ApiEndpoint> = {}): ApiEnd
 		useEnvelope: true,
 		responseShape: 'object',
 		expanded: false,
-		...overrides
-	};
-}
-
-/**
- * Creates a mock API tag (embedded in API).
- * Tags no longer have IDs - they are identified by name within an API.
- *
- * @param overrides - Partial tag properties to override defaults
- * @returns Complete ApiTag object
- */
-export function createMockTag(overrides: Partial<ApiTag> = {}): ApiTag {
-	return {
-		name: 'Test Tag',
-		description: 'Test description',
 		...overrides
 	};
 }
@@ -65,7 +49,6 @@ export function createMockApi(overrides: Partial<Api> = {}): Api {
 		description: '',
 		baseUrl: '/api/v1',
 		serverUrl: 'http://localhost:8000',
-		tags: [],
 		createdAt: new Date().toISOString(),
 		updatedAt: new Date().toISOString(),
 		...overrides
@@ -74,7 +57,7 @@ export function createMockApi(overrides: Partial<Api> = {}): Api {
 
 /**
  * Creates a configured user event instance for interactions
- * 
+ *
  * @returns UserEvent instance for simulating user interactions
  */
 export function setupUserEvent() {
@@ -83,7 +66,7 @@ export function setupUserEvent() {
 
 /**
  * Waits for an element to be removed from the DOM
- * 
+ *
  * @param callback - Function that returns true when element is removed
  * @param options - Wait options
  */
@@ -100,7 +83,7 @@ export async function waitForElementToBeRemoved(
 
 /**
  * Delays execution for testing async behaviors
- * 
+ *
  * @param ms - Milliseconds to wait
  */
 export function delay(ms: number): Promise<void> {
@@ -109,7 +92,7 @@ export function delay(ms: number): Promise<void> {
 
 /**
  * Creates a mock function with TypeScript support
- * 
+ *
  * @returns Mock function
  */
 export function createMockFn<T extends (...args: any[]) => any>(): T & {
@@ -143,7 +126,7 @@ export function createMockFn<T extends (...args: any[]) => any>(): T & {
 
 /**
  * Simulates a click on an element by text content
- * 
+ *
  * @param getByText - Testing Library's getByText query
  * @param text - Text content to search for
  */
@@ -158,7 +141,7 @@ export async function clickByText(
 
 /**
  * Simulates typing into an input field
- * 
+ *
  * @param element - Input element
  * @param text - Text to type
  */
@@ -169,7 +152,7 @@ export async function typeInto(element: HTMLElement, text: string) {
 
 /**
  * Clears an input field and types new text
- * 
+ *
  * @param element - Input element
  * @param text - Text to type
  */

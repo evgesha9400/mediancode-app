@@ -111,15 +111,6 @@ export type HttpMethod = 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
 export type ResponseShape = 'object' | 'list';
 export type ResponseItemShape = 'object'; // Only objects allowed in lists
 
-/**
- * Embedded tag definition within an API
- * Tags are stored as JSONB array in the apis table
- */
-export interface ApiTag {
-  name: string;
-  description: string;
-}
-
 export interface Api {
   id: string;
   namespaceId: string;
@@ -128,28 +119,26 @@ export interface Api {
   description: string;
   baseUrl: string;
   serverUrl: string;
-  tags: ApiTag[];  // Embedded tags array
   createdAt: string;
   updatedAt: string;
 }
 
-export interface EndpointParameter {
-  id: string;
+/**
+ * Path parameter referencing a field definition
+ */
+export interface PathParam {
   name: string;
-  type: string;
-  description: string;
-  required: boolean;
+  fieldId: string;
 }
 
 export interface ApiEndpoint {
   id: string;
-  namespaceId: string;
   apiId: string;
   method: HttpMethod;
   path: string;
   description: string;
   tagName?: string;  // Tag name reference (string, not UUID)
-  pathParams: EndpointParameter[];
+  pathParams: PathParam[];
   queryParamsObjectId?: string; // Select ONE object for query parameters (optional)
   requestBodyObjectId?: string; // Select ONE object for request body (optional - only POST/PUT/PATCH methods)
   responseBodyObjectId?: string; // Select ONE object for response body (for both single object and array of objects)

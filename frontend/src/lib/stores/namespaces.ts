@@ -71,10 +71,11 @@ export function getNamespaceEntityCount(namespaceId: string): number {
 	const fields = get(fieldsStore).filter(f => f.namespaceId === namespaceId);
 	const fieldConstraints = get(fieldConstraintsStore).filter(v => v.namespaceId === namespaceId);
 	const objects = get(objectsStore).filter(o => o.namespaceId === namespaceId);
-	const endpoints = get(endpointsStore).filter(e => e.namespaceId === namespaceId);
-	const apis = get(apisStore).filter(a => a.namespaceId === namespaceId);
+	const namespaceApiIds = new Set(get(apisStore).filter(a => a.namespaceId === namespaceId).map(a => a.id));
+	const endpoints = get(endpointsStore).filter(e => namespaceApiIds.has(e.apiId));
+	const apis = namespaceApiIds.size;
 
-	return fields.length + fieldConstraints.length + objects.length + endpoints.length + apis.length;
+	return fields.length + fieldConstraints.length + objects.length + endpoints.length + apis;
 }
 
 /**
@@ -92,8 +93,9 @@ export function getNamespaceEntityDetails(namespaceId: string): {
 	const fields = get(fieldsStore).filter(f => f.namespaceId === namespaceId).length;
 	const fieldConstraints = get(fieldConstraintsStore).filter(v => v.namespaceId === namespaceId).length;
 	const objects = get(objectsStore).filter(o => o.namespaceId === namespaceId).length;
-	const endpoints = get(endpointsStore).filter(e => e.namespaceId === namespaceId).length;
-	const apis = get(apisStore).filter(a => a.namespaceId === namespaceId).length;
+	const namespaceApiIds = new Set(get(apisStore).filter(a => a.namespaceId === namespaceId).map(a => a.id));
+	const endpoints = get(endpointsStore).filter(e => namespaceApiIds.has(e.apiId)).length;
+	const apis = namespaceApiIds.size;
 
 	return {
 		fields,

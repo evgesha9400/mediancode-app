@@ -257,11 +257,26 @@ describe('namespaces store - Entity Count', () => {
 			}
 		]);
 
+		// Add an API in the global namespace so the endpoint can be matched
+		apisStore.update(apis => [
+			...apis,
+			{
+				id: 'cccccccc-0000-0000-0000-000000000001',
+				namespaceId: GLOBAL_NAMESPACE_ID,
+				title: 'Test API',
+				version: '1.0.0',
+				description: '',
+				baseUrl: '/api/v1',
+				serverUrl: 'http://localhost:8000',
+				createdAt: new Date().toISOString(),
+				updatedAt: new Date().toISOString()
+			}
+		]);
+
 		endpointsStore.update(endpoints => [
 			...endpoints,
 			{
 				id: 'bbbbbbbb-0000-0000-0000-000000000001',
-				namespaceId: GLOBAL_NAMESPACE_ID,
 				apiId: 'cccccccc-0000-0000-0000-000000000001',
 				method: 'GET' as const,
 				path: '/test',
@@ -278,8 +293,8 @@ describe('namespaces store - Entity Count', () => {
 		expect(details.endpoints).toBe(1);
 		expect(details.fieldConstraints).toBe(initialConstraintCount); // Constraints still present
 		expect(details.objects).toBe(0);
-		expect(details.apis).toBe(0);
-		expect(details.total).toBe(2 + initialConstraintCount);
+		expect(details.apis).toBe(1); // Now counts the API we added
+		expect(details.total).toBe(3 + initialConstraintCount);
 	});
 
 	it('should not delete namespace with entities', () => {

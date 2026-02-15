@@ -3,8 +3,7 @@
   import {
     apisStore,
     searchApis,
-    getEndpointCountByApi,
-    getTagCountByApi
+    getEndpointCountByApi
   } from '$lib/stores/apis';
   import { deleteApiAction } from '$lib/stores/actions';
   import { showToast } from '$lib/stores/toasts';
@@ -30,7 +29,6 @@
   // Extended API type with computed properties for sorting
   type ApiWithCounts = Api & {
     endpointCount: number;
-    tagCount: number;
     namespaceName: string;
   };
 
@@ -48,15 +46,14 @@
     itemsStore: () => namespacedApis,
     searchFn: searchApis,
     filterSections: () => apiFilterConfig,
-    numericColumns: new Set(['endpointCount', 'tagCount']),
+    numericColumns: new Set(['endpointCount']),
     urlScope: { page, goto },
     getItemId: (api) => api.id,
     deriveExtra: (api) => ({
       endpointCount: getEndpointCountByApi(api.id),
-      tagCount: getTagCountByApi(api.id),
       namespaceName: getNamespaceById(api.namespaceId)?.name ?? ''
     }),
-    sortColumnMap: { 'endpoints': 'endpointCount', 'tags': 'tagCount', 'namespace': 'namespaceName' },
+    sortColumnMap: { 'endpoints': 'endpointCount', 'namespace': 'namespaceName' },
     drawerConfig: {
       trackEdits: false,
       allowDelete: true,
@@ -164,12 +161,6 @@
           onSort={listState.handleSort}
         />
         <SortableColumn
-          column="tags"
-          label="Tags"
-          {sorts}
-          onSort={listState.handleSort}
-        />
-        <SortableColumn
           column="namespace"
           label="Namespace"
           {sorts}
@@ -204,14 +195,6 @@
                 {api.endpointCount}
               </span>
               <span class="text-sm text-mono-600">endpoints</span>
-            </div>
-          </td>
-          <td class="px-6 py-4 whitespace-nowrap">
-            <div class="flex items-center space-x-2">
-              <span class="px-2 py-1 text-xs rounded-full bg-mono-200 text-mono-700">
-                {api.tagCount}
-              </span>
-              <span class="text-sm text-mono-600">tags</span>
             </div>
           </td>
           <td class="px-6 py-4 whitespace-nowrap">
@@ -280,19 +263,11 @@
           <span class="text-mono-900">{getNamespaceById(selectedApi.namespaceId)?.name ?? '-'}</span>
         </div>
 
-        <div class="grid grid-cols-2 gap-4">
-          <div>
-            <h3 class="text-sm text-mono-500 mb-1 font-medium">Endpoints</h3>
-            <span class="px-2 py-1 text-xs rounded-full bg-mono-200 text-mono-700">
-              {getEndpointCountByApi(selectedApi.id)}
-            </span>
-          </div>
-          <div>
-            <h3 class="text-sm text-mono-500 mb-1 font-medium">Tags</h3>
-            <span class="px-2 py-1 text-xs rounded-full bg-mono-200 text-mono-700">
-              {getTagCountByApi(selectedApi.id)}
-            </span>
-          </div>
+        <div>
+          <h3 class="text-sm text-mono-500 mb-1 font-medium">Endpoints</h3>
+          <span class="px-2 py-1 text-xs rounded-full bg-mono-200 text-mono-700">
+            {getEndpointCountByApi(selectedApi.id)}
+          </span>
         </div>
 
         <div class="grid grid-cols-2 gap-4">

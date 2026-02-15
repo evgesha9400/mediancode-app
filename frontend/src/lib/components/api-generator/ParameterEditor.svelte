@@ -1,110 +1,120 @@
 <script module lang="ts">
-  import type { EndpointParameter } from '$lib/types';
+  import type { Field } from '$lib/types';
 
   export interface ParameterEditorProps {
-    parameter: EndpointParameter;
-    onUpdate?: (updates: Partial<EndpointParameter>) => void;
-    onDelete?: () => void;
-    showRequired?: boolean;
-    nameEditable?: boolean;
-    readOnly?: boolean;
-    compact?: boolean;
+    paramName: string;
+    fieldId: string;
+    availableFields: Field[];
+    onFieldSelect: (fieldId: string) => void;
   }
 </script>
 
 <script lang="ts">
   interface Props extends ParameterEditorProps {}
 
-  let { parameter, onUpdate, onDelete, showRequired = true, nameEditable = true, readOnly = false, compact = false }: Props = $props();
+  let { paramName, fieldId, availableFields, onFieldSelect }: Props = $props();
 
-  // Common parameter types for FastAPI/OpenAPI
-  const parameterTypes = [
-    { value: '', label: 'Select type...' },
-    { value: 'string', label: 'String' },
-    { value: 'int', label: 'Integer' },
-    { value: 'float', label: 'Float' },
-    { value: 'bool', label: 'Boolean' },
-    { value: 'uuid', label: 'UUID' },
-    { value: 'datetime', label: 'DateTime' },
-    { value: 'date', label: 'Date' },
-    { value: 'time', label: 'Time' }
-  ];
+  let dropdownOpen = $state(false);
+  let searchQuery = $state('');
+
+  // Find the currently selected field
+  const selectedField = $derived(availableFields.find(f => f.id === fieldId));
+
+  // Filter fields by search query
+  const filteredFields = $derived.by(() => {
+    const lowerQuery = searchQuery.toLowerCase().trim();
+    if (!lowerQuery) return availableFields;
+    return availableFields.filter(field =>
+      field.name.toLowerCase().includes(lowerQuery) ||
+      field.type.toLowerCase().includes(lowerQuery) ||
+      field.description?.toLowerCase().includes(lowerQuery)
+    );
+  });
+
+  function handleSelect(id: string): void {
+    onFieldSelect(id);
+    searchQuery = '';
+    dropdownOpen = false;
+  }
+
+  function handleClear(): void {
+    onFieldSelect('');
+    searchQuery = '';
+    dropdownOpen = false;
+  }
+
+  function handleFocus(): void {
+    dropdownOpen = true;
+  }
+
+  function handleBlur(): void {
+    setTimeout(() => {
+      dropdownOpen = false;
+    }, 150);
+  }
 </script>
 
-<div class="flex items-center space-x-2 {compact ? 'py-1.5' : ''}">
-  {#if !readOnly}
-    <!-- Editable Mode -->
-    <!-- Parameter Name -->
-    {#if nameEditable}
-      <input
-        type="text"
-        value={parameter.name}
-        oninput={(e) => onUpdate?.({ name: e.currentTarget.value })}
-        placeholder="param_name"
-        class="w-40 px-2 py-1 text-xs border border-mono-300 rounded-md focus:ring-2 focus:ring-mono-400 focus:border-transparent"
-      />
+<div class="flex items-center space-x-2 py-1.5">
+  <!-- Param name (read-only) -->
+  <div class="w-32 px-2 py-1 text-xs bg-mono-100 border border-mono-200 rounded-md text-mono-700 font-mono shrink-0">
+    {paramName}
+  </div>
+
+  <!-- Field selector -->
+  <div class="flex-1 relative">
+    {#if selectedField}
+      <!-- Show selected field with clear button -->
+      <div class="flex items-center space-x-2 px-2 py-1 border border-mono-300 rounded-md bg-white">
+        <span class="font-mono text-xs text-mono-700">{selectedField.name}</span>
+        <span class="text-xs text-mono-500 bg-mono-100 px-1.5 py-0.5 rounded">{selectedField.type}</span>
+        <button
+          type="button"
+          onclick={handleClear}
+          class="ml-auto text-mono-400 hover:text-mono-600 transition-colors"
+          aria-label="Clear field selection"
+        >
+          <i class="fa-solid fa-xmark text-xs"></i>
+        </button>
+      </div>
     {:else}
-      <div class="w-40 px-2 py-1 text-xs bg-mono-100 border border-mono-200 rounded-md text-mono-700 font-mono">
-        {parameter.name}
-      </div>
-    {/if}
-
-    <!-- Type Dropdown -->
-    <select
-      value={parameter.type}
-      onchange={(e) => onUpdate?.({ type: e.currentTarget.value })}
-      class="px-2 py-1 text-xs border border-mono-300 rounded-md focus:ring-2 focus:ring-mono-400 focus:border-transparent {parameter.type === '' ? 'text-mono-400' : 'text-mono-700'}"
-    >
-      {#each parameterTypes as type (type.value)}
-        <option value={type.value}>{type.label}</option>
-      {/each}
-    </select>
-
-    <!-- Description -->
-    <input
-      type="text"
-      value={parameter.description}
-      oninput={(e) => onUpdate?.({ description: e.currentTarget.value })}
-      placeholder="Description"
-      class="flex-1 px-2 py-1 text-xs border border-mono-300 rounded-md focus:ring-2 focus:ring-mono-400 focus:border-transparent"
-    />
-
-    <!-- Required Toggle (only for query params, path params are always required) -->
-    {#if showRequired}
-      <label class="flex items-center space-x-2 cursor-pointer">
+      <!-- Search/select field -->
+      <div class="relative">
         <input
-          type="checkbox"
-          checked={parameter.required}
-          onchange={(e) => onUpdate?.({ required: e.currentTarget.checked })}
-          class="h-4 w-4 text-mono-900 border-mono-300 rounded"
+          type="text"
+          bind:value={searchQuery}
+          onfocus={handleFocus}
+          onblur={handleBlur}
+          placeholder="Select field..."
+          class="w-full px-2 py-1 text-xs border border-mono-300 rounded-md focus:ring-2 focus:ring-mono-400 focus:border-transparent pr-7"
         />
-        <span class="text-xs text-mono-600 whitespace-nowrap">Required</span>
-      </label>
-    {/if}
-  {:else}
-    <!-- Read-Only Mode -->
-    <div class="flex-1 px-2 py-1 text-xs bg-mono-100 border border-mono-200 rounded-md text-mono-700 font-mono">
-      {parameter.name}
-    </div>
-    <div class="px-2 py-1 text-xs bg-mono-100 border border-mono-200 rounded-md text-mono-700">
-      {parameterTypes.find(t => t.value === parameter.type)?.label || parameter.type}
-    </div>
-    {#if showRequired}
-      <div class="px-2 py-1 text-xs text-mono-600">
-        {parameter.required ? 'Required' : 'Optional'}
+        <i class="fa-solid fa-search absolute right-2 top-1/2 -translate-y-1/2 text-mono-400 text-xs pointer-events-none"></i>
       </div>
-    {/if}
-  {/if}
 
-  <!-- Delete Button (if onDelete is provided) -->
-  {#if onDelete}
-    <button
-      type="button"
-      onclick={onDelete}
-      class="text-red-700 hover:text-red-600 transition-colors"
-      aria-label="Delete parameter"
-    >
-      <i class="fa-solid fa-xmark"></i>
-    </button>
-  {/if}
+      {#if dropdownOpen}
+        <div class="absolute z-10 w-full mt-1 bg-white border border-mono-300 rounded-md shadow-lg max-h-48 overflow-auto">
+          {#if filteredFields.length === 0}
+            <div class="px-3 py-2 text-xs text-mono-500">
+              {searchQuery.trim() ? `No fields matching "${searchQuery}"` : 'No fields available'}
+            </div>
+          {:else}
+            {#each filteredFields as field (field.id)}
+              <button
+                type="button"
+                onclick={() => handleSelect(field.id)}
+                class="w-full px-3 py-1.5 text-left hover:bg-mono-50 border-b border-mono-100 last:border-b-0 transition-colors"
+              >
+                <div class="flex items-center space-x-2">
+                  <span class="font-mono text-xs text-mono-700">{field.name}</span>
+                  <span class="text-xs text-mono-500 bg-mono-100 px-1.5 py-0.5 rounded">{field.type}</span>
+                </div>
+                {#if field.description}
+                  <p class="text-xs text-mono-500 mt-0.5">{field.description}</p>
+                {/if}
+              </button>
+            {/each}
+          {/if}
+        </div>
+      {/if}
+    {/if}
+  </div>
 </div>

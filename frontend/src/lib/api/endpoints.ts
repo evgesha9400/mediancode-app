@@ -5,17 +5,14 @@
  */
 
 import { apiGet, apiPost, apiPut, apiDelete } from './client';
-import type { ApiEndpoint, EndpointParameter, HttpMethod, ResponseShape } from '$lib/types';
+import type { ApiEndpoint, PathParam, HttpMethod, ResponseShape } from '$lib/types';
 
 /**
- * Backend endpoint parameter response
+ * Backend path parameter response
  */
-interface EndpointParameterResponse {
-	id: string;
+interface PathParamResponse {
 	name: string;
-	type: string;
-	description: string;
-	required: boolean;
+	fieldId: string;
 }
 
 /**
@@ -23,13 +20,12 @@ interface EndpointParameterResponse {
  */
 interface EndpointResponse {
 	id: string;
-	namespaceId: string;
 	apiId: string;
 	method: string;
 	path: string;
 	description: string;
 	tagName: string | null;
-	pathParams: EndpointParameterResponse[];
+	pathParams: PathParamResponse[];
 	queryParamsObjectId: string | null;
 	requestBodyObjectId: string | null;
 	responseBodyObjectId: string | null;
@@ -40,13 +36,10 @@ interface EndpointResponse {
 /**
  * Transform backend parameter to frontend type
  */
-function transformParameter(response: EndpointParameterResponse): EndpointParameter {
+function transformParameter(response: PathParamResponse): PathParam {
 	return {
-		id: response.id,
 		name: response.name,
-		type: response.type,
-		description: response.description,
-		required: response.required
+		fieldId: response.fieldId
 	};
 }
 
@@ -56,7 +49,6 @@ function transformParameter(response: EndpointParameterResponse): EndpointParame
 function transformEndpoint(response: EndpointResponse): ApiEndpoint {
 	return {
 		id: response.id,
-		namespaceId: response.namespaceId,
 		apiId: response.apiId,
 		method: response.method as HttpMethod,
 		path: response.path,
@@ -73,14 +65,12 @@ function transformEndpoint(response: EndpointResponse): ApiEndpoint {
 }
 
 /**
- * List all endpoints, optionally filtered by namespace and/or API
+ * List all endpoints, optionally filtered by API
  *
- * @param namespaceId - Optional namespace ID to filter by
  * @param apiId - Optional API ID to filter by
  */
-export async function listEndpoints(namespaceId?: string, apiId?: string): Promise<ApiEndpoint[]> {
+export async function listEndpoints(apiId?: string): Promise<ApiEndpoint[]> {
 	const searchParams = new URLSearchParams();
-	if (namespaceId) searchParams.set('namespaceId', namespaceId);
 	if (apiId) searchParams.set('apiId', apiId);
 	const query = searchParams.toString();
 	const response = await apiGet<EndpointResponse[]>(`/endpoints${query ? `?${query}` : ''}`);
@@ -103,13 +93,12 @@ export async function getEndpoint(id: string): Promise<ApiEndpoint> {
  * Request payload for creating an endpoint
  */
 export interface CreateEndpointRequest {
-	namespaceId: string;
 	apiId: string;
 	method: HttpMethod;
 	path: string;
 	description?: string;
 	tagName?: string;
-	pathParams?: { name: string; type: string; description?: string; required?: boolean }[];
+	pathParams?: { name: string; fieldId: string }[];
 	queryParamsObjectId?: string;
 	requestBodyObjectId?: string;
 	responseBodyObjectId?: string;
@@ -125,7 +114,7 @@ export interface UpdateEndpointRequest {
 	path?: string;
 	description?: string;
 	tagName?: string | null;
-	pathParams?: { id?: string; name: string; type: string; description?: string; required?: boolean }[];
+	pathParams?: { name: string; fieldId: string }[];
 	queryParamsObjectId?: string | null;
 	requestBodyObjectId?: string | null;
 	responseBodyObjectId?: string | null;

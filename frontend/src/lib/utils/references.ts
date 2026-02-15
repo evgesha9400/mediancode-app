@@ -1,7 +1,7 @@
 import type { DeletionResult, Reference } from '$lib/types';
 import { get } from 'svelte/store';
 import { fieldsStore } from '$lib/stores/fields';
-import { endpointsStore } from '$lib/stores/apis';
+import { apisStore } from '$lib/stores/apis';
 
 /**
  * Builds a tooltip message for deletion blocking references
@@ -110,11 +110,11 @@ export function checkFieldDeletion(fieldName: string, usedInApis: string[], name
   // Filter by namespace if provided
   let filteredApis = usedInApis;
   if (namespaceId) {
-    const allEndpoints = get(endpointsStore);
-    const sameNamespaceEndpointIds = new Set(
-      allEndpoints.filter(e => e.namespaceId === namespaceId).map(e => e.id)
+    const allApis = get(apisStore);
+    const sameNamespaceApiIds = new Set(
+      allApis.filter(a => a.namespaceId === namespaceId).map(a => a.id)
     );
-    filteredApis = usedInApis.filter(apiId => sameNamespaceEndpointIds.has(apiId));
+    filteredApis = usedInApis.filter(apiId => sameNamespaceApiIds.has(apiId));
   }
 
   // If field is not used in any APIs (in the same namespace), deletion is safe
@@ -162,11 +162,11 @@ export function checkObjectDeletion(objectName: string, usedInApis: string[], na
   // Filter by namespace if provided
   let filteredApis = usedInApis;
   if (namespaceId) {
-    const allEndpoints = get(endpointsStore);
-    const sameNamespaceEndpointIds = new Set(
-      allEndpoints.filter(e => e.namespaceId === namespaceId).map(e => e.id)
+    const allApis = get(apisStore);
+    const sameNamespaceApiIds = new Set(
+      allApis.filter(a => a.namespaceId === namespaceId).map(a => a.id)
     );
-    filteredApis = usedInApis.filter(apiId => sameNamespaceEndpointIds.has(apiId));
+    filteredApis = usedInApis.filter(apiId => sameNamespaceApiIds.has(apiId));
   }
 
   // If object is not used in any APIs (in the same namespace), deletion is safe

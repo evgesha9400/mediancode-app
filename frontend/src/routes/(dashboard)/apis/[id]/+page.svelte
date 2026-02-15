@@ -19,6 +19,7 @@
   import { getApiById } from '$lib/stores/apis';
   import { deleteApiAction } from '$lib/stores/actions';
   import { activeNamespaceId } from '$lib/stores/namespaces';
+  import { fieldsStore } from '$lib/stores/fields';
   import { showToast } from '$lib/stores/toasts';
 
   // Get API ID from URL
@@ -47,6 +48,23 @@
     }
   });
 
+  // Fields filtered by API namespace (for path param field selectors)
+  const availableFields = $derived(
+    $fieldsStore.filter(f => f.namespaceId === apiState.apiNamespaceId)
+  );
+
+  // Filtered tag suggestions based on input
+  const filteredTags = $derived.by(() => {
+    const input = apiState.tagInputValue.toLowerCase().trim();
+    if (!input) return apiState.tags;
+    return apiState.tags.filter(t => t.toLowerCase().includes(input));
+  });
+
+  // Check if input exactly matches an existing tag
+  const exactTagMatch = $derived(
+    apiState.tags.find(t => t.toLowerCase() === apiState.tagInputValue.toLowerCase().trim())
+  );
+
   function handleDeleteClick() {
     showDeleteConfirm = true;
   }
@@ -71,6 +89,13 @@
 
   function cancelDelete() {
     showDeleteConfirm = false;
+  }
+
+  function handleTagInputCommit() {
+    const trimmed = apiState.tagInputValue.trim();
+    if (trimmed) {
+      apiState.handleTagSelect(trimmed);
+    }
   }
 </script>
 
@@ -174,7 +199,6 @@
                 {#each apiState.endpoints as endpoint (endpoint.id)}
                   <EndpointItem
                     {endpoint}
-                    tags={apiState.tags}
                     onClick={() => apiState.openEndpoint(endpoint)}
                   />
                 {/each}
@@ -224,7 +248,7 @@
         <h3 class="text-lg font-medium text-mono-900 mb-2">Delete API</h3>
         <p class="text-mono-600 mb-4">
           Are you sure you want to delete "{apiState.api?.title || 'this API'}"?
-          This will also delete all its endpoints and tags. This action cannot be undone.
+          This will also delete all its endpoints. This action cannot be undone.
         </p>
         <div class="flex space-x-2">
           <button
@@ -301,14 +325,14 @@
                   type="text"
                   bind:value={apiState.tagInputValue}
                   onfocus={() => apiState.tagDropdownOpen = true}
-                  onblur={() => setTimeout(() => apiState.tagDropdownOpen = false, 150)}
+                  onblur={() => setTimeout(() => { apiState.tagDropdownOpen = false; }, 150)}
                   onkeydown={(e) => {
-                    if (e.key === 'Enter' && apiState.tagInputValue.trim() && !apiState.exactTagMatch) {
+                    if (e.key === 'Enter') {
                       e.preventDefault();
-                      apiState.handleCreateTag();
+                      handleTagInputCommit();
                     }
                   }}
-                  placeholder="Select or create tag..."
+                  placeholder="Type or select tag..."
                   class="w-full px-3 py-1.5 border border-mono-300 rounded-md focus:ring-2 focus:ring-mono-400 focus:border-transparent text-sm pr-8"
                 />
                 {#if apiState.tagInputValue}
@@ -324,68 +348,30 @@
                   <i class="fa-solid fa-chevron-down absolute right-3 top-1/2 -translate-y-1/2 text-mono-400 text-xs pointer-events-none"></i>
                 {/if}
               </div>
-              {#if apiState.tagDropdownOpen && !apiState.tagToDelete}
+              {#if apiState.tagDropdownOpen}
                 <div class="absolute z-10 w-full mt-1 bg-white border border-mono-300 rounded-md shadow-lg max-h-48 overflow-auto">
-                  {#if apiState.tagInputValue.trim() && !apiState.exactTagMatch}
+                  {#if apiState.tagInputValue.trim() && !exactTagMatch}
                     <button
                       type="button"
-                      onclick={apiState.handleCreateTag}
+                      onclick={handleTagInputCommit}
                       class="w-full px-3 py-2 text-left text-sm hover:bg-mono-50 flex items-center space-x-2 text-mono-700 border-b border-mono-200"
                     >
                       <i class="fa-solid fa-plus text-xs"></i>
-                      <span>Create "<strong>{apiState.tagInputValue.trim()}</strong>"</span>
+                      <span>Use "<strong>{apiState.tagInputValue.trim()}</strong>"</span>
                     </button>
                   {/if}
-                  {#each apiState.tags as tag (tag.name)}
-                    <div class="flex items-center hover:bg-mono-50 {apiState.editedEndpoint?.tagName === tag.name ? 'bg-mono-100' : ''}">
-                      <button
-                        type="button"
-                        onclick={() => apiState.handleTagSelect(tag.name)}
-                        class="flex-1 px-3 py-2 text-left text-sm text-mono-700"
-                      >
-                        {tag.name}
-                      </button>
-                      <button
-                        type="button"
-                        onclick={(e) => apiState.handleDeleteTagClick(e, tag)}
-                        class="px-3 py-2 text-red-700 hover:text-red-600 transition-colors"
-                        aria-label="Delete tag"
-                      >
-                        <i class="fa-solid fa-xmark text-xs"></i>
-                      </button>
-                    </div>
+                  {#each filteredTags as tag (tag)}
+                    <button
+                      type="button"
+                      onclick={() => apiState.handleTagSelect(tag)}
+                      class="w-full px-3 py-2 text-left text-sm text-mono-700 hover:bg-mono-50 {apiState.editedEndpoint?.tagName === tag ? 'bg-mono-100' : ''}"
+                    >
+                      {tag}
+                    </button>
                   {/each}
-                  {#if apiState.tags.length === 0 && !apiState.tagInputValue.trim()}
+                  {#if filteredTags.length === 0 && !apiState.tagInputValue.trim()}
                     <div class="px-3 py-2 text-sm text-mono-500">No tags yet</div>
                   {/if}
-                </div>
-              {/if}
-              {#if apiState.tagToDelete}
-                <div class="absolute z-10 w-full mt-1 bg-white border border-mono-300 rounded-md shadow-lg p-3">
-                  <p class="text-sm text-mono-700 mb-2">
-                    Delete tag "<strong>{apiState.tagToDelete.name}</strong>"?
-                  </p>
-                  {#if apiState.getEndpointsUsingTag(apiState.tagToDelete.name) > 0}
-                    <p class="text-xs text-mono-500 mb-3">
-                      This tag is used by {apiState.getEndpointsUsingTag(apiState.tagToDelete.name)} endpoint{apiState.getEndpointsUsingTag(apiState.tagToDelete.name) > 1 ? 's' : ''}. It will be removed from them.
-                    </p>
-                  {/if}
-                  <div class="flex space-x-2">
-                    <button
-                      type="button"
-                      onclick={apiState.confirmDeleteTag}
-                      class="flex-1 px-3 py-1.5 bg-red-600 text-white text-sm rounded-md hover:bg-red-700"
-                    >
-                      Delete
-                    </button>
-                    <button
-                      type="button"
-                      onclick={apiState.cancelDeleteTag}
-                      class="flex-1 px-3 py-1.5 border border-mono-300 text-mono-700 text-sm rounded-md hover:bg-mono-50"
-                    >
-                      Cancel
-                    </button>
-                  </div>
                 </div>
               {/if}
             </div>
@@ -414,14 +400,13 @@
                 <p class="text-xs text-mono-500">No path parameters. Add parameters to your URL path using <code class="bg-mono-100 px-1 rounded">{`{param_name}`}</code></p>
               </div>
             {:else}
-              <div class="px-3 py-1 bg-mono-50 rounded border border-mono-200 space-y-2">
-                {#each apiState.editedEndpoint.pathParams as param (param.id)}
+              <div class="px-3 py-1 bg-mono-50 rounded border border-mono-200 space-y-1">
+                {#each apiState.editedEndpoint.pathParams as param (param.name)}
                   <ParameterEditor
-                    parameter={param}
-                    onUpdate={(updates) => apiState.handlePathParamUpdate(param.id, updates)}
-                    showRequired={false}
-                    nameEditable={false}
-                    compact={true}
+                    paramName={param.name}
+                    fieldId={param.fieldId}
+                    {availableFields}
+                    onFieldSelect={(fieldId) => apiState.handlePathParamUpdate(param.name, fieldId)}
                   />
                 {/each}
               </div>
@@ -430,21 +415,21 @@
 
           <!-- Query Parameters -->
           <QueryParametersEditor
-            endpointNamespaceId={apiState.editedEndpoint.namespaceId}
+            endpointNamespaceId={apiState.apiNamespaceId}
             selectedObjectId={apiState.editedEndpoint.queryParamsObjectId}
             onSelectObject={apiState.handleSelectQueryParamsObject}
           />
 
           <!-- Request Body Editor -->
           <RequestBodyEditor
-            endpointNamespaceId={apiState.editedEndpoint.namespaceId}
+            endpointNamespaceId={apiState.apiNamespaceId}
             selectedObjectId={apiState.editedEndpoint.requestBodyObjectId}
             onSelectObject={apiState.handleSelectRequestBodyObject}
           />
 
           <!-- Response Body Editor -->
           <ResponseBodyEditor
-            endpointNamespaceId={apiState.editedEndpoint.namespaceId}
+            endpointNamespaceId={apiState.apiNamespaceId}
             selectedObjectId={apiState.editedEndpoint.responseBodyObjectId}
             useEnvelope={apiState.editedEndpoint.useEnvelope}
             responseShape={apiState.editedEndpoint.responseShape}
