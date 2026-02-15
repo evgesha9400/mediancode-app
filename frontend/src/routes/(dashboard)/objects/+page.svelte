@@ -40,6 +40,8 @@
   // Form tracking
   let isSaving = $state(false);
   let isDeleting = $state(false);
+  let formTouched = $state(false);
+  let serverErrors = $state<Record<string, string>>({});
 
   // Filter objects by active namespace
   let namespacedObjects = $derived($objectsStore.filter(o => o.namespaceId === $activeNamespaceId));
@@ -66,24 +68,29 @@
     }
   });
 
-  // Convenience aliases for template bindings
-  let selectedObject = $derived(listState.selectedItem);
-  let editedObject = $derived(listState.editedItem);
-  let originalObject = $derived(listState.originalItem);
-  let validationErrors = $derived(listState.validationErrors);
-  let showDeleteConfirm = $derived(listState.showDeleteConfirm);
+  // Truly derived values (read-only computations)
   let filteredObjects = $derived(listState.results as ObjectWithCounts[]);
   let sorts = $derived(listState.sorts);
-  let activeFiltersCount = $derived(listState.activeFiltersCount);
   let hasChanges = $derived(listState.hasChanges);
 
   let fields = $derived($fieldsStore);
 
   // Filter fields to only show those in the object's namespace
-  let namespacedFields = $derived(editedObject ? fields.filter(f => f.namespaceId === editedObject.namespaceId) : []);
+  let namespacedFields = $derived(listState.editedItem ? fields.filter(f => f.namespaceId === listState.editedItem!.namespaceId) : []);
 
   // Derive selected field IDs for the FieldSelectorDropdown
-  let selectedFieldIds = $derived(editedObject?.fields.map(f => f.fieldId) ?? []);
+  let selectedFieldIds = $derived(listState.editedItem?.fields.map(f => f.fieldId) ?? []);
+
+  // Reactive validation
+  let formErrors = $derived.by(() => {
+    if (!listState.editedItem) return {};
+    const errors: Record<string, string> = {};
+    if (!listState.editedItem.name.trim()) errors.name = 'Object name is required';
+    return errors;
+  });
+
+  let isFormValid = $derived(listState.editedItem !== null && Object.keys(formErrors).length === 0);
+  let visibleErrors = $derived({ ...(formTouched ? formErrors : {}), ...serverErrors });
 
   function selectObject(obj: ObjectDefinition) {
     listState.selectItem(obj);
@@ -91,6 +98,8 @@
 
   function closeDrawer() {
     listState.closeDrawer();
+    formTouched = false;
+    serverErrors = {};
   }
 
   function createObjectDraft(): ObjectDefinition {
@@ -106,35 +115,25 @@
 
   function openCreateDrawer() {
     listState.openCreate(createObjectDraft());
+    formTouched = false;
+    serverErrors = {};
   }
 
   function isSelected(obj: ObjectDefinition): boolean {
-    return selectedObject?.id === obj.id;
-  }
-
-  function validateForm(): boolean {
-    const errors: Record<string, string> = {};
-    let isValid = true;
-
-    if (!editedObject) return false;
-
-    if (!editedObject.name.trim()) {
-      errors.name = 'Object name is required';
-      isValid = false;
-    }
-
-    listState.validationErrors = errors;
-    return isValid;
+    return listState.selectedItem?.id === obj.id;
   }
 
   async function handleSave() {
-    if (!editedObject || !validateForm() || isSaving) return;
+    if (!listState.editedItem || isSaving) return;
 
-    const objectName = editedObject.name;
+    formTouched = true;
+    if (!isFormValid) return;
+
+    const objectName = listState.editedItem.name;
     isSaving = true;
 
     // Strip derived properties before saving
-    const { fieldCount, usedInApisCount, namespaceName, ...cleanObject } = editedObject as ObjectWithCounts;
+    const { fieldCount, usedInApisCount, namespaceName, ...cleanObject } = listState.editedItem as ObjectWithCounts;
 
     const result = await updateObjectAction(cleanObject.id, {
       name: cleanObject.name,
@@ -145,7 +144,7 @@
     if (!result.success) {
       isSaving = false;
       if (result.error?.includes('already exists')) {
-        listState.validationErrors = { name: result.error };
+        serverErrors = { name: result.error };
       } else {
         showToast(result.error || 'Failed to update object', 'error', 5000);
       }
@@ -160,21 +159,24 @@
   }
 
   async function handleCreate() {
-    if (!editedObject || !validateForm() || isSaving) return;
+    if (!listState.editedItem || isSaving) return;
+
+    formTouched = true;
+    if (!isFormValid) return;
 
     isSaving = true;
 
     const result = await createObjectAction({
-      namespaceId: editedObject.namespaceId,
-      name: editedObject.name,
-      description: editedObject.description,
-      fields: editedObject.fields
+      namespaceId: listState.editedItem.namespaceId,
+      name: listState.editedItem.name,
+      description: listState.editedItem.description,
+      fields: listState.editedItem.fields
     });
 
     if (!result.success) {
       isSaving = false;
       if (result.error?.includes('already exists')) {
-        listState.validationErrors = { name: result.error };
+        serverErrors = { name: result.error };
       } else {
         showToast(result.error || 'Failed to create object', 'error', 5000);
       }
@@ -187,19 +189,20 @@
   }
 
   function handleUndo() {
-    if (originalObject) {
-      listState.editedItem = JSON.parse(JSON.stringify(originalObject));
-      listState.validationErrors = {};
+    if (listState.originalItem) {
+      listState.editedItem = JSON.parse(JSON.stringify(listState.originalItem));
+      formTouched = false;
+      serverErrors = {};
     }
   }
 
   async function handleDelete() {
-    if (!editedObject || isDeleting) return;
+    if (!listState.editedItem || isDeleting) return;
 
-    const objectName = editedObject.name;
+    const objectName = listState.editedItem.name;
     isDeleting = true;
 
-    const result = await deleteObjectAction(editedObject.id);
+    const result = await deleteObjectAction(listState.editedItem.id);
 
     if (result.success) {
       closeDrawer();
@@ -212,36 +215,36 @@
   }
 
   function addField(fieldId: string) {
-    if (!editedObject) return;
+    if (!listState.editedItem) return;
 
     listState.editedItem = {
-      ...editedObject,
-      fields: [...editedObject.fields, { fieldId, required: false }]
+      ...listState.editedItem,
+      fields: [...listState.editedItem.fields, { fieldId, required: false }]
     };
   }
 
   function removeField(fieldId: string) {
-    if (!editedObject) return;
+    if (!listState.editedItem) return;
     listState.editedItem = {
-      ...editedObject,
-      fields: editedObject.fields.filter(f => f.fieldId !== fieldId)
+      ...listState.editedItem,
+      fields: listState.editedItem.fields.filter(f => f.fieldId !== fieldId)
     };
   }
 
   function toggleFieldRequired(fieldId: string) {
-    if (!editedObject) return;
-    const newFields = editedObject.fields.map(f =>
+    if (!listState.editedItem) return;
+    const newFields = listState.editedItem.fields.map(f =>
       f.fieldId === fieldId ? { ...f, required: !f.required } : f
     );
     listState.editedItem = {
-      ...editedObject,
+      ...listState.editedItem,
       fields: newFields
     };
   }
 
-  let hasReferences = $derived(editedObject ? editedObject.usedInApis.length > 0 : false);
-  let deleteTooltip = $derived(editedObject && hasReferences
-    ? buildDeletionTooltip('object', 'API', editedObject!.usedInApis.map(api => ({ name: api })))
+  let hasReferences = $derived(listState.editedItem ? listState.editedItem.usedInApis.length > 0 : false);
+  let deleteTooltip = $derived(listState.editedItem && hasReferences
+    ? buildDeletionTooltip('object', 'API', listState.editedItem.usedInApis.map(api => ({ name: api })))
     : '');
   let hasLoadError = $derived($storeLoadingState.storeErrors.includes('Objects'));
 </script>
@@ -362,7 +365,7 @@
   <DrawerHeader title={listState.mode === 'creating' ? 'Create Object' : 'Edit Object'} onClose={closeDrawer} />
 
   <DrawerContent>
-    {#if editedObject}
+    {#if listState.editedItem}
       <div class="space-y-4">
         <!-- Namespace (Read-only - uses active namespace from selector) -->
         <div>
@@ -372,7 +375,7 @@
           <input
             id="object-namespace"
             type="text"
-            value={getNamespaceById(editedObject.namespaceId)?.name ?? 'No namespace selected'}
+            value={getNamespaceById(listState.editedItem.namespaceId)?.name ?? 'No namespace selected'}
             disabled
             class="w-full px-3 py-2 border border-mono-200 rounded-lg bg-mono-100 text-mono-500 cursor-not-allowed"
           />
@@ -389,11 +392,11 @@
           <input
             id="object-name"
             type="text"
-            bind:value={editedObject.name}
-            class="w-full px-3 py-2 border border-mono-300 rounded-md focus:ring-2 focus:ring-mono-400 focus:border-transparent {validationErrors.name ? 'border-red-500' : ''}"
+            bind:value={listState.editedItem.name}
+            class="w-full px-3 py-2 border border-mono-300 rounded-md focus:ring-2 focus:ring-mono-400 focus:border-transparent {visibleErrors.name ? 'border-red-500' : ''}"
           />
-          {#if validationErrors.name}
-            <p class="text-xs text-red-500 mt-1">{validationErrors.name}</p>
+          {#if visibleErrors.name}
+            <p class="text-xs text-red-500 mt-1">{visibleErrors.name}</p>
           {/if}
         </div>
 
@@ -402,7 +405,7 @@
           <label for="object-description" class="block text-sm text-mono-700 mb-1 font-medium">Description</label>
           <textarea
             id="object-description"
-            bind:value={editedObject.description}
+            bind:value={listState.editedItem.description}
             rows="3"
             class="w-full px-3 py-2 border border-mono-300 rounded-md focus:ring-2 focus:ring-mono-400 focus:border-transparent"
           ></textarea>
@@ -410,7 +413,7 @@
 
         <!-- Fields -->
         <div>
-          <h3 class="text-sm text-mono-700 mb-2 font-medium">Fields ({editedObject.fields.length})</h3>
+          <h3 class="text-sm text-mono-700 mb-2 font-medium">Fields ({listState.editedItem.fields.length})</h3>
 
           <div class="space-y-2">
             <!-- Field Selector Dropdown -->
@@ -422,13 +425,13 @@
             />
 
             <!-- Selected Fields -->
-            {#if editedObject.fields.length === 0}
+            {#if listState.editedItem.fields.length === 0}
               <div class="p-3 bg-mono-50 rounded border border-mono-200">
                 <p class="text-xs text-mono-500">No fields selected</p>
               </div>
             {:else}
               <div class="p-2 bg-mono-50 rounded border border-mono-200 space-y-2">
-                {#each editedObject.fields as fieldRef}
+                {#each listState.editedItem.fields as fieldRef}
                   {@const field = getFieldById(fieldRef.fieldId)}
                   {#if field}
                     <div class="flex items-center space-x-2 p-2 bg-white rounded border border-mono-200">
@@ -493,9 +496,9 @@
 
         <!-- Used In APIs -->
         <div>
-          <h3 class="text-sm text-mono-700 mb-2 font-medium">Used In APIs ({editedObject.usedInApis.length})</h3>
+          <h3 class="text-sm text-mono-700 mb-2 font-medium">Used In APIs ({listState.editedItem.usedInApis.length})</h3>
           <div class="space-y-2">
-            {#each editedObject.usedInApis as api}
+            {#each listState.editedItem.usedInApis as api}
               <div class="flex items-center justify-between p-3 bg-mono-50 rounded-md">
                 <div class="flex items-center space-x-2">
                   <i class="fa-solid fa-code text-mono-400"></i>
@@ -503,7 +506,7 @@
                 </div>
               </div>
             {/each}
-            {#if editedObject.usedInApis.length === 0}
+            {#if listState.editedItem.usedInApis.length === 0}
               <p class="text-sm text-mono-500 italic">Not used in any APIs</p>
             {/if}
           </div>
@@ -513,12 +516,12 @@
   </DrawerContent>
 
   <DrawerFooter>
-    {#if editedObject}
+    {#if listState.editedItem}
       <CrudDrawerFooter
         mode={listState.mode === 'creating' ? 'creating' : 'editing'}
         entityName="Object"
         {isSaving}
-        isFormValid={editedObject.name.trim() !== '' && !!editedObject.namespaceId}
+        {isFormValid}
         {hasChanges}
         canDelete={!hasReferences}
         {deleteTooltip}

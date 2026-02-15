@@ -41,6 +41,8 @@
   // Form tracking
   let isSaving = $state(false);
   let isDeleting = $state(false);
+  let formTouched = $state(false);
+  let serverErrors = $state<Record<string, string>>({});
 
   let selectableTypes = $derived(getSelectableTypes());
 
@@ -95,12 +97,7 @@
     }
   });
 
-  // Convenience aliases for template bindings
-  let selectedField = $derived(listState.selectedItem);
-  let editedField = $derived(listState.editedItem);
-  let originalField = $derived(listState.originalItem);
-  let validationErrors = $derived(listState.validationErrors);
-  let showDeleteConfirm = $derived(listState.showDeleteConfirm);
+  // Truly derived values (read-only computations)
   let filteredFields = $derived(listState.results as FieldWithApiCount[]);
   let sorts = $derived(listState.sorts);
   let activeFiltersCount = $derived(listState.activeFiltersCount);
@@ -109,18 +106,34 @@
   let fieldConstraints = $derived($fieldConstraintsStore);
   // Filter field constraints by field's type compatibility
   let availableFieldConstraints = $derived(
-    editedField
-      ? getFieldConstraintsByFieldType(editedField.type)
+    listState.editedItem
+      ? getFieldConstraintsByFieldType(listState.editedItem.type)
       : []
   );
 
   // Derive selected field constraint names for the FieldConstraintSelectorDropdown
-  let selectedFieldConstraintNames = $derived(editedField?.constraints.map(v => v.name) ?? []);
+  let selectedFieldConstraintNames = $derived(listState.editedItem?.constraints.map(v => v.name) ?? []);
+
+  // Reactive validation
+  let formErrors = $derived.by(() => {
+    if (!listState.editedItem) return {};
+    const errors: Record<string, string> = {};
+    if (!listState.editedItem.name.trim()) errors.name = 'Field name is required';
+    if (!listState.editedItem.type) errors.type = 'Type is required';
+    const emptyParam = listState.editedItem.constraints.find(
+      c => !c.params || c.params.value === undefined || c.params.value === ''
+    );
+    if (emptyParam) errors.constraints = `Constraint "${emptyParam.name}" requires a value`;
+    return errors;
+  });
+
+  let isFormValid = $derived(listState.editedItem !== null && Object.keys(formErrors).length === 0);
+  let visibleErrors = $derived({ ...(formTouched ? formErrors : {}), ...serverErrors });
 
   function handleTypeChange(newType: string) {
-    if (!editedField || editedField.type === newType) return;
+    if (!listState.editedItem || listState.editedItem.type === newType) return;
     listState.editedItem = {
-      ...editedField,
+      ...listState.editedItem,
       type: newType,
       constraints: [],
       defaultValue: ''
@@ -133,6 +146,8 @@
 
   function closeDrawer() {
     listState.closeDrawer();
+    formTouched = false;
+    serverErrors = {};
   }
 
   function createFieldDraft(): Field {
@@ -151,65 +166,42 @@
 
   function openCreateDrawer() {
     listState.openCreate(createFieldDraft());
+    formTouched = false;
+    serverErrors = {};
   }
 
   function isSelected(field: Field): boolean {
-    return selectedField?.id === field.id;
-  }
-
-  function validateForm(): boolean {
-    const errors: Record<string, string> = {};
-    let isValid = true;
-
-    if (!editedField) return false;
-
-    if (!editedField.name.trim()) {
-      errors.name = 'Field name is required';
-      isValid = false;
-    }
-
-    if (!editedField.type) {
-      errors.type = 'Type is required';
-      isValid = false;
-    }
-
-    const emptyParamConstraint = editedField.constraints.find(
-      c => !c.params || c.params.value === undefined || c.params.value === ''
-    );
-    if (emptyParamConstraint) {
-      errors.constraints = `Constraint "${emptyParamConstraint.name}" requires a value`;
-      isValid = false;
-    }
-
-    listState.validationErrors = errors;
-    return isValid;
+    return listState.selectedItem?.id === field.id;
   }
 
   async function handleSave() {
-    if (!editedField || !validateForm() || isSaving) return;
+    if (!listState.editedItem || isSaving) return;
 
-    const fieldName = editedField.name;
+    formTouched = true;
+    if (!isFormValid) return;
+
+    const fieldName = listState.editedItem.name;
     isSaving = true;
 
-    const typeId = getTypeIdByName(editedField.type);
+    const typeId = getTypeIdByName(listState.editedItem.type);
     if (!typeId) {
-      showToast(`Unknown type "${editedField.type}"`, 'error', 5000);
+      showToast(`Unknown type "${listState.editedItem.type}"`, 'error', 5000);
       isSaving = false;
       return;
     }
 
-    const result = await updateFieldAction(editedField.id, {
-      name: editedField.name,
+    const result = await updateFieldAction(listState.editedItem.id, {
+      name: listState.editedItem.name,
       typeId,
-      description: editedField.description,
-      defaultValue: editedField.defaultValue,
-      constraints: editedField.constraints
+      description: listState.editedItem.description,
+      defaultValue: listState.editedItem.defaultValue,
+      constraints: listState.editedItem.constraints
     });
 
     if (!result.success) {
       isSaving = false;
       if (result.error?.includes('already exists')) {
-        listState.validationErrors = { name: result.error };
+        serverErrors = { name: result.error };
       } else {
         showToast(result.error || 'Failed to update field', 'error', 5000);
       }
@@ -224,30 +216,33 @@
   }
 
   async function handleCreate() {
-    if (!editedField || !validateForm() || isSaving) return;
+    if (!listState.editedItem || isSaving) return;
+
+    formTouched = true;
+    if (!isFormValid) return;
 
     isSaving = true;
 
-    const typeId = getTypeIdByName(editedField.type);
+    const typeId = getTypeIdByName(listState.editedItem.type);
     if (!typeId) {
-      showToast(`Unknown type "${editedField.type}"`, 'error', 5000);
+      showToast(`Unknown type "${listState.editedItem.type}"`, 'error', 5000);
       isSaving = false;
       return;
     }
 
     const result = await createFieldAction({
-      namespaceId: editedField.namespaceId,
-      name: editedField.name,
+      namespaceId: listState.editedItem.namespaceId,
+      name: listState.editedItem.name,
       typeId,
-      description: editedField.description,
-      defaultValue: editedField.defaultValue,
-      constraints: editedField.constraints
+      description: listState.editedItem.description,
+      defaultValue: listState.editedItem.defaultValue,
+      constraints: listState.editedItem.constraints
     });
 
     if (!result.success) {
       isSaving = false;
       if (result.error?.includes('already exists')) {
-        listState.validationErrors = { name: result.error };
+        serverErrors = { name: result.error };
       } else {
         showToast(result.error || 'Failed to create field', 'error', 5000);
       }
@@ -260,19 +255,20 @@
   }
 
   function handleUndo() {
-    if (originalField) {
-      listState.editedItem = JSON.parse(JSON.stringify(originalField));
-      listState.validationErrors = {};
+    if (listState.originalItem) {
+      listState.editedItem = JSON.parse(JSON.stringify(listState.originalItem));
+      formTouched = false;
+      serverErrors = {};
     }
   }
 
   async function handleDelete() {
-    if (!editedField || isDeleting) return;
+    if (!listState.editedItem || isDeleting) return;
 
-    const fieldName = editedField.name;
+    const fieldName = listState.editedItem.name;
     isDeleting = true;
 
-    const result = await deleteFieldAction(editedField.id);
+    const result = await deleteFieldAction(listState.editedItem.id);
 
     if (result.success) {
       closeDrawer();
@@ -285,27 +281,27 @@
   }
 
   function addFieldConstraint(constraintName: string) {
-    if (!editedField) return;
+    if (!listState.editedItem) return;
 
     const constraint = fieldConstraints.find(fc => fc.name === constraintName);
     if (!constraint) return;
 
     listState.editedItem = {
-      ...editedField,
-      constraints: [...editedField.constraints, { name: constraintName, constraintId: constraint.id, params: {} }]
+      ...listState.editedItem,
+      constraints: [...listState.editedItem.constraints, { name: constraintName, constraintId: constraint.id, params: {} }]
     };
   }
 
   function removeFieldConstraint(index: number) {
-    if (!editedField) return;
+    if (!listState.editedItem) return;
     listState.editedItem = {
-      ...editedField,
-      constraints: editedField.constraints.filter((_, i) => i !== index)
+      ...listState.editedItem,
+      constraints: listState.editedItem.constraints.filter((_, i) => i !== index)
     };
   }
 
   function updateConstraintParam(index: number, rawValue: string, parameterType: string) {
-    if (!editedField) return;
+    if (!listState.editedItem) return;
 
     let parsedValue: string | number | undefined;
     if (rawValue === '') {
@@ -317,7 +313,7 @@
       parsedValue = isNaN(num) ? undefined : num;
     }
 
-    const updatedConstraints = editedField.constraints.map((c, i) => {
+    const updatedConstraints = listState.editedItem.constraints.map((c, i) => {
       if (i !== index) return c;
       return {
         ...c,
@@ -325,7 +321,7 @@
       };
     });
 
-    listState.editedItem = { ...editedField, constraints: updatedConstraints };
+    listState.editedItem = { ...listState.editedItem, constraints: updatedConstraints };
   }
 
   function formatFieldConstraintPill(constraintValue: FieldConstraintValue): string {
@@ -339,9 +335,9 @@
     return constraintValue.name;
   }
 
-  let hasReferences = $derived(editedField ? editedField.usedInApis.length > 0 : false);
-  let deleteTooltip = $derived(editedField && hasReferences
-    ? buildDeletionTooltip('field', 'API', editedField!.usedInApis.map(api => ({ name: api })))
+  let hasReferences = $derived(listState.editedItem ? listState.editedItem.usedInApis.length > 0 : false);
+  let deleteTooltip = $derived(listState.editedItem && hasReferences
+    ? buildDeletionTooltip('field', 'API', listState.editedItem.usedInApis.map(api => ({ name: api })))
     : '');
   let hasLoadError = $derived($storeLoadingState.storeErrors.includes('Fields'));
 </script>
@@ -489,7 +485,7 @@
   <DrawerHeader title={listState.mode === 'creating' ? 'Create Field' : 'Edit Field'} onClose={closeDrawer} />
 
   <DrawerContent>
-    {#if editedField}
+    {#if listState.editedItem}
       <div class="space-y-4">
         <!-- Namespace (Read-only) -->
         <div>
@@ -499,7 +495,7 @@
           <input
             id="fields-namespace"
             type="text"
-            value={getNamespaceById(editedField.namespaceId)?.name ?? ''}
+            value={getNamespaceById(listState.editedItem.namespaceId)?.name ?? ''}
             disabled
             class="w-full px-3 py-2 border border-mono-300 rounded-md bg-mono-50 text-mono-500 cursor-not-allowed"
           />
@@ -514,11 +510,11 @@
           <input
             id="fields-name"
             type="text"
-            bind:value={editedField.name}
-            class="w-full px-3 py-2 border border-mono-300 rounded-md focus:ring-2 focus:ring-mono-400 focus:border-transparent {validationErrors.name ? 'border-red-500' : ''}"
+            bind:value={listState.editedItem.name}
+            class="w-full px-3 py-2 border border-mono-300 rounded-md focus:ring-2 focus:ring-mono-400 focus:border-transparent {visibleErrors.name ? 'border-red-500' : ''}"
           />
-          {#if validationErrors.name}
-            <p class="text-xs text-red-500 mt-1">{validationErrors.name}</p>
+          {#if visibleErrors.name}
+            <p class="text-xs text-red-500 mt-1">{visibleErrors.name}</p>
           {/if}
         </div>
 
@@ -530,13 +526,13 @@
           <TypeSelectorDropdown
             id="fields-type"
             availableTypes={selectableTypes}
-            selectedTypeName={editedField.type}
+            selectedTypeName={listState.editedItem.type}
             onSelect={handleTypeChange}
             placeholder="Search types..."
-            error={!!validationErrors.type}
+            error={!!visibleErrors.type}
           />
-          {#if validationErrors.type}
-            <p class="text-xs text-red-500 mt-1">{validationErrors.type}</p>
+          {#if visibleErrors.type}
+            <p class="text-xs text-red-500 mt-1">{visibleErrors.type}</p>
           {/if}
         </div>
 
@@ -545,7 +541,7 @@
           <label for="fields-description" class="block text-sm text-mono-700 mb-1 font-medium">Description</label>
           <textarea
             id="fields-description"
-            bind:value={editedField.description}
+            bind:value={listState.editedItem.description}
             rows="3"
             class="w-full px-3 py-2 border border-mono-300 rounded-md focus:ring-2 focus:ring-mono-400 focus:border-transparent"
           ></textarea>
@@ -557,7 +553,7 @@
           <input
             id="fields-default-value"
             type="text"
-            bind:value={editedField.defaultValue}
+            bind:value={listState.editedItem.defaultValue}
             placeholder="None"
             class="w-full px-3 py-2 border border-mono-300 rounded-md focus:ring-2 focus:ring-mono-400 focus:border-transparent"
           />
@@ -565,21 +561,21 @@
 
         <!-- Constraints -->
         <FieldConstraintEditor
-          constraints={editedField.constraints}
+          constraints={listState.editedItem.constraints}
           availableConstraints={availableFieldConstraints}
           allConstraintMeta={fieldConstraints}
           selectedNames={selectedFieldConstraintNames}
           onAdd={addFieldConstraint}
           onRemove={removeFieldConstraint}
           onParamChange={updateConstraintParam}
-          error={validationErrors.constraints}
+          error={visibleErrors.constraints}
         />
 
         <!-- Used In APIs -->
         <div>
-          <h3 class="text-sm text-mono-700 mb-2 font-medium">Used In APIs ({editedField.usedInApis.length})</h3>
+          <h3 class="text-sm text-mono-700 mb-2 font-medium">Used In APIs ({listState.editedItem.usedInApis.length})</h3>
           <div class="space-y-2">
-            {#each editedField.usedInApis as api}
+            {#each listState.editedItem.usedInApis as api}
               <div class="flex items-center justify-between p-3 bg-mono-50 rounded-md">
                 <div class="flex items-center space-x-2">
                   <i class="fa-solid fa-code text-mono-400"></i>
@@ -587,7 +583,7 @@
                 </div>
               </div>
             {/each}
-            {#if editedField.usedInApis.length === 0}
+            {#if listState.editedItem.usedInApis.length === 0}
               <p class="text-sm text-mono-500 italic">Not used in any APIs</p>
             {/if}
           </div>
@@ -597,12 +593,12 @@
   </DrawerContent>
 
   <DrawerFooter>
-    {#if editedField}
+    {#if listState.editedItem}
       <CrudDrawerFooter
         mode={listState.mode === 'creating' ? 'creating' : 'editing'}
         entityName="Field"
         {isSaving}
-        isFormValid={editedField.name.trim() !== '' && !!editedField.type}
+        {isFormValid}
         {hasChanges}
         canDelete={!hasReferences}
         {deleteTooltip}

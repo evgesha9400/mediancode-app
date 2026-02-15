@@ -58,6 +58,8 @@
   let createErrors = $state<Record<string, string>>({});
   let isSaving = $state(false);
   let isDeleting = $state(false);
+  let formTouched = $state(false);
+  let serverErrors = $state<Record<string, string>>({});
 
   // Create list view state (owns all reactive state)
   const listState = createListViewState<Namespace, NamespaceFilterState>({
@@ -85,16 +87,22 @@
     }
   });
 
-  // Convenience aliases for template bindings
-  let selectedNamespace = $derived(listState.selectedItem);
-  let editedNamespace = $derived(listState.editedItem);
-  let originalNamespace = $derived(listState.originalItem);
-  let validationErrors = $derived(listState.validationErrors);
-  let showDeleteConfirm = $derived(listState.showDeleteConfirm);
+  // Truly derived values (read-only computations)
   let filteredNamespaces = $derived(listState.results as NamespaceWithCounts[]);
   let sorts = $derived(listState.sorts);
   let activeFiltersCount = $derived(listState.activeFiltersCount);
   let hasChanges = $derived(listState.hasChanges);
+
+  // Reactive validation for edit drawer
+  let formErrors = $derived.by(() => {
+    if (!listState.editedItem) return {};
+    const errors: Record<string, string> = {};
+    if (!listState.editedItem.name.trim()) errors.name = 'Namespace name is required';
+    return errors;
+  });
+
+  let isFormValid = $derived(listState.editedItem !== null && Object.keys(formErrors).length === 0);
+  let visibleErrors = $derived({ ...(formTouched ? formErrors : {}), ...serverErrors });
 
   function selectNamespace(namespace: Namespace) {
     listState.selectItem(namespace);
@@ -102,48 +110,38 @@
 
   function closeDrawer() {
     listState.closeDrawer();
+    formTouched = false;
+    serverErrors = {};
   }
 
   function isSelected(namespace: Namespace): boolean {
-    return selectedNamespace?.id === namespace.id;
-  }
-
-  function validateForm(): boolean {
-    const errors: Record<string, string> = {};
-    let isValid = true;
-
-    if (!editedNamespace) return false;
-
-    if (!editedNamespace.name.trim()) {
-      errors.name = 'Namespace name is required';
-      isValid = false;
-    }
-
-    listState.validationErrors = errors;
-    return isValid;
+    return listState.selectedItem?.id === namespace.id;
   }
 
   async function handleSave() {
-    if (!editedNamespace || !validateForm() || isSaving) return;
+    if (!listState.editedItem || isSaving) return;
 
     // Can't edit locked namespaces
-    if (editedNamespace.locked) {
+    if (listState.editedItem.locked) {
       showToast('Cannot edit locked namespaces', 'error', 3000);
       return;
     }
 
-    const namespaceName = editedNamespace.name;
+    formTouched = true;
+    if (!isFormValid) return;
+
+    const namespaceName = listState.editedItem.name;
     isSaving = true;
 
-    const result = await updateNamespaceAction(editedNamespace.id, {
-      name: editedNamespace.name,
-      description: editedNamespace.description
+    const result = await updateNamespaceAction(listState.editedItem.id, {
+      name: listState.editedItem.name,
+      description: listState.editedItem.description
     });
 
     if (!result.success) {
       isSaving = false;
       if (result.error?.includes('already exists')) {
-        listState.validationErrors = { name: result.error };
+        serverErrors = { name: result.error };
       } else {
         showToast(result.error || 'Failed to update namespace', 'error', 5000);
       }
@@ -158,19 +156,20 @@
   }
 
   function handleUndo() {
-    if (originalNamespace) {
-      listState.editedItem = JSON.parse(JSON.stringify(originalNamespace));
-      listState.validationErrors = {};
+    if (listState.originalItem) {
+      listState.editedItem = JSON.parse(JSON.stringify(listState.originalItem));
+      formTouched = false;
+      serverErrors = {};
     }
   }
 
   async function handleDelete() {
-    if (!editedNamespace || isDeleting) return;
+    if (!listState.editedItem || isDeleting) return;
 
-    const namespaceName = editedNamespace.name;
+    const namespaceName = listState.editedItem.name;
     isDeleting = true;
 
-    const result = await deleteNamespaceAction(editedNamespace.id);
+    const result = await deleteNamespaceAction(listState.editedItem.id);
 
     if (result.success) {
       closeDrawer();
@@ -225,15 +224,15 @@
   }
 
   let hasLoadError = $derived($storeLoadingState.storeErrors.includes('Namespaces'));
-  let isLocked = $derived(editedNamespace?.locked ?? false);
-  let hasEntities = $derived(() => {
-    if (!editedNamespace) return false;
-    return getNamespaceEntityDetails(editedNamespace.id).total > 0;
+  let isLocked = $derived(listState.editedItem?.locked ?? false);
+  let hasEntities = $derived.by(() => {
+    if (!listState.editedItem) return false;
+    return getNamespaceEntityDetails(listState.editedItem.id).total > 0;
   });
-  let deleteTooltip = $derived(() => {
-    if (!editedNamespace) return '';
-    if (editedNamespace.locked) return 'Cannot delete locked namespaces';
-    const details = getNamespaceEntityDetails(editedNamespace.id);
+  let deleteTooltip = $derived.by(() => {
+    if (!listState.editedItem) return '';
+    if (listState.editedItem.locked) return 'Cannot delete locked namespaces';
+    const details = getNamespaceEntityDetails(listState.editedItem.id);
     if (details.total > 0) {
       return `Cannot delete: Contains ${details.total} entities`;
     }
@@ -364,7 +363,7 @@
   <DrawerHeader title={isLocked ? 'View Namespace' : 'Edit Namespace'} onClose={closeDrawer} />
 
   <DrawerContent>
-    {#if editedNamespace}
+    {#if listState.editedItem}
       <div class="space-y-4">
         <!-- Namespace Name -->
         <div>
@@ -374,12 +373,12 @@
           <input
             id="namespace-name"
             type="text"
-            bind:value={editedNamespace.name}
+            bind:value={listState.editedItem.name}
             disabled={isLocked}
-            class="w-full px-3 py-2 border border-mono-300 rounded-md focus:ring-2 focus:ring-mono-400 focus:border-transparent {validationErrors.name ? 'border-red-500' : ''} {isLocked ? 'bg-mono-100 cursor-not-allowed' : ''}"
+            class="w-full px-3 py-2 border border-mono-300 rounded-md focus:ring-2 focus:ring-mono-400 focus:border-transparent {visibleErrors.name ? 'border-red-500' : ''} {isLocked ? 'bg-mono-100 cursor-not-allowed' : ''}"
           />
-          {#if validationErrors.name}
-            <p class="text-xs text-red-500 mt-1">{validationErrors.name}</p>
+          {#if visibleErrors.name}
+            <p class="text-xs text-red-500 mt-1">{visibleErrors.name}</p>
           {/if}
         </div>
 
@@ -388,7 +387,7 @@
           <label for="namespace-description" class="block text-sm text-mono-700 mb-1 font-medium">Description</label>
           <textarea
             id="namespace-description"
-            bind:value={editedNamespace.description}
+            bind:value={listState.editedItem.description}
             disabled={isLocked}
             rows="3"
             class="w-full px-3 py-2 border border-mono-300 rounded-md focus:ring-2 focus:ring-mono-400 focus:border-transparent {isLocked ? 'bg-mono-100 cursor-not-allowed' : ''}"
@@ -396,10 +395,10 @@
         </div>
 
         <!-- Entity Counts -->
-        <div>
-          <h3 class="text-sm text-mono-700 mb-2 font-medium">Contents</h3>
-          {#if editedNamespace}
-            {@const details = getNamespaceEntityDetails(editedNamespace.id)}
+        {#if listState.editedItem}
+          {@const details = getNamespaceEntityDetails(listState.editedItem.id)}
+          <div>
+            <h3 class="text-sm text-mono-700 mb-2 font-medium">Contents</h3>
             <div class="bg-mono-50 rounded-md p-3 space-y-2">
               <div class="flex justify-between text-sm">
                 <span class="text-mono-600">Fields</span>
@@ -422,8 +421,8 @@
                 <span class="text-mono-900 font-bold">{details.total}</span>
               </div>
             </div>
-          {/if}
-        </div>
+          </div>
+        {/if}
 
         <!-- Status -->
         <div>
@@ -440,7 +439,7 @@
                 <span class="text-sm">This namespace can be edited and deleted.</span>
               </div>
             {/if}
-            {#if editedNamespace.isDefault}
+            {#if listState.editedItem.isDefault}
               <div class="flex items-center space-x-2 text-mono-700">
                 <i class="fa-solid fa-star"></i>
                 <span class="text-sm">This is your default namespace.</span>
@@ -453,14 +452,14 @@
   </DrawerContent>
 
   <DrawerFooter>
-    {#if editedNamespace && !isLocked}
+    {#if listState.editedItem && !isLocked}
       <CrudDrawerFooter
         mode="editing"
         entityName="Namespace"
         {isSaving}
         {hasChanges}
-        canDelete={!hasEntities()}
-        deleteTooltip={deleteTooltip()}
+        canDelete={!hasEntities}
+        {deleteTooltip}
         showDeleteConfirm={listState.showDeleteConfirm}
         {isDeleting}
         onSave={handleSave}
@@ -470,7 +469,7 @@
         onDeleteConfirm={handleDelete}
         onDeleteCancel={() => listState.showDeleteConfirm = false}
       />
-    {:else if editedNamespace && isLocked}
+    {:else if listState.editedItem && isLocked}
       <button
         type="button"
         onclick={closeDrawer}
