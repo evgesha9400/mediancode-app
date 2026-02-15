@@ -18,7 +18,7 @@
     DrawerHeader,
     DrawerContent,
     DrawerFooter,
-    Tooltip
+    CrudDrawerFooter
   } from '$lib/components';
   import type { FilterConfig, Namespace } from '$lib/types';
   import { storeLoadingState, reloadStores } from '$lib/stores/loader';
@@ -454,68 +454,22 @@
 
   <DrawerFooter>
     {#if editedNamespace && !isLocked}
-      {@const canSave = hasChanges && !isSaving}
-      <button
-        type="button"
-        onclick={handleSave}
-        disabled={!canSave}
-        class="w-full px-4 py-2 rounded-md transition-colors font-medium {canSave ? 'bg-mono-900 text-white hover:bg-mono-800 cursor-pointer' : 'bg-mono-300 text-mono-500 cursor-not-allowed'}"
-      >
-        {#if isSaving}
-          <i class="fa-solid fa-spinner fa-spin mr-2"></i>
-          Saving...
-        {:else}
-          Save Changes
-        {/if}
-      </button>
-      <button
-        type="button"
-        onclick={handleUndo}
-        disabled={!hasChanges || isSaving}
-        class="w-full px-4 py-2 border rounded-md transition-colors font-medium {hasChanges && !isSaving ? 'border-mono-300 text-mono-700 hover:bg-mono-50 cursor-pointer' : 'border-mono-200 text-mono-400 cursor-not-allowed bg-mono-50'}"
-      >
-        Undo
-      </button>
-      {#if !showDeleteConfirm}
-        <Tooltip text={deleteTooltip()} position="top">
-          <button
-            type="button"
-            onclick={() => listState.showDeleteConfirm = true}
-            disabled={hasEntities()}
-            class="w-full px-4 py-2 rounded-md flex items-center justify-center transition-colors font-medium {hasEntities() ? 'bg-mono-200 text-mono-400 cursor-not-allowed' : 'bg-mono-100 text-red-700 hover:bg-red-50 cursor-pointer'}"
-          >
-            <i class="fa-solid fa-xmark mr-2"></i>
-            <span>Delete Namespace</span>
-          </button>
-        </Tooltip>
-      {:else}
-        <div class="bg-red-50 border border-red-200 rounded-md p-3">
-          <p class="text-sm text-red-800 mb-2">Are you sure you want to delete this namespace?</p>
-          <div class="flex space-x-2">
-            <button
-              type="button"
-              onclick={handleDelete}
-              disabled={isDeleting}
-              class="flex-1 px-3 py-1.5 rounded-md text-sm font-medium transition-colors {isDeleting ? 'bg-red-400 text-white cursor-not-allowed' : 'bg-red-600 text-white hover:bg-red-700 cursor-pointer'}"
-            >
-              {#if isDeleting}
-                <i class="fa-solid fa-spinner fa-spin mr-1"></i>
-                Deleting...
-              {:else}
-                Yes, Delete
-              {/if}
-            </button>
-            <button
-              type="button"
-              onclick={() => listState.showDeleteConfirm = false}
-              disabled={isDeleting}
-              class="flex-1 px-3 py-1.5 border rounded-md text-sm font-medium transition-colors {isDeleting ? 'border-mono-200 text-mono-400 cursor-not-allowed bg-mono-50' : 'border-mono-300 text-mono-700 hover:bg-mono-50 cursor-pointer'}"
-            >
-              Cancel
-            </button>
-          </div>
-        </div>
-      {/if}
+      <CrudDrawerFooter
+        mode="editing"
+        entityName="Namespace"
+        {isSaving}
+        {hasChanges}
+        canDelete={!hasEntities()}
+        deleteTooltip={deleteTooltip()}
+        showDeleteConfirm={listState.showDeleteConfirm}
+        {isDeleting}
+        onSave={handleSave}
+        onUndo={handleUndo}
+        onCancel={closeDrawer}
+        onDeleteRequest={() => listState.showDeleteConfirm = true}
+        onDeleteConfirm={handleDelete}
+        onDeleteCancel={() => listState.showDeleteConfirm = false}
+      />
     {:else if editedNamespace && isLocked}
       <button
         type="button"

@@ -17,9 +17,9 @@
     DrawerHeader,
     DrawerContent,
     DrawerFooter,
-    Tooltip,
+    CrudDrawerFooter,
     NamespaceSelector,
-    FieldConstraintSelectorDropdown,
+    FieldConstraintEditor,
     TypeSelectorDropdown
   } from '$lib/components';
   import type { FilterConfig } from '$lib/types';
@@ -39,8 +39,6 @@
   };
 
   // Form tracking
-  let previousFieldType = $state<string | null>(null);
-  let isCreating = $state(false);
   let isSaving = $state(false);
   let isDeleting = $state(false);
 
@@ -120,29 +118,21 @@
   let selectedFieldConstraintNames = $derived(editedField?.constraints.map(v => v.name) ?? []);
 
   function handleTypeChange(newType: string) {
-    if (!editedField) return;
-
-    // If type actually changed, reset constraints and default value
-    if (previousFieldType !== null && previousFieldType !== newType) {
-      listState.editedItem = {
-        ...editedField,
-        constraints: [],
-        defaultValue: ''
-      };
-    }
-
-    previousFieldType = newType;
+    if (!editedField || editedField.type === newType) return;
+    listState.editedItem = {
+      ...editedField,
+      type: newType,
+      constraints: [],
+      defaultValue: ''
+    };
   }
 
   function selectField(field: Field) {
     listState.selectItem(field);
-    previousFieldType = field.type;
   }
 
   function closeDrawer() {
     listState.closeDrawer();
-    previousFieldType = null;
-    isCreating = false;
   }
 
   function createFieldDraft(): Field {
@@ -160,13 +150,7 @@
   }
 
   function openCreateDrawer() {
-    isCreating = true;
-    listState.editedItem = createFieldDraft();
-    listState.selectedItem = null;
-    listState.originalItem = null;
-    listState.validationErrors = {};
-    listState.drawerOpen = true;
-    previousFieldType = selectableTypes[0]?.name ?? 'str';
+    listState.openCreate(createFieldDraft());
   }
 
   function isSelected(field: Field): boolean {
@@ -271,9 +255,6 @@
     }
 
     showToast(`Field "${result.data!.name}" created successfully`, 'success', 3000);
-
-    // Close drawer after successful creation (matches object builder behavior)
-    isCreating = false;
     closeDrawer();
     isSaving = false;
   }
@@ -281,7 +262,6 @@
   function handleUndo() {
     if (originalField) {
       listState.editedItem = JSON.parse(JSON.stringify(originalField));
-      previousFieldType = originalField.type;
       listState.validationErrors = {};
     }
   }
@@ -506,7 +486,7 @@
   </Table>
 
 <Drawer open={listState.drawerOpen}>
-  <DrawerHeader title={isCreating ? 'Create Field' : 'Edit Field'} onClose={closeDrawer} />
+  <DrawerHeader title={listState.mode === 'creating' ? 'Create Field' : 'Edit Field'} onClose={closeDrawer} />
 
   <DrawerContent>
     {#if editedField}
@@ -551,11 +531,7 @@
             id="fields-type"
             availableTypes={selectableTypes}
             selectedTypeName={editedField.type}
-            onSelect={(typeName) => {
-              if (!editedField) return;
-              listState.editedItem = { ...editedField, type: typeName };
-              handleTypeChange(typeName);
-            }}
+            onSelect={handleTypeChange}
             placeholder="Search types..."
             error={!!validationErrors.type}
           />
@@ -588,82 +564,16 @@
         </div>
 
         <!-- Constraints -->
-        <div>
-          <h3 class="text-sm text-mono-700 mb-2 font-medium">Field Constraints ({editedField.constraints.length})</h3>
-
-          <div class="space-y-2">
-            <!-- Field Constraint Selector Dropdown -->
-            <FieldConstraintSelectorDropdown
-              availableFieldConstraints={availableFieldConstraints}
-              selectedFieldConstraintNames={selectedFieldConstraintNames}
-              onSelect={addFieldConstraint}
-              placeholder="Add field constraint..."
-            />
-
-            <!-- Selected Field Constraints -->
-            {#if editedField.constraints.length === 0}
-              <div class="p-3 bg-mono-50 rounded border border-mono-200">
-                <p class="text-xs text-mono-500">No field constraints selected</p>
-              </div>
-            {:else}
-              <div class="p-2 bg-mono-50 rounded border border-mono-200 space-y-2">
-                {#each editedField.constraints as constraintValue, index}
-                  {@const constraintMeta = fieldConstraints.find(v => v.name === constraintValue.name)}
-                  {#if constraintMeta}
-                    <div class="flex items-center space-x-2 p-2 bg-white rounded border border-mono-200">
-                      <!-- Field Constraint Name and Type -->
-                      <div class="flex items-center space-x-2 shrink-0">
-                        <span class="font-mono text-sm text-mono-700">{constraintMeta.name}</span>
-                        <span class="text-xs text-mono-500 bg-mono-100 px-2 py-0.5 rounded">{constraintMeta.parameterType}</span>
-                      </div>
-
-                      <!-- Parameter Value Input -->
-                      <input
-                        type={constraintMeta.parameterType === 'str' ? 'text' : 'number'}
-                        step={constraintMeta.parameterType === 'int' ? '1' : 'any'}
-                        value={constraintValue.params?.value ?? ''}
-                        oninput={(e) => updateConstraintParam(index, e.currentTarget.value, constraintMeta.parameterType)}
-                        placeholder={constraintMeta.parameterType === 'str' ? 'e.g. ^[a-z]+$' : 'Value'}
-                        class="flex-1 min-w-0 px-2 py-1 border border-mono-300 rounded text-sm focus:ring-2 focus:ring-mono-400 focus:border-transparent"
-                      />
-
-                      <!-- Delete Button (aligned to the right) -->
-                      <button
-                        type="button"
-                        onclick={() => removeFieldConstraint(index)}
-                        class="text-red-700 hover:text-red-600 transition-colors shrink-0"
-                        title="Remove field constraint"
-                        aria-label="Remove field constraint"
-                      >
-                        <i class="fa-solid fa-xmark"></i>
-                      </button>
-                    </div>
-                  {:else}
-                    <!-- Missing field constraint fallback - constraint was deleted from registry -->
-                    <div class="flex items-center gap-2 py-1.5">
-                      <i class="fa-solid fa-triangle-exclamation text-red-500 text-sm"></i>
-                      <span class="flex-1 text-sm text-red-700">
-                        Field constraint not found <span class="font-mono text-xs text-red-500">({constraintValue.name})</span>
-                      </span>
-                      <button
-                        type="button"
-                        onclick={() => removeFieldConstraint(index)}
-                        class="p-1 text-red-700 hover:text-red-600 hover:bg-red-100 rounded transition-colors"
-                        title="Remove missing field constraint reference"
-                        aria-label="Remove field constraint"
-                      >
-                        <i class="fa-solid fa-xmark"></i>
-                      </button>
-                    </div>
-                  {/if}
-                {/each}
-              </div>
-            {/if}
-            {#if validationErrors.constraints}
-              <p class="text-xs text-red-500 mt-1">{validationErrors.constraints}</p>
-            {/if}
-          </div>
-        </div>
+        <FieldConstraintEditor
+          constraints={editedField.constraints}
+          availableConstraints={availableFieldConstraints}
+          allConstraintMeta={fieldConstraints}
+          selectedNames={selectedFieldConstraintNames}
+          onAdd={addFieldConstraint}
+          onRemove={removeFieldConstraint}
+          onParamChange={updateConstraintParam}
+          error={validationErrors.constraints}
+        />
 
         <!-- Used In APIs -->
         <div>
@@ -687,93 +597,25 @@
   </DrawerContent>
 
   <DrawerFooter>
-    {#if editedField && isCreating}
-      <!-- Creation mode buttons -->
-      {@const isFormValid = editedField.name.trim() !== '' && !!editedField.type && !isSaving}
-      <button
-        type="button"
-        onclick={handleCreate}
-        disabled={!isFormValid}
-        class="w-full px-4 py-2 rounded-md transition-colors font-medium {isFormValid ? 'bg-mono-900 text-white hover:bg-mono-800 cursor-pointer' : 'bg-mono-300 text-mono-500 cursor-not-allowed'}"
-      >
-        {#if isSaving}
-          <i class="fa-solid fa-spinner fa-spin mr-2"></i>
-          Creating...
-        {:else}
-          Create Field
-        {/if}
-      </button>
-      <button
-        type="button"
-        onclick={closeDrawer}
-        class="w-full px-4 py-2 border border-mono-300 text-mono-700 rounded-md hover:bg-mono-50 cursor-pointer transition-colors font-medium"
-      >
-        Cancel
-      </button>
-    {:else if editedField}
-      <!-- Edit mode buttons -->
-      {@const canSave = hasChanges && !isSaving}
-      <button
-        type="button"
-        onclick={handleSave}
-        disabled={!canSave}
-        class="w-full px-4 py-2 rounded-md transition-colors font-medium {canSave ? 'bg-mono-900 text-white hover:bg-mono-800 cursor-pointer' : 'bg-mono-300 text-mono-500 cursor-not-allowed'}"
-      >
-        {#if isSaving}
-          <i class="fa-solid fa-spinner fa-spin mr-2"></i>
-          Saving...
-        {:else}
-          Save Changes
-        {/if}
-      </button>
-      <button
-        type="button"
-        onclick={handleUndo}
-        disabled={!hasChanges || isSaving}
-        class="w-full px-4 py-2 border rounded-md transition-colors font-medium {hasChanges && !isSaving ? 'border-mono-300 text-mono-700 hover:bg-mono-50 cursor-pointer' : 'border-mono-200 text-mono-400 cursor-not-allowed bg-mono-50'}"
-      >
-        Undo
-      </button>
-      {#if !showDeleteConfirm}
-        <Tooltip text={deleteTooltip} position="top">
-          <button
-            type="button"
-            onclick={() => listState.showDeleteConfirm = true}
-            disabled={hasReferences}
-            class="w-full px-4 py-2 rounded-md flex items-center justify-center transition-colors font-medium {hasReferences ? 'bg-mono-200 text-mono-400 cursor-not-allowed' : 'bg-mono-100 text-red-700 hover:bg-red-50 cursor-pointer'}"
-          >
-            <i class="fa-solid fa-xmark mr-2"></i>
-            <span>Delete Field</span>
-          </button>
-        </Tooltip>
-      {:else}
-        <div class="bg-red-50 border border-red-200 rounded-md p-3">
-          <p class="text-sm text-red-800 mb-2">Are you sure you want to delete this field?</p>
-          <div class="flex space-x-2">
-            <button
-              type="button"
-              onclick={handleDelete}
-              disabled={isDeleting}
-              class="flex-1 px-3 py-1.5 rounded-md text-sm font-medium transition-colors {isDeleting ? 'bg-red-400 text-white cursor-not-allowed' : 'bg-red-600 text-white hover:bg-red-700 cursor-pointer'}"
-            >
-              {#if isDeleting}
-                <i class="fa-solid fa-spinner fa-spin mr-1"></i>
-                Deleting...
-              {:else}
-                Yes, Delete
-              {/if}
-            </button>
-            <button
-              type="button"
-              onclick={() => listState.showDeleteConfirm = false}
-              disabled={isDeleting}
-              class="flex-1 px-3 py-1.5 border rounded-md text-sm font-medium transition-colors {isDeleting ? 'border-mono-200 text-mono-400 cursor-not-allowed bg-mono-50' : 'border-mono-300 text-mono-700 hover:bg-mono-50 cursor-pointer'}"
-            >
-              Cancel
-            </button>
-          </div>
-        </div>
-      {/if}
+    {#if editedField}
+      <CrudDrawerFooter
+        mode={listState.mode === 'creating' ? 'creating' : 'editing'}
+        entityName="Field"
+        {isSaving}
+        isFormValid={editedField.name.trim() !== '' && !!editedField.type}
+        {hasChanges}
+        canDelete={!hasReferences}
+        {deleteTooltip}
+        showDeleteConfirm={listState.showDeleteConfirm}
+        {isDeleting}
+        onCreate={handleCreate}
+        onSave={handleSave}
+        onUndo={handleUndo}
+        onCancel={closeDrawer}
+        onDeleteRequest={() => listState.showDeleteConfirm = true}
+        onDeleteConfirm={handleDelete}
+        onDeleteCancel={() => listState.showDeleteConfirm = false}
+      />
     {/if}
   </DrawerFooter>
 </Drawer>

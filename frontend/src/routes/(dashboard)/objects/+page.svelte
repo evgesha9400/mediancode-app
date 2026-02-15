@@ -15,7 +15,7 @@
     DrawerHeader,
     DrawerContent,
     DrawerFooter,
-    Tooltip,
+    CrudDrawerFooter,
     FieldSelectorDropdown,
     NamespaceSelector
   } from '$lib/components';
@@ -38,7 +38,6 @@
   let objectFilterConfig = $derived([]);
 
   // Form tracking
-  let isCreating = $state(false);
   let isSaving = $state(false);
   let isDeleting = $state(false);
 
@@ -92,7 +91,6 @@
 
   function closeDrawer() {
     listState.closeDrawer();
-    isCreating = false;
   }
 
   function createObjectDraft(): ObjectDefinition {
@@ -107,12 +105,7 @@
   }
 
   function openCreateDrawer() {
-    isCreating = true;
-    listState.editedItem = createObjectDraft();
-    listState.selectedItem = null;
-    listState.originalItem = null;
-    listState.validationErrors = {};
-    listState.drawerOpen = true;
+    listState.openCreate(createObjectDraft());
   }
 
   function isSelected(obj: ObjectDefinition): boolean {
@@ -189,9 +182,6 @@
     }
 
     showToast(`Object "${result.data!.name}" created successfully`, 'success', 3000);
-
-    // Close drawer after successful creation
-    isCreating = false;
     closeDrawer();
     isSaving = false;
   }
@@ -369,7 +359,7 @@
   </Table>
 
 <Drawer open={listState.drawerOpen} maxWidth={720}>
-  <DrawerHeader title={isCreating ? 'Create Object' : 'Edit Object'} onClose={closeDrawer} />
+  <DrawerHeader title={listState.mode === 'creating' ? 'Create Object' : 'Edit Object'} onClose={closeDrawer} />
 
   <DrawerContent>
     {#if editedObject}
@@ -523,93 +513,25 @@
   </DrawerContent>
 
   <DrawerFooter>
-    {#if editedObject && isCreating}
-      <!-- Creation mode buttons -->
-      {@const isFormValid = editedObject.name.trim() !== '' && !!editedObject.namespaceId && !isSaving}
-      <button
-        type="button"
-        onclick={handleCreate}
-        disabled={!isFormValid}
-        class="w-full px-4 py-2 rounded-md transition-colors font-medium {isFormValid ? 'bg-mono-900 text-white hover:bg-mono-800 cursor-pointer' : 'bg-mono-300 text-mono-500 cursor-not-allowed'}"
-      >
-        {#if isSaving}
-          <i class="fa-solid fa-spinner fa-spin mr-2"></i>
-          Creating...
-        {:else}
-          Create Object
-        {/if}
-      </button>
-      <button
-        type="button"
-        onclick={closeDrawer}
-        class="w-full px-4 py-2 border border-mono-300 text-mono-700 rounded-md hover:bg-mono-50 cursor-pointer transition-colors font-medium"
-      >
-        Cancel
-      </button>
-    {:else if editedObject}
-      <!-- Edit mode buttons -->
-      {@const canSave = hasChanges && !isSaving}
-      <button
-        type="button"
-        onclick={handleSave}
-        disabled={!canSave}
-        class="w-full px-4 py-2 rounded-md transition-colors font-medium {canSave ? 'bg-mono-900 text-white hover:bg-mono-800 cursor-pointer' : 'bg-mono-300 text-mono-500 cursor-not-allowed'}"
-      >
-        {#if isSaving}
-          <i class="fa-solid fa-spinner fa-spin mr-2"></i>
-          Saving...
-        {:else}
-          Save Changes
-        {/if}
-      </button>
-      <button
-        type="button"
-        onclick={handleUndo}
-        disabled={!hasChanges || isSaving}
-        class="w-full px-4 py-2 border rounded-md transition-colors font-medium {hasChanges && !isSaving ? 'border-mono-300 text-mono-700 hover:bg-mono-50 cursor-pointer' : 'border-mono-200 text-mono-400 cursor-not-allowed bg-mono-50'}"
-      >
-        Undo
-      </button>
-      {#if !showDeleteConfirm}
-        <Tooltip text={deleteTooltip} position="top">
-          <button
-            type="button"
-            onclick={() => listState.showDeleteConfirm = true}
-            disabled={hasReferences}
-            class="w-full px-4 py-2 rounded-md flex items-center justify-center transition-colors font-medium {hasReferences ? 'bg-mono-200 text-mono-400 cursor-not-allowed' : 'bg-mono-100 text-red-700 hover:bg-red-50 cursor-pointer'}"
-          >
-            <i class="fa-solid fa-xmark mr-2"></i>
-            <span>Delete Object</span>
-          </button>
-        </Tooltip>
-      {:else}
-        <div class="bg-red-50 border border-red-200 rounded-md p-3">
-          <p class="text-sm text-red-800 mb-2">Are you sure you want to delete this object?</p>
-          <div class="flex space-x-2">
-            <button
-              type="button"
-              onclick={handleDelete}
-              disabled={isDeleting}
-              class="flex-1 px-3 py-1.5 rounded-md text-sm font-medium transition-colors {isDeleting ? 'bg-red-400 text-white cursor-not-allowed' : 'bg-red-600 text-white hover:bg-red-700 cursor-pointer'}"
-            >
-              {#if isDeleting}
-                <i class="fa-solid fa-spinner fa-spin mr-1"></i>
-                Deleting...
-              {:else}
-                Yes, Delete
-              {/if}
-            </button>
-            <button
-              type="button"
-              onclick={() => listState.showDeleteConfirm = false}
-              disabled={isDeleting}
-              class="flex-1 px-3 py-1.5 border rounded-md text-sm font-medium transition-colors {isDeleting ? 'border-mono-200 text-mono-400 cursor-not-allowed bg-mono-50' : 'border-mono-300 text-mono-700 hover:bg-mono-50 cursor-pointer'}"
-            >
-              Cancel
-            </button>
-          </div>
-        </div>
-      {/if}
+    {#if editedObject}
+      <CrudDrawerFooter
+        mode={listState.mode === 'creating' ? 'creating' : 'editing'}
+        entityName="Object"
+        {isSaving}
+        isFormValid={editedObject.name.trim() !== '' && !!editedObject.namespaceId}
+        {hasChanges}
+        canDelete={!hasReferences}
+        {deleteTooltip}
+        showDeleteConfirm={listState.showDeleteConfirm}
+        {isDeleting}
+        onCreate={handleCreate}
+        onSave={handleSave}
+        onUndo={handleUndo}
+        onCancel={closeDrawer}
+        onDeleteRequest={() => listState.showDeleteConfirm = true}
+        onDeleteConfirm={handleDelete}
+        onDeleteCancel={() => listState.showDeleteConfirm = false}
+      />
     {/if}
   </DrawerFooter>
 </Drawer>

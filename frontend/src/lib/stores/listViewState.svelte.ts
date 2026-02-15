@@ -15,6 +15,11 @@ import { parseMultiSortFromUrl, buildMultiSortUrl, handleSortClick, sortDataMult
 import { browser } from '$app/environment';
 
 /**
+ * Drawer mode state machine
+ */
+export type DrawerMode = 'closed' | 'editing' | 'creating';
+
+/**
  * Configuration for the drawer behavior
  */
 export interface DrawerConfig {
@@ -83,6 +88,9 @@ export interface ListViewState<Item, FilterState> {
   validationErrors: Record<string, string>;
   showDeleteConfirm: boolean;
 
+  // Drawer mode
+  readonly mode: DrawerMode;
+
   // Derived state (readonly, automatically recomputed)
   readonly results: Item[];
   readonly sorts: MultiSortState;
@@ -93,6 +101,7 @@ export interface ListViewState<Item, FilterState> {
   // Action methods
   handleSort: (columnKey: string, shiftKey: boolean) => void;
   selectItem: (item: Item) => void;
+  openCreate: (draft: Item) => void;
   closeDrawer: () => void;
   resetFilters: () => void;
   toggleFilters: () => void;
@@ -140,6 +149,7 @@ export function createListViewState<Item, FilterState extends Record<string, any
   }
 
   // Internal state using Svelte runes
+  let mode = $state<DrawerMode>('closed');
   let query = $state('');
   let filters = $state<FilterState>(createInitialFilterState());
   let filtersOpen = $state(false);
@@ -306,6 +316,7 @@ export function createListViewState<Item, FilterState extends Record<string, any
       drawerOpen = false;
     }
 
+    mode = 'editing';
     selectedItem = item;
 
     if (trackEdits) {
@@ -328,9 +339,21 @@ export function createListViewState<Item, FilterState extends Record<string, any
     }
   }
 
+  // Action: Open drawer in creation mode with a draft item
+  function openCreate(draft: Item): void {
+    mode = 'creating';
+    editedItem = draft;
+    selectedItem = null;
+    originalItem = null;
+    validationErrors = {};
+    showDeleteConfirm = false;
+    drawerOpen = true;
+  }
+
   // Action: Close drawer with delay
   function closeDrawer(): void {
     drawerOpen = false;
+    mode = 'closed';
 
     setTimeout(() => {
       selectedItem = null;
@@ -382,6 +405,9 @@ export function createListViewState<Item, FilterState extends Record<string, any
     get showDeleteConfirm() { return showDeleteConfirm; },
     set showDeleteConfirm(v: boolean) { showDeleteConfirm = v; },
 
+    // Drawer mode (read-only, set via selectItem/openCreate/closeDrawer)
+    get mode() { return mode; },
+
     // Derived state (exposed as getters that Svelte can track)
     get results() { return results; },
     get sorts() { return sorts; },
@@ -392,6 +418,7 @@ export function createListViewState<Item, FilterState extends Record<string, any
     // Action methods
     handleSort,
     selectItem,
+    openCreate,
     closeDrawer,
     resetFilters,
     toggleFilters

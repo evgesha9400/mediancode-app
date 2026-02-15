@@ -9,6 +9,7 @@ export { default as ResponseBodyEditor } from './ResponseBodyEditor.svelte';
 export { default as FieldSelectorDropdown } from './FieldSelectorDropdown.svelte';
 export { default as ObjectSelectorDropdown } from './ObjectSelectorDropdown.svelte';
 export { default as FieldConstraintSelectorDropdown } from './FieldConstraintSelectorDropdown.svelte';
+export { default as FieldConstraintEditor } from './FieldConstraintEditor.svelte';
 export { default as TypeSelectorDropdown } from './TypeSelectorDropdown.svelte';
 
 // API Generator component types
@@ -22,4 +23,5 @@ export type { ResponseBodyEditorProps } from './ResponseBodyEditor.svelte';
 export type { FieldSelectorDropdownProps } from './FieldSelectorDropdown.svelte';
 export type { ObjectSelectorDropdownProps } from './ObjectSelectorDropdown.svelte';
 export type { FieldConstraintSelectorDropdownProps } from './FieldConstraintSelectorDropdown.svelte';
+export type { FieldConstraintEditorProps } from './FieldConstraintEditor.svelte';
 export type { TypeSelectorDropdownProps } from './TypeSelectorDropdown.svelte';
