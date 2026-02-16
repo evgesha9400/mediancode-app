@@ -41,14 +41,20 @@ export const authenticatedTest = base.extend<
 			// for the same CORS request during HTTP/2 stream cleanup.
 			const succeededRequests = new Set<string>();
 
-			// Log failed network requests for debugging (skip if already succeeded)
+			// Log failed network requests for debugging (only our backend API)
+			// Third-party requests (Clerk, etc.) may be aborted during navigation
+			// as part of normal browser/HTTP2 lifecycle — not actionable for us.
 			page.on('requestfailed', (req) => {
-				const key = `${req.method()} ${req.url()}`;
+				const url = req.url();
+				if (!url.includes('api.dev.mediancode.com') && !url.includes('localhost:8000')) {
+					return; // Only log our backend failures
+				}
+				const key = `${req.method()} ${url}`;
 				if (succeededRequests.has(key)) {
 					succeededRequests.delete(key);
-					return; // Already got a successful response — this is just cleanup noise
+					return; // Already got a successful response — HTTP/2 cleanup noise
 				}
-				console.log(`[NET FAIL] ${req.method()} ${req.url()} — ${req.failure()?.errorText}`);
+				console.log(`[NET FAIL] ${req.method()} ${url} — ${req.failure()?.errorText}`);
 			});
 
 			// Log API responses for debugging
@@ -73,6 +79,10 @@ export const authenticatedTest = base.extend<
 				page,
 				emailAddress: process.env.E2E_TEST_USER_EMAIL!
 			});
+
+			// Wait for Clerk's post-sign-in requests (org memberships, session sync)
+			// to complete before the test navigates away
+			await page.waitForLoadState('networkidle');
 
 			await use();
 		},

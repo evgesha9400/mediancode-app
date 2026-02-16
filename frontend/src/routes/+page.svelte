@@ -2,11 +2,15 @@
 	import { clerkState } from '$lib/clerk';
 	import { Logo } from '$lib/components';
 
-	let mobileMenuOpen = false;
-	let heroFormSuccess = false;
-	let ctaFormSuccess = false;
-	let heroEmail = '';
-	let ctaEmail = '';
+	let mobileMenuOpen = $state(false);
+	let heroFormSuccess = $state(false);
+	let ctaFormSuccess = $state(false);
+	let heroEmail = $state('');
+	let ctaEmail = $state('');
+	let heroSubmitting = $state(false);
+	let ctaSubmitting = $state(false);
+	let heroError = $state('');
+	let ctaError = $state('');
 
 	function toggleMobileMenu() {
 		mobileMenuOpen = !mobileMenuOpen;
@@ -33,11 +37,8 @@
 			return;
 		}
 
-		// Disable form during submission
-		const submitButton = form.querySelector('button[type="submit"]') as HTMLButtonElement;
-		const originalButtonText = submitButton.textContent || '';
-		submitButton.disabled = true;
-		submitButton.textContent = 'Submitting...';
+		heroSubmitting = true;
+		heroError = '';
 
 		try {
 			const formData = new FormData(form);
@@ -56,10 +57,9 @@
 				throw new Error('Form submission failed');
 			}
 		} catch (error) {
-			alert('Something went wrong. Please try again later.');
+			heroError = 'Something went wrong. Please try again later.';
 		} finally {
-			submitButton.disabled = false;
-			submitButton.textContent = originalButtonText;
+			heroSubmitting = false;
 		}
 	}
 
@@ -73,11 +73,8 @@
 			return;
 		}
 
-		// Disable form during submission
-		const submitButton = form.querySelector('button[type="submit"]') as HTMLButtonElement;
-		const originalButtonText = submitButton.textContent || '';
-		submitButton.disabled = true;
-		submitButton.textContent = 'Submitting...';
+		ctaSubmitting = true;
+		ctaError = '';
 
 		try {
 			const formData = new FormData(form);
@@ -96,10 +93,9 @@
 				throw new Error('Form submission failed');
 			}
 		} catch (error) {
-			alert('Something went wrong. Please try again later.');
+			ctaError = 'Something went wrong. Please try again later.';
 		} finally {
-			submitButton.disabled = false;
-			submitButton.textContent = originalButtonText;
+			ctaSubmitting = false;
 		}
 	}
 </script>
@@ -183,10 +179,13 @@
 					<div class="flex flex-col sm:flex-row space-y-3 sm:space-y-0 sm:space-x-3">
 						<input type="email" name="email" bind:value={heroEmail} placeholder="Enter your email address" required
 							   class="flex-1 px-4 py-3 text-sm sm:text-base bg-white border border-mono-300 rounded-lg focus:outline-none focus:border-mono-600 focus:ring-1 focus:ring-mono-600">
-						<button type="submit" class="px-6 py-3 bg-mono-900 text-white rounded-lg hover:bg-mono-800 transition-colors font-medium text-sm sm:text-base whitespace-nowrap">
-							Notify Me
+						<button type="submit" disabled={heroSubmitting} class="px-6 py-3 bg-mono-900 text-white rounded-lg hover:bg-mono-800 transition-colors font-medium text-sm sm:text-base whitespace-nowrap disabled:opacity-50 disabled:cursor-not-allowed">
+							{heroSubmitting ? 'Submitting...' : 'Notify Me'}
 						</button>
 					</div>
+					{#if heroError}
+						<p class="mt-3 text-sm text-red-600">{heroError}</p>
+					{/if}
 					<p class:hidden={!heroFormSuccess} class="mt-3 text-sm text-mono-600 flex items-center space-x-2">
 						<i class="fa-solid fa-check text-green-600"></i>
 						<span>Thanks! We'll notify you when we launch.</span>
@@ -362,10 +361,13 @@
 				<div class="space-y-3 sm:space-y-4">
 					<input type="email" name="email" bind:value={ctaEmail} placeholder="Your email address" required
 						   class="w-full px-4 py-3 text-sm sm:text-base border border-mono-300 rounded-lg focus:outline-none focus:border-mono-600 focus:ring-1 focus:ring-mono-600">
-					<button type="submit" class="w-full py-3 bg-mono-900 text-white rounded-lg hover:bg-mono-800 transition-colors font-medium text-sm sm:text-base">
-						Join Waitlist
+					<button type="submit" disabled={ctaSubmitting} class="w-full py-3 bg-mono-900 text-white rounded-lg hover:bg-mono-800 transition-colors font-medium text-sm sm:text-base disabled:opacity-50 disabled:cursor-not-allowed">
+						{ctaSubmitting ? 'Submitting...' : 'Join Waitlist'}
 					</button>
 				</div>
+				{#if ctaError}
+					<p class="mt-3 text-sm text-red-600 text-center">{ctaError}</p>
+				{/if}
 				<p class:hidden={!ctaFormSuccess} class="mt-3 text-sm text-mono-600 flex items-center justify-center space-x-2">
 					<i class="fa-solid fa-check text-green-600"></i>
 					<span>Thanks! We'll notify you when we launch.</span>

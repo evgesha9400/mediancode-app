@@ -2,7 +2,8 @@
   NamespaceSelector - Dropdown selector for switching between namespaces
 
   Displays the current active namespace and allows users to switch between
-  available namespaces. The selector shows a locked icon for the global namespace.
+  available namespaces. The selector shows a globe icon for the global namespace,
+  a lock icon for other locked namespaces, and a layer-group icon for user-created namespaces.
 
   @component
   @example
@@ -25,6 +26,10 @@
     setActiveNamespace
   } from '$lib/stores/namespaces';
   import type { Namespace } from '$lib/types';
+
+  function isGlobalNamespace(ns: Namespace | undefined): boolean {
+    return ns?.name?.toLowerCase() === 'global';
+  }
 
   interface Props extends NamespaceSelectorProps {}
 
@@ -64,7 +69,9 @@
     aria-haspopup="listbox"
     aria-expanded={isOpen}
   >
-    {#if $activeNamespace?.locked}
+    {#if isGlobalNamespace($activeNamespace)}
+      <i class="fa-solid fa-earth-americas text-mono-400 text-xs"></i>
+    {:else if $activeNamespace?.locked}
       <i class="fa-solid fa-lock text-mono-400 text-xs"></i>
     {:else}
       <i class="fa-solid fa-layer-group text-mono-400 text-xs"></i>
@@ -91,7 +98,9 @@
             role="option"
             aria-selected={$activeNamespaceId === namespace.id}
           >
-            {#if namespace.locked}
+            {#if isGlobalNamespace(namespace)}
+              <i class="fa-solid fa-earth-americas text-mono-400 text-xs w-4"></i>
+            {:else if namespace.locked}
               <i class="fa-solid fa-lock text-mono-400 text-xs w-4"></i>
             {:else}
               <i class="fa-solid fa-layer-group text-mono-400 text-xs w-4"></i>

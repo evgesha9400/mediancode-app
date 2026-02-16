@@ -2,12 +2,12 @@
   import type { Api } from '$lib/types';
   import {
     apisStore,
-    searchApis,
-    getEndpointCountByApi
+    endpointsStore,
+    searchApis
   } from '$lib/stores/apis';
   import { deleteApiAction } from '$lib/stores/actions';
   import { showToast } from '$lib/stores/toasts';
-  import { activeNamespaceId, getNamespaceById } from '$lib/stores/namespaces';
+  import { activeNamespaceId, namespacesStore } from '$lib/stores/namespaces';
   import {
     PageHeader,
     SearchBar,
@@ -38,6 +38,10 @@
   // Build filter config (empty initially)
   let apiFilterConfig = $derived([]);
 
+  // Reactive store subscriptions for derived computations
+  let allNamespaces = $derived($namespacesStore);
+  let allEndpoints = $derived($endpointsStore);
+
   // Filter APIs by active namespace
   let namespacedApis = $derived($apisStore.filter(a => a.namespaceId === $activeNamespaceId));
 
@@ -50,8 +54,8 @@
     urlScope: { page, goto },
     getItemId: (api) => api.id,
     deriveExtra: (api) => ({
-      endpointCount: getEndpointCountByApi(api.id),
-      namespaceName: getNamespaceById(api.namespaceId)?.name ?? ''
+      endpointCount: allEndpoints.filter(e => e.apiId === api.id).length,
+      namespaceName: allNamespaces.find(ns => ns.id === api.namespaceId)?.name ?? ''
     }),
     sortColumnMap: { 'endpoints': 'endpointCount', 'namespace': 'namespaceName' },
     drawerConfig: {
@@ -260,13 +264,13 @@
 
         <div>
           <h3 class="text-sm text-mono-500 mb-1 font-medium">Namespace</h3>
-          <span class="text-mono-900">{getNamespaceById(selectedApi.namespaceId)?.name ?? '-'}</span>
+          <span class="text-mono-900">{allNamespaces.find(ns => ns.id === selectedApi.namespaceId)?.name ?? '-'}</span>
         </div>
 
         <div>
           <h3 class="text-sm text-mono-500 mb-1 font-medium">Endpoints</h3>
           <span class="px-2 py-1 text-xs rounded-full bg-mono-200 text-mono-700">
-            {getEndpointCountByApi(selectedApi.id)}
+            {allEndpoints.filter(e => e.apiId === selectedApi.id).length}
           </span>
         </div>
 

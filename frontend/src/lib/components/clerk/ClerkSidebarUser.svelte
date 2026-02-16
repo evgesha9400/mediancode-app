@@ -18,7 +18,6 @@
 </script>
 
 <script lang="ts">
-  import { onDestroy } from 'svelte';
   import { getClerk, clerkAppearance, clerkState } from '$lib/clerk';
 
   interface Props extends ClerkSidebarUserProps {}
@@ -48,7 +47,7 @@
     };
   }
 
-  // Reactively mount when Clerk becomes available
+  // Reactively mount when Clerk becomes available, with cleanup on unmount
   $effect(() => {
     const isLoaded = $clerkState.isLoaded;
 
@@ -75,19 +74,19 @@
     } catch (error) {
       console.error('[ClerkSidebarUser] Failed to mount:', error);
     }
-  });
 
-  onDestroy(() => {
-    if (isMounted) {
-      const clerk = getClerk();
-      if (clerk && typeof clerk.unmountUserButton === 'function') {
-        try {
-          clerk.unmountUserButton(buttonContainer);
-        } catch (error) {
-          console.error('[ClerkSidebarUser] Failed to unmount:', error);
+    return () => {
+      if (isMounted) {
+        const clerkInstance = getClerk();
+        if (clerkInstance && typeof clerkInstance.unmountUserButton === 'function') {
+          try {
+            clerkInstance.unmountUserButton(buttonContainer);
+          } catch (error) {
+            console.error('[ClerkSidebarUser] Failed to unmount:', error);
+          }
         }
       }
-    }
+    };
   });
 </script>
 

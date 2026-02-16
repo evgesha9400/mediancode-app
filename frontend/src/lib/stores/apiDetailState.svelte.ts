@@ -10,7 +10,7 @@
  * - Edit mode: Loads existing API from store
  */
 
-import { get } from 'svelte/store';
+import { fromStore } from 'svelte/store';
 import type { Api, ApiEndpoint, PathParam, ResponseShape } from '$lib/types';
 import {
 	apisStore,
@@ -195,9 +195,11 @@ export function createApiDetailState(config: ApiDetailStateConfig): ApiDetailSta
 	// Generate a real ID for new APIs upfront
 	const actualApiId = isNewApi ? generateId('api') : configApiId;
 
-	// Subscribe to stores - these will update reactively
-	let allApis = $state(get(apisStore));
-	let allEndpoints = $state(get(endpointsStore));
+	// Subscribe to stores reactively via fromStore (automatic cleanup)
+	const apisState = fromStore(apisStore);
+	const endpointsState = fromStore(endpointsStore);
+	let allApis = $derived(apisState.current);
+	let allEndpoints = $derived(endpointsState.current);
 
 	// Draft state for new APIs (local only, not in stores)
 	let draftEndpoints = $state<ApiEndpoint[]>([]);
@@ -243,10 +245,6 @@ export function createApiDetailState(config: ApiDetailStateConfig): ApiDetailSta
 			? draftEndpoints
 			: allEndpoints.filter(e => e.apiId === actualApiId)
 	);
-
-	// Subscribe to store updates
-	apisStore.subscribe(value => allApis = value);
-	endpointsStore.subscribe(value => allEndpoints = value);
 
 	// Drawer state
 	let drawerOpen = $state(false);

@@ -1,19 +1,20 @@
 <script lang="ts">
-  import { getTotalFieldCount, getTotalApiCount } from '$lib/stores/fields';
-  import { getTotalFieldConstraintCount } from '$lib/stores/fieldConstraints';
-  import { getTotalTypeCount } from '$lib/stores/types';
-  import { getTotalObjectCount } from '$lib/stores/objects';
+  import { typesBaseStore } from '$lib/stores/types';
+  import { fieldsStore } from '$lib/stores/fields';
+  import { fieldConstraintsStore } from '$lib/stores/fieldConstraints';
+  import { objectsStore } from '$lib/stores/objects';
+  import { apisStore } from '$lib/stores/apis';
   import { clerkState } from '$lib/clerk';
   import { storeLoadingState, reloadStores } from '$lib/stores/loader';
   import { StatCard } from '$lib/components';
 
-  $: totalTypes = getTotalTypeCount();
-  $: totalFields = getTotalFieldCount();
-  $: totalFieldConstraints = getTotalFieldConstraintCount();
-  $: totalObjects = getTotalObjectCount();
-  $: totalApis = getTotalApiCount();
-  $: userName = $clerkState.user?.firstName || $clerkState.user?.fullName || 'Developer';
-  $: errors = $storeLoadingState.storeErrors;
+  let totalTypes = $derived($typesBaseStore.length);
+  let totalFields = $derived($fieldsStore.length);
+  let totalFieldConstraints = $derived($fieldConstraintsStore.length);
+  let totalObjects = $derived($objectsStore.length);
+  let totalApis = $derived($apisStore.length);
+  let userName = $derived($clerkState.user?.firstName || $clerkState.user?.fullName || 'Developer');
+  let errors = $derived($storeLoadingState.storeErrors);
 
   function hasError(storeName: string): boolean {
     return errors.includes(storeName);

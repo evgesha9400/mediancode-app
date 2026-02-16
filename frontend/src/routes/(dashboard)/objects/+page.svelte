@@ -3,7 +3,7 @@
   import { createObjectAction, updateObjectAction, deleteObjectAction } from '$lib/stores/actions';
   import { fieldsStore, getFieldById } from '$lib/stores/fields';
   import { showToast } from '$lib/stores/toasts';
-  import { activeNamespaceId, getNamespaceById } from '$lib/stores/namespaces';
+  import { activeNamespaceId, namespacesStore } from '$lib/stores/namespaces';
   import { buildDeletionTooltip } from '$lib/utils/references';
   import {
     PageHeader,
@@ -43,6 +43,9 @@
   let formTouched = $state(false);
   let serverErrors = $state<Record<string, string>>({});
 
+  // Reactive store subscription for derived computations
+  let allNamespaces = $derived($namespacesStore);
+
   // Filter objects by active namespace
   let namespacedObjects = $derived($objectsStore.filter(o => o.namespaceId === $activeNamespaceId));
 
@@ -58,7 +61,7 @@
     deriveExtra: (obj) => ({
       fieldCount: obj.fields.length,
       usedInApisCount: obj.usedInApis.length,
-      namespaceName: getNamespaceById(obj.namespaceId)?.name ?? ''
+      namespaceName: allNamespaces.find(ns => ns.id === obj.namespaceId)?.name ?? ''
     }),
     sortColumnMap: { 'fields': 'fieldCount', 'usedInApis': 'usedInApisCount', 'namespace': 'namespaceName' },
     drawerConfig: {
@@ -375,7 +378,7 @@
           <input
             id="object-namespace"
             type="text"
-            value={getNamespaceById(listState.editedItem.namespaceId)?.name ?? 'No namespace selected'}
+            value={allNamespaces.find(ns => ns.id === listState.editedItem?.namespaceId)?.name ?? 'No namespace selected'}
             disabled
             class="w-full px-3 py-2 border border-mono-200 rounded-lg bg-mono-100 text-mono-500 cursor-not-allowed"
           />

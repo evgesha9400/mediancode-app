@@ -1,10 +1,10 @@
 <script lang="ts">
   import { fieldsStore, searchFields, type Field, type FieldConstraintValue } from '$lib/stores/fields';
   import { createFieldAction, updateFieldAction, deleteFieldAction } from '$lib/stores/actions';
-  import { fieldConstraintsStore, getFieldConstraintsByFieldType, type FieldConstraint } from '$lib/stores/fieldConstraints';
-  import { getSelectableTypes, getTypeIdByName } from '$lib/stores/types';
+  import { fieldConstraintsStore, type FieldConstraint } from '$lib/stores/fieldConstraints';
+  import { typesStore, getTypeIdByName } from '$lib/stores/types';
   import { showToast } from '$lib/stores/toasts';
-  import { activeNamespaceId, namespacesStore, getNamespaceById } from '$lib/stores/namespaces';
+  import { activeNamespaceId, namespacesStore } from '$lib/stores/namespaces';
   import { buildDeletionTooltip } from '$lib/utils/references';
   import {
     PageHeader,
@@ -44,7 +44,9 @@
   let formTouched = $state(false);
   let serverErrors = $state<Record<string, string>>({});
 
-  let selectableTypes = $derived(getSelectableTypes());
+  // Reactive store subscriptions for derived computations
+  let allNamespaces = $derived($namespacesStore);
+  let selectableTypes = $derived($typesStore.filter(t => !['numeric'].includes(t.name)));
 
   // Build filter config from selectable types (reactive to store changes)
   let fieldFilterConfig = $derived.by((): FilterConfig => {
@@ -87,7 +89,7 @@
     getItemId: (field) => field.id,
     deriveExtra: (field) => ({
       usedInApisCount: field.usedInApis.length,
-      namespaceName: getNamespaceById(field.namespaceId)?.name ?? ''
+      namespaceName: allNamespaces.find(ns => ns.id === field.namespaceId)?.name ?? ''
     }),
     sortColumnMap: { 'usedInApis': 'usedInApisCount', 'namespace': 'namespaceName' },
     drawerConfig: {
@@ -104,10 +106,10 @@
   let hasChanges = $derived(listState.hasChanges);
 
   let fieldConstraints = $derived($fieldConstraintsStore);
-  // Filter field constraints by field's type compatibility
+  // Filter field constraints by field's type compatibility (reactive)
   let availableFieldConstraints = $derived(
     listState.editedItem
-      ? getFieldConstraintsByFieldType(listState.editedItem.type)
+      ? fieldConstraints.filter(fc => fc.compatibleTypes.includes(listState.editedItem!.type))
       : []
   );
 
@@ -467,7 +469,7 @@
     {/snippet}
   </Table>
 
-<Drawer open={listState.drawerOpen}>
+<Drawer open={listState.drawerOpen} maxWidth={520}>
   <DrawerHeader title={listState.mode === 'creating' ? 'Create Field' : 'Edit Field'} onClose={closeDrawer} />
 
   <DrawerContent>
@@ -481,7 +483,7 @@
           <input
             id="fields-namespace"
             type="text"
-            value={getNamespaceById(listState.editedItem.namespaceId)?.name ?? ''}
+            value={allNamespaces.find(ns => ns.id === listState.editedItem?.namespaceId)?.name ?? ''}
             disabled
             class="w-full px-3 py-2 border border-mono-300 rounded-md bg-mono-50 text-mono-500 cursor-not-allowed"
           />

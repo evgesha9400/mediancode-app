@@ -11,7 +11,6 @@
 		if ($clerkState.isLoaded && !$clerkState.isSignedIn && clerkMountDiv && !hasAttemptedMount) {
 			hasAttemptedMount = true;
 			const clerk = getClerk();
-			console.log('Mounting sign-up form...');
 			if (clerk) {
 				clerk.mountSignUp(clerkMountDiv, {
 					fallbackRedirectUrl: '/dashboard',
@@ -36,7 +35,6 @@
 	// Redirect to dashboard when signed in
 	$effect(() => {
 		if ($clerkState.isSignedIn) {
-			console.log('User signed up, redirecting to dashboard...');
 			goto('/dashboard');
 		}
 	});

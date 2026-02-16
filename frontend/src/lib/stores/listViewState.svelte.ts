@@ -278,10 +278,10 @@ export function createListViewState<Item, FilterState extends Record<string, any
           selectItem(item);
           processedHighlightId = highlightedId;
 
-          // Clear the highlight parameter after opening
-          const newUrl = new URL(window.location.href);
+          // Clear the highlight parameter after opening (use SvelteKit router)
+          const newUrl = new URL(urlScope.page.url.href);
           newUrl.searchParams.delete(highlightParamKey);
-          window.history.replaceState({}, '', newUrl.pathname + newUrl.search);
+          urlScope.goto(newUrl.pathname + newUrl.search, { replaceState: true });
 
           onHighlightSelect?.(item);
         }

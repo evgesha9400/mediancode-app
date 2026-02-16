@@ -2,8 +2,7 @@
   import {
     namespacesStore,
     searchNamespaces,
-    getNamespaceEntityDetails,
-    GLOBAL_NAMESPACE_ID
+    getNamespaceEntityDetails
   } from '$lib/stores/namespaces';
   import { createNamespaceAction, updateNamespaceAction, deleteNamespaceAction } from '$lib/stores/actions';
   import { showToast } from '$lib/stores/toasts';
@@ -306,7 +305,9 @@
           <td class="px-6 py-4 whitespace-nowrap">
             <div class="flex items-center space-x-2">
               <span class="text-sm text-mono-900 font-medium">{namespace.name}</span>
-              {#if namespace.locked}
+              {#if namespace.name?.toLowerCase() === 'global'}
+                <i class="fa-solid fa-earth-americas text-mono-400 text-xs" title="Global"></i>
+              {:else if namespace.locked}
                 <i class="fa-solid fa-lock text-mono-400 text-xs" title="Locked"></i>
               {/if}
               {#if namespace.isDefault}
