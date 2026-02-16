@@ -12,8 +12,6 @@
 
   let { endpoint, onClick }: Props = $props();
 
-  const tagName = $derived(endpoint.tagName);
-
   // Swagger/OpenAPI color scheme for HTTP methods
   type MethodColors = {
     badge: string;
@@ -71,7 +69,7 @@
   class="w-full border {colors.border} rounded-lg overflow-hidden {colors.row} flex items-center justify-between p-2 cursor-pointer hover:brightness-95 text-left transition-all"
 >
   <div class="flex items-center space-x-3">
-    <span class="px-2 py-1 text-xs font-medium rounded {colors.badge}">
+    <span class="w-[70px] text-center flex-shrink-0 px-2 py-1 text-xs font-medium rounded {colors.badge}">
       {endpoint.method}
     </span>
     <span class="text-sm font-medium text-mono-900">{endpoint.path}</span>
@@ -79,12 +77,5 @@
       <span class="text-xs text-mono-500">{endpoint.description}</span>
     {/if}
   </div>
-  <div class="flex items-center space-x-2">
-    {#if tagName}
-      <span class="px-2 py-1 text-xs rounded-full bg-white/60 text-mono-700">
-        {tagName}
-      </span>
-    {/if}
-    <i class="fa-solid fa-chevron-right text-mono-400"></i>
-  </div>
+  <i class="fa-solid fa-chevron-right text-mono-400"></i>
 </button>
