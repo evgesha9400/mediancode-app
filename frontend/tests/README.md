@@ -33,21 +33,21 @@ tests/
 │   │   ├── dashboard.spec.ts
 │   │   ├── fields.spec.ts
 │   │   ├── types.spec.ts
-│   │   ├── validators.spec.ts
+│   │   ├── field-constraints.spec.ts
 │   │   └── mobile-blocked.spec.ts
 │   ├── page-objects/        # Page object models
 │   │   ├── LandingPage.ts
 │   │   ├── DashboardPage.ts
 │   │   ├── FieldsPage.ts
 │   │   ├── TypesPage.ts
-│   │   └── ValidatorsPage.ts
+│   │   └── FieldConstraintsPage.ts
 │   └── fixtures/            # Re-exports shared fixtures for Playwright
 │
 ├── fixtures/                # Shared test data and fixtures
 │   ├── users.ts
 │   ├── fields.ts
 │   ├── types.ts
-│   ├── validators.ts
+│   ├── fieldConstraints.ts
 │   ├── apis.ts
 │   ├── permissions.ts
 │   ├── index.ts             # Aggregator exporting all fixtures
@@ -104,7 +104,7 @@ E2E tests are NOT mirrored 1:1 with routes. Instead, they're organized by user-f
 - `dashboard.spec.ts` - Dashboard overview and navigation
 - `fields.spec.ts` - Field management workflows
 - `types.spec.ts` - Type definition workflows
-- `validators.spec.ts` - Validator management workflows
+- `field-constraints.spec.ts` - Field constraint management workflows
 - `mobile-blocked.spec.ts` - Mobile device detection and blocking
 
 **Page Objects:**

@@ -38,7 +38,7 @@
     resultsCount: number;
 
     /**
-     * Singular label for results (e.g., 'result', 'field', 'validator')
+     * Singular label for results (e.g., 'result', 'field', 'field constraint')
      * @default 'result'
      */
     resultLabel?: string;

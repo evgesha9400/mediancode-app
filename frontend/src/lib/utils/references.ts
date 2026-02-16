@@ -6,7 +6,7 @@ import { apisStore } from '$lib/stores/apis';
  * Builds a tooltip message for deletion blocking references
  * Creates formatted text showing why deletion is blocked
  *
- * @param entityType - Type of entity being deleted (e.g., 'field', 'validator')
+ * @param entityType - Type of entity being deleted (e.g., 'field', 'field constraint')
  * @param referenceType - Type of blocking references (e.g., 'API', 'field')
  * @param references - Array of references blocking deletion
  * @returns Formatted tooltip text with reference list
