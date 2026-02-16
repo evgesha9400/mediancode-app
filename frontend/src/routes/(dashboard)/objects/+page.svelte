@@ -1,6 +1,6 @@
 <script lang="ts">
   import { objectsStore, searchObjects, type ObjectDefinition } from '$lib/stores/objects';
-  import { createObjectAction, updateObjectAction, deleteObjectAction } from '$lib/stores/actions';
+  import { createObjectAction, updateObjectAction, deleteObjectAction } from '$lib/domain/mutations';
   import { fieldsStore, getFieldById } from '$lib/stores/fields';
   import { showToast } from '$lib/stores/toasts';
   import { activeNamespaceId, namespacesStore } from '$lib/stores/namespaces';

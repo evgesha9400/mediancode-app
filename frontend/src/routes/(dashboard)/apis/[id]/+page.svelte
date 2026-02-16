@@ -17,7 +17,7 @@
   } from '$lib/components';
   import { createApiDetailState } from '$lib/stores/apiDetailState.svelte';
   import { getApiById } from '$lib/stores/apis';
-  import { deleteApiAction } from '$lib/stores/actions';
+  import { deleteApiAction } from '$lib/domain/mutations';
   import { activeNamespaceId } from '$lib/stores/namespaces';
   import { fieldsStore } from '$lib/stores/fields';
   import { showToast } from '$lib/stores/toasts';

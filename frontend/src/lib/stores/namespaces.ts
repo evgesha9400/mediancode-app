@@ -1,7 +1,6 @@
 import { writable, derived, get } from 'svelte/store';
-import type { Namespace, DeletionResult } from '$lib/types';
+import type { Namespace } from '$lib/types';
 import { GLOBAL_NAMESPACE_ID } from '$lib/constants';
-import { generateId } from '$lib/utils/ids';
 import { fieldsStore } from './fields';
 import { fieldConstraintsStore } from './fieldConstraints';
 import { objectsStore } from './objects';
@@ -65,7 +64,6 @@ export function searchNamespaces(namespaces: Namespace[], query: string): Namesp
 
 /**
  * Count all entities within a namespace
- * Note: Tags are now embedded in APIs and not counted separately
  */
 export function getNamespaceEntityCount(namespaceId: string): number {
 	const fields = get(fieldsStore).filter(f => f.namespaceId === namespaceId);
@@ -80,7 +78,6 @@ export function getNamespaceEntityCount(namespaceId: string): number {
 
 /**
  * Get detailed entity counts for a namespace
- * Note: Tags are now embedded in APIs and counted as part of APIs
  */
 export function getNamespaceEntityDetails(namespaceId: string): {
 	fields: number;
@@ -108,116 +105,11 @@ export function getNamespaceEntityDetails(namespaceId: string): {
 }
 
 // ============================================================================
-// CRUD Operations
+// Active Namespace Management
 // ============================================================================
 
 /**
- * Create a new namespace with uniqueness guard
- *
- * @param name - The name for the new namespace
- * @param description - Optional description for the namespace
- * @returns The created namespace, or undefined if a namespace with that name already exists
- */
-export function createNamespace(name: string, description: string = ''): Namespace | undefined {
-	const trimmedName = name.trim();
-
-	// Check for existing namespace with same name (case-insensitive)
-	const existingNamespace = get(namespacesStore).find(
-		ns => ns.name.toLowerCase() === trimmedName.toLowerCase()
-	);
-
-	if (existingNamespace) {
-		return undefined;
-	}
-
-	const newNamespace: Namespace = {
-		id: generateId('namespace'),
-		name: trimmedName,
-		description,
-		locked: false,
-		isDefault: false
-	};
-
-	namespacesStore.update(namespaces => [...namespaces, newNamespace]);
-	return newNamespace;
-}
-
-/**
- * Update a namespace's properties
- * Locked namespaces (like global) cannot be updated
- *
- * @param id - The ID of the namespace to update
- * @param updates - Partial namespace object with properties to update
- */
-export function updateNamespace(id: string, updates: Partial<Namespace>): void {
-	namespacesStore.update(namespaces => {
-		return namespaces.map(ns => {
-			if (ns.id !== id) return ns;
-			// Locked namespaces cannot be updated
-			if (ns.locked) return ns;
-			// Cannot set locked to true via updates
-			const { locked, ...safeUpdates } = updates;
-			return { ...ns, ...safeUpdates };
-		});
-	});
-}
-
-/**
- * Delete a namespace
- * Cannot delete locked namespaces (like global)
- * Cannot delete namespaces that contain entities
- *
- * @param id - The ID of the namespace to delete
- * @returns DeletionResult with success status and error message if blocked
- */
-export function deleteNamespace(id: string): DeletionResult {
-	const namespace = getNamespaceById(id);
-
-	if (!namespace) {
-		return {
-			success: false,
-			error: `Namespace with ID "${id}" not found.`
-		};
-	}
-
-	if (namespace.locked) {
-		return {
-			success: false,
-			error: `Cannot delete the "${namespace.name}" namespace because it is locked.`
-		};
-	}
-
-	const entityCount = getNamespaceEntityCount(id);
-
-	if (entityCount > 0) {
-		const details = getNamespaceEntityDetails(id);
-		const parts: string[] = [];
-		if (details.fields > 0) parts.push(`${details.fields} field${details.fields > 1 ? 's' : ''}`);
-		if (details.fieldConstraints > 0) parts.push(`${details.fieldConstraints} field constraint${details.fieldConstraints > 1 ? 's' : ''}`);
-		if (details.objects > 0) parts.push(`${details.objects} object${details.objects > 1 ? 's' : ''}`);
-		if (details.endpoints > 0) parts.push(`${details.endpoints} endpoint${details.endpoints > 1 ? 's' : ''}`);
-		if (details.apis > 0) parts.push(`${details.apis} API${details.apis > 1 ? 's' : ''}`);
-
-		return {
-			success: false,
-			error: `Cannot delete namespace "${namespace.name}" because it contains ${parts.join(', ')}. Remove all entities before deleting.`
-		};
-	}
-
-	// If this is the active namespace, switch to global
-	if (get(activeNamespaceId) === id) {
-		activeNamespaceId.set(GLOBAL_NAMESPACE_ID);
-	}
-
-	namespacesStore.update(namespaces => namespaces.filter(ns => ns.id !== id));
-
-	return { success: true };
-}
-
-/**
  * Set the active namespace
- *
- * @param namespaceId - The ID of the namespace to make active
  */
 export function setActiveNamespace(namespaceId: string): void {
 	const namespace = getNamespaceById(namespaceId);

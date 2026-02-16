@@ -1,35 +1,34 @@
 /**
  * API Detail State Container
  *
- * Encapsulates UI state and domain operations for the API detail page.
- * Follows the listViewState pattern: owns all state using Svelte runes and
- * delegates domain logic to apis.ts store.
+ * Encapsulates UI state for the API detail page.
+ * All mutations go through the canonical domain layer (save-per-action).
  *
- * Supports two modes:
- * - New API mode (apiId === 'new'): Draft state kept locally until Save
- * - Edit mode: Loads existing API from store
+ * Two modes:
+ * - New API mode (apiId === 'new'): User fills metadata, clicks "Create API"
+ *   which calls the backend, then transitions to edit mode.
+ * - Edit mode: Loads existing API from store; every endpoint change is
+ *   immediately persisted via domain actions.
  */
 
 import { fromStore } from 'svelte/store';
-import type { Api, ApiEndpoint, PathParam, ResponseShape } from '$lib/types';
+import type { Api, ApiEndpoint, ResponseShape } from '$lib/types';
 import {
 	apisStore,
 	endpointsStore,
-	addApi,
-	updateApi,
 	getApiById,
-	addEndpoint,
-	getEndpointCountByTagName,
-	updateEndpoint,
-	deleteEndpoint,
-	reconcilePathParams,
-	normalizeEndpoint
+	getEndpointCountByTagName
 } from './apis';
-import { fieldsStore } from './fields';
-import { objectsStore } from './objects';
-import { fieldConstraintsStore } from './fieldConstraints';
 import { showToast } from './toasts';
 import { deepClone, generateId } from '$lib/utils/ids';
+import {
+	createApiAction,
+	updateApiAction,
+	createEndpointAction,
+	updateEndpointAction,
+	deleteEndpointAction
+} from '$lib/domain/mutations';
+import { reconcilePathParams, normalizeEndpoint } from '$lib/domain/endpointReducer';
 
 /**
  * Toast message constants
@@ -49,7 +48,7 @@ const MESSAGES = {
  * All state properties are reactive and can be bound directly in templates.
  */
 export interface ApiDetailState {
-	// Whether this is a new API (not yet saved to store)
+	// Whether this is a new API (not yet created on backend)
 	readonly isNewApi: boolean;
 
 	// The API being edited
@@ -83,9 +82,12 @@ export interface ApiDetailState {
 	readonly hasEndpointChanges: boolean;
 	readonly hasAnyChanges: boolean;
 
+	// Loading state for async operations
+	readonly isSaving: boolean;
+
 	// API metadata actions
 	handleApiUpdate: (updates: Partial<Api>) => void;
-	handleSaveApi: () => boolean;
+	handleSaveApi: () => Promise<boolean>;
 	handleDiscardApiChanges: () => void;
 
 	// Delete action (only for saved APIs)
@@ -93,7 +95,7 @@ export interface ApiDetailState {
 
 	// Close actions
 	handleClose: () => void;
-	handleSaveAndClose: () => void;
+	handleSaveAndClose: () => Promise<void>;
 	handleDiscardAndClose: () => void;
 	cancelClose: () => void;
 
@@ -101,16 +103,16 @@ export interface ApiDetailState {
 	handleTagSelect: (tagName: string | undefined) => void;
 
 	// Endpoint list actions
-	handleAddEndpoint: () => void;
-	handleDeleteEndpoint: () => void;
+	handleAddEndpoint: () => Promise<void>;
+	handleDeleteEndpoint: () => Promise<void>;
 	handleDeleteEndpointClick: () => void;
 	cancelDeleteEndpoint: () => void;
-	handleDuplicateEndpoint: (endpointId: string) => void;
+	handleDuplicateEndpoint: (endpointId: string) => Promise<void>;
 
 	// Drawer actions
 	openEndpoint: (endpoint: ApiEndpoint) => void;
 	closeDrawer: () => void;
-	handleSaveEndpoint: () => boolean;
+	handleSaveEndpoint: () => Promise<boolean>;
 	handleUndoEndpoint: () => void;
 	handleCancelEndpoint: () => void;
 
@@ -146,11 +148,11 @@ export interface ApiDetailStateConfig {
 	apiId: string; // 'new' for creating a new API
 	namespaceId: string;
 	onClose: () => void;
-	onApiCreated?: (apiId: string) => void; // Called after new API is saved
+	onApiCreated?: (apiId: string) => void; // Called after new API is created on backend
 }
 
 /**
- * Creates a default API object for new APIs
+ * Creates a default API object for new APIs (local draft only)
  */
 function createDefaultApi(id: string, namespaceId: string): Api {
 	const now = new Date().toISOString();
@@ -168,22 +170,6 @@ function createDefaultApi(id: string, namespaceId: string): Api {
 }
 
 /**
- * Creates a default endpoint object
- */
-function createDefaultEndpointLocal(apiId: string): ApiEndpoint {
-	return {
-		id: generateId('endpoint'),
-		apiId,
-		method: 'GET',
-		path: '/',
-		description: '',
-		pathParams: [],
-		useEnvelope: true,
-		responseShape: 'object'
-	};
-}
-
-/**
  * Creates the API detail state container for a specific API
  */
 export function createApiDetailState(config: ApiDetailStateConfig): ApiDetailState {
@@ -192,8 +178,15 @@ export function createApiDetailState(config: ApiDetailStateConfig): ApiDetailSta
 	// Determine if this is a new API
 	const isNewApi = configApiId === 'new';
 
-	// Generate a real ID for new APIs upfront
-	const actualApiId = isNewApi ? generateId('api') : configApiId;
+	// For new APIs, generate a placeholder ID for local use only.
+	// The real ID comes from the backend after createApiAction.
+	const localApiId = isNewApi ? generateId('api') : configApiId;
+
+	// Track the backend-assigned ID (set after createApiAction succeeds)
+	let backendApiId = $state(isNewApi ? '' : configApiId);
+
+	// The effective API ID to use for store lookups
+	let effectiveApiId = $derived(backendApiId || localApiId);
 
 	// Subscribe to stores reactively via fromStore (automatic cleanup)
 	const apisState = fromStore(apisStore);
@@ -201,21 +194,18 @@ export function createApiDetailState(config: ApiDetailStateConfig): ApiDetailSta
 	let allApis = $derived(apisState.current);
 	let allEndpoints = $derived(endpointsState.current);
 
-	// Draft state for new APIs (local only, not in stores)
-	let draftEndpoints = $state<ApiEndpoint[]>([]);
+	// Track if a new API has been created on the backend
+	let hasBeenCreated = $state(!isNewApi);
 
-	// Track if a new API has been saved (transitions from draft to saved)
-	let hasBeenSaved = $state(false);
+	// The current API from store
+	let storedApi = $derived(allApis.find(a => a.id === effectiveApiId) ?? null);
 
-	// The current API from store (null for new APIs until saved)
-	let storedApi = $derived(allApis.find(a => a.id === actualApiId) ?? null);
-
-	// For new APIs that haven't been saved, api is null; otherwise use stored
-	let api = $derived((isNewApi && !hasBeenSaved) ? null : storedApi);
+	// For new APIs that haven't been created, api is null
+	let api = $derived(hasBeenCreated ? storedApi : null);
 
 	// Edited copy of API for tracking changes
 	let editedApi = $state<Api | null>(
-		isNewApi ? createDefaultApi(actualApiId, namespaceId) : null
+		isNewApi ? createDefaultApi(localApiId, namespaceId) : null
 	);
 
 	// Initialize editedApi when existing api is loaded
@@ -228,23 +218,21 @@ export function createApiDetailState(config: ApiDetailStateConfig): ApiDetailSta
 	// Derived: the namespace ID for this API
 	let apiNamespaceId = $derived(editedApi?.namespaceId ?? namespaceId);
 
+	// Endpoints from the store (empty until API is created on backend)
+	let endpoints = $derived(
+		hasBeenCreated
+			? allEndpoints.filter(e => e.apiId === effectiveApiId)
+			: []
+	);
+
 	// Derived tags: collect unique tagName values from endpoints
 	let tags = $derived.by(() => {
-		const currentEndpoints = (isNewApi && !hasBeenSaved) ? draftEndpoints : allEndpoints.filter(e => e.apiId === actualApiId);
 		const tagNames = new Set<string>();
-		for (const ep of currentEndpoints) {
+		for (const ep of endpoints) {
 			if (ep.tagName) tagNames.add(ep.tagName);
 		}
 		return [...tagNames].sort();
 	});
-
-	// Derived filtered state for endpoints
-	// For new APIs that haven't been saved, use draft state; otherwise use store
-	let endpoints = $derived(
-		(isNewApi && !hasBeenSaved)
-			? draftEndpoints
-			: allEndpoints.filter(e => e.apiId === actualApiId)
-	);
 
 	// Drawer state
 	let drawerOpen = $state(false);
@@ -261,13 +249,15 @@ export function createApiDetailState(config: ApiDetailStateConfig): ApiDetailSta
 	// Close confirmation state
 	let showCloseConfirm = $state(false);
 
+	// Loading state
+	let isSaving = $state(false);
+
 	// Derived: Track if there are unsaved API changes
 	let hasApiChanges = $derived.by(() => {
-		if (isNewApi && !hasBeenSaved) {
-			// For new APIs that haven't been saved yet, always consider it as having changes
+		if (!hasBeenCreated) {
+			// New API not yet created — always has changes (the metadata draft)
 			return true;
 		}
-		// After saving (or for existing APIs), compare edited vs stored
 		if (!editedApi || !storedApi) return false;
 		return JSON.stringify(editedApi) !== JSON.stringify(storedApi);
 	});
@@ -291,54 +281,74 @@ export function createApiDetailState(config: ApiDetailStateConfig): ApiDetailSta
 		editedApi = { ...editedApi, ...updates };
 	}
 
-	function handleSaveApi(): boolean {
+	async function handleSaveApi(): Promise<boolean> {
 		if (!editedApi) return false;
+		isSaving = true;
 
-		if (isNewApi && !hasBeenSaved) {
-			// Commit new API to store
-			addApi(editedApi);
+		try {
+			if (!hasBeenCreated) {
+				// Create new API on backend
+				const result = await createApiAction({
+					namespaceId: editedApi.namespaceId,
+					title: editedApi.title,
+					version: editedApi.version,
+					description: editedApi.description,
+					baseUrl: editedApi.baseUrl,
+					serverUrl: editedApi.serverUrl
+				});
 
-			// Add all draft endpoints to store
-			for (const endpoint of draftEndpoints) {
-				addEndpoint(endpoint);
+				if (!result.success) {
+					showToast(result.error ?? 'Failed to create API', 'error');
+					return false;
+				}
+
+				// Update tracking with backend-assigned ID
+				backendApiId = result.data!.id;
+				hasBeenCreated = true;
+				editedApi = deepClone(result.data!);
+
+				showToast(MESSAGES.API_CREATED, 'success');
+
+				// Notify parent to update URL
+				if (onApiCreated) {
+					onApiCreated(result.data!.id);
+				}
+
+				return true;
 			}
 
-			// Mark as saved - now we switch to using store data
-			hasBeenSaved = true;
+			// Existing API — update via backend
+			const result = await updateApiAction(effectiveApiId, {
+				title: editedApi.title,
+				version: editedApi.version,
+				description: editedApi.description,
+				baseUrl: editedApi.baseUrl,
+				serverUrl: editedApi.serverUrl
+			});
 
-			// Clear draft arrays (data is now in stores)
-			draftEndpoints = [];
-
-			showToast(MESSAGES.API_CREATED, 'success');
-
-			// Notify parent to update URL (replace /apis/new with /apis/{id})
-			if (onApiCreated) {
-				onApiCreated(actualApiId);
+			if (!result.success) {
+				showToast(result.error ?? 'Failed to save API', 'error');
+				return false;
 			}
 
+			editedApi = deepClone(result.data!);
+			showToast(MESSAGES.API_SAVED, 'success');
 			return true;
+		} finally {
+			isSaving = false;
 		}
-
-		// Existing API (or previously saved new API) - just update
-		updateApi(actualApiId, editedApi);
-		showToast(MESSAGES.API_SAVED, 'success');
-		return true;
 	}
 
 	function handleDiscardApiChanges(): void {
-		if (isNewApi) {
-			// Reset to default for new APIs
-			editedApi = createDefaultApi(actualApiId, namespaceId);
-			draftEndpoints = [];
+		if (!hasBeenCreated) {
+			editedApi = createDefaultApi(localApiId, namespaceId);
 		} else if (storedApi) {
 			editedApi = deepClone(storedApi);
 		}
 	}
 
 	function handleDeleteApi(): void {
-		// This should only be called for saved APIs (handled in UI)
-		// The actual deletion is handled by the parent component
-		// since it needs to navigate away after deletion
+		// Handled by parent component (needs to navigate away after deletion)
 	}
 
 	// ============================================================================
@@ -353,10 +363,10 @@ export function createApiDetailState(config: ApiDetailStateConfig): ApiDetailSta
 		}
 	}
 
-	function handleSaveAndClose(): void {
-		handleSaveApi();
+	async function handleSaveAndClose(): Promise<void> {
+		await handleSaveApi();
 		if (hasEndpointChanges && editedEndpoint) {
-			handleSaveEndpoint();
+			await handleSaveEndpoint();
 		}
 		showCloseConfirm = false;
 		onClose();
@@ -376,15 +386,12 @@ export function createApiDetailState(config: ApiDetailStateConfig): ApiDetailSta
 	// ============================================================================
 
 	function getEndpointsUsingTag(tagName: string): number {
-		if (isNewApi && !hasBeenSaved) {
-			return draftEndpoints.filter(e => e.tagName === tagName).length;
-		}
-		return getEndpointCountByTagName(actualApiId, tagName);
+		if (!hasBeenCreated) return 0;
+		return getEndpointCountByTagName(effectiveApiId, tagName);
 	}
 
 	function handleTagSelect(tagName: string | undefined): void {
 		if (!editedEndpoint) return;
-
 		editedEndpoint = { ...editedEndpoint, tagName };
 		tagInputValue = tagName ?? '';
 		tagDropdownOpen = false;
@@ -394,46 +401,55 @@ export function createApiDetailState(config: ApiDetailStateConfig): ApiDetailSta
 	// Endpoint List Operations
 	// ============================================================================
 
-	function handleAddEndpoint(): void {
-		const newEndpoint = createDefaultEndpointLocal(actualApiId);
-
-		if (isNewApi && !hasBeenSaved) {
-			// Add to draft state
-			draftEndpoints = [...draftEndpoints, newEndpoint];
-		} else {
-			// Add to store immediately
-			addEndpoint(newEndpoint);
+	async function handleAddEndpoint(): Promise<void> {
+		if (!hasBeenCreated) {
+			showToast('Please create the API first before adding endpoints', 'warning');
+			return;
 		}
 
-		openEndpoint(newEndpoint);
+		isSaving = true;
+		try {
+			const result = await createEndpointAction({
+				apiId: effectiveApiId,
+				method: 'GET',
+				path: '/',
+				description: '',
+				pathParams: [],
+				useEnvelope: true,
+				responseShape: 'object'
+			});
+
+			if (!result.success) {
+				showToast(result.error ?? 'Failed to add endpoint', 'error');
+				return;
+			}
+
+			openEndpoint(result.data!);
+		} finally {
+			isSaving = false;
+		}
 	}
 
 	function handleDeleteEndpointClick(): void {
 		showEndpointDeleteConfirm = true;
 	}
 
-	function handleDeleteEndpoint(): void {
+	async function handleDeleteEndpoint(): Promise<void> {
 		if (!editedEndpoint) return;
 
-		const endpointId = editedEndpoint.id;
-
-		if (isNewApi && !hasBeenSaved) {
-			// Remove from draft state
-			draftEndpoints = draftEndpoints.filter(e => e.id !== endpointId);
-			showToast(MESSAGES.ENDPOINT_DELETED, 'success');
-			showEndpointDeleteConfirm = false;
-			closeDrawer();
-		} else {
-			// Delete from store
-			const result = deleteEndpoint(endpointId);
+		isSaving = true;
+		try {
+			const result = await deleteEndpointAction(editedEndpoint.id);
 
 			if (result.success) {
 				showToast(MESSAGES.ENDPOINT_DELETED, 'success');
 				showEndpointDeleteConfirm = false;
 				closeDrawer();
-			} else if (result.error) {
-				showToast(result.error, 'error');
+			} else {
+				showToast(result.error ?? 'Failed to delete endpoint', 'error');
 			}
+		} finally {
+			isSaving = false;
 		}
 	}
 
@@ -441,33 +457,37 @@ export function createApiDetailState(config: ApiDetailStateConfig): ApiDetailSta
 		showEndpointDeleteConfirm = false;
 	}
 
-	function handleDuplicateEndpoint(endpointId: string): void {
-		// Find the endpoint to duplicate
-		const original = isNewApi && !hasBeenSaved
-			? draftEndpoints.find(e => e.id === endpointId)
-			: allEndpoints.find(e => e.id === endpointId);
-
+	async function handleDuplicateEndpoint(endpointId: string): Promise<void> {
+		const original = allEndpoints.find(e => e.id === endpointId);
 		if (!original) {
 			showToast('Failed to duplicate endpoint', 'error');
 			return;
 		}
 
-		// Create a copy with new ID
-		const duplicated: ApiEndpoint = {
-			...deepClone(original),
-			id: generateId('endpoint'),
-			path: original.path + '-copy',
-			// PathParams are simple {name, fieldId} — just clone them
-			pathParams: original.pathParams.map(p => ({ ...p }))
-		};
+		isSaving = true;
+		try {
+			const result = await createEndpointAction({
+				apiId: original.apiId,
+				method: original.method,
+				path: original.path + '-copy',
+				description: original.description,
+				tagName: original.tagName,
+				pathParams: original.pathParams.map(p => ({ ...p })),
+				queryParamsObjectId: original.queryParamsObjectId,
+				requestBodyObjectId: original.requestBodyObjectId,
+				responseBodyObjectId: original.responseBodyObjectId,
+				useEnvelope: original.useEnvelope,
+				responseShape: original.responseShape
+			});
 
-		if (isNewApi && !hasBeenSaved) {
-			draftEndpoints = [...draftEndpoints, duplicated];
-		} else {
-			addEndpoint(duplicated);
+			if (result.success) {
+				showToast(MESSAGES.ENDPOINT_DUPLICATED, 'success');
+			} else {
+				showToast(result.error ?? 'Failed to duplicate endpoint', 'error');
+			}
+		} finally {
+			isSaving = false;
 		}
-
-		showToast(MESSAGES.ENDPOINT_DUPLICATED, 'success');
 	}
 
 	// ============================================================================
@@ -476,11 +496,9 @@ export function createApiDetailState(config: ApiDetailStateConfig): ApiDetailSta
 
 	function openEndpoint(endpoint: ApiEndpoint): void {
 		const normalized = normalizeEndpoint(endpoint);
-
 		selectedEndpoint = normalized;
 		editedEndpoint = deepClone(normalized);
 		drawerOpen = true;
-
 		tagInputValue = normalized.tagName ?? '';
 		tagDropdownOpen = false;
 	}
@@ -488,37 +506,48 @@ export function createApiDetailState(config: ApiDetailStateConfig): ApiDetailSta
 	function closeDrawer(): void {
 		drawerOpen = false;
 		showEndpointDeleteConfirm = false;
-
 		setTimeout(() => {
 			selectedEndpoint = null;
 			editedEndpoint = null;
 		}, 300);
 	}
 
-	function handleSaveEndpoint(): boolean {
+	async function handleSaveEndpoint(): Promise<boolean> {
 		if (!editedEndpoint || !selectedEndpoint) return false;
 
-		if (isNewApi && !hasBeenSaved) {
-			// Update in draft state
-			draftEndpoints = draftEndpoints.map(e =>
-				e.id === editedEndpoint!.id ? editedEndpoint! : e
-			);
-		} else {
-			// Update in store
-			updateEndpoint(editedEndpoint.id, editedEndpoint);
-		}
+		isSaving = true;
+		try {
+			const result = await updateEndpointAction(editedEndpoint.id, {
+				method: editedEndpoint.method,
+				path: editedEndpoint.path,
+				description: editedEndpoint.description,
+				tagName: editedEndpoint.tagName ?? null,
+				pathParams: editedEndpoint.pathParams,
+				queryParamsObjectId: editedEndpoint.queryParamsObjectId ?? null,
+				requestBodyObjectId: editedEndpoint.requestBodyObjectId ?? null,
+				responseBodyObjectId: editedEndpoint.responseBodyObjectId ?? null,
+				useEnvelope: editedEndpoint.useEnvelope,
+				responseShape: editedEndpoint.responseShape
+			});
 
-		selectedEndpoint = editedEndpoint;
-		showToast(MESSAGES.ENDPOINT_SAVED, 'success');
-		closeDrawer();
-		return true;
+			if (!result.success) {
+				showToast(result.error ?? 'Failed to save endpoint', 'error');
+				return false;
+			}
+
+			selectedEndpoint = result.data!;
+			editedEndpoint = deepClone(result.data!);
+			showToast(MESSAGES.ENDPOINT_SAVED, 'success');
+			closeDrawer();
+			return true;
+		} finally {
+			isSaving = false;
+		}
 	}
 
 	function handleUndoEndpoint(): void {
 		if (!selectedEndpoint) return;
-
 		editedEndpoint = deepClone(selectedEndpoint);
-
 		tagInputValue = editedEndpoint?.tagName ?? '';
 	}
 
@@ -532,19 +561,12 @@ export function createApiDetailState(config: ApiDetailStateConfig): ApiDetailSta
 
 	function handlePathChange(newPath: string): void {
 		if (!editedEndpoint) return;
-
 		const { path, pathParams } = reconcilePathParams(newPath, editedEndpoint.pathParams);
-
-		editedEndpoint = {
-			...editedEndpoint,
-			path,
-			pathParams
-		};
+		editedEndpoint = { ...editedEndpoint, path, pathParams };
 	}
 
 	function handlePathParamUpdate(paramName: string, fieldId: string): void {
 		if (!editedEndpoint) return;
-
 		const updatedParams = editedEndpoint.pathParams.map(p =>
 			p.name === paramName ? { ...p, fieldId } : p
 		);
@@ -557,11 +579,7 @@ export function createApiDetailState(config: ApiDetailStateConfig): ApiDetailSta
 
 	function handleSelectQueryParamsObject(objectId: string | undefined): void {
 		if (!editedEndpoint) return;
-
-		editedEndpoint = {
-			...editedEndpoint,
-			queryParamsObjectId: objectId
-		};
+		editedEndpoint = { ...editedEndpoint, queryParamsObjectId: objectId };
 	}
 
 	// ============================================================================
@@ -570,11 +588,7 @@ export function createApiDetailState(config: ApiDetailStateConfig): ApiDetailSta
 
 	function handleSelectRequestBodyObject(objectId: string | undefined): void {
 		if (!editedEndpoint) return;
-
-		editedEndpoint = {
-			...editedEndpoint,
-			requestBodyObjectId: objectId
-		};
+		editedEndpoint = { ...editedEndpoint, requestBodyObjectId: objectId };
 	}
 
 	// ============================================================================
@@ -583,16 +597,11 @@ export function createApiDetailState(config: ApiDetailStateConfig): ApiDetailSta
 
 	function handleSelectResponseBodyObject(objectId: string | undefined): void {
 		if (!editedEndpoint) return;
-
-		editedEndpoint = {
-			...editedEndpoint,
-			responseBodyObjectId: objectId
-		};
+		editedEndpoint = { ...editedEndpoint, responseBodyObjectId: objectId };
 	}
 
 	function handleEnvelopeToggle(enabled: boolean): void {
 		if (!editedEndpoint) return;
-
 		editedEndpoint = { ...editedEndpoint, useEnvelope: enabled };
 	}
 
@@ -602,13 +611,11 @@ export function createApiDetailState(config: ApiDetailStateConfig): ApiDetailSta
 
 	function handleSetResponseShape(shape: ResponseShape): void {
 		if (!editedEndpoint) return;
-
 		editedEndpoint = { ...editedEndpoint, responseShape: shape };
 	}
 
 	function handleResetResponseDefaults(): void {
 		if (!editedEndpoint) return;
-
 		editedEndpoint = {
 			...editedEndpoint,
 			useEnvelope: true,
@@ -624,26 +631,12 @@ export function createApiDetailState(config: ApiDetailStateConfig): ApiDetailSta
 	function handleGenerateCode(): void {
 		if (!editedApi) return;
 
-		// Require API to be saved before generating code
-		if (isNewApi && !hasBeenSaved) {
+		if (!hasBeenCreated) {
 			showToast('Please save the API before generating code', 'warning', 5000);
 			return;
 		}
 
-		// TODO: Implement when backend is deployed
-		// The new endpoint structure is: POST /apis/{actualApiId}/generate
-		// The backend will automatically retrieve all related entities by API ID
-		//
-		// Implementation outline:
-		// 1. Get Clerk session token: const token = await clerk?.session?.getToken();
-		// 2. Call fetch(`${API_BASE_URL}/apis/${actualApiId}/generate`, {
-		//      method: 'POST',
-		//      headers: { 'Authorization': `Bearer ${token}` }
-		//    });
-		// 3. Handle zip file download from response blob
-		// 4. Show success/error toast
-
-		console.log('Generate code for API:', actualApiId);
+		console.log('Generate code for API:', effectiveApiId);
 		showToast('Code generation will be available when backend is deployed', 'info', 5000);
 	}
 
@@ -652,51 +645,31 @@ export function createApiDetailState(config: ApiDetailStateConfig): ApiDetailSta
 	// ============================================================================
 
 	return {
-		// Mode flag (readonly)
-		get isNewApi() { return isNewApi && !hasBeenSaved; },
-
-		// API data (readonly)
+		get isNewApi() { return !hasBeenCreated; },
 		get api() { return api; },
-
 		get editedApi() { return editedApi; },
 		set editedApi(v: Api | null) { editedApi = v; },
-
-		// Store subscriptions (readonly)
 		get tags() { return tags; },
 		get endpoints() { return endpoints; },
-
-		// Namespace (readonly)
 		get apiNamespaceId() { return apiNamespaceId; },
-
-		// Drawer state (read/write)
 		get drawerOpen() { return drawerOpen; },
 		set drawerOpen(v: boolean) { drawerOpen = v; },
-
 		get selectedEndpoint() { return selectedEndpoint; },
 		set selectedEndpoint(v: ApiEndpoint | null) { selectedEndpoint = v; },
-
 		get editedEndpoint() { return editedEndpoint; },
 		set editedEndpoint(v: ApiEndpoint | null) { editedEndpoint = v; },
-
-		// Tag combobox state (read/write)
 		get tagInputValue() { return tagInputValue; },
 		set tagInputValue(v: string) { tagInputValue = v; },
-
 		get tagDropdownOpen() { return tagDropdownOpen; },
 		set tagDropdownOpen(v: boolean) { tagDropdownOpen = v; },
-
 		get showEndpointDeleteConfirm() { return showEndpointDeleteConfirm; },
 		set showEndpointDeleteConfirm(v: boolean) { showEndpointDeleteConfirm = v; },
-
 		get showCloseConfirm() { return showCloseConfirm; },
 		set showCloseConfirm(v: boolean) { showCloseConfirm = v; },
-
-		// Derived state (readonly)
 		get hasApiChanges() { return hasApiChanges; },
 		get hasEndpointChanges() { return hasEndpointChanges; },
 		get hasAnyChanges() { return hasAnyChanges; },
-
-		// Actions
+		get isSaving() { return isSaving; },
 		handleApiUpdate,
 		handleSaveApi,
 		handleDiscardApiChanges,

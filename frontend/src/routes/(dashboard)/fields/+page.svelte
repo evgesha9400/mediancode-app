@@ -1,6 +1,6 @@
 <script lang="ts">
   import { fieldsStore, searchFields, type Field, type FieldConstraintValue } from '$lib/stores/fields';
-  import { createFieldAction, updateFieldAction, deleteFieldAction } from '$lib/stores/actions';
+  import { createFieldAction, updateFieldAction, deleteFieldAction } from '$lib/domain/mutations';
   import { fieldConstraintsStore, type FieldConstraint } from '$lib/stores/fieldConstraints';
   import { typesStore, getTypeIdByName } from '$lib/stores/types';
   import { showToast } from '$lib/stores/toasts';

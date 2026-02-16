@@ -1,9 +1,5 @@
 import { writable, get } from 'svelte/store';
-import { checkFieldDeletion } from '$lib/utils/references';
-import type { DeletionResult } from '$lib/types';
-import { GLOBAL_NAMESPACE_ID } from '$lib/constants';
 import type { Field, FieldConstraintValue } from '$lib/types';
-import { generateId } from '$lib/utils/ids';
 
 // Re-export types for backwards compatibility
 export type { Field, FieldConstraintValue } from '$lib/types';
@@ -62,97 +58,4 @@ export function searchFields(fields: Field[], query: string): Field[] {
 		field.description?.toLowerCase().includes(lowerQuery) ||
 		field.constraints.some(c => c.name.toLowerCase().includes(lowerQuery))
 	);
-}
-
-export function updateField(id: string, updates: Partial<Field>): void {
-	fieldsStore.update(fields => {
-		return fields.map(field =>
-			field.id === id ? { ...field, ...updates } : field
-		);
-	});
-}
-
-/**
- * Delete a field by ID
- * Checks for API references before deletion to prevent breaking API dependencies
- *
- * @param id - The ID of the field to delete
- * @returns DeletionResult - Contains success status and error message if blocked by references
- */
-export function deleteField(id: string): DeletionResult {
-	// Reuse centralized getFieldById helper
-	const fieldToDelete = getFieldById(id);
-
-	if (!fieldToDelete) {
-		return {
-			success: false,
-			error: `Field with ID "${id}" not found.`
-		};
-	}
-
-	// Check if field can be safely deleted
-	const deletionCheck = checkFieldDeletion(fieldToDelete.name, fieldToDelete.usedInApis);
-
-	if (!deletionCheck.success) {
-		return deletionCheck;
-	}
-
-	// Remove the field from the store
-	fieldsStore.update(fields => {
-		return fields.filter(field => field.id !== id);
-	});
-
-	return { success: true };
-}
-
-// ============================================================================
-// Field Lifecycle Operations
-// ============================================================================
-
-/**
- * Create a new field with uniqueness guard within the namespace
- *
- * @param name - The name for the new field
- * @param type - The type name for the field (primitive or constrained)
- * @param namespaceId - The namespace to create the field in (defaults to global)
- * @param options - Optional field properties (description, validators, etc.)
- * @returns The created field, or undefined if a field with that name already exists in the namespace
- */
-export function createField(
-	name: string,
-	type: string,
-	namespaceId: string = GLOBAL_NAMESPACE_ID,
-	options: Partial<Omit<Field, 'id' | 'name' | 'type' | 'namespaceId'>> = {}
-): Field | undefined {
-	const trimmedName = name.trim();
-
-	// Check for existing field with same name in the same namespace (case-insensitive)
-	const existingField = get(fieldsStore).find(
-		f => f.name.toLowerCase() === trimmedName.toLowerCase() && f.namespaceId === namespaceId
-	);
-
-	if (existingField) {
-		return undefined;
-	}
-
-	const newField: Field = {
-		id: generateId('field'),
-		namespaceId,
-		name: trimmedName,
-		type,
-		constraints: options.constraints ?? [],
-		usedInApis: options.usedInApis ?? [],
-		description: options.description ?? '',
-		defaultValue: options.defaultValue ?? ''
-	};
-
-	fieldsStore.update(fields => [...fields, newField]);
-	return newField;
-}
-
-/**
- * Add a pre-constructed field (legacy support)
- */
-export function addField(field: Field): void {
-	fieldsStore.update(fields => [...fields, field]);
 }

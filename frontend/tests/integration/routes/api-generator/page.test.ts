@@ -15,14 +15,10 @@ import { get } from 'svelte/store';
 import {
 	apisStore,
 	endpointsStore,
-	addEndpoint,
-	updateEndpoint,
 	getTotalEndpointCount,
-	getEndpointCountByTagName,
-	createApi
+	getEndpointCountByTagName
 } from '$lib/stores/apis';
 import { createMockEndpoint, createMockApi } from '../../../shared/testUtils';
-import { GLOBAL_NAMESPACE_ID } from '$lib/constants';
 
 const TEST_API_ID = 'cccccccc-0000-0000-0000-000000000001';
 
@@ -35,18 +31,22 @@ describe('API Generator Page - Store Integration', () => {
 
 	describe('Tag Tracking (Derived from Endpoints)', () => {
 		it('counts endpoints using a specific tag by name', () => {
-			addEndpoint(createMockEndpoint({ id: 'bbbbbbbb-0000-0000-0000-000000000001', path: '/users', tagName: 'Users' }));
-			addEndpoint(createMockEndpoint({ id: 'bbbbbbbb-0000-0000-0000-000000000002', method: 'POST', path: '/users', tagName: 'Users' }));
-			addEndpoint(createMockEndpoint({ id: 'bbbbbbbb-0000-0000-0000-000000000003', path: '/posts', tagName: undefined }));
+			endpointsStore.set([
+				createMockEndpoint({ id: 'ep-1', path: '/users', tagName: 'Users' }),
+				createMockEndpoint({ id: 'ep-2', method: 'POST', path: '/users', tagName: 'Users' }),
+				createMockEndpoint({ id: 'ep-3', path: '/posts', tagName: undefined })
+			]);
 
 			expect(getEndpointCountByTagName(TEST_API_ID, 'Users')).toBe(2);
 		});
 
 		it('derives unique tags from endpoint tagName values', () => {
-			addEndpoint(createMockEndpoint({ id: 'bbbbbbbb-0000-0000-0000-000000000001', path: '/users', tagName: 'Users' }));
-			addEndpoint(createMockEndpoint({ id: 'bbbbbbbb-0000-0000-0000-000000000002', method: 'POST', path: '/users', tagName: 'Users' }));
-			addEndpoint(createMockEndpoint({ id: 'bbbbbbbb-0000-0000-0000-000000000003', path: '/posts', tagName: 'Posts' }));
-			addEndpoint(createMockEndpoint({ id: 'bbbbbbbb-0000-0000-0000-000000000004', path: '/health', tagName: undefined }));
+			endpointsStore.set([
+				createMockEndpoint({ id: 'ep-1', path: '/users', tagName: 'Users' }),
+				createMockEndpoint({ id: 'ep-2', method: 'POST', path: '/users', tagName: 'Users' }),
+				createMockEndpoint({ id: 'ep-3', path: '/posts', tagName: 'Posts' }),
+				createMockEndpoint({ id: 'ep-4', path: '/health', tagName: undefined })
+			]);
 
 			const endpoints = get(endpointsStore);
 			const uniqueTags = [...new Set(endpoints.map(e => e.tagName).filter(Boolean))];
@@ -64,7 +64,7 @@ describe('API Generator Page - Store Integration', () => {
 				description: 'Get all users'
 			});
 
-			addEndpoint(endpoint);
+			endpointsStore.set([endpoint]);
 
 			const endpoints = get(endpointsStore);
 			expect(endpoints).toHaveLength(1);
@@ -73,10 +73,12 @@ describe('API Generator Page - Store Integration', () => {
 
 		it('updates endpoint properties including tagName', () => {
 			const endpoint = createMockEndpoint({ path: '/users' });
-			addEndpoint(endpoint);
+			endpointsStore.set([endpoint]);
 
 			// Update endpoint to set tag name
-			updateEndpoint(endpoint.id, { ...endpoint, tagName: 'Users' });
+			endpointsStore.update(eps =>
+				eps.map(e => e.id === endpoint.id ? { ...e, tagName: 'Users' } : e)
+			);
 
 			const endpoints = get(endpointsStore);
 			expect(endpoints[0].tagName).toBe('Users');
@@ -85,7 +87,7 @@ describe('API Generator Page - Store Integration', () => {
 		it('tracks endpoint count correctly', () => {
 			expect(getTotalEndpointCount()).toBe(0);
 
-			addEndpoint(createMockEndpoint({ path: '/users' }));
+			endpointsStore.set([createMockEndpoint({ path: '/users' })]);
 
 			expect(getTotalEndpointCount()).toBe(1);
 		});
@@ -99,21 +101,21 @@ describe('API Generator Page - Store Integration', () => {
 				tagName: 'Users'
 			});
 
-			addEndpoint(originalEndpoint);
+			endpointsStore.set([originalEndpoint]);
 
 			// Simulate user editing: change tag to Posts
-			const editedEndpoint = {
-				...originalEndpoint,
-				tagName: 'Posts'
-			};
-			updateEndpoint(editedEndpoint.id, editedEndpoint);
+			endpointsStore.update(eps =>
+				eps.map(e => e.id === originalEndpoint.id ? { ...e, tagName: 'Posts' } : e)
+			);
 
 			// Verify the change was applied
 			let endpoints = get(endpointsStore);
 			expect(endpoints[0].tagName).toBe('Posts');
 
 			// Simulate undo: restore to original state
-			updateEndpoint(originalEndpoint.id, originalEndpoint);
+			endpointsStore.update(eps =>
+				eps.map(e => e.id === originalEndpoint.id ? { ...originalEndpoint } : e)
+			);
 
 			// Verify the original tagName is restored
 			endpoints = get(endpointsStore);
@@ -126,21 +128,21 @@ describe('API Generator Page - Store Integration', () => {
 				tagName: undefined
 			});
 
-			addEndpoint(originalEndpoint);
+			endpointsStore.set([originalEndpoint]);
 
 			// Simulate user editing: assign a tag
-			const editedEndpoint = {
-				...originalEndpoint,
-				tagName: 'Users'
-			};
-			updateEndpoint(editedEndpoint.id, editedEndpoint);
+			endpointsStore.update(eps =>
+				eps.map(e => e.id === originalEndpoint.id ? { ...e, tagName: 'Users' } : e)
+			);
 
 			// Verify tag was assigned
 			let endpoints = get(endpointsStore);
 			expect(endpoints[0].tagName).toBe('Users');
 
 			// Simulate undo: restore to no tag
-			updateEndpoint(originalEndpoint.id, originalEndpoint);
+			endpointsStore.update(eps =>
+				eps.map(e => e.id === originalEndpoint.id ? { ...originalEndpoint } : e)
+			);
 
 			// Verify tagName is back to undefined
 			endpoints = get(endpointsStore);
@@ -156,7 +158,7 @@ describe('API Generator Page - Store Integration', () => {
 				description: 'Create user'
 			});
 
-			addEndpoint(endpoint);
+			endpointsStore.set([endpoint]);
 
 			const endpoints = get(endpointsStore);
 			expect(endpoints[0]).toHaveProperty('id');
@@ -174,17 +176,23 @@ describe('API Generator Page - Store Integration', () => {
 
 	describe('Tag-Endpoint Relationships', () => {
 		it('allows multiple endpoints to share the same tag', () => {
-			addEndpoint(createMockEndpoint({ id: 'bbbbbbbb-0000-0000-0000-000000000001', path: '/users', tagName: 'Users' }));
-			addEndpoint(createMockEndpoint({ id: 'bbbbbbbb-0000-0000-0000-000000000002', method: 'POST', path: '/users', tagName: 'Users' }));
+			endpointsStore.set([
+				createMockEndpoint({ id: 'ep-1', path: '/users', tagName: 'Users' }),
+				createMockEndpoint({ id: 'ep-2', method: 'POST', path: '/users', tagName: 'Users' })
+			]);
 
 			const endpoints = get(endpointsStore);
 			expect(endpoints.filter(e => e.tagName === 'Users')).toHaveLength(2);
 		});
 
 		it('clearing tagName removes endpoint from tag group', () => {
-			addEndpoint(createMockEndpoint({ id: 'bbbbbbbb-0000-0000-0000-000000000001', path: '/users', tagName: 'Users' }));
+			endpointsStore.set([
+				createMockEndpoint({ id: 'ep-1', path: '/users', tagName: 'Users' })
+			]);
 
-			updateEndpoint('bbbbbbbb-0000-0000-0000-000000000001', { tagName: undefined });
+			endpointsStore.update(eps =>
+				eps.map(e => e.id === 'ep-1' ? { ...e, tagName: undefined } : e)
+			);
 
 			const endpoints = get(endpointsStore);
 			expect(endpoints[0].tagName).toBeUndefined();

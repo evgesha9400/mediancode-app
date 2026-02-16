@@ -5,7 +5,7 @@
     endpointsStore,
     searchApis
   } from '$lib/stores/apis';
-  import { deleteApiAction } from '$lib/stores/actions';
+  import { deleteApiAction } from '$lib/domain/mutations';
   import { showToast } from '$lib/stores/toasts';
   import { activeNamespaceId, namespacesStore } from '$lib/stores/namespaces';
   import {

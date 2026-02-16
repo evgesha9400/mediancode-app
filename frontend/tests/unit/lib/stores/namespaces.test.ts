@@ -9,24 +9,29 @@ import {
 	searchNamespaces,
 	getNamespaceEntityCount,
 	getNamespaceEntityDetails,
-	createNamespace,
-	updateNamespace,
-	deleteNamespace,
 	setActiveNamespace,
 	GLOBAL_NAMESPACE_ID
 } from '$lib/stores/namespaces';
 import { initialNamespaces } from '../../../fixtures/seedData';
-import { seedIdGenerator } from '$lib/utils/ids';
 import { fieldsStore } from '$lib/stores/fields';
 import { objectsStore } from '$lib/stores/objects';
 import { endpointsStore, apisStore } from '$lib/stores/apis';
+import type { Namespace } from '$lib/types';
+
+// Helper to create a namespace for seeding the store directly
+function makeNamespace(overrides: Partial<Namespace> & { id: string; name: string }): Namespace {
+	return {
+		description: '',
+		locked: false,
+		isDefault: false,
+		...overrides
+	};
+}
 
 describe('namespaces store - Basic Operations', () => {
 	beforeEach(() => {
-		// Reset stores to initial state
 		namespacesStore.set([...initialNamespaces]);
 		activeNamespaceId.set(GLOBAL_NAMESPACE_ID);
-		seedIdGenerator({ counter: 0 });
 	});
 
 	it('should have global namespace by default', () => {
@@ -59,96 +64,19 @@ describe('namespaces store - Basic Operations', () => {
 	});
 });
 
-describe('namespaces store - CRUD Operations', () => {
-	beforeEach(() => {
-		namespacesStore.set([...initialNamespaces]);
-		activeNamespaceId.set(GLOBAL_NAMESPACE_ID);
-		seedIdGenerator({ counter: 0 });
-	});
-
-	it('should create a new namespace', () => {
-		const namespace = createNamespace('development', 'Dev environment');
-
-		expect(namespace).toBeDefined();
-		expect(namespace?.id).toBe('00000000-0000-4000-a000-000000000000');
-		expect(namespace?.name).toBe('development');
-		expect(namespace?.description).toBe('Dev environment');
-		expect(namespace?.locked).toBe(false);
-
-		expect(getTotalNamespaceCount()).toBe(3); // global + user + development
-	});
-
-	it('should prevent duplicate namespace creation (case-insensitive)', () => {
-		createNamespace('development');
-		const duplicate = createNamespace('Development');
-
-		expect(duplicate).toBeUndefined();
-		expect(getTotalNamespaceCount()).toBe(3); // global + user + development
-	});
-
-	it('should not allow creating namespace with same name as global', () => {
-		const duplicate = createNamespace('global');
-		expect(duplicate).toBeUndefined();
-		expect(getTotalNamespaceCount()).toBe(2); // global + user (unchanged)
-	});
-
-	it('should trim namespace names', () => {
-		const namespace = createNamespace('  development  ');
-		expect(namespace?.name).toBe('development');
-	});
-
-	it('should update a namespace', () => {
-		const namespace = createNamespace('development');
-		updateNamespace(namespace!.id, { description: 'Updated description' });
-
-		const updated = getNamespaceById(namespace!.id);
-		expect(updated?.description).toBe('Updated description');
-	});
-
-	it('should not update locked namespaces', () => {
-		updateNamespace(GLOBAL_NAMESPACE_ID, { name: 'new-name' });
-
-		const globalNs = getNamespaceById(GLOBAL_NAMESPACE_ID);
-		expect(globalNs?.name).toBe('global');
-	});
-
-	it('should delete a namespace', () => {
-		const namespace = createNamespace('development');
-		const result = deleteNamespace(namespace!.id);
-
-		expect(result.success).toBe(true);
-		expect(getNamespaceById(namespace!.id)).toBeUndefined();
-		expect(getTotalNamespaceCount()).toBe(2); // global + user (back to initial)
-	});
-
-	it('should not delete locked namespaces', () => {
-		const result = deleteNamespace(GLOBAL_NAMESPACE_ID);
-
-		expect(result.success).toBe(false);
-		expect(result.error).toContain('locked');
-		expect(getTotalNamespaceCount()).toBe(2); // global + user (unchanged)
-	});
-
-	it('should return error for non-existent namespace deletion', () => {
-		const result = deleteNamespace('non-existent');
-
-		expect(result.success).toBe(false);
-		expect(result.error).toContain('not found');
-	});
-});
-
 describe('namespaces store - Active Namespace', () => {
 	beforeEach(() => {
-		namespacesStore.set([...initialNamespaces]);
+		namespacesStore.set([
+			...initialNamespaces,
+			makeNamespace({ id: 'ns-dev', name: 'development' })
+		]);
 		activeNamespaceId.set(GLOBAL_NAMESPACE_ID);
-		seedIdGenerator({ counter: 0 });
 	});
 
 	it('should set active namespace', () => {
-		const namespace = createNamespace('development');
-		setActiveNamespace(namespace!.id);
+		setActiveNamespace('ns-dev');
 
-		expect(get(activeNamespaceId)).toBe(namespace!.id);
+		expect(get(activeNamespaceId)).toBe('ns-dev');
 		expect(get(activeNamespace)?.name).toBe('development');
 	});
 
@@ -157,24 +85,16 @@ describe('namespaces store - Active Namespace', () => {
 
 		expect(get(activeNamespaceId)).toBe(GLOBAL_NAMESPACE_ID);
 	});
-
-	it('should reset active namespace to global when deleting active namespace', () => {
-		const namespace = createNamespace('development');
-		setActiveNamespace(namespace!.id);
-		expect(get(activeNamespaceId)).toBe(namespace!.id);
-
-		deleteNamespace(namespace!.id);
-		expect(get(activeNamespaceId)).toBe(GLOBAL_NAMESPACE_ID);
-	});
 });
 
 describe('namespaces store - Search', () => {
 	beforeEach(() => {
-		namespacesStore.set([...initialNamespaces]);
-		seedIdGenerator({ counter: 0 });
-		createNamespace('development', 'Dev environment');
-		createNamespace('staging', 'Staging environment');
-		createNamespace('production', 'Prod environment');
+		namespacesStore.set([
+			...initialNamespaces,
+			makeNamespace({ id: 'ns-dev', name: 'development', description: 'Dev environment' }),
+			makeNamespace({ id: 'ns-stg', name: 'staging', description: 'Staging environment' }),
+			makeNamespace({ id: 'ns-prd', name: 'production', description: 'Prod environment' })
+		]);
 	});
 
 	it('should search namespaces by name', () => {
@@ -216,7 +136,6 @@ describe('namespaces store - Entity Count', () => {
 		objectsStore.set([]);
 		endpointsStore.set([]);
 		apisStore.set([]);
-		seedIdGenerator({ counter: 0 });
 	});
 
 	it('should count entities in a namespace', () => {
@@ -295,28 +214,5 @@ describe('namespaces store - Entity Count', () => {
 		expect(details.objects).toBe(0);
 		expect(details.apis).toBe(1); // Now counts the API we added
 		expect(details.total).toBe(3 + initialConstraintCount);
-	});
-
-	it('should not delete namespace with entities', () => {
-		const namespace = createNamespace('development');
-
-		// Add an entity to the new namespace
-		fieldsStore.update(fields => [
-			...fields,
-			{
-				id: 'aaaaaaaa-0000-0000-0000-000000000002',
-				namespaceId: namespace!.id,
-				name: 'test_field',
-				type: 'str' as const,
-				constraints: [],
-				usedInApis: []
-			}
-		]);
-
-		const result = deleteNamespace(namespace!.id);
-
-		expect(result.success).toBe(false);
-		expect(result.error).toContain('contains');
-		expect(result.error).toContain('1 field');
 	});
 });

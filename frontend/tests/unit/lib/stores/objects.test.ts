@@ -7,19 +7,24 @@ import {
 	getObjectsByNamespace,
 	getObjectCountByNamespace,
 	searchObjects,
-	updateObject,
-	deleteObject,
-	createObject,
 	type ObjectDefinition
 } from '$lib/stores/objects';
 import { GLOBAL_NAMESPACE_ID } from '$lib/constants';
-import { seedIdGenerator } from '$lib/utils/ids';
+
+// Helper to create an object definition for seeding the store directly
+function makeObject(overrides: Partial<ObjectDefinition> & { id: string; name: string }): ObjectDefinition {
+	return {
+		namespaceId: GLOBAL_NAMESPACE_ID,
+		description: '',
+		fields: [],
+		usedInApis: [],
+		...overrides
+	};
+}
 
 describe('objects store - Basic Operations', () => {
 	beforeEach(() => {
-		// Reset store to empty for predictable tests
 		objectsStore.set([]);
-		seedIdGenerator({ counter: 0 });
 	});
 
 	it('should start with empty objects', () => {
@@ -35,130 +40,32 @@ describe('objects store - Basic Operations', () => {
 	it('should count total objects', () => {
 		expect(getTotalObjectCount()).toBe(0);
 
-		createObject('TestObject');
-		expect(getTotalObjectCount()).toBe(1);
-	});
-});
-
-describe('objects store - createObject', () => {
-	beforeEach(() => {
-		objectsStore.set([]);
-		seedIdGenerator({ counter: 0 });
-	});
-
-	it('should create a new object with default options', () => {
-		const object = createObject('TestObject');
-
-		expect(object).toBeDefined();
-		expect(object?.id).toBe('00000000-0000-4000-a000-000000000000');
-		expect(object?.name).toBe('TestObject');
-		expect(object?.namespaceId).toBe(GLOBAL_NAMESPACE_ID);
-		expect(object?.fields).toEqual([]);
-		expect(object?.usedInApis).toEqual([]);
-		expect(object?.description).toBe('');
-
+		objectsStore.set([makeObject({ id: 'o-1', name: 'TestObject' })]);
 		expect(getTotalObjectCount()).toBe(1);
 	});
 
-	it('should create an object with custom namespace', () => {
-		const object = createObject('TestObject', 'custom-namespace');
+	it('should get object by ID', () => {
+		objectsStore.set([
+			makeObject({ id: 'o-1', name: 'User' }),
+			makeObject({ id: 'o-2', name: 'Product' })
+		]);
 
-		expect(object?.namespaceId).toBe('custom-namespace');
-	});
+		const obj = getObjectById('o-1');
+		expect(obj).toBeDefined();
+		expect(obj?.name).toBe('User');
 
-	it('should create an object with description', () => {
-		const object = createObject('TestObject', GLOBAL_NAMESPACE_ID, {
-			description: 'A test object'
-		});
-
-		expect(object?.description).toBe('A test object');
-	});
-
-	it('should create an object with fields', () => {
-		const fields = [
-			{ fieldId: 'aaaaaaaa-0000-0000-0000-000000000001', required: true },
-			{ fieldId: 'aaaaaaaa-0000-0000-0000-000000000002', required: false }
-		];
-		const object = createObject('TestObject', GLOBAL_NAMESPACE_ID, {
-			fields
-		});
-
-		expect(object?.fields).toEqual(fields);
-		expect(object?.fields).toHaveLength(2);
-	});
-
-	it('should create an object with all options', () => {
-		const object = createObject('TestObject', 'custom-namespace', {
-			description: 'A test object',
-			fields: [
-				{ fieldId: 'aaaaaaaa-0000-0000-0000-000000000001', required: true },
-				{ fieldId: 'aaaaaaaa-0000-0000-0000-000000000002', required: false }
-			],
-			usedInApis: ['aaaaaaaa-0000-0000-0000-000000000003', 'aaaaaaaa-0000-0000-0000-000000000004']
-		});
-
-		expect(object?.name).toBe('TestObject');
-		expect(object?.namespaceId).toBe('custom-namespace');
-		expect(object?.description).toBe('A test object');
-		expect(object?.fields).toHaveLength(2);
-		expect(object?.usedInApis).toEqual(['aaaaaaaa-0000-0000-0000-000000000003', 'aaaaaaaa-0000-0000-0000-000000000004']);
-	});
-
-	it('should trim object names', () => {
-		const object = createObject('  TestObject  ');
-		expect(object?.name).toBe('TestObject');
-	});
-
-	it('should prevent duplicate object creation in same namespace (case-insensitive)', () => {
-		createObject('TestObject', GLOBAL_NAMESPACE_ID);
-		const duplicate = createObject('testobject', GLOBAL_NAMESPACE_ID);
-
-		expect(duplicate).toBeUndefined();
-		expect(getTotalObjectCount()).toBe(1);
-	});
-
-	it('should allow same object name in different namespaces', () => {
-		const object1 = createObject('TestObject', 'namespace-1');
-		const object2 = createObject('TestObject', 'namespace-2');
-
-		expect(object1).toBeDefined();
-		expect(object2).toBeDefined();
-		expect(getTotalObjectCount()).toBe(2);
-	});
-
-	it('should generate unique IDs for each object', () => {
-		const object1 = createObject('Object1');
-		const object2 = createObject('Object2');
-
-		expect(object1?.id).not.toBe(object2?.id);
-	});
-
-	it('should persist fields with required flags', () => {
-		const object = createObject('TestObject', GLOBAL_NAMESPACE_ID, {
-			fields: [
-				{ fieldId: 'email', required: true },
-				{ fieldId: 'name', required: true },
-				{ fieldId: 'phone', required: false }
-			]
-		});
-
-		expect(object?.fields).toHaveLength(3);
-		expect(object?.fields[0]).toEqual({ fieldId: 'email', required: true });
-		expect(object?.fields[1]).toEqual({ fieldId: 'name', required: true });
-		expect(object?.fields[2]).toEqual({ fieldId: 'phone', required: false });
+		expect(getObjectById('o-999')).toBeUndefined();
 	});
 });
 
 describe('objects store - Namespace Filtering', () => {
 	beforeEach(() => {
-		objectsStore.set([]);
-		seedIdGenerator({ counter: 0 });
-
-		// Create objects in different namespaces
-		createObject('GlobalObject', GLOBAL_NAMESPACE_ID);
-		createObject('NS1Object1', 'namespace-1');
-		createObject('NS1Object2', 'namespace-1');
-		createObject('NS2Object', 'namespace-2');
+		objectsStore.set([
+			makeObject({ id: 'o-1', name: 'GlobalObject', namespaceId: GLOBAL_NAMESPACE_ID }),
+			makeObject({ id: 'o-2', name: 'NS1Object1', namespaceId: 'namespace-1' }),
+			makeObject({ id: 'o-3', name: 'NS1Object2', namespaceId: 'namespace-1' }),
+			makeObject({ id: 'o-4', name: 'NS2Object', namespaceId: 'namespace-2' })
+		]);
 	});
 
 	it('should get objects by namespace', () => {
@@ -180,12 +87,11 @@ describe('objects store - Namespace Filtering', () => {
 
 describe('objects store - Search', () => {
 	beforeEach(() => {
-		objectsStore.set([]);
-		seedIdGenerator({ counter: 0 });
-
-		createObject('UserProfile', GLOBAL_NAMESPACE_ID, { description: 'User profile data' });
-		createObject('AdminSettings', GLOBAL_NAMESPACE_ID);
-		createObject('ProductCatalog', GLOBAL_NAMESPACE_ID, { description: 'Product catalog entries' });
+		objectsStore.set([
+			makeObject({ id: 'o-1', name: 'UserProfile', description: 'User profile data' }),
+			makeObject({ id: 'o-2', name: 'AdminSettings' }),
+			makeObject({ id: 'o-3', name: 'ProductCatalog', description: 'Product catalog entries' })
+		]);
 	});
 
 	it('should search objects by name', () => {
@@ -217,80 +123,5 @@ describe('objects store - Search', () => {
 
 		expect(results).toHaveLength(1);
 		expect(results[0].name).toBe('AdminSettings');
-	});
-});
-
-describe('objects store - CRUD Operations', () => {
-	beforeEach(() => {
-		objectsStore.set([]);
-		seedIdGenerator({ counter: 0 });
-	});
-
-	it('should update an object', () => {
-		const object = createObject('TestObject');
-		updateObject(object!.id, {
-			description: 'Updated description',
-			fields: [{ fieldId: 'aaaaaaaa-0000-0000-0000-000000000001', required: true }]
-		});
-
-		const updated = getObjectById(object!.id);
-		expect(updated?.description).toBe('Updated description');
-		expect(updated?.fields).toHaveLength(1);
-	});
-
-	it('should delete an object', () => {
-		const object = createObject('TestObject');
-		const result = deleteObject(object!.id);
-
-		expect(result.success).toBe(true);
-		expect(getObjectById(object!.id)).toBeUndefined();
-		expect(getTotalObjectCount()).toBe(0);
-	});
-
-	it('should return error for non-existent object deletion', () => {
-		const result = deleteObject('non-existent');
-
-		expect(result.success).toBe(false);
-		expect(result.error).toContain('not found');
-	});
-
-	it('should not delete objects used in APIs', () => {
-		const object = createObject('TestObject', GLOBAL_NAMESPACE_ID, {
-			usedInApis: ['aaaaaaaa-0000-0000-0000-000000000003']
-		});
-
-		const result = deleteObject(object!.id);
-
-		expect(result.success).toBe(false);
-		expect(result.error).toContain('used in');
-	});
-});
-
-describe('objects store - Namespace Assignment', () => {
-	beforeEach(() => {
-		objectsStore.set([]);
-		seedIdGenerator({ counter: 0 });
-	});
-
-	it('should assign object to specified namespace during creation', () => {
-		const object = createObject('TestObject', 'custom-namespace');
-
-		expect(object?.namespaceId).toBe('custom-namespace');
-	});
-
-	it('should default to global namespace if not specified', () => {
-		const object = createObject('TestObject');
-
-		expect(object?.namespaceId).toBe(GLOBAL_NAMESPACE_ID);
-	});
-
-	it('should enforce namespace-scoped uniqueness', () => {
-		const object1 = createObject('TestObject', 'namespace-1');
-		const object2 = createObject('TestObject', 'namespace-1'); // Duplicate in same namespace
-		const object3 = createObject('TestObject', 'namespace-2'); // Same name, different namespace
-
-		expect(object1).toBeDefined();
-		expect(object2).toBeUndefined(); // Should fail due to duplicate
-		expect(object3).toBeDefined(); // Should succeed in different namespace
 	});
 });

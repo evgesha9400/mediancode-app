@@ -1,14 +1,12 @@
-/**
- * Async Actions Layer
- *
- * Wraps API calls with store updates, providing:
- * - Optimistic updates with rollback on failure
- * - Consistent error handling
- * - Action result interface for UI feedback
- */
+// src/lib/domain/mutations.ts
+//
+// Canonical mutation pipeline. Every entity create/update/delete goes through here.
+// Stores become read-only; routes import actions from this module.
 
 import { get } from 'svelte/store';
-import { ApiError } from '$lib/api/client';
+import { mapApiError } from './errorMap';
+
+// --- API transport functions ---
 import {
 	createFieldApi,
 	updateFieldApi,
@@ -44,19 +42,29 @@ import {
 	type CreateNamespaceRequest,
 	type UpdateNamespaceRequest
 } from '$lib/api/namespaces';
-import { fieldsStore, type Field } from './fields';
-import { objectsStore, type ObjectDefinition } from './objects';
-import { apisStore, endpointsStore } from './apis';
-import { namespacesStore, activeNamespaceId, GLOBAL_NAMESPACE_ID } from './namespaces';
+
+// --- Stores (used for optimistic updates and post-mutation commits) ---
+import { fieldsStore, type Field } from '$lib/stores/fields';
+import { objectsStore, type ObjectDefinition } from '$lib/stores/objects';
+import { apisStore, endpointsStore } from '$lib/stores/apis';
+import {
+	namespacesStore,
+	activeNamespaceId,
+	getNamespaceById,
+	getNamespaceEntityCount,
+	getNamespaceEntityDetails,
+	GLOBAL_NAMESPACE_ID
+} from '$lib/stores/namespaces';
+
+// --- Deletion guards ---
+import { checkFieldDeletion, checkObjectDeletion } from '$lib/utils/references';
+
 import type { Api, ApiEndpoint, Namespace } from '$lib/types';
 
 // ============================================================================
 // Types
 // ============================================================================
 
-/**
- * Result of an async action
- */
 export interface ActionResult<T> {
 	success: boolean;
 	data?: T;
@@ -64,94 +72,55 @@ export interface ActionResult<T> {
 }
 
 // ============================================================================
-// Error Handling
-// ============================================================================
-
-/**
- * Extract a user-friendly error message from various error types
- */
-function handleApiError(error: unknown, context: string): string {
-	if (error instanceof ApiError) {
-		if (error.status === 401) {
-			return 'Session expired. Please sign in again.';
-		}
-		if (error.status === 403) {
-			return 'Permission denied';
-		}
-		if (error.status === 404) {
-			return 'Resource not found';
-		}
-		if (error.status === 409) {
-			return error.detail || 'A resource with this name already exists';
-		}
-		if (error.status >= 500) {
-			return 'Server error - please try again';
-		}
-		return error.detail || error.message;
-	}
-	if (error instanceof TypeError && error.message.includes('fetch')) {
-		return 'Network error - check your connection';
-	}
-	return `Failed to ${context}`;
-}
-
-// ============================================================================
 // Field Actions
 // ============================================================================
 
-/**
- * Create a new field via API
- */
 export async function createFieldAction(data: CreateFieldRequest): Promise<ActionResult<Field>> {
 	try {
 		const field = await createFieldApi(data);
 		fieldsStore.update(fields => [...fields, field]);
 		return { success: true, data: field };
 	} catch (err) {
-		const message = handleApiError(err, 'create field');
-		return { success: false, error: message };
+		return { success: false, error: mapApiError(err, 'create field') };
 	}
 }
 
-/**
- * Update an existing field via API with optimistic update
- */
 export async function updateFieldAction(
 	id: string,
 	updates: UpdateFieldRequest
 ): Promise<ActionResult<Field>> {
 	const previousFields = get(fieldsStore);
 
-	// Optimistic update - cast to Field since we know the structure is valid
 	fieldsStore.update(fields =>
 		fields.map(f => (f.id === id ? { ...f, ...updates } as Field : f))
 	);
 
 	try {
 		const field = await updateFieldApi(id, updates);
-		// Replace with server response to ensure consistency
 		fieldsStore.update(fields => fields.map(f => (f.id === id ? field : f)));
 		return { success: true, data: field };
 	} catch (err) {
-		// Rollback on failure
 		fieldsStore.set(previousFields);
-		const message = handleApiError(err, 'update field');
-		return { success: false, error: message };
+		return { success: false, error: mapApiError(err, 'update field') };
 	}
 }
 
-/**
- * Delete a field via API (pessimistic delete - waits for server confirmation)
- */
 export async function deleteFieldAction(id: string): Promise<ActionResult<void>> {
+	// Pre-flight deletion guard
+	const field = get(fieldsStore).find(f => f.id === id);
+	if (field) {
+		const check = checkFieldDeletion(field.name, field.usedInApis);
+		if (!check.success) {
+			return { success: false, error: check.error };
+		}
+	}
+
 	try {
 		await deleteFieldApi(id);
-		// Only update store after successful API response
 		fieldsStore.update(fields => fields.filter(f => f.id !== id));
 		return { success: true };
 	} catch (err) {
-		const message = handleApiError(err, 'delete field');
-		return { success: false, error: message };
+		return { success: false, error: mapApiError(err, 'delete field') };
 	}
 }
 
@@ -159,9 +128,6 @@ export async function deleteFieldAction(id: string): Promise<ActionResult<void>>
 // Object Actions
 // ============================================================================
 
-/**
- * Create a new object via API
- */
 export async function createObjectAction(
 	data: CreateObjectRequest
 ): Promise<ActionResult<ObjectDefinition>> {
@@ -170,21 +136,16 @@ export async function createObjectAction(
 		objectsStore.update(objects => [...objects, object]);
 		return { success: true, data: object };
 	} catch (err) {
-		const message = handleApiError(err, 'create object');
-		return { success: false, error: message };
+		return { success: false, error: mapApiError(err, 'create object') };
 	}
 }
 
-/**
- * Update an existing object via API with optimistic update
- */
 export async function updateObjectAction(
 	id: string,
 	updates: UpdateObjectRequest
 ): Promise<ActionResult<ObjectDefinition>> {
 	const previousObjects = get(objectsStore);
 
-	// Optimistic update
 	objectsStore.update(objects =>
 		objects.map(o => (o.id === id ? { ...o, ...updates } : o))
 	);
@@ -195,23 +156,26 @@ export async function updateObjectAction(
 		return { success: true, data: object };
 	} catch (err) {
 		objectsStore.set(previousObjects);
-		const message = handleApiError(err, 'update object');
-		return { success: false, error: message };
+		return { success: false, error: mapApiError(err, 'update object') };
 	}
 }
 
-/**
- * Delete an object via API (pessimistic delete - waits for server confirmation)
- */
 export async function deleteObjectAction(id: string): Promise<ActionResult<void>> {
+	// Pre-flight deletion guard
+	const obj = get(objectsStore).find(o => o.id === id);
+	if (obj) {
+		const check = checkObjectDeletion(obj.name, obj.usedInApis);
+		if (!check.success) {
+			return { success: false, error: check.error };
+		}
+	}
+
 	try {
 		await deleteObjectApi(id);
-		// Only update store after successful API response
 		objectsStore.update(objects => objects.filter(o => o.id !== id));
 		return { success: true };
 	} catch (err) {
-		const message = handleApiError(err, 'delete object');
-		return { success: false, error: message };
+		return { success: false, error: mapApiError(err, 'delete object') };
 	}
 }
 
@@ -219,30 +183,22 @@ export async function deleteObjectAction(id: string): Promise<ActionResult<void>
 // API Actions
 // ============================================================================
 
-/**
- * Create a new API via API
- */
 export async function createApiAction(data: CreateApiRequest): Promise<ActionResult<Api>> {
 	try {
 		const api = await createApiApi(data);
 		apisStore.update(apis => [...apis, api]);
 		return { success: true, data: api };
 	} catch (err) {
-		const message = handleApiError(err, 'create API');
-		return { success: false, error: message };
+		return { success: false, error: mapApiError(err, 'create API') };
 	}
 }
 
-/**
- * Update an existing API via API with optimistic update
- */
 export async function updateApiAction(
 	id: string,
 	updates: UpdateApiRequest
 ): Promise<ActionResult<Api>> {
 	const previousApis = get(apisStore);
 
-	// Optimistic update
 	apisStore.update(apis =>
 		apis.map(a =>
 			a.id === id ? { ...a, ...updates, updatedAt: new Date().toISOString() } : a
@@ -255,25 +211,18 @@ export async function updateApiAction(
 		return { success: true, data: api };
 	} catch (err) {
 		apisStore.set(previousApis);
-		const message = handleApiError(err, 'update API');
-		return { success: false, error: message };
+		return { success: false, error: mapApiError(err, 'update API') };
 	}
 }
 
-/**
- * Delete an API via API (pessimistic delete - waits for server confirmation)
- * Also removes associated endpoints from local stores
- */
 export async function deleteApiAction(id: string): Promise<ActionResult<void>> {
 	try {
 		await deleteApiApi(id);
-		// Only update stores after successful API response
 		apisStore.update(apis => apis.filter(a => a.id !== id));
 		endpointsStore.update(endpoints => endpoints.filter(e => e.apiId !== id));
 		return { success: true };
 	} catch (err) {
-		const message = handleApiError(err, 'delete API');
-		return { success: false, error: message };
+		return { success: false, error: mapApiError(err, 'delete API') };
 	}
 }
 
@@ -281,9 +230,6 @@ export async function deleteApiAction(id: string): Promise<ActionResult<void>> {
 // Endpoint Actions
 // ============================================================================
 
-/**
- * Create a new endpoint via API
- */
 export async function createEndpointAction(
 	data: CreateEndpointRequest
 ): Promise<ActionResult<ApiEndpoint>> {
@@ -292,27 +238,22 @@ export async function createEndpointAction(
 		endpointsStore.update(endpoints => [...endpoints, endpoint]);
 		return { success: true, data: endpoint };
 	} catch (err) {
-		const message = handleApiError(err, 'create endpoint');
-		return { success: false, error: message };
+		return { success: false, error: mapApiError(err, 'create endpoint') };
 	}
 }
 
-/**
- * Update an existing endpoint via API with optimistic update
- */
 export async function updateEndpointAction(
 	id: string,
 	updates: UpdateEndpointRequest
 ): Promise<ActionResult<ApiEndpoint>> {
 	const previousEndpoints = get(endpointsStore);
 
-	// Convert null to undefined for tagName to match ApiEndpoint type
+	// Normalize null tagName to undefined for local ApiEndpoint type
 	const normalizedUpdates = {
 		...updates,
 		tagName: updates.tagName === null ? undefined : updates.tagName
 	};
 
-	// Optimistic update - cast to ApiEndpoint since we know the structure is valid
 	endpointsStore.update(endpoints =>
 		endpoints.map(e => (e.id === id ? { ...e, ...normalizedUpdates } as ApiEndpoint : e))
 	);
@@ -323,23 +264,17 @@ export async function updateEndpointAction(
 		return { success: true, data: endpoint };
 	} catch (err) {
 		endpointsStore.set(previousEndpoints);
-		const message = handleApiError(err, 'update endpoint');
-		return { success: false, error: message };
+		return { success: false, error: mapApiError(err, 'update endpoint') };
 	}
 }
 
-/**
- * Delete an endpoint via API (pessimistic delete - waits for server confirmation)
- */
 export async function deleteEndpointAction(id: string): Promise<ActionResult<void>> {
 	try {
 		await deleteEndpointApi(id);
-		// Only update store after successful API response
 		endpointsStore.update(endpoints => endpoints.filter(e => e.id !== id));
 		return { success: true };
 	} catch (err) {
-		const message = handleApiError(err, 'delete endpoint');
-		return { success: false, error: message };
+		return { success: false, error: mapApiError(err, 'delete endpoint') };
 	}
 }
 
@@ -347,9 +282,6 @@ export async function deleteEndpointAction(id: string): Promise<ActionResult<voi
 // Namespace Actions
 // ============================================================================
 
-/**
- * Create a new namespace via API
- */
 export async function createNamespaceAction(
 	data: CreateNamespaceRequest
 ): Promise<ActionResult<Namespace>> {
@@ -358,21 +290,16 @@ export async function createNamespaceAction(
 		namespacesStore.update(namespaces => [...namespaces, namespace]);
 		return { success: true, data: namespace };
 	} catch (err) {
-		const message = handleApiError(err, 'create namespace');
-		return { success: false, error: message };
+		return { success: false, error: mapApiError(err, 'create namespace') };
 	}
 }
 
-/**
- * Update an existing namespace via API with optimistic update
- */
 export async function updateNamespaceAction(
 	id: string,
 	updates: UpdateNamespaceRequest
 ): Promise<ActionResult<Namespace>> {
 	const previousNamespaces = get(namespacesStore);
 
-	// Optimistic update
 	namespacesStore.update(namespaces =>
 		namespaces.map(ns => (ns.id === id ? { ...ns, ...updates } : ns))
 	);
@@ -383,34 +310,53 @@ export async function updateNamespaceAction(
 		return { success: true, data: namespace };
 	} catch (err) {
 		namespacesStore.set(previousNamespaces);
-		const message = handleApiError(err, 'update namespace');
-		return { success: false, error: message };
+		return { success: false, error: mapApiError(err, 'update namespace') };
 	}
 }
 
-/**
- * Delete a namespace via API (pessimistic delete - waits for server confirmation)
- */
 export async function deleteNamespaceAction(id: string): Promise<ActionResult<void>> {
+	// Pre-flight: locked namespace guard
+	const namespace = getNamespaceById(id);
+	if (!namespace) {
+		return { success: false, error: `Namespace with ID "${id}" not found.` };
+	}
+	if (namespace.locked) {
+		return { success: false, error: `Cannot delete the "${namespace.name}" namespace because it is locked.` };
+	}
+
+	// Pre-flight: entity count guard
+	const entityCount = getNamespaceEntityCount(id);
+	if (entityCount > 0) {
+		const details = getNamespaceEntityDetails(id);
+		const parts: string[] = [];
+		if (details.fields > 0) parts.push(`${details.fields} field${details.fields > 1 ? 's' : ''}`);
+		if (details.fieldConstraints > 0) parts.push(`${details.fieldConstraints} field constraint${details.fieldConstraints > 1 ? 's' : ''}`);
+		if (details.objects > 0) parts.push(`${details.objects} object${details.objects > 1 ? 's' : ''}`);
+		if (details.endpoints > 0) parts.push(`${details.endpoints} endpoint${details.endpoints > 1 ? 's' : ''}`);
+		if (details.apis > 0) parts.push(`${details.apis} API${details.apis > 1 ? 's' : ''}`);
+
+		return {
+			success: false,
+			error: `Cannot delete namespace "${namespace.name}" because it contains ${parts.join(', ')}. Remove all entities before deleting.`
+		};
+	}
+
 	const wasActive = get(activeNamespaceId) === id;
 
 	try {
 		await deleteNamespaceApi(id);
-		// Only update stores after successful API response
 		namespacesStore.update(namespaces => namespaces.filter(ns => ns.id !== id));
-		// If this was the active namespace, switch to global
 		if (wasActive) {
 			activeNamespaceId.set(GLOBAL_NAMESPACE_ID);
 		}
 		return { success: true };
 	} catch (err) {
-		const message = handleApiError(err, 'delete namespace');
-		return { success: false, error: message };
+		return { success: false, error: mapApiError(err, 'delete namespace') };
 	}
 }
 
 // ============================================================================
-// Re-exports for convenience
+// Re-exports for convenience (preserves import compatibility)
 // ============================================================================
 
 export type {

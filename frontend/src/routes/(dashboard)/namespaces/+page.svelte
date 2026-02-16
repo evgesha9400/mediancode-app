@@ -4,7 +4,7 @@
     searchNamespaces,
     getNamespaceEntityDetails
   } from '$lib/stores/namespaces';
-  import { createNamespaceAction, updateNamespaceAction, deleteNamespaceAction } from '$lib/stores/actions';
+  import { createNamespaceAction, updateNamespaceAction, deleteNamespaceAction } from '$lib/domain/mutations';
   import { showToast } from '$lib/stores/toasts';
   import {
     PageHeader,
