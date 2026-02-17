@@ -456,7 +456,6 @@
     {#if listState.editedItem && !isLocked}
       <CrudDrawerFooter
         mode="editing"
-        entityName="Namespace"
         {isSaving}
         {hasChanges}
         canDelete={!hasEntities}
@@ -465,7 +464,6 @@
         {isDeleting}
         onSave={handleSave}
         onUndo={handleUndo}
-        onCancel={closeDrawer}
         onDeleteRequest={() => listState.showDeleteConfirm = true}
         onDeleteConfirm={handleDelete}
         onDeleteCancel={() => listState.showDeleteConfirm = false}
@@ -526,12 +524,12 @@
           ></textarea>
         </div>
       </div>
-      <div class="flex space-x-2 p-4 border-t border-mono-200">
+      <div class="p-4 border-t border-mono-200">
         <button
           type="button"
           onclick={handleCreate}
           disabled={isSaving}
-          class="flex-1 px-4 py-2 bg-mono-900 text-white rounded-md hover:bg-mono-800 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+          class="w-full px-4 py-2 bg-mono-900 text-white rounded-md hover:bg-mono-800 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {#if isSaving}
             <i class="fa-solid fa-spinner fa-spin mr-2"></i>
@@ -539,14 +537,6 @@
           {:else}
             Create
           {/if}
-        </button>
-        <button
-          type="button"
-          onclick={closeCreateModal}
-          disabled={isSaving}
-          class="flex-1 px-4 py-2 border border-mono-300 text-mono-700 rounded-md hover:bg-mono-50 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed"
-        >
-          Cancel
         </button>
       </div>
     </div>

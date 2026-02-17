@@ -114,15 +114,15 @@ export class FieldsPage {
 		this.constraintRows = page.locator('.flex.items-center.space-x-2.p-2.bg-white').filter({ has: page.getByRole('button', { name: 'Remove field constraint' }) });
 
 		// Drawer actions
-		this.saveButton = page.getByRole('button', { name: 'Save Changes' });
+		this.saveButton = page.getByRole('button', { name: 'Save', exact: true });
 		this.undoButton = page.getByRole('button', { name: 'Undo' });
-		this.deleteButton = page.getByRole('button', { name: 'Delete Field' });
+		this.deleteButton = page.getByRole('button').filter({ has: page.locator('span', { hasText: 'Delete' }) });
 		this.deleteConfirmButton = page.getByRole('button', { name: 'Yes, Delete' });
 		this.deleteCancelButton = page.getByRole('button', { name: 'Cancel' });
 
 		// Creation mode
 		this.addFieldButton = page.getByRole('button', { name: 'Add Field' });
-		this.createButton = page.getByRole('button', { name: 'Create Field' });
+		this.createButton = page.getByRole('button', { name: 'Create', exact: true });
 		this.cancelButton = page.getByRole('button', { name: 'Cancel' });
 		this.createDrawer = page.locator('[class*="fixed"][class*="right-0"]').filter({ has: page.locator('text=Create Field') });
 	}

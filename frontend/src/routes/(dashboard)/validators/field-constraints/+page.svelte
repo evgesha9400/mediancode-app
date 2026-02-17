@@ -356,12 +356,12 @@
             class="w-full px-4 py-2 rounded-md flex items-center justify-center transition-colors font-medium {hasReferences ? 'bg-mono-200 text-mono-400 cursor-not-allowed' : 'bg-mono-100 text-red-700 hover:bg-red-50 cursor-pointer'}"
           >
             <i class="fa-solid fa-xmark mr-2"></i>
-            <span>Delete Field Constraint</span>
+            <span>Delete</span>
           </button>
         </Tooltip>
       {:else}
         <div class="bg-red-50 border border-red-200 rounded-md p-3">
-          <p class="text-sm text-red-800 mb-2">Are you sure you want to delete this field constraint?</p>
+          <p class="text-sm text-red-800 mb-2">Are you sure?</p>
           <div class="flex space-x-2">
             <button
               type="button"

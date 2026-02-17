@@ -87,7 +87,7 @@ export class FieldConstraintsPage {
 		this.fieldReferenceButtons = page.locator('button').filter({ has: page.locator('i.fa-table-list') });
 
 		// Drawer actions
-		this.deleteButton = page.getByRole('button', { name: 'Delete Field Constraint' });
+		this.deleteButton = page.getByRole('button').filter({ has: page.locator('span', { hasText: 'Delete' }) });
 		this.deleteConfirmButton = page.getByRole('button', { name: 'Yes, Delete' });
 		this.deleteCancelButton = page.getByRole('button', { name: 'Cancel' });
 	}

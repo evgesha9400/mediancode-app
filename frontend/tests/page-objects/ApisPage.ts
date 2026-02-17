@@ -85,7 +85,7 @@ export class ApisPage {
 
 		// Drawer actions
 		this.editApiButton = page.getByRole('button', { name: 'Edit API' });
-		this.deleteApiButton = page.getByRole('button', { name: 'Delete API' });
+		this.deleteApiButton = page.getByRole('button').filter({ has: page.locator('span', { hasText: 'Delete' }) });
 		this.deleteConfirmButton = page.getByRole('button', { name: 'Yes, Delete' });
 		this.deleteCancelButton = page.getByRole('button', { name: 'Cancel' });
 	}

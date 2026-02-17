@@ -305,11 +305,11 @@
           class="w-full px-4 py-2 bg-mono-100 text-red-700 rounded-md hover:bg-red-50 cursor-pointer transition-colors font-medium flex items-center justify-center space-x-2"
         >
           <i class="fa-solid fa-xmark"></i>
-          <span>Delete API</span>
+          <span>Delete</span>
         </button>
       {:else}
         <div class="bg-red-50 border border-red-200 rounded-md p-3">
-          <p class="text-sm text-red-800 mb-2">Delete this API and all its endpoints?</p>
+          <p class="text-sm text-red-800 mb-2">Are you sure?</p>
           <div class="flex space-x-2">
             <button
               type="button"

@@ -138,6 +138,14 @@
             <span>Save</span>
           </button>
           <button
+            onclick={apiState.handleDiscardApiChanges}
+            disabled={!apiState.hasApiChanges}
+            class="px-4 py-2 border rounded-md flex items-center space-x-2 transition-colors {apiState.hasApiChanges ? 'border-mono-300 text-mono-700 hover:bg-mono-50' : 'border-mono-200 text-mono-400 cursor-not-allowed bg-mono-50'}"
+          >
+            <i class="fa-solid fa-undo"></i>
+            <span>Undo</span>
+          </button>
+          <button
             onclick={apiState.handleClose}
             class="px-4 py-2 border border-mono-300 text-mono-700 rounded-md flex items-center space-x-2 hover:bg-mono-50"
           >
@@ -482,7 +490,7 @@
           </div>
         {:else}
           <div class="bg-red-50 border border-red-200 rounded-md p-3">
-            <p class="text-sm text-red-800 mb-2">Are you sure you want to delete this endpoint?</p>
+            <p class="text-sm text-red-800 mb-2">Are you sure?</p>
             <div class="flex space-x-2">
               <button
                 type="button"

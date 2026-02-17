@@ -368,13 +368,11 @@
   <DrawerFooter>
     <CrudDrawerFooter
       mode="creating"
-      entityName="API"
       {isSaving}
       {isFormValid}
       hasChanges={false}
       canDelete={false}
       onCreate={handleCreate}
-      onCancel={closeDrawer}
     />
   </DrawerFooter>
 </Drawer>

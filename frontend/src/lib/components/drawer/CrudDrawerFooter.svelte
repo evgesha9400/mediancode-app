@@ -2,8 +2,6 @@
   export interface CrudDrawerFooterProps {
     /** Current drawer mode */
     mode: 'creating' | 'editing';
-    /** Entity name for button labels (e.g. "Field", "Object") */
-    entityName: string;
     /** Whether the form is currently saving */
     isSaving?: boolean;
     /** Whether the form is valid (used in create mode to enable/disable button) */
@@ -24,8 +22,6 @@
     onSave?: () => void;
     /** Called when undo button is clicked */
     onUndo?: () => void;
-    /** Called when cancel/close button is clicked */
-    onCancel?: () => void;
     /** Called when delete button is clicked (shows confirmation) */
     onDeleteRequest?: () => void;
     /** Called when delete is confirmed */
@@ -42,7 +38,6 @@
 
   let {
     mode,
-    entityName,
     isSaving = false,
     isFormValid = true,
     hasChanges = false,
@@ -53,7 +48,6 @@
     onCreate,
     onSave,
     onUndo,
-    onCancel,
     onDeleteRequest,
     onDeleteConfirm,
     onDeleteCancel
@@ -72,15 +66,8 @@
       <i class="fa-solid fa-spinner fa-spin mr-2"></i>
       Creating...
     {:else}
-      Create {entityName}
+      Create
     {/if}
-  </button>
-  <button
-    type="button"
-    onclick={onCancel}
-    class="w-full px-4 py-2 border border-mono-300 text-mono-700 rounded-md hover:bg-mono-50 cursor-pointer transition-colors font-medium"
-  >
-    Cancel
   </button>
 {:else}
   {@const canSave = hasChanges && !isSaving}
@@ -94,7 +81,7 @@
       <i class="fa-solid fa-spinner fa-spin mr-2"></i>
       Saving...
     {:else}
-      Save Changes
+      Save
     {/if}
   </button>
   <button
@@ -114,12 +101,12 @@
         class="w-full px-4 py-2 rounded-md flex items-center justify-center transition-colors font-medium {!canDelete ? 'bg-mono-200 text-mono-400 cursor-not-allowed' : 'bg-mono-100 text-red-700 hover:bg-red-50 cursor-pointer'}"
       >
         <i class="fa-solid fa-xmark mr-2"></i>
-        <span>Delete {entityName}</span>
+        <span>Delete</span>
       </button>
     </Tooltip>
   {:else}
     <div class="bg-red-50 border border-red-200 rounded-md p-3">
-      <p class="text-sm text-red-800 mb-2">Are you sure you want to delete this {entityName.toLowerCase()}?</p>
+      <p class="text-sm text-red-800 mb-2">Are you sure?</p>
       <div class="flex space-x-2">
         <button
           type="button"

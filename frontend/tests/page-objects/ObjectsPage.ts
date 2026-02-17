@@ -94,15 +94,15 @@ export class ObjectsPage {
 		this.fieldDropdownOptions = page.locator('.absolute.z-10.w-full button');
 
 		// Drawer actions
-		this.saveButton = page.getByRole('button', { name: 'Save Changes' });
+		this.saveButton = page.getByRole('button', { name: 'Save', exact: true });
 		this.undoButton = page.getByRole('button', { name: 'Undo' });
-		this.deleteButton = page.getByRole('button', { name: 'Delete Object' });
+		this.deleteButton = page.getByRole('button').filter({ has: page.locator('span', { hasText: 'Delete' }) });
 		this.deleteConfirmButton = page.getByRole('button', { name: 'Yes, Delete' });
 		this.deleteCancelButton = page.getByRole('button', { name: 'Cancel' });
 
 		// Creation mode
 		this.createObjectButton = page.getByRole('button', { name: /Create Object/i });
-		this.createButton = page.locator('button').filter({ hasText: /^Create Object$/i });
+		this.createButton = page.getByRole('button', { name: 'Create', exact: true });
 		this.cancelButton = page.getByRole('button', { name: 'Cancel' });
 		this.createDrawer = page.locator('[class*="fixed"][class*="right-0"]').filter({ has: page.locator('text=Create Object') });
 

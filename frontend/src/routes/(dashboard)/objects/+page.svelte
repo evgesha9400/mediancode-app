@@ -522,7 +522,6 @@
     {#if listState.editedItem}
       <CrudDrawerFooter
         mode={listState.mode === 'creating' ? 'creating' : 'editing'}
-        entityName="Object"
         {isSaving}
         {isFormValid}
         {hasChanges}
@@ -533,7 +532,6 @@
         onCreate={handleCreate}
         onSave={handleSave}
         onUndo={handleUndo}
-        onCancel={closeDrawer}
         onDeleteRequest={() => listState.showDeleteConfirm = true}
         onDeleteConfirm={handleDelete}
         onDeleteCancel={() => listState.showDeleteConfirm = false}
