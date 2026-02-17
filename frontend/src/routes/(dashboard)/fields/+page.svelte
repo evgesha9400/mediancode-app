@@ -1,11 +1,10 @@
 <script lang="ts">
   import { fieldsStore, searchFields, type Field, type FieldConstraintValue } from '$lib/stores/fields';
-  import { createFieldAction, updateFieldAction, deleteFieldAction } from '$lib/domain/mutations';
-  import { fieldConstraintsStore, type FieldConstraint } from '$lib/stores/fieldConstraints';
+  import { fieldConstraintsStore } from '$lib/stores/fieldConstraints';
   import { typesStore, getTypeIdByName } from '$lib/stores/types';
-  import { showToast } from '$lib/stores/toasts';
   import { activeNamespaceId, namespacesStore } from '$lib/stores/namespaces';
-  import { buildDeletionTooltip } from '$lib/utils/references';
+  import { createFieldContract } from '$lib/domain/entityContracts';
+  import { createCrudWorkflow } from '$lib/stores/crudWorkflow.svelte';
   import {
     PageHeader,
     SearchBar,
@@ -37,12 +36,6 @@
     onlyUsedInApis: boolean;
     onlyHasConstraints: boolean;
   };
-
-  // Form tracking
-  let isSaving = $state(false);
-  let isDeleting = $state(false);
-  let formTouched = $state(false);
-  let serverErrors = $state<Record<string, string>>({});
 
   // Reactive store subscriptions for derived computations
   let allNamespaces = $derived($namespacesStore);
@@ -99,213 +92,65 @@
     }
   });
 
+  // Entity contract + CRUD workflow
+  const contract = createFieldContract({
+    getActiveNamespaceId: () => $activeNamespaceId,
+    getDefaultType: () => selectableTypes[0]?.name ?? 'str',
+    getTypeIdByName
+  });
+  const workflow = createCrudWorkflow(listState, contract);
+
   // Truly derived values (read-only computations)
-  let filteredFields = $derived(listState.results as FieldWithApiCount[]);
-  let sorts = $derived(listState.sorts);
-  let activeFiltersCount = $derived(listState.activeFiltersCount);
-  let hasChanges = $derived(listState.hasChanges);
+  let filteredFields = $derived(workflow.results as FieldWithApiCount[]);
+  let sorts = $derived(workflow.sorts);
+  let activeFiltersCount = $derived(workflow.activeFiltersCount);
 
   let fieldConstraints = $derived($fieldConstraintsStore);
   // Filter field constraints by field's type compatibility (reactive)
   let availableFieldConstraints = $derived(
-    listState.editedItem
-      ? fieldConstraints.filter(fc => fc.compatibleTypes.includes(listState.editedItem!.type))
+    workflow.editedItem
+      ? fieldConstraints.filter(fc => fc.compatibleTypes.includes(workflow.editedItem!.type))
       : []
   );
 
   // Derive selected field constraint names for the FieldConstraintSelectorDropdown
-  let selectedFieldConstraintNames = $derived(listState.editedItem?.constraints.map(v => v.name) ?? []);
+  let selectedFieldConstraintNames = $derived(workflow.editedItem?.constraints.map(v => v.name) ?? []);
 
-  // Reactive validation
-  let formErrors = $derived.by(() => {
-    if (!listState.editedItem) return {};
-    const errors: Record<string, string> = {};
-    if (!listState.editedItem.name.trim()) errors.name = 'Field name is required';
-    if (!listState.editedItem.type) errors.type = 'Type is required';
-    const emptyParam = listState.editedItem.constraints.find(
-      c => c.value === null || c.value === ''
-    );
-    if (emptyParam) errors.constraints = `Constraint "${emptyParam.name}" requires a value`;
-    return errors;
-  });
-
-  let isFormValid = $derived(listState.editedItem !== null && Object.keys(formErrors).length === 0);
-  let visibleErrors = $derived({ ...(formTouched ? formErrors : {}), ...serverErrors });
-
+  // Entity-specific UI helpers
   function handleTypeChange(newType: string) {
-    if (!listState.editedItem || listState.editedItem.type === newType) return;
-    listState.editedItem = {
-      ...listState.editedItem,
+    if (!workflow.editedItem || workflow.editedItem.type === newType) return;
+    workflow.editedItem = {
+      ...workflow.editedItem,
       type: newType,
       constraints: [],
       defaultValue: ''
     };
   }
 
-  function selectField(field: Field) {
-    listState.selectItem(field);
-  }
-
-  function closeDrawer() {
-    listState.closeDrawer();
-    formTouched = false;
-    serverErrors = {};
-  }
-
-  function createFieldDraft(): Field {
-    const firstType = selectableTypes[0]?.name ?? 'str';
-    return {
-      id: '',
-      namespaceId: $activeNamespaceId,
-      name: '',
-      type: firstType,
-      constraints: [],
-      usedInApis: [],
-      description: '',
-      defaultValue: ''
-    };
-  }
-
-  function openCreateDrawer() {
-    listState.openCreate(createFieldDraft());
-    formTouched = false;
-    serverErrors = {};
-  }
-
-  function isSelected(field: Field): boolean {
-    return listState.selectedItem?.id === field.id;
-  }
-
-  async function handleSave() {
-    if (!listState.editedItem || isSaving) return;
-
-    formTouched = true;
-    if (!isFormValid) return;
-
-    const fieldName = listState.editedItem.name;
-    isSaving = true;
-
-    const typeId = getTypeIdByName(listState.editedItem.type);
-    if (!typeId) {
-      showToast(`Unknown type "${listState.editedItem.type}"`, 'error', 5000);
-      isSaving = false;
-      return;
-    }
-
-    const result = await updateFieldAction(listState.editedItem.id, {
-      name: listState.editedItem.name,
-      typeId,
-      description: listState.editedItem.description,
-      defaultValue: listState.editedItem.defaultValue,
-      constraints: listState.editedItem.constraints.map(c => ({ constraintId: c.constraintId, value: c.value }))
-    });
-
-    if (!result.success) {
-      isSaving = false;
-      if (result.error?.includes('already exists')) {
-        serverErrors = { name: result.error };
-      } else {
-        showToast(result.error || 'Failed to update field', 'error', 5000);
-      }
-      return;
-    }
-
-    listState.selectedItem = result.data!;
-    listState.originalItem = JSON.parse(JSON.stringify(result.data!));
-    showToast(`Field "${fieldName}" updated successfully`, 'success', 3000);
-    closeDrawer();
-    isSaving = false;
-  }
-
-  async function handleCreate() {
-    if (!listState.editedItem || isSaving) return;
-
-    formTouched = true;
-    if (!isFormValid) return;
-
-    isSaving = true;
-
-    const typeId = getTypeIdByName(listState.editedItem.type);
-    if (!typeId) {
-      showToast(`Unknown type "${listState.editedItem.type}"`, 'error', 5000);
-      isSaving = false;
-      return;
-    }
-
-    const result = await createFieldAction({
-      namespaceId: listState.editedItem.namespaceId,
-      name: listState.editedItem.name,
-      typeId,
-      description: listState.editedItem.description,
-      defaultValue: listState.editedItem.defaultValue,
-      constraints: listState.editedItem.constraints.map(c => ({ constraintId: c.constraintId, value: c.value }))
-    });
-
-    if (!result.success) {
-      isSaving = false;
-      if (result.error?.includes('already exists')) {
-        serverErrors = { name: result.error };
-      } else {
-        showToast(result.error || 'Failed to create field', 'error', 5000);
-      }
-      return;
-    }
-
-    showToast(`Field "${result.data!.name}" created successfully`, 'success', 3000);
-    closeDrawer();
-    isSaving = false;
-  }
-
-  function handleUndo() {
-    if (listState.originalItem) {
-      listState.editedItem = JSON.parse(JSON.stringify(listState.originalItem));
-      formTouched = false;
-      serverErrors = {};
-    }
-  }
-
-  async function handleDelete() {
-    if (!listState.editedItem || isDeleting) return;
-
-    const fieldName = listState.editedItem.name;
-    isDeleting = true;
-
-    const result = await deleteFieldAction(listState.editedItem.id);
-
-    if (result.success) {
-      closeDrawer();
-      isDeleting = false;
-      showToast(`Field "${fieldName}" deleted successfully`, 'success', 3000);
-    } else {
-      isDeleting = false;
-      showToast(result.error || 'Failed to delete field', 'error', 5000);
-    }
-  }
-
   function addFieldConstraint(constraintName: string) {
-    if (!listState.editedItem) return;
+    if (!workflow.editedItem) return;
 
     const constraint = fieldConstraints.find(fc => fc.name === constraintName);
     if (!constraint) return;
 
-    listState.editedItem = {
-      ...listState.editedItem,
-      constraints: [...listState.editedItem.constraints, { name: constraintName, constraintId: constraint.id, value: null }]
+    workflow.editedItem = {
+      ...workflow.editedItem,
+      constraints: [...workflow.editedItem.constraints, { name: constraintName, constraintId: constraint.id, value: null }]
     };
   }
 
   function removeFieldConstraint(index: number) {
-    if (!listState.editedItem) return;
-    listState.editedItem = {
-      ...listState.editedItem,
-      constraints: listState.editedItem.constraints.filter((_, i) => i !== index)
+    if (!workflow.editedItem) return;
+    workflow.editedItem = {
+      ...workflow.editedItem,
+      constraints: workflow.editedItem.constraints.filter((_, i) => i !== index)
     };
   }
 
   function updateConstraintParam(index: number, rawValue: string, parameterType: string) {
-    if (!listState.editedItem) return;
+    if (!workflow.editedItem) return;
 
-    const updatedConstraints = listState.editedItem.constraints.map((c, i) => {
+    const updatedConstraints = workflow.editedItem.constraints.map((c, i) => {
       if (i !== index) return c;
       return {
         ...c,
@@ -313,7 +158,7 @@
       };
     });
 
-    listState.editedItem = { ...listState.editedItem, constraints: updatedConstraints };
+    workflow.editedItem = { ...workflow.editedItem, constraints: updatedConstraints };
   }
 
   function formatFieldConstraintPill(constraintValue: FieldConstraintValue): string {
@@ -323,10 +168,6 @@
     return constraintValue.name;
   }
 
-  let hasReferences = $derived(listState.editedItem ? listState.editedItem.usedInApis.length > 0 : false);
-  let deleteTooltip = $derived(listState.editedItem && hasReferences
-    ? buildDeletionTooltip('field', 'API', listState.editedItem.usedInApis.map(api => ({ name: api })))
-    : '');
   let hasLoadError = $derived($storeLoadingState.storeErrors.includes('Fields'));
 </script>
 
@@ -335,7 +176,7 @@
       <NamespaceSelector />
       <button
         type="button"
-        onclick={openCreateDrawer}
+        onclick={workflow.openCreate}
         class="px-4 py-2 bg-mono-900 text-white rounded-md flex items-center space-x-2 hover:bg-mono-800 cursor-pointer transition-colors"
       >
         <i class="fa-solid fa-plus"></i>
@@ -345,21 +186,21 @@
   </PageHeader>
 
   <SearchBar
-    bind:searchQuery={listState.query}
+    bind:searchQuery={workflow.query}
     placeholder="Search fields..."
     resultsCount={filteredFields.length}
     resultLabel="field"
     showFilter={true}
-    active={listState.filtersOpen || activeFiltersCount > 0}
-    onFilterClick={listState.toggleFilters}
+    active={workflow.filtersOpen || activeFiltersCount > 0}
+    onFilterClick={workflow.toggleFilters}
   >
     {#snippet filterPanel()}
       <FilterPanel
-        visible={listState.filtersOpen}
+        visible={workflow.filtersOpen}
         config={fieldFilterConfig}
-        bind:state={listState.filters}
-        onClose={() => listState.filtersOpen = false}
-        onClear={listState.resetFilters}
+        bind:state={workflow.filters}
+        onClose={() => workflow.filtersOpen = false}
+        onClear={workflow.resetFilters}
       />
     {/snippet}
   </SearchBar>
@@ -371,19 +212,19 @@
           column="name"
           label="Field Name"
           {sorts}
-          onSort={listState.handleSort}
+          onSort={workflow.handleSort}
         />
         <SortableColumn
           column="type"
           label="Type"
           {sorts}
-          onSort={listState.handleSort}
+          onSort={workflow.handleSort}
         />
         <SortableColumn
           column="namespace"
           label="Namespace"
           {sorts}
-          onSort={listState.handleSort}
+          onSort={workflow.handleSort}
         />
         <th scope="col" class="px-6 py-3 text-left text-xs text-mono-500 tracking-wider font-medium">
           <div class="flex items-center space-x-1">
@@ -394,13 +235,13 @@
           column="defaultValue"
           label="Default Value"
           {sorts}
-          onSort={listState.handleSort}
+          onSort={workflow.handleSort}
         />
         <SortableColumn
           column="usedInApis"
           label="Used In APIs"
           {sorts}
-          onSort={listState.handleSort}
+          onSort={workflow.handleSort}
         />
       </tr>
     {/snippet}
@@ -408,8 +249,8 @@
     {#snippet body()}
       {#each filteredFields as field}
         <tr
-          onclick={() => selectField(field)}
-          class="cursor-pointer transition-colors {isSelected(field) ? 'bg-mono-100' : 'hover:bg-mono-50'}"
+          onclick={() => workflow.selectItem(field)}
+          class="cursor-pointer transition-colors {workflow.isSelected(field) ? 'bg-mono-100' : 'hover:bg-mono-50'}"
         >
           <td class="px-6 py-4 whitespace-nowrap">
             <div class="text-sm text-mono-900 font-medium">{field.name}</div>
@@ -469,11 +310,11 @@
     {/snippet}
   </Table>
 
-<Drawer open={listState.drawerOpen} maxWidth={520}>
-  <DrawerHeader title={listState.mode === 'creating' ? 'Create Field' : 'Edit Field'} onClose={closeDrawer} />
+<Drawer open={workflow.drawerOpen} maxWidth={520}>
+  <DrawerHeader title={workflow.mode === 'creating' ? 'Create Field' : 'Edit Field'} onClose={workflow.closeDrawer} />
 
   <DrawerContent>
-    {#if listState.editedItem}
+    {#if workflow.editedItem}
       <div class="space-y-4">
         <!-- Namespace (Read-only) -->
         <div>
@@ -483,7 +324,7 @@
           <input
             id="fields-namespace"
             type="text"
-            value={allNamespaces.find(ns => ns.id === listState.editedItem?.namespaceId)?.name ?? ''}
+            value={allNamespaces.find(ns => ns.id === workflow.editedItem?.namespaceId)?.name ?? ''}
             disabled
             class="w-full px-3 py-2 border border-mono-300 rounded-md bg-mono-50 text-mono-500 cursor-not-allowed"
           />
@@ -498,11 +339,11 @@
           <input
             id="fields-name"
             type="text"
-            bind:value={listState.editedItem.name}
-            class="w-full px-3 py-2 border border-mono-300 rounded-md focus:ring-2 focus:ring-mono-400 focus:border-transparent {visibleErrors.name ? 'border-red-500' : ''}"
+            bind:value={workflow.editedItem.name}
+            class="w-full px-3 py-2 border border-mono-300 rounded-md focus:ring-2 focus:ring-mono-400 focus:border-transparent {workflow.visibleErrors.name ? 'border-red-500' : ''}"
           />
-          {#if visibleErrors.name}
-            <p class="text-xs text-red-500 mt-1">{visibleErrors.name}</p>
+          {#if workflow.visibleErrors.name}
+            <p class="text-xs text-red-500 mt-1">{workflow.visibleErrors.name}</p>
           {/if}
         </div>
 
@@ -514,13 +355,13 @@
           <TypeSelectorDropdown
             id="fields-type"
             availableTypes={selectableTypes}
-            selectedTypeName={listState.editedItem.type}
+            selectedTypeName={workflow.editedItem.type}
             onSelect={handleTypeChange}
             placeholder="Search types..."
-            error={!!visibleErrors.type}
+            error={!!workflow.visibleErrors.type}
           />
-          {#if visibleErrors.type}
-            <p class="text-xs text-red-500 mt-1">{visibleErrors.type}</p>
+          {#if workflow.visibleErrors.type}
+            <p class="text-xs text-red-500 mt-1">{workflow.visibleErrors.type}</p>
           {/if}
         </div>
 
@@ -529,7 +370,7 @@
           <label for="fields-description" class="block text-sm text-mono-700 mb-1 font-medium">Description</label>
           <textarea
             id="fields-description"
-            bind:value={listState.editedItem.description}
+            bind:value={workflow.editedItem.description}
             rows="3"
             class="w-full px-3 py-2 border border-mono-300 rounded-md focus:ring-2 focus:ring-mono-400 focus:border-transparent"
           ></textarea>
@@ -541,7 +382,7 @@
           <input
             id="fields-default-value"
             type="text"
-            bind:value={listState.editedItem.defaultValue}
+            bind:value={workflow.editedItem.defaultValue}
             placeholder="None"
             class="w-full px-3 py-2 border border-mono-300 rounded-md focus:ring-2 focus:ring-mono-400 focus:border-transparent"
           />
@@ -549,21 +390,21 @@
 
         <!-- Constraints -->
         <FieldConstraintEditor
-          constraints={listState.editedItem.constraints}
+          constraints={workflow.editedItem.constraints}
           availableConstraints={availableFieldConstraints}
           allConstraintMeta={fieldConstraints}
           selectedNames={selectedFieldConstraintNames}
           onAdd={addFieldConstraint}
           onRemove={removeFieldConstraint}
           onParamChange={updateConstraintParam}
-          error={visibleErrors.constraints}
+          error={workflow.visibleErrors.constraints}
         />
 
         <!-- Used In APIs -->
         <div>
-          <h3 class="text-sm text-mono-700 mb-2 font-medium">Used In APIs ({listState.editedItem.usedInApis.length})</h3>
+          <h3 class="text-sm text-mono-700 mb-2 font-medium">Used In APIs ({workflow.editedItem.usedInApis.length})</h3>
           <div class="space-y-2">
-            {#each listState.editedItem.usedInApis as api}
+            {#each workflow.editedItem.usedInApis as api}
               <div class="flex items-center justify-between p-3 bg-mono-50 rounded-md">
                 <div class="flex items-center space-x-2">
                   <i class="fa-solid fa-code text-mono-400"></i>
@@ -571,7 +412,7 @@
                 </div>
               </div>
             {/each}
-            {#if listState.editedItem.usedInApis.length === 0}
+            {#if workflow.editedItem.usedInApis.length === 0}
               <p class="text-sm text-mono-500 italic">Not used in any APIs</p>
             {/if}
           </div>
@@ -581,22 +422,22 @@
   </DrawerContent>
 
   <DrawerFooter>
-    {#if listState.editedItem}
+    {#if workflow.editedItem}
       <CrudDrawerFooter
-        mode={listState.mode === 'creating' ? 'creating' : 'editing'}
-        {isSaving}
-        {isFormValid}
-        {hasChanges}
-        canDelete={!hasReferences}
-        {deleteTooltip}
-        showDeleteConfirm={listState.showDeleteConfirm}
-        {isDeleting}
-        onCreate={handleCreate}
-        onSave={handleSave}
-        onUndo={handleUndo}
-        onDeleteRequest={() => listState.showDeleteConfirm = true}
-        onDeleteConfirm={handleDelete}
-        onDeleteCancel={() => listState.showDeleteConfirm = false}
+        mode={workflow.mode === 'creating' ? 'creating' : 'editing'}
+        isSaving={workflow.isSaving}
+        isFormValid={workflow.isFormValid}
+        hasChanges={workflow.hasChanges}
+        canDelete={workflow.canDelete}
+        deleteTooltip={workflow.deleteTooltip}
+        showDeleteConfirm={workflow.showDeleteConfirm}
+        isDeleting={workflow.isDeleting}
+        onCreate={workflow.handleCreate}
+        onSave={workflow.handleSave}
+        onUndo={workflow.handleUndo}
+        onDeleteRequest={() => workflow.showDeleteConfirm = true}
+        onDeleteConfirm={workflow.handleDelete}
+        onDeleteCancel={() => workflow.showDeleteConfirm = false}
       />
     {/if}
   </DrawerFooter>

@@ -1,10 +1,9 @@
 <script lang="ts">
   import { objectsStore, searchObjects, type ObjectDefinition } from '$lib/stores/objects';
-  import { createObjectAction, updateObjectAction, deleteObjectAction } from '$lib/domain/mutations';
   import { fieldsStore, getFieldById } from '$lib/stores/fields';
-  import { showToast } from '$lib/stores/toasts';
   import { activeNamespaceId, namespacesStore } from '$lib/stores/namespaces';
-  import { buildDeletionTooltip } from '$lib/utils/references';
+  import { createObjectContract } from '$lib/domain/entityContracts';
+  import { createCrudWorkflow } from '$lib/stores/crudWorkflow.svelte';
   import {
     PageHeader,
     SearchBar,
@@ -37,12 +36,6 @@
   // Build filter config (empty initially)
   let objectFilterConfig = $derived([]);
 
-  // Form tracking
-  let isSaving = $state(false);
-  let isDeleting = $state(false);
-  let formTouched = $state(false);
-  let serverErrors = $state<Record<string, string>>({});
-
   // Reactive store subscription for derived computations
   let allNamespaces = $derived($namespacesStore);
 
@@ -71,184 +64,51 @@
     }
   });
 
+  // Entity contract + CRUD workflow
+  const contract = createObjectContract({ getActiveNamespaceId: () => $activeNamespaceId });
+  const workflow = createCrudWorkflow(listState, contract);
+
   // Truly derived values (read-only computations)
-  let filteredObjects = $derived(listState.results as ObjectWithCounts[]);
-  let sorts = $derived(listState.sorts);
-  let hasChanges = $derived(listState.hasChanges);
+  let filteredObjects = $derived(workflow.results as ObjectWithCounts[]);
+  let sorts = $derived(workflow.sorts);
 
   let fields = $derived($fieldsStore);
 
   // Filter fields to only show those in the object's namespace
-  let namespacedFields = $derived(listState.editedItem ? fields.filter(f => f.namespaceId === listState.editedItem!.namespaceId) : []);
+  let namespacedFields = $derived(workflow.editedItem ? fields.filter(f => f.namespaceId === workflow.editedItem!.namespaceId) : []);
 
   // Derive selected field IDs for the FieldSelectorDropdown
-  let selectedFieldIds = $derived(listState.editedItem?.fields.map(f => f.fieldId) ?? []);
+  let selectedFieldIds = $derived(workflow.editedItem?.fields.map(f => f.fieldId) ?? []);
 
-  // Reactive validation
-  let formErrors = $derived.by(() => {
-    if (!listState.editedItem) return {};
-    const errors: Record<string, string> = {};
-    if (!listState.editedItem.name.trim()) errors.name = 'Object name is required';
-    return errors;
-  });
-
-  let isFormValid = $derived(listState.editedItem !== null && Object.keys(formErrors).length === 0);
-  let visibleErrors = $derived({ ...(formTouched ? formErrors : {}), ...serverErrors });
-
-  function selectObject(obj: ObjectDefinition) {
-    listState.selectItem(obj);
-  }
-
-  function closeDrawer() {
-    listState.closeDrawer();
-    formTouched = false;
-    serverErrors = {};
-  }
-
-  function createObjectDraft(): ObjectDefinition {
-    return {
-      id: '',
-      namespaceId: $activeNamespaceId,
-      name: '',
-      description: '',
-      fields: [],
-      usedInApis: []
-    };
-  }
-
-  function openCreateDrawer() {
-    listState.openCreate(createObjectDraft());
-    formTouched = false;
-    serverErrors = {};
-  }
-
-  function isSelected(obj: ObjectDefinition): boolean {
-    return listState.selectedItem?.id === obj.id;
-  }
-
-  async function handleSave() {
-    if (!listState.editedItem || isSaving) return;
-
-    formTouched = true;
-    if (!isFormValid) return;
-
-    const objectName = listState.editedItem.name;
-    isSaving = true;
-
-    // Strip derived properties before saving
-    const { fieldCount, usedInApisCount, namespaceName, ...cleanObject } = listState.editedItem as ObjectWithCounts;
-
-    const result = await updateObjectAction(cleanObject.id, {
-      name: cleanObject.name,
-      description: cleanObject.description,
-      fields: cleanObject.fields
-    });
-
-    if (!result.success) {
-      isSaving = false;
-      if (result.error?.includes('already exists')) {
-        serverErrors = { name: result.error };
-      } else {
-        showToast(result.error || 'Failed to update object', 'error', 5000);
-      }
-      return;
-    }
-
-    listState.selectedItem = result.data!;
-    listState.originalItem = JSON.parse(JSON.stringify(result.data!));
-    showToast(`Object "${objectName}" updated successfully`, 'success', 3000);
-    closeDrawer();
-    isSaving = false;
-  }
-
-  async function handleCreate() {
-    if (!listState.editedItem || isSaving) return;
-
-    formTouched = true;
-    if (!isFormValid) return;
-
-    isSaving = true;
-
-    const result = await createObjectAction({
-      namespaceId: listState.editedItem.namespaceId,
-      name: listState.editedItem.name,
-      description: listState.editedItem.description,
-      fields: listState.editedItem.fields
-    });
-
-    if (!result.success) {
-      isSaving = false;
-      if (result.error?.includes('already exists')) {
-        serverErrors = { name: result.error };
-      } else {
-        showToast(result.error || 'Failed to create object', 'error', 5000);
-      }
-      return;
-    }
-
-    showToast(`Object "${result.data!.name}" created successfully`, 'success', 3000);
-    closeDrawer();
-    isSaving = false;
-  }
-
-  function handleUndo() {
-    if (listState.originalItem) {
-      listState.editedItem = JSON.parse(JSON.stringify(listState.originalItem));
-      formTouched = false;
-      serverErrors = {};
-    }
-  }
-
-  async function handleDelete() {
-    if (!listState.editedItem || isDeleting) return;
-
-    const objectName = listState.editedItem.name;
-    isDeleting = true;
-
-    const result = await deleteObjectAction(listState.editedItem.id);
-
-    if (result.success) {
-      closeDrawer();
-      isDeleting = false;
-      showToast(`Object "${objectName}" deleted successfully`, 'success', 3000);
-    } else {
-      isDeleting = false;
-      showToast(result.error || 'Failed to delete object', 'error', 5000);
-    }
-  }
-
+  // Entity-specific UI helpers (not abstractable into workflow)
   function addField(fieldId: string) {
-    if (!listState.editedItem) return;
+    if (!workflow.editedItem) return;
 
-    listState.editedItem = {
-      ...listState.editedItem,
-      fields: [...listState.editedItem.fields, { fieldId, required: false }]
+    workflow.editedItem = {
+      ...workflow.editedItem,
+      fields: [...workflow.editedItem.fields, { fieldId, required: false }]
     };
   }
 
   function removeField(fieldId: string) {
-    if (!listState.editedItem) return;
-    listState.editedItem = {
-      ...listState.editedItem,
-      fields: listState.editedItem.fields.filter(f => f.fieldId !== fieldId)
+    if (!workflow.editedItem) return;
+    workflow.editedItem = {
+      ...workflow.editedItem,
+      fields: workflow.editedItem.fields.filter(f => f.fieldId !== fieldId)
     };
   }
 
   function toggleFieldRequired(fieldId: string) {
-    if (!listState.editedItem) return;
-    const newFields = listState.editedItem.fields.map(f =>
+    if (!workflow.editedItem) return;
+    const newFields = workflow.editedItem.fields.map(f =>
       f.fieldId === fieldId ? { ...f, required: !f.required } : f
     );
-    listState.editedItem = {
-      ...listState.editedItem,
+    workflow.editedItem = {
+      ...workflow.editedItem,
       fields: newFields
     };
   }
 
-  let hasReferences = $derived(listState.editedItem ? listState.editedItem.usedInApis.length > 0 : false);
-  let deleteTooltip = $derived(listState.editedItem && hasReferences
-    ? buildDeletionTooltip('object', 'API', listState.editedItem.usedInApis.map(api => ({ name: api })))
-    : '');
   let hasLoadError = $derived($storeLoadingState.storeErrors.includes('Objects'));
 </script>
 
@@ -257,7 +117,7 @@
       <NamespaceSelector />
       <button
         type="button"
-        onclick={openCreateDrawer}
+        onclick={workflow.openCreate}
         class="px-4 py-2 bg-mono-900 text-white rounded-md flex items-center space-x-2 hover:bg-mono-800 cursor-pointer transition-colors"
       >
         <i class="fa-solid fa-plus"></i>
@@ -267,7 +127,7 @@
   </PageHeader>
 
   <SearchBar
-    bind:searchQuery={listState.query}
+    bind:searchQuery={workflow.query}
     placeholder="Search objects..."
     resultsCount={filteredObjects.length}
     resultLabel="object"
@@ -282,25 +142,25 @@
           column="name"
           label="Object Name"
           {sorts}
-          onSort={listState.handleSort}
+          onSort={workflow.handleSort}
         />
         <SortableColumn
           column="namespace"
           label="Namespace"
           {sorts}
-          onSort={listState.handleSort}
+          onSort={workflow.handleSort}
         />
         <SortableColumn
           column="fields"
           label="Fields"
           {sorts}
-          onSort={listState.handleSort}
+          onSort={workflow.handleSort}
         />
         <SortableColumn
           column="usedInApis"
           label="Used In APIs"
           {sorts}
-          onSort={listState.handleSort}
+          onSort={workflow.handleSort}
         />
         <th scope="col" class="px-6 py-3 text-left text-xs text-mono-500 tracking-wider font-medium">
           <div class="flex items-center space-x-1">
@@ -313,8 +173,8 @@
     {#snippet body()}
       {#each filteredObjects as object}
         <tr
-          onclick={() => selectObject(object)}
-          class="cursor-pointer transition-colors {isSelected(object) ? 'bg-mono-100' : 'hover:bg-mono-50'}"
+          onclick={() => workflow.selectItem(object)}
+          class="cursor-pointer transition-colors {workflow.isSelected(object) ? 'bg-mono-100' : 'hover:bg-mono-50'}"
         >
           <td class="px-6 py-4 whitespace-nowrap">
             <div class="text-sm text-mono-900 font-medium">{object.name}</div>
@@ -364,11 +224,11 @@
     {/snippet}
   </Table>
 
-<Drawer open={listState.drawerOpen} maxWidth={720}>
-  <DrawerHeader title={listState.mode === 'creating' ? 'Create Object' : 'Edit Object'} onClose={closeDrawer} />
+<Drawer open={workflow.drawerOpen} maxWidth={720}>
+  <DrawerHeader title={workflow.mode === 'creating' ? 'Create Object' : 'Edit Object'} onClose={workflow.closeDrawer} />
 
   <DrawerContent>
-    {#if listState.editedItem}
+    {#if workflow.editedItem}
       <div class="space-y-4">
         <!-- Namespace (Read-only - uses active namespace from selector) -->
         <div>
@@ -378,7 +238,7 @@
           <input
             id="object-namespace"
             type="text"
-            value={allNamespaces.find(ns => ns.id === listState.editedItem?.namespaceId)?.name ?? 'No namespace selected'}
+            value={allNamespaces.find(ns => ns.id === workflow.editedItem?.namespaceId)?.name ?? 'No namespace selected'}
             disabled
             class="w-full px-3 py-2 border border-mono-200 rounded-lg bg-mono-100 text-mono-500 cursor-not-allowed"
           />
@@ -395,11 +255,11 @@
           <input
             id="object-name"
             type="text"
-            bind:value={listState.editedItem.name}
-            class="w-full px-3 py-2 border border-mono-300 rounded-md focus:ring-2 focus:ring-mono-400 focus:border-transparent {visibleErrors.name ? 'border-red-500' : ''}"
+            bind:value={workflow.editedItem.name}
+            class="w-full px-3 py-2 border border-mono-300 rounded-md focus:ring-2 focus:ring-mono-400 focus:border-transparent {workflow.visibleErrors.name ? 'border-red-500' : ''}"
           />
-          {#if visibleErrors.name}
-            <p class="text-xs text-red-500 mt-1">{visibleErrors.name}</p>
+          {#if workflow.visibleErrors.name}
+            <p class="text-xs text-red-500 mt-1">{workflow.visibleErrors.name}</p>
           {/if}
         </div>
 
@@ -408,7 +268,7 @@
           <label for="object-description" class="block text-sm text-mono-700 mb-1 font-medium">Description</label>
           <textarea
             id="object-description"
-            bind:value={listState.editedItem.description}
+            bind:value={workflow.editedItem.description}
             rows="3"
             class="w-full px-3 py-2 border border-mono-300 rounded-md focus:ring-2 focus:ring-mono-400 focus:border-transparent"
           ></textarea>
@@ -416,7 +276,7 @@
 
         <!-- Fields -->
         <div>
-          <h3 class="text-sm text-mono-700 mb-2 font-medium">Fields ({listState.editedItem.fields.length})</h3>
+          <h3 class="text-sm text-mono-700 mb-2 font-medium">Fields ({workflow.editedItem.fields.length})</h3>
 
           <div class="space-y-2">
             <!-- Field Selector Dropdown -->
@@ -428,13 +288,13 @@
             />
 
             <!-- Selected Fields -->
-            {#if listState.editedItem.fields.length === 0}
+            {#if workflow.editedItem.fields.length === 0}
               <div class="p-3 bg-mono-50 rounded border border-mono-200">
                 <p class="text-xs text-mono-500">No fields selected</p>
               </div>
             {:else}
               <div class="p-2 bg-mono-50 rounded border border-mono-200 space-y-2">
-                {#each listState.editedItem.fields as fieldRef}
+                {#each workflow.editedItem.fields as fieldRef}
                   {@const field = getFieldById(fieldRef.fieldId)}
                   {#if field}
                     <div class="flex items-center space-x-2 p-2 bg-white rounded border border-mono-200">
@@ -499,9 +359,9 @@
 
         <!-- Used In APIs -->
         <div>
-          <h3 class="text-sm text-mono-700 mb-2 font-medium">Used In APIs ({listState.editedItem.usedInApis.length})</h3>
+          <h3 class="text-sm text-mono-700 mb-2 font-medium">Used In APIs ({workflow.editedItem.usedInApis.length})</h3>
           <div class="space-y-2">
-            {#each listState.editedItem.usedInApis as api}
+            {#each workflow.editedItem.usedInApis as api}
               <div class="flex items-center justify-between p-3 bg-mono-50 rounded-md">
                 <div class="flex items-center space-x-2">
                   <i class="fa-solid fa-code text-mono-400"></i>
@@ -509,7 +369,7 @@
                 </div>
               </div>
             {/each}
-            {#if listState.editedItem.usedInApis.length === 0}
+            {#if workflow.editedItem.usedInApis.length === 0}
               <p class="text-sm text-mono-500 italic">Not used in any APIs</p>
             {/if}
           </div>
@@ -519,22 +379,22 @@
   </DrawerContent>
 
   <DrawerFooter>
-    {#if listState.editedItem}
+    {#if workflow.editedItem}
       <CrudDrawerFooter
-        mode={listState.mode === 'creating' ? 'creating' : 'editing'}
-        {isSaving}
-        {isFormValid}
-        {hasChanges}
-        canDelete={!hasReferences}
-        {deleteTooltip}
-        showDeleteConfirm={listState.showDeleteConfirm}
-        {isDeleting}
-        onCreate={handleCreate}
-        onSave={handleSave}
-        onUndo={handleUndo}
-        onDeleteRequest={() => listState.showDeleteConfirm = true}
-        onDeleteConfirm={handleDelete}
-        onDeleteCancel={() => listState.showDeleteConfirm = false}
+        mode={workflow.mode === 'creating' ? 'creating' : 'editing'}
+        isSaving={workflow.isSaving}
+        isFormValid={workflow.isFormValid}
+        hasChanges={workflow.hasChanges}
+        canDelete={workflow.canDelete}
+        deleteTooltip={workflow.deleteTooltip}
+        showDeleteConfirm={workflow.showDeleteConfirm}
+        isDeleting={workflow.isDeleting}
+        onCreate={workflow.handleCreate}
+        onSave={workflow.handleSave}
+        onUndo={workflow.handleUndo}
+        onDeleteRequest={() => workflow.showDeleteConfirm = true}
+        onDeleteConfirm={workflow.handleDelete}
+        onDeleteCancel={() => workflow.showDeleteConfirm = false}
       />
     {/if}
   </DrawerFooter>

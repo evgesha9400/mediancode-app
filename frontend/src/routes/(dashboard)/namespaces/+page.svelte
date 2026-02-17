@@ -4,8 +4,10 @@
     searchNamespaces,
     getNamespaceEntityDetails
   } from '$lib/stores/namespaces';
-  import { createNamespaceAction, updateNamespaceAction, deleteNamespaceAction } from '$lib/domain/mutations';
+  import { createNamespaceAction } from '$lib/domain/mutations';
   import { showToast } from '$lib/stores/toasts';
+  import { createNamespaceContract } from '$lib/domain/entityContracts';
+  import { createCrudWorkflow } from '$lib/stores/crudWorkflow.svelte';
   import {
     PageHeader,
     SearchBar,
@@ -50,16 +52,6 @@
     }
   ];
 
-  // Modal state for creating new namespace
-  let showCreateModal = $state(false);
-  let newNamespaceName = $state('');
-  let newNamespaceDescription = $state('');
-  let createErrors = $state<Record<string, string>>({});
-  let isSaving = $state(false);
-  let isDeleting = $state(false);
-  let formTouched = $state(false);
-  let serverErrors = $state<Record<string, string>>({});
-
   // Create list view state (owns all reactive state)
   const listState = createListViewState<Namespace, NamespaceFilterState>({
     itemsStore: () => $namespacesStore,
@@ -86,99 +78,21 @@
     }
   });
 
+  // Entity contract + CRUD workflow (handles drawer edit/delete only)
+  const contract = createNamespaceContract({ getNamespaceEntityDetails });
+  const workflow = createCrudWorkflow(listState, contract);
+
   // Truly derived values (read-only computations)
-  let filteredNamespaces = $derived(listState.results as NamespaceWithCounts[]);
-  let sorts = $derived(listState.sorts);
-  let activeFiltersCount = $derived(listState.activeFiltersCount);
-  let hasChanges = $derived(listState.hasChanges);
+  let filteredNamespaces = $derived(workflow.results as NamespaceWithCounts[]);
+  let sorts = $derived(workflow.sorts);
+  let activeFiltersCount = $derived(workflow.activeFiltersCount);
 
-  // Reactive validation for edit drawer
-  let formErrors = $derived.by(() => {
-    if (!listState.editedItem) return {};
-    const errors: Record<string, string> = {};
-    if (!listState.editedItem.name.trim()) errors.name = 'Namespace name is required';
-    return errors;
-  });
-
-  let isFormValid = $derived(listState.editedItem !== null && Object.keys(formErrors).length === 0);
-  let visibleErrors = $derived({ ...(formTouched ? formErrors : {}), ...serverErrors });
-
-  function selectNamespace(namespace: Namespace) {
-    listState.selectItem(namespace);
-  }
-
-  function closeDrawer() {
-    listState.closeDrawer();
-    formTouched = false;
-    serverErrors = {};
-  }
-
-  function isSelected(namespace: Namespace): boolean {
-    return listState.selectedItem?.id === namespace.id;
-  }
-
-  async function handleSave() {
-    if (!listState.editedItem || isSaving) return;
-
-    // Can't edit locked namespaces
-    if (listState.editedItem.locked) {
-      showToast('Cannot edit locked namespaces', 'error', 3000);
-      return;
-    }
-
-    formTouched = true;
-    if (!isFormValid) return;
-
-    const namespaceName = listState.editedItem.name;
-    isSaving = true;
-
-    const result = await updateNamespaceAction(listState.editedItem.id, {
-      name: listState.editedItem.name,
-      description: listState.editedItem.description
-    });
-
-    if (!result.success) {
-      isSaving = false;
-      if (result.error?.includes('already exists')) {
-        serverErrors = { name: result.error };
-      } else {
-        showToast(result.error || 'Failed to update namespace', 'error', 5000);
-      }
-      return;
-    }
-
-    listState.selectedItem = result.data!;
-    listState.originalItem = JSON.parse(JSON.stringify(result.data!));
-    showToast(`Namespace "${namespaceName}" updated successfully`, 'success', 3000);
-    closeDrawer();
-    isSaving = false;
-  }
-
-  function handleUndo() {
-    if (listState.originalItem) {
-      listState.editedItem = JSON.parse(JSON.stringify(listState.originalItem));
-      formTouched = false;
-      serverErrors = {};
-    }
-  }
-
-  async function handleDelete() {
-    if (!listState.editedItem || isDeleting) return;
-
-    const namespaceName = listState.editedItem.name;
-    isDeleting = true;
-
-    const result = await deleteNamespaceAction(listState.editedItem.id);
-
-    if (result.success) {
-      closeDrawer();
-      isDeleting = false;
-      showToast(`Namespace "${namespaceName}" deleted successfully`, 'success', 3000);
-    } else {
-      isDeleting = false;
-      showToast(result.error || 'Failed to delete namespace', 'error', 5000);
-    }
-  }
+  // Modal state for creating new namespace (NOT handled by workflow)
+  let showCreateModal = $state(false);
+  let newNamespaceName = $state('');
+  let newNamespaceDescription = $state('');
+  let createErrors = $state<Record<string, string>>({});
+  let isCreating = $state(false);
 
   function openCreateModal() {
     newNamespaceName = '';
@@ -199,15 +113,15 @@
       return;
     }
 
-    if (isSaving) return;
-    isSaving = true;
+    if (isCreating) return;
+    isCreating = true;
 
     const result = await createNamespaceAction({
       name: newNamespaceName.trim(),
       description: newNamespaceDescription.trim() || undefined
     });
 
-    isSaving = false;
+    isCreating = false;
 
     if (!result.success) {
       if (result.error?.includes('already exists')) {
@@ -223,20 +137,7 @@
   }
 
   let hasLoadError = $derived($storeLoadingState.storeErrors.includes('Namespaces'));
-  let isLocked = $derived(listState.editedItem?.locked ?? false);
-  let hasEntities = $derived.by(() => {
-    if (!listState.editedItem) return false;
-    return getNamespaceEntityDetails(listState.editedItem.id).total > 0;
-  });
-  let deleteTooltip = $derived.by(() => {
-    if (!listState.editedItem) return '';
-    if (listState.editedItem.locked) return 'Cannot delete locked namespaces';
-    const details = getNamespaceEntityDetails(listState.editedItem.id);
-    if (details.total > 0) {
-      return `Cannot delete: Contains ${details.total} entities`;
-    }
-    return '';
-  });
+  let isLocked = $derived(workflow.editedItem?.locked ?? false);
 </script>
 
 <PageHeader title="Namespaces">
@@ -253,21 +154,21 @@
   </PageHeader>
 
   <SearchBar
-    bind:searchQuery={listState.query}
+    bind:searchQuery={workflow.query}
     placeholder="Search namespaces..."
     resultsCount={filteredNamespaces.length}
     resultLabel="namespace"
     showFilter={true}
-    active={listState.filtersOpen || activeFiltersCount > 0}
-    onFilterClick={listState.toggleFilters}
+    active={workflow.filtersOpen || activeFiltersCount > 0}
+    onFilterClick={workflow.toggleFilters}
   >
     {#snippet filterPanel()}
       <FilterPanel
-        visible={listState.filtersOpen}
+        visible={workflow.filtersOpen}
         config={namespaceFilterConfig}
-        bind:state={listState.filters}
-        onClose={() => listState.filtersOpen = false}
-        onClear={listState.resetFilters}
+        bind:state={workflow.filters}
+        onClose={() => workflow.filtersOpen = false}
+        onClear={workflow.resetFilters}
       />
     {/snippet}
   </SearchBar>
@@ -279,7 +180,7 @@
           column="name"
           label="Name"
           {sorts}
-          onSort={listState.handleSort}
+          onSort={workflow.handleSort}
         />
         <th scope="col" class="px-6 py-3 text-left text-xs text-mono-500 tracking-wider font-medium">
           Description
@@ -291,7 +192,7 @@
           column="entityCount"
           label="Entities"
           {sorts}
-          onSort={listState.handleSort}
+          onSort={workflow.handleSort}
         />
       </tr>
     {/snippet}
@@ -299,8 +200,8 @@
     {#snippet body()}
       {#each filteredNamespaces as namespace}
         <tr
-          onclick={() => selectNamespace(namespace)}
-          class="cursor-pointer transition-colors {isSelected(namespace) ? 'bg-mono-100' : 'hover:bg-mono-50'}"
+          onclick={() => workflow.selectItem(namespace)}
+          class="cursor-pointer transition-colors {workflow.isSelected(namespace) ? 'bg-mono-100' : 'hover:bg-mono-50'}"
         >
           <td class="px-6 py-4 whitespace-nowrap">
             <div class="flex items-center space-x-2">
@@ -360,11 +261,11 @@
     {/snippet}
   </Table>
 
-<Drawer open={listState.drawerOpen}>
-  <DrawerHeader title={isLocked ? 'View Namespace' : 'Edit Namespace'} onClose={closeDrawer} />
+<Drawer open={workflow.drawerOpen}>
+  <DrawerHeader title={isLocked ? 'View Namespace' : 'Edit Namespace'} onClose={workflow.closeDrawer} />
 
   <DrawerContent>
-    {#if listState.editedItem}
+    {#if workflow.editedItem}
       <div class="space-y-4">
         <!-- Namespace Name -->
         <div>
@@ -374,12 +275,12 @@
           <input
             id="namespace-name"
             type="text"
-            bind:value={listState.editedItem.name}
+            bind:value={workflow.editedItem.name}
             disabled={isLocked}
-            class="w-full px-3 py-2 border border-mono-300 rounded-md focus:ring-2 focus:ring-mono-400 focus:border-transparent {visibleErrors.name ? 'border-red-500' : ''} {isLocked ? 'bg-mono-100 cursor-not-allowed' : ''}"
+            class="w-full px-3 py-2 border border-mono-300 rounded-md focus:ring-2 focus:ring-mono-400 focus:border-transparent {workflow.visibleErrors.name ? 'border-red-500' : ''} {isLocked ? 'bg-mono-100 cursor-not-allowed' : ''}"
           />
-          {#if visibleErrors.name}
-            <p class="text-xs text-red-500 mt-1">{visibleErrors.name}</p>
+          {#if workflow.visibleErrors.name}
+            <p class="text-xs text-red-500 mt-1">{workflow.visibleErrors.name}</p>
           {/if}
         </div>
 
@@ -388,7 +289,7 @@
           <label for="namespace-description" class="block text-sm text-mono-700 mb-1 font-medium">Description</label>
           <textarea
             id="namespace-description"
-            bind:value={listState.editedItem.description}
+            bind:value={workflow.editedItem.description}
             disabled={isLocked}
             rows="3"
             class="w-full px-3 py-2 border border-mono-300 rounded-md focus:ring-2 focus:ring-mono-400 focus:border-transparent {isLocked ? 'bg-mono-100 cursor-not-allowed' : ''}"
@@ -396,8 +297,8 @@
         </div>
 
         <!-- Entity Counts -->
-        {#if listState.editedItem}
-          {@const details = getNamespaceEntityDetails(listState.editedItem.id)}
+        {#if workflow.editedItem}
+          {@const details = getNamespaceEntityDetails(workflow.editedItem.id)}
           <div>
             <h3 class="text-sm text-mono-700 mb-2 font-medium">Contents</h3>
             <div class="bg-mono-50 rounded-md p-3 space-y-2">
@@ -440,7 +341,7 @@
                 <span class="text-sm">This namespace can be edited and deleted.</span>
               </div>
             {/if}
-            {#if listState.editedItem.isDefault}
+            {#if workflow.editedItem.isDefault}
               <div class="flex items-center space-x-2 text-mono-700">
                 <i class="fa-solid fa-star"></i>
                 <span class="text-sm">This is your default namespace.</span>
@@ -453,25 +354,25 @@
   </DrawerContent>
 
   <DrawerFooter>
-    {#if listState.editedItem && !isLocked}
+    {#if workflow.editedItem && !isLocked}
       <CrudDrawerFooter
         mode="editing"
-        {isSaving}
-        {hasChanges}
-        canDelete={!hasEntities}
-        {deleteTooltip}
-        showDeleteConfirm={listState.showDeleteConfirm}
-        {isDeleting}
-        onSave={handleSave}
-        onUndo={handleUndo}
-        onDeleteRequest={() => listState.showDeleteConfirm = true}
-        onDeleteConfirm={handleDelete}
-        onDeleteCancel={() => listState.showDeleteConfirm = false}
+        isSaving={workflow.isSaving}
+        hasChanges={workflow.hasChanges}
+        canDelete={workflow.canDelete}
+        deleteTooltip={workflow.deleteTooltip}
+        showDeleteConfirm={workflow.showDeleteConfirm}
+        isDeleting={workflow.isDeleting}
+        onSave={workflow.handleSave}
+        onUndo={workflow.handleUndo}
+        onDeleteRequest={() => workflow.showDeleteConfirm = true}
+        onDeleteConfirm={workflow.handleDelete}
+        onDeleteCancel={() => workflow.showDeleteConfirm = false}
       />
-    {:else if listState.editedItem && isLocked}
+    {:else if workflow.editedItem && isLocked}
       <button
         type="button"
-        onclick={closeDrawer}
+        onclick={workflow.closeDrawer}
         class="w-full px-4 py-2 border border-mono-300 text-mono-700 rounded-md hover:bg-mono-50 transition-colors font-medium"
       >
         Close
@@ -528,10 +429,10 @@
         <button
           type="button"
           onclick={handleCreate}
-          disabled={isSaving}
+          disabled={isCreating}
           class="w-full px-4 py-2 bg-mono-900 text-white rounded-md hover:bg-mono-800 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          {#if isSaving}
+          {#if isCreating}
             <i class="fa-solid fa-spinner fa-spin mr-2"></i>
             Creating...
           {:else}
