@@ -10,7 +10,6 @@ import {
 	mockFields,
 	mockFieldConstraints,
 	mockTypes,
-	mockApis,
 	mockPermissions,
 	mockRoles
 } from './index';
@@ -76,31 +75,6 @@ function validateFieldConstraints() {
 	});
 }
 
-// Validate field-API relationships
-function validateFieldApiRelationships() {
-	mockFields.forEach((field) => {
-		field.usedInApis.forEach((apiId) => {
-			const api = mockApis.find((a) => a.id === apiId);
-			if (!api) {
-				addError('Field', field.id, 'usedInApis', 'API not found: ' + apiId);
-			} else if (!api.usedFields.includes(field.id)) {
-				addError('Field', field.id, 'usedInApis', 'API does not reference field');
-			}
-		});
-	});
-
-	mockApis.forEach((api) => {
-		api.usedFields.forEach((fieldId) => {
-			const field = mockFields.find((f) => f.id === fieldId);
-			if (!field) {
-				addError('ApiEndpoint', api.id, 'usedFields', 'Field not found: ' + fieldId);
-			} else if (!field.usedInApis.includes(api.id)) {
-				addError('ApiEndpoint', api.id, 'usedFields', 'Field does not reference API');
-			}
-		});
-	});
-}
-
 // Validate role-permission relationships
 function validateRolePermissions() {
 	mockRoles.forEach((role) => {
@@ -135,7 +109,6 @@ function validate() {
 	// Entities with IDs
 	validateUniqueness(mockUsers, 'User');
 	validateUniqueness(mockFields, 'Field');
-	validateUniqueness(mockApis, 'ApiEndpoint');
 	validateUniqueness(mockPermissions, 'Permission');
 	validateUniqueness(mockRoles, 'Role');
 
@@ -145,7 +118,6 @@ function validate() {
 
 	// Relationship checks
 	validateFieldConstraints();
-	validateFieldApiRelationships();
 	validateRolePermissions();
 
 	if (errors.length === 0) {

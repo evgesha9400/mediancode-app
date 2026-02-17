@@ -2,7 +2,7 @@
  * APIs Page Object
  *
  * Encapsulates interactions with the APIs page (/apis).
- * Handles search, view details, edit, create, and delete operations for APIs.
+ * Handles search, create (via drawer), and navigation to detail page.
  */
 
 import { type Page, type Locator, expect } from '@playwright/test';
@@ -33,19 +33,16 @@ export class ApisPage {
 	readonly versionColumnHeader: Locator;
 	readonly baseUrlColumnHeader: Locator;
 	readonly endpointsColumnHeader: Locator;
-	readonly tagsColumnHeader: Locator;
 	readonly namespaceColumnHeader: Locator;
 
-	// Drawer (view/delete details)
-	readonly drawer: Locator;
-	readonly drawerCloseButton: Locator;
-	readonly drawerTitle: Locator;
-
-	// Drawer actions
-	readonly editApiButton: Locator;
-	readonly deleteApiButton: Locator;
-	readonly deleteConfirmButton: Locator;
-	readonly deleteCancelButton: Locator;
+	// Create drawer
+	readonly createDrawer: Locator;
+	readonly apiTitleInput: Locator;
+	readonly apiVersionInput: Locator;
+	readonly apiDescriptionInput: Locator;
+	readonly apiServerUrlInput: Locator;
+	readonly apiBaseUrlInput: Locator;
+	readonly createButton: Locator;
 
 	constructor(page: Page) {
 		this.page = page;
@@ -73,21 +70,18 @@ export class ApisPage {
 		this.versionColumnHeader = this.table.locator('thead th').filter({ hasText: 'Version' });
 		this.baseUrlColumnHeader = this.table.locator('thead th').filter({ hasText: 'Base URL' });
 		this.endpointsColumnHeader = this.table.locator('thead th').filter({ hasText: 'Endpoints' });
-		this.tagsColumnHeader = this.table.locator('thead th').filter({ hasText: 'Tags' });
 		this.namespaceColumnHeader = this.table.locator('thead th').filter({ hasText: 'Namespace' });
 
-		// Drawer
-		this.drawer = page
+		// Create drawer
+		this.createDrawer = page
 			.locator('[class*="fixed"][class*="right-0"]')
-			.filter({ has: page.locator('text=API Details') });
-		this.drawerCloseButton = page.locator('button[aria-label="Close drawer"]');
-		this.drawerTitle = page.locator('text=API Details');
-
-		// Drawer actions
-		this.editApiButton = page.getByRole('button', { name: 'Edit API' });
-		this.deleteApiButton = page.getByRole('button').filter({ has: page.locator('span', { hasText: 'Delete' }) });
-		this.deleteConfirmButton = page.getByRole('button', { name: 'Yes, Delete' });
-		this.deleteCancelButton = page.getByRole('button', { name: 'Cancel' });
+			.filter({ has: page.locator('text=Create API') });
+		this.apiTitleInput = page.locator('#api-title');
+		this.apiVersionInput = page.locator('#api-version');
+		this.apiDescriptionInput = page.locator('#api-description');
+		this.apiServerUrlInput = page.locator('#api-server-url');
+		this.apiBaseUrlInput = page.locator('#api-base-url');
+		this.createButton = page.getByRole('button', { name: 'Create' });
 	}
 
 	/**
@@ -103,7 +97,6 @@ export class ApisPage {
 	 */
 	async search(query: string) {
 		await this.searchInput.fill(query);
-		// Wait for results to update
 		await this.page.waitForTimeout(300);
 	}
 
@@ -123,13 +116,12 @@ export class ApisPage {
 	}
 
 	/**
-	 * Click on a row by API title
-	 * Note: Clicking a row navigates to the edit page, not opens a drawer
+	 * Click on a row by API title (navigates to detail page)
 	 */
 	async clickRow(apiTitle: string) {
 		const row = this.tableRows.filter({ hasText: apiTitle });
 		await row.click();
-		await this.page.waitForTimeout(300);
+		await this.page.waitForURL(/\/apis\/[^/]+$/);
 	}
 
 	/**
@@ -209,66 +201,52 @@ export class ApisPage {
 	}
 
 	/**
-	 * Check if drawer is open
-	 */
-	async isDrawerOpen(): Promise<boolean> {
-		return await this.drawer.isVisible();
-	}
-
-	/**
-	 * Close drawer
-	 */
-	async closeDrawer() {
-		await this.drawerCloseButton.click();
-		await this.page.waitForTimeout(500);
-	}
-
-	/**
-	 * Click the New API button
-	 * This navigates to the API creation page
+	 * Click the New API button (opens create drawer)
 	 */
 	async clickNewApi() {
 		await this.newApiButton.click();
-		// Wait for navigation to complete
-		await this.page.waitForURL(/\/apis\/new/);
+		await this.createDrawer.waitFor({ state: 'visible' });
 	}
 
 	/**
-	 * Click edit button in drawer (navigates to edit page)
+	 * Fill the create API form
 	 */
-	async clickEditApi() {
-		await this.editApiButton.click();
-		// Wait for navigation
+	async fillCreateForm(data: {
+		title: string;
+		version?: string;
+		description?: string;
+		serverUrl?: string;
+		baseUrl?: string;
+	}) {
+		await this.apiTitleInput.fill(data.title);
+		if (data.version !== undefined) await this.apiVersionInput.fill(data.version);
+		if (data.description !== undefined) await this.apiDescriptionInput.fill(data.description);
+		if (data.serverUrl !== undefined) await this.apiServerUrlInput.fill(data.serverUrl);
+		if (data.baseUrl !== undefined) await this.apiBaseUrlInput.fill(data.baseUrl);
+	}
+
+	/**
+	 * Submit the create form (clicks Create, waits for navigation to detail page)
+	 */
+	async submitCreate() {
+		await this.createButton.click();
 		await this.page.waitForURL(/\/apis\/[^/]+$/);
 	}
 
 	/**
-	 * Click delete button in drawer
+	 * Close the create drawer
 	 */
-	async clickDelete() {
-		await this.deleteApiButton.click();
-	}
-
-	/**
-	 * Confirm delete
-	 */
-	async confirmDelete() {
-		await this.deleteConfirmButton.click();
-		await this.page.waitForTimeout(500);
-	}
-
-	/**
-	 * Cancel delete
-	 */
-	async cancelDelete() {
-		await this.deleteCancelButton.click();
+	async closeCreateDrawer() {
+		const closeButton = this.page.locator('button[aria-label="Close drawer"]');
+		await closeButton.click();
+		await this.page.waitForTimeout(300);
 	}
 
 	/**
 	 * Sort by column
 	 */
 	async sortByColumn(
-		column: 'name' | 'version' | 'baseUrl' | 'endpoints' | 'tags' | 'namespace',
+		column: 'name' | 'version' | 'baseUrl' | 'endpoints' | 'namespace',
 		withShift = false
 	) {
 		const clickOptions = withShift
@@ -280,26 +258,10 @@ export class ApisPage {
 			version: () => this.table.locator('thead th button').filter({ hasText: 'Version' }),
 			baseUrl: () => this.table.locator('thead th button').filter({ hasText: 'Base URL' }),
 			endpoints: () => this.table.locator('thead th button').filter({ hasText: 'Endpoints' }),
-			tags: () => this.table.locator('thead th button').filter({ hasText: 'Tags' }),
 			namespace: () => this.table.locator('thead th button').filter({ hasText: 'Namespace' })
 		};
 
 		await headerMap[column]().click(clickOptions);
 		await this.page.waitForTimeout(300);
-	}
-
-	/**
-	 * Delete an API by title
-	 * Opens the row, opens drawer, and deletes
-	 */
-	async deleteApi(apiTitle: string) {
-		await this.clickRow(apiTitle);
-
-		// If drawer opens (depends on current implementation)
-		if (await this.isDrawerOpen()) {
-			await this.clickDelete();
-			await this.confirmDelete();
-		}
-		// Otherwise the row click navigated to edit page
 	}
 }

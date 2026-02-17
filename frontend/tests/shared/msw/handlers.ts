@@ -15,14 +15,12 @@ import {
 	mockFields,
 	mockFieldConstraints,
 	mockTypes,
-	mockApis,
 	mockPermissions,
 	mockRoles,
 	getUserById,
 	getFieldById,
 	getFieldConstraintByName,
-	getTypeByName,
-	getApiById
+	getTypeByName
 } from '../../fixtures';
 
 /**
@@ -128,29 +126,6 @@ export const handlers = [
 			return new HttpResponse(null, { status: 404 });
 		}
 		return HttpResponse.json(type);
-	}),
-
-	// ============================================
-	// API Endpoint Management
-	// ============================================
-	http.get('/api/endpoints', () => {
-		return HttpResponse.json(mockApis);
-	}),
-
-	http.get('/api/endpoints/:id', ({ params }) => {
-		const api = getApiById(params.id as string);
-		if (!api) {
-			return new HttpResponse(null, { status: 404 });
-		}
-		return HttpResponse.json(api);
-	}),
-
-	http.post('/api/endpoints', async ({ request }) => {
-		const newApi = (await request.json()) as Record<string, unknown>;
-		return HttpResponse.json(
-			{ ...newApi, id: `api-${Date.now()}` },
-			{ status: 201 }
-		);
 	}),
 
 	// ============================================

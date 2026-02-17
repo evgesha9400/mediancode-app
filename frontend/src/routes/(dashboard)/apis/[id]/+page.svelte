@@ -7,7 +7,6 @@
     DrawerHeader,
     DrawerContent,
     DrawerFooter,
-    ApiMetadataCard,
     EndpointItem,
     ParameterEditor,
     QueryParametersEditor,
@@ -17,40 +16,29 @@
   } from '$lib/components';
   import { createApiDetailState } from '$lib/stores/apiDetailState.svelte';
   import { getApiById } from '$lib/stores/apis';
-  import { deleteApiAction } from '$lib/domain/mutations';
-  import { activeNamespaceId } from '$lib/stores/namespaces';
+  import { namespacesStore } from '$lib/stores/namespaces';
   import { fieldsStore } from '$lib/stores/fields';
-  import { showToast } from '$lib/stores/toasts';
 
   // Get API ID from URL
   let apiId = $derived(page.params.id ?? '');
 
-  // Check if this is a new API or editing existing
-  let isNewRoute = $derived(apiId === 'new');
-
-  // Check if existing API exists (only relevant for non-new routes)
-  let apiExists = $derived(isNewRoute || (apiId !== '' && getApiById(apiId) !== undefined));
-
-  // Delete confirmation state
-  let showDeleteConfirm = $state(false);
-  let isDeleting = $state(false);
+  // Check if existing API exists
+  let apiExists = $derived(apiId !== '' && getApiById(apiId) !== undefined);
 
   // Create state container for this specific API
-  // Using untrack() because the apiId is intentionally captured at mount time
-  // SvelteKit remounts the component when the route changes
   const apiState = createApiDetailState({
     apiId: untrack(() => apiId),
-    namespaceId: untrack(() => $activeNamespaceId),
-    onClose: () => goto('/apis'),
-    onApiCreated: (newApiId: string) => {
-      // Replace /apis/new with /apis/{actualId} in URL without reloading
-      goto(`/apis/${newApiId}`, { replaceState: true });
-    }
+    onNavigateBack: () => goto('/apis')
   });
 
   // Fields filtered by API namespace (for path param field selectors)
   const availableFields = $derived(
     $fieldsStore.filter(f => f.namespaceId === apiState.apiNamespaceId)
+  );
+
+  // Namespace name for display
+  let namespaceName = $derived(
+    $namespacesStore.find(ns => ns.id === apiState.apiNamespaceId)?.name ?? ''
   );
 
   // Filtered tag suggestions based on input
@@ -64,32 +52,6 @@
   const exactTagMatch = $derived(
     apiState.tags.find(t => t.toLowerCase() === apiState.tagInputValue.toLowerCase().trim())
   );
-
-  function handleDeleteClick() {
-    showDeleteConfirm = true;
-  }
-
-  async function confirmDelete() {
-    if (!apiState.api || isDeleting) return;
-
-    const apiTitle = apiState.api.title;
-    isDeleting = true;
-
-    const result = await deleteApiAction(apiState.api.id);
-
-    if (result.success) {
-      showToast(`API "${apiTitle}" deleted successfully`, 'success');
-      goto('/apis');
-    } else {
-      showToast(result.error || 'Failed to delete API', 'error');
-      isDeleting = false;
-    }
-    showDeleteConfirm = false;
-  }
-
-  function cancelDelete() {
-    showDeleteConfirm = false;
-  }
 
   function handleTagInputCommit() {
     const trimmed = apiState.tagInputValue.trim();
@@ -114,179 +76,270 @@
     </div>
   </div>
 {:else}
-  <!-- Header -->
-    <div class="bg-white border-b border-mono-200 py-4 px-6">
-      <div class="flex justify-between items-center">
-        <div>
-          <h1 class="text-xl text-mono-800">{apiState.editedApi?.title || 'Untitled API'}</h1>
-          <p class="text-sm text-mono-500 mt-1">
-            {#if apiState.isNewApi}
-              Create a new API
-            {:else}
-              Design and configure API endpoints
-            {/if}
-          </p>
-        </div>
-        <div class="flex items-center space-x-3">
-          <NamespaceSelector />
-          <button
-            onclick={apiState.handleSaveApi}
-            disabled={!apiState.hasApiChanges}
-            class="px-4 py-2 rounded-md flex items-center space-x-2 transition-colors {apiState.hasApiChanges ? 'bg-mono-900 text-white hover:bg-mono-800' : 'bg-mono-300 text-mono-500 cursor-not-allowed'}"
-          >
-            <i class="fa-solid fa-save"></i>
-            <span>Save</span>
-          </button>
-          <button
-            onclick={apiState.handleDiscardApiChanges}
-            disabled={!apiState.hasApiChanges}
-            class="px-4 py-2 border rounded-md flex items-center space-x-2 transition-colors {apiState.hasApiChanges ? 'border-mono-300 text-mono-700 hover:bg-mono-50' : 'border-mono-200 text-mono-400 cursor-not-allowed bg-mono-50'}"
-          >
-            <i class="fa-solid fa-undo"></i>
-            <span>Undo</span>
-          </button>
-          <button
-            onclick={apiState.handleClose}
-            class="px-4 py-2 border border-mono-300 text-mono-700 rounded-md flex items-center space-x-2 hover:bg-mono-50"
-          >
-            <i class="fa-solid fa-times"></i>
-            <span>Close</span>
-          </button>
-          {#if !apiState.isNewApi}
-            <button
-              onclick={handleDeleteClick}
-              class="px-4 py-2 border border-red-300 text-red-700 rounded-md flex items-center space-x-2 hover:bg-red-50"
-            >
-              <i class="fa-solid fa-trash"></i>
-              <span>Delete</span>
-            </button>
-          {/if}
-          <button
-            onclick={apiState.handleGenerateCode}
-            class="px-4 py-2 bg-mono-900 text-white rounded-md flex items-center space-x-2 hover:bg-mono-800"
-          >
-            <i class="fa-solid fa-code"></i>
-            <span>Generate Code</span>
-          </button>
-        </div>
-      </div>
-    </div>
+  <!-- Compact Header -->
+  <div class="bg-white border-b border-mono-200 py-4 px-6">
+    <div class="flex justify-between items-center">
+      <!-- Left side -->
+      <div>
+        <button
+          onclick={() => goto('/apis')}
+          class="text-sm text-mono-500 hover:text-mono-700 transition-colors flex items-center space-x-1 mb-2"
+        >
+          <i class="fa-solid fa-arrow-left text-xs"></i>
+          <span>Back to APIs</span>
+        </button>
 
-    <!-- Main Content -->
-    <div class="flex-1 overflow-auto">
-      <div class="max-w-7xl mx-auto p-6 space-y-6">
-        <!-- API Metadata Card -->
-        {#if apiState.editedApi}
-          <ApiMetadataCard metadata={apiState.editedApi} onUpdate={apiState.handleApiUpdate} />
+        <div class="flex items-center space-x-3 mb-1">
+          <h1 class="text-xl font-semibold text-mono-900">{apiState.api?.title || 'Untitled API'}</h1>
+          <span class="px-2 py-0.5 text-xs rounded-full bg-mono-200 text-mono-700">
+            {apiState.api?.version ?? ''}
+          </span>
+        </div>
+
+        {#if apiState.api?.description}
+          <p class="text-sm text-mono-500 mb-2">{apiState.api.description}</p>
         {/if}
 
-        <!-- API Endpoints Card -->
+        <div class="flex items-center space-x-4 text-xs text-mono-500">
+          {#if apiState.api?.serverUrl}
+            <div class="flex items-center space-x-1.5">
+              <i class="fa-solid fa-server"></i>
+              <code class="font-mono">{apiState.api.serverUrl}</code>
+            </div>
+          {/if}
+          {#if apiState.api?.baseUrl}
+            <div class="flex items-center space-x-1.5">
+              <i class="fa-solid fa-link"></i>
+              <code class="font-mono">{apiState.api.baseUrl}</code>
+            </div>
+          {/if}
+          {#if namespaceName}
+            <div class="flex items-center space-x-1.5">
+              <i class="fa-solid fa-layer-group"></i>
+              <span>{namespaceName}</span>
+            </div>
+          {/if}
+        </div>
+      </div>
+
+      <!-- Right side -->
+      <div class="flex items-center space-x-2">
+        <button
+          onclick={apiState.handleAddEndpoint}
+          class="px-4 py-2 bg-mono-900 text-white rounded-md flex items-center space-x-2 hover:bg-mono-800 cursor-pointer transition-colors"
+        >
+          <i class="fa-solid fa-plus"></i>
+          <span>Add Endpoint</span>
+        </button>
+        <button
+          onclick={apiState.openEditDrawer}
+          class="px-4 py-2 border border-mono-300 text-mono-700 rounded-md flex items-center space-x-2 hover:bg-mono-50 cursor-pointer transition-colors"
+        >
+          <i class="fa-solid fa-pen-to-square"></i>
+          <span>Edit</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main Content -->
+  <div class="flex-1 overflow-auto">
+    <div class="max-w-7xl mx-auto p-6">
+      {#if apiState.endpoints.length === 0}
         <div class="bg-white rounded-lg border border-mono-200">
-          <div class="flex items-center justify-between px-4 py-3">
-            <h2 class="text-base text-mono-800 flex items-center">
-              <i class="fa-solid fa-route mr-2"></i>
-              API Endpoints
-            </h2>
+          <div class="text-center py-8 text-mono-500">
+            <i class="fa-solid fa-route text-2xl mb-2 text-mono-300"></i>
+            <p class="text-sm">No endpoints yet. Create your first API endpoint.</p>
+          </div>
+        </div>
+      {:else}
+        <!-- Swagger-style flush tag sections -->
+        <div class="rounded-lg overflow-hidden border border-mono-200">
+          {#each apiState.allTagSections as section, i (section.tag)}
+            {@const isExpanded = apiState.expandedTags.has(section.tag)}
+            <div class="{i < apiState.allTagSections.length - 1 ? 'border-b border-mono-200' : ''}">
+              <!-- Tag section header -->
+              <button
+                type="button"
+                onclick={() => apiState.toggleTagSection(section.tag)}
+                class="w-full flex items-center justify-between px-4 py-3 bg-white hover:bg-mono-50 transition-colors text-left"
+              >
+                <div class="flex items-center space-x-2">
+                  <h2 class="text-base font-semibold text-mono-800">{section.tag}</h2>
+                  <span class="text-xs text-mono-400">{section.endpoints.length} endpoint{section.endpoints.length !== 1 ? 's' : ''}</span>
+                </div>
+                <i class="fa-solid fa-chevron-down text-mono-500 text-sm transition-transform {isExpanded ? 'rotate-0' : '-rotate-90'}"></i>
+              </button>
+              <!-- Tag section body -->
+              {#if isExpanded}
+                <div class="px-4 pb-3">
+                  <div class="space-y-2">
+                    {#each section.endpoints as endpoint (endpoint.id)}
+                      <EndpointItem
+                        {endpoint}
+                        onClick={() => apiState.openEndpoint(endpoint)}
+                      />
+                    {/each}
+                  </div>
+                </div>
+              {/if}
+            </div>
+          {/each}
+        </div>
+      {/if}
+    </div>
+  </div>
+
+  <!-- Edit API Drawer -->
+  <Drawer open={apiState.editDrawerOpen} maxWidth={520}>
+    <DrawerHeader title="Edit API" onClose={apiState.closeEditDrawer} />
+
+    <DrawerContent>
+      <div class="space-y-4">
+        <!-- Namespace -->
+        <div>
+          <label for="edit-namespace" class="block text-sm text-mono-700 mb-1 font-medium">
+            Namespace
+          </label>
+          <NamespaceSelector />
+        </div>
+
+        <!-- API Title -->
+        <div>
+          <label for="edit-title" class="block text-sm text-mono-700 mb-1 font-medium">
+            API Title <span class="text-red-500">*</span>
+          </label>
+          <input
+            id="edit-title"
+            type="text"
+            bind:value={apiState.editForm.title}
+            class="w-full px-3 py-2 border border-mono-300 rounded-md focus:ring-2 focus:ring-mono-400 focus:border-transparent"
+          />
+        </div>
+
+        <!-- Version -->
+        <div>
+          <label for="edit-version" class="block text-sm text-mono-700 mb-1 font-medium">
+            Version
+          </label>
+          <input
+            id="edit-version"
+            type="text"
+            bind:value={apiState.editForm.version}
+            placeholder="1.0.0"
+            class="w-full px-3 py-2 border border-mono-300 rounded-md focus:ring-2 focus:ring-mono-400 focus:border-transparent"
+          />
+        </div>
+
+        <!-- Description -->
+        <div>
+          <label for="edit-description" class="block text-sm text-mono-700 mb-1 font-medium">
+            Description
+          </label>
+          <textarea
+            id="edit-description"
+            bind:value={apiState.editForm.description}
+            rows="3"
+            placeholder="Describe what this API does..."
+            class="w-full px-3 py-2 border border-mono-300 rounded-md focus:ring-2 focus:ring-mono-400 focus:border-transparent"
+          ></textarea>
+        </div>
+
+        <!-- Server URL -->
+        <div>
+          <label for="edit-server-url" class="block text-sm text-mono-700 mb-1 font-medium">
+            Server URL
+          </label>
+          <input
+            id="edit-server-url"
+            type="text"
+            bind:value={apiState.editForm.serverUrl}
+            placeholder="https://api.example.com"
+            class="w-full px-3 py-2 border border-mono-300 rounded-md focus:ring-2 focus:ring-mono-400 focus:border-transparent"
+          />
+        </div>
+
+        <!-- Base URL -->
+        <div>
+          <label for="edit-base-url" class="block text-sm text-mono-700 mb-1 font-medium">
+            Base URL
+          </label>
+          <input
+            id="edit-base-url"
+            type="text"
+            bind:value={apiState.editForm.baseUrl}
+            placeholder="/api/v1"
+            class="w-full px-3 py-2 border border-mono-300 rounded-md focus:ring-2 focus:ring-mono-400 focus:border-transparent"
+          />
+        </div>
+      </div>
+    </DrawerContent>
+
+    <DrawerFooter>
+      {#if !apiState.showEditDeleteConfirm}
+        <button
+          type="button"
+          onclick={apiState.handleEditSave}
+          disabled={!apiState.hasEditChanges || apiState.isSaving}
+          class="w-full px-4 py-2 rounded-md transition-colors font-medium {apiState.hasEditChanges && !apiState.isSaving ? 'bg-mono-900 text-white hover:bg-mono-800 cursor-pointer' : 'bg-mono-300 text-mono-500 cursor-not-allowed'}"
+        >
+          {#if apiState.isSaving}
+            <i class="fa-solid fa-spinner fa-spin mr-2"></i>
+            Saving...
+          {:else}
+            Save Changes
+          {/if}
+        </button>
+        <button
+          type="button"
+          onclick={apiState.handleEditUndo}
+          disabled={!apiState.hasEditChanges}
+          class="w-full px-4 py-2 border rounded-md transition-colors font-medium {apiState.hasEditChanges ? 'border-mono-300 text-mono-700 hover:bg-mono-50 cursor-pointer' : 'border-mono-200 text-mono-400 cursor-not-allowed bg-mono-50'}"
+        >
+          Undo
+        </button>
+        <button
+          type="button"
+          onclick={apiState.handleEditDeleteClick}
+          class="w-full px-4 py-2 bg-mono-100 text-red-700 rounded-md hover:bg-red-50 cursor-pointer transition-colors font-medium flex items-center justify-center space-x-2"
+        >
+          <i class="fa-solid fa-xmark"></i>
+          <span>Delete API</span>
+        </button>
+      {:else}
+        <div class="bg-red-50 border border-red-200 rounded-md p-3">
+          <p class="text-sm text-red-800 mb-2">Delete this API and all its endpoints?</p>
+          <div class="flex space-x-2">
             <button
-              onclick={apiState.handleAddEndpoint}
-              class="px-3 py-1.5 bg-mono-900 text-white text-sm rounded-md flex items-center space-x-2 hover:bg-mono-800"
+              type="button"
+              onclick={apiState.handleDeleteApi}
+              disabled={apiState.isSaving}
+              class="flex-1 px-3 py-1.5 rounded-md text-sm font-medium transition-colors {apiState.isSaving ? 'bg-red-400 text-white cursor-not-allowed' : 'bg-red-600 text-white hover:bg-red-700 cursor-pointer'}"
             >
-              <i class="fa-solid fa-plus"></i>
-              <span>New Endpoint</span>
+              {#if apiState.isSaving}
+                <i class="fa-solid fa-spinner fa-spin mr-1"></i>
+                Deleting...
+              {:else}
+                Yes, Delete
+              {/if}
+            </button>
+            <button
+              type="button"
+              onclick={apiState.cancelEditDelete}
+              disabled={apiState.isSaving}
+              class="flex-1 px-3 py-1.5 border border-mono-300 text-mono-700 rounded-md hover:bg-mono-50 text-sm font-medium"
+            >
+              Cancel
             </button>
           </div>
-
-          <div class="px-4 pb-4">
-            {#if apiState.endpoints.length === 0}
-              <div class="text-center py-6 text-mono-500">
-                <i class="fa-solid fa-route text-2xl mb-2 text-mono-300"></i>
-                <p class="text-sm">No endpoints yet. Create your first API endpoint.</p>
-              </div>
-            {:else}
-              <div class="space-y-2">
-                {#each apiState.endpoints as endpoint (endpoint.id)}
-                  <EndpointItem
-                    {endpoint}
-                    onClick={() => apiState.openEndpoint(endpoint)}
-                  />
-                {/each}
-              </div>
-            {/if}
-          </div>
         </div>
-      </div>
-    </div>
+      {/if}
+    </DrawerFooter>
+  </Drawer>
 
-  <!-- Close Confirmation Modal -->
-  {#if apiState.showCloseConfirm}
-    <div class="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-      <div class="bg-white rounded-lg shadow-xl p-6 max-w-md w-full mx-4">
-        <h3 class="text-lg font-medium text-mono-900 mb-2">Unsaved Changes</h3>
-        <p class="text-mono-600 mb-4">You have unsaved changes. What would you like to do?</p>
-        <div class="flex flex-col space-y-2">
-          <button
-            onclick={apiState.handleSaveAndClose}
-            class="w-full px-4 py-2 bg-mono-900 text-white rounded-md hover:bg-mono-800 flex items-center justify-center space-x-2"
-          >
-            <i class="fa-solid fa-save"></i>
-            <span>Save and Close</span>
-          </button>
-          <button
-            onclick={apiState.handleDiscardAndClose}
-            class="w-full px-4 py-2 border border-red-300 text-red-700 rounded-md hover:bg-red-50 flex items-center justify-center space-x-2"
-          >
-            <i class="fa-solid fa-trash"></i>
-            <span>Discard Changes</span>
-          </button>
-          <button
-            onclick={apiState.cancelClose}
-            class="w-full px-4 py-2 border border-mono-300 text-mono-700 rounded-md hover:bg-mono-50"
-          >
-            Cancel
-          </button>
-        </div>
-      </div>
-    </div>
-  {/if}
-
-  <!-- Delete API Confirmation Modal -->
-  {#if showDeleteConfirm}
-    <div class="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-      <div class="bg-white rounded-lg shadow-xl p-6 max-w-md w-full mx-4">
-        <h3 class="text-lg font-medium text-mono-900 mb-2">Delete API</h3>
-        <p class="text-mono-600 mb-4">
-          Are you sure you want to delete "{apiState.api?.title || 'this API'}"?
-          This will also delete all its endpoints. This action cannot be undone.
-        </p>
-        <div class="flex space-x-2">
-          <button
-            onclick={confirmDelete}
-            disabled={isDeleting}
-            class="flex-1 px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 flex items-center justify-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            {#if isDeleting}
-              <i class="fa-solid fa-spinner fa-spin"></i>
-              <span>Deleting...</span>
-            {:else}
-              <i class="fa-solid fa-trash"></i>
-              <span>Delete</span>
-            {/if}
-          </button>
-          <button
-            onclick={cancelDelete}
-            disabled={isDeleting}
-            class="flex-1 px-4 py-2 border border-mono-300 text-mono-700 rounded-md hover:bg-mono-50 disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            Cancel
-          </button>
-        </div>
-      </div>
-    </div>
-  {/if}
-
-  <!-- Edit Drawer -->
-  <Drawer open={apiState.drawerOpen} maxWidth={1200}>
-    <DrawerHeader title="Edit Endpoint" onClose={apiState.closeDrawer} />
+  <!-- Endpoint Drawer -->
+  <Drawer open={apiState.endpointDrawerOpen} maxWidth={1200}>
+    <DrawerHeader title="Edit Endpoint" onClose={apiState.closeEndpointDrawer} />
 
     <DrawerContent>
       {#if apiState.editedEndpoint}

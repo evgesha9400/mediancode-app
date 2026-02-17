@@ -5,7 +5,7 @@
     endpointsStore,
     searchApis
   } from '$lib/stores/apis';
-  import { deleteApiAction } from '$lib/domain/mutations';
+  import { createApiAction } from '$lib/domain/mutations';
   import { showToast } from '$lib/stores/toasts';
   import { activeNamespaceId, namespacesStore } from '$lib/stores/namespaces';
   import {
@@ -18,7 +18,7 @@
     DrawerHeader,
     DrawerContent,
     DrawerFooter,
-    Tooltip,
+    CrudDrawerFooter,
     NamespaceSelector
   } from '$lib/components';
   import { storeLoadingState, reloadStores } from '$lib/stores/loader';
@@ -60,58 +60,93 @@
     sortColumnMap: { 'endpoints': 'endpointCount', 'namespace': 'namespaceName' },
     drawerConfig: {
       trackEdits: false,
-      allowDelete: true,
-      closeDelay: 300
+      allowDelete: false
     }
   });
 
-  // Convenience aliases for template bindings
-  let selectedApi = $derived(listState.selectedItem);
-  let showDeleteConfirm = $derived(listState.showDeleteConfirm);
   let filteredApis = $derived(listState.results as ApiWithCounts[]);
   let sorts = $derived(listState.sorts);
 
-  let isDeleting = $state(false);
   let hasLoadError = $derived($storeLoadingState.storeErrors.includes('APIs'));
-
-  function isSelected(api: Api): boolean {
-    return selectedApi?.id === api.id;
-  }
-
-  function handleCreateApi() {
-    goto('/apis/new');
-  }
 
   function handleOpenApi(api: Api) {
     goto(`/apis/${api.id}`);
   }
 
-  async function handleDelete() {
-    if (!selectedApi || isDeleting) return;
+  // ============================================================================
+  // Create Drawer State
+  // ============================================================================
 
-    const apiTitle = selectedApi.title;
-    isDeleting = true;
+  let createDrawerOpen = $state(false);
+  let isSaving = $state(false);
+  let formTouched = $state(false);
 
-    const result = await deleteApiAction(selectedApi.id);
+  let formData = $state({
+    title: '',
+    version: '1.0.0',
+    description: '',
+    serverUrl: '',
+    baseUrl: '/api/v1'
+  });
 
-    if (result.success) {
-      listState.closeDrawer();
-      isDeleting = false;
-      showToast(`API "${apiTitle}" deleted successfully`, 'success', 3000);
-    } else {
-      isDeleting = false;
-      showToast(result.error || 'Failed to delete API', 'error', 5000);
+  let formErrors = $derived.by(() => {
+    const errors: Record<string, string> = {};
+    if (!formData.title.trim()) errors.title = 'API title is required';
+    return errors;
+  });
+
+  let isFormValid = $derived(Object.keys(formErrors).length === 0);
+  let visibleErrors = $derived(formTouched ? formErrors : {});
+
+  function openCreateDrawer() {
+    formData = {
+      title: '',
+      version: '1.0.0',
+      description: '',
+      serverUrl: '',
+      baseUrl: '/api/v1'
+    };
+    formTouched = false;
+    createDrawerOpen = true;
+  }
+
+  function closeCreateDrawer() {
+    createDrawerOpen = false;
+    formTouched = false;
+  }
+
+  async function handleCreate() {
+    formTouched = true;
+    if (!isFormValid) return;
+
+    isSaving = true;
+    try {
+      const result = await createApiAction({
+        namespaceId: $activeNamespaceId,
+        title: formData.title,
+        version: formData.version,
+        description: formData.description,
+        serverUrl: formData.serverUrl,
+        baseUrl: formData.baseUrl
+      });
+
+      if (!result.success) {
+        showToast(result.error ?? 'Failed to create API', 'error');
+        return;
+      }
+
+      showToast('API created successfully', 'success');
+      closeCreateDrawer();
+      goto(`/apis/${result.data!.id}`);
+    } finally {
+      isSaving = false;
     }
   }
 
-  function formatDate(isoString: string): string {
-    if (!isoString) return '-';
-    return new Date(isoString).toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric'
-    });
-  }
+  // Namespace name for the create drawer
+  let activeNamespaceName = $derived(
+    allNamespaces.find(ns => ns.id === $activeNamespaceId)?.name ?? 'Default'
+  );
 </script>
 
 <PageHeader title="APIs">
@@ -119,7 +154,7 @@
       <NamespaceSelector />
       <button
         type="button"
-        onclick={handleCreateApi}
+        onclick={openCreateDrawer}
         class="px-4 py-2 bg-mono-900 text-white rounded-md flex items-center space-x-2 hover:bg-mono-800 cursor-pointer transition-colors"
       >
         <i class="fa-solid fa-plus"></i>
@@ -177,7 +212,7 @@
       {#each filteredApis as api}
         <tr
           onclick={() => handleOpenApi(api)}
-          class="cursor-pointer transition-colors {isSelected(api) ? 'bg-mono-100' : 'hover:bg-mono-50'}"
+          class="cursor-pointer transition-colors hover:bg-mono-50"
         >
           <td class="px-6 py-4 whitespace-nowrap">
             <div class="text-sm text-mono-900 font-medium">{api.title || 'Untitled API'}</div>
@@ -227,113 +262,110 @@
     {/snippet}
   </Table>
 
-<Drawer open={listState.drawerOpen}>
-  <DrawerHeader title="API Details" onClose={listState.closeDrawer} />
+<!-- Create API Drawer -->
+<Drawer open={createDrawerOpen} maxWidth={520}>
+  <DrawerHeader title="Create API" onClose={closeCreateDrawer} />
 
   <DrawerContent>
-    {#if selectedApi}
-      <div class="space-y-6">
-        <div>
-          <h3 class="text-sm text-mono-500 mb-1 font-medium">API Name</h3>
-          <p class="text-mono-900">{selectedApi.title || 'Untitled API'}</p>
-        </div>
-
-        <div>
-          <h3 class="text-sm text-mono-500 mb-1 font-medium">Version</h3>
-          <span class="px-2 py-1 text-xs rounded-full bg-mono-200 text-mono-700">
-            {selectedApi.version}
-          </span>
-        </div>
-
-        <div>
-          <h3 class="text-sm text-mono-500 mb-1 font-medium">Base URL</h3>
-          <code class="text-mono-900 font-mono">{selectedApi.baseUrl}</code>
-        </div>
-
-        {#if selectedApi.serverUrl}
-          <div>
-            <h3 class="text-sm text-mono-500 mb-1 font-medium">Server URL</h3>
-            <code class="text-mono-900 font-mono">{selectedApi.serverUrl}</code>
-          </div>
+    <div class="space-y-4">
+      <!-- API Title -->
+      <div>
+        <label for="api-title" class="block text-sm text-mono-700 mb-1 font-medium">
+          API Title <span class="text-red-500">*</span>
+        </label>
+        <input
+          id="api-title"
+          type="text"
+          bind:value={formData.title}
+          placeholder="My API"
+          class="w-full px-3 py-2 border border-mono-300 rounded-md focus:ring-2 focus:ring-mono-400 focus:border-transparent {visibleErrors.title ? 'border-red-500' : ''}"
+        />
+        {#if visibleErrors.title}
+          <p class="text-xs text-red-500 mt-1">{visibleErrors.title}</p>
         {/if}
-
-        <div>
-          <h3 class="text-sm text-mono-500 mb-1 font-medium">Description</h3>
-          <p class="text-mono-900">{selectedApi.description || '-'}</p>
-        </div>
-
-        <div>
-          <h3 class="text-sm text-mono-500 mb-1 font-medium">Namespace</h3>
-          <span class="text-mono-900">{allNamespaces.find(ns => ns.id === selectedApi.namespaceId)?.name ?? '-'}</span>
-        </div>
-
-        <div>
-          <h3 class="text-sm text-mono-500 mb-1 font-medium">Endpoints</h3>
-          <span class="px-2 py-1 text-xs rounded-full bg-mono-200 text-mono-700">
-            {allEndpoints.filter(e => e.apiId === selectedApi.id).length}
-          </span>
-        </div>
-
-        <div class="grid grid-cols-2 gap-4">
-          <div>
-            <h3 class="text-sm text-mono-500 mb-1 font-medium">Created</h3>
-            <span class="text-mono-900">{formatDate(selectedApi.createdAt)}</span>
-          </div>
-          <div>
-            <h3 class="text-sm text-mono-500 mb-1 font-medium">Last Updated</h3>
-            <span class="text-mono-900">{formatDate(selectedApi.updatedAt)}</span>
-          </div>
-        </div>
       </div>
-    {/if}
+
+      <!-- Version -->
+      <div>
+        <label for="api-version" class="block text-sm text-mono-700 mb-1 font-medium">
+          Version
+        </label>
+        <input
+          id="api-version"
+          type="text"
+          bind:value={formData.version}
+          placeholder="1.0.0"
+          class="w-full px-3 py-2 border border-mono-300 rounded-md focus:ring-2 focus:ring-mono-400 focus:border-transparent"
+        />
+      </div>
+
+      <!-- Description -->
+      <div>
+        <label for="api-description" class="block text-sm text-mono-700 mb-1 font-medium">
+          Description
+        </label>
+        <textarea
+          id="api-description"
+          bind:value={formData.description}
+          rows="3"
+          placeholder="Describe what this API does..."
+          class="w-full px-3 py-2 border border-mono-300 rounded-md focus:ring-2 focus:ring-mono-400 focus:border-transparent"
+        ></textarea>
+      </div>
+
+      <!-- Server URL -->
+      <div>
+        <label for="api-server-url" class="block text-sm text-mono-700 mb-1 font-medium">
+          Server URL
+        </label>
+        <input
+          id="api-server-url"
+          type="text"
+          bind:value={formData.serverUrl}
+          placeholder="https://api.example.com"
+          class="w-full px-3 py-2 border border-mono-300 rounded-md focus:ring-2 focus:ring-mono-400 focus:border-transparent"
+        />
+      </div>
+
+      <!-- Base URL -->
+      <div>
+        <label for="api-base-url" class="block text-sm text-mono-700 mb-1 font-medium">
+          Base URL
+        </label>
+        <input
+          id="api-base-url"
+          type="text"
+          bind:value={formData.baseUrl}
+          placeholder="/api/v1"
+          class="w-full px-3 py-2 border border-mono-300 rounded-md focus:ring-2 focus:ring-mono-400 focus:border-transparent"
+        />
+      </div>
+
+      <!-- Namespace (read-only) -->
+      <div>
+        <label for="api-namespace" class="block text-sm text-mono-700 mb-1 font-medium">
+          Namespace
+        </label>
+        <input
+          id="api-namespace"
+          type="text"
+          value={activeNamespaceName}
+          disabled
+          class="w-full px-3 py-2 border border-mono-300 rounded-md bg-mono-50 text-mono-500 cursor-not-allowed"
+        />
+        <p class="text-xs text-mono-500 mt-1">Uses the currently active namespace</p>
+      </div>
+    </div>
   </DrawerContent>
 
   <DrawerFooter>
-    {#if selectedApi}
-      {#if !showDeleteConfirm}
-        <button
-          type="button"
-          onclick={() => handleOpenApi(selectedApi)}
-          class="w-full px-4 py-2 bg-mono-900 text-white rounded-md hover:bg-mono-800 cursor-pointer transition-colors font-medium flex items-center justify-center space-x-2"
-        >
-          <i class="fa-solid fa-pen-to-square"></i>
-          <span>Edit API</span>
-        </button>
-        <button
-          type="button"
-          onclick={() => listState.showDeleteConfirm = true}
-          class="w-full px-4 py-2 bg-mono-100 text-red-700 rounded-md hover:bg-red-50 cursor-pointer transition-colors font-medium flex items-center justify-center space-x-2"
-        >
-          <i class="fa-solid fa-xmark"></i>
-          <span>Delete</span>
-        </button>
-      {:else}
-        <div class="bg-red-50 border border-red-200 rounded-md p-3">
-          <p class="text-sm text-red-800 mb-2">Are you sure?</p>
-          <div class="flex space-x-2">
-            <button
-              type="button"
-              onclick={handleDelete}
-              disabled={isDeleting}
-              class="flex-1 px-3 py-1.5 bg-red-600 text-white rounded-md hover:bg-red-700 text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {#if isDeleting}
-                <i class="fa-solid fa-spinner fa-spin mr-1"></i>
-                Deleting...
-              {:else}
-                Yes, Delete
-              {/if}
-            </button>
-            <button
-              type="button"
-              onclick={() => listState.showDeleteConfirm = false}
-              class="flex-1 px-3 py-1.5 border border-mono-300 text-mono-700 rounded-md hover:bg-mono-50 text-sm font-medium"
-            >
-              Cancel
-            </button>
-          </div>
-        </div>
-      {/if}
-    {/if}
+    <CrudDrawerFooter
+      mode="creating"
+      {isSaving}
+      {isFormValid}
+      hasChanges={false}
+      canDelete={false}
+      onCreate={handleCreate}
+    />
   </DrawerFooter>
 </Drawer>

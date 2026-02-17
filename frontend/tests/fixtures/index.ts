@@ -13,7 +13,6 @@ export * from './users';
 export * from './types';
 export * from './fieldConstraints';
 export * from './fields';
-export * from './apis';
 export * from './permissions';
 export * from './seedData';
 
@@ -60,14 +59,6 @@ export {
 	type Field,
 	type FieldConstraintValue
 } from './fields';
-
-export {
-	mockApis,
-	getApiById,
-	getApisByMethod,
-	getApisUsingField,
-	type ApiEndpoint
-} from './apis';
 
 export {
 	mockPermissions,

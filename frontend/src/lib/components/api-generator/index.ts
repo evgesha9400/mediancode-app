@@ -1,6 +1,4 @@
 // API Generator components barrel export
-export { default as CollapsibleCard } from './CollapsibleCard.svelte';
-export { default as ApiMetadataCard } from './ApiMetadataCard.svelte';
 export { default as EndpointItem } from './EndpointItem.svelte';
 export { default as ParameterEditor } from './ParameterEditor.svelte';
 export { default as QueryParametersEditor } from './QueryParametersEditor.svelte';
@@ -13,8 +11,6 @@ export { default as FieldConstraintEditor } from './FieldConstraintEditor.svelte
 export { default as TypeSelectorDropdown } from './TypeSelectorDropdown.svelte';
 
 // API Generator component types
-export type { CollapsibleCardProps } from './CollapsibleCard.svelte';
-export type { ApiMetadataCardProps } from './ApiMetadataCard.svelte';
 export type { EndpointItemProps } from './EndpointItem.svelte';
 export type { ParameterEditorProps } from './ParameterEditor.svelte';
 export type { QueryParametersEditorProps } from './QueryParametersEditor.svelte';
