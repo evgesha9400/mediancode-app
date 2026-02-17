@@ -114,7 +114,6 @@ export interface ApiDetailState {
 	closeDrawer: () => void;
 	handleSaveEndpoint: () => Promise<boolean>;
 	handleUndoEndpoint: () => void;
-	handleCancelEndpoint: () => void;
 
 	// Endpoint editing actions
 	handlePathChange: (newPath: string) => void;
@@ -551,10 +550,6 @@ export function createApiDetailState(config: ApiDetailStateConfig): ApiDetailSta
 		tagInputValue = editedEndpoint?.tagName ?? '';
 	}
 
-	function handleCancelEndpoint(): void {
-		closeDrawer();
-	}
-
 	// ============================================================================
 	// Endpoint Editing Operations
 	// ============================================================================
@@ -688,7 +683,6 @@ export function createApiDetailState(config: ApiDetailStateConfig): ApiDetailSta
 		closeDrawer,
 		handleSaveEndpoint,
 		handleUndoEndpoint,
-		handleCancelEndpoint,
 		handlePathChange,
 		handlePathParamUpdate,
 		handleSelectQueryParamsObject,

@@ -3,6 +3,7 @@
   import { fieldsStore } from '$lib/stores/fields';
   import { showToast } from '$lib/stores/toasts';
   import { buildDeletionTooltip } from '$lib/utils/references';
+  import { isSystemEntity } from '$lib/utils/namespace';
   import {
     PageHeader,
     SearchBar,
@@ -110,6 +111,7 @@
   let deleteTooltip = $derived(hasReferences
     ? buildDeletionTooltip('field constraint', 'field', fieldsUsingSelected)
     : '');
+  let isSystemItem = $derived(selectedFieldConstraint ? isSystemEntity(selectedFieldConstraint) : false);
   let hasLoadError = $derived($storeLoadingState.storeErrors.includes('Field Constraints'));
 </script>
 
@@ -181,7 +183,15 @@
         class="cursor-pointer transition-colors {isSelected(fc) ? 'bg-mono-100' : 'hover:bg-mono-50'}"
       >
         <td class="px-6 py-4 whitespace-nowrap">
-          <div class="text-sm text-mono-900 font-medium">{fc.name}</div>
+          <div class="flex items-center space-x-2">
+            <span class="text-sm text-mono-900 font-medium">{fc.name}</span>
+            {#if isSystemEntity(fc)}
+              <span class="inline-flex items-center space-x-1 px-2 py-0.5 text-xs rounded-full bg-mono-100 text-mono-500 border border-mono-200">
+                <i class="fa-solid fa-lock text-[10px]"></i>
+                <span>System</span>
+              </span>
+            {/if}
+          </div>
         </td>
         <td class="px-6 py-4 whitespace-nowrap">
           <span class="px-2 py-0.5 text-xs rounded-full bg-mono-200 text-mono-700">
@@ -253,6 +263,13 @@
   <DrawerContent>
     {#if selectedFieldConstraint}
       <div class="space-y-6">
+        {#if isSystemItem}
+          <div class="flex items-center space-x-2 px-3 py-2 bg-mono-50 border border-mono-200 rounded-md">
+            <i class="fa-solid fa-lock text-mono-400 text-sm"></i>
+            <span class="text-sm text-mono-600">System field constraint — read-only</span>
+          </div>
+        {/if}
+
         <div>
           <h3 class="text-sm text-mono-500 mb-1 font-medium">Name</h3>
           <p class="text-mono-900">{selectedFieldConstraint.name}</p>
@@ -328,7 +345,7 @@
     {/if}
   </DrawerContent>
 
-  {#if selectedFieldConstraint}
+  {#if selectedFieldConstraint && !isSystemItem}
     <DrawerFooter>
       {#if !showDeleteConfirm}
         <Tooltip text={deleteTooltip} position="top">

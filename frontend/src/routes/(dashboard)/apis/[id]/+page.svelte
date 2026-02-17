@@ -479,13 +479,6 @@
               <i class="fa-solid fa-xmark"></i>
               <span>Delete</span>
             </button>
-            <button
-              type="button"
-              onclick={apiState.handleCancelEndpoint}
-              class="flex-1 px-4 py-2 border border-mono-300 text-mono-700 rounded-md hover:bg-mono-50 transition-colors font-medium"
-            >
-              Cancel
-            </button>
           </div>
         {:else}
           <div class="bg-red-50 border border-red-200 rounded-md p-3">

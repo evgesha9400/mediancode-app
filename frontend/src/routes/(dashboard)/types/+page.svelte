@@ -1,5 +1,6 @@
 <script lang="ts">
   import { typesStore, searchTypes, type FieldType } from '$lib/stores/types';
+  import { isSystemEntity } from '$lib/utils/namespace';
   import {
     PageHeader,
     SearchBar,
@@ -101,7 +102,15 @@
       {#each filteredTypes as type}
         <tr class="hover:bg-mono-50 transition-colors">
           <td class="px-6 py-4 whitespace-nowrap">
-            <div class="text-sm text-mono-900 font-medium">{type.name}</div>
+            <div class="flex items-center space-x-2">
+              <span class="text-sm text-mono-900 font-medium">{type.name}</span>
+              {#if isSystemEntity(type)}
+                <span class="inline-flex items-center space-x-1 px-2 py-0.5 text-xs rounded-full bg-mono-100 text-mono-500 border border-mono-200">
+                  <i class="fa-solid fa-lock text-[10px]"></i>
+                  <span>System</span>
+                </span>
+              {/if}
+            </div>
           </td>
           <td class="px-6 py-4 whitespace-nowrap">
             <span class="px-2 py-0.5 text-xs rounded-full bg-mono-200 text-mono-700">
