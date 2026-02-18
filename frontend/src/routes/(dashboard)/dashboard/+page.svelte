@@ -8,6 +8,8 @@
   import { storeLoadingState, reloadStores } from '$lib/stores/loader';
   import { StatCard } from '$lib/components';
 
+  const isBeta = true;
+
   let totalTypes = $derived($typesBaseStore.length);
   let totalFields = $derived($fieldsStore.length);
   let totalFieldConstraints = $derived($fieldConstraintsStore.length);
@@ -58,8 +60,8 @@
     <section>
       <h2 class="text-xs uppercase tracking-wider text-mono-400 mb-3 font-medium">Account</h2>
       <div class="flex flex-wrap gap-6">
-        <div class="w-40"><StatCard title="Credits Available" value={2450} icon="fa-coins" /></div>
-        <div class="w-40"><StatCard title="Credits Used" value={1550} icon="fa-chart-line" /></div>
+        <div class="w-40"><StatCard title="Credits Available" value={isBeta ? '∞' : 0} icon="fa-coins" trend={isBeta ? 'Unlimited during beta' : undefined} /></div>
+        <div class="w-40"><StatCard title="Credits Used" value={isBeta ? '—' : 0} icon="fa-chart-line" /></div>
       </div>
     </section>
   </div>
