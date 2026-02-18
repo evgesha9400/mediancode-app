@@ -83,7 +83,7 @@ CI tests run on every push to `develop` and `main`. Configuration lives in Setti
 | Job | `develop` | `main` | Backend target |
 |-----|-----------|--------|----------------|
 | Lint & Type Check | push, PR | PR | None |
-| Unit & Integration | push, PR | PR | None |
+| Unit Tests | push, PR | PR | None |
 | Smoke (Playwright) | push, PR | PR | None |
 | CRUD (Playwright) | push, schedule, manual | -- | `api.dev.mediancode.com` |
 

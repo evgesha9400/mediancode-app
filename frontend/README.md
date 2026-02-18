@@ -55,7 +55,7 @@ median-code/
 │   └── webfonts/
 ├── tests/                           # Test suites
 │   ├── unit/                        # Unit tests (Vitest)
-│   ├── integration/                 # Integration tests
+│   ├── integration/                 # Integration tests (blocked; see tests/integration/README.md)
 │   ├── e2e/                         # E2E tests (Playwright)
 │   ├── fixtures/                    # Shared test fixtures
 │   └── shared/                      # Shared test utilities (MSW)
@@ -158,7 +158,7 @@ bun run check        # Type-check
 
 ## Testing
 
-Median Code has comprehensive testing across three layers: unit, integration, and end-to-end.
+Median Code has comprehensive testing across two layers: unit and end-to-end.
 
 ### Quick Start
 
@@ -167,7 +167,6 @@ Median Code has comprehensive testing across three layers: unit, integration, an
 bun run check                    # TypeScript type checking
 bun run test:fixtures:validate   # Validate test fixtures
 bun run test:unit                # Unit tests
-bun run test:integration         # Integration tests
 bun run test:e2e:smoke           # E2E smoke tests (fast)
 ```
 
@@ -177,10 +176,6 @@ bun run test:e2e:smoke           # E2E smoke tests (fast)
 # Unit tests
 bun run test:unit                # Run unit tests once
 bun run test:unit:watch          # Watch mode for development
-
-# Integration tests
-bun run test:integration         # Run integration tests once
-bun run test:integration:watch   # Watch mode for development
 
 # E2E tests
 bun run test:e2e                 # All E2E tests
@@ -209,7 +204,6 @@ To choose local vs hosted backend, set `PUBLIC_API_BASE_URL` when running E2E co
 ### Test Infrastructure
 
 - **Unit Tests:** Component and utility testing with Vitest and Testing Library
-- **Integration Tests:** Route and store testing with MSW-backed API mocking
 - **E2E Tests:** Critical user flows with Playwright and visual regression
 - **Fixtures:** Deterministic test data shared across all test layers
 - **CI/CD:** GitHub Actions workflow validates all PRs
@@ -228,7 +222,6 @@ Always run these commands:
 bun run check                    # Must pass (0 errors)
 bun run test:fixtures:validate   # Must pass
 bun run test:unit                # Must pass
-bun run test:integration         # Must pass
 bun run test:e2e:smoke           # Must pass
 ```
 

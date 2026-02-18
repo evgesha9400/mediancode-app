@@ -68,7 +68,7 @@
 </script>
 
 <script lang="ts">
-  import { SEARCH_INPUT_ID } from '$lib/utils/testIds';
+  import { SEARCH_INPUT_ID, FILTER_TOGGLE_ID } from '$lib/utils/testIds';
 
   interface Props extends SearchBarProps {}
 
@@ -103,6 +103,7 @@
         <button
           type="button"
           onclick={() => onFilterClick?.()}
+          data-testid={FILTER_TOGGLE_ID}
           class="flex items-center space-x-2 px-3 py-2 border rounded-md transition-colors {showFilter ? (active ? 'bg-mono-100 border-mono-400 text-mono-900' : 'bg-white border-mono-300 text-mono-700 hover:bg-mono-50') : 'hidden'}"
         >
           <i class="fa-solid fa-filter {active ? 'text-mono-900' : 'text-mono-500'}"></i>

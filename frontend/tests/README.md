@@ -21,10 +21,7 @@ tests/
 │       ├── utils/           # Utility function tests (mirroring src/lib/utils/)
 │       └── types/           # Type validation tests (mirroring src/lib/types/)
 │
-├── integration/             # Integration tests for routes and store interactions
-│   ├── routes/              # Route integration tests (mirroring src/routes/)
-│   └── lib/
-│       └── stores/          # Store integration tests with MSW
+├── integration/             # Integration tests (blocked; see tests/integration/README.md)
 │
 ├── e2e/                     # End-to-end Playwright tests
 │   ├── scenarios/           # E2E test scenarios by feature area
@@ -81,20 +78,7 @@ For every file in `src/lib/`, there should be a corresponding test file in `test
 Component subdirectories (`drawer/`, `table/`, etc.) are mirrored exactly:
 - `src/lib/components/drawer/DrawerHeader.svelte` → `tests/unit/lib/components/drawer/DrawerHeader.test.ts`
 
-### 2. Integration Tests Mirror `src/routes/`
-
-For every route in `src/routes/`, there should be a corresponding integration test:
-
-**Example:**
-- `src/routes/dashboard/+page.svelte` → `tests/integration/routes/dashboard/page.test.ts`
-- `src/routes/fields/+page.svelte` → `tests/integration/routes/fields/page.test.ts`
-- `src/routes/+layout.svelte` → `tests/integration/routes/layout.test.ts`
-
-**Naming Convention:**
-- Route files with `+` prefix (e.g., `+page.svelte`) → test files without `+` (e.g., `page.test.ts`)
-- Preserves SvelteKit semantics while being filesystem-friendly
-
-### 3. E2E Tests Organized by Feature
+### 2. E2E Tests Organized by Feature
 
 E2E tests are NOT mirrored 1:1 with routes. Instead, they're organized by user-facing features:
 
@@ -112,7 +96,7 @@ Each major route gets a page object model to encapsulate selectors and interacti
 
 ## File Naming Conventions
 
-### Unit and Integration Tests
+### Unit Tests
 - **Suffix:** `.test.ts` (required)
 - **Naming:** Match the source file name exactly
 - **Examples:**
@@ -136,7 +120,7 @@ Each major route gets a page object model to encapsulate selectors and interacti
 
 ## Test Organization Principles
 
-### 1. One Test File Per Source File (Unit/Integration)
+### 1. One Test File Per Source File
 Each source file gets exactly one corresponding test file. Do not split tests across multiple files.
 
 ### 2. Co-locate Related Tests
@@ -149,7 +133,7 @@ Any test utilities, helpers, or configurations used across multiple test files b
 All mock data lives in `tests/fixtures/`. No inline fixture data in test files.
 
 ### 5. MSW Handlers Are Reusable
-MSW handlers in `tests/shared/msw/handlers.ts` are consumed by BOTH Vitest (unit/integration) and Playwright (E2E) to ensure deterministic behavior across all test layers.
+MSW handlers in `tests/shared/msw/handlers.ts` are consumed by BOTH Vitest (unit) and Playwright (E2E) to ensure deterministic behavior across all test layers.
 
 ## Running Tests
 
@@ -161,11 +145,6 @@ bun test
 ### Unit Tests Only
 ```bash
 bun run test:unit
-```
-
-### Integration Tests Only
-```bash
-bun run test:integration
 ```
 
 ### E2E Smoke Tests (Fast)
@@ -201,16 +180,14 @@ bun run test:coverage
 2. Create corresponding test in `tests/unit/lib/components/{category}/`
 3. Update fixtures if component uses external data
 4. Update MSW handlers if component makes API calls
-5. Add integration test if component interacts with stores
-6. Update page objects if component appears in E2E scenarios
+5. Update page objects if component appears in E2E scenarios
 
 ### Adding a New Route
 1. Create route in `src/routes/{name}/`
-2. Create integration test in `tests/integration/routes/{name}/`
-3. Update fixtures for route-specific data
-4. Create E2E scenario in `tests/e2e/scenarios/{name}.spec.ts`
-5. Create page object in `tests/e2e/page-objects/{Name}Page.ts`
-6. Update MSW handlers for route's API interactions
+2. Update fixtures for route-specific data
+3. Create E2E scenario in `tests/e2e/scenarios/{name}.spec.ts`
+4. Create page object in `tests/e2e/page-objects/{Name}Page.ts`
+5. Update MSW handlers for route's API interactions
 
 ### Updating Mock API Schema
 1. Update fixture definitions in `tests/fixtures/`

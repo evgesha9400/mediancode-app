@@ -2,7 +2,7 @@
  * MSW Request Handlers
  *
  * This file defines all Mock Service Worker handlers for API requests.
- * Handlers are consumed by BOTH Vitest (unit/integration) and Playwright (E2E)
+ * Handlers are consumed by BOTH Vitest (unit) and Playwright (E2E)
  * to ensure deterministic behavior across all test layers.
  *
  * IMPORTANT: All handlers MUST use fixtures from tests/fixtures/

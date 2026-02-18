@@ -38,7 +38,6 @@ I have run the following tests locally:
 
 - [ ] `bun run check` - Type checking passed
 - [ ] `bun run test:unit` - Unit tests passed
-- [ ] `bun run test:integration` - Integration tests passed
 - [ ] `bun run test:e2e:smoke` - Smoke tests passed
 
 ### Test Updates
@@ -46,7 +45,6 @@ I have run the following tests locally:
 <!-- Check all that apply -->
 
 - [ ] Added/updated unit tests for new/changed functionality
-- [ ] Added/updated integration tests for new/changed routes or stores
 - [ ] Added/updated E2E tests for new/changed user flows
 - [ ] Updated page objects for UI changes
 - [ ] Updated fixtures for new/changed data structures
@@ -85,7 +83,6 @@ I have run the following tests locally:
 
 - [ ] Component created in `src/lib/components/[category]/`
 - [ ] Unit test added in `tests/unit/lib/components/[category]/`
-- [ ] Integration test added (if component uses stores/API)
 - [ ] Page object updated (if component appears in E2E flow)
 - [ ] E2E test added (if component is in critical user flow)
 - [ ] Component exported from barrel export (`index.ts`)
@@ -95,7 +92,6 @@ I have run the following tests locally:
 ### New Route Checklist
 
 - [ ] Route created in `src/routes/`
-- [ ] Integration test added in `tests/integration/routes/`
 - [ ] Page object created in `tests/e2e/page-objects/`
 - [ ] Smoke test created in `tests/e2e/scenarios/*.smoke.spec.ts`
 - [ ] Full test created in `tests/e2e/scenarios/*.spec.ts`
@@ -130,7 +126,7 @@ I have run the following tests locally:
 
 ## Checklist Before Merge
 
-- [ ] All CI checks passing (lint-and-typecheck, unit-integration, playwright-smoke)
+- [ ] All CI checks passing (lint-and-typecheck, unit-tests, playwright-smoke)
 - [ ] PR has been reviewed and approved
 - [ ] Merge conflicts resolved
 - [ ] Branch is up to date with base branch

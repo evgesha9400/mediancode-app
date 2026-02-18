@@ -11,7 +11,7 @@
  * and Svelte component imports to resolve incorrectly (typeof === 'string').
  *
  * The correct commands are:
- *   bun run test          - Run all unit + integration tests via Vitest
+ *   bun run test          - Run all unit tests via Vitest
  *   bun run test:unit     - Run unit tests only
  *   bun run test:e2e      - Run E2E tests via Playwright
  */
@@ -29,7 +29,7 @@ ${YELLOW}This project uses Vitest with the SvelteKit Vite plugin, not Bun's nati
 Bun's test runner cannot compile .svelte.ts files or process Svelte 5 runes ($state, $derived).${RESET}
 
 ${CYAN}${BOLD}Use one of these commands instead:${RESET}
-  ${CYAN}bun run test${RESET}              Run all unit + integration tests (Vitest)
+  ${CYAN}bun run test${RESET}              Run all unit tests (Vitest)
   ${CYAN}bun run test:unit${RESET}         Run unit tests only
   ${CYAN}bun run test:unit:watch${RESET}   Run unit tests in watch mode
   ${CYAN}bun run test:coverage${RESET}     Run tests with coverage report
