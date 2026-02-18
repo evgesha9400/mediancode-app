@@ -6,6 +6,7 @@
  */
 
 import { type Page, type Locator, expect } from '@playwright/test';
+import { ACTION_DELAY_MS } from '../helpers/e2e-delays';
 
 export class ApisPage {
 	readonly page: Page;
@@ -84,6 +85,10 @@ export class ApisPage {
 		this.createButton = page.getByRole('button', { name: 'Create' });
 	}
 
+	private async delay() {
+		await this.page.waitForTimeout(ACTION_DELAY_MS);
+	}
+
 	/**
 	 * Navigate to the APIs page
 	 */
@@ -97,7 +102,7 @@ export class ApisPage {
 	 */
 	async search(query: string) {
 		await this.searchInput.fill(query);
-		await this.page.waitForTimeout(300);
+		await this.delay();
 	}
 
 	/**
@@ -105,7 +110,7 @@ export class ApisPage {
 	 */
 	async clearSearch() {
 		await this.searchInput.clear();
-		await this.page.waitForTimeout(300);
+		await this.delay();
 	}
 
 	/**
@@ -239,7 +244,7 @@ export class ApisPage {
 	async closeCreateDrawer() {
 		const closeButton = this.page.locator('button[aria-label="Close drawer"]');
 		await closeButton.click();
-		await this.page.waitForTimeout(300);
+		await this.createDrawer.waitFor({ state: 'hidden' });
 	}
 
 	/**
@@ -262,6 +267,6 @@ export class ApisPage {
 		};
 
 		await headerMap[column]().click(clickOptions);
-		await this.page.waitForTimeout(300);
+		await this.delay();
 	}
 }

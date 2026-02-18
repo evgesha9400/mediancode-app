@@ -7,6 +7,7 @@
  */
 
 import { type Page, type Locator } from '@playwright/test';
+import { ACTION_DELAY_MS } from '../helpers/e2e-delays';
 
 export class TypesPage {
 	readonly page: Page;
@@ -59,6 +60,10 @@ export class TypesPage {
 		this.usedInFieldsColumnHeader = this.table.locator('thead th').filter({ hasText: 'Used In Fields' });
 	}
 
+	private async delay() {
+		await this.page.waitForTimeout(ACTION_DELAY_MS);
+	}
+
 	/**
 	 * Navigate to the types page
 	 */
@@ -72,7 +77,7 @@ export class TypesPage {
 	 */
 	async search(query: string) {
 		await this.searchInput.fill(query);
-		await this.page.waitForTimeout(300);
+		await this.delay();
 	}
 
 	/**
@@ -80,7 +85,7 @@ export class TypesPage {
 	 */
 	async clearSearch() {
 		await this.searchInput.clear();
-		await this.page.waitForTimeout(300);
+		await this.delay();
 	}
 
 	/**
@@ -95,7 +100,7 @@ export class TypesPage {
 	 */
 	async openFilters() {
 		await this.filterButton.click();
-		await this.page.waitForTimeout(200);
+		await this.filterPanel.waitFor({ state: 'visible' });
 	}
 
 	/**
@@ -136,7 +141,7 @@ export class TypesPage {
 		};
 
 		await headerMap[column]().click(clickOptions);
-		await this.page.waitForTimeout(300);
+		await this.delay();
 	}
 
 	/**

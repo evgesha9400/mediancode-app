@@ -6,6 +6,7 @@
  */
 
 import { type Page, type Locator, expect } from '@playwright/test';
+import { ACTION_DELAY_MS } from '../helpers/e2e-delays';
 
 export class ObjectsPage {
 	readonly page: Page;
@@ -110,6 +111,10 @@ export class ObjectsPage {
 		this.namespaceSelector = page.locator('[data-namespace-selector]');
 	}
 
+	private async delay() {
+		await this.page.waitForTimeout(ACTION_DELAY_MS);
+	}
+
 	/**
 	 * Navigate to the object builder page
 	 */
@@ -123,8 +128,7 @@ export class ObjectsPage {
 	 */
 	async search(query: string) {
 		await this.searchInput.fill(query);
-		// Wait for results to update
-		await this.page.waitForTimeout(300);
+		await this.delay();
 	}
 
 	/**
@@ -132,7 +136,7 @@ export class ObjectsPage {
 	 */
 	async clearSearch() {
 		await this.searchInput.clear();
-		await this.page.waitForTimeout(300);
+		await this.delay();
 	}
 
 	/**
@@ -148,7 +152,7 @@ export class ObjectsPage {
 	async clickRow(objectName: string) {
 		const row = this.tableRows.filter({ hasText: objectName });
 		await row.click();
-		await this.page.waitForTimeout(300);
+		await this.drawer.waitFor({ state: 'visible' });
 	}
 
 	/**
@@ -251,8 +255,7 @@ export class ObjectsPage {
 	 */
 	async setObjectNamespace(namespaceId: string) {
 		await this.objectNamespaceSelect.selectOption(namespaceId);
-		// Wait for namespace change to propagate (clears fields from other namespaces)
-		await this.page.waitForTimeout(200);
+		await this.delay();
 	}
 
 	/**
@@ -268,12 +271,12 @@ export class ObjectsPage {
 	async addField(fieldName: string) {
 		await this.fieldSelectorInput.click();
 		await this.fieldSelectorInput.fill(fieldName);
-		await this.page.waitForTimeout(200);
+		await this.delay();
 
 		// Click the matching field option
 		const option = this.fieldDropdownOptions.filter({ hasText: fieldName }).first();
 		await option.click();
-		await this.page.waitForTimeout(200);
+		await this.delay();
 	}
 
 	/**
@@ -309,7 +312,7 @@ export class ObjectsPage {
 	 */
 	async closeDrawer() {
 		await this.drawerCloseButton.click();
-		await this.page.waitForTimeout(500);
+		await this.drawer.waitFor({ state: 'hidden' });
 	}
 
 	/**
@@ -331,7 +334,7 @@ export class ObjectsPage {
 	 */
 	async save() {
 		await this.saveButton.click();
-		await this.page.waitForTimeout(500);
+		await this.drawer.waitFor({ state: 'hidden', timeout: 10000 });
 	}
 
 	/**
@@ -353,7 +356,7 @@ export class ObjectsPage {
 	 */
 	async confirmDelete() {
 		await this.deleteConfirmButton.click();
-		await this.page.waitForTimeout(300);
+		await this.drawer.waitFor({ state: 'hidden', timeout: 10000 });
 	}
 
 	/**
@@ -383,8 +386,7 @@ export class ObjectsPage {
 	 */
 	async openCreateDrawer() {
 		await this.createObjectButton.click();
-		// Wait for drawer to open
-		await this.page.waitForTimeout(300);
+		await this.createDrawer.waitFor({ state: 'visible' });
 	}
 
 	/**
@@ -406,8 +408,7 @@ export class ObjectsPage {
 	 */
 	async create() {
 		await this.createButton.click();
-		// Wait for create to complete and drawer to close
-		await this.page.waitForTimeout(600);
+		await this.createDrawer.waitFor({ state: 'hidden', timeout: 10000 });
 	}
 
 	/**
@@ -415,8 +416,7 @@ export class ObjectsPage {
 	 */
 	async cancelCreate() {
 		await this.cancelButton.click();
-		// Wait for drawer close animation
-		await this.page.waitForTimeout(500);
+		await this.createDrawer.waitFor({ state: 'hidden' });
 	}
 
 	/**

@@ -8,6 +8,7 @@
  */
 
 import { type Page, type Locator } from '@playwright/test';
+import { ACTION_DELAY_MS } from '../helpers/e2e-delays';
 
 export class FieldConstraintsPage {
 	readonly page: Page;
@@ -92,6 +93,10 @@ export class FieldConstraintsPage {
 		this.deleteCancelButton = page.getByRole('button', { name: 'Cancel' });
 	}
 
+	private async delay() {
+		await this.page.waitForTimeout(ACTION_DELAY_MS);
+	}
+
 	/**
 	 * Navigate to the field constraints page
 	 */
@@ -105,7 +110,7 @@ export class FieldConstraintsPage {
 	 */
 	async search(query: string) {
 		await this.searchInput.fill(query);
-		await this.page.waitForTimeout(300);
+		await this.delay();
 	}
 
 	/**
@@ -113,7 +118,7 @@ export class FieldConstraintsPage {
 	 */
 	async clearSearch() {
 		await this.searchInput.clear();
-		await this.page.waitForTimeout(300);
+		await this.delay();
 	}
 
 	/**
@@ -129,7 +134,7 @@ export class FieldConstraintsPage {
 	async clickRow(fieldConstraintName: string) {
 		const row = this.tableRows.filter({ hasText: fieldConstraintName }).first();
 		await row.click();
-		await this.page.waitForTimeout(300);
+		await this.drawer.waitFor({ state: 'visible' });
 	}
 
 	/**
@@ -145,8 +150,7 @@ export class FieldConstraintsPage {
 	async closeDrawer() {
 		if (await this.isDrawerOpen()) {
 			await this.drawerCloseButton.click();
-			await this.page.waitForTimeout(500);
-			await this.fieldConstraintNameDisplay.waitFor({ state: 'hidden', timeout: 5000 });
+			await this.drawer.waitFor({ state: 'hidden' });
 		}
 	}
 
@@ -206,7 +210,7 @@ export class FieldConstraintsPage {
 	 */
 	async confirmDelete() {
 		await this.deleteConfirmButton.click();
-		await this.page.waitForTimeout(300);
+		await this.drawer.waitFor({ state: 'hidden', timeout: 10000 });
 	}
 
 	/**
@@ -221,7 +225,7 @@ export class FieldConstraintsPage {
 	 */
 	async openFilters() {
 		await this.filterButton.click();
-		await this.page.waitForTimeout(200);
+		await this.filterPanel.waitFor({ state: 'visible' });
 	}
 
 	/**
@@ -260,7 +264,7 @@ export class FieldConstraintsPage {
 		};
 
 		await headerMap[column]().click(clickOptions);
-		await this.page.waitForTimeout(300);
+		await this.delay();
 	}
 
 	/**
