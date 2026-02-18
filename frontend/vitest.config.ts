@@ -41,10 +41,10 @@ export default defineConfig(({ mode }) => ({
 				'**/node_modules/**'
 			],
 			thresholds: {
-				lines: 0,
-				functions: 0,
-				branches: 0,
-				statements: 0
+				lines: 21,
+				functions: 24,
+				branches: 17,
+				statements: 18
 			}
 		},
 
