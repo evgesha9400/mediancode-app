@@ -100,7 +100,7 @@ interface FieldConstraintBase {
   namespaceId: string;                // Namespace this field constraint belongs to
   name: string;                       // Field constraint name (unique within namespace)
   description: string;                // Human-readable description
-  parameterType: string;              // Type of parameter expected (int, str, number)
+  parameterTypes: string[];            // Python types for the parameter (e.g. ['int'], ['int', 'float'])
   docsUrl: string | null;             // Documentation URL
   compatibleTypes: string[];          // Types this constraint can be applied to
 }
@@ -260,7 +260,7 @@ The fixture validation script (`bun run test:fixtures:validate`) should verify:
 
 2. **Type compatibility:**
    - Field constraints match field type's compatible categories
-   - Field constraint parameters match `parameterType`
+   - Field constraint parameters match `parameterTypes`
 
 3. **Uniqueness constraints:**
    - All IDs are unique within their entity type

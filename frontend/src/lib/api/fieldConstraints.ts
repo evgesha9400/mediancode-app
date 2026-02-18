@@ -15,7 +15,7 @@ interface FieldConstraintResponse {
 	namespaceId: string;
 	name: string;
 	description: string;
-	parameterType: string;
+	parameterTypes: string[];
 	docsUrl: string | null;
 	compatibleTypes: string[];
 	usedInFields: number;
@@ -30,7 +30,7 @@ function transformFieldConstraint(response: FieldConstraintResponse): FieldConst
 		namespaceId: response.namespaceId,
 		name: response.name,
 		description: response.description,
-		parameterType: response.parameterType,
+		parameterTypes: response.parameterTypes,
 		docsUrl: response.docsUrl,
 		compatibleTypes: response.compatibleTypes,
 		usedInFields: response.usedInFields

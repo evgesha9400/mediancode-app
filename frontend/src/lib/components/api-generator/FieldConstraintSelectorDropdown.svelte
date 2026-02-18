@@ -28,7 +28,7 @@
         if (!lowerQuery) return true;
         return (
           fc.name.toLowerCase().includes(lowerQuery) ||
-          fc.parameterType.toLowerCase().includes(lowerQuery) ||
+          fc.parameterTypes.some(t => t.toLowerCase().includes(lowerQuery)) ||
           fc.description?.toLowerCase().includes(lowerQuery)
         );
       });
@@ -92,7 +92,7 @@
             <div class="flex-1">
               <div class="flex items-center space-x-2">
                 <span class="font-mono text-sm text-mono-700">{fc.name}</span>
-                <span class="text-xs text-mono-500 bg-mono-100 px-2 py-0.5 rounded">{fc.parameterType}</span>
+                <span class="text-xs text-mono-500 bg-mono-100 px-2 py-0.5 rounded">{fc.parameterTypes.join(', ')}</span>
               </div>
               {#if fc.description}
                 <p class="text-xs text-mono-500 mt-1">{fc.description}</p>

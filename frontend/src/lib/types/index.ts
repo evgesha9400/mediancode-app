@@ -188,7 +188,7 @@ export interface FieldConstraintBase {
   namespaceId: string;
   name: string;
   description: string;
-  parameterType: string;
+  parameterTypes: string[];
   docsUrl: string | null;
   compatibleTypes: string[];
 }

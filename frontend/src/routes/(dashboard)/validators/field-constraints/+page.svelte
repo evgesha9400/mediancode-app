@@ -147,8 +147,8 @@
         onSort={state.handleSort}
       />
       <SortableColumn
-        column="parameterType"
-        label="Parameter Type"
+        column="parameterTypes"
+        label="Parameter Types"
         {sorts}
         onSort={state.handleSort}
       />
@@ -193,10 +193,14 @@
             {/if}
           </div>
         </td>
-        <td class="px-6 py-4 whitespace-nowrap">
-          <span class="px-2 py-0.5 text-xs rounded-full bg-mono-200 text-mono-700">
-            {fc.parameterType}
-          </span>
+        <td class="px-6 py-4">
+          <div class="flex flex-wrap gap-1">
+            {#each fc.parameterTypes as ptype}
+              <span class="px-2 py-0.5 text-xs rounded-full bg-mono-200 text-mono-700">
+                {ptype}
+              </span>
+            {/each}
+          </div>
         </td>
         <td class="px-6 py-4">
           <div class="flex flex-wrap gap-1">
@@ -281,10 +285,14 @@
         </div>
 
         <div>
-          <h3 class="text-sm text-mono-500 mb-1 font-medium">Parameter Type</h3>
-          <code class="px-2 py-1 text-xs rounded bg-mono-100 text-mono-800 font-mono">
-            {selectedFieldConstraint.parameterType}
-          </code>
+          <h3 class="text-sm text-mono-500 mb-1 font-medium">Parameter Types</h3>
+          <div class="flex flex-wrap gap-1.5 mt-1">
+            {#each selectedFieldConstraint.parameterTypes as ptype}
+              <span class="px-2 py-1 text-xs rounded-full bg-mono-200 text-mono-700">
+                {ptype}
+              </span>
+            {/each}
+          </div>
         </div>
 
         <div>

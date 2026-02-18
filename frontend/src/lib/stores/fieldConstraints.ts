@@ -32,7 +32,7 @@ export function searchFieldConstraints(fieldConstraints: FieldConstraint[], quer
 	return fieldConstraints.filter(fieldConstraint =>
 		fieldConstraint.name.toLowerCase().includes(lowerQuery) ||
 		fieldConstraint.description.toLowerCase().includes(lowerQuery) ||
-		fieldConstraint.parameterType.toLowerCase().includes(lowerQuery) ||
+		fieldConstraint.parameterTypes.some(t => t.toLowerCase().includes(lowerQuery)) ||
 		fieldConstraint.compatibleTypes.some(t => t.toLowerCase().includes(lowerQuery))
 	);
 }

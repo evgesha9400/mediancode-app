@@ -121,7 +121,7 @@
     };
   }
 
-  function updateConstraintParam(index: number, rawValue: string, parameterType: string) {
+  function updateConstraintParam(index: number, rawValue: string, parameterTypes: string[]) {
     if (!workflow.editedItem) return;
 
     const updatedConstraints = workflow.editedItem.constraints.map((c, i) => {

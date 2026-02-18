@@ -108,7 +108,7 @@ describe('Dashboard Page - Store Integration', () => {
 
 			fieldConstraints.forEach((fc) => {
 				expect(fc).toHaveProperty('name');
-				expect(fc).toHaveProperty('parameterType');
+				expect(fc).toHaveProperty('parameterTypes');
 				expect(fc).toHaveProperty('compatibleTypes');
 				expect(fc).toHaveProperty('usedInFields');
 				expect(typeof fc.usedInFields).toBe('number');
@@ -134,12 +134,12 @@ describe('Dashboard Page - Store Integration', () => {
 	});
 
 	describe('Field Constraint Properties', () => {
-		it('field constraints have valid parameterType values', () => {
+		it('field constraints have valid parameterTypes arrays', () => {
 			const fieldConstraints = get(fieldConstraintsStore);
 
 			fieldConstraints.forEach((fc) => {
-				expect(typeof fc.parameterType).toBe('string');
-				expect(fc.parameterType.length).toBeGreaterThan(0);
+				expect(Array.isArray(fc.parameterTypes)).toBe(true);
+				expect(fc.parameterTypes.length).toBeGreaterThan(0);
 			});
 		});
 

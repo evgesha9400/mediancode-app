@@ -284,7 +284,7 @@ export const initialFieldConstraints: FieldConstraintBase[] = [
 		namespaceId: GLOBAL_NAMESPACE_ID,
 		name: 'max_length',
 		description: 'Validates that length does not exceed maximum',
-		parameterType: 'int',
+		parameterTypes: ['int'],
 		docsUrl: 'https://docs.pydantic.dev/latest/api/fields/#pydantic.fields.Field',
 		compatibleTypes: ['str']
 	},
@@ -293,7 +293,7 @@ export const initialFieldConstraints: FieldConstraintBase[] = [
 		namespaceId: GLOBAL_NAMESPACE_ID,
 		name: 'min_length',
 		description: 'Validates minimum string length',
-		parameterType: 'int',
+		parameterTypes: ['int'],
 		docsUrl: 'https://docs.pydantic.dev/latest/api/fields/#pydantic.fields.Field',
 		compatibleTypes: ['str']
 	},
@@ -302,7 +302,7 @@ export const initialFieldConstraints: FieldConstraintBase[] = [
 		namespaceId: GLOBAL_NAMESPACE_ID,
 		name: 'pattern',
 		description: 'Validates against regex pattern',
-		parameterType: 'str',
+		parameterTypes: ['str'],
 		docsUrl: 'https://docs.pydantic.dev/latest/api/fields/#pydantic.fields.Field',
 		compatibleTypes: ['str']
 	},
@@ -311,7 +311,7 @@ export const initialFieldConstraints: FieldConstraintBase[] = [
 		namespaceId: GLOBAL_NAMESPACE_ID,
 		name: 'gt',
 		description: 'Greater than validation',
-		parameterType: 'number',
+		parameterTypes: ['int', 'float'],
 		docsUrl: 'https://docs.pydantic.dev/latest/api/fields/#pydantic.fields.Field',
 		compatibleTypes: ['int', 'float']
 	},
@@ -320,7 +320,7 @@ export const initialFieldConstraints: FieldConstraintBase[] = [
 		namespaceId: GLOBAL_NAMESPACE_ID,
 		name: 'ge',
 		description: 'Greater than or equal validation',
-		parameterType: 'number',
+		parameterTypes: ['int', 'float'],
 		docsUrl: 'https://docs.pydantic.dev/latest/api/fields/#pydantic.fields.Field',
 		compatibleTypes: ['int', 'float']
 	},
@@ -329,7 +329,7 @@ export const initialFieldConstraints: FieldConstraintBase[] = [
 		namespaceId: GLOBAL_NAMESPACE_ID,
 		name: 'lt',
 		description: 'Less than validation',
-		parameterType: 'number',
+		parameterTypes: ['int', 'float'],
 		docsUrl: 'https://docs.pydantic.dev/latest/api/fields/#pydantic.fields.Field',
 		compatibleTypes: ['int', 'float']
 	},
@@ -338,7 +338,7 @@ export const initialFieldConstraints: FieldConstraintBase[] = [
 		namespaceId: GLOBAL_NAMESPACE_ID,
 		name: 'le',
 		description: 'Less than or equal validation',
-		parameterType: 'number',
+		parameterTypes: ['int', 'float'],
 		docsUrl: 'https://docs.pydantic.dev/latest/api/fields/#pydantic.fields.Field',
 		compatibleTypes: ['int', 'float']
 	},
@@ -347,7 +347,7 @@ export const initialFieldConstraints: FieldConstraintBase[] = [
 		namespaceId: GLOBAL_NAMESPACE_ID,
 		name: 'multiple_of',
 		description: 'Multiple of validation',
-		parameterType: 'number',
+		parameterTypes: ['int', 'float'],
 		docsUrl: 'https://docs.pydantic.dev/latest/api/fields/#pydantic.fields.Field',
 		compatibleTypes: ['int', 'float']
 	}

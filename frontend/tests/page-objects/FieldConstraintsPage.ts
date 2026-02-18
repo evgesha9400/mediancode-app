@@ -31,7 +31,7 @@ export class FieldConstraintsPage {
 
 	// Sortable columns
 	readonly nameColumnHeader: Locator;
-	readonly parameterTypeColumnHeader: Locator;
+	readonly parameterTypesColumnHeader: Locator;
 	readonly usedInFieldsColumnHeader: Locator;
 
 	// Drawer
@@ -41,7 +41,7 @@ export class FieldConstraintsPage {
 	// Drawer details
 	readonly fieldConstraintNameDisplay: Locator;
 	readonly fieldConstraintDescriptionDisplay: Locator;
-	readonly fieldConstraintParameterTypeDisplay: Locator;
+	readonly fieldConstraintParameterTypesDisplay: Locator;
 	readonly fieldConstraintDocsLink: Locator;
 	readonly fieldReferenceButtons: Locator;
 
@@ -72,7 +72,7 @@ export class FieldConstraintsPage {
 
 		// Sortable columns - scoped to table to avoid conflicts with drawer/filter panel
 		this.nameColumnHeader = this.table.locator('thead th').filter({ hasText: 'Name' });
-		this.parameterTypeColumnHeader = this.table.locator('thead th').filter({ hasText: 'Parameter Type' });
+		this.parameterTypesColumnHeader = this.table.locator('thead th').filter({ hasText: 'Parameter Types' });
 		this.usedInFieldsColumnHeader = this.table.locator('thead th').filter({ hasText: 'Used in Fields' });
 
 		// Drawer
@@ -82,7 +82,7 @@ export class FieldConstraintsPage {
 		// Drawer details (read-only display elements)
 		this.fieldConstraintNameDisplay = page.locator('h3:has-text("Name") + p');
 		this.fieldConstraintDescriptionDisplay = page.locator('h3:has-text("Description") + p');
-		this.fieldConstraintParameterTypeDisplay = page.locator('h3:has-text("Parameter Type") + code');
+		this.fieldConstraintParameterTypesDisplay = page.locator('h3:has-text("Parameter Types")');
 		this.fieldConstraintDocsLink = page.locator('a').filter({ hasText: 'View Docs' });
 		this.fieldReferenceButtons = page.locator('button').filter({ has: page.locator('i.fa-table-list') });
 
@@ -250,12 +250,12 @@ export class FieldConstraintsPage {
 	/**
 	 * Sort by column (click column header)
 	 */
-	async sortByColumn(column: 'name' | 'parameterType' | 'usedInFields', withShift = false) {
+	async sortByColumn(column: 'name' | 'parameterTypes' | 'usedInFields', withShift = false) {
 		const clickOptions = withShift ? { modifiers: ['Shift'] as ('Shift' | 'Alt' | 'Control' | 'Meta')[] } : undefined;
 
 		const headerMap = {
 			name: () => this.table.locator('thead th button').filter({ hasText: 'Name' }),
-			parameterType: () => this.table.locator('thead th button').filter({ hasText: 'Parameter Type' }),
+			parameterTypes: () => this.table.locator('thead th button').filter({ hasText: 'Parameter Types' }),
 			usedInFields: () => this.table.locator('thead th button').filter({ hasText: 'Used in Fields' })
 		};
 

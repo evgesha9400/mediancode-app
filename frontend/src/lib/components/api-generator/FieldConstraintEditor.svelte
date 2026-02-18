@@ -16,7 +16,7 @@
     /** Called when a constraint is removed by index */
     onRemove: (index: number) => void;
     /** Called when a constraint parameter value changes */
-    onParamChange: (index: number, rawValue: string, parameterType: string) => void;
+    onParamChange: (index: number, rawValue: string, parameterTypes: string[]) => void;
     /** Validation error message to display */
     error?: string;
   }
@@ -62,15 +62,15 @@
             <div class="flex items-center space-x-2 p-2 bg-white rounded border border-mono-200">
               <div class="flex items-center space-x-2 shrink-0">
                 <span class="font-mono text-sm text-mono-700">{constraintMeta.name}</span>
-                <span class="text-xs text-mono-500 bg-mono-100 px-2 py-0.5 rounded">{constraintMeta.parameterType}</span>
+                <span class="text-xs text-mono-500 bg-mono-100 px-2 py-0.5 rounded">{constraintMeta.parameterTypes.join(', ')}</span>
               </div>
 
               <input
-                type={constraintMeta.parameterType === 'str' ? 'text' : 'number'}
-                step={constraintMeta.parameterType === 'int' ? '1' : 'any'}
+                type={constraintMeta.parameterTypes.includes('str') ? 'text' : 'number'}
+                step={constraintMeta.parameterTypes.includes('float') ? 'any' : '1'}
                 value={constraintValue.value ?? ''}
-                oninput={(e) => onParamChange(index, e.currentTarget.value, constraintMeta.parameterType)}
-                placeholder={constraintMeta.parameterType === 'str' ? 'e.g. ^[a-z]+$' : 'Value'}
+                oninput={(e) => onParamChange(index, e.currentTarget.value, constraintMeta.parameterTypes)}
+                placeholder={constraintMeta.parameterTypes.includes('str') ? 'e.g. ^[a-z]+$' : 'Value'}
                 class="flex-1 min-w-0 px-2 py-1 border border-mono-300 rounded text-sm focus:ring-2 focus:ring-mono-400 focus:border-transparent"
               />
 

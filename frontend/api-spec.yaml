@@ -1406,11 +1406,13 @@ components:
           title: Description
           examples:
           - Validates string length does not exceed maximum
-        parameterType:
-          type: string
-          title: Parametertype
+        parameterTypes:
+          items:
+            type: string
+          type: array
+          title: Parametertypes
           examples:
-          - int
+          - - int
         docsUrl:
           anyOf:
           - type: string
@@ -1436,7 +1438,7 @@ components:
       - namespaceId
       - name
       - description
-      - parameterType
+      - parameterTypes
       - compatibleTypes
       title: FieldConstraintResponse
       description: 'Response schema for field constraint data.
