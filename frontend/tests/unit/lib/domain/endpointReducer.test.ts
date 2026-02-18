@@ -37,12 +37,9 @@ function makeEndpoint(overrides: Partial<ApiEndpoint> = {}): ApiEndpoint {
     apiId: 'api-1',
     path: '/items',
     method: 'GET',
-    summary: '',
     description: '',
     pathParams: [],
-    queryParams: [],
-    requestObjectId: null,
-    responseObjectId: null,
+    useEnvelope: false,
     responseShape: 'object',
     expanded: true,
     ...overrides

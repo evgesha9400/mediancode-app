@@ -35,6 +35,7 @@ function makeConstraint(overrides: Partial<FieldConstraint> & { name: string }):
     namespaceId: 'ns-1',
     description: '',
     parameterTypes: [],
+    docsUrl: null,
     compatibleTypes: [],
     usedInFields: 0,
     ...overrides
