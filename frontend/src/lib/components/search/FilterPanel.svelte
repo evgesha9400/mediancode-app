@@ -51,6 +51,8 @@
 </script>
 
 <script lang="ts">
+  import { FILTER_PANEL_ID } from '$lib/utils/testIds';
+
   interface Props extends FilterPanelProps {}
 
   let {
@@ -108,7 +110,7 @@
   ></div>
 
   <!-- Panel -->
-  <div class="absolute right-0 top-full mt-2 w-72 bg-white rounded-lg shadow-xl border border-mono-200 z-20 overflow-hidden">
+  <div data-testid={FILTER_PANEL_ID} class="absolute right-0 top-full mt-2 w-72 bg-white rounded-lg shadow-xl border border-mono-200 z-20 overflow-hidden">
     <div class="p-4 border-b border-mono-100 flex justify-between items-center bg-mono-50">
       <h3 class="font-medium text-mono-900">Filters</h3>
       <button

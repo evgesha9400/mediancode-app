@@ -1,9 +1,16 @@
 /**
  * Test ID Utilities
  *
- * Shared functions for generating consistent test IDs across components and tests.
+ * Shared constants and functions for generating consistent test IDs across components and tests.
  * This ensures that E2E selectors and component test IDs never drift.
  */
+
+// Shared component test IDs
+export const SEARCH_INPUT_ID = 'search-input';
+export const FILTER_PANEL_ID = 'filter-panel';
+export const TABLE_ID = 'data-table';
+export const EMPTY_STATE_ID = 'empty-state';
+export const DRAWER_ID = 'drawer';
 
 /**
  * Generate a test ID for a StatCard component based on its title.

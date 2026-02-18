@@ -47,6 +47,8 @@
 </script>
 
 <script lang="ts">
+  import { TABLE_ID, EMPTY_STATE_ID } from '$lib/utils/testIds';
+
   interface Props extends TableProps {}
 
   let { isEmpty = false, header, body, empty }: Props = $props();
@@ -54,7 +56,7 @@
 
 <div class="flex-1 overflow-auto">
   {#if !isEmpty}
-    <table class="min-w-full bg-white">
+    <table data-testid={TABLE_ID} class="min-w-full bg-white">
       <thead class="bg-mono-50 sticky top-0">
         {@render header?.()}
       </thead>

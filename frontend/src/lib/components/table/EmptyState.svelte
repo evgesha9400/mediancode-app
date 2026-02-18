@@ -49,12 +49,14 @@
 </script>
 
 <script lang="ts">
+  import { EMPTY_STATE_ID } from '$lib/utils/testIds';
+
   interface Props extends EmptyStateProps {}
 
   let { icon = 'fa-search', title, message, actionLabel, onAction, variant = 'default' }: Props = $props();
 </script>
 
-<div class="flex flex-col items-center justify-center py-12 px-6">
+<div data-testid={EMPTY_STATE_ID} class="flex flex-col items-center justify-center py-12 px-6">
   <i class="fa-solid {icon} text-4xl {variant === 'error' ? 'text-red-400' : 'text-mono-300'} mb-4"></i>
   <h3 class="text-lg font-medium {variant === 'error' ? 'text-red-600' : 'text-mono-900'} mb-2">{title}</h3>
   <p class="text-sm text-mono-500">{message}</p>

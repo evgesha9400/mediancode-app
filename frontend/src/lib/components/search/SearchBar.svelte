@@ -68,6 +68,8 @@
 </script>
 
 <script lang="ts">
+  import { SEARCH_INPUT_ID } from '$lib/utils/testIds';
+
   interface Props extends SearchBarProps {}
 
   let {
@@ -92,6 +94,7 @@
           type="text"
           {placeholder}
           bind:value={searchQuery}
+          data-testid={SEARCH_INPUT_ID}
           class="w-full pl-10 pr-4 py-2 border border-mono-300 rounded-md focus:ring-2 focus:ring-mono-400 focus:border-transparent"
         />
         <i class="fa-solid fa-search absolute left-3 top-1/2 transform -translate-y-1/2 text-mono-400"></i>

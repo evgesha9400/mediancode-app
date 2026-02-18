@@ -37,6 +37,7 @@
 
 <script lang="ts">
   import { slide } from 'svelte/transition';
+  import { DRAWER_ID } from '$lib/utils/testIds';
 
   interface Props extends DrawerProps {}
 
@@ -48,6 +49,7 @@
 
 {#if open}
   <div
+    data-testid={DRAWER_ID}
     transition:slide={{ duration: 300, axis: 'x' }}
     class="drawer fixed right-0 top-0 h-screen bg-white border-l border-mono-200 flex flex-col overflow-hidden z-50"
     class:pointer-events-none={!open}
