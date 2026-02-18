@@ -6,8 +6,7 @@
   } from '$lib/stores/namespaces';
   import { createNamespaceAction } from '$lib/domain/mutations';
   import { showToast } from '$lib/stores/toasts';
-  import { createNamespaceContract } from '$lib/domain/entityContracts';
-  import { createCrudWorkflow } from '$lib/stores/crudWorkflow.svelte';
+  import { createNamespacesModel } from '$lib/stores/namespacesModel.svelte';
   import {
     PageHeader,
     SearchBar,
@@ -25,7 +24,6 @@
   import { storeLoadingState, reloadStores } from '$lib/stores/loader';
   import { page } from '$app/state';
   import { goto } from '$app/navigation';
-  import { createListViewState } from '$lib/stores/listViewState.svelte';
 
   // Extended namespace type with computed entity counts
   type NamespaceWithCounts = Namespace & {
@@ -34,11 +32,6 @@
     fieldConstraintCount: number;
     objectCount: number;
     endpointCount: number;
-  };
-
-  // Filter state type
-  type NamespaceFilterState = {
-    onlyUserCreated: boolean;
   };
 
   // Build filter config
@@ -52,35 +45,14 @@
     }
   ];
 
-  // Create list view state (owns all reactive state)
-  const listState = createListViewState<Namespace, NamespaceFilterState>({
+  // Per-entity CRUD model (replaces listViewState + crudWorkflow + entityContract)
+  const workflow = createNamespacesModel({
     itemsStore: () => $namespacesStore,
     searchFn: searchNamespaces,
     filterSections: namespaceFilterConfig,
-    numericColumns: new Set(['entityCount']),
     urlScope: { page, goto },
-    getItemId: (namespace) => namespace.id,
-    deriveExtra: (namespace) => {
-      const details = getNamespaceEntityDetails(namespace.id);
-      return {
-        entityCount: details.total,
-        fieldCount: details.fields,
-        fieldConstraintCount: details.fieldConstraints,
-        objectCount: details.objects,
-        endpointCount: details.endpoints
-      };
-    },
-    sortColumnMap: {},
-    drawerConfig: {
-      trackEdits: true,
-      allowDelete: true,
-      closeDelay: 300
-    }
+    getNamespaceEntityDetails
   });
-
-  // Entity contract + CRUD workflow (handles drawer edit/delete only)
-  const contract = createNamespaceContract({ getNamespaceEntityDetails });
-  const workflow = createCrudWorkflow(listState, contract);
 
   // Truly derived values (read-only computations)
   let filteredNamespaces = $derived(workflow.results as NamespaceWithCounts[]);

@@ -2,8 +2,7 @@
   import { objectsStore, searchObjects, type ObjectDefinition } from '$lib/stores/objects';
   import { fieldsStore, getFieldById } from '$lib/stores/fields';
   import { activeNamespaceId, namespacesStore } from '$lib/stores/namespaces';
-  import { createObjectContract } from '$lib/domain/entityContracts';
-  import { createCrudWorkflow } from '$lib/stores/crudWorkflow.svelte';
+  import { createObjectsModel } from '$lib/stores/objectsModel.svelte';
   import {
     PageHeader,
     SearchBar,
@@ -21,7 +20,6 @@
   import { storeLoadingState, reloadStores } from '$lib/stores/loader';
   import { page } from '$app/state';
   import { goto } from '$app/navigation';
-  import { createListViewState } from '$lib/stores/listViewState.svelte';
 
   // Extended object type with computed properties for sorting
   type ObjectWithCounts = ObjectDefinition & {
@@ -29,9 +27,6 @@
     usedInApisCount: number;
     namespaceName: string;
   };
-
-  // Filter state type (no filters initially)
-  type ObjectFilterState = Record<string, never>;
 
   // Build filter config (empty initially)
   let objectFilterConfig = $derived([]);
@@ -42,31 +37,15 @@
   // Filter objects by active namespace
   let namespacedObjects = $derived($objectsStore.filter(o => o.namespaceId === $activeNamespaceId));
 
-  // Create list view state (owns all reactive state)
-  const listState = createListViewState<ObjectDefinition, ObjectFilterState>({
+  // Per-entity CRUD model (replaces listViewState + crudWorkflow + entityContract)
+  const workflow = createObjectsModel({
     itemsStore: () => namespacedObjects,
     searchFn: searchObjects,
     filterSections: () => objectFilterConfig,
-    numericColumns: new Set(['fieldCount', 'usedInApisCount']),
     urlScope: { page, goto },
-    highlightParamKey: 'highlight',
-    getItemId: (obj) => obj.id,
-    deriveExtra: (obj) => ({
-      fieldCount: obj.fields.length,
-      usedInApisCount: obj.usedInApis.length,
-      namespaceName: allNamespaces.find(ns => ns.id === obj.namespaceId)?.name ?? ''
-    }),
-    sortColumnMap: { 'fields': 'fieldCount', 'usedInApis': 'usedInApisCount', 'namespace': 'namespaceName' },
-    drawerConfig: {
-      trackEdits: true,
-      allowDelete: true,
-      closeDelay: 300
-    }
+    getActiveNamespaceId: () => $activeNamespaceId,
+    getNamespaceName: (nsId) => allNamespaces.find(ns => ns.id === nsId)?.name ?? ''
   });
-
-  // Entity contract + CRUD workflow
-  const contract = createObjectContract({ getActiveNamespaceId: () => $activeNamespaceId });
-  const workflow = createCrudWorkflow(listState, contract);
 
   // Truly derived values (read-only computations)
   let filteredObjects = $derived(workflow.results as ObjectWithCounts[]);
