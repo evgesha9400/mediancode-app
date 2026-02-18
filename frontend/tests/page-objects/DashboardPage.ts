@@ -16,8 +16,7 @@ export const STAT_CARD_TITLES = {
 	fields: 'Fields',
 	objects: 'Objects',
 	generatedApis: 'Generated APIs',
-	creditsAvailable: 'Credits Available',
-	creditsUsed: 'Credits Used'
+	generations: 'Generations'
 } as const;
 
 type StatCardTitle = (typeof STAT_CARD_TITLES)[keyof typeof STAT_CARD_TITLES];
@@ -36,8 +35,7 @@ export class DashboardPage {
 	readonly generatedApisCard: Locator;
 	readonly fieldConstraintsCard: Locator;
 	readonly objectsCard: Locator;
-	readonly creditsAvailableCard: Locator;
-	readonly creditsUsedCard: Locator;
+	readonly generationsCard: Locator;
 
 	// Sidebar navigation - use href-based selectors
 	readonly sidebar: Locator;
@@ -63,8 +61,7 @@ export class DashboardPage {
 		this.generatedApisCard = this.getStatCardLocator(STAT_CARD_TITLES.generatedApis);
 		this.fieldConstraintsCard = this.getStatCardLocator(STAT_CARD_TITLES.fieldConstraints);
 		this.objectsCard = this.getStatCardLocator(STAT_CARD_TITLES.objects);
-		this.creditsAvailableCard = this.getStatCardLocator(STAT_CARD_TITLES.creditsAvailable);
-		this.creditsUsedCard = this.getStatCardLocator(STAT_CARD_TITLES.creditsUsed);
+		this.generationsCard = this.getStatCardLocator(STAT_CARD_TITLES.generations);
 
 		// Sidebar - use href-based navigation links
 		this.sidebar = page.locator('nav, aside').first();

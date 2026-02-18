@@ -34,6 +34,13 @@ describe('mapApiError', () => {
     expect(mapApiError(err, 'test')).toBe('Session expired. Please sign in again.');
   });
 
+  it('returns generation limit message for 402', () => {
+    const err = makeApiError(402, 'Payment Required');
+    expect(mapApiError(err, 'test')).toBe(
+      'Monthly generation limit reached. Your limit resets at the start of each month.'
+    );
+  });
+
   it('returns permission denied for 403', () => {
     const err = makeApiError(403, 'Forbidden');
     expect(mapApiError(err, 'test')).toBe('Permission denied');

@@ -11,7 +11,7 @@ export function mapApiError(error: unknown, context: string): string {
 			return 'Session expired. Please sign in again.';
 		}
 		if (error.status === 402) {
-			return "You've run out of credits. Please upgrade your plan to continue generating.";
+			return 'Monthly generation limit reached. Your limit resets at the start of each month.';
 		}
 		if (error.status === 403) {
 			return 'Permission denied';

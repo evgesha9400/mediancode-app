@@ -30,8 +30,7 @@ test.describe('Dashboard - Smoke Tests', () => {
 		await expect(dashboardPage.fieldsCard).toBeVisible();
 		await expect(dashboardPage.generatedApisCard).toBeVisible();
 		await expect(dashboardPage.fieldConstraintsCard).toBeVisible();
-		await expect(dashboardPage.creditsAvailableCard).toBeVisible();
-		await expect(dashboardPage.creditsUsedCard).toBeVisible();
+		await expect(dashboardPage.generationsCard).toBeVisible();
 	});
 
 	test('should display sidebar navigation', async () => {
