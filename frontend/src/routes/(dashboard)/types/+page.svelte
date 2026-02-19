@@ -102,14 +102,13 @@
       {#each filteredTypes as type}
         <tr class="hover:bg-mono-50 transition-colors">
           <td class="px-6 py-4 whitespace-nowrap">
-            <div class="flex items-center space-x-2">
+            <div class="flex items-center">
+              <span class="w-5 flex-shrink-0 flex items-center justify-center">
+                {#if isSystemEntity(type)}
+                  <i class="fa-solid fa-lock text-mono-400 text-xs leading-none" title="System — read-only"></i>
+                {/if}
+              </span>
               <span class="text-sm text-mono-900 font-medium">{type.name}</span>
-              {#if isSystemEntity(type)}
-                <span class="inline-flex items-center space-x-1 px-2 py-0.5 text-xs rounded-full bg-mono-100 text-mono-500 border border-mono-200">
-                  <i class="fa-solid fa-lock text-[10px]"></i>
-                  <span>System</span>
-                </span>
-              {/if}
             </div>
           </td>
           <td class="px-6 py-4 whitespace-nowrap">
