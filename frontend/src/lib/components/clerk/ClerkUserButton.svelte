@@ -31,6 +31,7 @@
 </script>
 
 <script lang="ts">
+  import { onDestroy } from 'svelte';
   import { getClerk, clerkAppearance, clerkState } from '$lib/clerk';
 
   interface Props extends ClerkUserButtonProps {}
@@ -60,7 +61,11 @@
     return clerkAppearance;
   }
 
-  // Reactively mount when Clerk becomes available, with cleanup on unmount
+  // Reactively mount when Clerk becomes available
+  // Note: Cleanup is handled by onDestroy, NOT the $effect cleanup function.
+  // Using $effect cleanup would unmount the button whenever clerkState updates
+  // (e.g., from Clerk's addListener firing), since the effect re-runs on any
+  // store change, and the isMounted guard prevents re-mounting.
   $effect(() => {
     // Subscribe to clerkState to trigger when Clerk loads
     const isLoaded = $clerkState.isLoaded;
@@ -89,19 +94,19 @@
     } catch (error) {
       console.error('[ClerkUserButton] Failed to mount:', error);
     }
+  });
 
-    return () => {
-      if (isMounted) {
-        const clerkInstance = getClerk();
-        if (clerkInstance && typeof clerkInstance.unmountUserButton === 'function') {
-          try {
-            clerkInstance.unmountUserButton(containerElement);
-          } catch (error) {
-            console.error('[ClerkUserButton] Failed to unmount:', error);
-          }
+  onDestroy(() => {
+    if (isMounted) {
+      const clerk = getClerk();
+      if (clerk && typeof clerk.unmountUserButton === 'function') {
+        try {
+          clerk.unmountUserButton(containerElement);
+        } catch (error) {
+          console.error('[ClerkUserButton] Failed to unmount:', error);
         }
       }
-    };
+    }
   });
 </script>
 
