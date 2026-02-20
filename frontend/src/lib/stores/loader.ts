@@ -14,12 +14,14 @@ import { listFields } from '$lib/api/fields';
 import { listObjects } from '$lib/api/objects';
 import { listEndpoints } from '$lib/api/endpoints';
 import { listFieldConstraints } from '$lib/api/fieldConstraints';
+import { listFieldValidators } from '$lib/api/fieldValidators';
 import { listTypes } from '$lib/api/types';
 import { namespacesStore, activeNamespaceId } from './namespaces';
 import { apisStore, endpointsStore } from './apis';
 import { fieldsStore } from './fields';
 import { objectsStore } from './objects';
 import { fieldConstraintsStore } from './fieldConstraints';
+import { fieldValidatorsStore } from './fieldValidators';
 import { typesBaseStore } from './types';
 import { GLOBAL_NAMESPACE_ID } from '$lib/constants';
 
@@ -45,7 +47,7 @@ export const storeLoadingState = writable<LoadingState>({
 const PHASE1_STORE_NAMES = ['Types', 'Namespaces', 'Field Constraints'] as const;
 
 /** Store names for phase 2 (depend on phase 1 stores being populated) */
-const PHASE2_STORE_NAMES = ['Fields', 'Objects', 'APIs', 'Endpoints'] as const;
+const PHASE2_STORE_NAMES = ['Fields', 'Objects', 'APIs', 'Endpoints', 'Field Validators'] as const;
 
 /**
  * Load all store data from the backend API
@@ -105,13 +107,15 @@ export async function loadStoresFromApi(): Promise<void> {
 		listFields(),
 		listObjects(),
 		listApis(),
-		listEndpoints()
+		listEndpoints(),
+		listFieldValidators()
 	]);
 
 	const fields = phase2Results[0].status === 'fulfilled' ? phase2Results[0].value : [];
 	const objects = phase2Results[1].status === 'fulfilled' ? phase2Results[1].value : [];
 	const apis = phase2Results[2].status === 'fulfilled' ? phase2Results[2].value : [];
 	const endpoints = phase2Results[3].status === 'fulfilled' ? phase2Results[3].value : [];
+	const fieldValidators = phase2Results[4].status === 'fulfilled' ? phase2Results[4].value : [];
 
 	phase2Results.forEach((result, i) => {
 		if (result.status === 'rejected') {
@@ -125,6 +129,7 @@ export async function loadStoresFromApi(): Promise<void> {
 	objectsStore.set(objects);
 	apisStore.set(apis);
 	endpointsStore.set(endpoints);
+	fieldValidatorsStore.set(fieldValidators);
 
 	// Set active namespace to global if it exists, otherwise first namespace
 	const globalNamespace = namespaces.find(ns => ns.id === GLOBAL_NAMESPACE_ID);
@@ -167,6 +172,7 @@ export function resetStores(): void {
 	objectsStore.set([]);
 	endpointsStore.set([]);
 	fieldConstraintsStore.set([]);
+	fieldValidatorsStore.set([]);
 	typesBaseStore.set([]);
 	activeNamespaceId.set(GLOBAL_NAMESPACE_ID);
 

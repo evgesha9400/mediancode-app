@@ -36,6 +36,27 @@
     { href: '/apis', label: 'APIs', icon: 'fa-code' }
   ];
 
+  const prototypeItems: NavItem[] = [
+    {
+      href: '/prototypes/field-validators',
+      label: 'Field Validators',
+      icon: 'fa-flask-vial',
+      children: [
+        { href: '/prototypes/field-validators/test-driven', label: 'Test-Driven', icon: '' },
+        { href: '/prototypes/field-validators/repl', label: 'Interactive REPL', icon: '' }
+      ]
+    },
+    {
+      href: '/prototypes/model-validators',
+      label: 'Model Validators',
+      icon: 'fa-flask-vial',
+      children: [
+        { href: '/prototypes/model-validators/gallery', label: 'Template Gallery', icon: '' },
+        { href: '/prototypes/model-validators/dual-mode', label: 'Dual-Mode Editor', icon: '' }
+      ]
+    }
+  ];
+
   const configItems: NavItem[] = [
     { href: '/namespaces', label: 'Namespaces', icon: 'fa-layer-group' }
   ];
@@ -118,6 +139,42 @@
               <i class="fa-solid {item.icon} w-5"></i>
               <span class="opacity-60">{item.label}</span>
             </button>
+          {:else}
+            <a
+              href={item.href}
+              class="flex items-center space-x-2 px-2 py-1.5 rounded-md cursor-pointer {isActive(item.href) ? 'bg-mono-800' : 'hover:bg-mono-800'}"
+            >
+              <i class="fa-solid {item.icon} w-5"></i>
+              <span>{item.label}</span>
+            </a>
+          {/if}
+        </li>
+      {/each}
+    </ul>
+  </div>
+
+  <div class="p-4 border-t border-mono-800">
+    <h2 class="text-xs uppercase tracking-wider text-mono-400 mb-3 font-medium">Prototypes</h2>
+    <ul class="space-y-1">
+      {#each prototypeItems as item}
+        <li>
+          {#if item.children}
+            <div class="flex items-center space-x-2 px-2 py-1.5 rounded-md">
+              <i class="fa-solid {item.icon} w-5"></i>
+              <span>{item.label}</span>
+            </div>
+            <ul class="mt-0.5 space-y-0.5 ml-7 border-l border-mono-500 pl-3">
+              {#each item.children as child}
+                <li>
+                  <a
+                    href={child.href}
+                    class="flex items-center space-x-2 px-2 py-1.5 rounded-md cursor-pointer {isActive(child.href) ? 'bg-mono-800' : 'hover:bg-mono-800'}"
+                  >
+                    <span>{child.label}</span>
+                  </a>
+                </li>
+              {/each}
+            </ul>
           {:else}
             <a
               href={item.href}

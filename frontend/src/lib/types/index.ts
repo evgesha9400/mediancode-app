@@ -192,3 +192,17 @@ export interface FieldConstraintBase {
   docsUrl: string | null;
   compatibleTypes: string[];
 }
+
+// Field validator types
+export interface FieldValidator {
+  id: string;
+  namespaceId: string;
+  name: string;
+  description: string;
+  compatibleTypes: string[];
+  mode: 'before' | 'after';
+  code: string;
+  usedInFields: number;
+  createdAt: string;
+  updatedAt: string;
+}
