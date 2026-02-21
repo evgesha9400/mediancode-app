@@ -22,6 +22,16 @@ FieldConstraint
   ├─ belongs to → Namespace
   └─ used in many → Field
 
+FieldValidator
+  ├─ belongs to → Namespace
+  ├─ has many → compatibleTypes (type names)
+  └─ used in many → Field
+
+ModelValidator
+  ├─ belongs to → Namespace
+  ├─ has many → requiredFields (field names)
+  └─ used in many → Object
+
 Type
   ├─ has one → importPath (Python import path, nullable)
   ├─ has one → parentTypeId (parent type UUID, nullable)
@@ -117,6 +127,66 @@ interface FieldConstraint extends FieldConstraintBase {
 **Field Constraints:**
 - `max_length`, `min_length`, `pattern`, `email_format`, `url_format`, `product_name_format`
 - `gt`, `ge`, `lt`, `le`, `multiple_of`
+
+### FieldValidator
+
+```typescript
+interface FieldValidator {
+  id: string;                        // Unique identifier (UUID)
+  namespaceId: string;               // Namespace this validator belongs to
+  name: string;                      // Validator name (unique within namespace)
+  description: string;               // Human-readable description
+  compatibleTypes: string[];         // Types this validator can be applied to
+  mode: 'before' | 'after';         // When the validator runs
+  code: string;                      // Python validator code
+  usedInFields: number;             // Count of fields using this validator
+  createdAt: string;                // ISO 8601 timestamp
+  updatedAt: string;                // ISO 8601 timestamp
+}
+```
+
+**Invariants:**
+- `id` must be unique
+- `name` must be unique within namespace
+- `mode` must be `'before'` or `'after'`
+- `code` must not be empty
+- `compatibleTypes` must contain at least one valid type name
+
+**Test Data:**
+- 3 field validators total
+- IDs: `fv-001`, `fv-002`, `fv-003`
+- Modes: 1 before, 2 after
+- Compatible types: str (2 validators), int+float (1 validator)
+
+### ModelValidator
+
+```typescript
+interface ModelValidator {
+  id: string;                        // Unique identifier (UUID)
+  namespaceId: string;               // Namespace this validator belongs to
+  name: string;                      // Validator name (unique within namespace)
+  description: string;               // Human-readable description
+  requiredFields: string[];          // Fields this validator depends on
+  mode: 'before' | 'after';         // When the validator runs
+  code: string;                      // Python validator code
+  usedInObjects: number;            // Count of objects using this validator
+  createdAt: string;                // ISO 8601 timestamp
+  updatedAt: string;                // ISO 8601 timestamp
+}
+```
+
+**Invariants:**
+- `id` must be unique
+- `name` must be unique within namespace
+- `mode` must be `'before'` or `'after'`
+- `code` must not be empty
+- `requiredFields` must contain at least one field name
+
+**Test Data:**
+- 3 model validators total
+- IDs: `mv-001`, `mv-002`, `mv-003`
+- All use `'after'` mode
+- Required fields reference logical field names (not fixture IDs)
 
 ### Field
 
