@@ -8,20 +8,18 @@
 
 	let { children, data } = $props();
 
-	// Define routes that don't need mobile redirect
-	const mobileAllowedRoutes = ['/', '/mobile-blocked'];
+	// Public routes that don't require mobile redirect
+	const publicRoutes = new Set(['/', '/signin', '/signup', '/mobile-blocked']);
 
-	// Check for mobile devices and redirect (disabled for landing page)
+	// Redirect mobile users away from dashboard routes, and desktop users away from /mobile-blocked
 	$effect(() => {
 		if (browser) {
 			const currentPath = page.url.pathname;
 			const isMobile = isMobileDevice();
 
-			// Only redirect for dashboard route, not landing page
-			if (isMobile && currentPath === '/dashboard') {
+			if (isMobile && !publicRoutes.has(currentPath)) {
 				goto('/mobile-blocked');
 			} else if (!isMobile && currentPath === '/mobile-blocked') {
-				// Redirect desktop users away from blocked page
 				goto('/');
 			}
 		}

@@ -1,10 +1,23 @@
 <script lang="ts">
 	import { clerkState, getClerk } from '$lib/clerk';
 	import { goto } from '$app/navigation';
+	import { page } from '$app/state';
 	import { Logo } from '$lib/components';
 
 	let clerkMountDiv = $state<HTMLDivElement>();
 	let hasAttemptedMount = $state(false);
+
+	/**
+	 * Resolve the post-sign-in redirect target from the `redirect` query parameter.
+	 * Only allows internal paths (starting with `/`) to prevent open-redirect attacks.
+	 */
+	function getRedirectTarget(): string {
+		const raw = page.url.searchParams.get('redirect');
+		if (raw && raw.startsWith('/') && !raw.startsWith('//')) {
+			return raw;
+		}
+		return '/dashboard';
+	}
 
 	// Mount Clerk sign-in form when ready
 	$effect(() => {
@@ -13,7 +26,7 @@
 			const clerk = getClerk();
 			if (clerk) {
 				clerk.mountSignIn(clerkMountDiv, {
-					fallbackRedirectUrl: '/dashboard',
+					fallbackRedirectUrl: getRedirectTarget(),
 					signUpUrl: '/signup',
 					appearance: {
 						elements: {
@@ -32,10 +45,10 @@
 		}
 	});
 
-	// Redirect to dashboard when signed in
+	// Redirect to intended destination (or dashboard) when signed in
 	$effect(() => {
 		if ($clerkState.isSignedIn) {
-			goto('/dashboard');
+			goto(getRedirectTarget());
 		}
 	});
 </script>
