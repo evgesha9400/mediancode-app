@@ -3,7 +3,7 @@
  * Used by both RequestBodyEditor and ResponseBodyEditor components
  */
 
-import type { ResponseShape, ResponseItemShape, ObjectDefinition } from '$lib/types';
+import type { ResponseShape } from '$lib/types';
 import { getFieldById } from '$lib/stores/fields';
 import { getObjectById } from '$lib/stores/objects';
 
@@ -26,26 +26,6 @@ export function getExampleValueForType(type: string): any {
 	if (normalizedType === 'time') return '00:00:00';
 
 	return null;
-}
-
-/**
- * Build an object from field IDs
- *
- * @param fieldIds - Array of field IDs to include in the object
- * @param fields - Optional fields array for reactive dependencies (not used directly but ensures reactivity)
- * @returns An object with field names as keys and example values
- */
-export function buildObjectFromFieldIds(fieldIds: string[], fields?: any[]): Record<string, any> {
-	const obj: Record<string, any> = {};
-
-	fieldIds.forEach(fieldId => {
-		const field = getFieldById(fieldId);
-		if (field) {
-			obj[field.name] = getExampleValueForType(field.type);
-		}
-	});
-
-	return obj;
 }
 
 /**
@@ -78,22 +58,6 @@ export function buildObjectFromObjectId(objectId: string | undefined, objects?: 
 }
 
 /**
- * Build request body preview JSON (legacy - uses field IDs)
- *
- * @param fieldIds - Array of field IDs to include in the request body
- * @param fields - Optional fields array for reactive dependencies (not used directly but ensures reactivity)
- * @returns JSON string representation of the request body
- */
-export function buildRequestPreview(fieldIds: string[], fields?: any[]): string {
-	if (fieldIds.length === 0) {
-		return '{}';
-	}
-
-	const bodyContent = buildObjectFromFieldIds(fieldIds, fields);
-	return JSON.stringify(bodyContent, null, 2);
-}
-
-/**
  * Build request body preview JSON from an object ID
  *
  * @param objectId - The ID of the object definition to use for the request body
@@ -102,58 +66,6 @@ export function buildRequestPreview(fieldIds: string[], fields?: any[]): string 
  */
 export function buildRequestPreviewFromObject(objectId: string | undefined, objects?: any[]): string {
 	const bodyContent = buildObjectFromObjectId(objectId, objects);
-	return JSON.stringify(bodyContent, null, 2);
-}
-
-/**
- * Build response body preview JSON
- *
- * Supports two response shapes:
- * - object: Returns an object built from field IDs
- * - list: Returns an array of objects
- *
- * @param shape - The response shape ('object' or 'list')
- * @param fieldIds - Array of field IDs for object/list-of-objects shapes
- * @param primitiveFieldId - Deprecated parameter (kept for compatibility, not used)
- * @param itemShape - Deprecated parameter (kept for compatibility, always 'object')
- * @param useEnvelope - Whether to wrap the response in a { data: ... } envelope
- * @param fields - Optional fields array for reactive dependencies (not used directly but ensures reactivity)
- * @returns JSON string representation of the response body
- */
-export function buildResponsePreview(
-	shape: ResponseShape,
-	fieldIds: string[],
-	primitiveFieldId: string | undefined,
-	itemShape: ResponseItemShape,
-	useEnvelope: boolean,
-	fields?: any[]
-): string {
-	let bodyContent: any;
-
-	if (shape === 'object') {
-		// Object shape: build object from field IDs
-		if (fieldIds.length === 0) {
-			bodyContent = {};
-		} else {
-			bodyContent = buildObjectFromFieldIds(fieldIds, fields);
-		}
-	} else if (shape === 'list') {
-		// List shape: array of objects only
-		if (fieldIds.length === 0) {
-			bodyContent = [];
-		} else {
-			const itemObject = buildObjectFromFieldIds(fieldIds, fields);
-			bodyContent = [itemObject, itemObject]; // Show 2 example items
-		}
-	}
-
-	// Wrap in envelope if enabled
-	if (useEnvelope) {
-		bodyContent = {
-			data: bodyContent
-		};
-	}
-
 	return JSON.stringify(bodyContent, null, 2);
 }
 
