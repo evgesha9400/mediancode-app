@@ -10,7 +10,7 @@
  * Current test coverage:
  * - TypeScript interface validation (works in jsdom)
  * - Component export verification (works in jsdom)
- * - E2E tests via Playwright provide full rendering coverage (tests/e2e/scenarios/dashboard.spec.ts)
+ * - E2E tests via Playwright provide full rendering coverage (tests/smoke/dashboard.spec.ts)
  *
  * To enable browser-mode rendering tests in CI/CD, configure Vitest browser mode:
  * ```typescript
@@ -86,7 +86,7 @@ describe('Table Component', () => {
  * Why: Svelte 5's mount() requires a browser environment. While @testing-library/svelte
  * is installed and jsdom is configured, the combination doesn't support Svelte 5 $props() components.
  *
- * See tests/e2e/scenarios/dashboard.spec.ts for comprehensive rendering tests including:
+ * See tests/smoke/dashboard.spec.ts for comprehensive rendering tests including:
  * - Table structure validation
  * - Empty state rendering
  * - Header and body content
