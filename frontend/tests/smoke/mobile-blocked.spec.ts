@@ -2,7 +2,7 @@
  * Mobile Blocked Page Smoke Tests
  *
  * Verifies mobile device blocking renders correctly and
- * that mobile users accessing /dashboard are redirected.
+ * that mobile users accessing dashboard routes are redirected.
  *
  * @tags smoke
  */
@@ -33,6 +33,15 @@ test.describe('Mobile Detection', () => {
 
 	test('should redirect /dashboard to /mobile-blocked on mobile', async ({ page }) => {
 		await page.goto('/dashboard');
+		await page.waitForURL('**/mobile-blocked');
+		await expect(page).toHaveURL('/mobile-blocked');
+
+		const mobileBlockedPage = new MobileBlockedPage(page);
+		await expect(mobileBlockedPage.heading).toBeVisible();
+	});
+
+	test('should redirect /types to /mobile-blocked on mobile', async ({ page }) => {
+		await page.goto('/types');
 		await page.waitForURL('**/mobile-blocked');
 		await expect(page).toHaveURL('/mobile-blocked');
 

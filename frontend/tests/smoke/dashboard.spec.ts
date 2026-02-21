@@ -1,43 +1,34 @@
 /**
  * Dashboard Smoke Tests
  *
- * Verifies dashboard page structure renders correctly.
- * These run without authentication — the dashboard renders with
- * default/empty state (zero stat values, fallback username).
+ * Verifies that unauthenticated access to dashboard routes
+ * redirects to /signin with a return URL.
  * Real authenticated dashboard behavior is covered by CRUD tests.
  *
  * @tags smoke
  */
 
 import { test, expect } from './fixtures';
-import { DashboardPage } from '../page-objects';
 
-test.describe('Dashboard - Smoke Tests', () => {
-	let dashboardPage: DashboardPage;
-
-	test.beforeEach(async ({ page }) => {
-		dashboardPage = new DashboardPage(page);
-		await dashboardPage.goto();
+test.describe('Dashboard - Auth Redirect', () => {
+	test('should redirect unauthenticated /dashboard to /signin', async ({ page }) => {
+		await page.goto('/dashboard');
+		await page.waitForURL('**/signin?redirect=**');
+		expect(page.url()).toContain('/signin');
+		expect(page.url()).toContain('redirect=%2Fdashboard');
 	});
 
-	test('should display dashboard header', async () => {
-		await expect(dashboardPage.pageTitle).toBeVisible();
-		await expect(dashboardPage.welcomeMessage).toBeVisible();
+	test('should redirect unauthenticated /types to /signin', async ({ page }) => {
+		await page.goto('/types');
+		await page.waitForURL('**/signin?redirect=**');
+		expect(page.url()).toContain('/signin');
+		expect(page.url()).toContain('redirect=%2Ftypes');
 	});
 
-	test('should display stat cards', async () => {
-		await expect(dashboardPage.typesCard).toBeVisible();
-		await expect(dashboardPage.fieldsCard).toBeVisible();
-		await expect(dashboardPage.generatedApisCard).toBeVisible();
-		await expect(dashboardPage.fieldConstraintsCard).toBeVisible();
-		await expect(dashboardPage.generationsCard).toBeVisible();
-	});
-
-	test('should display sidebar navigation', async () => {
-		await expect(dashboardPage.sidebar).toBeVisible();
-		await expect(dashboardPage.dashboardNavLink).toBeVisible();
-		await expect(dashboardPage.fieldsNavLink).toBeVisible();
-		await expect(dashboardPage.typesNavLink).toBeVisible();
-		await expect(dashboardPage.fieldConstraintsNavLink).toBeVisible();
+	test('should redirect unauthenticated /fields to /signin', async ({ page }) => {
+		await page.goto('/fields');
+		await page.waitForURL('**/signin?redirect=**');
+		expect(page.url()).toContain('/signin');
+		expect(page.url()).toContain('redirect=%2Ffields');
 	});
 });
