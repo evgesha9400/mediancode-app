@@ -17,3 +17,4 @@ export * from './fields';
 export * from './objects';
 export * from './endpoints';
 export * from './fieldValidators';
+export * from './modelValidators';

@@ -55,9 +55,9 @@ export class TypesPage {
 		this.emptyState = page.locator('text=No types found');
 
 		// Sortable columns - scoped to table to avoid conflicts with filter panel
-		this.nameColumnHeader = this.table.locator('thead th').filter({ hasText: 'Type Name' });
-		this.pythonTypeColumnHeader = this.table.locator('thead th').filter({ hasText: /^Type$/i });
-		this.usedInFieldsColumnHeader = this.table.locator('thead th').filter({ hasText: 'Used In Fields' });
+		this.nameColumnHeader = this.table.locator('thead th').filter({ hasText: /^Name$/i });
+		this.pythonTypeColumnHeader = this.table.locator('thead th').filter({ hasText: 'Python Type' });
+		this.usedInFieldsColumnHeader = this.table.locator('thead th').filter({ hasText: 'Used in Fields' });
 	}
 
 	private async delay() {
@@ -135,9 +135,9 @@ export class TypesPage {
 		// Get fresh locator each time to avoid stale elements
 		// Click the button inside the th, which contains the label text
 		const headerMap = {
-			name: () => this.table.locator('thead th button').filter({ hasText: 'Type Name' }),
-			pythonType: () => this.table.locator('thead th button').filter({ hasText: 'Type' }).nth(1),
-			usedInFields: () => this.table.locator('thead th button').filter({ hasText: 'Used In Fields' })
+			name: () => this.table.locator('thead th button').filter({ hasText: /^Name$/i }),
+			pythonType: () => this.table.locator('thead th button').filter({ hasText: 'Python Type' }),
+			usedInFields: () => this.table.locator('thead th button').filter({ hasText: 'Used in Fields' })
 		};
 
 		await headerMap[column]().click(clickOptions);

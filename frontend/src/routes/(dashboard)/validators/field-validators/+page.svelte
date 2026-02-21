@@ -12,7 +12,7 @@
     NamespaceSelector
   } from '$lib/components';
   import type { FilterConfig, FieldValidator } from '$lib/types';
-  import { storeLoadingState, reloadStores } from '$lib/stores/loader';
+  import { storeLoadingState, reloadStores, STORE_NAMES } from '$lib/stores/loader';
   import { page } from '$app/state';
   import { goto } from '$app/navigation';
   import { createListViewState } from '$lib/stores/listViewState.svelte';
@@ -31,7 +31,7 @@
   // Build filter config (reactive to store changes)
   let filterConfig = $derived.by((): FilterConfig => {
     const rootTypes = $typesStore
-      .filter(t => t.parentTypeId === null && t.name !== 'numeric')
+      .filter(t => t.parentTypeId === null)
       .map(t => t.name);
     const typeOptions = [...rootTypes, 'Any'].sort();
 
@@ -72,7 +72,7 @@
   let sorts = $derived(state.sorts);
   let activeFiltersCount = $derived(state.activeFiltersCount);
 
-  let hasLoadError = $derived($storeLoadingState.storeErrors.includes('Field Validators'));
+  let hasLoadError = $derived($storeLoadingState.storeErrors.includes(STORE_NAMES.FIELD_VALIDATORS));
 </script>
 
 <PageHeader title="Field Validators">

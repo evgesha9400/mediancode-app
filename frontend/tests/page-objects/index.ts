@@ -14,3 +14,4 @@ export { TypesPage } from './TypesPage';
 export { FieldConstraintsPage } from './FieldConstraintsPage';
 export { ApisPage } from './ApisPage';
 export { ObjectsPage } from './ObjectsPage';
+export { NamespacesPage } from './NamespacesPage';

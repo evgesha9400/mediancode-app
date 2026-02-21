@@ -11,7 +11,6 @@ import {
   typesStore,
   getTotalTypeCount,
   getPrimitiveTypes,
-  getSelectableTypes,
   searchTypes,
   getTypeIdByName,
   type TypeBase,
@@ -44,7 +43,6 @@ const PRIMITIVE_TYPES: TypeBase[] = [
   makeType({ name: 'uuid', pythonType: 'UUID', description: 'UUID type' })
 ];
 
-const ABSTRACT_TYPE = makeType({ name: 'numeric', pythonType: 'numeric', description: 'Abstract numeric type' });
 
 // ---------------------------------------------------------------------------
 // Setup
@@ -84,18 +82,6 @@ describe('typesStore (derived)', () => {
     expect(boolType?.usedInFields).toBe(0);
   });
 
-  it('counts int+float usage for abstract "numeric" type', () => {
-    typesBaseStore.set([...PRIMITIVE_TYPES, ABSTRACT_TYPE]);
-    fieldsStore.set([
-      { id: 'f-1', name: 'age', namespaceId: 'ns-1', type: 'int', description: '', defaultValue: '', constraints: [], usedInApis: [] },
-      { id: 'f-2', name: 'price', namespaceId: 'ns-1', type: 'float', description: '', defaultValue: '', constraints: [], usedInApis: [] },
-      { id: 'f-3', name: 'count', namespaceId: 'ns-1', type: 'int', description: '', defaultValue: '', constraints: [], usedInApis: [] }
-    ] as any);
-
-    const types = get(typesStore);
-    const numeric = types.find(t => t.name === 'numeric');
-    expect(numeric?.usedInFields).toBe(3); // 2 int + 1 float
-  });
 });
 
 describe('getTotalTypeCount', () => {
@@ -111,27 +97,14 @@ describe('getTotalTypeCount', () => {
 
 describe('getPrimitiveTypes', () => {
   beforeEach(() => {
-    typesBaseStore.set([...PRIMITIVE_TYPES, ABSTRACT_TYPE]);
+    typesBaseStore.set([...PRIMITIVE_TYPES]);
     fieldsStore.set([]);
   });
 
-  it('returns only primitive types (excludes abstract)', () => {
+  it('returns primitive types', () => {
     const primitives = getPrimitiveTypes();
     expect(primitives).toHaveLength(6);
-    expect(primitives.map(t => t.name)).not.toContain('numeric');
-  });
-});
-
-describe('getSelectableTypes', () => {
-  beforeEach(() => {
-    typesBaseStore.set([...PRIMITIVE_TYPES, ABSTRACT_TYPE]);
-    fieldsStore.set([]);
-  });
-
-  it('returns all types except abstract types', () => {
-    const selectable = getSelectableTypes();
-    expect(selectable).toHaveLength(6);
-    expect(selectable.map(t => t.name)).not.toContain('numeric');
+    expect(primitives.map(t => t.name)).toEqual(['str', 'int', 'float', 'bool', 'datetime', 'uuid']);
   });
 });
 

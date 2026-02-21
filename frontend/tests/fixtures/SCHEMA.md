@@ -19,8 +19,6 @@ Field
   └─ used in many → ApiEndpoint
 
 FieldConstraint
-  ├─ has one → type (string, numeric)
-  ├─ has one → category (inline, custom)
   ├─ belongs to → Namespace
   └─ used in many → Field
 
@@ -64,8 +62,7 @@ interface MockUser {
 
 ```typescript
 type PrimitiveTypeName = 'str' | 'int' | 'float' | 'bool' | 'datetime' | 'uuid';
-type AbstractTypeName = 'numeric';
-type TypeName = PrimitiveTypeName | AbstractTypeName;
+type TypeName = PrimitiveTypeName;
 
 interface TypeBase {
   id: string;                          // Unique identifier (UUID)
@@ -84,13 +81,10 @@ interface FieldType extends TypeBase {
 
 **Invariants:**
 - Primitive types: `str`, `int`, `float`, `bool`, `datetime`, `uuid`
-- Abstract types: `numeric`
 - Field constraint compatibility is determined by a static mapping in the types store
 
 **Test Data:**
 - 6 primitive types
-- 1 abstract type
-- Total: 7 types
 
 ### FieldConstraint
 
@@ -112,18 +106,17 @@ interface FieldConstraint extends FieldConstraintBase {
 
 **Invariants:**
 - `name` must be unique within namespace
-- `type` must be compatible with the field type's constraint categories
-- Inline field constraints map to Pydantic Field constraints
-- Custom field constraints use `@field_validator` decorator
+- `compatibleTypes` must contain valid primitive type names
+- Field constraints map to Pydantic Field constraints
 
 **Test Data:**
 - 8 inline field constraints (global namespace)
 - 3 custom field constraints (2 global: `email_format`, `url_format` + 1 user: `product_name_format`)
 - Total: 11 field constraints across all namespaces (10 in global namespace)
 
-**Field Constraint Types:**
-- **string:** `max_length`, `min_length`, `pattern`, `email_format`, `url_format`, `product_name_format`
-- **numeric:** `gt`, `ge`, `lt`, `le`, `multiple_of`
+**Field Constraints:**
+- `max_length`, `min_length`, `pattern`, `email_format`, `url_format`, `product_name_format`
+- `gt`, `ge`, `lt`, `le`, `multiple_of`
 
 ### Field
 

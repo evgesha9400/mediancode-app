@@ -13,6 +13,7 @@ export * from './users';
 export * from './types';
 export * from './fieldConstraints';
 export * from './fields';
+export * from './validators';
 export * from './permissions';
 export * from './seedData';
 
@@ -28,16 +29,13 @@ export {
 export {
 	mockTypes,
 	mockPrimitiveTypes,
-	mockAbstractTypes,
 	mockFieldTypes,
 	getTypeByName,
 	getPrimitiveTypes,
-	getAbstractTypes,
 	type TypeBase,
 	type FieldType,
 	type TypeName,
-	type PrimitiveTypeName,
-	type AbstractTypeName
+	type PrimitiveTypeName
 } from './types';
 
 export {

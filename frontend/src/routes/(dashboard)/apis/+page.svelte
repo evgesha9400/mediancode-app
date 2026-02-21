@@ -21,7 +21,7 @@
     CrudDrawerFooter,
     NamespaceSelector
   } from '$lib/components';
-  import { storeLoadingState, reloadStores } from '$lib/stores/loader';
+  import { storeLoadingState, reloadStores, STORE_NAMES } from '$lib/stores/loader';
   import { page } from '$app/state';
   import { goto } from '$app/navigation';
   import { createListViewState } from '$lib/stores/listViewState.svelte';
@@ -67,7 +67,7 @@
   let filteredApis = $derived(listState.results as ApiWithCounts[]);
   let sorts = $derived(listState.sorts);
 
-  let hasLoadError = $derived($storeLoadingState.storeErrors.includes('APIs'));
+  let hasLoadError = $derived($storeLoadingState.storeErrors.includes(STORE_NAMES.APIS));
 
   function handleOpenApi(api: Api) {
     goto(`/apis/${api.id}`);

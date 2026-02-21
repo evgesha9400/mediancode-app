@@ -21,7 +21,7 @@
     CrudDrawerFooter
   } from '$lib/components';
   import type { FilterConfig, Namespace } from '$lib/types';
-  import { storeLoadingState, reloadStores } from '$lib/stores/loader';
+  import { storeLoadingState, reloadStores, STORE_NAMES } from '$lib/stores/loader';
   import { page } from '$app/state';
   import { goto } from '$app/navigation';
 
@@ -108,7 +108,7 @@
     closeCreateModal();
   }
 
-  let hasLoadError = $derived($storeLoadingState.storeErrors.includes('Namespaces'));
+  let hasLoadError = $derived($storeLoadingState.storeErrors.includes(STORE_NAMES.NAMESPACES));
   let isLocked = $derived(workflow.editedItem?.locked ?? false);
 </script>
 

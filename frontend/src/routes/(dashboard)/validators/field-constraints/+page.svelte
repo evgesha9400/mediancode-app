@@ -18,7 +18,7 @@
     Tooltip
   } from '$lib/components';
   import type { FilterConfig } from '$lib/types';
-  import { storeLoadingState, reloadStores } from '$lib/stores/loader';
+  import { storeLoadingState, reloadStores, STORE_NAMES } from '$lib/stores/loader';
   import { page } from '$app/state';
   import { goto } from '$app/navigation';
   import { createListViewState } from '$lib/stores/listViewState.svelte';
@@ -112,7 +112,7 @@
     ? buildDeletionTooltip('field constraint', 'field', fieldsUsingSelected)
     : '');
   let isSystemItem = $derived(selectedFieldConstraint ? isSystemEntity(selectedFieldConstraint) : false);
-  let hasLoadError = $derived($storeLoadingState.storeErrors.includes('Field Constraints'));
+  let hasLoadError = $derived($storeLoadingState.storeErrors.includes(STORE_NAMES.FIELD_CONSTRAINTS));
 </script>
 
 <PageHeader title="Field Constraints" />

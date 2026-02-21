@@ -10,7 +10,7 @@
     EmptyState
   } from '$lib/components';
   import type { FilterConfig } from '$lib/types';
-  import { storeLoadingState, reloadStores } from '$lib/stores/loader';
+  import { storeLoadingState, reloadStores, STORE_NAMES } from '$lib/stores/loader';
   import { page } from '$app/state';
   import { goto } from '$app/navigation';
   import { createListViewState } from '$lib/stores/listViewState.svelte';
@@ -44,7 +44,7 @@
   let filteredTypes = $derived(state.results);
   let sorts = $derived(state.sorts);
   let activeFiltersCount = $derived(state.activeFiltersCount);
-  let hasLoadError = $derived($storeLoadingState.storeErrors.includes('Types'));
+  let hasLoadError = $derived($storeLoadingState.storeErrors.includes(STORE_NAMES.TYPES));
 </script>
 
 <PageHeader title="Types" />

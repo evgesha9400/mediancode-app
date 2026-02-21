@@ -17,7 +17,7 @@
     FieldSelectorDropdown,
     NamespaceSelector
   } from '$lib/components';
-  import { storeLoadingState, reloadStores } from '$lib/stores/loader';
+  import { storeLoadingState, reloadStores, STORE_NAMES } from '$lib/stores/loader';
   import { page } from '$app/state';
   import { goto } from '$app/navigation';
 
@@ -88,7 +88,7 @@
     };
   }
 
-  let hasLoadError = $derived($storeLoadingState.storeErrors.includes('Objects'));
+  let hasLoadError = $derived($storeLoadingState.storeErrors.includes(STORE_NAMES.OBJECTS));
 </script>
 
 <PageHeader title="Objects">

@@ -21,7 +21,7 @@
     TypeSelectorDropdown
   } from '$lib/components';
   import type { FilterConfig } from '$lib/types';
-  import { storeLoadingState, reloadStores } from '$lib/stores/loader';
+  import { storeLoadingState, reloadStores, STORE_NAMES } from '$lib/stores/loader';
   import { page } from '$app/state';
   import { goto } from '$app/navigation';
 
@@ -30,7 +30,7 @@
 
   // Reactive store subscriptions for derived computations
   let allNamespaces = $derived($namespacesStore);
-  let selectableTypes = $derived($typesStore.filter(t => !['numeric'].includes(t.name)));
+  let selectableTypes = $derived($typesStore);
 
   // Build filter config from selectable types (reactive to store changes)
   let fieldFilterConfig = $derived.by((): FilterConfig => {
@@ -142,7 +142,7 @@
     return constraintValue.name;
   }
 
-  let hasLoadError = $derived($storeLoadingState.storeErrors.includes('Fields'));
+  let hasLoadError = $derived($storeLoadingState.storeErrors.includes(STORE_NAMES.FIELDS));
 </script>
 
 <PageHeader title="Fields">

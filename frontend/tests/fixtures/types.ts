@@ -6,8 +6,7 @@
  */
 
 export type PrimitiveTypeName = 'str' | 'int' | 'float' | 'bool' | 'datetime' | 'uuid';
-export type AbstractTypeName = 'numeric';
-export type TypeName = PrimitiveTypeName | AbstractTypeName;
+export type TypeName = PrimitiveTypeName;
 
 export interface TypeBase {
 	id: string;
@@ -82,19 +81,7 @@ export const mockPrimitiveTypes: TypeBase[] = [
 	}
 ];
 
-export const mockAbstractTypes: TypeBase[] = [
-	{
-		id: '00000000-0000-0000-0001-000000000007',
-		namespaceId: GLOBAL_NAMESPACE_ID,
-		name: 'numeric',
-		pythonType: 'int | float',
-		description: 'Abstract numeric type (int or float)',
-		importPath: null,
-		parentTypeId: null
-	}
-];
-
-export const mockTypes: TypeBase[] = [...mockPrimitiveTypes, ...mockAbstractTypes];
+export const mockTypes: TypeBase[] = [...mockPrimitiveTypes];
 
 export const mockFieldTypes: FieldType[] = mockTypes.map((type, index) => ({
 	...type,
@@ -109,15 +96,8 @@ export function getTypeByName(name: TypeName): TypeBase | undefined {
 }
 
 /**
- * Get primitive types (all types except abstract ones like 'numeric')
+ * Get primitive types
  */
 export function getPrimitiveTypes(): TypeBase[] {
 	return mockPrimitiveTypes;
-}
-
-/**
- * Get abstract types (like 'numeric')
- */
-export function getAbstractTypes(): TypeBase[] {
-	return mockAbstractTypes;
 }

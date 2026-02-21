@@ -1,11 +1,11 @@
 /**
- * Field Validator Fixtures
+ * Validator Fixtures
  *
- * Mock field validators for testing field validator features.
- * Matches the FieldValidator type from src/lib/types/index.ts.
+ * Mock field validators and model validators for testing.
+ * Matches the FieldValidator and ModelValidator types from src/lib/types/index.ts.
  */
 
-import type { FieldValidator } from '$lib/types';
+import type { FieldValidator, ModelValidator } from '$lib/types';
 
 export const mockFieldValidators: FieldValidator[] = [
 	{
@@ -65,4 +65,68 @@ export function getFieldValidatorByName(name: string): FieldValidator | undefine
  */
 export function getFieldValidatorsByMode(mode: 'before' | 'after'): FieldValidator[] {
 	return mockFieldValidators.filter(fv => fv.mode === mode);
+}
+
+// ============================================================================
+// Model Validator Fixtures
+// ============================================================================
+
+export const mockModelValidators: ModelValidator[] = [
+	{
+		id: 'mv-001',
+		namespaceId: '00000000-0000-0000-0000-000000000001',
+		name: 'Date Range Check',
+		description: 'Ensure end_date is after start_date',
+		requiredFields: ['start_date', 'end_date'],
+		mode: 'after',
+		code: '    if self.end_date <= self.start_date:\n        raise ValueError(\'end_date must be after start_date\')\n    return self',
+		usedInObjects: 2,
+		createdAt: '2026-01-20T10:00:00Z',
+		updatedAt: '2026-01-20T10:00:00Z'
+	},
+	{
+		id: 'mv-002',
+		namespaceId: '00000000-0000-0000-0000-000000000001',
+		name: 'Company Fields Required',
+		description: 'If company_name is set, company_id is required',
+		requiredFields: ['company_name', 'company_id'],
+		mode: 'after',
+		code: '    if self.company_name and not self.company_id:\n        raise ValueError(\'company_id is required when company_name is provided\')\n    return self',
+		usedInObjects: 1,
+		createdAt: '2026-01-21T10:00:00Z',
+		updatedAt: '2026-01-21T10:00:00Z'
+	},
+	{
+		id: 'mv-003',
+		namespaceId: '00000000-0000-0000-0000-000000000001',
+		name: 'Discount Validation',
+		description: 'Validate discount code and amount consistency',
+		requiredFields: ['discount_code', 'discount_amount', 'total'],
+		mode: 'after',
+		code: '    if self.discount_code and self.discount_amount > self.total:\n        raise ValueError(\'Discount amount cannot exceed total\')\n    return self',
+		usedInObjects: 0,
+		createdAt: '2026-01-22T10:00:00Z',
+		updatedAt: '2026-01-22T10:00:00Z'
+	}
+];
+
+/**
+ * Get a model validator by ID
+ */
+export function getModelValidatorById(id: string): ModelValidator | undefined {
+	return mockModelValidators.find(mv => mv.id === id);
+}
+
+/**
+ * Get a model validator by name
+ */
+export function getModelValidatorByName(name: string): ModelValidator | undefined {
+	return mockModelValidators.find(mv => mv.name === name);
+}
+
+/**
+ * Get model validators by mode
+ */
+export function getModelValidatorsByMode(mode: 'before' | 'after'): ModelValidator[] {
+	return mockModelValidators.filter(mv => mv.mode === mode);
 }

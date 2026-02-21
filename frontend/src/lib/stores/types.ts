@@ -2,8 +2,7 @@ import { writable, derived, get } from 'svelte/store';
 import { fieldsStore } from './fields';
 
 export type PrimitiveTypeName = 'str' | 'int' | 'float' | 'bool' | 'datetime' | 'uuid';
-export type AbstractTypeName = 'numeric';
-export type TypeName = PrimitiveTypeName | AbstractTypeName;
+export type TypeName = PrimitiveTypeName;
 
 export interface TypeBase {
 	id: string;
@@ -28,22 +27,10 @@ export const typesStore = derived(
 	[typesBaseStore, fieldsStore],
 	([$typesBase, $fields]) => {
 		// Calculate usage for each type
-		return $typesBase.map(typeBase => {
-			let usedInFields = 0;
-
-			// For the abstract 'numeric' type, count usage of all related primitive types
-			if (typeBase.name === 'numeric') {
-				usedInFields = $fields.filter(field => field.type === 'int' || field.type === 'float').length;
-			} else {
-				// For all other types, count direct usage
-				usedInFields = $fields.filter(field => field.type === typeBase.name).length;
-			}
-
-			return {
-				...typeBase,
-				usedInFields
-			} as FieldType;
-		});
+		return $typesBase.map(typeBase => ({
+			...typeBase,
+			usedInFields: $fields.filter(field => field.type === typeBase.name).length
+		} as FieldType));
 	}
 );
 
@@ -54,16 +41,6 @@ export function getTotalTypeCount(): number {
 export function getPrimitiveTypes(): FieldType[] {
 	const primitiveNames: string[] = ['str', 'int', 'float', 'bool', 'datetime', 'uuid'];
 	return get(typesStore).filter(t => primitiveNames.includes(t.name));
-}
-
-/**
- * Get all types that can be selected for a field.
- * Includes primitive types AND constrained types, but excludes abstract types (e.g., 'numeric').
- * Abstract types are grouping/category types that cannot be directly assigned to a field.
- */
-export function getSelectableTypes(): FieldType[] {
-	const abstractNames: string[] = ['numeric'];
-	return get(typesStore).filter(t => !abstractNames.includes(t.name));
 }
 
 export function searchTypes(types: FieldType[], query: string): FieldType[] {

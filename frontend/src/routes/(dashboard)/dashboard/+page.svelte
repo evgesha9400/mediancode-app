@@ -5,7 +5,7 @@
   import { objectsStore } from '$lib/stores/objects';
   import { apisStore } from '$lib/stores/apis';
   import { clerkState } from '$lib/clerk';
-  import { storeLoadingState, reloadStores } from '$lib/stores/loader';
+  import { storeLoadingState, reloadStores, STORE_NAMES } from '$lib/stores/loader';
   import { StatCard } from '$lib/components';
 
   let totalTypes = $derived($typesBaseStore.length);
@@ -16,7 +16,7 @@
   let userName = $derived($clerkState.user?.firstName || $clerkState.user?.fullName || 'Developer');
   let errors = $derived($storeLoadingState.storeErrors);
 
-  function hasError(storeName: string): boolean {
+  function hasError(storeName: typeof STORE_NAMES[keyof typeof STORE_NAMES]): boolean {
     return errors.includes(storeName);
   }
 
@@ -39,10 +39,10 @@
     <section>
       <h2 class="text-xs uppercase tracking-wider text-mono-400 mb-3 font-medium">Core Components</h2>
       <div class="flex flex-wrap gap-6">
-        <div class="w-40"><StatCard title="Types" value={totalTypes} icon="fa-shapes" error={hasError('Types')} onRetry={handleRetry} /></div>
-        <div class="w-40"><StatCard title="Field Constraints" value={totalFieldConstraints} icon="fa-check-circle" error={hasError('Field Constraints')} onRetry={handleRetry} /></div>
-        <div class="w-40"><StatCard title="Fields" value={totalFields} icon="fa-table-list" error={hasError('Fields')} onRetry={handleRetry} /></div>
-        <div class="w-40"><StatCard title="Objects" value={totalObjects} icon="fa-cubes" error={hasError('Objects')} onRetry={handleRetry} /></div>
+        <div class="w-40"><StatCard title="Types" value={totalTypes} icon="fa-shapes" error={hasError(STORE_NAMES.TYPES)} onRetry={handleRetry} /></div>
+        <div class="w-40"><StatCard title="Field Constraints" value={totalFieldConstraints} icon="fa-check-circle" error={hasError(STORE_NAMES.FIELD_CONSTRAINTS)} onRetry={handleRetry} /></div>
+        <div class="w-40"><StatCard title="Fields" value={totalFields} icon="fa-table-list" error={hasError(STORE_NAMES.FIELDS)} onRetry={handleRetry} /></div>
+        <div class="w-40"><StatCard title="Objects" value={totalObjects} icon="fa-cubes" error={hasError(STORE_NAMES.OBJECTS)} onRetry={handleRetry} /></div>
       </div>
     </section>
 
@@ -50,7 +50,7 @@
     <section>
       <h2 class="text-xs uppercase tracking-wider text-mono-400 mb-3 font-medium">APIs</h2>
       <div class="flex flex-wrap gap-6">
-        <div class="w-40"><StatCard title="Generated APIs" value={totalApis} icon="fa-code" error={hasError('APIs')} onRetry={handleRetry} /></div>
+        <div class="w-40"><StatCard title="Generated APIs" value={totalApis} icon="fa-code" error={hasError(STORE_NAMES.APIS)} onRetry={handleRetry} /></div>
       </div>
     </section>
 

@@ -206,3 +206,17 @@ export interface FieldValidator {
   createdAt: string;
   updatedAt: string;
 }
+
+// Model validator types
+export interface ModelValidator {
+  id: string;
+  namespaceId: string;
+  name: string;
+  description: string;
+  requiredFields: string[];
+  mode: 'before' | 'after';
+  code: string;
+  usedInObjects: number;
+  createdAt: string;
+  updatedAt: string;
+}

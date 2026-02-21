@@ -162,10 +162,10 @@
   // DERIVED STATE
   // ============================================================================
 
-  // Dynamic type options from store (root types minus abstract 'numeric', plus 'Any')
+  // Dynamic type options from store (root types plus 'Any')
   let typeOptions = $derived.by(() => {
     const rootTypes = $typesStore
-      .filter(t => t.parentTypeId === null && t.name !== 'numeric')
+      .filter(t => t.parentTypeId === null)
       .map(t => t.name);
     return [...rootTypes, 'Any'];
   });
