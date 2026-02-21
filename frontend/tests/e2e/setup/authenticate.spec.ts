@@ -1,9 +1,11 @@
 /**
  * Auth Setup for E2E Tests
  *
- * Uses @clerk/testing to sign in programmatically via clerk.signIn(),
- * bypassing the UI form flow and device verification. The session
- * state is saved for reuse by other test projects.
+ * Uses @clerk/testing's emailAddress-based sign-in which creates a sign-in
+ * token via the Clerk Backend API (requires CLERK_SECRET_KEY). This approach
+ * bypasses 2FA and device verification, making it reliable for CI/CD.
+ *
+ * The session state is saved for reuse by other test projects.
  *
  * Required environment variables:
  * - E2E_TEST_USER_EMAIL
@@ -59,24 +61,26 @@ function getTestCredentials(): { email: string; password: string } {
 
 setup('authenticate test user', async ({ page }) => {
 	// clerkSetup() is called in global-setup.ts (sets CLERK_FAPI + CLERK_TESTING_TOKEN)
-	const { email, password } = getTestCredentials();
+	const { email } = getTestCredentials();
 	console.log(`Authenticating test user: ${email}`);
 
-	// Navigate to signin page so Clerk JS loads (signin page redirects on auth)
-	await page.goto('/signin');
+	// Navigate to landing page (not /signin) to load Clerk without the
+	// mounted <SignIn> component, which blocks programmatic sign-in state updates.
+	await page.goto('/');
 	await page.waitForLoadState('networkidle', { timeout: 15_000 });
 
-	// Sign in programmatically via Clerk SDK (not the UI form)
+	// Sign in using emailAddress-based approach (creates sign-in token via
+	// Clerk Backend API, bypasses 2FA and device verification).
+	// This matches the authenticatedTest fixture pattern.
 	await clerk.signIn({
 		page,
-		signInParams: {
-			strategy: 'password',
-			identifier: email,
-			password: password
-		}
+		emailAddress: email
 	});
 
-	// Navigate to dashboard and verify authenticated session
+	// Wait for Clerk's post-sign-in requests (session sync) to complete
+	await page.waitForLoadState('networkidle', { timeout: 15_000 });
+
+	// Navigate to dashboard and verify authenticated session persists
 	await page.goto('/dashboard');
 	await page.waitForLoadState('networkidle', { timeout: 15_000 });
 

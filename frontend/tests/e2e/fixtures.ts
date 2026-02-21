@@ -13,6 +13,20 @@ import { test as base } from '@playwright/test';
 import { clerk } from '@clerk/testing/playwright';
 import { assertBackendHealthy } from '../helpers';
 
+/** Derive the backend hostname from PUBLIC_API_BASE_URL for network log filtering. */
+function getBackendHostname(): string {
+	const apiUrl = process.env.PUBLIC_API_BASE_URL || 'http://localhost:8000/v1';
+	try {
+		return new URL(apiUrl).hostname;
+	} catch {
+		return 'localhost';
+	}
+}
+
+function isBackendRequest(url: string): boolean {
+	return url.includes(getBackendHostname());
+}
+
 export const test = base.extend<{}, { _backendHealthy: void }>({
 	_backendHealthy: [
 		async ({}, use) => {
@@ -46,7 +60,7 @@ export const authenticatedTest = base.extend<
 			// as part of normal browser/HTTP2 lifecycle — not actionable for us.
 			page.on('requestfailed', (req) => {
 				const url = req.url();
-				if (!url.includes('api.dev.mediancode.com') && !url.includes('localhost:8000')) {
+				if (!isBackendRequest(url)) {
 					return; // Only log our backend failures
 				}
 				const key = `${req.method()} ${url}`;
@@ -60,7 +74,7 @@ export const authenticatedTest = base.extend<
 			// Log API responses for debugging
 			page.on('response', (resp) => {
 				const url = resp.url();
-				if (url.includes('api.dev.mediancode.com') || url.includes('localhost:8000')) {
+				if (isBackendRequest(url)) {
 					const key = `${resp.request().method()} ${url}`;
 					if (resp.ok()) succeededRequests.add(key);
 					console.log(
