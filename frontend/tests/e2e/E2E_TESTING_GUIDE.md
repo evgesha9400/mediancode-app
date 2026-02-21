@@ -31,10 +31,13 @@ import { E2EApiClient } from '../../helpers';
 Define 3-4 items as `const` objects at the top of the file. Requirements:
 
 1. **All data is hardcoded.** No generators, timestamps, random suffixes, or computed values.
-2. **Every filterable/sortable property has distinct values** across items so single-column sort and filter tests are meaningful.
-3. **Multi-sort requires ties.** At least two items must share the same value for one sortable column so the secondary sort has a tie to break. If every item has a unique value for the primary sort column, the secondary sort never activates and the test gives false confidence.
-4. **Pre-compute all expected sort orders** as named constants (`SORTED_ASC`, `SORTED_DESC`, `SORTED_BY_{COL1}_THEN_{COL2}`).
-5. **The multi-sort expected order must differ from every single-column sort order.** Assert this explicitly with `expect(SORTED_BY_X_THEN_Y).not.toEqual(SORTED_ASC)`.
+2. **Names must be meaningful and domain-relevant.** Use names that reflect real use cases so developers have an immediate mental model of what the test data represents. This makes tests easier to read, debug, and maintain.
+   - Good: `e2e_payments`, `e2e_is_active`, `e2e_user_email`, `e2e_notifications`
+   - Bad: `e2e_alpha`, `e2e_item_1`, `e2e_test_a`, `e2e_beta_ns`
+3. **Every filterable/sortable property has distinct values** across items so single-column sort and filter tests are meaningful.
+4. **Multi-sort requires ties.** At least two items must share the same value for one sortable column so the secondary sort has a tie to break. If every item has a unique value for the primary sort column, the secondary sort never activates and the test gives false confidence.
+5. **Pre-compute all expected sort orders** as named constants (`SORTED_ASC`, `SORTED_DESC`, `SORTED_BY_{COL1}_THEN_{COL2}`).
+6. **The multi-sort expected order must differ from every single-column sort order.** Assert this explicitly with `expect(SORTED_BY_X_THEN_Y).not.toEqual(SORTED_ASC)`.
 
 ### Flow Structure
 
@@ -63,6 +66,21 @@ The test follows this exact linear sequence. Every step either creates state a l
 18. Delete one by one   — for each item: click row → click delete → confirm → verify count decrements
 19. Verify empty state  — expect row count === 0
 ```
+
+### Sort Testing Exceptions
+
+Sort testing (steps 10-12) can be **skipped** when all of these conditions are true:
+
+1. The entity has no sortable column where ties naturally occur (e.g., Entities count is always 0 for newly created items).
+2. Creating items with shared values to force ties would **violate cross-entity isolation** (e.g., adding fields to a namespace just to test namespace sort).
+3. The only meaningful sort is by Name, which is always unique — single-column sort on unique values is trivial and doesn't warrant testing.
+
+When skipping sort testing:
+- **Document the rationale** in the spec file header comment (explain why multi-sort is not meaningful).
+- **Omit steps 10-12** from the flow and remove sort-related constants (`SORTED_ASC`, `SORTED_DESC`, `SORTED_BY_*`).
+- **Omit sort-related checklist items** from the verification checklist review.
+
+Example entity where sort testing is skipped: **Namespaces** (sortable columns: Name [unique], Entities [always 0]).
 
 ### Cleanup Strategy
 
@@ -135,11 +153,13 @@ Use this checklist to review any E2E CRUD spec before merging. Every box must be
 
 - [ ] 3-4 items defined as `const` at the top of the file
 - [ ] All values are hardcoded — no `Date.now()`, `Math.random()`, or template literals
+- [ ] Names are meaningful and domain-relevant — no abstract names (alpha, beta, item_1)
 - [ ] Every filterable property has at least one unique value (for filter-by-X tests)
-- [ ] At least two items share a value for one sortable column (for multi-sort tie-breaking)
-- [ ] `SORTED_ASC` and `SORTED_DESC` are pre-computed and correct
-- [ ] `SORTED_BY_{COL1}_THEN_{COL2}` is pre-computed and differs from `SORTED_ASC`
-- [ ] The file explicitly asserts `expect(SORTED_BY_X_THEN_Y).not.toEqual(SORTED_ASC)`
+- [ ] At least two items share a value for one sortable column (for multi-sort tie-breaking) — unless sort testing is skipped per "Sort Testing Exceptions"
+- [ ] `SORTED_ASC` and `SORTED_DESC` are pre-computed and correct — unless sort testing is skipped
+- [ ] `SORTED_BY_{COL1}_THEN_{COL2}` is pre-computed and differs from `SORTED_ASC` — unless sort testing is skipped
+- [ ] The file explicitly asserts `expect(SORTED_BY_X_THEN_Y).not.toEqual(SORTED_ASC)` — unless sort testing is skipped
+- [ ] If sort testing is skipped, file header documents the rationale per "Sort Testing Exceptions"
 
 ### Flow Completeness
 
@@ -151,10 +171,10 @@ Use this checklist to review any E2E CRUD spec before merging. Every box must be
 - [ ] Clear search: verifies full count restored
 - [ ] Filter: applies a filter, verifies reduced count and correct item(s)
 - [ ] Clear filter: verifies full count restored
-- [ ] Sort ascending: verifies order matches `SORTED_ASC`
-- [ ] Sort descending: clicks same column again, verifies `SORTED_DESC`
-- [ ] Multi-sort: clicks column X, then Shift+clicks column Y, verifies `SORTED_BY_X_THEN_Y`
-- [ ] Multi-sort guard: asserts multi-sort order !== single-sort order
+- [ ] Sort ascending: verifies order matches `SORTED_ASC` — unless sort testing is skipped per "Sort Testing Exceptions"
+- [ ] Sort descending: clicks same column again, verifies `SORTED_DESC` — unless sort testing is skipped
+- [ ] Multi-sort: clicks column X, then Shift+clicks column Y, verifies `SORTED_BY_X_THEN_Y` — unless sort testing is skipped
+- [ ] Multi-sort guard: asserts multi-sort order !== single-sort order — unless sort testing is skipped
 - [ ] Read: clicks a row, verifies drawer opens, verifies all field values in drawer
 - [ ] Update: changes values, verifies save is enabled, saves, verifies drawer closes
 - [ ] Verify persistence: re-opens same item, verifies updated values

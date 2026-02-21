@@ -285,7 +285,7 @@ export class NamespacesPage {
 	 */
 	async openCreateModal() {
 		await this.addNamespaceButton.click();
-		await this.createModal.waitFor({ state: 'visible' });
+		await this.createModal.waitFor({ state: 'visible', timeout: 5000 });
 	}
 
 	/**
@@ -301,11 +301,13 @@ export class NamespacesPage {
 	}
 
 	/**
-	 * Submit the create form
+	 * Submit the create form and wait for the modal to close.
+	 * Includes a settling delay to prevent rapid-fire modal reopens.
 	 */
 	async submitCreate() {
 		await this.createButton.click();
 		await this.createModal.waitFor({ state: 'hidden', timeout: 10000 });
+		await this.delay();
 	}
 
 	/**
