@@ -138,7 +138,7 @@ export function testObjectData(context?: string) {
  */
 export function testApiData(context?: string) {
 	return {
-		name: apiName(context),
+		title: apiName(context),
 		description: `E2E test API created at ${new Date().toISOString()}`,
 		version: '1.0.0'
 	};

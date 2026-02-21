@@ -39,9 +39,10 @@ export interface ApiObject {
 
 export interface ApiEntity {
 	id: string;
-	name: string;
+	title: string;
 	description?: string;
 	version?: string;
+	namespaceId?: string;
 }
 
 export interface ApiNamespace {

@@ -147,12 +147,27 @@ export class ObjectsPage {
 	}
 
 	/**
-	 * Click on a row by object name
+	 * Click on a row by object name (opens edit drawer).
+	 * Waits for the drawer shell to appear, then waits for the form content
+	 * to render. If the content doesn't appear (race condition with Svelte
+	 * reactivity), closes and retries the click once.
 	 */
 	async clickRow(objectName: string) {
 		const row = this.tableRows.filter({ hasText: objectName });
 		await row.click();
-		await this.drawer.waitFor({ state: 'visible' });
+		await this.drawer.waitFor({ state: 'visible', timeout: 5000 });
+
+		// Wait for drawer content to render (editedItem may lag behind drawerOpen)
+		const contentLoaded = await this.objectNameInput.waitFor({ state: 'visible', timeout: 3000 }).then(() => true).catch(() => false);
+		if (!contentLoaded) {
+			// Retry: close drawer and re-click
+			await this.drawerCloseButton.click();
+			await this.drawer.waitFor({ state: 'hidden', timeout: 5000 });
+			await this.page.waitForTimeout(ACTION_DELAY_MS);
+			await row.click();
+			await this.drawer.waitFor({ state: 'visible', timeout: 5000 });
+			await this.objectNameInput.waitFor({ state: 'visible', timeout: 5000 });
+		}
 	}
 
 	/**

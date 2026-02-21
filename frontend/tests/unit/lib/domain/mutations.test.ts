@@ -35,6 +35,16 @@ vi.mock('$lib/api/namespaces', () => ({
   updateNamespaceApi: vi.fn(),
   deleteNamespaceApi: vi.fn()
 }));
+vi.mock('$lib/api/fieldValidators', () => ({
+  createFieldValidatorApi: vi.fn(),
+  updateFieldValidatorApi: vi.fn(),
+  deleteFieldValidatorApi: vi.fn()
+}));
+vi.mock('$lib/api/modelValidators', () => ({
+  createModelValidatorApi: vi.fn(),
+  updateModelValidatorApi: vi.fn(),
+  deleteModelValidatorApi: vi.fn()
+}));
 
 // Mock errorMap — use a simplified version
 vi.mock('$lib/domain/errorMap', () => ({
@@ -66,7 +76,13 @@ import {
   deleteEndpointAction,
   createNamespaceAction,
   updateNamespaceAction,
-  deleteNamespaceAction
+  deleteNamespaceAction,
+  createFieldValidatorAction,
+  updateFieldValidatorAction,
+  deleteFieldValidatorAction,
+  createModelValidatorAction,
+  updateModelValidatorAction,
+  deleteModelValidatorAction
 } from '$lib/domain/mutations';
 
 import { fieldsStore } from '$lib/stores/fields';
@@ -80,6 +96,10 @@ import { createObjectApi, updateObjectApi, deleteObjectApi } from '$lib/api/obje
 import { createApiApi, updateApiApi, deleteApiApi } from '$lib/api/apis';
 import { createEndpointApi, updateEndpointApi, deleteEndpointApi } from '$lib/api/endpoints';
 import { createNamespaceApi, updateNamespaceApi, deleteNamespaceApi } from '$lib/api/namespaces';
+import { createFieldValidatorApi, updateFieldValidatorApi, deleteFieldValidatorApi } from '$lib/api/fieldValidators';
+import { createModelValidatorApi, updateModelValidatorApi, deleteModelValidatorApi } from '$lib/api/modelValidators';
+import { fieldValidatorsStore } from '$lib/stores/fieldValidators';
+import { modelValidatorsStore } from '$lib/stores/modelValidators';
 import { checkFieldDeletion, checkObjectDeletion } from '$lib/utils/references';
 
 // ---------------------------------------------------------------------------
@@ -111,6 +131,34 @@ const NAMESPACE_1 = {
   id: 'ns-1', name: 'Test NS', description: '', locked: false, slug: 'test'
 };
 
+const FIELD_VALIDATOR_1 = {
+  id: 'fv-1', namespaceId: 'ns-1', name: 'String Cleanup',
+  description: 'Strip whitespace', compatibleTypes: ['str'],
+  mode: 'before', code: 'v = v.strip()', usedInFields: 0,
+  createdAt: '2026-01-01T00:00:00Z', updatedAt: '2026-01-01T00:00:00Z'
+};
+
+const FIELD_VALIDATOR_USED = {
+  id: 'fv-2', namespaceId: 'ns-1', name: 'Email Format',
+  description: 'Validate email', compatibleTypes: ['str'],
+  mode: 'after', code: 'validate(v)', usedInFields: 3,
+  createdAt: '2026-01-01T00:00:00Z', updatedAt: '2026-01-01T00:00:00Z'
+};
+
+const MODEL_VALIDATOR_1 = {
+  id: 'mv-1', namespaceId: 'ns-1', name: 'Date Range',
+  description: 'Check date range', requiredFields: ['start_date', 'end_date'],
+  mode: 'after', code: 'check(self)', usedInObjects: 0,
+  createdAt: '2026-01-01T00:00:00Z', updatedAt: '2026-01-01T00:00:00Z'
+};
+
+const MODEL_VALIDATOR_USED = {
+  id: 'mv-2', namespaceId: 'ns-1', name: 'Company Check',
+  description: 'Validate company fields', requiredFields: ['company_name'],
+  mode: 'after', code: 'check(self)', usedInObjects: 2,
+  createdAt: '2026-01-01T00:00:00Z', updatedAt: '2026-01-01T00:00:00Z'
+};
+
 // ---------------------------------------------------------------------------
 // Setup
 // ---------------------------------------------------------------------------
@@ -125,6 +173,8 @@ beforeEach(() => {
   endpointsStore.set([{ ...ENDPOINT_1 }] as any);
   namespacesStore.set([{ ...NAMESPACE_1 }] as any);
   fieldConstraintsStore.set([]);
+  fieldValidatorsStore.set([{ ...FIELD_VALIDATOR_1 }, { ...FIELD_VALIDATOR_USED }] as any);
+  modelValidatorsStore.set([{ ...MODEL_VALIDATOR_1 }, { ...MODEL_VALIDATOR_USED }] as any);
   activeNamespaceId.set(GLOBAL_NAMESPACE_ID);
 
   // Default reference guards: allow deletion
@@ -439,6 +489,8 @@ describe('Namespace Actions', () => {
       apisStore.set([]);
       endpointsStore.set([]);
       fieldConstraintsStore.set([]);
+      fieldValidatorsStore.set([]);
+      modelValidatorsStore.set([]);
       activeNamespaceId.set('ns-1'); // Set as active
 
       (deleteNamespaceApi as Mock).mockResolvedValue(undefined);
@@ -456,6 +508,8 @@ describe('Namespace Actions', () => {
       apisStore.set([]);
       endpointsStore.set([]);
       fieldConstraintsStore.set([]);
+      fieldValidatorsStore.set([]);
+      modelValidatorsStore.set([]);
       activeNamespaceId.set('other-ns');
 
       (deleteNamespaceApi as Mock).mockResolvedValue(undefined);
@@ -463,6 +517,170 @@ describe('Namespace Actions', () => {
       await deleteNamespaceAction('ns-1');
 
       expect(get(activeNamespaceId)).toBe('other-ns');
+    });
+  });
+});
+
+// ===========================================================================
+// Field Validator Actions
+// ===========================================================================
+
+describe('Field Validator Actions', () => {
+  describe('createFieldValidatorAction', () => {
+    it('adds field validator to store on success', async () => {
+      const newFv = { ...FIELD_VALIDATOR_1, id: 'fv-new', name: 'New Validator' };
+      (createFieldValidatorApi as Mock).mockResolvedValue(newFv);
+
+      const result = await createFieldValidatorAction({
+        name: 'New Validator', namespaceId: 'ns-1', description: '',
+        compatibleTypes: ['str'], mode: 'before', code: ''
+      } as any);
+
+      expect(result.success).toBe(true);
+      expect(result.data).toEqual(newFv);
+      expect(get(fieldValidatorsStore)).toHaveLength(3);
+    });
+
+    it('returns error on API failure', async () => {
+      (createFieldValidatorApi as Mock).mockRejectedValue(new Error('fail'));
+
+      const result = await createFieldValidatorAction({ name: 'test' } as any);
+
+      expect(result.success).toBe(false);
+      expect(result.error).toBeDefined();
+    });
+  });
+
+  describe('updateFieldValidatorAction', () => {
+    it('applies optimistic update then commits API result', async () => {
+      const updated = { ...FIELD_VALIDATOR_1, name: 'Updated Name' };
+      (updateFieldValidatorApi as Mock).mockResolvedValue(updated);
+
+      const result = await updateFieldValidatorAction('fv-1', { name: 'Updated Name' } as any);
+
+      expect(result.success).toBe(true);
+      const fv = get(fieldValidatorsStore).find(f => f.id === 'fv-1');
+      expect(fv?.name).toBe('Updated Name');
+    });
+
+    it('rolls back on API failure', async () => {
+      (updateFieldValidatorApi as Mock).mockRejectedValue(new Error('fail'));
+
+      const result = await updateFieldValidatorAction('fv-1', { name: 'changed' } as any);
+
+      expect(result.success).toBe(false);
+      const fv = get(fieldValidatorsStore).find(f => f.id === 'fv-1');
+      expect(fv?.name).toBe('String Cleanup');
+    });
+  });
+
+  describe('deleteFieldValidatorAction', () => {
+    it('removes field validator from store on success', async () => {
+      (deleteFieldValidatorApi as Mock).mockResolvedValue(undefined);
+
+      const result = await deleteFieldValidatorAction('fv-1');
+
+      expect(result.success).toBe(true);
+      expect(get(fieldValidatorsStore).find(f => f.id === 'fv-1')).toBeUndefined();
+    });
+
+    it('blocks deletion when validator is used in fields', async () => {
+      const result = await deleteFieldValidatorAction('fv-2');
+
+      expect(result.success).toBe(false);
+      expect(result.error).toContain('used in 3 fields');
+      expect(get(fieldValidatorsStore).find(f => f.id === 'fv-2')).toBeDefined();
+    });
+
+    it('returns error on API failure', async () => {
+      (deleteFieldValidatorApi as Mock).mockRejectedValue(new Error('fail'));
+
+      const result = await deleteFieldValidatorAction('fv-1');
+
+      expect(result.success).toBe(false);
+      expect(result.error).toBeDefined();
+    });
+  });
+});
+
+// ===========================================================================
+// Model Validator Actions
+// ===========================================================================
+
+describe('Model Validator Actions', () => {
+  describe('createModelValidatorAction', () => {
+    it('adds model validator to store on success', async () => {
+      const newMv = { ...MODEL_VALIDATOR_1, id: 'mv-new', name: 'New Validator' };
+      (createModelValidatorApi as Mock).mockResolvedValue(newMv);
+
+      const result = await createModelValidatorAction({
+        name: 'New Validator', namespaceId: 'ns-1', description: '',
+        requiredFields: ['start_date'], mode: 'after', code: ''
+      } as any);
+
+      expect(result.success).toBe(true);
+      expect(result.data).toEqual(newMv);
+      expect(get(modelValidatorsStore)).toHaveLength(3);
+    });
+
+    it('returns error on API failure', async () => {
+      (createModelValidatorApi as Mock).mockRejectedValue(new Error('fail'));
+
+      const result = await createModelValidatorAction({ name: 'test' } as any);
+
+      expect(result.success).toBe(false);
+      expect(result.error).toBeDefined();
+    });
+  });
+
+  describe('updateModelValidatorAction', () => {
+    it('applies optimistic update then commits API result', async () => {
+      const updated = { ...MODEL_VALIDATOR_1, name: 'Updated Name' };
+      (updateModelValidatorApi as Mock).mockResolvedValue(updated);
+
+      const result = await updateModelValidatorAction('mv-1', { name: 'Updated Name' } as any);
+
+      expect(result.success).toBe(true);
+      const mv = get(modelValidatorsStore).find(m => m.id === 'mv-1');
+      expect(mv?.name).toBe('Updated Name');
+    });
+
+    it('rolls back on API failure', async () => {
+      (updateModelValidatorApi as Mock).mockRejectedValue(new Error('fail'));
+
+      const result = await updateModelValidatorAction('mv-1', { name: 'changed' } as any);
+
+      expect(result.success).toBe(false);
+      const mv = get(modelValidatorsStore).find(m => m.id === 'mv-1');
+      expect(mv?.name).toBe('Date Range');
+    });
+  });
+
+  describe('deleteModelValidatorAction', () => {
+    it('removes model validator from store on success', async () => {
+      (deleteModelValidatorApi as Mock).mockResolvedValue(undefined);
+
+      const result = await deleteModelValidatorAction('mv-1');
+
+      expect(result.success).toBe(true);
+      expect(get(modelValidatorsStore).find(m => m.id === 'mv-1')).toBeUndefined();
+    });
+
+    it('blocks deletion when validator is used in objects', async () => {
+      const result = await deleteModelValidatorAction('mv-2');
+
+      expect(result.success).toBe(false);
+      expect(result.error).toContain('used in 2 objects');
+      expect(get(modelValidatorsStore).find(m => m.id === 'mv-2')).toBeDefined();
+    });
+
+    it('returns error on API failure', async () => {
+      (deleteModelValidatorApi as Mock).mockRejectedValue(new Error('fail'));
+
+      const result = await deleteModelValidatorAction('mv-1');
+
+      expect(result.success).toBe(false);
+      expect(result.error).toBeDefined();
     });
   });
 });

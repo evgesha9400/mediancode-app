@@ -37,6 +37,7 @@ export default defineConfig(({ mode }) => ({
 				'src/**/*.d.ts',
 				'src/**/*.test.{js,ts}',
 				'src/**/*.spec.{js,ts}',
+				'src/**/*.typecheck.{js,ts}',
 				'**/.svelte-kit/**',
 				'**/node_modules/**'
 			],

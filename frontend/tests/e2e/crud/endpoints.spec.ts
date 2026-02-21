@@ -28,8 +28,7 @@ test('Endpoint lifecycle: create, verify, delete', async ({ page }) => {
 	const { data: existing } = await apiClient.listApis();
 	if (existing) {
 		for (const api of existing) {
-			const apiName = api.name || (api as any).title || '';
-			if (apiName === HELPER_API.title) {
+			if (api.title === HELPER_API.title) {
 				await apiClient.deleteApi(api.id);
 			}
 		}
@@ -81,8 +80,7 @@ test('Endpoint lifecycle: create, verify, delete', async ({ page }) => {
 	const { data: remaining } = await apiClient.listApis();
 	if (remaining) {
 		for (const api of remaining) {
-			const apiName = api.name || (api as any).title || '';
-			if (apiName === HELPER_API.title) {
+			if (api.title === HELPER_API.title) {
 				await apiClient.deleteApi(api.id);
 			}
 		}

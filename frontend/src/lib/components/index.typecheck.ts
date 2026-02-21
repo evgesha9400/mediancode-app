@@ -42,7 +42,6 @@ import {
   PageHeader,
 
   // Standalone components
-  DashboardLayout,
   Sidebar,
   StatCard,
 } from '$lib/components';
@@ -75,7 +74,6 @@ import type {
   PageHeaderProps,
 
   // Standalone component types
-  DashboardLayoutProps,
   SidebarProps,
   StatCardProps,
 } from '$lib/components';
@@ -100,7 +98,6 @@ const components = [
   ToastContainer,
   Tooltip,
   PageHeader,
-  DashboardLayout,
   Sidebar,
   StatCard,
 ] as const;
@@ -120,7 +117,6 @@ export type PropTypes = [
   ToastContainerProps,
   TooltipProps,
   PageHeaderProps,
-  DashboardLayoutProps,
   SidebarProps,
   StatCardProps,
 ];

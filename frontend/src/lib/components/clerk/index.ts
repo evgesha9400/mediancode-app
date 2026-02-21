@@ -1,6 +1,3 @@
-export { default as ClerkUserButton } from './ClerkUserButton.svelte';
-export type { ClerkUserButtonProps } from './ClerkUserButton.svelte';
-
 export { default as ClerkSidebarUser } from './ClerkSidebarUser.svelte';
 export type { ClerkSidebarUserProps } from './ClerkSidebarUser.svelte';
 

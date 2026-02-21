@@ -1,0 +1,103 @@
+import { describe, it, expect, vi, beforeEach } from 'vitest';
+
+vi.mock('$lib/api/client', () => ({
+  apiGet: vi.fn(),
+  apiPost: vi.fn(),
+  apiPut: vi.fn(),
+  apiDelete: vi.fn()
+}));
+
+import {
+  listObjects,
+  getObject,
+  createObjectApi,
+  updateObjectApi,
+  deleteObjectApi
+} from '$lib/api/objects';
+import { apiGet, apiPost, apiPut, apiDelete } from '$lib/api/client';
+
+const MOCK_OBJECT_RESPONSE = {
+  id: 'o-1',
+  namespaceId: 'ns-1',
+  name: 'User',
+  description: 'User model',
+  fields: [
+    { fieldId: 'f-1', required: true },
+    { fieldId: 'f-2', required: false }
+  ],
+  usedInApis: ['api-1']
+};
+
+describe('Objects API Service', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  describe('listObjects', () => {
+    it('should list all objects', async () => {
+      (apiGet as any).mockResolvedValue([MOCK_OBJECT_RESPONSE]);
+
+      const result = await listObjects();
+
+      expect(apiGet).toHaveBeenCalledWith('/objects');
+      expect(result).toHaveLength(1);
+      expect(result[0].name).toBe('User');
+      expect(result[0].fields).toHaveLength(2);
+    });
+
+    it('should filter by namespace', async () => {
+      (apiGet as any).mockResolvedValue([]);
+
+      await listObjects('ns-1');
+
+      expect(apiGet).toHaveBeenCalledWith('/objects?namespaceId=ns-1');
+    });
+  });
+
+  describe('getObject', () => {
+    it('should get object by ID and transform', async () => {
+      (apiGet as any).mockResolvedValue({ ...MOCK_OBJECT_RESPONSE, description: null });
+
+      const result = await getObject('o-1');
+
+      expect(apiGet).toHaveBeenCalledWith('/objects/o-1');
+      expect(result.description).toBeUndefined();
+    });
+  });
+
+  describe('createObjectApi', () => {
+    it('should create object', async () => {
+      (apiPost as any).mockResolvedValue(MOCK_OBJECT_RESPONSE);
+
+      const result = await createObjectApi({
+        namespaceId: 'ns-1',
+        name: 'User',
+        fields: [{ fieldId: 'f-1', required: true }]
+      });
+
+      expect(apiPost).toHaveBeenCalledWith('/objects', expect.any(Object));
+      expect(result.id).toBe('o-1');
+    });
+  });
+
+  describe('updateObjectApi', () => {
+    it('should update object', async () => {
+      (apiPut as any).mockResolvedValue({ ...MOCK_OBJECT_RESPONSE, name: 'Updated' });
+
+      const result = await updateObjectApi('o-1', { name: 'Updated' });
+
+      expect(apiPut).toHaveBeenCalledWith('/objects/o-1', { name: 'Updated' });
+      expect(result.name).toBe('Updated');
+    });
+  });
+
+  describe('deleteObjectApi', () => {
+    it('should delete object', async () => {
+      (apiDelete as any).mockResolvedValue(undefined);
+
+      await deleteObjectApi('o-1');
+
+      expect(apiDelete).toHaveBeenCalledWith('/objects/o-1');
+    });
+  });
+});

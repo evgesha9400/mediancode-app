@@ -2,7 +2,14 @@
  * Namespaces Page Object
  *
  * Encapsulates interactions with the namespaces page (/namespaces).
- * Handles search, create (via modal), edit (via drawer), and delete.
+ * Handles search, filter, sort, create (via modal), edit (via drawer), and delete.
+ *
+ * Actions that involve API calls or UI transitions (drawer open/close, confirmation
+ * dialogs) wait for the actual state change rather than using fixed timeouts.
+ * This makes tests reliable regardless of network latency to the backend.
+ *
+ * Purely client-side operations (form fills, search, filter, sort) use a
+ * configurable delay for visual pacing (E2E_ACTION_DELAY env var, default: 300ms).
  */
 
 import { type Page, type Locator } from '@playwright/test';
@@ -20,6 +27,11 @@ export class NamespacesPage {
 	// Search
 	readonly searchInput: Locator;
 	readonly resultsCount: Locator;
+
+	// Filter
+	readonly filterButton: Locator;
+	readonly filterPanel: Locator;
+	readonly clearFiltersButton: Locator;
 
 	// Table
 	readonly table: Locator;
@@ -63,6 +75,11 @@ export class NamespacesPage {
 		this.searchInput = page.getByPlaceholder('Search namespaces...');
 		this.resultsCount = page.locator('text=/\\d+ namespace/');
 
+		// Filter
+		this.filterButton = page.locator('button').filter({ has: page.locator('i.fa-filter') });
+		this.filterPanel = page.locator('.bg-white.rounded-lg.shadow-xl.border');
+		this.clearFiltersButton = page.getByRole('button', { name: /clear all/i });
+
 		// Table
 		this.table = page.locator('table');
 		this.tableRows = page.locator('tbody tr');
@@ -105,6 +122,7 @@ export class NamespacesPage {
 	async goto() {
 		await this.page.goto('/namespaces', { waitUntil: 'networkidle' });
 		await this.pageTitle.waitFor({ state: 'visible' });
+		await this.delay();
 	}
 
 	/**
@@ -131,12 +149,27 @@ export class NamespacesPage {
 	}
 
 	/**
-	 * Click on a row by namespace name (opens edit drawer)
+	 * Click on a row by namespace name (opens edit drawer).
+	 * Waits for the drawer shell to appear, then waits for the form content
+	 * to render. If the content doesn't appear (race condition with Svelte
+	 * reactivity), closes and retries the click once.
 	 */
 	async clickRow(namespaceName: string) {
 		const row = this.tableRows.filter({ hasText: namespaceName });
 		await row.click();
-		await this.drawer.waitFor({ state: 'visible' });
+		await this.drawer.waitFor({ state: 'visible', timeout: 5000 });
+
+		// Wait for drawer content to render (editedItem may lag behind drawerOpen)
+		const contentLoaded = await this.namespaceNameInput.waitFor({ state: 'visible', timeout: 3000 }).then(() => true).catch(() => false);
+		if (!contentLoaded) {
+			// Retry: close drawer and re-click
+			await this.drawerCloseButton.click();
+			await this.drawer.waitFor({ state: 'hidden', timeout: 5000 });
+			await this.delay();
+			await row.click();
+			await this.drawer.waitFor({ state: 'visible', timeout: 5000 });
+			await this.namespaceNameInput.waitFor({ state: 'visible', timeout: 5000 });
+		}
 	}
 
 	/**
@@ -186,6 +219,64 @@ export class NamespacesPage {
 	}
 
 	// ============================================================================
+	// Filter Methods
+	// ============================================================================
+
+	/**
+	 * Open filter panel and wait for it to appear.
+	 */
+	async openFilters() {
+		await this.filterButton.click();
+		await this.filterPanel.waitFor({ state: 'visible', timeout: 5000 });
+	}
+
+	/**
+	 * Close filter panel without clearing filter state.
+	 * Clicks the backdrop overlay which triggers onClose() in FilterPanel.
+	 */
+	async closeFilters() {
+		const backdrop = this.page.locator('div.fixed.inset-0[role="presentation"]');
+		await backdrop.click();
+		await this.filterPanel.waitFor({ state: 'hidden', timeout: 5000 });
+	}
+
+	/**
+	 * Toggle a filter switch by label
+	 */
+	async toggleFilterSwitch(label: string) {
+		const toggle = this.page.locator('label').filter({ hasText: label }).locator('input[type="checkbox"]');
+		await toggle.click();
+		await this.delay();
+	}
+
+	/**
+	 * Clear all filters. Note: this also closes the panel via resetFilters().
+	 */
+	async clearFilters() {
+		await this.clearFiltersButton.click();
+		await this.filterPanel.waitFor({ state: 'hidden', timeout: 5000 });
+	}
+
+	// ============================================================================
+	// Sort Methods
+	// ============================================================================
+
+	/**
+	 * Sort by column (click column header button)
+	 */
+	async sortByColumn(column: 'name' | 'entities', withShift = false) {
+		const clickOptions = withShift ? { modifiers: ['Shift'] as ('Shift' | 'Alt' | 'Control' | 'Meta')[] } : undefined;
+
+		const headerMap = {
+			name: () => this.table.locator('thead th button').filter({ hasText: 'Name' }),
+			entities: () => this.table.locator('thead th button').filter({ hasText: 'Entities' })
+		};
+
+		await headerMap[column]().click(clickOptions);
+		await this.delay();
+	}
+
+	// ============================================================================
 	// Create Modal Methods
 	// ============================================================================
 
@@ -202,8 +293,10 @@ export class NamespacesPage {
 	 */
 	async fillCreateForm(data: { name: string; description?: string }) {
 		await this.newNamespaceNameInput.fill(data.name);
+		await this.delay();
 		if (data.description !== undefined) {
 			await this.newNamespaceDescriptionInput.fill(data.description);
+			await this.delay();
 		}
 	}
 
@@ -222,6 +315,28 @@ export class NamespacesPage {
 		await this.openCreateModal();
 		await this.fillCreateForm(data);
 		await this.submitCreate();
+	}
+
+	/**
+	 * Check if create modal is open
+	 */
+	async isCreateModalOpen(): Promise<boolean> {
+		return await this.createModal.isVisible();
+	}
+
+	/**
+	 * Check if create button is enabled
+	 */
+	async isCreateEnabled(): Promise<boolean> {
+		return await this.createButton.isEnabled();
+	}
+
+	/**
+	 * Cancel create and close modal
+	 */
+	async cancelCreate() {
+		await this.closeModalButton.click();
+		await this.createModal.waitFor({ state: 'hidden', timeout: 5000 });
 	}
 
 	// ============================================================================
@@ -247,6 +362,7 @@ export class NamespacesPage {
 	 */
 	async setNamespaceName(name: string) {
 		await this.namespaceNameInput.fill(name);
+		await this.delay();
 	}
 
 	/**
@@ -254,6 +370,7 @@ export class NamespacesPage {
 	 */
 	async setNamespaceDescription(description: string) {
 		await this.namespaceDescriptionTextarea.fill(description);
+		await this.delay();
 	}
 
 	/**
@@ -272,7 +389,22 @@ export class NamespacesPage {
 	}
 
 	/**
-	 * Click delete button
+	 * Check if undo button is enabled
+	 */
+	async isUndoEnabled(): Promise<boolean> {
+		return await this.undoButton.isEnabled();
+	}
+
+	/**
+	 * Click undo button
+	 */
+	async undo() {
+		await this.undoButton.click();
+		await this.delay();
+	}
+
+	/**
+	 * Click delete button and wait for confirmation UI to appear.
 	 */
 	async clickDelete() {
 		await this.deleteButton.click();
@@ -285,6 +417,14 @@ export class NamespacesPage {
 	async confirmDelete() {
 		await this.deleteConfirmButton.click();
 		await this.drawer.waitFor({ state: 'hidden', timeout: 10000 });
+	}
+
+	/**
+	 * Cancel delete and wait for normal delete button to reappear.
+	 */
+	async cancelDelete() {
+		await this.deleteCancelButton.click();
+		await this.deleteButton.waitFor({ state: 'visible', timeout: 5000 });
 	}
 
 	/**

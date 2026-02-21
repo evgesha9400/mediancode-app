@@ -37,8 +37,7 @@ test('API lifecycle: create, search, edit, delete', async ({ page }) => {
 	const { data: existing } = await apiClient.listApis();
 	if (existing) {
 		for (const api of existing) {
-			const apiName = api.name || (api as any).title || '';
-			if (apiName.startsWith('e2e_')) {
+			if (api.title?.startsWith('e2e_')) {
 				await apiClient.deleteApi(api.id);
 			}
 		}

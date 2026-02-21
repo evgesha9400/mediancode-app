@@ -139,7 +139,7 @@ MSW handlers in `tests/shared/msw/handlers.ts` are consumed by BOTH Vitest (unit
 
 ### All Tests
 ```bash
-bun test
+bun run test
 ```
 
 ### Unit Tests Only
