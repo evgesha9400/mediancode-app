@@ -11,66 +11,13 @@
   import { getModelValidator } from '$lib/api/modelValidators';
 
   // CodeMirror
-  import { EditorView, minimalSetup } from 'codemirror';
-  import { EditorState, Compartment } from '@codemirror/state';
   import {
-    lineNumbers,
-    highlightActiveLine,
-    highlightActiveLineGutter,
-    keymap
-  } from '@codemirror/view';
-  import { bracketMatching, indentOnInput, syntaxHighlighting } from '@codemirror/language';
-  import { closeBrackets } from '@codemirror/autocomplete';
-  import { indentWithTab } from '@codemirror/commands';
-  import { python } from '@codemirror/lang-python';
-  import { oneDarkHighlightStyle } from '@codemirror/theme-one-dark';
-
-  // ============================================================================
-  // CODEMIRROR THEME
-  // ============================================================================
-
-  const monoTheme = EditorView.theme({
-    '&': {
-      backgroundColor: '#171717',
-      color: '#f5f5f5',
-      fontSize: '14px',
-    },
-    '.cm-gutters': {
-      backgroundColor: '#171717',
-      color: '#737373',
-      border: 'none',
-      paddingRight: '8px',
-    },
-    '.cm-activeLineGutter': {
-      backgroundColor: '#262626',
-    },
-    '.cm-activeLine': {
-      backgroundColor: '#262626',
-    },
-    '&.cm-focused .cm-cursor': {
-      borderLeftColor: 'white',
-    },
-    '&.cm-focused .cm-selectionBackground, .cm-selectionBackground': {
-      backgroundColor: '#404040 !important',
-    },
-    '.cm-content': {
-      caretColor: 'white',
-      fontFamily: 'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace',
-    },
-    '.cm-line': {
-      padding: '0 0 0 4px',
-    },
-  });
-
-  const wrapperDimTheme = EditorView.theme({
-    '&': { opacity: '0.875' },
-    '.cm-scroller': { overflow: 'hidden !important' },
-  });
-
-  const bodyFillTheme = EditorView.theme({
-    '&': { height: '100%' },
-    '.cm-scroller': { overflow: 'auto' },
-  });
+    type EditorView,
+    type Compartment,
+    createSplitEditor,
+    updateWrapperContent,
+    updateBodyLineNumbers,
+  } from '$lib/utils/codemirror';
 
   // ============================================================================
   // STATE
@@ -111,9 +58,7 @@
   // CodeMirror instances (managed imperatively, not reactive)
   let wrapperView: EditorView | null = null;
   let bodyView: EditorView | null = null;
-
-  // Compartment for dynamic line number offset on body editor
-  const bodyLineNumCompartment = new Compartment();
+  let bodyLineNumCompartment: Compartment | null = null;
 
   // ============================================================================
   // LOAD VALIDATOR
@@ -292,93 +237,40 @@
   // CODEMIRROR LIFECYCLE
   // ============================================================================
 
-  // Create wrapper editor when loaded
+  // Create split editor when loaded
   $effect(() => {
-    if (isLoading || !wrapperEditorEl) return;
+    if (isLoading || !wrapperEditorEl || !bodyEditorEl) return;
 
-    const initialDoc = untrack(() => wrapperCode);
-    const state = EditorState.create({
-      doc: initialDoc,
-      extensions: [
-        minimalSetup,
-        lineNumbers(),
-        python(),
-        syntaxHighlighting(oneDarkHighlightStyle),
-        monoTheme,
-        wrapperDimTheme,
-        EditorView.editable.of(false),
-        EditorState.readOnly.of(true),
-      ],
-    });
-    wrapperView = new EditorView({ state, parent: wrapperEditorEl });
+    const result = createSplitEditor(
+      {
+        wrapperDoc: untrack(() => wrapperCode),
+        bodyDoc: untrack(() => validatorCode),
+        onBodyChange: (content) => { validatorCode = content; },
+      },
+      wrapperEditorEl,
+      bodyEditorEl,
+    );
+    wrapperView = result.wrapperView;
+    bodyView = result.bodyView;
+    bodyLineNumCompartment = result.bodyLineNumCompartment;
 
     return () => {
-      wrapperView?.destroy();
+      result.destroy();
       wrapperView = null;
+      bodyView = null;
     };
   });
 
   // Update wrapper content when name/mode/imports change
   $effect(() => {
-    const newDoc = wrapperCode;
-    if (!wrapperView) return;
-    const currentDoc = wrapperView.state.doc.toString();
-    if (currentDoc !== newDoc) {
-      wrapperView.dispatch({
-        changes: { from: 0, to: currentDoc.length, insert: newDoc },
-      });
-    }
-  });
-
-  // Create body editor when loaded
-  $effect(() => {
-    if (isLoading || !bodyEditorEl) return;
-
-    const initialDoc = untrack(() => validatorCode);
-    const initialOffset = untrack(() => wrapperLineCount);
-
-    const state = EditorState.create({
-      doc: initialDoc,
-      extensions: [
-        minimalSetup,
-        bodyLineNumCompartment.of(
-          lineNumbers({ formatNumber: (n: number) => String(n + initialOffset) })
-        ),
-        highlightActiveLine(),
-        highlightActiveLineGutter(),
-        bracketMatching(),
-        closeBrackets(),
-        indentOnInput(),
-        keymap.of([indentWithTab]),
-        python(),
-        syntaxHighlighting(oneDarkHighlightStyle),
-        monoTheme,
-        bodyFillTheme,
-        EditorView.updateListener.of((update) => {
-          if (update.docChanged) {
-            validatorCode = update.state.doc.toString();
-          }
-        }),
-      ],
-    });
-    bodyView = new EditorView({ state, parent: bodyEditorEl });
-    bodyView.focus();
-
-    return () => {
-      bodyView?.destroy();
-      bodyView = null;
-    };
+    if (wrapperView) updateWrapperContent(wrapperView, wrapperCode);
   });
 
   // Update body line number offset when wrapper line count changes
   $effect(() => {
-    const offset = wrapperLineCount;
-    if (!bodyView) return;
-    bodyView.dispatch({
-      effects: bodyLineNumCompartment.reconfigure(
-        lineNumbers({ formatNumber: (n: number) => String(n + offset) })
-      ),
-    });
+    if (bodyView && bodyLineNumCompartment) {
+      updateBodyLineNumbers(bodyView, bodyLineNumCompartment, wrapperLineCount);
+    }
   });
 
   // ============================================================================
