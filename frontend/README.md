@@ -28,8 +28,7 @@ median-code/
 │   │   │   ├── apis/                # APIs list
 │   │   │   │   └── [id]/            # API detail/edit
 │   │   │   ├── namespaces/          # Namespaces management
-│   │   │   ├── api-generator/       # API generator
-│   │   │   └── prototypes/          # Prototype pages
+│   │   │   └── settings/            # Settings pages
 │   │   ├── signin/                  # Sign-in page
 │   │   ├── signup/                  # Sign-up page
 │   │   └── mobile-blocked/          # Mobile device blocking
@@ -95,16 +94,22 @@ median-code/
 - `/signup` - Sign-up page for new users
 - `/mobile-blocked` - Mobile device blocking page
 
-**Dashboard Routes** (authenticated):
+**Dashboard Routes** (authenticated, redirect to `/signin` when not signed in):
 - `/dashboard` - Dashboard home with overview stats
 - `/types` - Types management (create, edit, delete types)
-- `/validators` - Validators management
+- `/validators/field-constraints` - Field Constraints management
+- `/validators/field-validators` - Field Validators management
+- `/validators/field-validators/new` - Field Validator gallery + editor
+- `/validators/field-validators/[id]` - Field Validator edit
+- `/validators/model-validators` - Model Validators management
+- `/validators/model-validators/new` - Model Validator gallery + editor
+- `/validators/model-validators/[id]` - Model Validator edit
 - `/fields` - Fields management
 - `/objects` - Objects management
 - `/apis` - APIs list view
 - `/apis/[id]` - API detail and edit view
 - `/namespaces` - Namespaces management
-- `/api-generator` - API code generator
+- `/settings` - User/organization settings
 
 ## Local Development
 
@@ -231,7 +236,7 @@ bun run test:e2e:smoke           # Must pass
 
 The application automatically deploys to Vercel when changes are pushed to the `main` branch.
 
-**Production URL**: https://mediancode.com
+**Production URL**: https://app.mediancode.com
 
 **Environment Variables** (set in Vercel dashboard):
 - `PUBLIC_CLERK_PUBLISHABLE_KEY` - Your Clerk publishable key
@@ -287,15 +292,16 @@ The dashboard uses Clerk for authentication with support for:
 **Authentication Flow:**
 1. User visits `/` (landing page - public)
 2. User navigates to `/signin` to sign in or `/signup` to create account
-3. After successful authentication, redirects to `/dashboard`
-4. Sign out redirects back to `/signin`
+3. Accessing any dashboard route while unauthenticated redirects to `/signin?redirect=<path>`
+4. After successful authentication, redirects to the original destination (or `/dashboard`)
+5. Sign out redirects back to `/signin`
 
 **Public Routes** (no authentication required):
 - `/` - Landing page
 - `/mobile-blocked` - Mobile blocking page
 
-**Protected Routes** (authentication required):
-- All `/dashboard/*` routes (dashboard, types, validators, fields, objects, apis, namespaces, api-generator)
+**Protected Routes** (authentication required — all routes in the `(dashboard)` route group):
+- `/dashboard`, `/types`, `/validators/*`, `/fields`, `/objects`, `/apis`, `/apis/[id]`, `/namespaces`, `/settings`
 
 ## Key Features
 
@@ -316,7 +322,6 @@ The dashboard uses Clerk for authentication with support for:
 - **Objects Management**: Build complex data structures
 - **APIs Management**: Design API endpoints with request/response bodies
 - **Namespaces Management**: Organize APIs by namespace
-- **API Generator**: Generate FastAPI code from your definitions
 
 ### Performance Optimizations
 - **Clerk Initialization**: Loads on all routes to handle OAuth callbacks properly
@@ -328,7 +333,7 @@ The dashboard uses Clerk for authentication with support for:
 
 1. **Feature Development**: Work on `develop` branch
 2. **Testing**: Test locally with `bun run dev`
-3. **Commit**: Use conventional commit format (see `COMMIT_MESSAGE_STANDARD.md`)
+3. **Commit**: Use conventional commit format (see `docs/COMMIT_MESSAGE_STANDARD.md`)
 4. **Deploy**: Merge `develop` → `main` to trigger Vercel deployment
 
 ## Commit Message Standard
@@ -358,8 +363,8 @@ See `docs/COMMIT_MESSAGE_STANDARD.md` for detailed guidelines.
 
 - **CLAUDE.md** - Detailed guidance for Claude Code AI assistant
 - **AGENTS.md** - Guidance for AI code agents
+- **ENVIRONMENTS.md** - Environment strategy across all services
 - **docs/COMMIT_MESSAGE_STANDARD.md** - Commit message conventions
-- **docs/PAGES_AND_FEATURES.md** - Pages and features documentation
 - **api-spec.yaml** - OpenAPI 3.0 specification for code generation API
 
 ## Contributing

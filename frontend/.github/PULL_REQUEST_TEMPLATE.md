@@ -86,18 +86,16 @@ I have run the following tests locally:
 - [ ] Page object updated (if component appears in E2E flow)
 - [ ] E2E test added (if component is in critical user flow)
 - [ ] Component exported from barrel export (`index.ts`)
-- [ ] Updated testing tracker in `docs/testing.md`
 - [ ] N/A - No new components
 
 ### New Route Checklist
 
 - [ ] Route created in `src/routes/`
-- [ ] Page object created in `tests/e2e/page-objects/`
-- [ ] Smoke test created in `tests/e2e/scenarios/*.smoke.spec.ts`
-- [ ] Full test created in `tests/e2e/scenarios/*.spec.ts`
+- [ ] Page object created in `tests/page-objects/`
+- [ ] Smoke test created in `tests/smoke/*.spec.ts`
+- [ ] CRUD test created in `tests/e2e/crud/*.spec.ts` (if backend-integrated)
 - [ ] MSW handlers updated (if route needs API)
 - [ ] Fixtures updated (if route needs data)
-- [ ] Updated testing tracker in `docs/testing.md`
 - [ ] N/A - No new routes
 
 ## Code Quality

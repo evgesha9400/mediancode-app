@@ -1,223 +1,165 @@
 # Test Directory Structure
 
-> This document defines the canonical testing structure for the Median Code project. All test files and directories MUST follow these conventions to ensure predictability for both human developers and LLM agents.
+> Canonical test layout for this repository. Keep file placement and naming
+> predictable for both human developers and automation.
 
-**Last Updated:** 2025-11-24
+**Last Updated:** 2026-02-21
 
 ## Directory Layout
 
 ```
 tests/
-├── unit/                    # Unit tests for isolated components and utilities
-│   └── lib/
-│       ├── components/      # Component unit tests (mirroring src/lib/components/)
-│       │   ├── drawer/
-│       │   ├── layout/
-│       │   ├── search/
-│       │   ├── table/
-│       │   ├── toast/
-│       │   └── tooltip/
-│       ├── stores/          # Store unit tests (mirroring src/lib/stores/)
-│       ├── utils/           # Utility function tests (mirroring src/lib/utils/)
-│       └── types/           # Type validation tests (mirroring src/lib/types/)
+├── unit/                    # Unit tests for isolated modules
+│   └── lib/                 # Mirrors src/lib/
+│       ├── api/
+│       ├── components/
+│       ├── domain/
+│       ├── stores/
+│       ├── types/
+│       └── utils/
 │
-├── integration/             # Integration tests (blocked; see tests/integration/README.md)
+├── integration/             # Reserved for higher-level integration tests
 │
-├── e2e/                     # End-to-end Playwright tests
-│   ├── scenarios/           # E2E test scenarios by feature area
-│   │   ├── landing.spec.ts
-│   │   ├── auth.spec.ts
-│   │   ├── dashboard.spec.ts
-│   │   ├── fields.spec.ts
-│   │   ├── types.spec.ts
-│   │   ├── field-constraints.spec.ts
-│   │   └── mobile-blocked.spec.ts
-│   ├── page-objects/        # Page object models
-│   │   ├── LandingPage.ts
-│   │   ├── DashboardPage.ts
-│   │   ├── FieldsPage.ts
-│   │   ├── TypesPage.ts
-│   │   └── FieldConstraintsPage.ts
-│   └── fixtures/            # Re-exports shared fixtures for Playwright
+├── smoke/                   # Playwright smoke coverage (core user paths)
+│   ├── auth.spec.ts
+│   ├── dashboard.spec.ts
+│   ├── landing.spec.ts
+│   └── mobile-blocked.spec.ts
 │
-├── fixtures/                # Shared test data and fixtures
-│   ├── users.ts
-│   ├── fields.ts
-│   ├── types.ts
-│   ├── fieldConstraints.ts
-│   ├── apis.ts
-│   ├── permissions.ts
-│   ├── index.ts             # Aggregator exporting all fixtures
-│   └── SCHEMA.md            # Entity relationships and contracts
+├── e2e/                     # Playwright backend-integration flows
+│   ├── crud/                # CRUD workflows against real backend
+│   ├── setup/               # Auth/session bootstrap specs
+│   ├── fixtures.ts          # Playwright fixtures
+│   └── global-setup.ts
 │
-├── shared/                  # Shared test utilities
-│   ├── msw/                 # Mock Service Worker configuration
-│   │   ├── handlers.ts      # MSW request handlers
-│   │   └── server.ts        # MSW server setup (Vitest + Playwright)
-│   ├── renderWithProviders.ts  # Component render helper
-│   └── testUtils.ts         # Additional test utilities
-│
-├── setup/                   # Test setup and configuration
-│   └── vitestSetup.ts       # Vitest global setup
-│
-└── README.md                # This file
+├── page-objects/            # Shared Page Object Models used by smoke/e2e
+├── fixtures/                # Shared test data and factories
+├── helpers/                 # E2E helper modules
+├── shared/                  # Shared infra (MSW, test utils)
+│   └── msw/
+├── setup/                   # Vitest setup
+├── config/                  # Playwright config variants
+└── README.md
 ```
 
 ## Mirroring Rules
 
 ### 1. Unit Tests Mirror `src/lib/`
 
-For every file in `src/lib/`, there should be a corresponding test file in `tests/unit/lib/`:
+For files in `src/lib/`, put the corresponding test under `tests/unit/lib/`:
 
-**Example:**
-- `src/lib/components/Drawer.svelte` → `tests/unit/lib/components/Drawer.test.ts`
+- `src/lib/components/drawer/Drawer.svelte` → `tests/unit/lib/components/drawer/Drawer.test.ts`
 - `src/lib/utils/sorting.ts` → `tests/unit/lib/utils/sorting.test.ts`
 - `src/lib/stores/fields.ts` → `tests/unit/lib/stores/fields.test.ts`
 
-**Component Categories:**
-Component subdirectories (`drawer/`, `table/`, etc.) are mirrored exactly:
-- `src/lib/components/drawer/DrawerHeader.svelte` → `tests/unit/lib/components/drawer/DrawerHeader.test.ts`
+### 2. Page Objects Live at `tests/page-objects/`
 
-### 2. E2E Tests Organized by Feature
-
-E2E tests are NOT mirrored 1:1 with routes. Instead, they're organized by user-facing features:
-
-**Scenarios:**
-- `landing.spec.ts` - Landing page interactions (hero, forms, navigation)
-- `auth.spec.ts` - Authentication flows (sign-in, sign-up, sign-out)
-- `dashboard.spec.ts` - Dashboard overview and navigation
-- `fields.spec.ts` - Field management workflows
-- `types.spec.ts` - Type definition workflows
-- `field-constraints.spec.ts` - Field constraint management workflows
-- `mobile-blocked.spec.ts` - Mobile device detection and blocking
-
-**Page Objects:**
-Each major route gets a page object model to encapsulate selectors and interactions.
+Page objects are shared by smoke and e2e suites and are not nested under `tests/e2e/`.
 
 ## File Naming Conventions
 
 ### Unit Tests
-- **Suffix:** `.test.ts` (required)
-- **Naming:** Match the source file name exactly
-- **Examples:**
-  - `Drawer.test.ts` (for `Drawer.svelte`)
-  - `sorting.test.ts` (for `sorting.ts`)
-  - `fields.test.ts` (for `fields.ts`)
 
-### E2E Tests
-- **Suffix:** `.spec.ts` (required for Playwright)
-- **Naming:** Descriptive feature name
-- **Examples:**
-  - `landing.spec.ts`
-  - `fields.spec.ts`
+- Suffix: `.test.ts`
+- Name matches source file purpose
+
+### Playwright Tests
+
+- Suffix: `.spec.ts`
+- `tests/smoke/*.spec.ts` for fast confidence checks
+- `tests/e2e/crud/*.spec.ts` for backend-integrated CRUD flows
 
 ### Page Objects
-- **Suffix:** `.ts` (no test suffix)
-- **Naming:** `{FeatureName}Page.ts`
-- **Examples:**
-  - `DashboardPage.ts`
-  - `FieldsPage.ts`
+
+- Suffix: `.ts`
+- Pattern: `{FeatureName}Page.ts`
 
 ## Test Organization Principles
 
-### 1. One Test File Per Source File
-Each source file gets exactly one corresponding test file. Do not split tests across multiple files.
+### 1. One Test File Per Source Concern
 
-### 2. Co-locate Related Tests
-Tests for components in the same category stay in the same subdirectory (e.g., all drawer tests in `tests/unit/lib/components/drawer/`).
+Avoid splitting one concern across many files unless there is a clear boundary.
 
-### 3. Shared Logic Goes in `tests/shared/`
-Any test utilities, helpers, or configurations used across multiple test files belong in `tests/shared/`, NOT duplicated in individual test files.
+### 2. Shared Logic Stays Shared
 
-### 4. Fixtures Are Centralized
-All mock data lives in `tests/fixtures/`. No inline fixture data in test files.
+Use `tests/shared/`, `tests/helpers/`, and `tests/fixtures/` for reusable code/data.
 
-### 5. MSW Handlers Are Reusable
-MSW handlers in `tests/shared/msw/handlers.ts` are consumed by BOTH Vitest (unit) and Playwright (E2E) to ensure deterministic behavior across all test layers.
+### 3. MSW is Centralized
+
+Reuse handlers from `tests/shared/msw/handlers.ts` in test suites that need mocked API behavior.
 
 ## Running Tests
 
-### All Tests
+### All Unit Tests
+
 ```bash
 bun run test
 ```
 
 ### Unit Tests Only
+
 ```bash
 bun run test:unit
 ```
 
-### E2E Smoke Tests (Fast)
+### Unit Tests with Coverage
+
+```bash
+bun run test:coverage
+```
+
+### E2E Smoke
+
 ```bash
 bun run test:e2e:smoke
 ```
 
-### E2E Full Suite
+### E2E CRUD
+
 ```bash
-bun run test:e2e:full
+bun run test:e2e:crud
 ```
 
-### E2E CI Commands
-```bash
-bun run test:e2e:smoke:ci
-bun run test:e2e:crud:ci
-```
+### Fixture Drift Check
 
-### Watch Mode (Unit)
 ```bash
-bun run test:unit:watch
-```
-
-### Coverage
-```bash
-bun run test:coverage
+bun run test:fixtures:validate
 ```
 
 ## Future Maintenance
 
 ### Adding a New Component
-1. Create component in `src/lib/components/{category}/`
-2. Create corresponding test in `tests/unit/lib/components/{category}/`
-3. Update fixtures if component uses external data
-4. Update MSW handlers if component makes API calls
-5. Update page objects if component appears in E2E scenarios
+
+1. Create the component in `src/lib/components/...`.
+2. Add/update mirrored unit test in `tests/unit/lib/components/...`.
+3. Update fixtures/MSW only when component behavior depends on API data.
 
 ### Adding a New Route
-1. Create route in `src/routes/{name}/`
-2. Update fixtures for route-specific data
-3. Create E2E scenario in `tests/e2e/scenarios/{name}.spec.ts`
-4. Create page object in `tests/e2e/page-objects/{Name}Page.ts`
-5. Update MSW handlers for route's API interactions
+
+1. Create route in `src/routes/{name}/`.
+2. Add or update a page object in `tests/page-objects/{Name}Page.ts`.
+3. Add a smoke path in `tests/smoke/{name}.spec.ts`.
+4. If the route performs real CRUD/backend workflows, add coverage in `tests/e2e/crud/{name}.spec.ts`.
+5. Update fixtures and/or MSW handlers as required.
 
 ### Updating Mock API Schema
-1. Update fixture definitions in `tests/fixtures/`
-2. Update `tests/fixtures/SCHEMA.md`
-3. Update MSW handlers in `tests/shared/msw/handlers.ts`
-4. Run `bun run test:fixtures:validate` to check for drift
-5. Update affected tests
 
-## LLM Agent Guidelines
-
-When implementing tests as an LLM agent:
-
-1. **Always check the mirroring rule first** - Find the source file, then create the test in the mirrored location
-2. **Never create inline fixtures** - Use or extend `tests/fixtures/`
-3. **Reuse MSW handlers** - Don't mock API calls directly in tests
-4. **Follow the established pattern** - If similar tests exist, match their structure
-5. **Document new patterns** - If you establish a new testing pattern, update this README
+1. Update fixtures in `tests/fixtures/`.
+2. Update `tests/fixtures/SCHEMA.md`.
+3. Update handlers in `tests/shared/msw/handlers.ts`.
+4. Run `bun run test:fixtures:validate`.
 
 ## Configuration Files
 
-- `vitest.config.ts` - Vitest configuration (extends vite.config.ts)
-- `playwright.config.ts` - Playwright local configuration (manages dev server lifecycle)
-- `tests/config/playwright.config.ci.ts` - Playwright CI configuration (manages preview server)
-- `tests/config/playwright.config.shared.ts` - Shared Playwright settings
-- `tsconfig.vitest.json` - TypeScript config for tests
-- `tests/setup/vitestSetup.ts` - Global Vitest setup
+- `vitest.config.ts`
+- `playwright.config.ts`
+- `tests/config/playwright.config.ci.ts`
+- `tests/config/playwright.config.shared.ts`
+- `tsconfig.vitest.json`
+- `tests/setup/vitestSetup.ts`
 
 ## References
 
 - [Vitest Documentation](https://vitest.dev/)
-- [Testing Library](https://testing-library.com/)
 - [Playwright Documentation](https://playwright.dev/)
 - [MSW Documentation](https://mswjs.io/)
