@@ -23,6 +23,8 @@
     "test:e2e:smoke:ci": "playwright test --config=tests/config/playwright.config.ci.ts --project=smoke --max-failures=1",
     "test:e2e:crud:ci": "bunx tsx scripts/check-e2e-env.ts && playwright test --config=tests/config/playwright.config.ci.ts --project=setup --project=crud",
     "test:e2e:ui": "playwright test --config=playwright.config.ts --ui",
+    "lint:dead": "tsx scripts/lint-dead-code.ts",
+    "lint:consistency": "tsx scripts/check-consistency.ts",
     "lint:api": "spectral lint api-spec.yaml --fail-severity=warn"
   },
   "devDependencies": {

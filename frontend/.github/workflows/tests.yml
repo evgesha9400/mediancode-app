@@ -45,6 +45,12 @@ jobs:
         env:
           PUBLIC_CLERK_PUBLISHABLE_KEY: ${{ vars.PUBLIC_CLERK_PUBLISHABLE_KEY || 'pk_test_placeholder' }}
 
+      - name: Run dead code guard
+        run: bun run lint:dead
+
+      - name: Check consistency (stale refs + test mirrors)
+        run: bun run lint:consistency
+
       - name: Validate fixtures schema
         run: bun run test:fixtures:validate
 
