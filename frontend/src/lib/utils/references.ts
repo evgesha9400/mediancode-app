@@ -40,28 +40,6 @@ export function buildDeletionTooltip(
 }
 
 /**
- * Checks if a field constraint can be deleted safely
- * A field constraint cannot be deleted if it's currently used in any fields
- *
- * @param fieldConstraintName - The name of the field constraint to check
- * @param usedInFields - Count of fields using this field constraint
- * @returns DeletionResult indicating whether deletion is safe
- */
-export function checkFieldConstraintDeletion(
-  fieldConstraintName: string,
-  usedInFields: number
-): DeletionResult {
-  if (usedInFields === 0) {
-    return { success: true };
-  }
-
-  return {
-    success: false,
-    error: `Cannot delete field constraint "${fieldConstraintName}" because it is used in ${usedInFields} field${usedInFields > 1 ? 's' : ''}. Remove this field constraint from all fields before deleting.`
-  };
-}
-
-/**
  * Checks if a field can be deleted safely
  * A field cannot be deleted if it's currently used in any APIs
  * Only checks references within the same namespace when namespaceId is provided

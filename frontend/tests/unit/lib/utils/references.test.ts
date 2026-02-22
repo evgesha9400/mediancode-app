@@ -16,7 +16,6 @@ vi.mock('$lib/stores/apis', () => {
 
 import {
   buildDeletionTooltip,
-  checkFieldConstraintDeletion,
   checkFieldDeletion,
   checkObjectDeletion
 } from '$lib/utils/references';
@@ -53,27 +52,6 @@ describe('buildDeletionTooltip', () => {
     expect(result).toContain('- D');
     expect(result).toContain('and 2 more');
     expect(result).not.toContain('- E');
-  });
-});
-
-describe('checkFieldConstraintDeletion', () => {
-  it('returns success when usedInFields is 0', () => {
-    const result = checkFieldConstraintDeletion('MaxLength', 0);
-    expect(result).toEqual({ success: true });
-  });
-
-  it('returns error when usedInFields > 0', () => {
-    const result = checkFieldConstraintDeletion('MaxLength', 3);
-    expect(result.success).toBe(false);
-    expect(result.error).toContain('MaxLength');
-    expect(result.error).toContain('3 fields');
-  });
-
-  it('uses singular "field" for count of 1', () => {
-    const result = checkFieldConstraintDeletion('MinValue', 1);
-    expect(result.success).toBe(false);
-    expect(result.error).toContain('1 field');
-    expect(result.error).not.toContain('1 fields');
   });
 });
 

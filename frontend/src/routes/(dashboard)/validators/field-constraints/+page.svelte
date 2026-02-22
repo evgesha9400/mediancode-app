@@ -1,8 +1,6 @@
 <script lang="ts">
-  import { fieldConstraintsStore, deleteFieldConstraint, searchFieldConstraints, type FieldConstraint } from '$lib/stores/fieldConstraints';
+  import { fieldConstraintsStore, searchFieldConstraints, type FieldConstraint } from '$lib/stores/fieldConstraints';
   import { fieldsStore } from '$lib/stores/fields';
-  import { showToast } from '$lib/stores/toasts';
-  import { buildDeletionTooltip } from '$lib/utils/references';
   import { isSystemEntity } from '$lib/utils/namespace';
   import {
     PageHeader,
@@ -13,9 +11,7 @@
     EmptyState,
     Drawer,
     DrawerHeader,
-    DrawerContent,
-    DrawerFooter,
-    Tooltip
+    DrawerContent
   } from '$lib/components';
   import type { FilterConfig } from '$lib/types';
   import { storeLoadingState, reloadStores, STORE_NAMES } from '$lib/stores/loader';
@@ -66,33 +62,19 @@
     getItemId: (fc) => fc.name,
     drawerConfig: {
       trackEdits: false,
-      allowDelete: true,
+      allowDelete: false,
       closeDelay: 300
     }
   });
 
   // Convenience aliases for template bindings
   let selectedFieldConstraint = $derived(state.selectedItem);
-  let showDeleteConfirm = $derived(state.showDeleteConfirm);
   let filteredFieldConstraints = $derived(state.results);
   let sorts = $derived(state.sorts);
   let activeFiltersCount = $derived(state.activeFiltersCount);
 
   function isSelected(fc: FieldConstraint): boolean {
     return selectedFieldConstraint?.name === fc.name;
-  }
-
-  function handleDelete() {
-    if (!selectedFieldConstraint) return;
-
-    const fcName = selectedFieldConstraint.name;
-    const result = deleteFieldConstraint(selectedFieldConstraint.name);
-    if (result.success) {
-      state.closeDrawer();
-      showToast(`Field constraint "${fcName}" deleted successfully`, 'success', 3000);
-    } else {
-      showToast(result.error || 'Failed to delete field constraint', 'error', 5000);
-    }
   }
 
   function navigateToField(fieldId: string) {
@@ -107,10 +89,6 @@
       : []
   );
 
-  let hasReferences = $derived(fieldsUsingSelected.length > 0);
-  let deleteTooltip = $derived(hasReferences
-    ? buildDeletionTooltip('field constraint', 'field', fieldsUsingSelected)
-    : '');
   let isSystemItem = $derived(selectedFieldConstraint ? isSystemEntity(selectedFieldConstraint) : false);
   let hasLoadError = $derived($storeLoadingState.storeErrors.includes(STORE_NAMES.FIELD_CONSTRAINTS));
 </script>
@@ -351,42 +329,4 @@
       </div>
     {/if}
   </DrawerContent>
-
-  {#if selectedFieldConstraint && !isSystemItem}
-    <DrawerFooter>
-      {#if !showDeleteConfirm}
-        <Tooltip text={deleteTooltip} position="top">
-          <button
-            type="button"
-            onclick={() => state.showDeleteConfirm = true}
-            disabled={hasReferences}
-            class="w-full px-4 py-2 rounded-md flex items-center justify-center transition-colors font-medium {hasReferences ? 'bg-mono-200 text-mono-400 cursor-not-allowed' : 'bg-mono-100 text-red-700 hover:bg-red-50 cursor-pointer'}"
-          >
-            <i class="fa-solid fa-xmark mr-2"></i>
-            <span>Delete</span>
-          </button>
-        </Tooltip>
-      {:else}
-        <div class="bg-red-50 border border-red-200 rounded-md p-3">
-          <p class="text-sm text-red-800 mb-2">Are you sure?</p>
-          <div class="flex space-x-2">
-            <button
-              type="button"
-              onclick={handleDelete}
-              class="flex-1 px-3 py-1.5 bg-red-600 text-white rounded-md hover:bg-red-700 text-sm font-medium"
-            >
-              Yes, Delete
-            </button>
-            <button
-              type="button"
-              onclick={() => state.showDeleteConfirm = false}
-              class="flex-1 px-3 py-1.5 border border-mono-300 text-mono-700 rounded-md hover:bg-mono-50 text-sm font-medium"
-            >
-              Cancel
-            </button>
-          </div>
-        </div>
-      {/if}
-    </DrawerFooter>
-  {/if}
 </Drawer>

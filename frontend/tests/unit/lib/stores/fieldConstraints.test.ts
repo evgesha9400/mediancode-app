@@ -3,15 +3,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { get } from 'svelte/store';
 
 // ---------------------------------------------------------------------------
-// Mocks
-// ---------------------------------------------------------------------------
-
-vi.mock('$lib/utils/references', () => ({
-  checkFieldConstraintDeletion: vi.fn()
-}));
-
-// ---------------------------------------------------------------------------
-// Imports (after mocks)
+// Imports
 // ---------------------------------------------------------------------------
 
 import {
@@ -19,11 +11,9 @@ import {
   getTotalFieldConstraintCount,
   searchFieldConstraints,
   getFieldConstraintsByFieldType,
-  deleteFieldConstraint,
   addFieldConstraint,
   type FieldConstraint
 } from '$lib/stores/fieldConstraints';
-import { checkFieldConstraintDeletion } from '$lib/utils/references';
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -131,46 +121,6 @@ describe('getFieldConstraintsByFieldType', () => {
   it('returns empty array for unmatched type', () => {
     const results = getFieldConstraintsByFieldType('bool');
     expect(results).toHaveLength(0);
-  });
-});
-
-describe('deleteFieldConstraint', () => {
-  beforeEach(() => {
-    fieldConstraintsStore.set([
-      makeConstraint({ name: 'MaxLength', usedInFields: 0 }),
-      makeConstraint({ name: 'MinValue', usedInFields: 2 })
-    ]);
-    vi.clearAllMocks();
-  });
-
-  it('removes constraint when deletion check passes', () => {
-    (checkFieldConstraintDeletion as any).mockReturnValue({ success: true });
-
-    const result = deleteFieldConstraint('MaxLength');
-
-    expect(result.success).toBe(true);
-    expect(get(fieldConstraintsStore)).toHaveLength(1);
-    expect(get(fieldConstraintsStore)[0].name).toBe('MinValue');
-  });
-
-  it('blocks deletion when used in fields', () => {
-    (checkFieldConstraintDeletion as any).mockReturnValue({
-      success: false,
-      error: 'Cannot delete: used in 2 fields'
-    });
-
-    const result = deleteFieldConstraint('MinValue');
-
-    expect(result.success).toBe(false);
-    expect(result.error).toContain('Cannot delete');
-    expect(get(fieldConstraintsStore)).toHaveLength(2);
-  });
-
-  it('returns error when constraint not found', () => {
-    const result = deleteFieldConstraint('NonExistent');
-
-    expect(result.success).toBe(false);
-    expect(result.error).toContain('not found');
   });
 });
 
