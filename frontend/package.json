@@ -25,7 +25,9 @@
     "test:e2e:ui": "playwright test --config=playwright.config.ts --ui",
     "lint:dead": "tsx scripts/lint-dead-code.ts",
     "lint:consistency": "tsx scripts/check-consistency.ts",
-    "lint:api": "spectral lint api-spec.yaml --fail-severity=warn"
+    "lint:api": "spectral lint api-spec.yaml --fail-severity=warn",
+    "format": "prettier --write .",
+    "format:check": "prettier --check ."
   },
   "devDependencies": {
     "@clerk/testing": "^1.13.35",
@@ -46,6 +48,8 @@
     "jsdom": "^25.0.0",
     "msw": "^2.6.0",
     "postcss": "^8.5.6",
+    "prettier": "^3.8.1",
+    "prettier-plugin-svelte": "^3.5.0",
     "svelte": "^5.41.0",
     "svelte-check": "^4.3.3",
     "tailwindcss": "^3.4.18",
