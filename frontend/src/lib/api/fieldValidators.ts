@@ -44,7 +44,7 @@ export interface UpdateFieldValidatorRequest {
  * @param namespaceId - Optional namespace ID to filter by
  */
 export async function listFieldValidators(namespaceId?: string): Promise<FieldValidator[]> {
-	const params = namespaceId ? `?namespaceId=${encodeURIComponent(namespaceId)}` : '';
+	const params = namespaceId ? `?namespace_id=${encodeURIComponent(namespaceId)}` : '';
 	return apiGet<FieldValidator[]>(`/field-validators${params}`);
 }
 

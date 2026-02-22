@@ -49,7 +49,7 @@ describe('Field Validators API Service', () => {
 
       await listFieldValidators('ns-1');
 
-      expect(apiGet).toHaveBeenCalledWith('/field-validators?namespaceId=ns-1');
+      expect(apiGet).toHaveBeenCalledWith('/field-validators?namespace_id=ns-1');
     });
   });
 

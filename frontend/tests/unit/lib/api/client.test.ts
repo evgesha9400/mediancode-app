@@ -16,7 +16,7 @@ import { getClerk } from '$lib/clerk';
 import { getActiveOrganizationId } from '$lib/stores/organization';
 
 // Base URL from mocked $env/dynamic/public in vitestSetup.ts
-const API_BASE = 'http://localhost:3000/api';
+const API_BASE = 'http://localhost:3000/v1';
 
 describe('API Client - apiClient', () => {
   beforeEach(() => {

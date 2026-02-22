@@ -66,7 +66,7 @@ describe('Fields API Service', () => {
 
       await listFields('ns-1');
 
-      expect(apiGet).toHaveBeenCalledWith('/fields?namespaceId=ns-1');
+      expect(apiGet).toHaveBeenCalledWith('/fields?namespace_id=ns-1');
     });
   });
 

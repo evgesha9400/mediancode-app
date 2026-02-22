@@ -44,7 +44,7 @@ export interface UpdateModelValidatorRequest {
  * @param namespaceId - Optional namespace ID to filter by
  */
 export async function listModelValidators(namespaceId?: string): Promise<ModelValidator[]> {
-	const params = namespaceId ? `?namespaceId=${encodeURIComponent(namespaceId)}` : '';
+	const params = namespaceId ? `?namespace_id=${encodeURIComponent(namespaceId)}` : '';
 	return apiGet<ModelValidator[]>(`/model-validators${params}`);
 }
 

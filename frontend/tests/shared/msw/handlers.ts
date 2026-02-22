@@ -33,11 +33,11 @@ export const handlers = [
 	// ============================================
 	// User Endpoints
 	// ============================================
-	http.get('/api/users', () => {
+	http.get('/v1/users', () => {
 		return HttpResponse.json(mockUsers);
 	}),
 
-	http.get('/api/users/:id', ({ params }) => {
+	http.get('/v1/users/:id', ({ params }) => {
 		const user = getUserById(params.id as string);
 		if (!user) {
 			return new HttpResponse(null, { status: 404 });
@@ -48,11 +48,11 @@ export const handlers = [
 	// ============================================
 	// Field Endpoints
 	// ============================================
-	http.get('/api/fields', () => {
+	http.get('/v1/fields', () => {
 		return HttpResponse.json(mockFields);
 	}),
 
-	http.get('/api/fields/:id', ({ params }) => {
+	http.get('/v1/fields/:id', ({ params }) => {
 		const field = getFieldById(params.id as string);
 		if (!field) {
 			return new HttpResponse(null, { status: 404 });
@@ -60,7 +60,7 @@ export const handlers = [
 		return HttpResponse.json(field);
 	}),
 
-	http.post('/api/fields', async ({ request }) => {
+	http.post('/v1/fields', async ({ request }) => {
 		const newField = (await request.json()) as Record<string, unknown>;
 		return HttpResponse.json(
 			{ ...newField, id: `field-${Date.now()}` },
@@ -68,7 +68,7 @@ export const handlers = [
 		);
 	}),
 
-	http.put('/api/fields/:id', async ({ params, request }) => {
+	http.put('/v1/fields/:id', async ({ params, request }) => {
 		const field = getFieldById(params.id as string);
 		if (!field) {
 			return new HttpResponse(null, { status: 404 });
@@ -77,7 +77,7 @@ export const handlers = [
 		return HttpResponse.json({ ...field, ...updates });
 	}),
 
-	http.delete('/api/fields/:id', ({ params }) => {
+	http.delete('/v1/fields/:id', ({ params }) => {
 		const field = getFieldById(params.id as string);
 		if (!field) {
 			return new HttpResponse(null, { status: 404 });
@@ -88,11 +88,11 @@ export const handlers = [
 	// ============================================
 	// Field Constraint Endpoints
 	// ============================================
-	http.get('/api/field-constraints', () => {
+	http.get('/v1/field-constraints', () => {
 		return HttpResponse.json(mockFieldConstraints);
 	}),
 
-	http.get('/api/field-constraints/:name', ({ params }) => {
+	http.get('/v1/field-constraints/:name', ({ params }) => {
 		const fieldConstraint = getFieldConstraintByName(params.name as string);
 		if (!fieldConstraint) {
 			return new HttpResponse(null, { status: 404 });
@@ -100,27 +100,15 @@ export const handlers = [
 		return HttpResponse.json(fieldConstraint);
 	}),
 
-	http.post('/api/field-constraints', async ({ request }) => {
-		const newFieldConstraint = await request.json();
-		return HttpResponse.json(newFieldConstraint, { status: 201 });
-	}),
-
-	http.delete('/api/field-constraints/:name', ({ params }) => {
-		const fieldConstraint = getFieldConstraintByName(params.name as string);
-		if (!fieldConstraint) {
-			return new HttpResponse(null, { status: 404 });
-		}
-		return new HttpResponse(null, { status: 204 });
-	}),
 
 	// ============================================
 	// Type Endpoints
 	// ============================================
-	http.get('/api/types', () => {
+	http.get('/v1/types', () => {
 		return HttpResponse.json(mockTypes);
 	}),
 
-	http.get('/api/types/:name', ({ params }) => {
+	http.get('/v1/types/:name', ({ params }) => {
 		const type = getTypeByName(params.name as any);
 		if (!type) {
 			return new HttpResponse(null, { status: 404 });
@@ -131,11 +119,11 @@ export const handlers = [
 	// ============================================
 	// Permission & Role Endpoints
 	// ============================================
-	http.get('/api/permissions', () => {
+	http.get('/v1/permissions', () => {
 		return HttpResponse.json(mockPermissions);
 	}),
 
-	http.get('/api/roles', () => {
+	http.get('/v1/roles', () => {
 		return HttpResponse.json(mockRoles);
 	})
 ];

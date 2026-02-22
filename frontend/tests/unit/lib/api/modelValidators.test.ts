@@ -49,7 +49,7 @@ describe('Model Validators API Service', () => {
 
       await listModelValidators('ns-1');
 
-      expect(apiGet).toHaveBeenCalledWith('/model-validators?namespaceId=ns-1');
+      expect(apiGet).toHaveBeenCalledWith('/model-validators?namespace_id=ns-1');
     });
   });
 

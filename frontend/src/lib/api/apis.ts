@@ -45,7 +45,7 @@ function transformApi(response: ApiResponse): Api {
  * @param namespaceId - Optional namespace ID to filter by
  */
 export async function listApis(namespaceId?: string): Promise<Api[]> {
-	const params = namespaceId ? `?namespaceId=${encodeURIComponent(namespaceId)}` : '';
+	const params = namespaceId ? `?namespace_id=${encodeURIComponent(namespaceId)}` : '';
 	const response = await apiGet<ApiResponse[]>(`/apis${params}`);
 	return response.map(transformApi);
 }

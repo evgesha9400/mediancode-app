@@ -43,7 +43,7 @@ function transformFieldConstraint(response: FieldConstraintResponse): FieldConst
  * @param namespaceId - Optional namespace ID to filter by
  */
 export async function listFieldConstraints(namespaceId?: string): Promise<FieldConstraint[]> {
-	const params = namespaceId ? `?namespaceId=${encodeURIComponent(namespaceId)}` : '';
+	const params = namespaceId ? `?namespace_id=${encodeURIComponent(namespaceId)}` : '';
 	const response = await apiGet<FieldConstraintResponse[]>(`/field-constraints${params}`);
 	return response.map(transformFieldConstraint);
 }

@@ -50,7 +50,7 @@ describe('Objects API Service', () => {
 
       await listObjects('ns-1');
 
-      expect(apiGet).toHaveBeenCalledWith('/objects?namespaceId=ns-1');
+      expect(apiGet).toHaveBeenCalledWith('/objects?namespace_id=ns-1');
     });
   });
 

@@ -83,7 +83,7 @@ function transformField(response: FieldResponse, typeMap: Record<string, string>
  * @param namespaceId - Optional namespace ID to filter by
  */
 export async function listFields(namespaceId?: string): Promise<Field[]> {
-	const params = namespaceId ? `?namespaceId=${encodeURIComponent(namespaceId)}` : '';
+	const params = namespaceId ? `?namespace_id=${encodeURIComponent(namespaceId)}` : '';
 	const response = await apiGet<FieldResponse[]>(`/fields${params}`);
 	const typeMap = buildTypeIdToNameMap();
 	return response.map(r => transformField(r, typeMap));

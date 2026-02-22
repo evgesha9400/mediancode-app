@@ -39,7 +39,7 @@ describe('Field Constraints API Service', () => {
 
       await listFieldConstraints('ns-1');
 
-      expect(apiGet).toHaveBeenCalledWith('/field-constraints?namespaceId=ns-1');
+      expect(apiGet).toHaveBeenCalledWith('/field-constraints?namespace_id=ns-1');
     });
   });
 });

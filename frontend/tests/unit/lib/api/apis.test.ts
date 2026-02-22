@@ -43,7 +43,7 @@ describe('APIs API Service', () => {
 
       await listApis('ns-1');
 
-      expect(apiGet).toHaveBeenCalledWith('/apis?namespaceId=ns-1');
+      expect(apiGet).toHaveBeenCalledWith('/apis?namespace_id=ns-1');
     });
   });
 

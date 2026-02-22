@@ -19,7 +19,7 @@ vi.mock('$env/dynamic/public', () => ({
 	env: {
 		PUBLIC_CLERK_PUBLISHABLE_KEY: 'pk_test_placeholder',
 		PUBLIC_CLERK_MOCK_MODE: 'true',
-		PUBLIC_API_BASE_URL: 'http://localhost:3000/api'
+		PUBLIC_API_BASE_URL: 'http://localhost:3000/v1'
 	}
 }));
 
@@ -27,7 +27,7 @@ vi.mock('$env/dynamic/public', () => ({
 vi.mock('$env/static/public', () => ({
 	PUBLIC_CLERK_PUBLISHABLE_KEY: 'pk_test_placeholder',
 	PUBLIC_CLERK_MOCK_MODE: 'true',
-	PUBLIC_API_BASE_URL: 'http://localhost:3000/api'
+	PUBLIC_API_BASE_URL: 'http://localhost:3000/v1'
 }));
 
 // Start MSW server before all tests

@@ -57,7 +57,7 @@ function transformObject(response: ObjectResponse): ObjectDefinition {
  * @param namespaceId - Optional namespace ID to filter by
  */
 export async function listObjects(namespaceId?: string): Promise<ObjectDefinition[]> {
-	const params = namespaceId ? `?namespaceId=${encodeURIComponent(namespaceId)}` : '';
+	const params = namespaceId ? `?namespace_id=${encodeURIComponent(namespaceId)}` : '';
 	const response = await apiGet<ObjectResponse[]>(`/objects${params}`);
 	return response.map(transformObject);
 }
