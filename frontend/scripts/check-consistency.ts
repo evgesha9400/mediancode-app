@@ -1,10 +1,13 @@
 #!/usr/bin/env tsx
 /**
- * Consistency drift guard: detect stale doc references and missing unit test mirrors.
+ * Consistency drift guard: detect stale doc references, missing test mirrors,
+ * API contract drift, and test infrastructure mismatches.
  *
  * Checks:
  * 1. Stale path references in documentation files (README, CLAUDE.md, PR template, test docs)
  * 2. Unit test mirror coverage for src/lib/ files
+ * 3. CamelCase query param keys in API client files (must use snake_case)
+ * 4. Wrong base path in test setup files (/api instead of /v1)
  *
  * Run: bun run lint:consistency
  */
@@ -122,6 +125,73 @@ function checkTestMirrors() {
 }
 
 // ============================================================================
+// CHECK 3: CamelCase query param keys in API client files
+// ============================================================================
+
+/** Matches query param patterns like `?namespaceId=` or `&namespaceId=` (camelCase keys). */
+const CAMEL_CASE_QUERY_PARAM = /[?&][a-z]+[A-Z][a-zA-Z]*=/;
+
+/** Known exception: endpoints.ts sends apiId pending backend verification (see docs/endpoint-query-params.md). */
+const QUERY_PARAM_EXCEPTIONS = new Set(['endpoints.ts']);
+
+function checkApiQueryParams() {
+	const apiDir = path.join(ROOT, 'src', 'lib', 'api');
+	if (!fs.existsSync(apiDir)) return;
+
+	const files = fs.readdirSync(apiDir).filter(f => f.endsWith('.ts'));
+
+	for (const file of files) {
+		if (QUERY_PARAM_EXCEPTIONS.has(file)) continue;
+
+		const absPath = path.join(apiDir, file);
+		const content = fs.readFileSync(absPath, 'utf-8');
+		const lines = content.split('\n');
+
+		lines.forEach((line, idx) => {
+			const match = line.match(CAMEL_CASE_QUERY_PARAM);
+			if (match) {
+				errors.push(
+					`src/lib/api/${file}:${idx + 1}: camelCase query param key "${match[0]}" — use snake_case (e.g. namespace_id)`
+				);
+			}
+		});
+	}
+}
+
+// ============================================================================
+// CHECK 4: Test infrastructure base path
+// ============================================================================
+
+/** The wrong base path pattern that should not appear in test setup/config. */
+const WRONG_BASE_PATHS = [
+	{ pattern: /localhost:\d+\/api(?![-_])/g, reason: 'Use /v1 base path, not /api' },
+];
+
+const TEST_SETUP_FILES = [
+	'tests/setup/vitestSetup.ts',
+];
+
+function checkTestBasePath() {
+	for (const relPath of TEST_SETUP_FILES) {
+		const absPath = path.join(ROOT, relPath);
+		if (!fs.existsSync(absPath)) continue;
+
+		const content = fs.readFileSync(absPath, 'utf-8');
+		const lines = content.split('\n');
+
+		for (const { pattern, reason } of WRONG_BASE_PATHS) {
+			lines.forEach((line, idx) => {
+				// Reset regex lastIndex for global patterns
+				pattern.lastIndex = 0;
+				if (pattern.test(line)) {
+					errors.push(`${relPath}:${idx + 1}: ${reason}`);
+				}
+			});
+		}
+	}
+}
+
+// ============================================================================
 // MAIN
 // ============================================================================
 
@@ -130,6 +200,8 @@ function main() {
 
 	checkStaleReferences();
 	checkTestMirrors();
+	checkApiQueryParams();
+	checkTestBasePath();
 
 	if (errors.length === 0) {
 		console.log('All consistency checks passed!');
