@@ -1,23 +1,13 @@
 <script lang="ts">
-  import { untrack } from 'svelte';
   import { goto } from '$app/navigation';
   import { page } from '$app/state';
-  import { PageHeader, Tooltip } from '$lib/components';
+  import { Tooltip, ValidatorMultiSelect, ValidatorCodeEditor } from '$lib/components';
   import { fieldsStore } from '$lib/stores/fields';
   import { activeNamespaceId } from '$lib/stores/namespaces';
   import { modelValidatorsStore, getModelValidatorById } from '$lib/stores/modelValidators';
   import { showToast } from '$lib/stores/toasts';
   import { updateModelValidatorAction, deleteModelValidatorAction } from '$lib/domain/mutations';
   import { getModelValidator } from '$lib/api/modelValidators';
-
-  // CodeMirror
-  import {
-    type EditorView,
-    type Compartment,
-    createSplitEditor,
-    updateWrapperContent,
-    updateBodyLineNumbers,
-  } from '$lib/utils/codemirror';
 
   // ============================================================================
   // STATE
@@ -30,7 +20,7 @@
   let showDeleteConfirm = $state(false);
   let isDeleting = $state(false);
 
-  // Editor state — these are populated from the loaded validator
+  // Editor state
   let validatorName = $state('');
   let validatorDescription = $state('');
   let validatorRequiredFields = $state<string[]>([]);
@@ -45,21 +35,6 @@
   let originalMode = $state<'before' | 'after'>('after');
   let originalCode = $state('');
 
-  // Field dropdown state
-  let fieldDropdownOpen = $state(false);
-  let fieldSearchQuery = $state('');
-  let fieldHighlightIndex = $state(0);
-  let fieldBlurTimeoutId: ReturnType<typeof setTimeout> | null = null;
-
-  // CodeMirror DOM mount points
-  let wrapperEditorEl = $state<HTMLDivElement | null>(null);
-  let bodyEditorEl = $state<HTMLDivElement | null>(null);
-
-  // CodeMirror instances (managed imperatively, not reactive)
-  let wrapperView: EditorView | null = null;
-  let bodyView: EditorView | null = null;
-  let bodyLineNumCompartment: Compartment | null = null;
-
   // ============================================================================
   // LOAD VALIDATOR
   // ============================================================================
@@ -67,16 +42,13 @@
   const validatorId = page.params.id as string;
 
   $effect(() => {
-    // Try to load from store first, then fall back to API
     const fromStore = getModelValidatorById(validatorId);
     if (fromStore) {
       populateFields(fromStore);
       isLoading = false;
     } else {
-      // Fetch from API
       getModelValidator(validatorId)
         .then((mv) => {
-          // Add to store for future lookups
           modelValidatorsStore.update(mvs => [...mvs, mv]);
           populateFields(mv);
           isLoading = false;
@@ -96,7 +68,6 @@
     validatorCode = mv.code;
     validatorUsedInObjects = mv.usedInObjects;
 
-    // Store originals for change tracking
     originalName = mv.name;
     originalDescription = mv.description;
     originalRequiredFields = [...mv.requiredFields];
@@ -108,18 +79,11 @@
   // DERIVED STATE
   // ============================================================================
 
-  // Dynamic field options from store (namespace-filtered, deduplicated, sorted)
   let fieldOptions = $derived.by(() => {
     const names = $fieldsStore
       .filter(f => f.namespaceId === $activeNamespaceId)
       .map(f => f.name);
     return [...new Set(names)].sort();
-  });
-
-  let filteredFieldOptions = $derived.by(() => {
-    const q = fieldSearchQuery.toLowerCase().trim();
-    if (!q) return fieldOptions;
-    return fieldOptions.filter(f => f.toLowerCase().includes(q));
   });
 
   let functionName = $derived.by(() => {
@@ -141,7 +105,6 @@
     datetime: 'datetime', uuid: 'UUID', Any: 'Any',
   };
 
-  // Build the example class fields from required fields
   let exampleClassLines = $derived.by(() => {
     if (validatorRequiredFields.length === 0) return [];
     const lines: string[] = [];
@@ -153,7 +116,6 @@
     return lines;
   });
 
-  // Collect extra imports needed for the example class
   let classImports = $derived.by(() => {
     const imports = new Set<string>();
     for (const fieldName of validatorRequiredFields) {
@@ -172,7 +134,6 @@
   let wrapperCode = $derived.by(() => {
     const lines: string[] = [];
 
-    // Imports
     lines.push('from pydantic import model_validator, BaseModel');
     if (validatorMode === 'after') {
       lines.push('from typing import Self');
@@ -181,14 +142,11 @@
     }
     if (needsReImport) lines.push('import re');
 
-    // Extra imports from class fields
     for (const imp of classImports) {
       if (!lines.includes(imp)) lines.push(imp);
     }
 
     lines.push('');
-
-    // Example class
     lines.push('class ExampleModel(BaseModel):');
     if (exampleClassLines.length > 0) {
       for (const cl of exampleClassLines) {
@@ -199,7 +157,6 @@
     }
     lines.push('');
 
-    // Decorator + signature
     lines.push(`    @model_validator(mode='${validatorMode}')`);
     if (validatorMode === 'after') {
       lines.push(`    def ${functionName}(self) -> Self:`);
@@ -211,7 +168,6 @@
     return lines.join('\n');
   });
 
-  let wrapperLineCount = $derived(wrapperCode.split('\n').length);
   let fullCode = $derived(wrapperCode + '\n' + validatorCode);
 
   let hasChanges = $derived(
@@ -225,7 +181,6 @@
   let canSave = $derived(validatorName.trim() !== '' && validatorCode.trim() !== '' && hasChanges);
   let canDelete = $derived(validatorUsedInObjects === 0);
 
-  // Mode-aware info display
   let modeInfoLabel = $derived(validatorMode === 'after' ? 'self' : 'data: dict');
   let modeInfoTooltip = $derived(
     validatorMode === 'after'
@@ -234,112 +189,8 @@
   );
 
   // ============================================================================
-  // CODEMIRROR LIFECYCLE
-  // ============================================================================
-
-  // Create split editor when loaded
-  $effect(() => {
-    if (isLoading || !wrapperEditorEl || !bodyEditorEl) return;
-
-    const result = createSplitEditor(
-      {
-        wrapperDoc: untrack(() => wrapperCode),
-        bodyDoc: untrack(() => validatorCode),
-        onBodyChange: (content) => { validatorCode = content; },
-      },
-      wrapperEditorEl,
-      bodyEditorEl,
-    );
-    wrapperView = result.wrapperView;
-    bodyView = result.bodyView;
-    bodyLineNumCompartment = result.bodyLineNumCompartment;
-
-    return () => {
-      result.destroy();
-      wrapperView = null;
-      bodyView = null;
-    };
-  });
-
-  // Update wrapper content when name/mode/imports change
-  $effect(() => {
-    if (wrapperView) updateWrapperContent(wrapperView, wrapperCode);
-  });
-
-  // Update body line number offset when wrapper line count changes
-  $effect(() => {
-    if (bodyView && bodyLineNumCompartment) {
-      updateBodyLineNumbers(bodyView, bodyLineNumCompartment, wrapperLineCount);
-    }
-  });
-
-  // ============================================================================
   // HELPERS
   // ============================================================================
-
-  function toggleField(fieldName: string) {
-    if (validatorRequiredFields.includes(fieldName)) {
-      validatorRequiredFields = validatorRequiredFields.filter(f => f !== fieldName);
-    } else {
-      validatorRequiredFields = [...validatorRequiredFields, fieldName];
-    }
-  }
-
-  function openFieldDropdown() {
-    if (fieldBlurTimeoutId) {
-      clearTimeout(fieldBlurTimeoutId);
-      fieldBlurTimeoutId = null;
-    }
-    fieldDropdownOpen = true;
-    fieldHighlightIndex = 0;
-  }
-
-  function closeFieldDropdown() {
-    fieldDropdownOpen = false;
-    fieldSearchQuery = '';
-    fieldHighlightIndex = 0;
-  }
-
-  function handleFieldBlur() {
-    fieldBlurTimeoutId = setTimeout(() => {
-      closeFieldDropdown();
-      fieldBlurTimeoutId = null;
-    }, 150);
-  }
-
-  function handleFieldKeydown(e: KeyboardEvent) {
-    if (!fieldDropdownOpen) {
-      if (e.key === 'ArrowDown' || e.key === 'Enter') {
-        e.preventDefault();
-        openFieldDropdown();
-      }
-      return;
-    }
-    switch (e.key) {
-      case 'ArrowDown':
-        e.preventDefault();
-        fieldHighlightIndex = Math.min(fieldHighlightIndex + 1, filteredFieldOptions.length - 1);
-        break;
-      case 'ArrowUp':
-        e.preventDefault();
-        fieldHighlightIndex = Math.max(fieldHighlightIndex - 1, 0);
-        break;
-      case 'Enter':
-        e.preventDefault();
-        if (filteredFieldOptions[fieldHighlightIndex]) {
-          toggleField(filteredFieldOptions[fieldHighlightIndex]);
-        }
-        break;
-      case 'Escape':
-        e.preventDefault();
-        closeFieldDropdown();
-        break;
-    }
-  }
-
-  function removeField(fieldName: string) {
-    validatorRequiredFields = validatorRequiredFields.filter(f => f !== fieldName);
-  }
 
   async function copyFullCode() {
     try {
@@ -423,12 +274,9 @@
 <!-- ======================================================================== -->
 
   <div class="flex flex-col flex-1 overflow-hidden">
-    <!-- ================================================================ -->
-    <!-- HEADER                                                            -->
-    <!-- ================================================================ -->
+    <!-- HEADER -->
     <div class="bg-white border-b border-mono-200 py-4 px-6 flex-shrink-0">
       <div class="flex justify-between items-start">
-        <!-- Left side: back button + title -->
         <div>
           <button
             onclick={() => goto('/validators/model-validators')}
@@ -440,9 +288,7 @@
           <h1 class="text-xl font-semibold text-mono-900">Edit Model Validator</h1>
         </div>
 
-        <!-- Right side: action buttons -->
         <div class="flex items-center gap-2">
-          <!-- Delete -->
           {#if !showDeleteConfirm}
             <Tooltip text={canDelete ? '' : `Used in ${validatorUsedInObjects} object${validatorUsedInObjects > 1 ? 's' : ''}`} position="bottom">
               <button
@@ -523,12 +369,9 @@
       </div>
     </div>
 
-    <!-- ================================================================ -->
-    <!-- METADATA BAR                                                     -->
-    <!-- ================================================================ -->
+    <!-- METADATA BAR -->
     <div class="bg-white border-b border-mono-200 px-6 py-4 flex-shrink-0">
       <div class="grid grid-cols-12 gap-4 items-start">
-        <!-- Name -->
         <div class="col-span-3">
           <label for="validator-name" class="block text-xs font-medium text-mono-500 mb-1">Name <span class="text-red-500">*</span></label>
           <input
@@ -542,67 +385,14 @@
           />
         </div>
 
-        <!-- Required Fields -->
-        <div class="col-span-4 relative">
-          <label for="field-search-edit" class="block text-xs font-medium text-mono-500 mb-1">Required Fields</label>
-          <div
-            class="flex flex-wrap items-center gap-1 min-h-[34px] px-2 py-1 border border-mono-200 rounded-md
-                   bg-white cursor-text
-                   {fieldDropdownOpen ? 'ring-1 ring-mono-400 border-mono-400' : ''}"
-            onclick={() => { openFieldDropdown(); document.getElementById('field-search-edit')?.focus(); }}
-            role="presentation"
-          >
-            {#each validatorRequiredFields as field}
-              <span class="inline-flex items-center gap-1 px-1.5 py-0.5 text-xs font-mono rounded bg-mono-800 text-white">
-                {field}
-                <button
-                  type="button"
-                  onclick={(e) => { e.stopPropagation(); removeField(field); }}
-                  class="hover:text-mono-300 transition-colors leading-none"
-                  aria-label="Remove {field}"
-                >
-                  <i class="fa-solid fa-xmark text-[9px]"></i>
-                </button>
-              </span>
-            {/each}
-            <input
-              id="field-search-edit"
-              type="text"
-              bind:value={fieldSearchQuery}
-              onfocus={openFieldDropdown}
-              onblur={handleFieldBlur}
-              onkeydown={handleFieldKeydown}
-              placeholder={validatorRequiredFields.length === 0 ? 'Select fields...' : ''}
-              class="flex-1 min-w-[60px] text-xs font-mono bg-transparent border-none outline-none
-                     placeholder:text-mono-300 py-0.5"
-            />
-          </div>
-          {#if fieldDropdownOpen}
-            <div class="absolute z-20 w-full mt-1 bg-white border border-mono-200 rounded-md shadow-lg max-h-48 overflow-auto">
-              {#if filteredFieldOptions.length === 0}
-                <div class="px-3 py-2 text-xs text-mono-400">No fields match "{fieldSearchQuery}"</div>
-              {:else}
-                {#each filteredFieldOptions as field, i (field)}
-                  <button
-                    type="button"
-                    onmousedown={(e) => { e.preventDefault(); toggleField(field); }}
-                    class="w-full px-3 py-1.5 text-left text-xs font-mono flex items-center justify-between
-                           transition-colors border-b border-mono-100 last:border-b-0
-                           {i === fieldHighlightIndex ? 'bg-mono-50' : 'hover:bg-mono-50'}
-                           text-mono-700"
-                  >
-                    <span>{field}</span>
-                    {#if validatorRequiredFields.includes(field)}
-                      <i class="fa-solid fa-check text-[10px] text-mono-500"></i>
-                    {/if}
-                  </button>
-                {/each}
-              {/if}
-            </div>
-          {/if}
-        </div>
+        <ValidatorMultiSelect
+          label="Required Fields"
+          bind:selectedItems={validatorRequiredFields}
+          options={fieldOptions}
+          placeholder="Select fields..."
+          inputId="field-search-edit"
+        />
 
-        <!-- Mode -->
         <div class="col-span-2">
           <label for="validator-mode" class="block text-xs font-medium text-mono-500 mb-1">Mode</label>
           <select
@@ -617,7 +407,6 @@
           </select>
         </div>
 
-        <!-- Description -->
         <div class="col-span-3">
           <label for="validator-description" class="block text-xs font-medium text-mono-500 mb-1">Description</label>
           <input
@@ -633,47 +422,15 @@
       </div>
     </div>
 
-    <!-- ================================================================ -->
-    <!-- CODE EDITOR                                                      -->
-    <!-- ================================================================ -->
-    <div class="flex-1 bg-mono-900 flex flex-col overflow-hidden min-h-0">
-      <!-- Editor header bar -->
-      <div class="flex items-center justify-between px-4 py-2.5 bg-mono-800 border-b border-mono-700 flex-shrink-0">
-        <div class="flex items-center gap-3">
-          <div class="flex items-center gap-2">
-            <i class="fa-solid fa-code text-xs text-mono-400"></i>
-            <span class="text-xs text-mono-400 font-mono">{functionName}.py</span>
-          </div>
-          <!-- Mode-aware info -->
-          <div class="relative group/info">
-            <div class="flex items-center gap-1 px-2 py-0.5 rounded bg-mono-700/50 cursor-help">
-              <i class="fa-solid fa-circle-info text-[10px] text-mono-500"></i>
-              <span class="text-[10px] text-mono-500 font-mono">{modeInfoLabel}</span>
-            </div>
-            <div class="absolute bottom-full left-0 mb-2 px-3 py-2 bg-mono-800 border border-mono-600 rounded-md
-                        text-xs text-mono-300 whitespace-nowrap opacity-0 group-hover/info:opacity-100
-                        transition-opacity duration-200 pointer-events-none z-10 shadow-lg">
-              {modeInfoTooltip}
-              <div class="absolute top-full left-4 w-2 h-2 bg-mono-800 border-r border-b border-mono-600 transform rotate-45 -mt-1"></div>
-            </div>
-          </div>
-        </div>
-        <div class="flex items-center gap-1.5 text-[10px] text-mono-500 font-mono">
-          {#if needsReImport}
-            <span class="px-1.5 py-0.5 rounded bg-mono-700/50 text-mono-400">
-              <i class="fa-solid fa-cube text-[9px] mr-1"></i>re
-            </span>
-          {/if}
-        </div>
-      </div>
-
-      <!-- CodeMirror editors -->
-      <div class="flex-1 flex flex-col overflow-hidden min-h-0">
-        <!-- Read-only wrapper (imports + class + decorator + signature) -->
-        <div bind:this={wrapperEditorEl} class="flex-shrink-0"></div>
-        <!-- Editable body (function body) -->
-        <div bind:this={bodyEditorEl} class="flex-1 min-h-0"></div>
-      </div>
-    </div>
+    <!-- CODE EDITOR -->
+    <ValidatorCodeEditor
+      {wrapperCode}
+      bind:validatorCode
+      {functionName}
+      {needsReImport}
+      infoLabel={modeInfoLabel}
+      infoTooltip={modeInfoTooltip}
+      isReady={!isLoading}
+    />
   </div>
 {/if}

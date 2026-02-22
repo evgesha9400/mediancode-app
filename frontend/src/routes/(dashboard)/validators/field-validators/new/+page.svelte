@@ -1,141 +1,15 @@
 <script lang="ts">
-  import { untrack } from 'svelte';
   import { goto } from '$app/navigation';
-  import { Tooltip } from '$lib/components';
+  import { Tooltip, ValidatorMultiSelect, ValidatorCodeEditor } from '$lib/components';
   import { typesStore } from '$lib/stores/types';
   import { activeNamespaceId } from '$lib/stores/namespaces';
   import { showToast } from '$lib/stores/toasts';
   import { createFieldValidatorAction } from '$lib/domain/mutations';
-
-  // CodeMirror
   import {
-    type EditorView,
-    type Compartment,
-    createSplitEditor,
-    updateWrapperContent,
-    updateBodyLineNumbers,
-  } from '$lib/utils/codemirror';
-
-  // ============================================================================
-  // TYPES
-  // ============================================================================
-
-  type TemplateDefinition = {
-    id: string;
-    name: string;
-    icon: string;
-    description: string;
-    compatibleTypes: string[];
-    mode: 'before' | 'after';
-    code: string;
-  };
-
-  // ============================================================================
-  // CONSTANTS
-  // ============================================================================
-
-  const blankTemplate: TemplateDefinition = {
-    id: 'blank',
-    name: 'Blank Validator',
-    icon: 'fa-file-circle-plus',
-    description: 'Start from scratch with an empty validator',
-    compatibleTypes: ['Any'],
-    mode: 'after',
-    code: '    # Write your validation logic here\n    return v'
-  };
-
-  const templates: TemplateDefinition[] = [
-    {
-      id: 'string-cleanup',
-      name: 'String Cleanup',
-      icon: 'fa-broom',
-      description: 'Strip whitespace, lowercase, and optional length bounds',
-      compatibleTypes: ['str'],
-      mode: 'before',
-      code: '    v = v.strip()\n    v = v.lower()\n    if len(v) > 255:\n        raise ValueError(\'Must be 255 characters or less\')\n    return v'
-    },
-    {
-      id: 'email-format',
-      name: 'Email Format',
-      icon: 'fa-envelope',
-      description: 'Validate email format with regex and normalize',
-      compatibleTypes: ['str'],
-      mode: 'after',
-      code: '    if not re.match(r\'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$\', v):\n        raise ValueError(\'Invalid email format\')\n    v = v.lower().strip()\n    return v'
-    },
-    {
-      id: 'number-range',
-      name: 'Number Range',
-      icon: 'fa-arrow-up-1-9',
-      description: 'Ensure a number falls within min/max bounds',
-      compatibleTypes: ['int', 'float'],
-      mode: 'after',
-      code: '    if v < 0:\n        raise ValueError(\'Must be greater than or equal to 0\')\n    if v > 1000:\n        raise ValueError(\'Must be less than or equal to 1000\')\n    return v'
-    },
-    {
-      id: 'length-bounds',
-      name: 'Length Bounds',
-      icon: 'fa-ruler-horizontal',
-      description: 'Enforce minimum and maximum string length',
-      compatibleTypes: ['str'],
-      mode: 'after',
-      code: '    if len(v) < 1:\n        raise ValueError(\'Cannot be empty\')\n    if len(v) > 255:\n        raise ValueError(\'Must be 255 characters or less\')\n    return v'
-    },
-    {
-      id: 'regex-pattern',
-      name: 'Regex Pattern',
-      icon: 'fa-code',
-      description: 'Validate value matches a custom regex pattern',
-      compatibleTypes: ['str'],
-      mode: 'after',
-      code: '    if not re.match(r\'^[a-zA-Z0-9_-]+$\', v):\n        raise ValueError(\'Contains invalid characters\')\n    return v'
-    },
-    {
-      id: 'allowed-values',
-      name: 'Allowed Values',
-      icon: 'fa-list-check',
-      description: 'Ensure value is one of the allowed options',
-      compatibleTypes: ['str', 'int'],
-      mode: 'after',
-      code: '    allowed = [\'active\', \'inactive\', \'pending\']\n    if v not in allowed:\n        raise ValueError(f\'Must be one of: {", ".join(allowed)}\')\n    return v'
-    },
-    {
-      id: 'not-empty',
-      name: 'Not Empty',
-      icon: 'fa-ban',
-      description: 'Reject null, empty, or whitespace-only values',
-      compatibleTypes: ['Any'],
-      mode: 'before',
-      code: '    if v is None:\n        raise ValueError(\'Value is required\')\n    if isinstance(v, str) and not v.strip():\n        raise ValueError(\'Value cannot be blank\')\n    return v'
-    },
-    {
-      id: 'url-format',
-      name: 'URL Format',
-      icon: 'fa-link',
-      description: 'Validate URL format with protocol requirement',
-      compatibleTypes: ['str'],
-      mode: 'before',
-      code: '    if not re.match(r\'^https?://[^\\s/$.?#].[^\\s]*$\', v):\n        raise ValueError(\'Invalid URL format\')\n    v = v.strip()\n    return v'
-    },
-    {
-      id: 'datetime-range',
-      name: 'Datetime Range',
-      icon: 'fa-calendar-check',
-      description: 'Validate datetime falls within an acceptable range',
-      compatibleTypes: ['datetime'],
-      mode: 'after',
-      code: '    from datetime import datetime, timezone\n    now = datetime.now(timezone.utc)\n    if v > now:\n        raise ValueError(\'Datetime cannot be in the future\')\n    return v'
-    },
-    {
-      id: 'uuid-format',
-      name: 'UUID Format',
-      icon: 'fa-fingerprint',
-      description: 'Validate UUID version and format',
-      compatibleTypes: ['uuid'],
-      mode: 'after',
-      code: '    if v.version != 4:\n        raise ValueError(\'Must be a UUID v4\')\n    return v'
-    }
-  ];
+    type FieldValidatorTemplate,
+    blankFieldValidatorTemplate,
+    fieldValidatorTemplates,
+  } from '$lib/utils/validatorTemplates';
 
   // ============================================================================
   // STATE
@@ -152,21 +26,6 @@
   let validatorMode = $state<'before' | 'after'>('after');
   let validatorCode = $state('');
 
-  // Type dropdown state
-  let typeDropdownOpen = $state(false);
-  let typeSearchQuery = $state('');
-  let typeHighlightIndex = $state(0);
-  let typeBlurTimeoutId: ReturnType<typeof setTimeout> | null = null;
-
-  // CodeMirror DOM mount points
-  let wrapperEditorEl = $state<HTMLDivElement | null>(null);
-  let bodyEditorEl = $state<HTMLDivElement | null>(null);
-
-  // CodeMirror instances (managed imperatively, not reactive)
-  let wrapperView: EditorView | null = null;
-  let bodyView: EditorView | null = null;
-  let bodyLineNumCompartment: Compartment | null = null;
-
   // ============================================================================
   // DERIVED STATE
   // ============================================================================
@@ -177,12 +36,6 @@
       .filter(t => t.parentTypeId === null)
       .map(t => t.name);
     return [...rootTypes, 'Any'];
-  });
-
-  let filteredTypeOptions = $derived.by(() => {
-    const q = typeSearchQuery.toLowerCase().trim();
-    if (!q) return typeOptions;
-    return typeOptions.filter(t => t.toLowerCase().includes(q));
   });
 
   let functionName = $derived.by(() => {
@@ -199,13 +52,11 @@
     /\bre\.(match|search|sub|findall|finditer|fullmatch|split|compile)\b/.test(validatorCode)
   );
 
-  // Map domain type names to Python type annotation names
   const TYPE_TO_PYTHON: Record<string, string> = {
     str: 'str', int: 'int', float: 'float', bool: 'bool',
     datetime: 'datetime', uuid: 'UUID', Any: 'Any',
   };
 
-  // Build the type annotation for v (e.g. "str", "str | int", "Any")
   let typeAnnotation = $derived.by(() => {
     if (validatorCompatibleTypes.length === 0) return '';
     const pyTypes = validatorCompatibleTypes
@@ -229,56 +80,14 @@
     return lines.join('\n');
   });
 
-  let wrapperLineCount = $derived(wrapperCode.split('\n').length);
   let fullCode = $derived(wrapperCode + '\n' + validatorCode);
-
   let canSave = $derived(validatorName.trim() !== '' && validatorCode.trim() !== '');
-
-  // ============================================================================
-  // CODEMIRROR LIFECYCLE
-  // ============================================================================
-
-  // Create split editor when entering editor view
-  $effect(() => {
-    if (currentView !== 'editor' || !wrapperEditorEl || !bodyEditorEl) return;
-
-    const result = createSplitEditor(
-      {
-        wrapperDoc: untrack(() => wrapperCode),
-        bodyDoc: untrack(() => validatorCode),
-        onBodyChange: (content) => { validatorCode = content; },
-      },
-      wrapperEditorEl,
-      bodyEditorEl,
-    );
-    wrapperView = result.wrapperView;
-    bodyView = result.bodyView;
-    bodyLineNumCompartment = result.bodyLineNumCompartment;
-
-    return () => {
-      result.destroy();
-      wrapperView = null;
-      bodyView = null;
-    };
-  });
-
-  // Update wrapper content when name/mode/imports change
-  $effect(() => {
-    if (wrapperView) updateWrapperContent(wrapperView, wrapperCode);
-  });
-
-  // Update body line number offset when wrapper line count changes
-  $effect(() => {
-    if (bodyView && bodyLineNumCompartment) {
-      updateBodyLineNumbers(bodyView, bodyLineNumCompartment, wrapperLineCount);
-    }
-  });
 
   // ============================================================================
   // HELPERS
   // ============================================================================
 
-  function selectTemplate(template: TemplateDefinition) {
+  function selectTemplate(template: FieldValidatorTemplate) {
     validatorName = template.name;
     validatorDescription = template.description;
     validatorCompatibleTypes = [...template.compatibleTypes];
@@ -286,10 +95,6 @@
     validatorCode = template.code;
     copySuccess = false;
     currentView = 'editor';
-  }
-
-  function backToGallery() {
-    currentView = 'gallery';
   }
 
   function toggleType(type: string) {
@@ -308,62 +113,6 @@
 
   function isTypeDimmed(type: string): boolean {
     return validatorCompatibleTypes.includes('Any') && type !== 'Any';
-  }
-
-  function openTypeDropdown() {
-    if (typeBlurTimeoutId) {
-      clearTimeout(typeBlurTimeoutId);
-      typeBlurTimeoutId = null;
-    }
-    typeDropdownOpen = true;
-    typeHighlightIndex = 0;
-  }
-
-  function closeTypeDropdown() {
-    typeDropdownOpen = false;
-    typeSearchQuery = '';
-    typeHighlightIndex = 0;
-  }
-
-  function handleTypeBlur() {
-    typeBlurTimeoutId = setTimeout(() => {
-      closeTypeDropdown();
-      typeBlurTimeoutId = null;
-    }, 150);
-  }
-
-  function handleTypeKeydown(e: KeyboardEvent) {
-    if (!typeDropdownOpen) {
-      if (e.key === 'ArrowDown' || e.key === 'Enter') {
-        e.preventDefault();
-        openTypeDropdown();
-      }
-      return;
-    }
-    switch (e.key) {
-      case 'ArrowDown':
-        e.preventDefault();
-        typeHighlightIndex = Math.min(typeHighlightIndex + 1, filteredTypeOptions.length - 1);
-        break;
-      case 'ArrowUp':
-        e.preventDefault();
-        typeHighlightIndex = Math.max(typeHighlightIndex - 1, 0);
-        break;
-      case 'Enter':
-        e.preventDefault();
-        if (filteredTypeOptions[typeHighlightIndex]) {
-          toggleType(filteredTypeOptions[typeHighlightIndex]);
-        }
-        break;
-      case 'Escape':
-        e.preventDefault();
-        closeTypeDropdown();
-        break;
-    }
-  }
-
-  function removeType(type: string) {
-    validatorCompatibleTypes = validatorCompatibleTypes.filter(t => t !== type);
   }
 
   async function copyFullCode() {
@@ -421,7 +170,7 @@
       <div class="flex items-center space-x-4">
         <button
           type="button"
-          onclick={() => selectTemplate(blankTemplate)}
+          onclick={() => selectTemplate(blankFieldValidatorTemplate)}
           class="px-4 py-2 bg-mono-900 text-white rounded-md flex items-center space-x-2 hover:bg-mono-800 cursor-pointer transition-colors"
         >
           <i class="fa-solid fa-plus"></i>
@@ -451,7 +200,7 @@
           </tr>
         </thead>
         <tbody class="divide-y divide-mono-200">
-          {#each templates as template (template.id)}
+          {#each fieldValidatorTemplates as template (template.id)}
             <tr
               onclick={() => selectTemplate(template)}
               class="group cursor-pointer transition-colors hover:bg-mono-50"
@@ -492,15 +241,12 @@
 
 {:else}
   <div class="flex flex-col flex-1 overflow-hidden">
-    <!-- ================================================================ -->
-    <!-- HEADER                                                            -->
-    <!-- ================================================================ -->
+    <!-- HEADER -->
     <div class="bg-white border-b border-mono-200 py-4 px-6 flex-shrink-0">
       <div class="flex justify-between items-start">
-        <!-- Left side: back button + title -->
         <div>
           <button
-            onclick={backToGallery}
+            onclick={() => { currentView = 'gallery'; }}
             class="text-sm text-mono-500 hover:text-mono-700 transition-colors flex items-center space-x-1 mb-2"
           >
             <i class="fa-solid fa-arrow-left text-xs"></i>
@@ -509,7 +255,6 @@
           <h1 class="text-xl font-semibold text-mono-900">Field Validator Editor</h1>
         </div>
 
-        <!-- Right side: action buttons -->
         <div class="flex items-center gap-2">
           <button
             type="button"
@@ -557,12 +302,9 @@
       </div>
     </div>
 
-    <!-- ================================================================ -->
-    <!-- METADATA BAR                                                     -->
-    <!-- ================================================================ -->
+    <!-- METADATA BAR -->
     <div class="bg-white border-b border-mono-200 px-6 py-4 flex-shrink-0">
       <div class="grid grid-cols-12 gap-4 items-start">
-        <!-- Name -->
         <div class="col-span-3">
           <label for="validator-name" class="block text-xs font-medium text-mono-500 mb-1">Name <span class="text-red-500">*</span></label>
           <input
@@ -576,69 +318,16 @@
           />
         </div>
 
-        <!-- Compatible Types -->
-        <div class="col-span-4 relative">
-          <label for="type-search" class="block text-xs font-medium text-mono-500 mb-1">Compatible Types</label>
-          <!-- Trigger area: chips + search input -->
-          <div
-            class="flex flex-wrap items-center gap-1 min-h-[34px] px-2 py-1 border border-mono-200 rounded-md
-                   bg-white cursor-text
-                   {typeDropdownOpen ? 'ring-1 ring-mono-400 border-mono-400' : ''}"
-            onclick={() => { openTypeDropdown(); document.getElementById('type-search')?.focus(); }}
-            role="presentation"
-          >
-            {#each validatorCompatibleTypes as type}
-              <span class="inline-flex items-center gap-1 px-1.5 py-0.5 text-xs font-mono rounded bg-mono-800 text-white">
-                {type}
-                <button
-                  type="button"
-                  onclick={(e) => { e.stopPropagation(); removeType(type); }}
-                  class="hover:text-mono-300 transition-colors leading-none"
-                  aria-label="Remove {type}"
-                >
-                  <i class="fa-solid fa-xmark text-[9px]"></i>
-                </button>
-              </span>
-            {/each}
-            <input
-              id="type-search"
-              type="text"
-              bind:value={typeSearchQuery}
-              onfocus={openTypeDropdown}
-              onblur={handleTypeBlur}
-              onkeydown={handleTypeKeydown}
-              placeholder={validatorCompatibleTypes.length === 0 ? 'Select types...' : ''}
-              class="flex-1 min-w-[60px] text-xs font-mono bg-transparent border-none outline-none
-                     placeholder:text-mono-300 py-0.5"
-            />
-          </div>
-          <!-- Dropdown panel -->
-          {#if typeDropdownOpen}
-            <div class="absolute z-20 w-full mt-1 bg-white border border-mono-200 rounded-md shadow-lg max-h-48 overflow-auto">
-              {#if filteredTypeOptions.length === 0}
-                <div class="px-3 py-2 text-xs text-mono-400">No types match "{typeSearchQuery}"</div>
-              {:else}
-                {#each filteredTypeOptions as type, i (type)}
-                  <button
-                    type="button"
-                    onmousedown={(e) => { e.preventDefault(); toggleType(type); }}
-                    class="w-full px-3 py-1.5 text-left text-xs font-mono flex items-center justify-between
-                           transition-colors border-b border-mono-100 last:border-b-0
-                           {i === typeHighlightIndex ? 'bg-mono-50' : 'hover:bg-mono-50'}
-                           {isTypeDimmed(type) ? 'text-mono-300' : 'text-mono-700'}"
-                  >
-                    <span>{type}</span>
-                    {#if validatorCompatibleTypes.includes(type)}
-                      <i class="fa-solid fa-check text-[10px] text-mono-500"></i>
-                    {/if}
-                  </button>
-                {/each}
-              {/if}
-            </div>
-          {/if}
-        </div>
+        <ValidatorMultiSelect
+          label="Compatible Types"
+          bind:selectedItems={validatorCompatibleTypes}
+          options={typeOptions}
+          placeholder="Select types..."
+          inputId="type-search"
+          isDimmed={isTypeDimmed}
+          onToggle={toggleType}
+        />
 
-        <!-- Mode -->
         <div class="col-span-2">
           <label for="validator-mode" class="block text-xs font-medium text-mono-500 mb-1">Mode</label>
           <select
@@ -653,7 +342,6 @@
           </select>
         </div>
 
-        <!-- Description -->
         <div class="col-span-3">
           <label for="validator-description" class="block text-xs font-medium text-mono-500 mb-1">Description</label>
           <input
@@ -669,47 +357,15 @@
       </div>
     </div>
 
-    <!-- ================================================================ -->
-    <!-- CODE EDITOR                                                      -->
-    <!-- ================================================================ -->
-    <div class="flex-1 bg-mono-900 flex flex-col overflow-hidden min-h-0">
-      <!-- Editor header bar -->
-      <div class="flex items-center justify-between px-4 py-2.5 bg-mono-800 border-b border-mono-700 flex-shrink-0">
-        <div class="flex items-center gap-3">
-          <div class="flex items-center gap-2">
-            <i class="fa-solid fa-code text-xs text-mono-400"></i>
-            <span class="text-xs text-mono-400 font-mono">{functionName}.py</span>
-          </div>
-          <!-- {field} placeholder info -->
-          <div class="relative group/info">
-            <div class="flex items-center gap-1 px-2 py-0.5 rounded bg-mono-700/50 cursor-help">
-              <i class="fa-solid fa-circle-info text-[10px] text-mono-500"></i>
-              <span class="text-[10px] text-mono-500 font-mono">{'{field}'}</span>
-            </div>
-            <div class="absolute bottom-full left-0 mb-2 px-3 py-2 bg-mono-800 border border-mono-600 rounded-md
-                        text-xs text-mono-300 whitespace-nowrap opacity-0 group-hover/info:opacity-100
-                        transition-opacity duration-200 pointer-events-none z-10 shadow-lg">
-              Field name is injected when this validator is attached to a field
-              <div class="absolute top-full left-4 w-2 h-2 bg-mono-800 border-r border-b border-mono-600 transform rotate-45 -mt-1"></div>
-            </div>
-          </div>
-        </div>
-        <div class="flex items-center gap-1.5 text-[10px] text-mono-500 font-mono">
-          {#if needsReImport}
-            <span class="px-1.5 py-0.5 rounded bg-mono-700/50 text-mono-400">
-              <i class="fa-solid fa-cube text-[9px] mr-1"></i>re
-            </span>
-          {/if}
-        </div>
-      </div>
-
-      <!-- CodeMirror editors -->
-      <div class="flex-1 flex flex-col overflow-hidden min-h-0">
-        <!-- Read-only wrapper (imports + decorator + signature) -->
-        <div bind:this={wrapperEditorEl} class="flex-shrink-0"></div>
-        <!-- Editable body (function body) -->
-        <div bind:this={bodyEditorEl} class="flex-1 min-h-0"></div>
-      </div>
-    </div>
+    <!-- CODE EDITOR -->
+    <ValidatorCodeEditor
+      {wrapperCode}
+      bind:validatorCode
+      {functionName}
+      {needsReImport}
+      infoLabel="{'{field}'}"
+      infoTooltip="Field name is injected when this validator is attached to a field"
+      isReady={currentView === 'editor'}
+    />
   </div>
 {/if}
