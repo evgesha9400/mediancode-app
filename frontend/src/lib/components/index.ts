@@ -31,6 +31,9 @@ export * from './clerk';
 // API Generator components
 export * from './api-generator';
 
+// Validator template components
+export * from './validator-templates';
+
 // Standalone components
 export { default as Sidebar } from './Sidebar.svelte';
 export { default as StatCard } from './StatCard.svelte';

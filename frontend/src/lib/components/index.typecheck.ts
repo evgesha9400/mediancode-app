@@ -44,6 +44,10 @@ import {
   // Standalone components
   Sidebar,
   StatCard,
+
+  // Validator template components
+  TemplateGallery,
+  TemplateForm,
 } from '$lib/components';
 
 // Type imports - these should all compile successfully
@@ -76,6 +80,10 @@ import type {
   // Standalone component types
   SidebarProps,
   StatCardProps,
+
+  // Validator template types
+  TemplateGalleryProps,
+  TemplateFormProps,
 } from '$lib/components';
 
 /**
@@ -100,6 +108,8 @@ const components = [
   PageHeader,
   Sidebar,
   StatCard,
+  TemplateGallery,
+  TemplateForm,
 ] as const;
 
 // Type assertions for prop interfaces - ensures types are valid
@@ -119,6 +129,8 @@ export type PropTypes = [
   PageHeaderProps,
   SidebarProps,
   StatCardProps,
+  TemplateGalleryProps,
+  TemplateFormProps,
 ];
 
 // PropTypes tuple above serves as a compile-time check that all prop types exist
