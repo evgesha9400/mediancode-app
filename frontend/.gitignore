@@ -85,3 +85,6 @@ claude_output_*.txt
 
 # Auto Claude data directory
 .auto-claude/
+
+# Git Worktrees
+.worktrees/
