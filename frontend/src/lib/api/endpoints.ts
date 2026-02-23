@@ -65,15 +65,13 @@ function transformEndpoint(response: EndpointResponse): ApiEndpoint {
 }
 
 /**
- * List all endpoints, optionally filtered by API
+ * List all endpoints, optionally filtered by namespace
  *
- * @param apiId - Optional API ID to filter by
+ * @param namespaceId - Optional namespace ID to filter by
  */
-export async function listEndpoints(apiId?: string): Promise<ApiEndpoint[]> {
-	const searchParams = new URLSearchParams();
-	if (apiId) searchParams.set('apiId', apiId);
-	const query = searchParams.toString();
-	const response = await apiGet<EndpointResponse[]>(`/endpoints${query ? `?${query}` : ''}`);
+export async function listEndpoints(namespaceId?: string): Promise<ApiEndpoint[]> {
+	const params = namespaceId ? `?namespace_id=${encodeURIComponent(namespaceId)}` : '';
+	const response = await apiGet<EndpointResponse[]>(`/endpoints${params}`);
 	return response.map(transformEndpoint);
 }
 

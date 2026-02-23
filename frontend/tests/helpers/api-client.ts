@@ -160,7 +160,7 @@ export class E2EApiClient {
 
 	// ---- Endpoints ----
 
-	async listEndpoints(apiId?: string) { return this.get<ApiEndpoint[]>(apiId ? `/endpoints?api_id=${apiId}` : '/endpoints'); }
+	async listEndpoints(namespaceId?: string) { return this.get<ApiEndpoint[]>(namespaceId ? `/endpoints?namespace_id=${namespaceId}` : '/endpoints'); }
 	async createEndpoint(ep: Omit<ApiEndpoint, 'id'>) { return this.post<ApiEndpoint>('/endpoints', ep); }
 	async getEndpoint(id: string) { return this.get<ApiEndpoint>(`/endpoints/${id}`); }
 	async updateEndpoint(id: string, ep: Partial<ApiEndpoint>) { return this.patch<ApiEndpoint>(`/endpoints/${id}`, ep); }

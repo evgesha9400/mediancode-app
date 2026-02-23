@@ -131,8 +131,8 @@ function checkTestMirrors() {
 /** Matches query param patterns like `?namespaceId=` or `&namespaceId=` (camelCase keys). */
 const CAMEL_CASE_QUERY_PARAM = /[?&][a-z]+[A-Z][a-zA-Z]*=/;
 
-/** Known exception: endpoints.ts sends apiId pending backend verification (see docs/endpoint-query-params.md). */
-const QUERY_PARAM_EXCEPTIONS = new Set(['endpoints.ts']);
+/** Known exceptions for camelCase query params (should be empty after full alignment). */
+const QUERY_PARAM_EXCEPTIONS = new Set<string>();
 
 function checkApiQueryParams() {
 	const apiDir = path.join(ROOT, 'src', 'lib', 'api');

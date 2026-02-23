@@ -48,12 +48,12 @@ describe('Endpoints API Service', () => {
       expect(result[0].expanded).toBe(false);
     });
 
-    it('should filter by API ID', async () => {
+    it('should filter by namespace ID', async () => {
       (apiGet as any).mockResolvedValue([]);
 
-      await listEndpoints('a-1');
+      await listEndpoints('ns-1');
 
-      expect(apiGet).toHaveBeenCalledWith('/endpoints?apiId=a-1');
+      expect(apiGet).toHaveBeenCalledWith('/endpoints?namespace_id=ns-1');
     });
   });
 
