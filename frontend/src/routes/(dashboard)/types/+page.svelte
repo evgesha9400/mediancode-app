@@ -7,10 +7,14 @@
     FilterPanel,
     Table,
     SortableColumn,
-    EmptyState
+    Drawer,
+    DrawerHeader,
+    DrawerContent,
+    DetailField,
+    TableEmptyState
   } from '$lib/components';
   import type { FilterConfig } from '$lib/types';
-  import { storeLoadingState, reloadStores, STORE_NAMES } from '$lib/stores/loader';
+  import { STORE_NAMES } from '$lib/stores/loader';
   import { page } from '$app/state';
   import { goto } from '$app/navigation';
   import { createListViewState } from '$lib/stores/listViewState.svelte';
@@ -32,19 +36,23 @@
 
   // Create list view state (owns all reactive state)
   const state = createListViewState<FieldType, TypeFilterState>({
-    itemsStore: () => $typesStore, // Use reactive store subscription
+    itemsStore: () => $typesStore,
     searchFn: searchTypes,
     filterSections: filterConfig,
     numericColumns: new Set(['usedInFields']),
     urlScope: { page, goto },
-    getItemId: (type) => type.name
+    getItemId: (type) => type.name,
+    drawerConfig: {
+      trackEdits: false,
+      allowDelete: false,
+      closeDelay: 300
+    }
   });
 
   // Convenience aliases for template bindings
   let filteredTypes = $derived(state.results);
   let sorts = $derived(state.sorts);
   let activeFiltersCount = $derived(state.activeFiltersCount);
-  let hasLoadError = $derived($storeLoadingState.storeErrors.includes(STORE_NAMES.TYPES));
 </script>
 
 <PageHeader title="Types" />
@@ -100,7 +108,10 @@
 
     {#snippet body()}
       {#each filteredTypes as type}
-        <tr class="hover:bg-mono-50 transition-colors">
+        <tr
+          onclick={() => state.selectItem(type)}
+          class="cursor-pointer transition-colors {state.selectedItem?.name === type.name ? 'bg-mono-100' : 'hover:bg-mono-50'}"
+        >
           <td class="px-6 py-4 whitespace-nowrap">
             <div class="flex items-center">
               <span class="w-5 flex-shrink-0 flex items-center justify-center">
@@ -132,20 +143,25 @@
     {/snippet}
 
     {#snippet empty()}
-      {#if hasLoadError}
-        <EmptyState
-          icon="fa-circle-exclamation"
-          variant="error"
-          title="Failed to load types"
-          message="Something went wrong while fetching type data"
-          actionLabel="Retry"
-          onAction={reloadStores}
-        />
-      {:else}
-        <EmptyState
-          title="No types found"
-          message="Try adjusting your search query"
-        />
-      {/if}
+      <TableEmptyState entityName="types" storeKey={STORE_NAMES.TYPES} />
     {/snippet}
   </Table>
+
+<Drawer open={state.drawerOpen}>
+  <DrawerHeader title="Type Details" onClose={state.closeDrawer} />
+  <DrawerContent>
+    {#if state.selectedItem}
+      <div class="space-y-6">
+        <DetailField label="Name" value={state.selectedItem.name} />
+        <DetailField label="Python Type" value={state.selectedItem.pythonType} />
+        <DetailField label="Description" value={state.selectedItem.description} />
+        <DetailField label="Used in Fields">
+          <span class="px-2 py-1 text-xs rounded-full bg-mono-200 text-mono-700">
+            {state.selectedItem.usedInFields}
+          </span>
+          <span class="text-sm text-mono-600 ml-2">fields</span>
+        </DetailField>
+      </div>
+    {/if}
+  </DrawerContent>
+</Drawer>
