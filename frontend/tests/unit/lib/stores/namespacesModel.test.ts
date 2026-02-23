@@ -28,6 +28,7 @@ vi.mock('$app/state', () => ({
 }));
 
 vi.mock('$lib/domain/mutations', () => ({
+  createNamespaceAction: vi.fn(),
   updateNamespaceAction: vi.fn(),
   deleteNamespaceAction: vi.fn()
 }));
