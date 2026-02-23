@@ -15,8 +15,13 @@
     DrawerFooter,
     CrudDrawerFooter,
     FieldSelectorDropdown,
-    NamespaceSelector
+    NamespaceSelector,
+    TemplateGallery,
+    TemplateForm
   } from '$lib/components';
+  import type { InlineModelValidator, Field } from '$lib/types';
+  import type { ModelValidatorTemplate } from '$lib/utils/validatorTemplates';
+  import { getModelTemplates } from '$lib/utils/validatorTemplates';
   import { storeLoadingState, reloadStores, STORE_NAMES } from '$lib/stores/loader';
   import { page } from '$app/state';
   import { goto } from '$app/navigation';
@@ -85,6 +90,51 @@
     workflow.editedItem = {
       ...workflow.editedItem,
       fields: newFields
+    };
+  }
+
+  // --- Validator template UI state ---
+  let validatorGalleryOpen = $state(false);
+  let selectedModelTemplate = $state<ModelValidatorTemplate | null>(null);
+
+  let modelTemplates = $derived(getModelTemplates());
+
+  // Resolve object's fields to full Field objects for template role dropdowns
+  let objectFieldDefinitions = $derived.by((): Field[] => {
+    if (!workflow.editedItem) return [];
+    return workflow.editedItem.fields
+      .map(ref => getFieldById(ref.fieldId))
+      .filter((f): f is Field => f !== undefined);
+  });
+
+  function openValidatorGallery() {
+    selectedModelTemplate = null;
+    validatorGalleryOpen = true;
+  }
+
+  function handleSelectModelTemplate(template: ModelValidatorTemplate) {
+    selectedModelTemplate = template;
+  }
+
+  function handleAddValidator(validator: { functionName: string; mode: 'before' | 'after'; functionBody: string; description: string }) {
+    if (!workflow.editedItem) return;
+    const newValidator: InlineModelValidator = {
+      id: '',
+      ...validator
+    };
+    workflow.editedItem = {
+      ...workflow.editedItem,
+      validators: [...workflow.editedItem.validators, newValidator]
+    };
+    validatorGalleryOpen = false;
+    selectedModelTemplate = null;
+  }
+
+  function removeValidator(index: number) {
+    if (!workflow.editedItem) return;
+    workflow.editedItem = {
+      ...workflow.editedItem,
+      validators: workflow.editedItem.validators.filter((_, i) => i !== index)
     };
   }
 
@@ -330,6 +380,66 @@
                       </button>
                     </div>
                   {/if}
+                {/each}
+              </div>
+            {/if}
+          </div>
+        </div>
+
+        <!-- Validators -->
+        <div>
+          <h3 class="text-sm text-mono-700 mb-2 font-medium">Validators ({workflow.editedItem.validators.length})</h3>
+
+          <div class="space-y-2">
+            {#if !validatorGalleryOpen}
+              <button
+                type="button"
+                onclick={openValidatorGallery}
+                class="w-full px-3 py-2 border border-dashed border-mono-300 rounded-md text-sm text-mono-500 hover:border-mono-400 hover:text-mono-700 transition-colors cursor-pointer"
+              >
+                <i class="fa-solid fa-plus mr-1"></i> Add Validator
+              </button>
+            {:else if selectedModelTemplate}
+              <div class="p-3 bg-mono-50 rounded border border-mono-200">
+                <TemplateForm
+                  kind="model"
+                  modelTemplate={selectedModelTemplate}
+                  availableFields={objectFieldDefinitions}
+                  onAdd={handleAddValidator}
+                  onBack={() => selectedModelTemplate = null}
+                />
+              </div>
+            {:else}
+              <div class="p-3 bg-mono-50 rounded border border-mono-200">
+                <TemplateGallery
+                  kind="model"
+                  modelTemplates={modelTemplates}
+                  onSelectModel={handleSelectModelTemplate}
+                  onClose={() => validatorGalleryOpen = false}
+                />
+              </div>
+            {/if}
+
+            {#if workflow.editedItem.validators.length > 0}
+              <div class="p-2 bg-mono-50 rounded border border-mono-200 space-y-2">
+                {#each workflow.editedItem.validators as validator, index}
+                  <div class="flex items-center space-x-2 p-2 bg-white rounded border border-mono-200">
+                    <div class="flex items-center space-x-2 flex-1 min-w-0">
+                      <span class="font-mono text-sm text-mono-700 truncate">{validator.functionName}</span>
+                      <span class="px-2 py-0.5 text-xs rounded-full bg-mono-100 text-mono-600 shrink-0">{validator.mode}</span>
+                    </div>
+                    {#if validator.description}
+                      <span class="text-xs text-mono-500 truncate">{validator.description}</span>
+                    {/if}
+                    <button
+                      type="button"
+                      onclick={() => removeValidator(index)}
+                      class="text-red-700 hover:text-red-600 transition-colors shrink-0"
+                      title="Remove validator"
+                    >
+                      <i class="fa-solid fa-xmark"></i>
+                    </button>
+                  </div>
                 {/each}
               </div>
             {/if}

@@ -183,7 +183,10 @@ export function createObjectsModel(config: ObjectsModelConfig): ObjectsModelStat
         namespaceId: item.namespaceId,
         name: item.name,
         description: item.description,
-        fields: item.fields
+        fields: item.fields,
+        validators: item.validators.length > 0
+          ? item.validators.map(v => ({ functionName: v.functionName, mode: v.mode, functionBody: v.functionBody, description: v.description }))
+          : undefined
       }
     };
   }
@@ -196,7 +199,8 @@ export function createObjectsModel(config: ObjectsModelConfig): ObjectsModelStat
       data: {
         name: clean.name,
         description: clean.description,
-        fields: clean.fields
+        fields: clean.fields,
+        validators: clean.validators.map(v => ({ functionName: v.functionName, mode: v.mode, functionBody: v.functionBody, description: v.description }))
       }
     };
   }

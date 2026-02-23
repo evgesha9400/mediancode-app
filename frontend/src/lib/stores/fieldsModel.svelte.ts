@@ -194,7 +194,10 @@ export function createFieldsModel(config: FieldsModelConfig): FieldsModelState {
         typeId,
         description: item.description,
         defaultValue: item.defaultValue,
-        constraints: item.constraints.map(c => ({ constraintId: c.constraintId, value: c.value }))
+        constraints: item.constraints.map(c => ({ constraintId: c.constraintId, value: c.value })),
+        validators: item.validators.length > 0
+          ? item.validators.map(v => ({ functionName: v.functionName, mode: v.mode, functionBody: v.functionBody, description: v.description }))
+          : undefined
       }
     };
   }
@@ -209,7 +212,8 @@ export function createFieldsModel(config: FieldsModelConfig): FieldsModelState {
         typeId,
         description: item.description,
         defaultValue: item.defaultValue,
-        constraints: item.constraints.map(c => ({ constraintId: c.constraintId, value: c.value }))
+        constraints: item.constraints.map(c => ({ constraintId: c.constraintId, value: c.value })),
+        validators: item.validators.map(v => ({ functionName: v.functionName, mode: v.mode, functionBody: v.functionBody, description: v.description }))
       }
     };
   }
