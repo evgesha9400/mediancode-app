@@ -8,13 +8,15 @@
     FilterPanel,
     Table,
     SortableColumn,
-    EmptyState,
+    Pill,
+    DetailField,
+    TableEmptyState,
     Drawer,
     DrawerHeader,
     DrawerContent
   } from '$lib/components';
   import type { FilterConfig } from '$lib/types';
-  import { storeLoadingState, reloadStores, STORE_NAMES } from '$lib/stores/loader';
+  import { STORE_NAMES } from '$lib/stores/loader';
   import { page } from '$app/state';
   import { goto } from '$app/navigation';
   import { createListViewState } from '$lib/stores/listViewState.svelte';
@@ -90,7 +92,6 @@
   );
 
   let isSystemItem = $derived(selectedFieldConstraint ? isSystemEntity(selectedFieldConstraint) : false);
-  let hasLoadError = $derived($storeLoadingState.storeErrors.includes(STORE_NAMES.FIELD_CONSTRAINTS));
 </script>
 
 <PageHeader title="Field Constraints" />
@@ -173,18 +174,14 @@
         <td class="px-6 py-4">
           <div class="flex flex-wrap gap-1">
             {#each fc.parameterTypes as ptype}
-              <span class="px-2 py-0.5 text-xs rounded-full bg-mono-200 text-mono-700">
-                {ptype}
-              </span>
+              <Pill>{ptype}</Pill>
             {/each}
           </div>
         </td>
         <td class="px-6 py-4">
           <div class="flex flex-wrap gap-1">
             {#each fc.compatibleTypes as ctype}
-              <span class="px-2 py-0.5 text-xs rounded-full bg-mono-200 text-mono-700">
-                {ctype}
-              </span>
+              <Pill>{ctype}</Pill>
             {/each}
           </div>
         </td>
@@ -209,9 +206,7 @@
         </td>
         <td class="px-6 py-4 whitespace-nowrap">
           <div class="flex items-center space-x-2">
-            <span class="px-2 py-1 text-xs rounded-full bg-mono-200 text-mono-700">
-              {fc.usedInFields}
-            </span>
+            <Pill>{fc.usedInFields}</Pill>
             <span class="text-sm text-mono-600">fields</span>
           </div>
         </td>
@@ -220,21 +215,7 @@
   {/snippet}
 
   {#snippet empty()}
-    {#if hasLoadError}
-      <EmptyState
-        icon="fa-circle-exclamation"
-        variant="error"
-        title="Failed to load field constraints"
-        message="Something went wrong while fetching field constraint data"
-        actionLabel="Retry"
-        onAction={reloadStores}
-      />
-    {:else}
-      <EmptyState
-        title="No field constraints found"
-        message="Try adjusting your search query"
-      />
-    {/if}
+    <TableEmptyState entityName="field constraints" storeKey={STORE_NAMES.FIELD_CONSTRAINTS} />
   {/snippet}
 </Table>
 
@@ -251,41 +232,28 @@
           </div>
         {/if}
 
-        <div>
-          <h3 class="text-sm text-mono-500 mb-1 font-medium">Name</h3>
-          <p class="text-mono-900">{selectedFieldConstraint.name}</p>
-        </div>
+        <DetailField label="Name" value={selectedFieldConstraint.name} />
 
-        <div>
-          <h3 class="text-sm text-mono-500 mb-1 font-medium">Description</h3>
-          <p class="text-mono-900">{selectedFieldConstraint.description}</p>
-        </div>
+        <DetailField label="Description" value={selectedFieldConstraint.description} />
 
-        <div>
-          <h3 class="text-sm text-mono-500 mb-1 font-medium">Parameter Types</h3>
+        <DetailField label="Parameter Types">
           <div class="flex flex-wrap gap-1.5 mt-1">
             {#each selectedFieldConstraint.parameterTypes as ptype}
-              <span class="px-2 py-1 text-xs rounded-full bg-mono-200 text-mono-700">
-                {ptype}
-              </span>
+              <Pill>{ptype}</Pill>
             {/each}
           </div>
-        </div>
+        </DetailField>
 
-        <div>
-          <h3 class="text-sm text-mono-500 mb-1 font-medium">Compatible Types</h3>
+        <DetailField label="Compatible Types">
           <div class="flex flex-wrap gap-1.5 mt-1">
             {#each selectedFieldConstraint.compatibleTypes as ctype}
-              <span class="px-2 py-1 text-xs rounded-full bg-mono-200 text-mono-700">
-                {ctype}
-              </span>
+              <Pill>{ctype}</Pill>
             {/each}
           </div>
-        </div>
+        </DetailField>
 
         {#if selectedFieldConstraint.docsUrl}
-          <div>
-            <h3 class="text-sm text-mono-500 mb-1 font-medium">Documentation</h3>
+          <DetailField label="Documentation">
             <a
               href={selectedFieldConstraint.docsUrl}
               target="_blank"
@@ -294,13 +262,10 @@
             >
               View Docs <i class="fa-solid fa-arrow-up-right-from-square text-xs"></i>
             </a>
-          </div>
+          </DetailField>
         {/if}
 
-        <div>
-          <h3 class="text-sm text-mono-500 mb-2 font-medium">
-            Used In Fields ({fieldsUsingSelected.length})
-          </h3>
+        <DetailField label="Used In Fields ({fieldsUsingSelected.length})">
           {#if fieldsUsingSelected.length > 0}
             <div class="space-y-2">
               {#each fieldsUsingSelected as field}
@@ -325,7 +290,7 @@
           {:else}
             <p class="text-sm text-mono-500 italic">Not used in any fields yet</p>
           {/if}
-        </div>
+        </DetailField>
       </div>
     {/if}
   </DrawerContent>

@@ -7,6 +7,8 @@
     DrawerHeader,
     DrawerContent,
     DrawerFooter,
+    Pill,
+    FormField,
     EndpointItem,
     ParameterEditor,
     QueryParametersEditor,
@@ -91,9 +93,7 @@
 
         <div class="flex items-center space-x-3 mb-1">
           <h1 class="text-xl font-semibold text-mono-900">{apiState.api?.title || 'Untitled API'}</h1>
-          <span class="px-2 py-0.5 text-xs rounded-full bg-mono-200 text-mono-700">
-            {apiState.api?.version ?? ''}
-          </span>
+          <Pill>{apiState.api?.version ?? ''}</Pill>
         </div>
 
         {#if apiState.api?.description}
@@ -205,31 +205,18 @@
         </div>
 
         <!-- API Title -->
-        <div>
-          <label for="edit-title" class="block text-sm text-mono-700 mb-1 font-medium">
-            API Title <span class="text-red-500">*</span>
-          </label>
-          <input
-            id="edit-title"
-            type="text"
-            bind:value={apiState.editForm.title}
-            class="w-full px-3 py-2 border border-mono-300 rounded-md focus:ring-2 focus:ring-mono-400 focus:border-transparent"
-          />
-        </div>
+        <FormField
+          label="API Title"
+          bind:value={apiState.editForm.title}
+          required
+        />
 
         <!-- Version -->
-        <div>
-          <label for="edit-version" class="block text-sm text-mono-700 mb-1 font-medium">
-            Version
-          </label>
-          <input
-            id="edit-version"
-            type="text"
-            bind:value={apiState.editForm.version}
-            placeholder="1.0.0"
-            class="w-full px-3 py-2 border border-mono-300 rounded-md focus:ring-2 focus:ring-mono-400 focus:border-transparent"
-          />
-        </div>
+        <FormField
+          label="Version"
+          bind:value={apiState.editForm.version}
+          placeholder="1.0.0"
+        />
 
         <!-- Description -->
         <div>
@@ -246,32 +233,18 @@
         </div>
 
         <!-- Server URL -->
-        <div>
-          <label for="edit-server-url" class="block text-sm text-mono-700 mb-1 font-medium">
-            Server URL
-          </label>
-          <input
-            id="edit-server-url"
-            type="text"
-            bind:value={apiState.editForm.serverUrl}
-            placeholder="https://api.example.com"
-            class="w-full px-3 py-2 border border-mono-300 rounded-md focus:ring-2 focus:ring-mono-400 focus:border-transparent"
-          />
-        </div>
+        <FormField
+          label="Server URL"
+          bind:value={apiState.editForm.serverUrl}
+          placeholder="https://api.example.com"
+        />
 
         <!-- Base URL -->
-        <div>
-          <label for="edit-base-url" class="block text-sm text-mono-700 mb-1 font-medium">
-            Base URL
-          </label>
-          <input
-            id="edit-base-url"
-            type="text"
-            bind:value={apiState.editForm.baseUrl}
-            placeholder="/api/v1"
-            class="w-full px-3 py-2 border border-mono-300 rounded-md focus:ring-2 focus:ring-mono-400 focus:border-transparent"
-          />
-        </div>
+        <FormField
+          label="Base URL"
+          bind:value={apiState.editForm.baseUrl}
+          placeholder="/api/v1"
+        />
       </div>
     </DrawerContent>
 

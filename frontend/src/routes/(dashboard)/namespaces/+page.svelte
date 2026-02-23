@@ -16,6 +16,8 @@
     DrawerContent,
     DrawerFooter,
     CrudDrawerFooter,
+    Pill,
+    FormField,
     TableEmptyState
   } from '$lib/components';
   import type { FilterConfig, Namespace } from '$lib/types';
@@ -153,9 +155,7 @@
           </td>
           <td class="px-6 py-4 whitespace-nowrap">
             <div class="flex items-center space-x-2">
-              <span class="px-2 py-1 text-xs rounded-full bg-mono-200 text-mono-700">
-                {namespace.entityCount}
-              </span>
+              <Pill>{namespace.entityCount}</Pill>
               <span class="text-sm text-mono-600">total</span>
             </div>
           </td>
@@ -182,22 +182,14 @@
     {#if workflow.editedItem}
       <div class="space-y-4">
         <!-- Namespace Name -->
-        <div>
-          <label for="namespace-name" class="block text-sm text-mono-700 mb-1 font-medium">
-            Name {#if !isLocked}<span class="text-red-500">*</span>{/if}
-          </label>
-          <input
-            id="namespace-name"
-            type="text"
-            bind:value={workflow.editedItem.name}
-            disabled={isLocked}
-            placeholder={isCreating ? 'my-namespace' : ''}
-            class="w-full px-3 py-2 border border-mono-300 rounded-md focus:ring-2 focus:ring-mono-400 focus:border-transparent {workflow.visibleErrors.name ? 'border-red-500' : ''} {isLocked ? 'bg-mono-100 cursor-not-allowed' : ''}"
-          />
-          {#if workflow.visibleErrors.name}
-            <p class="text-xs text-red-500 mt-1">{workflow.visibleErrors.name}</p>
-          {/if}
-        </div>
+        <FormField
+          label="Name"
+          bind:value={workflow.editedItem.name}
+          disabled={isLocked}
+          required={!isLocked}
+          placeholder={isCreating ? 'my-namespace' : ''}
+          error={workflow.visibleErrors.name}
+        />
 
         <!-- Description -->
         <div>

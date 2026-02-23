@@ -11,6 +11,7 @@
     DrawerHeader,
     DrawerContent,
     DetailField,
+    Pill,
     TableEmptyState
   } from '$lib/components';
   import type { FilterConfig } from '$lib/types';
@@ -123,18 +124,14 @@
             </div>
           </td>
           <td class="px-6 py-4 whitespace-nowrap">
-            <span class="px-2 py-0.5 text-xs rounded-full bg-mono-200 text-mono-700">
-              {type.pythonType}
-            </span>
+            <Pill>{type.pythonType}</Pill>
           </td>
           <td class="px-6 py-4 text-sm text-mono-500">
             {type.description}
           </td>
           <td class="px-6 py-4 whitespace-nowrap">
             <div class="flex items-center space-x-2">
-              <span class="px-2 py-1 text-xs rounded-full bg-mono-200 text-mono-700">
-                {type.usedInFields}
-              </span>
+              <Pill>{type.usedInFields}</Pill>
               <span class="text-sm text-mono-600">fields</span>
             </div>
           </td>
@@ -156,9 +153,7 @@
         <DetailField label="Python Type" value={state.selectedItem.pythonType} />
         <DetailField label="Description" value={state.selectedItem.description} />
         <DetailField label="Used in Fields">
-          <span class="px-2 py-1 text-xs rounded-full bg-mono-200 text-mono-700">
-            {state.selectedItem.usedInFields}
-          </span>
+          <Pill>{state.selectedItem.usedInFields}</Pill>
           <span class="text-sm text-mono-600 ml-2">fields</span>
         </DetailField>
       </div>

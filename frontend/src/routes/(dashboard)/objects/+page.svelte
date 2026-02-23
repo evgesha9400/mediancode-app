@@ -8,7 +8,9 @@
     SearchBar,
     Table,
     SortableColumn,
-    EmptyState,
+    Pill,
+    FormField,
+    TableEmptyState,
     Drawer,
     DrawerHeader,
     DrawerContent,
@@ -22,7 +24,7 @@
   import type { InlineModelValidator, Field } from '$lib/types';
   import type { ModelValidatorTemplate } from '$lib/utils/validatorTemplates';
   import { getModelTemplates } from '$lib/utils/validatorTemplates';
-  import { storeLoadingState, reloadStores, STORE_NAMES } from '$lib/stores/loader';
+  import { STORE_NAMES } from '$lib/stores/loader';
   import { page } from '$app/state';
   import { goto } from '$app/navigation';
 
@@ -138,7 +140,7 @@
     };
   }
 
-  let hasLoadError = $derived($storeLoadingState.storeErrors.includes(STORE_NAMES.OBJECTS));
+
 </script>
 
 <PageHeader title="Objects">
@@ -213,17 +215,13 @@
           </td>
           <td class="px-6 py-4 whitespace-nowrap">
             <div class="flex items-center space-x-2">
-              <span class="px-2 py-1 text-xs rounded-full bg-mono-200 text-mono-700">
-                {object.fields.length}
-              </span>
+              <Pill>{object.fields.length}</Pill>
               <span class="text-sm text-mono-600">fields</span>
             </div>
           </td>
           <td class="px-6 py-4 whitespace-nowrap">
             <div class="flex items-center space-x-2">
-              <span class="px-2 py-1 text-xs rounded-full bg-mono-200 text-mono-700">
-                {object.usedInApis.length}
-              </span>
+              <Pill>{object.usedInApis.length}</Pill>
               <span class="text-sm text-mono-600">APIs</span>
             </div>
           </td>
@@ -235,21 +233,7 @@
     {/snippet}
 
     {#snippet empty()}
-      {#if hasLoadError}
-        <EmptyState
-          icon="fa-circle-exclamation"
-          variant="error"
-          title="Failed to load objects"
-          message="Something went wrong while fetching object data"
-          actionLabel="Retry"
-          onAction={reloadStores}
-        />
-      {:else}
-        <EmptyState
-          title="No objects found"
-          message="Try adjusting your search query"
-        />
-      {/if}
+      <TableEmptyState entityName="objects" storeKey={STORE_NAMES.OBJECTS} />
     {/snippet}
   </Table>
 
@@ -277,20 +261,12 @@
         </div>
 
         <!-- Object Name -->
-        <div>
-          <label for="object-name" class="block text-sm text-mono-700 mb-1 font-medium">
-            Object Name <span class="text-red-500">*</span>
-          </label>
-          <input
-            id="object-name"
-            type="text"
-            bind:value={workflow.editedItem.name}
-            class="w-full px-3 py-2 border border-mono-300 rounded-md focus:ring-2 focus:ring-mono-400 focus:border-transparent {workflow.visibleErrors.name ? 'border-red-500' : ''}"
-          />
-          {#if workflow.visibleErrors.name}
-            <p class="text-xs text-red-500 mt-1">{workflow.visibleErrors.name}</p>
-          {/if}
-        </div>
+        <FormField
+          label="Object Name"
+          bind:value={workflow.editedItem.name}
+          required
+          error={workflow.visibleErrors.name}
+        />
 
         <!-- Description -->
         <div>

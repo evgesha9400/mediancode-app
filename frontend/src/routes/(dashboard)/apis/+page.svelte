@@ -18,6 +18,7 @@
     CrudDrawerFooter,
     TableEmptyState,
     FormField,
+    Pill,
     NamespaceSelector
   } from '$lib/components';
   import { STORE_NAMES } from '$lib/stores/loader';
@@ -134,18 +135,14 @@
             {/if}
           </td>
           <td class="px-6 py-4 whitespace-nowrap">
-            <span class="px-2 py-1 text-xs rounded-full bg-mono-200 text-mono-700">
-              {api.version}
-            </span>
+            <Pill>{api.version}</Pill>
           </td>
           <td class="px-6 py-4 whitespace-nowrap">
             <code class="text-sm text-mono-600 font-mono">{api.baseUrl}</code>
           </td>
           <td class="px-6 py-4 whitespace-nowrap">
             <div class="flex items-center space-x-2">
-              <span class="px-2 py-1 text-xs rounded-full bg-mono-200 text-mono-700">
-                {api.endpointCount}
-              </span>
+              <Pill>{api.endpointCount}</Pill>
               <span class="text-sm text-mono-600">endpoints</span>
             </div>
           </td>
