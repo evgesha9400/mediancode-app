@@ -130,10 +130,9 @@ This phase is pure deletion. After completion, the app should build with zero va
 - `src/routes/(dashboard)/validators/field-validators/` (3 files: list, new, [id])
 - `src/routes/(dashboard)/validators/model-validators/` (3 files: list, new, [id])
 
-**Delete prototype routes:**
+**Delete entire prototypes directory** (all prototypes are validator-related):
 
-- `src/routes/(dashboard)/prototypes/field-validators/` (2 files: repl, test-driven)
-- `src/routes/(dashboard)/prototypes/model-validators/` (2 files: gallery, dual-mode)
+- `src/routes/(dashboard)/prototypes/` (4 files across field-validators/ and model-validators/)
 
 **Keep:** `src/routes/(dashboard)/validators/field-constraints/` — unchanged.
 
@@ -190,7 +189,7 @@ export interface ModelValidator { ... }
 export interface InlineFieldValidator {
   id: string;
   functionName: string;
-  mode: 'before' | 'after' | 'wrap' | 'plain';
+  mode: 'before' | 'after';  // NOTE: Backend only supports before/after for field validators
   functionBody: string;
   description?: string;
 }
@@ -312,14 +311,7 @@ Remove all prototype nav items for field-validators and model-validators.
 - `tests/fixtures/validate.ts` — remove `validateFieldValidators()`, `validateModelValidators()` and their calls
 - `tests/fixtures/index.ts` — remove `export * from './validators'`
 
-### Task 1.14: Delete obsolete docs
-
-**Delete entirely:**
-
-- `docs/field-validators-implementation-plan.md`
-- `docs/field-validators-implementation-audit.md`
-
-### Task 1.15: Update documentation
+### Task 1.14: Update documentation
 
 **File:** `CLAUDE.md`
 
@@ -334,6 +326,18 @@ Remove all prototype nav items for field-validators and model-validators.
 **File:** `docs/endpoint-query-params.md`
 
 - Remove references to `fieldValidators.ts`, `modelValidators.ts`
+
+**File:** `tests/fixtures/SCHEMA.md`
+
+- Remove standalone `FieldValidator` and `ModelValidator` entity schema sections (lines ~131-189)
+- Remove validators from relationship diagrams (lines ~25-33)
+- Update to reflect that validators are now inline children of Fields and Objects
+
+### Task 1.15: Review Sidebar test
+
+**File:** `tests/unit/lib/components/Sidebar.test.ts`
+
+- Review after sidebar restructuring (Task 1.11). The test references `/validators/field-constraints` which is being kept, but verify no expectations break when the nav group structure changes.
 
 ### Task 1.16: Verify Phase 1
 
@@ -606,7 +610,7 @@ All four must pass before this work is considered complete.
 
 ## File Inventory Summary
 
-### Files to Delete (~30 files)
+### Files to Delete (~28 files)
 
 | Category | Files |
 |---|---|
@@ -616,9 +620,8 @@ All four must pass before this work is considered complete.
 | Components | 3 (validator-editor/) |
 | Utils | 2 (codemirror.ts, validatorTemplates.ts) |
 | Test files | 10 |
-| Docs | 2 |
 
-### Files to Modify (~15 files)
+### Files to Modify (~16 files)
 
 | File | Change |
 |---|---|
@@ -635,6 +638,7 @@ All four must pass before this work is considered complete.
 | `tests/unit/lib/stores/loader.test.ts` | Remove validator test blocks |
 | `tests/fixtures/validate.ts` | Remove validator functions |
 | `tests/fixtures/index.ts` | Remove validators export |
+| `tests/fixtures/SCHEMA.md` | Remove standalone validator schemas, update relationship diagrams |
 | `CLAUDE.md` | Remove validator routes from structure |
 | `README.md` | Remove validator routes from listings |
 | `package.json` | Remove 3 CodeMirror dependencies |
@@ -656,8 +660,10 @@ All four must pass before this work is considered complete.
 
 Phases should be executed in order. Within each phase, tasks can be parallelized where they don't depend on each other.
 
-1. **Phase 1** (Tasks 1.1–1.16): Delete everything, update types/API clients, verify build
-2. **Phase 2** (Tasks 2.1–2.4): Build template system and components
-3. **Phase 3** (Tasks 3.1–3.3): Wire templates into Field and Object pages
-4. **Phase 4** (Tasks 4.1–4.4): Build validator table pages
-5. **Phase 5** (Tasks 5.1–5.4): Tests and final validation
+**Commit strategy:** One commit per phase on the same branch.
+
+1. **Phase 1** (Tasks 1.1–1.16): Delete everything, update types/API clients, verify build → `refactor(validators): delete standalone validator infrastructure`
+2. **Phase 2** (Tasks 2.1–2.4): Build template system and components → `feat(validators): build parameterized template system`
+3. **Phase 3** (Tasks 3.1–3.3): Wire templates into Field and Object pages → `feat(validators): wire inline validators into entity pages`
+4. **Phase 4** (Tasks 4.1–4.4): Build validator table pages → `feat(validators): build validator table pages`
+5. **Phase 5** (Tasks 5.1–5.4): Tests and final validation → `feat(validators): add E2E tests and final validation`
