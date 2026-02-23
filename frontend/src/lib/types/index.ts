@@ -160,6 +160,7 @@ export interface ObjectDefinition {
   name: string;
   description?: string;
   fields: ObjectFieldReference[];
+  validators: InlineModelValidator[];
   usedInApis: string[];
 }
 
@@ -179,6 +180,7 @@ export interface Field {
   description?: string;
   defaultValue?: string;
   constraints: FieldConstraintValue[];
+  validators: InlineFieldValidator[];
   usedInApis: string[];
 }
 
@@ -193,30 +195,19 @@ export interface FieldConstraintBase {
   compatibleTypes: string[];
 }
 
-// Field validator types
-export interface FieldValidator {
+// Inline validator types (child rows of fields/objects, not standalone entities)
+export interface InlineFieldValidator {
   id: string;
-  namespaceId: string;
-  name: string;
-  description: string;
-  compatibleTypes: string[];
+  functionName: string;
   mode: 'before' | 'after';
-  code: string;
-  usedInFields: number;
-  createdAt: string;
-  updatedAt: string;
+  functionBody: string;
+  description?: string;
 }
 
-// Model validator types
-export interface ModelValidator {
+export interface InlineModelValidator {
   id: string;
-  namespaceId: string;
-  name: string;
-  description: string;
-  requiredFields: string[];
+  functionName: string;
   mode: 'before' | 'after';
-  code: string;
-  usedInObjects: number;
-  createdAt: string;
-  updatedAt: string;
+  functionBody: string;
+  description?: string;
 }

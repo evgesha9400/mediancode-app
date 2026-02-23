@@ -35,6 +35,7 @@ describe('FieldSelectorDropdown Component', () => {
 						type: 'str',
 						description: 'User name',
 						constraints: [],
+						validators: [],
 						usedInApis: []
 					}
 				],

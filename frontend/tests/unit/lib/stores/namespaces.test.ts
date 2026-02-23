@@ -151,6 +151,7 @@ describe('namespaces store - Entity Count', () => {
 				name: 'test_field',
 				type: 'str' as const,
 				constraints: [],
+				validators: [],
 				usedInApis: []
 			}
 		]);
@@ -172,6 +173,7 @@ describe('namespaces store - Entity Count', () => {
 				name: 'test_field',
 				type: 'str' as const,
 				constraints: [],
+				validators: [],
 				usedInApis: []
 			}
 		]);

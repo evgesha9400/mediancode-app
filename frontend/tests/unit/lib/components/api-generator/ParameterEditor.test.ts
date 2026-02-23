@@ -39,6 +39,7 @@ describe('ParameterEditor Component', () => {
 						type: 'int',
 						description: 'User identifier',
 						constraints: [],
+						validators: [],
 						usedInApis: []
 					},
 					{
@@ -47,6 +48,7 @@ describe('ParameterEditor Component', () => {
 						name: 'item_id',
 						type: 'str',
 						constraints: [],
+						validators: [],
 						usedInApis: []
 					}
 				],

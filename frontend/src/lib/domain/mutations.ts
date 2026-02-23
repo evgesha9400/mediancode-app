@@ -42,21 +42,6 @@ import {
 	type CreateNamespaceRequest,
 	type UpdateNamespaceRequest
 } from '$lib/api/namespaces';
-import {
-	createFieldValidatorApi,
-	updateFieldValidatorApi,
-	deleteFieldValidatorApi,
-	type CreateFieldValidatorRequest,
-	type UpdateFieldValidatorRequest
-} from '$lib/api/fieldValidators';
-import {
-	createModelValidatorApi,
-	updateModelValidatorApi,
-	deleteModelValidatorApi,
-	type CreateModelValidatorRequest,
-	type UpdateModelValidatorRequest
-} from '$lib/api/modelValidators';
-
 // --- Stores (used for optimistic updates and post-mutation commits) ---
 import { fieldsStore, type Field } from '$lib/stores/fields';
 import { objectsStore, type ObjectDefinition } from '$lib/stores/objects';
@@ -69,13 +54,10 @@ import {
 	getNamespaceEntityDetails,
 	GLOBAL_NAMESPACE_ID
 } from '$lib/stores/namespaces';
-import { fieldValidatorsStore } from '$lib/stores/fieldValidators';
-import { modelValidatorsStore } from '$lib/stores/modelValidators';
-
 // --- Deletion guards ---
 import { checkFieldDeletion, checkObjectDeletion } from '$lib/utils/references';
 
-import type { Api, ApiEndpoint, Namespace, FieldValidator, ModelValidator } from '$lib/types';
+import type { Api, ApiEndpoint, Namespace } from '$lib/types';
 
 // ============================================================================
 // Types
@@ -163,7 +145,7 @@ export async function updateObjectAction(
 	const previousObjects = get(objectsStore);
 
 	objectsStore.update(objects =>
-		objects.map(o => (o.id === id ? { ...o, ...updates } : o))
+		objects.map(o => (o.id === id ? { ...o, ...updates } as ObjectDefinition : o))
 	);
 
 	try {
@@ -347,8 +329,6 @@ export async function deleteNamespaceAction(id: string): Promise<ActionResult<vo
 		const parts: string[] = [];
 		if (details.fields > 0) parts.push(`${details.fields} field${details.fields > 1 ? 's' : ''}`);
 		if (details.fieldConstraints > 0) parts.push(`${details.fieldConstraints} field constraint${details.fieldConstraints > 1 ? 's' : ''}`);
-		if (details.fieldValidators > 0) parts.push(`${details.fieldValidators} field validator${details.fieldValidators > 1 ? 's' : ''}`);
-		if (details.modelValidators > 0) parts.push(`${details.modelValidators} model validator${details.modelValidators > 1 ? 's' : ''}`);
 		if (details.objects > 0) parts.push(`${details.objects} object${details.objects > 1 ? 's' : ''}`);
 		if (details.endpoints > 0) parts.push(`${details.endpoints} endpoint${details.endpoints > 1 ? 's' : ''}`);
 		if (details.apis > 0) parts.push(`${details.apis} API${details.apis > 1 ? 's' : ''}`);
@@ -370,116 +350,6 @@ export async function deleteNamespaceAction(id: string): Promise<ActionResult<vo
 		return { success: true };
 	} catch (err) {
 		return { success: false, error: mapApiError(err, 'delete namespace') };
-	}
-}
-
-// ============================================================================
-// Field Validator Actions
-// ============================================================================
-
-export async function createFieldValidatorAction(
-	data: CreateFieldValidatorRequest
-): Promise<ActionResult<FieldValidator>> {
-	try {
-		const fieldValidator = await createFieldValidatorApi(data);
-		fieldValidatorsStore.update(fvs => [...fvs, fieldValidator]);
-		return { success: true, data: fieldValidator };
-	} catch (err) {
-		return { success: false, error: mapApiError(err, 'create field validator') };
-	}
-}
-
-export async function updateFieldValidatorAction(
-	id: string,
-	updates: UpdateFieldValidatorRequest
-): Promise<ActionResult<FieldValidator>> {
-	const previousFieldValidators = get(fieldValidatorsStore);
-
-	fieldValidatorsStore.update(fvs =>
-		fvs.map(fv => (fv.id === id ? { ...fv, ...updates } as FieldValidator : fv))
-	);
-
-	try {
-		const fieldValidator = await updateFieldValidatorApi(id, updates);
-		fieldValidatorsStore.update(fvs => fvs.map(fv => (fv.id === id ? fieldValidator : fv)));
-		return { success: true, data: fieldValidator };
-	} catch (err) {
-		fieldValidatorsStore.set(previousFieldValidators);
-		return { success: false, error: mapApiError(err, 'update field validator') };
-	}
-}
-
-export async function deleteFieldValidatorAction(id: string): Promise<ActionResult<void>> {
-	// Pre-flight deletion guard
-	const fv = get(fieldValidatorsStore).find(f => f.id === id);
-	if (fv && fv.usedInFields > 0) {
-		return {
-			success: false,
-			error: `Cannot delete field validator "${fv.name}" because it is used in ${fv.usedInFields} field${fv.usedInFields > 1 ? 's' : ''}. Remove all usages before deleting.`
-		};
-	}
-
-	try {
-		await deleteFieldValidatorApi(id);
-		fieldValidatorsStore.update(fvs => fvs.filter(f => f.id !== id));
-		return { success: true };
-	} catch (err) {
-		return { success: false, error: mapApiError(err, 'delete field validator') };
-	}
-}
-
-// ============================================================================
-// Model Validator Actions
-// ============================================================================
-
-export async function createModelValidatorAction(
-	data: CreateModelValidatorRequest
-): Promise<ActionResult<ModelValidator>> {
-	try {
-		const modelValidator = await createModelValidatorApi(data);
-		modelValidatorsStore.update(mvs => [...mvs, modelValidator]);
-		return { success: true, data: modelValidator };
-	} catch (err) {
-		return { success: false, error: mapApiError(err, 'create model validator') };
-	}
-}
-
-export async function updateModelValidatorAction(
-	id: string,
-	updates: UpdateModelValidatorRequest
-): Promise<ActionResult<ModelValidator>> {
-	const previousModelValidators = get(modelValidatorsStore);
-
-	modelValidatorsStore.update(mvs =>
-		mvs.map(mv => (mv.id === id ? { ...mv, ...updates } as ModelValidator : mv))
-	);
-
-	try {
-		const modelValidator = await updateModelValidatorApi(id, updates);
-		modelValidatorsStore.update(mvs => mvs.map(mv => (mv.id === id ? modelValidator : mv)));
-		return { success: true, data: modelValidator };
-	} catch (err) {
-		modelValidatorsStore.set(previousModelValidators);
-		return { success: false, error: mapApiError(err, 'update model validator') };
-	}
-}
-
-export async function deleteModelValidatorAction(id: string): Promise<ActionResult<void>> {
-	// Pre-flight deletion guard
-	const mv = get(modelValidatorsStore).find(m => m.id === id);
-	if (mv && mv.usedInObjects > 0) {
-		return {
-			success: false,
-			error: `Cannot delete model validator "${mv.name}" because it is used in ${mv.usedInObjects} object${mv.usedInObjects > 1 ? 's' : ''}. Remove all usages before deleting.`
-		};
-	}
-
-	try {
-		await deleteModelValidatorApi(id);
-		modelValidatorsStore.update(mvs => mvs.filter(m => m.id !== id));
-		return { success: true };
-	} catch (err) {
-		return { success: false, error: mapApiError(err, 'delete model validator') };
 	}
 }
 
@@ -507,11 +377,3 @@ export type {
 	CreateNamespaceRequest,
 	UpdateNamespaceRequest
 } from '$lib/api/namespaces';
-export type {
-	CreateFieldValidatorRequest,
-	UpdateFieldValidatorRequest
-} from '$lib/api/fieldValidators';
-export type {
-	CreateModelValidatorRequest,
-	UpdateModelValidatorRequest
-} from '$lib/api/modelValidators';

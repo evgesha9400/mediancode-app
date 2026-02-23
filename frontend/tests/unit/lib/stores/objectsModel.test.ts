@@ -64,6 +64,7 @@ function makeObject(overrides: Partial<ObjectDefinition> & { id: string; name: s
     namespaceId: 'ns-1',
     description: '',
     fields: [],
+    validators: [],
     usedInApis: [],
     ...overrides
   };

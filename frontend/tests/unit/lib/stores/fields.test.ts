@@ -18,6 +18,7 @@ function makeField(overrides: Partial<Field> & { id: string; name: string; type:
 		description: '',
 		defaultValue: '',
 		constraints: [],
+		validators: [],
 		usedInApis: [],
 		...overrides
 	};

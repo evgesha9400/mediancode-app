@@ -41,10 +41,6 @@ import {
   // Layout components
   PageHeader,
 
-  // Validator editor components
-  ValidatorMultiSelect,
-  ValidatorCodeEditor,
-
   // Standalone components
   Sidebar,
   StatCard,
@@ -77,10 +73,6 @@ import type {
   // Layout types
   PageHeaderProps,
 
-  // Validator editor types
-  ValidatorMultiSelectProps,
-  ValidatorCodeEditorProps,
-
   // Standalone component types
   SidebarProps,
   StatCardProps,
@@ -106,8 +98,6 @@ const components = [
   ToastContainer,
   Tooltip,
   PageHeader,
-  ValidatorMultiSelect,
-  ValidatorCodeEditor,
   Sidebar,
   StatCard,
 ] as const;
@@ -127,8 +117,6 @@ export type PropTypes = [
   ToastContainerProps,
   TooltipProps,
   PageHeaderProps,
-  ValidatorMultiSelectProps,
-  ValidatorCodeEditorProps,
   SidebarProps,
   StatCardProps,
 ];

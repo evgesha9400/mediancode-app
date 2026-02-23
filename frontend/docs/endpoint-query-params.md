@@ -30,8 +30,8 @@ Both of these filter by parent API rather than by namespace.
 
 - `src/lib/api/endpoints.ts` keeps its current `apiId` query key unchanged
 - `tests/helpers/api-client.ts` keeps its current `api_id` query key unchanged
-- All other API services (`apis.ts`, `fields.ts`, `objects.ts`, `fieldConstraints.ts`,
-  `fieldValidators.ts`, `modelValidators.ts`) have been aligned to use `namespace_id`
+- All other API services (`apis.ts`, `fields.ts`, `objects.ts`, `fieldConstraints.ts`)
+  have been aligned to use `namespace_id`
 
 ## How to verify
 

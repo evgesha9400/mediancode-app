@@ -40,6 +40,7 @@ const MOCK_FIELD_RESPONSE = {
   constraints: [
     { name: 'max_length', constraintId: 'c-1', value: '255' }
   ],
+  validators: [],
   usedInApis: ['api-1']
 };
 

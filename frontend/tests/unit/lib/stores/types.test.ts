@@ -67,9 +67,9 @@ describe('typesStore (derived)', () => {
   it('computes usedInFields from fieldsStore', () => {
     typesBaseStore.set([...PRIMITIVE_TYPES]);
     fieldsStore.set([
-      { id: 'f-1', name: 'username', namespaceId: 'ns-1', type: 'str', description: '', defaultValue: '', constraints: [], usedInApis: [] },
-      { id: 'f-2', name: 'email', namespaceId: 'ns-1', type: 'str', description: '', defaultValue: '', constraints: [], usedInApis: [] },
-      { id: 'f-3', name: 'age', namespaceId: 'ns-1', type: 'int', description: '', defaultValue: '', constraints: [], usedInApis: [] }
+      { id: 'f-1', name: 'username', namespaceId: 'ns-1', type: 'str', description: '', defaultValue: '', constraints: [], validators: [], usedInApis: [] },
+      { id: 'f-2', name: 'email', namespaceId: 'ns-1', type: 'str', description: '', defaultValue: '', constraints: [], validators: [], usedInApis: [] },
+      { id: 'f-3', name: 'age', namespaceId: 'ns-1', type: 'int', description: '', defaultValue: '', constraints: [], validators: [], usedInApis: [] }
     ] as any);
 
     const types = get(typesStore);

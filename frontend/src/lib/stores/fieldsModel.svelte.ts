@@ -176,6 +176,7 @@ export function createFieldsModel(config: FieldsModelConfig): FieldsModelState {
       name: '',
       type: getDefaultType(),
       constraints: [],
+      validators: [],
       usedInApis: [],
       description: '',
       defaultValue: ''

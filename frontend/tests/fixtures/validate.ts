@@ -11,9 +11,7 @@ import {
 	mockFieldConstraints,
 	mockTypes,
 	mockPermissions,
-	mockRoles,
-	mockFieldValidators,
-	mockModelValidators
+	mockRoles
 } from './index';
 
 interface ValidationError {
@@ -104,36 +102,6 @@ function validateUniquenessByName<T extends { name: string }>(
 	}
 }
 
-// Validate field validators
-function validateFieldValidators() {
-	mockFieldValidators.forEach((fv) => {
-		if (!fv.mode || !['before', 'after'].includes(fv.mode)) {
-			addError('FieldValidator', fv.id, 'mode', 'Invalid mode: ' + fv.mode);
-		}
-		if (!fv.code || fv.code.trim().length === 0) {
-			addError('FieldValidator', fv.id, 'code', 'Code must not be empty');
-		}
-		if (!fv.compatibleTypes || fv.compatibleTypes.length === 0) {
-			addError('FieldValidator', fv.id, 'compatibleTypes', 'Must have at least one compatible type');
-		}
-	});
-}
-
-// Validate model validators
-function validateModelValidators() {
-	mockModelValidators.forEach((mv) => {
-		if (!mv.mode || !['before', 'after'].includes(mv.mode)) {
-			addError('ModelValidator', mv.id, 'mode', 'Invalid mode: ' + mv.mode);
-		}
-		if (!mv.code || mv.code.trim().length === 0) {
-			addError('ModelValidator', mv.id, 'code', 'Code must not be empty');
-		}
-		if (!mv.requiredFields || mv.requiredFields.length === 0) {
-			addError('ModelValidator', mv.id, 'requiredFields', 'Must have at least one required field');
-		}
-	});
-}
-
 // Run all validations
 function validate() {
 	console.log('Validating fixtures...');
@@ -143,22 +111,13 @@ function validate() {
 	validateUniqueness(mockFields, 'Field');
 	validateUniqueness(mockPermissions, 'Permission');
 	validateUniqueness(mockRoles, 'Role');
-	validateUniqueness(mockFieldValidators, 'FieldValidator');
-	validateUniqueness(mockModelValidators, 'ModelValidator');
-
 	// Entities identified by name
 	validateUniquenessByName(mockFieldConstraints, 'FieldConstraint');
 	validateUniquenessByName(mockTypes, 'Type');
 
-	// Name uniqueness for validators (also have IDs but names should be unique)
-	validateUniquenessByName(mockFieldValidators, 'FieldValidator');
-	validateUniquenessByName(mockModelValidators, 'ModelValidator');
-
 	// Relationship checks
 	validateFieldConstraints();
 	validateRolePermissions();
-	validateFieldValidators();
-	validateModelValidators();
 
 	if (errors.length === 0) {
 		console.log('All fixtures are valid!');

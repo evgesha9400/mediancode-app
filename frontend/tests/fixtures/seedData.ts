@@ -133,6 +133,7 @@ export const initialFields: Field[] = [
 		constraints: [
 			{ name: 'max_length', constraintId: BUILTIN_FIELD_CONSTRAINT_IDS.max_length, value: '255' }
 		],
+		validators: [],
 		usedInApis: [SEED_API_IDS.api_1, SEED_API_IDS.api_2]
 	},
 	{
@@ -146,6 +147,7 @@ export const initialFields: Field[] = [
 			{ name: 'min_length', constraintId: BUILTIN_FIELD_CONSTRAINT_IDS.min_length, value: '3' },
 			{ name: 'max_length', constraintId: BUILTIN_FIELD_CONSTRAINT_IDS.max_length, value: '50' }
 		],
+		validators: [],
 		usedInApis: [SEED_API_IDS.api_1]
 	},
 	{
@@ -159,6 +161,7 @@ export const initialFields: Field[] = [
 			{ name: 'min_length', constraintId: BUILTIN_FIELD_CONSTRAINT_IDS.min_length, value: '8' },
 			{ name: 'max_length', constraintId: BUILTIN_FIELD_CONSTRAINT_IDS.max_length, value: '128' }
 		],
+		validators: [],
 		usedInApis: []
 	},
 	{
@@ -169,6 +172,7 @@ export const initialFields: Field[] = [
 		description: 'Unique identifier for user',
 		defaultValue: 'uuid.uuid4()',
 		constraints: [],
+		validators: [],
 		usedInApis: [SEED_API_IDS.api_1]
 	},
 	{
@@ -179,6 +183,7 @@ export const initialFields: Field[] = [
 		description: 'Timestamp when the record was created',
 		defaultValue: 'datetime.now()',
 		constraints: [],
+		validators: [],
 		usedInApis: []
 	},
 	{
@@ -189,6 +194,7 @@ export const initialFields: Field[] = [
 		description: 'Timestamp when the record was last updated',
 		defaultValue: 'datetime.now()',
 		constraints: [],
+		validators: [],
 		usedInApis: [SEED_API_IDS.api_1, SEED_API_IDS.api_2]
 	},
 	{
@@ -199,6 +205,7 @@ export const initialFields: Field[] = [
 		description: 'Product or service price',
 		defaultValue: '0.0',
 		constraints: [],
+		validators: [],
 		usedInApis: []
 	},
 	{
@@ -209,6 +216,7 @@ export const initialFields: Field[] = [
 		description: 'Current status of the entity',
 		defaultValue: "'active'",
 		constraints: [],
+		validators: [],
 		usedInApis: [SEED_API_IDS.api_1, SEED_API_IDS.api_2, SEED_API_IDS.api_3]
 	},
 	{
@@ -222,6 +230,7 @@ export const initialFields: Field[] = [
 			{ name: 'min_length', constraintId: BUILTIN_FIELD_CONSTRAINT_IDS.min_length, value: '5' },
 			{ name: 'max_length', constraintId: BUILTIN_FIELD_CONSTRAINT_IDS.max_length, value: '255' }
 		],
+		validators: [],
 		usedInApis: []
 	},
 	{
@@ -232,6 +241,7 @@ export const initialFields: Field[] = [
 		description: 'Contact phone number',
 		defaultValue: '',
 		constraints: [],
+		validators: [],
 		usedInApis: []
 	},
 	// User namespace fields for testing isolation
@@ -246,6 +256,7 @@ export const initialFields: Field[] = [
 			{ name: 'min_length', constraintId: BUILTIN_FIELD_CONSTRAINT_IDS.min_length, value: '2' },
 			{ name: 'max_length', constraintId: BUILTIN_FIELD_CONSTRAINT_IDS.max_length, value: '100' }
 		],
+		validators: [],
 		usedInApis: []
 	},
 	{
@@ -258,6 +269,7 @@ export const initialFields: Field[] = [
 		constraints: [
 			{ name: 'ge', constraintId: BUILTIN_FIELD_CONSTRAINT_IDS.ge, value: '0' }
 		],
+		validators: [],
 		usedInApis: []
 	},
 	{
@@ -270,6 +282,7 @@ export const initialFields: Field[] = [
 		constraints: [
 			{ name: 'gt', constraintId: BUILTIN_FIELD_CONSTRAINT_IDS.gt, value: '0' }
 		],
+		validators: [],
 		usedInApis: []
 	}
 ];
@@ -371,6 +384,7 @@ export const initialObjects: ObjectDefinition[] = [
 			{ fieldId: SEED_FIELD_IDS.created_at, required: true },
 			{ fieldId: SEED_FIELD_IDS.updated_at, required: false }
 		],
+		validators: [],
 		usedInApis: [SEED_API_IDS.api_1]
 	},
 	{
@@ -384,6 +398,7 @@ export const initialObjects: ObjectDefinition[] = [
 			{ fieldId: SEED_FIELD_IDS.created_at, required: true },
 			{ fieldId: SEED_FIELD_IDS.updated_at, required: false }
 		],
+		validators: [],
 		usedInApis: []
 	},
 	{
@@ -398,6 +413,7 @@ export const initialObjects: ObjectDefinition[] = [
 			{ fieldId: SEED_FIELD_IDS.created_at, required: true },
 			{ fieldId: SEED_FIELD_IDS.updated_at, required: false }
 		],
+		validators: [],
 		usedInApis: [SEED_API_IDS.api_2]
 	},
 	{
@@ -410,6 +426,7 @@ export const initialObjects: ObjectDefinition[] = [
 			{ fieldId: SEED_FIELD_IDS.phone, required: false },
 			{ fieldId: SEED_FIELD_IDS.created_at, required: true },
 		],
+		validators: [],
 		usedInApis: []
 	},
 	{
@@ -422,6 +439,7 @@ export const initialObjects: ObjectDefinition[] = [
 			{ fieldId: SEED_FIELD_IDS.status, required: true },
 			{ fieldId: SEED_FIELD_IDS.created_at, required: true },
 		],
+		validators: [],
 		usedInApis: [SEED_API_IDS.api_3]
 	},
 	{
@@ -433,6 +451,7 @@ export const initialObjects: ObjectDefinition[] = [
 			{ fieldId: SEED_FIELD_IDS.website, required: false },
 			{ fieldId: SEED_FIELD_IDS.phone, required: false },
 		],
+		validators: [],
 		usedInApis: []
 	},
 	{
@@ -446,6 +465,7 @@ export const initialObjects: ObjectDefinition[] = [
 			{ fieldId: SEED_FIELD_IDS.email, required: true },
 			{ fieldId: SEED_FIELD_IDS.created_at, required: true },
 		],
+		validators: [],
 		usedInApis: []
 	},
 	{
@@ -459,6 +479,7 @@ export const initialObjects: ObjectDefinition[] = [
 			{ fieldId: SEED_FIELD_IDS.created_at, required: true },
 			{ fieldId: SEED_FIELD_IDS.updated_at, required: false }
 		],
+		validators: [],
 		usedInApis: []
 	},
 	// User namespace objects for testing isolation
@@ -472,6 +493,7 @@ export const initialObjects: ObjectDefinition[] = [
 			{ fieldId: SEED_FIELD_IDS.quantity, required: true },
 			{ fieldId: SEED_FIELD_IDS.product_price, required: true }
 		],
+		validators: [],
 		usedInApis: []
 	}
 ];
@@ -487,6 +509,7 @@ export function cloneFields(fields: Field[] = initialFields): Field[] {
 	return fields.map(field => ({
 		...field,
 		constraints: field.constraints.map(c => ({ ...c })),
+		validators: field.validators.map(v => ({ ...v })),
 		usedInApis: [...field.usedInApis]
 	}));
 }
@@ -505,6 +528,7 @@ export function cloneObjects(objects: ObjectDefinition[] = initialObjects): Obje
 	return objects.map(obj => ({
 		...obj,
 		fields: obj.fields.map(f => ({ ...f })),
+		validators: obj.validators.map(v => ({ ...v })),
 		usedInApis: [...obj.usedInApis]
 	}));
 }

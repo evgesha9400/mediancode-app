@@ -78,7 +78,7 @@ describe('reconcilePathParams', () => {
 
   it('matches field by name for new params', () => {
     fieldsStore.set([
-      { id: 'f-1', name: 'user_id', namespaceId: 'ns', type: 'uuid', description: '', defaultValue: '', constraints: [], usedInApis: [] }
+      { id: 'f-1', name: 'user_id', namespaceId: 'ns', type: 'uuid', description: '', defaultValue: '', constraints: [], validators: [], usedInApis: [] }
     ] as any);
 
     const result = reconcilePathParams('/users/{user_id}', []);

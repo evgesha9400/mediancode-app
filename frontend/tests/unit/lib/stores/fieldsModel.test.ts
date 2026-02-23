@@ -71,6 +71,7 @@ function makeField(overrides: Partial<Field> & { id: string; name: string }): Fi
     description: '',
     defaultValue: '',
     constraints: [],
+    validators: [],
     usedInApis: [],
     ...overrides
   };

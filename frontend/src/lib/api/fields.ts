@@ -5,7 +5,7 @@
  */
 
 import { apiGet, apiPost, apiPut, apiDelete } from './client';
-import type { Field, FieldConstraintValue } from '$lib/types';
+import type { Field, FieldConstraintValue, InlineFieldValidator } from '$lib/types';
 import { get } from 'svelte/store';
 import { typesBaseStore } from '$lib/stores/types';
 
@@ -31,6 +31,17 @@ function buildTypeIdToNameMap(): Record<string, string> {
 }
 
 /**
+ * Backend API response for field validator
+ */
+interface FieldValidatorResponse {
+	id: string;
+	functionName: string;
+	mode: 'before' | 'after';
+	functionBody: string;
+	description: string | null;
+}
+
+/**
  * Backend API response for Field entity
  */
 interface FieldResponse {
@@ -41,6 +52,7 @@ interface FieldResponse {
 	description: string | null;
 	defaultValue: string | null;
 	constraints: FieldConstraintValueResponse[];
+	validators: FieldValidatorResponse[];
 	usedInApis: string[];
 }
 
@@ -52,6 +64,19 @@ function transformFieldConstraintValue(response: FieldConstraintValueResponse): 
 		name: response.name,
 		constraintId: response.constraintId,
 		value: response.value
+	};
+}
+
+/**
+ * Transform backend field validator response to frontend type.
+ */
+function transformFieldValidator(response: FieldValidatorResponse): InlineFieldValidator {
+	return {
+		id: response.id,
+		functionName: response.functionName,
+		mode: response.mode,
+		functionBody: response.functionBody,
+		description: response.description ?? undefined
 	};
 }
 
@@ -73,6 +98,7 @@ function transformField(response: FieldResponse, typeMap: Record<string, string>
 		description: response.description ?? undefined,
 		defaultValue: response.defaultValue ?? undefined,
 		constraints: response.constraints.map(transformFieldConstraintValue),
+		validators: (response.validators ?? []).map(transformFieldValidator),
 		usedInApis: response.usedInApis
 	};
 }
@@ -112,6 +138,7 @@ export interface CreateFieldRequest {
 	description?: string;
 	defaultValue?: string;
 	constraints: { constraintId: string; value: string | null }[];
+	validators?: { functionName: string; mode: 'before' | 'after'; functionBody: string; description?: string }[];
 }
 
 /**
@@ -123,6 +150,7 @@ export interface UpdateFieldRequest {
 	description?: string;
 	defaultValue?: string;
 	constraints?: { constraintId: string; value: string | null }[];
+	validators?: { functionName: string; mode: 'before' | 'after'; functionBody: string; description?: string }[];
 }
 
 // ============================================================================

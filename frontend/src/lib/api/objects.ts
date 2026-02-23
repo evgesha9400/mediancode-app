@@ -5,7 +5,7 @@
  */
 
 import { apiGet, apiPost, apiPut, apiDelete } from './client';
-import type { ObjectDefinition, ObjectFieldReference } from '$lib/types';
+import type { ObjectDefinition, ObjectFieldReference, InlineModelValidator } from '$lib/types';
 
 /**
  * Backend object field reference response
@@ -13,6 +13,17 @@ import type { ObjectDefinition, ObjectFieldReference } from '$lib/types';
 interface ObjectFieldReferenceResponse {
 	fieldId: string;
 	required: boolean;
+}
+
+/**
+ * Backend API response for model validator
+ */
+interface ModelValidatorResponse {
+	id: string;
+	functionName: string;
+	mode: 'before' | 'after';
+	functionBody: string;
+	description: string | null;
 }
 
 /**
@@ -24,6 +35,7 @@ interface ObjectResponse {
 	name: string;
 	description: string | null;
 	fields: ObjectFieldReferenceResponse[];
+	validators: ModelValidatorResponse[];
 	usedInApis: string[];
 }
 
@@ -38,6 +50,19 @@ function transformFieldReference(response: ObjectFieldReferenceResponse): Object
 }
 
 /**
+ * Transform backend model validator response to frontend type.
+ */
+function transformModelValidator(response: ModelValidatorResponse): InlineModelValidator {
+	return {
+		id: response.id,
+		functionName: response.functionName,
+		mode: response.mode,
+		functionBody: response.functionBody,
+		description: response.description ?? undefined
+	};
+}
+
+/**
  * Transform backend response to frontend ObjectDefinition type
  */
 function transformObject(response: ObjectResponse): ObjectDefinition {
@@ -47,6 +72,7 @@ function transformObject(response: ObjectResponse): ObjectDefinition {
 		name: response.name,
 		description: response.description ?? undefined,
 		fields: response.fields.map(transformFieldReference),
+		validators: (response.validators ?? []).map(transformModelValidator),
 		usedInApis: response.usedInApis
 	};
 }
@@ -82,6 +108,7 @@ export interface CreateObjectRequest {
 	name: string;
 	description?: string;
 	fields: ObjectFieldReference[];
+	validators?: { functionName: string; mode: 'before' | 'after'; functionBody: string; description?: string }[];
 }
 
 /**
@@ -91,6 +118,7 @@ export interface UpdateObjectRequest {
 	name?: string;
 	description?: string;
 	fields?: ObjectFieldReference[];
+	validators?: { functionName: string; mode: 'before' | 'after'; functionBody: string; description?: string }[];
 }
 
 // ============================================================================

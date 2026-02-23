@@ -23,8 +23,6 @@ vi.mock('$lib/api/fields', () => ({ listFields: vi.fn() }));
 vi.mock('$lib/api/objects', () => ({ listObjects: vi.fn() }));
 vi.mock('$lib/api/endpoints', () => ({ listEndpoints: vi.fn() }));
 vi.mock('$lib/api/fieldConstraints', () => ({ listFieldConstraints: vi.fn() }));
-vi.mock('$lib/api/fieldValidators', () => ({ listFieldValidators: vi.fn() }));
-vi.mock('$lib/api/modelValidators', () => ({ listModelValidators: vi.fn() }));
 vi.mock('$lib/api/types', () => ({ listTypes: vi.fn() }));
 
 // Mock all store modules
@@ -59,16 +57,6 @@ vi.mock('$lib/stores/fieldConstraints', () => {
   return { fieldConstraintsStore: writable([]) };
 });
 
-vi.mock('$lib/stores/fieldValidators', () => {
-  const { writable } = require('svelte/store');
-  return { fieldValidatorsStore: writable([]) };
-});
-
-vi.mock('$lib/stores/modelValidators', () => {
-  const { writable } = require('svelte/store');
-  return { modelValidatorsStore: writable([]) };
-});
-
 vi.mock('$lib/stores/types', () => {
   const { writable } = require('svelte/store');
   return { typesBaseStore: writable([]) };
@@ -97,8 +85,6 @@ import { listFields } from '$lib/api/fields';
 import { listObjects } from '$lib/api/objects';
 import { listEndpoints } from '$lib/api/endpoints';
 import { listFieldConstraints } from '$lib/api/fieldConstraints';
-import { listFieldValidators } from '$lib/api/fieldValidators';
-import { listModelValidators } from '$lib/api/modelValidators';
 import { listTypes } from '$lib/api/types';
 
 import { namespacesStore, activeNamespaceId } from '$lib/stores/namespaces';
@@ -106,8 +92,6 @@ import { apisStore, endpointsStore } from '$lib/stores/apis';
 import { fieldsStore } from '$lib/stores/fields';
 import { objectsStore } from '$lib/stores/objects';
 import { fieldConstraintsStore } from '$lib/stores/fieldConstraints';
-import { fieldValidatorsStore } from '$lib/stores/fieldValidators';
-import { modelValidatorsStore } from '$lib/stores/modelValidators';
 import { typesBaseStore } from '$lib/stores/types';
 
 // ---------------------------------------------------------------------------
@@ -132,8 +116,6 @@ beforeEach(() => {
   (listObjects as ReturnType<typeof vi.fn>).mockResolvedValue([]);
   (listApis as ReturnType<typeof vi.fn>).mockResolvedValue([]);
   (listEndpoints as ReturnType<typeof vi.fn>).mockResolvedValue([]);
-  (listFieldValidators as ReturnType<typeof vi.fn>).mockResolvedValue([]);
-  (listModelValidators as ReturnType<typeof vi.fn>).mockResolvedValue([]);
 });
 
 // ---------------------------------------------------------------------------
@@ -167,8 +149,6 @@ describe('loader - Exports', () => {
     expect(STORE_NAMES.OBJECTS).toBe('Objects');
     expect(STORE_NAMES.APIS).toBe('APIs');
     expect(STORE_NAMES.ENDPOINTS).toBe('Endpoints');
-    expect(STORE_NAMES.FIELD_VALIDATORS).toBe('Field Validators');
-    expect(STORE_NAMES.MODEL_VALIDATORS).toBe('Model Validators');
   });
 });
 
@@ -213,8 +193,6 @@ describe('loader - loadStoresFromApi', () => {
     expect(listObjects).toHaveBeenCalledTimes(1);
     expect(listApis).toHaveBeenCalledTimes(1);
     expect(listEndpoints).toHaveBeenCalledTimes(1);
-    expect(listFieldValidators).toHaveBeenCalledTimes(1);
-    expect(listModelValidators).toHaveBeenCalledTimes(1);
   });
 
   it('should populate stores with API data', async () => {
@@ -326,8 +304,6 @@ describe('loader - resetStores', () => {
     objectsStore.set([{ id: 'o-1' }] as any);
     endpointsStore.set([{ id: 'ep-1' }] as any);
     fieldConstraintsStore.set([{ id: 'fc-1' }] as any);
-    fieldValidatorsStore.set([{ id: 'fv-1' }] as any);
-    modelValidatorsStore.set([{ id: 'mv-1' }] as any);
     typesBaseStore.set([{ id: 'type-1' }] as any);
 
     resetStores();
@@ -338,8 +314,6 @@ describe('loader - resetStores', () => {
     expect(get(objectsStore)).toEqual([]);
     expect(get(endpointsStore)).toEqual([]);
     expect(get(fieldConstraintsStore)).toEqual([]);
-    expect(get(fieldValidatorsStore)).toEqual([]);
-    expect(get(modelValidatorsStore)).toEqual([]);
     expect(get(typesBaseStore)).toEqual([]);
   });
 
@@ -368,9 +342,6 @@ describe('loader - reloadStores', () => {
     (listObjects as ReturnType<typeof vi.fn>).mockResolvedValue([]);
     (listApis as ReturnType<typeof vi.fn>).mockResolvedValue([]);
     (listEndpoints as ReturnType<typeof vi.fn>).mockResolvedValue([]);
-    (listFieldValidators as ReturnType<typeof vi.fn>).mockResolvedValue([]);
-    (listModelValidators as ReturnType<typeof vi.fn>).mockResolvedValue([]);
-
     await reloadStores();
 
     // Should have called API endpoints again
@@ -388,8 +359,8 @@ describe('loader - STORE_NAMES constants', () => {
     expect(errors.includes(STORE_NAMES.OBJECTS)).toBe(false);
   });
 
-  it('should cover all 9 store entities', () => {
+  it('should cover all 7 store entities', () => {
     const allNames = Object.values(STORE_NAMES);
-    expect(allNames).toHaveLength(9);
+    expect(allNames).toHaveLength(7);
   });
 });

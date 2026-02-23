@@ -25,6 +25,7 @@ const MOCK_OBJECT_RESPONSE = {
     { fieldId: 'f-1', required: true },
     { fieldId: 'f-2', required: false }
   ],
+  validators: [],
   usedInApis: ['api-1']
 };
 

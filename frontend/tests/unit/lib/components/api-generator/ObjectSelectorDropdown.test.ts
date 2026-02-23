@@ -32,6 +32,7 @@ describe('ObjectSelectorDropdown Component', () => {
 						name: 'UserResponse',
 						description: 'User response object',
 						fields: [{ fieldId: 'field-1', required: true }],
+						validators: [],
 						usedInApis: ['api-1']
 					}
 				],
