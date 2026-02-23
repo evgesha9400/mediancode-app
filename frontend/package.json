@@ -7,7 +7,7 @@
     "dev": "vite dev",
     "build": "vite build",
     "preview": "vite preview",
-    "prepare": "svelte-kit sync || echo ''",
+    "prepare": "git config core.hooksPath .githooks && (svelte-kit sync || echo '')",
     "check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
     "check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch",
     "kill-dev": "./scripts/kill-dev.sh",
@@ -26,6 +26,7 @@
     "lint:dead": "tsx scripts/lint-dead-code.ts",
     "lint:consistency": "tsx scripts/check-consistency.ts",
     "lint:api": "spectral lint api-spec.yaml --fail-severity=warn",
+    "lint:ci": "bun run check && bun run lint:dead && bun run lint:consistency && bun run test:fixtures:validate",
     "format": "prettier --write .",
     "format:check": "prettier --check ."
   },
