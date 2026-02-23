@@ -34,6 +34,12 @@ export * from './api-generator';
 // Validator template components
 export * from './validator-templates';
 
+// Pill component
+export * from './pill';
+
+// Form components
+export * from './form';
+
 // Standalone components
 export { default as Sidebar } from './Sidebar.svelte';
 export { default as StatCard } from './StatCard.svelte';
