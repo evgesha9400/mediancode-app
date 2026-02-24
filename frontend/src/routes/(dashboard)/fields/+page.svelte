@@ -319,7 +319,7 @@
     {/snippet}
   </Table>
 
-<Drawer open={workflow.drawerOpen} maxWidth={520}>
+<Drawer open={workflow.drawerOpen} maxWidth={720}>
   <DrawerHeader title={workflow.mode === 'creating' ? 'Create Field' : 'Edit Field'} onClose={workflow.closeDrawer} />
 
   <DrawerContent>
