@@ -318,36 +318,6 @@
     <DrawerContent>
       {#if apiState.editedEndpoint}
         <div class="space-y-6">
-          <!-- Method and Path -->
-          <div>
-            <h3 class="text-sm text-mono-700 mb-2 flex items-center font-medium">
-              <i class="fa-solid fa-route mr-2"></i>
-              Method & Path
-            </h3>
-            <div class="flex items-center space-x-2">
-              <select
-                bind:value={apiState.editedEndpoint.method}
-                class="px-3 py-1.5 border border-mono-300 rounded-md focus:ring-2 focus:ring-mono-400 focus:border-transparent text-sm"
-              >
-                <option value="GET">GET</option>
-                <option value="POST">POST</option>
-                <option value="PUT">PUT</option>
-                <option value="PATCH">PATCH</option>
-                <option value="DELETE">DELETE</option>
-              </select>
-              <div class="flex-1 flex items-center border border-mono-300 rounded-md focus-within:ring-2 focus-within:ring-mono-400 focus-within:border-transparent">
-                <span class="px-3 py-1.5 text-sm font-mono text-mono-500 bg-mono-50 border-r border-mono-300">/</span>
-                <input
-                  type="text"
-                  value={apiState.editedEndpoint.path.substring(1)}
-                  oninput={(e) => apiState.handlePathChange('/' + e.currentTarget.value)}
-                  placeholder="users/{`{user_id}`}"
-                  class="flex-1 px-3 py-1.5 text-sm font-mono border-0 focus:ring-0 focus:outline-none"
-                />
-              </div>
-            </div>
-          </div>
-
           <!-- Tag and Description (same line) -->
           <div class="flex space-x-4">
             <div class="w-56 relative">
@@ -421,6 +391,36 @@
                 placeholder="Add a description for this endpoint..."
                 class="w-full px-3 py-1.5 border border-mono-300 rounded-md focus:ring-2 focus:ring-mono-400 focus:border-transparent text-sm"
               />
+            </div>
+          </div>
+
+          <!-- Method and Path -->
+          <div>
+            <h3 class="text-sm text-mono-700 mb-2 flex items-center font-medium">
+              <i class="fa-solid fa-route mr-2"></i>
+              Method & Path
+            </h3>
+            <div class="flex items-center space-x-2">
+              <select
+                bind:value={apiState.editedEndpoint.method}
+                class="px-3 py-1.5 border border-mono-300 rounded-md focus:ring-2 focus:ring-mono-400 focus:border-transparent text-sm"
+              >
+                <option value="GET">GET</option>
+                <option value="POST">POST</option>
+                <option value="PUT">PUT</option>
+                <option value="PATCH">PATCH</option>
+                <option value="DELETE">DELETE</option>
+              </select>
+              <div class="flex-1 flex items-center border border-mono-300 rounded-md focus-within:ring-2 focus-within:ring-mono-400 focus-within:border-transparent">
+                <span class="px-3 py-1.5 text-sm font-mono text-mono-500 bg-mono-50 border-r border-mono-300">/</span>
+                <input
+                  type="text"
+                  value={apiState.editedEndpoint.path.substring(1)}
+                  oninput={(e) => apiState.handlePathChange('/' + e.currentTarget.value)}
+                  placeholder="users/{`{user_id}`}"
+                  class="flex-1 px-3 py-1.5 text-sm font-mono border-0 focus:ring-0 focus:outline-none"
+                />
+              </div>
             </div>
           </div>
 
