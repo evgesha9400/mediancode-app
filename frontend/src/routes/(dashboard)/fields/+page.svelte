@@ -25,9 +25,8 @@
     TemplateGallery,
     TemplateForm
   } from '$lib/components';
-  import type { FilterConfig, InlineFieldValidator } from '$lib/types';
-  import type { FieldValidatorTemplate } from '$lib/utils/validatorTemplates';
-  import { getFieldTemplatesForType } from '$lib/utils/validatorTemplates';
+  import type { FilterConfig, InlineFieldValidator, FieldValidatorTemplate } from '$lib/types';
+  import { fieldValidatorTemplatesStore, getFieldValidatorTemplateById } from '$lib/stores/fieldValidatorTemplates';
   import { STORE_NAMES } from '$lib/stores/loader';
   import { page } from '$app/state';
   import { goto } from '$app/navigation';
@@ -154,8 +153,11 @@
   let selectedFieldTemplate = $state<FieldValidatorTemplate | null>(null);
 
   // Templates compatible with the current field's type
+  let allFieldTemplates = $derived($fieldValidatorTemplatesStore);
   let compatibleTemplates = $derived(
-    workflow.editedItem ? getFieldTemplatesForType(workflow.editedItem.type) : []
+    workflow.editedItem
+      ? allFieldTemplates.filter(t => t.compatibleTypes.includes(workflow.editedItem!.type))
+      : []
   );
 
   function openValidatorGallery() {
@@ -167,11 +169,12 @@
     selectedFieldTemplate = template;
   }
 
-  function handleAddValidator(validator: { functionName: string; mode: 'before' | 'after'; functionBody: string; description: string }) {
+  function handleAddValidator(validator: { templateId: string; parameters?: Record<string, string> }) {
     if (!workflow.editedItem) return;
     const newValidator: InlineFieldValidator = {
       id: '',
-      ...validator
+      templateId: validator.templateId,
+      parameters: validator.parameters ?? null
     };
     workflow.editedItem = {
       ...workflow.editedItem,
@@ -413,7 +416,6 @@
                 <TemplateForm
                   kind="field"
                   fieldTemplate={selectedFieldTemplate}
-                  fieldName={workflow.editedItem.name}
                   onAdd={handleAddValidator}
                   onBack={() => selectedFieldTemplate = null}
                 />
@@ -432,14 +434,12 @@
             {#if workflow.editedItem.validators.length > 0}
               <div class="p-2 bg-mono-50 rounded border border-mono-200 space-y-2">
                 {#each workflow.editedItem.validators as validator, index}
+                  {@const tmpl = getFieldValidatorTemplateById(validator.templateId)}
                   <div class="flex items-center space-x-2 p-2 bg-white rounded border border-mono-200">
                     <div class="flex items-center space-x-2 flex-1 min-w-0">
-                      <span class="font-mono text-sm text-mono-700 truncate">{validator.functionName}</span>
-                      <span class="px-2 py-0.5 text-xs rounded-full bg-mono-100 text-mono-600 shrink-0">{validator.mode}</span>
+                      <span class="text-sm text-mono-700 truncate">{tmpl?.name ?? validator.templateId}</span>
+                      <span class="px-2 py-0.5 text-xs rounded-full bg-mono-100 text-mono-600 shrink-0">{tmpl?.mode ?? 'after'}</span>
                     </div>
-                    {#if validator.description}
-                      <span class="text-xs text-mono-500 truncate">{validator.description}</span>
-                    {/if}
                     <button
                       type="button"
                       onclick={() => removeValidator(index)}

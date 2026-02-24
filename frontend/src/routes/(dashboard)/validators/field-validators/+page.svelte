@@ -1,6 +1,5 @@
 <script lang="ts">
-  import { fieldsStore } from '$lib/stores/fields';
-  import { activeNamespaceId } from '$lib/stores/namespaces';
+  import { fieldValidatorTemplatesStore, searchFieldValidatorTemplates } from '$lib/stores/fieldValidatorTemplates';
   import {
     PageHeader,
     SearchBar,
@@ -13,58 +12,21 @@
     Pill,
     TableEmptyState
   } from '$lib/components';
-  import type { InlineFieldValidator } from '$lib/types';
+  import type { FieldValidatorTemplate } from '$lib/types';
   import { STORE_NAMES } from '$lib/stores/loader';
   import { page } from '$app/state';
   import { goto } from '$app/navigation';
   import { createListViewState } from '$lib/stores/listViewState.svelte';
 
-  // Flattened view: one row per validator with parent field info
-  interface FieldValidatorRow {
-    id: string;
-    name: string;
-    validator: InlineFieldValidator;
-    parentFieldName: string;
-    parentFieldId: string;
-  }
+  let allTemplates = $derived($fieldValidatorTemplatesStore);
 
-  // Derive all field validators from the fields store, filtered by namespace
-  let allRows = $derived.by((): FieldValidatorRow[] => {
-    const fields = $fieldsStore.filter(f => f.namespaceId === $activeNamespaceId);
-    const rows: FieldValidatorRow[] = [];
-    for (const field of fields) {
-      for (const v of field.validators) {
-        rows.push({
-          id: `${field.id}-${v.functionName}`,
-          name: v.functionName,
-          validator: v,
-          parentFieldName: field.name,
-          parentFieldId: field.id
-        });
-      }
-    }
-    return rows;
-  });
-
-  // Search function
-  function searchValidators(items: FieldValidatorRow[], query: string): FieldValidatorRow[] {
-    if (!query.trim()) return items;
-    const q = query.toLowerCase();
-    return items.filter(r =>
-      r.validator.functionName.toLowerCase().includes(q) ||
-      r.parentFieldName.toLowerCase().includes(q) ||
-      (r.validator.description ?? '').toLowerCase().includes(q)
-    );
-  }
-
-  // Create list view state
-  const state = createListViewState<FieldValidatorRow, Record<string, never>>({
-    itemsStore: () => allRows,
-    searchFn: searchValidators,
+  const state = createListViewState<FieldValidatorTemplate, Record<string, never>>({
+    itemsStore: () => allTemplates,
+    searchFn: searchFieldValidatorTemplates,
     filterSections: [],
     numericColumns: new Set(),
     urlScope: { page, goto },
-    getItemId: (row) => row.id,
+    getItemId: (t) => t.id,
     drawerConfig: {
       trackEdits: false,
       allowDelete: false,
@@ -72,43 +34,39 @@
     }
   });
 
-  let filteredRows = $derived(state.results);
+  let filteredTemplates = $derived(state.results);
   let sorts = $derived(state.sorts);
-
-  function navigateToField(fieldId: string) {
-    goto(`/fields?highlight=${fieldId}`);
-  }
 </script>
 
 <PageHeader title="Field Validators" />
 
 <SearchBar
   bind:searchQuery={state.query}
-  placeholder="Search field validators..."
-  resultsCount={filteredRows.length}
-  resultLabel="field validator"
+  placeholder="Search field validator templates..."
+  resultsCount={filteredTemplates.length}
+  resultLabel="template"
   showFilter={false}
   active={false}
 />
 
-<Table isEmpty={filteredRows.length === 0}>
+<Table isEmpty={filteredTemplates.length === 0}>
   {#snippet header()}
     <tr>
       <SortableColumn
         column="name"
-        label="Validator Name"
-        {sorts}
-        onSort={state.handleSort}
-      />
-      <SortableColumn
-        column="parentFieldName"
-        label="Parent Field"
+        label="Template Name"
         {sorts}
         onSort={state.handleSort}
       />
       <SortableColumn
         column="mode"
         label="Mode"
+        {sorts}
+        onSort={state.handleSort}
+      />
+      <SortableColumn
+        column="compatibleTypes"
+        label="Compatible Types"
         {sorts}
         onSort={state.handleSort}
       />
@@ -122,22 +80,26 @@
   {/snippet}
 
   {#snippet body()}
-    {#each filteredRows as row}
+    {#each filteredTemplates as template}
       <tr
-        onclick={() => state.selectItem(row)}
-        class="cursor-pointer transition-colors {state.selectedItem?.id === row.id ? 'bg-mono-100' : 'hover:bg-mono-50'}"
+        onclick={() => state.selectItem(template)}
+        class="cursor-pointer transition-colors {state.selectedItem?.id === template.id ? 'bg-mono-100' : 'hover:bg-mono-50'}"
       >
         <td class="px-6 py-4 whitespace-nowrap">
-          <span class="text-sm text-mono-900 font-medium">{row.validator.functionName}</span>
+          <span class="text-sm text-mono-900 font-medium">{template.name}</span>
         </td>
         <td class="px-6 py-4 whitespace-nowrap">
-          <span class="text-sm text-mono-600">{row.parentFieldName}</span>
+          <Pill variant="light">{template.mode}</Pill>
         </td>
-        <td class="px-6 py-4 whitespace-nowrap">
-          <Pill variant="light">{row.validator.mode}</Pill>
+        <td class="px-6 py-4">
+          <div class="flex flex-wrap gap-1">
+            {#each template.compatibleTypes as ctype}
+              <span class="px-2 py-0.5 text-xs rounded-full bg-mono-100 text-mono-600">{ctype}</span>
+            {/each}
+          </div>
         </td>
         <td class="px-6 py-4 text-sm text-mono-500 max-w-xs truncate">
-          {row.validator.description || '-'}
+          {template.description}
         </td>
       </tr>
     {/each}
@@ -145,43 +107,60 @@
 
   {#snippet empty()}
     <TableEmptyState
-      entityName="field validators"
-      storeKey={STORE_NAMES.FIELDS}
-      noResultsMessage="Add validators to fields from the Fields page"
+      entityName="field validator templates"
+      storeKey={STORE_NAMES.FIELD_VALIDATOR_TEMPLATES}
+      noResultsMessage="No field validator templates available"
     />
   {/snippet}
 </Table>
 
 <Drawer open={state.drawerOpen}>
-  <DrawerHeader title="Field Validator Details" onClose={state.closeDrawer} />
+  <DrawerHeader title="Field Validator Template" onClose={state.closeDrawer} />
 
   <DrawerContent>
     {#if state.selectedItem}
       <div class="space-y-6">
-        <DetailField label="Function Name">
-          <p class="font-mono text-mono-900">{state.selectedItem.validator.functionName}</p>
+        <DetailField label="Name">
+          <p class="text-mono-900 font-medium">{state.selectedItem.name}</p>
         </DetailField>
+
+        <DetailField label="Description" value={state.selectedItem.description} />
 
         <DetailField label="Mode">
-          <Pill variant="light">{state.selectedItem.validator.mode}</Pill>
+          <Pill variant="light">{state.selectedItem.mode}</Pill>
         </DetailField>
 
-        <DetailField label="Description" value={state.selectedItem.validator.description || 'No description'} />
-
-        <DetailField label="Parent Field">
-          <button
-            type="button"
-            onclick={() => navigateToField(state.selectedItem!.parentFieldId)}
-            class="flex items-center space-x-2 p-3 bg-mono-50 rounded-md hover:bg-mono-100 cursor-pointer transition-colors group w-full"
-          >
-            <i class="fa-solid fa-table-list text-mono-400 group-hover:text-mono-600 transition-colors"></i>
-            <span class="text-sm text-mono-900 group-hover:text-mono-700 transition-colors">{state.selectedItem.parentFieldName}</span>
-            <i class="fa-solid fa-arrow-right text-mono-400 group-hover:text-mono-600 transition-colors text-xs ml-auto"></i>
-          </button>
+        <DetailField label="Compatible Types">
+          <div class="flex flex-wrap gap-1">
+            {#each state.selectedItem.compatibleTypes as ctype}
+              <span class="px-2 py-0.5 text-xs rounded-full bg-mono-900 text-white">{ctype}</span>
+            {/each}
+          </div>
         </DetailField>
 
-        <DetailField label="Function Body">
-          <pre class="p-3 bg-mono-900 text-mono-100 rounded-md text-xs overflow-x-auto whitespace-pre font-mono">{state.selectedItem.validator.functionBody}</pre>
+        {#if state.selectedItem.parameters.length > 0}
+          <DetailField label="Parameters">
+            <div class="space-y-2">
+              {#each state.selectedItem.parameters as param}
+                <div class="p-2 bg-mono-50 rounded border border-mono-200">
+                  <div class="flex items-center space-x-2">
+                    <span class="text-sm text-mono-700 font-medium">{param.label}</span>
+                    <span class="px-1.5 py-0.5 text-[10px] rounded-full bg-mono-200 text-mono-600">{param.type}</span>
+                    {#if param.required}
+                      <span class="text-red-500 text-xs">required</span>
+                    {/if}
+                  </div>
+                  {#if param.placeholder}
+                    <p class="text-xs text-mono-500 mt-1">e.g. {param.placeholder}</p>
+                  {/if}
+                </div>
+              {/each}
+            </div>
+          </DetailField>
+        {/if}
+
+        <DetailField label="Code Template">
+          <pre class="p-3 bg-mono-900 text-mono-100 rounded-md text-xs overflow-x-auto whitespace-pre font-mono">{state.selectedItem.bodyTemplate}</pre>
         </DetailField>
       </div>
     {/if}

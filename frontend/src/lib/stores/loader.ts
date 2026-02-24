@@ -15,12 +15,16 @@ import { listObjects } from '$lib/api/objects';
 import { listEndpoints } from '$lib/api/endpoints';
 import { listFieldConstraints } from '$lib/api/fieldConstraints';
 import { listTypes } from '$lib/api/types';
+import { listFieldValidatorTemplates } from '$lib/api/fieldValidatorTemplates';
+import { listModelValidatorTemplates } from '$lib/api/modelValidatorTemplates';
 import { namespacesStore, activeNamespaceId } from './namespaces';
 import { apisStore, endpointsStore } from './apis';
 import { fieldsStore } from './fields';
 import { objectsStore } from './objects';
 import { fieldConstraintsStore } from './fieldConstraints';
 import { typesBaseStore } from './types';
+import { fieldValidatorTemplatesStore } from './fieldValidatorTemplates';
+import { modelValidatorTemplatesStore } from './modelValidatorTemplates';
 import { GLOBAL_NAMESPACE_ID } from '$lib/constants';
 
 /**
@@ -49,6 +53,8 @@ export const STORE_NAMES = {
 	TYPES: 'Types',
 	NAMESPACES: 'Namespaces',
 	FIELD_CONSTRAINTS: 'Field Constraints',
+	FIELD_VALIDATOR_TEMPLATES: 'Field Validator Templates',
+	MODEL_VALIDATOR_TEMPLATES: 'Model Validator Templates',
 	FIELDS: 'Fields',
 	OBJECTS: 'Objects',
 	APIS: 'APIs',
@@ -56,7 +62,7 @@ export const STORE_NAMES = {
 } as const;
 
 /** Store names for phase 1 (must load first — fields depend on types) */
-const PHASE1_STORE_NAMES = [STORE_NAMES.TYPES, STORE_NAMES.NAMESPACES, STORE_NAMES.FIELD_CONSTRAINTS] as const;
+const PHASE1_STORE_NAMES = [STORE_NAMES.TYPES, STORE_NAMES.NAMESPACES, STORE_NAMES.FIELD_CONSTRAINTS, STORE_NAMES.FIELD_VALIDATOR_TEMPLATES, STORE_NAMES.MODEL_VALIDATOR_TEMPLATES] as const;
 
 /** Store names for phase 2 (depend on phase 1 stores being populated) */
 const PHASE2_STORE_NAMES = [STORE_NAMES.FIELDS, STORE_NAMES.OBJECTS, STORE_NAMES.APIS, STORE_NAMES.ENDPOINTS] as const;
@@ -95,12 +101,16 @@ export async function loadStoresFromApi(): Promise<void> {
 	const phase1Results = await Promise.allSettled([
 		listTypes(),
 		listNamespaces(),
-		listFieldConstraints()
+		listFieldConstraints(),
+		listFieldValidatorTemplates(),
+		listModelValidatorTemplates()
 	]);
 
 	const types = phase1Results[0].status === 'fulfilled' ? phase1Results[0].value : [];
 	const namespaces = phase1Results[1].status === 'fulfilled' ? phase1Results[1].value : [];
 	const fieldConstraints = phase1Results[2].status === 'fulfilled' ? phase1Results[2].value : [];
+	const fieldValidatorTemplates = phase1Results[3].status === 'fulfilled' ? phase1Results[3].value : [];
+	const modelValidatorTemplates = phase1Results[4].status === 'fulfilled' ? phase1Results[4].value : [];
 
 	phase1Results.forEach((result, i) => {
 		if (result.status === 'rejected') {
@@ -113,6 +123,8 @@ export async function loadStoresFromApi(): Promise<void> {
 	typesBaseStore.set(types);
 	namespacesStore.set(namespaces);
 	fieldConstraintsStore.set(fieldConstraints);
+	fieldValidatorTemplatesStore.set(fieldValidatorTemplates);
+	modelValidatorTemplatesStore.set(modelValidatorTemplates);
 
 	// Phase 2: Load entities that depend on phase 1 stores
 	const phase2Results = await Promise.allSettled([
@@ -182,6 +194,8 @@ export function resetStores(): void {
 	endpointsStore.set([]);
 	fieldConstraintsStore.set([]);
 	typesBaseStore.set([]);
+	fieldValidatorTemplatesStore.set([]);
+	modelValidatorTemplatesStore.set([]);
 	activeNamespaceId.set(GLOBAL_NAMESPACE_ID);
 
 	console.log('[Store Loader] Stores reset to initial state');

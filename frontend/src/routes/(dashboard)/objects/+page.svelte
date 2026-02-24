@@ -23,8 +23,8 @@
     TemplateForm
   } from '$lib/components';
   import type { InlineModelValidator, Field } from '$lib/types';
-  import type { ModelValidatorTemplate } from '$lib/utils/validatorTemplates';
-  import { getModelTemplates } from '$lib/utils/validatorTemplates';
+  import type { ModelValidatorTemplate } from '$lib/types';
+  import { modelValidatorTemplatesStore, getModelValidatorTemplateById } from '$lib/stores/modelValidatorTemplates';
   import { STORE_NAMES } from '$lib/stores/loader';
   import { page } from '$app/state';
   import { goto } from '$app/navigation';
@@ -100,7 +100,7 @@
   let validatorGalleryOpen = $state(false);
   let selectedModelTemplate = $state<ModelValidatorTemplate | null>(null);
 
-  let modelTemplates = $derived(getModelTemplates());
+  let modelTemplates = $derived($modelValidatorTemplatesStore);
 
   // Resolve object's fields to full Field objects for template role dropdowns
   let objectFieldDefinitions = $derived.by((): Field[] => {
@@ -119,11 +119,13 @@
     selectedModelTemplate = template;
   }
 
-  function handleAddValidator(validator: { functionName: string; mode: 'before' | 'after'; functionBody: string; description: string }) {
+  function handleAddValidator(validator: { templateId: string; parameters?: Record<string, string>; fieldMappings?: Record<string, string> }) {
     if (!workflow.editedItem) return;
     const newValidator: InlineModelValidator = {
       id: '',
-      ...validator
+      templateId: validator.templateId,
+      parameters: validator.parameters ?? null,
+      fieldMappings: validator.fieldMappings ?? {}
     };
     workflow.editedItem = {
       ...workflow.editedItem,
@@ -400,14 +402,12 @@
             {#if workflow.editedItem.validators.length > 0}
               <div class="p-2 bg-mono-50 rounded border border-mono-200 space-y-2">
                 {#each workflow.editedItem.validators as validator, index}
+                  {@const tmpl = getModelValidatorTemplateById(validator.templateId)}
                   <div class="flex items-center space-x-2 p-2 bg-white rounded border border-mono-200">
                     <div class="flex items-center space-x-2 flex-1 min-w-0">
-                      <span class="font-mono text-sm text-mono-700 truncate">{validator.functionName}</span>
-                      <span class="px-2 py-0.5 text-xs rounded-full bg-mono-100 text-mono-600 shrink-0">{validator.mode}</span>
+                      <span class="text-sm text-mono-700 truncate">{tmpl?.name ?? validator.templateId}</span>
+                      <span class="px-2 py-0.5 text-xs rounded-full bg-mono-100 text-mono-600 shrink-0">{tmpl?.mode ?? 'after'}</span>
                     </div>
-                    {#if validator.description}
-                      <span class="text-xs text-mono-500 truncate">{validator.description}</span>
-                    {/if}
                     <button
                       type="button"
                       onclick={() => removeValidator(index)}
