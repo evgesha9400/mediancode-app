@@ -26,7 +26,7 @@ Data source: backend template catalogue (`GET /v1/field-validator-templates`).
 
 | Column | Content |
 |---|---|
-| Name | Template name (e.g. "Strip & Lowercase") |
+| Name | Template name (e.g. "Strip & Normalize Case") |
 | Compatible Types | Pill list (e.g. `str`, `int float`) |
 | Mode | `before` / `after` pill |
 | Description | Template description (truncated to first sentence) |
@@ -38,8 +38,8 @@ Data source: backend template catalogue (`GET /v1/field-validator-templates`).
 
 **Drawer (read-only):**
 - Name, Description, Compatible Types (pill list), Mode (pill)
-- Parameters (list of parameter names + types, if any)
-- Code Preview — `bodyTemplate` shown as-is in a code block
+- Parameters (list of parameter names + types; `select` parameters show their options as pills)
+- Code Preview — `bodyTemplate` shown as-is in a code block with `{{ }}` placeholders visible
 - Used In Fields — count + clickable field links (same pattern as Field Constraints drawer)
 
 ### Page Layout — Model Validators
@@ -104,11 +104,22 @@ GET /v1/model-validator-templates    → ModelValidatorTemplate[]
 {
   key: string;
   label: string;
-  type: 'text' | 'number';
+  type: 'text' | 'number' | 'select';
   placeholder: string;
+  options?: SelectOption[];           // present only when type is 'select'
   required: boolean;
 }
 ```
+
+**SelectOption:**
+```typescript
+{
+  value: string;   // substituted into {{ }} placeholders
+  label: string;   // displayed in dropdown
+}
+```
+
+The `select` type renders as a dropdown. The selected `value` is substituted into `{{ }}` placeholders identically to `text` and `number` parameters — no special handling needed in the preview function.
 
 **FieldMappingDefinition:**
 ```typescript
@@ -146,19 +157,27 @@ validators: [{
 }]
 ```
 
-Backend resolves templateId, substitutes parameters/fieldMappings into bodyTemplate, generates functionName, and produces final Python code. No raw functionBody accepted.
+Backend stores the template reference only — no rendering happens at CRUD time. Jinja2 rendering of templates into final Python code happens exclusively at generation time (when the user generates the API and spends credits). No raw functionBody accepted.
 
-**Backend response** includes resolved code plus templateId for traceability:
+**Backend response** includes only what was stored — template reference + configured values:
 ```typescript
+// Field validator response (on GET fields)
 validators: [{
   id: string;
   templateId: string;
-  functionName: string;
-  mode: 'before' | 'after';
-  functionBody: string;       // resolved with real values
-  description: string | null;
+  parameters: Record<string, string> | null;
+}]
+
+// Model validator response (on GET objects)
+validators: [{
+  id: string;
+  templateId: string;
+  parameters: Record<string, string> | null;
+  fieldMappings: Record<string, string>;
 }]
 ```
+
+The frontend looks up template metadata (name, mode, description, bodyTemplate) from the template catalogue store to display alongside the applied validator. Code preview in edit drawers uses client-side `{{ }}` substitution on the template's `bodyTemplate`.
 
 ### "Used In" Tracking
 
@@ -190,9 +209,36 @@ function previewBody(bodyTemplate: string, mappings: Record<string, string>): st
 ### Impact on Fields/Objects Pages
 
 - Attached validators display stays on edit drawers
-- Each validator shows which template it came from (pill/label)
-- Function body shown is the resolved version from the backend
+- Each validator shows which template it came from (pill/label) — looked up from template catalogue store by `templateId`
+- Code preview uses client-side `{{ }}` substitution of the template's `bodyTemplate` with the stored parameters/fieldMappings (not a backend-resolved body)
+- Mode, description, and other template metadata come from the catalogue store, not from the validator response
 - Adding validators still uses TemplateGallery + TemplateForm, but sends `{ templateId, parameters, fieldMappings }` instead of generated code
+- `select`-type parameters render as dropdowns in TemplateForm
+
+### Backend Template Catalogue — Field Validator Templates (9)
+
+| Name | Compatible Types | Mode | Parameters |
+|---|---|---|---|
+| Strip & Normalize Case | `str` | before | `case` (select: lowercase / UPPERCASE / Title Case) |
+| Normalize Whitespace | `str` | before | none |
+| Default If Empty | `str` | before | `default_value` (text, required) |
+| Trim To Length | `str` | before | `max_length` (number, required) |
+| Strip HTML Tags | `str` | before | none |
+| Round Decimal | `float, Decimal` | before | `places` (number, required) |
+| Slug Format | `str` | after | none |
+| Future Date Only | `datetime, date` | after | none |
+| Past Date Only | `datetime, date` | after | none |
+
+### Backend Template Catalogue — Model Validator Templates (6)
+
+| Name | Mode | Field Mappings | Parameters |
+|---|---|---|---|
+| Password Confirmation | after | `password_field` (str), `confirm_field` (str) | none |
+| Date Range | after | `start_field` (datetime/date), `end_field` (datetime/date) | `comparison` (select: strict / inclusive) |
+| Mutual Exclusivity | after | `field_a` (any), `field_b` (any) | none |
+| Conditional Required | after | `trigger_field` (any), `required_field` (any) | `condition` (select: equals / not_equals / is_truthy), `trigger_value` (text) |
+| Numeric Comparison | after | `lesser_field` (int/float), `greater_field` (int/float) | `comparison` (select: strict / inclusive) |
+| At Least One Required | before | `field_a` (any), `field_b` (any) | none |
 
 ### What Gets Deleted
 
@@ -205,4 +251,5 @@ function previewBody(bodyTemplate: string, mappings: Record<string, string>): st
 - **Deterministic:** Same templateId + parameters + fieldMappings always produces the same Python.
 - **Templates-only:** No raw functionBody accepted. Guarantees working generated code.
 - **Reference catalogues:** All three Validators pages are now catalogues of available options.
+- **CRUD is CRUD, generation is generation:** The API stores template references only. Jinja2 rendering happens exclusively at generation time when the user spends credits. Frontend handles code preview via simple `{{ }}` substitution.
 - **"Generate structure, leave behavior to post-generation":** If a user's validation doesn't fit a template, they add it after deployment.
