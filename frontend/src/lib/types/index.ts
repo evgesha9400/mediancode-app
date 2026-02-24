@@ -198,37 +198,55 @@ export interface FieldConstraintBase {
 // Inline validator types (child rows of fields/objects, not standalone entities)
 export interface InlineFieldValidator {
   id: string;
-  functionName: string;
-  mode: 'before' | 'after';
-  functionBody: string;
-  description?: string;
+  templateId: string;
+  parameters: Record<string, string> | null;
 }
 
 export interface InlineModelValidator {
   id: string;
-  functionName: string;
-  mode: 'before' | 'after';
-  functionBody: string;
-  description?: string;
+  templateId: string;
+  parameters: Record<string, string> | null;
+  fieldMappings: Record<string, string>;
 }
 
-// Standalone validator types (top-level CRUD entities)
-export interface FieldValidator {
+// Validator template catalogue types (backend-served reference data)
+export interface TemplateParameter {
+  key: string;
+  label: string;
+  type: 'text' | 'number' | 'select';
+  placeholder: string;
+  options?: SelectOption[];
+  required: boolean;
+}
+
+export interface SelectOption {
+  value: string;
+  label: string;
+}
+
+export interface FieldMappingDefinition {
+  key: string;
+  label: string;
+  compatibleTypes: string[];
+  required: boolean;
+}
+
+export interface FieldValidatorTemplate {
   id: string;
-  namespaceId: string;
   name: string;
   description: string;
   compatibleTypes: string[];
   mode: 'before' | 'after';
-  code: string;
+  parameters: TemplateParameter[];
+  bodyTemplate: string;
 }
 
-export interface ModelValidator {
+export interface ModelValidatorTemplate {
   id: string;
-  namespaceId: string;
   name: string;
   description: string;
-  requiredFields: string[];
   mode: 'before' | 'after';
-  code: string;
+  parameters: TemplateParameter[];
+  fieldMappings: FieldMappingDefinition[];
+  bodyTemplate: string;
 }
