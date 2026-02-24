@@ -323,7 +323,7 @@ paths:
       tags:
       - Types
       summary: List all types
-      description: Retrieve all type definitions.
+      description: Retrieve all type definitions accessible to the authenticated user.
       operationId: list_types_v1_types_get
       security:
       - HTTPBearer: []
@@ -357,7 +357,8 @@ paths:
       tags:
       - Field Constraints
       summary: List all field constraints
-      description: Retrieve all field constraint definitions (Pydantic Field constraints).
+      description: Retrieve all field constraint definitions accessible to the authenticated
+        user.
       operationId: list_field_constraints_v1_field_constraints_get
       security:
       - HTTPBearer: []
@@ -386,6 +387,46 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
+  /v1/field-validator-templates:
+    get:
+      tags:
+      - Field Validator Templates
+      summary: List all field validator templates
+      description: Retrieve all field validator template definitions.
+      operationId: list_field_validator_templates_v1_field_validator_templates_get
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/FieldValidatorTemplateResponse'
+                type: array
+                title: Response List Field Validator Templates V1 Field Validator
+                  Templates Get
+      security:
+      - HTTPBearer: []
+  /v1/model-validator-templates:
+    get:
+      tags:
+      - Model Validator Templates
+      summary: List all model validator templates
+      description: Retrieve all model validator template definitions.
+      operationId: list_model_validator_templates_v1_model_validator_templates_get
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/ModelValidatorTemplateResponse'
+                type: array
+                title: Response List Model Validator Templates V1 Model Validator
+                  Templates Get
+      security:
+      - HTTPBearer: []
   /v1/fields:
     get:
       tags:
@@ -1452,7 +1493,7 @@ components:
 
         :ivar description: Constraint description.
 
-        :ivar parameter_type: Type of parameter this constraint accepts.
+        :ivar parameter_types: List of types this constraint''s parameter accepts.
 
         :ivar docs_url: URL to documentation.
 
@@ -1543,6 +1584,11 @@ components:
             $ref: '#/components/schemas/FieldConstraintValueInput'
           type: array
           title: Constraints
+        validators:
+          items:
+            $ref: '#/components/schemas/FieldValidatorInput'
+          type: array
+          title: Validators
       type: object
       required:
       - namespaceId
@@ -1562,7 +1608,9 @@ components:
 
         :ivar default_value: Default value expression.
 
-        :ivar constraints: Constraints to attach to this field.'
+        :ivar constraints: Constraints to attach to this field.
+
+        :ivar validators: Inline validator definitions for this field.'
     FieldResponse:
       properties:
         id:
@@ -1615,6 +1663,11 @@ components:
             $ref: '#/components/schemas/FieldConstraintValueResponse'
           type: array
           title: Constraints
+        validators:
+          items:
+            $ref: '#/components/schemas/FieldValidatorResponse'
+          type: array
+          title: Validators
       type: object
       required:
       - id
@@ -1639,7 +1692,9 @@ components:
 
         :ivar used_in_apis: Array of endpoint IDs where this field is used.
 
-        :ivar constraints: Constraints attached to this field.'
+        :ivar constraints: Constraints attached to this field.
+
+        :ivar validators: Validators attached to this field.'
     FieldUpdate:
       properties:
         name:
@@ -1670,6 +1725,13 @@ components:
             type: array
           - type: 'null'
           title: Constraints
+        validators:
+          anyOf:
+          - items:
+              $ref: '#/components/schemas/FieldValidatorInput'
+            type: array
+          - type: 'null'
+          title: Validators
       type: object
       title: FieldUpdate
       description: 'Request schema for updating a field.
@@ -1681,7 +1743,117 @@ components:
 
         :ivar default_value: Updated default value.
 
-        :ivar constraints: Updated constraints (None = don''t touch, [] = clear all).'
+        :ivar constraints: Updated constraints (None = don''t touch, [] = clear all).
+
+        :ivar validators: Updated validators (None = don''t touch, [] = clear all).'
+    FieldValidatorInput:
+      properties:
+        templateId:
+          type: string
+          format: uuid
+          title: Templateid
+        parameters:
+          anyOf:
+          - additionalProperties:
+              type: string
+            type: object
+          - type: 'null'
+          title: Parameters
+      type: object
+      required:
+      - templateId
+      title: FieldValidatorInput
+      description: 'Request schema for attaching a field validator template to a field.
+
+
+        :ivar template_id: Reference to the field validator template.
+
+        :ivar parameters: Template parameter values.'
+    FieldValidatorResponse:
+      properties:
+        id:
+          type: string
+          format: uuid
+          title: Id
+        templateId:
+          type: string
+          format: uuid
+          title: Templateid
+        parameters:
+          anyOf:
+          - additionalProperties:
+              type: string
+            type: object
+          - type: 'null'
+          title: Parameters
+      type: object
+      required:
+      - id
+      - templateId
+      title: FieldValidatorResponse
+      description: 'Response schema for an applied field validator.
+
+
+        :ivar id: Unique identifier for the applied validator.
+
+        :ivar template_id: Reference to the template.
+
+        :ivar parameters: Template parameter values.'
+    FieldValidatorTemplateResponse:
+      properties:
+        id:
+          type: string
+          format: uuid
+          title: Id
+        name:
+          type: string
+          title: Name
+        description:
+          type: string
+          title: Description
+        compatibleTypes:
+          items:
+            type: string
+          type: array
+          title: Compatibletypes
+        mode:
+          type: string
+          title: Mode
+        parameters:
+          items:
+            additionalProperties: true
+            type: object
+          type: array
+          title: Parameters
+        bodyTemplate:
+          type: string
+          title: Bodytemplate
+      type: object
+      required:
+      - id
+      - name
+      - description
+      - compatibleTypes
+      - mode
+      - parameters
+      - bodyTemplate
+      title: FieldValidatorTemplateResponse
+      description: 'Response schema for a field validator template.
+
+
+        :ivar id: Unique identifier for the template.
+
+        :ivar name: Template display name.
+
+        :ivar description: Template description.
+
+        :ivar compatible_types: List of type names this template applies to.
+
+        :ivar mode: Validator mode (before, after).
+
+        :ivar parameters: Template parameter definitions.
+
+        :ivar body_template: Jinja2 template for the function body.'
     HTTPValidationError:
       properties:
         detail:
@@ -1691,6 +1863,132 @@ components:
           title: Detail
       type: object
       title: HTTPValidationError
+    ModelValidatorInput:
+      properties:
+        templateId:
+          type: string
+          format: uuid
+          title: Templateid
+        parameters:
+          anyOf:
+          - additionalProperties:
+              type: string
+            type: object
+          - type: 'null'
+          title: Parameters
+        fieldMappings:
+          additionalProperties:
+            type: string
+          type: object
+          title: Fieldmappings
+      type: object
+      required:
+      - templateId
+      - fieldMappings
+      title: ModelValidatorInput
+      description: 'Request schema for attaching a model validator template to an
+        object.
+
+
+        :ivar template_id: Reference to the model validator template.
+
+        :ivar parameters: Template parameter values.
+
+        :ivar field_mappings: Maps template field mapping keys to actual field names.'
+    ModelValidatorResponse:
+      properties:
+        id:
+          type: string
+          format: uuid
+          title: Id
+        templateId:
+          type: string
+          format: uuid
+          title: Templateid
+        parameters:
+          anyOf:
+          - additionalProperties:
+              type: string
+            type: object
+          - type: 'null'
+          title: Parameters
+        fieldMappings:
+          additionalProperties:
+            type: string
+          type: object
+          title: Fieldmappings
+      type: object
+      required:
+      - id
+      - templateId
+      - fieldMappings
+      title: ModelValidatorResponse
+      description: 'Response schema for an applied model validator.
+
+
+        :ivar id: Unique identifier for the applied validator.
+
+        :ivar template_id: Reference to the template.
+
+        :ivar parameters: Template parameter values.
+
+        :ivar field_mappings: Resolved field name mappings.'
+    ModelValidatorTemplateResponse:
+      properties:
+        id:
+          type: string
+          format: uuid
+          title: Id
+        name:
+          type: string
+          title: Name
+        description:
+          type: string
+          title: Description
+        mode:
+          type: string
+          title: Mode
+        parameters:
+          items:
+            additionalProperties: true
+            type: object
+          type: array
+          title: Parameters
+        fieldMappings:
+          items:
+            additionalProperties: true
+            type: object
+          type: array
+          title: Fieldmappings
+        bodyTemplate:
+          type: string
+          title: Bodytemplate
+      type: object
+      required:
+      - id
+      - name
+      - description
+      - mode
+      - parameters
+      - fieldMappings
+      - bodyTemplate
+      title: ModelValidatorTemplateResponse
+      description: 'Response schema for a model validator template.
+
+
+        :ivar id: Unique identifier for the template.
+
+        :ivar name: Template display name.
+
+        :ivar description: Template description.
+
+        :ivar mode: Validator mode (before, after).
+
+        :ivar parameters: Template parameter definitions.
+
+        :ivar field_mappings: Field mapping definitions.
+
+        :ivar body_template: Jinja2 template for the function body.'
     NamespaceCreate:
       properties:
         name:
@@ -1813,6 +2111,11 @@ components:
             $ref: '#/components/schemas/ObjectFieldReferenceSchema'
           type: array
           title: Fields
+        validators:
+          items:
+            $ref: '#/components/schemas/ModelValidatorInput'
+          type: array
+          title: Validators
       type: object
       required:
       - namespaceId
@@ -1828,7 +2131,9 @@ components:
 
         :ivar description: Object description.
 
-        :ivar fields: List of field references.'
+        :ivar fields: List of field references.
+
+        :ivar validators: Inline model validator definitions for this object.'
     ObjectFieldReferenceSchema:
       properties:
         fieldId:
@@ -1892,6 +2197,11 @@ components:
           title: Usedinapis
           examples:
           - - 00000000-0000-0000-0004-000000000001
+        validators:
+          items:
+            $ref: '#/components/schemas/ModelValidatorResponse'
+          type: array
+          title: Validators
       type: object
       required:
       - id
@@ -1911,7 +2221,9 @@ components:
 
         :ivar fields: List of field references.
 
-        :ivar used_in_apis: Array of endpoint IDs that use this object.'
+        :ivar used_in_apis: Array of endpoint IDs that use this object.
+
+        :ivar validators: Model validators attached to this object.'
     ObjectUpdate:
       properties:
         name:
@@ -1935,6 +2247,13 @@ components:
             type: array
           - type: 'null'
           title: Fields
+        validators:
+          anyOf:
+          - items:
+              $ref: '#/components/schemas/ModelValidatorInput'
+            type: array
+          - type: 'null'
+          title: Validators
       type: object
       title: ObjectUpdate
       description: 'Request schema for updating an object.
@@ -1944,7 +2263,9 @@ components:
 
         :ivar description: Updated description.
 
-        :ivar fields: Updated list of field references.'
+        :ivar fields: Updated list of field references (None = don''t touch).
+
+        :ivar validators: Updated validators (None = don''t touch, [] = clear all).'
     PathParamSchema:
       properties:
         name:
