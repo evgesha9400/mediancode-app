@@ -18,6 +18,7 @@
     CrudDrawerFooter,
     TableEmptyState,
     FormField,
+    FormLabel,
     Pill,
     NamespaceSelector
   } from '$lib/components';
@@ -170,6 +171,7 @@
     {#if workflow.editedItem}
     <div class="space-y-4">
       <FormField
+        id="api-title"
         label="API Title"
         bind:value={workflow.editedItem.title}
         placeholder="My API"
@@ -178,16 +180,15 @@
       />
 
       <FormField
+        id="api-version"
         label="Version"
         bind:value={workflow.editedItem.version}
         placeholder="1.0.0"
       />
 
-      <!-- Description (textarea - FormField doesn't support textarea, keep inline) -->
+      <!-- Description -->
       <div>
-        <label for="api-description" class="block text-sm text-mono-700 mb-1 font-medium">
-          Description
-        </label>
+        <FormLabel label="Description" forId="api-description" />
         <textarea
           id="api-description"
           bind:value={workflow.editedItem.description}
@@ -198,12 +199,14 @@
       </div>
 
       <FormField
+        id="api-server-url"
         label="Server URL"
         bind:value={workflow.editedItem.serverUrl}
         placeholder="https://api.example.com"
       />
 
       <FormField
+        id="api-base-url"
         label="Base URL"
         bind:value={workflow.editedItem.baseUrl}
         placeholder="/api/v1"
@@ -211,9 +214,7 @@
 
       <!-- Namespace (read-only) -->
       <div>
-        <label for="api-namespace" class="block text-sm text-mono-700 mb-1 font-medium">
-          Namespace
-        </label>
+        <FormLabel label="Namespace" forId="api-namespace" />
         <input
           id="api-namespace"
           type="text"

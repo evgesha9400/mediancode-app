@@ -10,6 +10,7 @@
     SortableColumn,
     Pill,
     FormField,
+    FormLabel,
     TableEmptyState,
     Drawer,
     DrawerHeader,
@@ -193,11 +194,12 @@
           {sorts}
           onSort={workflow.handleSort}
         />
-        <th scope="col" class="px-6 py-3 text-left text-xs text-mono-500 tracking-wider font-medium">
-          <div class="flex items-center space-x-1">
-            <span>Description</span>
-          </div>
-        </th>
+        <SortableColumn
+          column="description"
+          label="Description"
+          {sorts}
+          onSort={workflow.handleSort}
+        />
       </tr>
     {/snippet}
 
@@ -245,9 +247,7 @@
       <div class="space-y-4">
         <!-- Namespace (Read-only - uses active namespace from selector) -->
         <div>
-          <label for="object-namespace" class="block text-sm text-mono-700 mb-1 font-medium">
-            Namespace
-          </label>
+          <FormLabel label="Namespace" forId="object-namespace" />
           <input
             id="object-namespace"
             type="text"
@@ -262,6 +262,7 @@
 
         <!-- Object Name -->
         <FormField
+          id="object-name"
           label="Object Name"
           bind:value={workflow.editedItem.name}
           required
@@ -270,7 +271,7 @@
 
         <!-- Description -->
         <div>
-          <label for="object-description" class="block text-sm text-mono-700 mb-1 font-medium">Description</label>
+          <FormLabel label="Description" forId="object-description" />
           <textarea
             id="object-description"
             bind:value={workflow.editedItem.description}

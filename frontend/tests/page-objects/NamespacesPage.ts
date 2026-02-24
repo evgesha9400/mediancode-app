@@ -2,7 +2,7 @@
  * Namespaces Page Object
  *
  * Encapsulates interactions with the namespaces page (/namespaces).
- * Handles search, filter, sort, create (via modal), edit (via drawer), and delete.
+ * Handles search, filter, sort, create (via drawer), edit (via drawer), and delete.
  *
  * Actions that involve API calls or UI transitions (drawer open/close, confirmation
  * dialogs) wait for the actual state change rather than using fixed timeouts.
@@ -42,15 +42,9 @@ export class NamespacesPage {
 	readonly nameColumnHeader: Locator;
 	readonly entitiesColumnHeader: Locator;
 
-	// Create modal
-	readonly createModal: Locator;
-	readonly newNamespaceNameInput: Locator;
-	readonly newNamespaceDescriptionInput: Locator;
-	readonly createButton: Locator;
-	readonly closeModalButton: Locator;
-
-	// Edit drawer
+	// Drawer (used for both create and edit)
 	readonly drawer: Locator;
+	readonly createButton: Locator;
 	readonly drawerCloseButton: Locator;
 	readonly namespaceNameInput: Locator;
 	readonly namespaceDescriptionTextarea: Locator;
@@ -89,17 +83,11 @@ export class NamespacesPage {
 		this.nameColumnHeader = this.table.locator('thead th').filter({ hasText: 'Name' });
 		this.entitiesColumnHeader = this.table.locator('thead th').filter({ hasText: 'Entities' });
 
-		// Create modal
-		this.createModal = page.locator('.fixed.inset-0').filter({ has: page.locator('text=Create Namespace') });
-		this.newNamespaceNameInput = page.locator('#new-namespace-name');
-		this.newNamespaceDescriptionInput = page.locator('#new-namespace-description');
-		this.createButton = this.createModal.getByRole('button', { name: 'Create' });
-		this.closeModalButton = page.locator('button[title="Close modal"]');
-
-		// Edit drawer
+		// Drawer (handles create, edit, and view)
 		this.drawer = page.locator('[class*="fixed"][class*="right-0"]').filter({
-			has: page.locator('text=/Edit Namespace|View Namespace/')
+			has: page.locator('text=/Create Namespace|Edit Namespace|View Namespace/')
 		});
+		this.createButton = page.getByRole('button', { name: 'Create', exact: true });
 		this.drawerCloseButton = page.locator('button[aria-label="Close drawer"]');
 		this.namespaceNameInput = page.locator('#namespace-name');
 		this.namespaceDescriptionTextarea = page.locator('#namespace-description');
@@ -277,53 +265,45 @@ export class NamespacesPage {
 	}
 
 	// ============================================================================
-	// Create Modal Methods
+	// Create Drawer Methods
 	// ============================================================================
 
 	/**
-	 * Open the create namespace modal
+	 * Open the create namespace drawer
 	 */
-	async openCreateModal() {
+	async openCreateDrawer() {
 		await this.addNamespaceButton.click();
-		await this.createModal.waitFor({ state: 'visible', timeout: 5000 });
+		await this.drawer.waitFor({ state: 'visible', timeout: 5000 });
 	}
 
 	/**
-	 * Fill the create form
+	 * Fill the create form in the drawer
 	 */
 	async fillCreateForm(data: { name: string; description?: string }) {
-		await this.newNamespaceNameInput.fill(data.name);
+		await this.namespaceNameInput.fill(data.name);
 		await this.delay();
 		if (data.description !== undefined) {
-			await this.newNamespaceDescriptionInput.fill(data.description);
+			await this.namespaceDescriptionTextarea.fill(data.description);
 			await this.delay();
 		}
 	}
 
 	/**
-	 * Submit the create form and wait for the modal to close.
-	 * Includes a settling delay to prevent rapid-fire modal reopens.
+	 * Submit the create form and wait for the drawer to close.
 	 */
 	async submitCreate() {
 		await this.createButton.click();
-		await this.createModal.waitFor({ state: 'hidden', timeout: 10000 });
+		await this.drawer.waitFor({ state: 'hidden', timeout: 10000 });
 		await this.delay();
 	}
 
 	/**
-	 * Create a new namespace (open modal, fill, submit)
+	 * Create a new namespace (open drawer, fill, submit)
 	 */
 	async createNewNamespace(data: { name: string; description?: string }) {
-		await this.openCreateModal();
+		await this.openCreateDrawer();
 		await this.fillCreateForm(data);
 		await this.submitCreate();
-	}
-
-	/**
-	 * Check if create modal is open
-	 */
-	async isCreateModalOpen(): Promise<boolean> {
-		return await this.createModal.isVisible();
 	}
 
 	/**
@@ -334,11 +314,11 @@ export class NamespacesPage {
 	}
 
 	/**
-	 * Cancel create and close modal
+	 * Cancel create and close drawer
 	 */
 	async cancelCreate() {
-		await this.closeModalButton.click();
-		await this.createModal.waitFor({ state: 'hidden', timeout: 5000 });
+		await this.drawerCloseButton.click();
+		await this.drawer.waitFor({ state: 'hidden', timeout: 5000 });
 	}
 
 	// ============================================================================

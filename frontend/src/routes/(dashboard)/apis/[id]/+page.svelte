@@ -9,6 +9,7 @@
     DrawerFooter,
     Pill,
     FormField,
+    FormLabel,
     EndpointItem,
     ParameterEditor,
     QueryParametersEditor,
@@ -198,14 +199,13 @@
       <div class="space-y-4">
         <!-- Namespace -->
         <div>
-          <label for="edit-namespace" class="block text-sm text-mono-700 mb-1 font-medium">
-            Namespace
-          </label>
+          <FormLabel label="Namespace" forId="edit-namespace" />
           <NamespaceSelector />
         </div>
 
         <!-- API Title -->
         <FormField
+          id="edit-title"
           label="API Title"
           bind:value={apiState.editForm.title}
           required
@@ -213,6 +213,7 @@
 
         <!-- Version -->
         <FormField
+          id="edit-version"
           label="Version"
           bind:value={apiState.editForm.version}
           placeholder="1.0.0"
@@ -220,9 +221,7 @@
 
         <!-- Description -->
         <div>
-          <label for="edit-description" class="block text-sm text-mono-700 mb-1 font-medium">
-            Description
-          </label>
+          <FormLabel label="Description" forId="edit-description" />
           <textarea
             id="edit-description"
             bind:value={apiState.editForm.description}
@@ -234,6 +233,7 @@
 
         <!-- Server URL -->
         <FormField
+          id="edit-server-url"
           label="Server URL"
           bind:value={apiState.editForm.serverUrl}
           placeholder="https://api.example.com"
@@ -241,6 +241,7 @@
 
         <!-- Base URL -->
         <FormField
+          id="edit-base-url"
           label="Base URL"
           bind:value={apiState.editForm.baseUrl}
           placeholder="/api/v1"

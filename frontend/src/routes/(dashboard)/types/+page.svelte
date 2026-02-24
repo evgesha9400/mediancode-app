@@ -93,11 +93,12 @@
           {sorts}
           onSort={state.handleSort}
         />
-        <th scope="col" class="px-6 py-3 text-left text-xs text-mono-500 tracking-wider font-medium">
-          <div class="flex items-center space-x-1">
-            <span>Description</span>
-          </div>
-        </th>
+        <SortableColumn
+          column="description"
+          label="Description"
+          {sorts}
+          onSort={state.handleSort}
+        />
         <SortableColumn
           column="usedInFields"
           label="Used in Fields"

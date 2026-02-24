@@ -106,12 +106,18 @@
         {sorts}
         onSort={state.handleSort}
       />
-      <th scope="col" class="px-6 py-3 text-left text-xs text-mono-500 tracking-wider font-medium">
-        Mode
-      </th>
-      <th scope="col" class="px-6 py-3 text-left text-xs text-mono-500 tracking-wider font-medium">
-        Description
-      </th>
+      <SortableColumn
+        column="mode"
+        label="Mode"
+        {sorts}
+        onSort={state.handleSort}
+      />
+      <SortableColumn
+        column="description"
+        label="Description"
+        {sorts}
+        onSort={state.handleSort}
+      />
     </tr>
   {/snippet}
 

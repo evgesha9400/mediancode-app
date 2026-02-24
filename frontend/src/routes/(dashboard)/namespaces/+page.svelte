@@ -18,6 +18,7 @@
     CrudDrawerFooter,
     Pill,
     FormField,
+    FormLabel,
     TableEmptyState
   } from '$lib/components';
   import type { FilterConfig, Namespace } from '$lib/types';
@@ -105,12 +106,18 @@
           {sorts}
           onSort={workflow.handleSort}
         />
-        <th scope="col" class="px-6 py-3 text-left text-xs text-mono-500 tracking-wider font-medium">
-          Description
-        </th>
-        <th scope="col" class="px-6 py-3 text-left text-xs text-mono-500 tracking-wider font-medium">
-          Status
-        </th>
+        <SortableColumn
+          column="description"
+          label="Description"
+          {sorts}
+          onSort={workflow.handleSort}
+        />
+        <SortableColumn
+          column="locked"
+          label="Status"
+          {sorts}
+          onSort={workflow.handleSort}
+        />
         <SortableColumn
           column="entityCount"
           label="Entities"
@@ -183,6 +190,7 @@
       <div class="space-y-4">
         <!-- Namespace Name -->
         <FormField
+          id="namespace-name"
           label="Name"
           bind:value={workflow.editedItem.name}
           disabled={isLocked}
@@ -193,7 +201,7 @@
 
         <!-- Description -->
         <div>
-          <label for="namespace-description" class="block text-sm text-mono-700 mb-1 font-medium">Description</label>
+          <FormLabel label="Description" forId="namespace-description" />
           <textarea
             id="namespace-description"
             bind:value={workflow.editedItem.description}

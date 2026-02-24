@@ -211,3 +211,24 @@ export interface InlineModelValidator {
   functionBody: string;
   description?: string;
 }
+
+// Standalone validator types (top-level CRUD entities)
+export interface FieldValidator {
+  id: string;
+  namespaceId: string;
+  name: string;
+  description: string;
+  compatibleTypes: string[];
+  mode: 'before' | 'after';
+  code: string;
+}
+
+export interface ModelValidator {
+  id: string;
+  namespaceId: string;
+  name: string;
+  description: string;
+  requiredFields: string[];
+  mode: 'before' | 'after';
+  code: string;
+}

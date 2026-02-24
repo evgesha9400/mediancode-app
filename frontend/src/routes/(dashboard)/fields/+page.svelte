@@ -12,6 +12,7 @@
     SortableColumn,
     Pill,
     FormField,
+    FormLabel,
     TableEmptyState,
     Drawer,
     DrawerHeader,
@@ -246,11 +247,12 @@
           {sorts}
           onSort={workflow.handleSort}
         />
-        <th scope="col" class="px-6 py-3 text-left text-xs text-mono-500 tracking-wider font-medium">
-          <div class="flex items-center space-x-1">
-            <span>Field Constraints</span>
-          </div>
-        </th>
+        <SortableColumn
+          column="constraints"
+          label="Field Constraints"
+          {sorts}
+          onSort={workflow.handleSort}
+        />
         <SortableColumn
           column="defaultValue"
           label="Default Value"
@@ -322,9 +324,7 @@
       <div class="space-y-4">
         <!-- Namespace (Read-only) -->
         <div>
-          <label for="fields-namespace" class="block text-sm text-mono-700 mb-1 font-medium">
-            Namespace
-          </label>
+          <FormLabel label="Namespace" forId="fields-namespace" />
           <input
             id="fields-namespace"
             type="text"
@@ -337,6 +337,7 @@
 
         <!-- Field Name -->
         <FormField
+          id="fields-name"
           label="Field Name"
           bind:value={workflow.editedItem.name}
           required
@@ -345,9 +346,7 @@
 
         <!-- Type -->
         <div>
-          <label for="fields-type" class="block text-sm text-mono-700 mb-1 font-medium">
-            Type <span class="text-red-500">*</span>
-          </label>
+          <FormLabel label="Type" forId="fields-type" required />
           <TypeSelectorDropdown
             id="fields-type"
             availableTypes={selectableTypes}
@@ -363,7 +362,7 @@
 
         <!-- Description -->
         <div>
-          <label for="fields-description" class="block text-sm text-mono-700 mb-1 font-medium">Description</label>
+          <FormLabel label="Description" forId="fields-description" />
           <textarea
             id="fields-description"
             bind:value={workflow.editedItem.description}
@@ -374,7 +373,7 @@
 
         <!-- Default Value -->
         <div>
-          <label for="fields-default-value" class="block text-sm text-mono-700 mb-1 font-medium">Default Value</label>
+          <FormLabel label="Default Value" forId="fields-default-value" />
           <input
             id="fields-default-value"
             type="text"
