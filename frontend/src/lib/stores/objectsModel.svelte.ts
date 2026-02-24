@@ -185,7 +185,11 @@ export function createObjectsModel(config: ObjectsModelConfig): ObjectsModelStat
         description: item.description,
         fields: item.fields,
         validators: item.validators.length > 0
-          ? item.validators.map(v => ({ functionName: v.functionName, mode: v.mode, functionBody: v.functionBody, description: v.description }))
+          ? item.validators.map(v => ({
+              templateId: v.templateId,
+              parameters: v.parameters ?? undefined,
+              fieldMappings: v.fieldMappings
+            }))
           : undefined
       }
     };
@@ -200,7 +204,11 @@ export function createObjectsModel(config: ObjectsModelConfig): ObjectsModelStat
         name: clean.name,
         description: clean.description,
         fields: clean.fields,
-        validators: clean.validators.map(v => ({ functionName: v.functionName, mode: v.mode, functionBody: v.functionBody, description: v.description }))
+        validators: clean.validators.map(v => ({
+          templateId: v.templateId,
+          parameters: v.parameters ?? undefined,
+          fieldMappings: v.fieldMappings
+        }))
       }
     };
   }

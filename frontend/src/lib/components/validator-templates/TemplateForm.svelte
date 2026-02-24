@@ -1,5 +1,5 @@
 <script module lang="ts">
-  import type { FieldValidatorTemplate, ModelValidatorTemplate } from '$lib/utils/validatorTemplates';
+  import type { FieldValidatorTemplate, ModelValidatorTemplate } from '$lib/types';
   import type { Field } from '$lib/types';
 
   export interface TemplateFormProps {
@@ -9,25 +9,24 @@
     fieldTemplate?: FieldValidatorTemplate;
     /** The selected model validator template (when kind='model') */
     modelTemplate?: ModelValidatorTemplate;
-    /** The parent field name — used to generate functionName for field validators */
-    fieldName?: string;
     /** Available fields for role mapping (model validators only) */
     availableFields?: Field[];
-    /** Called when form is submitted with generated validator data */
-    onAdd: (validator: { functionName: string; mode: 'before' | 'after'; functionBody: string; description: string }) => void;
+    /** Called when form is submitted with template reference data */
+    onAdd: (validator: { templateId: string; parameters?: Record<string, string>; fieldMappings?: Record<string, string> }) => void;
     /** Called to go back to the gallery */
     onBack: () => void;
   }
 </script>
 
 <script lang="ts">
+  import { previewBody } from '$lib/utils/templatePreview';
+
   interface Props extends TemplateFormProps {}
 
   let {
     kind,
     fieldTemplate,
     modelTemplate,
-    fieldName = '',
     availableFields = [],
     onAdd,
     onBack
@@ -39,14 +38,11 @@
   // Role mappings (for model validators)
   let mappings = $state<Record<string, string>>({});
 
-  // Custom overrides
-  let customDescription = $state('');
-
   let template = $derived(kind === 'field' ? fieldTemplate : modelTemplate);
   let templateName = $derived(template?.name ?? '');
   let templateDescription = $derived(template?.description ?? '');
 
-  // For model templates, check if all required roles are mapped
+  // For model templates, check if all required fieldMappings are mapped
   let isValid = $derived.by(() => {
     if (kind === 'field') {
       const ft = fieldTemplate;
@@ -59,9 +55,9 @@
     } else {
       const mt = modelTemplate;
       if (!mt) return false;
-      // Check required roles
-      for (const role of mt.roles) {
-        if (role.required && !mappings[role.key]?.trim()) return false;
+      // Check required fieldMappings
+      for (const fm of mt.fieldMappings) {
+        if (fm.required && !mappings[fm.key]?.trim()) return false;
       }
       // Check required params
       for (const p of mt.parameters ?? []) {
@@ -75,17 +71,22 @@
     if (!isValid) return;
 
     if (kind === 'field' && fieldTemplate) {
-      const functionName = fieldTemplate.generateFunctionName(fieldName);
-      const functionBody = fieldTemplate.generateFunctionBody(params);
-      const description = customDescription.trim() || fieldTemplate.description;
-      onAdd({ functionName, mode: fieldTemplate.mode, functionBody, description });
+      const nonEmptyParams = Object.fromEntries(
+        Object.entries(params).filter(([_, v]) => v !== '')
+      );
+      onAdd({
+        templateId: fieldTemplate.id,
+        parameters: Object.keys(nonEmptyParams).length > 0 ? nonEmptyParams : undefined
+      });
     } else if (kind === 'model' && modelTemplate) {
-      // Merge role mappings + parameter values for generation
-      const allMappings = { ...mappings, ...params };
-      const functionName = modelTemplate.generateFunctionName();
-      const functionBody = modelTemplate.generateFunctionBody(allMappings);
-      const description = customDescription.trim() || modelTemplate.description;
-      onAdd({ functionName, mode: modelTemplate.mode, functionBody, description });
+      const nonEmptyParams = Object.fromEntries(
+        Object.entries(params).filter(([_, v]) => v !== '')
+      );
+      onAdd({
+        templateId: modelTemplate.id,
+        parameters: Object.keys(nonEmptyParams).length > 0 ? nonEmptyParams : undefined,
+        fieldMappings: mappings
+      });
     }
   }
 
@@ -118,29 +119,42 @@
         <label for="param-{param.key}" class="block text-xs text-mono-700 mb-1 font-medium">
           {param.label} {#if param.required}<span class="text-red-500">*</span>{/if}
         </label>
-        <input
-          id="param-{param.key}"
-          type={param.type}
-          step={param.type === 'number' ? 'any' : undefined}
-          bind:value={params[param.key]}
-          placeholder={param.placeholder}
-          class="w-full px-3 py-2 border border-mono-300 rounded-md text-sm focus:ring-2 focus:ring-mono-400 focus:border-transparent"
-        />
+        {#if param.type === 'select' && param.options}
+          <select
+            id="param-{param.key}"
+            bind:value={params[param.key]}
+            class="w-full px-3 py-2 border border-mono-300 rounded-md text-sm focus:ring-2 focus:ring-mono-400 focus:border-transparent bg-white"
+          >
+            <option value="">Select...</option>
+            {#each param.options as opt}
+              <option value={opt.value}>{opt.label}</option>
+            {/each}
+          </select>
+        {:else}
+          <input
+            id="param-{param.key}"
+            type={param.type}
+            step={param.type === 'number' ? 'any' : undefined}
+            bind:value={params[param.key]}
+            placeholder={param.placeholder}
+            class="w-full px-3 py-2 border border-mono-300 rounded-md text-sm focus:ring-2 focus:ring-mono-400 focus:border-transparent"
+          />
+        {/if}
       </div>
     {/each}
   {/if}
 
-  <!-- Role mappings (model validators) -->
-  {#if kind === 'model' && modelTemplate?.roles}
-    {#each modelTemplate.roles as role}
-      {@const candidates = fieldsForRole(role.compatibleTypes)}
+  <!-- Field mappings (model validators) -->
+  {#if kind === 'model' && modelTemplate?.fieldMappings}
+    {#each modelTemplate.fieldMappings as fm}
+      {@const candidates = fieldsForRole(fm.compatibleTypes)}
       <div>
-        <label for="role-{role.key}" class="block text-xs text-mono-700 mb-1 font-medium">
-          {role.label} {#if role.required}<span class="text-red-500">*</span>{/if}
+        <label for="role-{fm.key}" class="block text-xs text-mono-700 mb-1 font-medium">
+          {fm.label} {#if fm.required}<span class="text-red-500">*</span>{/if}
         </label>
         <select
-          id="role-{role.key}"
-          bind:value={mappings[role.key]}
+          id="role-{fm.key}"
+          bind:value={mappings[fm.key]}
           class="w-full px-3 py-2 border border-mono-300 rounded-md text-sm focus:ring-2 focus:ring-mono-400 focus:border-transparent bg-white"
         >
           <option value="">Select a field...</option>
@@ -159,31 +173,39 @@
         <label for="mparam-{param.key}" class="block text-xs text-mono-700 mb-1 font-medium">
           {param.label} {#if param.required}<span class="text-red-500">*</span>{/if}
         </label>
-        <input
-          id="mparam-{param.key}"
-          type={param.type}
-          step={param.type === 'number' ? 'any' : undefined}
-          bind:value={params[param.key]}
-          placeholder={param.placeholder}
-          class="w-full px-3 py-2 border border-mono-300 rounded-md text-sm focus:ring-2 focus:ring-mono-400 focus:border-transparent"
-        />
+        {#if param.type === 'select' && param.options}
+          <select
+            id="mparam-{param.key}"
+            bind:value={params[param.key]}
+            class="w-full px-3 py-2 border border-mono-300 rounded-md text-sm focus:ring-2 focus:ring-mono-400 focus:border-transparent bg-white"
+          >
+            <option value="">Select...</option>
+            {#each param.options as opt}
+              <option value={opt.value}>{opt.label}</option>
+            {/each}
+          </select>
+        {:else}
+          <input
+            id="mparam-{param.key}"
+            type={param.type}
+            step={param.type === 'number' ? 'any' : undefined}
+            bind:value={params[param.key]}
+            placeholder={param.placeholder}
+            class="w-full px-3 py-2 border border-mono-300 rounded-md text-sm focus:ring-2 focus:ring-mono-400 focus:border-transparent"
+          />
+        {/if}
       </div>
     {/each}
   {/if}
 
-  <!-- Custom description override -->
-  <div>
-    <label for="custom-description" class="block text-xs text-mono-700 mb-1 font-medium">
-      Description (optional override)
-    </label>
-    <input
-      id="custom-description"
-      type="text"
-      bind:value={customDescription}
-      placeholder={templateDescription}
-      class="w-full px-3 py-2 border border-mono-300 rounded-md text-sm focus:ring-2 focus:ring-mono-400 focus:border-transparent"
-    />
-  </div>
+  <!-- Code Preview -->
+  {#if template?.bodyTemplate}
+    {@const allMappings = { ...mappings, ...params }}
+    <div>
+      <span class="block text-xs text-mono-700 mb-1 font-medium">Code Preview</span>
+      <pre class="p-3 bg-mono-900 text-mono-100 rounded-md text-xs overflow-x-auto whitespace-pre font-mono">{previewBody(template.bodyTemplate, allMappings)}</pre>
+    </div>
+  {/if}
 
   <!-- Add button -->
   <button

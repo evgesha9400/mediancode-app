@@ -10,7 +10,7 @@
 
 import { describe, it, expect } from 'vitest';
 import { TemplateGallery, type TemplateGalleryProps } from '$lib/components';
-import type { FieldValidatorTemplate, ModelValidatorTemplate } from '$lib/utils/validatorTemplates';
+import type { FieldValidatorTemplate, ModelValidatorTemplate } from '$lib/types';
 
 describe('TemplateGallery Component', () => {
 	describe('TypeScript Interface', () => {
@@ -40,8 +40,8 @@ describe('TemplateGallery Component', () => {
 				description: 'A test template',
 				compatibleTypes: ['str'],
 				mode: 'before',
-				generateFunctionName: (fieldName) => `test_${fieldName}`,
-				generateFunctionBody: () => '    return v'
+				parameters: [],
+				bodyTemplate: '    return v.strip()'
 			};
 
 			const props: TemplateGalleryProps = {
@@ -60,9 +60,9 @@ describe('TemplateGallery Component', () => {
 				name: 'Test Model Template',
 				description: 'A test model template',
 				mode: 'after',
-				roles: [{ key: 'field_a', label: 'Field A', compatibleTypes: [], required: true }],
-				generateFunctionName: () => 'test_model_validator',
-				generateFunctionBody: (mappings) => `    return self`
+				parameters: [],
+				fieldMappings: [{ key: 'field_a', label: 'Field A', compatibleTypes: [], required: true }],
+				bodyTemplate: '    return self'
 			};
 
 			const props: TemplateGalleryProps = {

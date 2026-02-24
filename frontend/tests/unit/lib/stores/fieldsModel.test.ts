@@ -455,6 +455,27 @@ describe('fieldsModel - Create', () => {
 
     expect(showToast).toHaveBeenCalledWith('Create failed', 'error', 5000);
   });
+
+  it('should map validators to template-based payload', async () => {
+    ({ model, cleanup } = createTestModel());
+    const newField = makeField({ id: 'f-new', name: 'new_field' });
+    (createFieldAction as Mock).mockResolvedValue({ success: true, data: newField });
+
+    model.openCreate();
+    flushSync();
+    model.editedItem!.name = 'new_field';
+    model.editedItem!.validators = [
+      { id: '', templateId: 'tmpl-1', parameters: { case: 'lowercase' } }
+    ];
+    flushSync();
+
+    await model.handleCreate();
+
+    const payload = (createFieldAction as Mock).mock.calls[0][0];
+    expect(payload.validators).toEqual([
+      { templateId: 'tmpl-1', parameters: { case: 'lowercase' } }
+    ]);
+  });
 });
 
 describe('fieldsModel - Delete', () => {

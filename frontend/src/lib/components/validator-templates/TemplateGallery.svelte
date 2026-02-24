@@ -1,5 +1,5 @@
 <script module lang="ts">
-  import type { FieldValidatorTemplate, ModelValidatorTemplate } from '$lib/utils/validatorTemplates';
+  import type { FieldValidatorTemplate, ModelValidatorTemplate } from '$lib/types';
 
   export interface TemplateGalleryProps {
     /** 'field' or 'model' — determines which template list to show */
@@ -83,6 +83,11 @@
             <span class="px-2 py-0.5 text-xs rounded-full bg-mono-100 text-mono-600">{template.mode}</span>
           </div>
           <p class="text-xs text-mono-500 mt-1">{template.description}</p>
+          <div class="flex flex-wrap gap-1 mt-1">
+            {#each template.compatibleTypes as ctype}
+              <span class="px-1.5 py-0.5 text-[10px] rounded-full bg-mono-200 text-mono-600">{ctype}</span>
+            {/each}
+          </div>
         </button>
       {:else}
         <p class="text-xs text-mono-500 italic p-2">No matching templates</p>
@@ -99,6 +104,11 @@
             <span class="px-2 py-0.5 text-xs rounded-full bg-mono-100 text-mono-600">{template.mode}</span>
           </div>
           <p class="text-xs text-mono-500 mt-1">{template.description}</p>
+          <div class="flex flex-wrap gap-1 mt-1">
+            {#each template.fieldMappings as fm}
+              <span class="px-1.5 py-0.5 text-[10px] rounded-full bg-mono-200 text-mono-600">{fm.label}</span>
+            {/each}
+          </div>
         </button>
       {:else}
         <p class="text-xs text-mono-500 italic p-2">No matching templates</p>

@@ -196,7 +196,7 @@ export function createFieldsModel(config: FieldsModelConfig): FieldsModelState {
         defaultValue: item.defaultValue,
         constraints: item.constraints.map(c => ({ constraintId: c.constraintId, value: c.value })),
         validators: item.validators.length > 0
-          ? item.validators.map(v => ({ functionName: v.functionName, mode: v.mode, functionBody: v.functionBody, description: v.description }))
+          ? item.validators.map(v => ({ templateId: v.templateId, parameters: v.parameters ?? undefined }))
           : undefined
       }
     };
@@ -213,7 +213,7 @@ export function createFieldsModel(config: FieldsModelConfig): FieldsModelState {
         description: item.description,
         defaultValue: item.defaultValue,
         constraints: item.constraints.map(c => ({ constraintId: c.constraintId, value: c.value })),
-        validators: item.validators.map(v => ({ functionName: v.functionName, mode: v.mode, functionBody: v.functionBody, description: v.description }))
+        validators: item.validators.map(v => ({ templateId: v.templateId, parameters: v.parameters ?? undefined }))
       }
     };
   }

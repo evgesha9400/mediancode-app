@@ -384,6 +384,27 @@ describe('objectsModel - Create', () => {
     expect(createObjectAction).not.toHaveBeenCalled();
   });
 
+  it('should map validators to template-based payload', async () => {
+    ({ model, cleanup } = createTestModel());
+    const created = makeObject({ id: 'o-new', name: 'NewObj' });
+    (createObjectAction as Mock).mockResolvedValue({ success: true, data: created });
+
+    model.openCreate();
+    flushSync();
+    model.editedItem!.name = 'NewObj';
+    model.editedItem!.validators = [
+      { id: '', templateId: 'tmpl-pwd', parameters: null, fieldMappings: { password_field: 'password', confirm_field: 'confirm' } }
+    ];
+    flushSync();
+
+    await model.handleCreate();
+
+    const payload = (createObjectAction as Mock).mock.calls[0][0];
+    expect(payload.validators).toEqual([
+      { templateId: 'tmpl-pwd', parameters: undefined, fieldMappings: { password_field: 'password', confirm_field: 'confirm' } }
+    ]);
+  });
+
   it('should handle create failure', async () => {
     ({ model, cleanup } = createTestModel());
     (createObjectAction as Mock).mockResolvedValue({ success: false, error: 'Create failed' });

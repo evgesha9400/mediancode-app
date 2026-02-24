@@ -10,15 +10,14 @@
 
 import { describe, it, expect } from 'vitest';
 import { TemplateForm, type TemplateFormProps } from '$lib/components';
-import type { FieldValidatorTemplate, ModelValidatorTemplate } from '$lib/utils/validatorTemplates';
+import type { FieldValidatorTemplate, ModelValidatorTemplate } from '$lib/types';
 import type { Field } from '$lib/types';
 
 describe('TemplateForm Component', () => {
 	const mockOnAdd = (_validator: {
-		functionName: string;
-		mode: 'before' | 'after';
-		functionBody: string;
-		description: string;
+		templateId: string;
+		parameters?: Record<string, string>;
+		fieldMappings?: Record<string, string>;
 	}) => {};
 	const mockOnBack = () => {};
 
@@ -52,8 +51,8 @@ describe('TemplateForm Component', () => {
 				description: 'A test template',
 				compatibleTypes: ['str'],
 				mode: 'before',
-				generateFunctionName: (fieldName) => `test_${fieldName}`,
-				generateFunctionBody: () => '    return v'
+				parameters: [],
+				bodyTemplate: '    return v.strip()'
 			};
 
 			const props: TemplateFormProps = {
@@ -73,9 +72,9 @@ describe('TemplateForm Component', () => {
 				name: 'Test Model Template',
 				description: 'A test model template',
 				mode: 'after',
-				roles: [{ key: 'field_a', label: 'Field A', compatibleTypes: [], required: true }],
-				generateFunctionName: () => 'test_model_validator',
-				generateFunctionBody: (mappings) => `    return self`
+				parameters: [],
+				fieldMappings: [{ key: 'field_a', label: 'Field A', compatibleTypes: [], required: true }],
+				bodyTemplate: '    return self'
 			};
 
 			const props: TemplateFormProps = {
@@ -87,17 +86,6 @@ describe('TemplateForm Component', () => {
 
 			expect(props.modelTemplate).toBeDefined();
 			expect(props.modelTemplate!.name).toBe('Test Model Template');
-		});
-
-		it('TemplateFormProps accepts optional fieldName', () => {
-			const props: TemplateFormProps = {
-				kind: 'field',
-				fieldName: 'email',
-				onAdd: mockOnAdd,
-				onBack: mockOnBack
-			};
-
-			expect(props.fieldName).toBe('email');
 		});
 
 		it('TemplateFormProps accepts optional availableFields for model validators', () => {
@@ -134,7 +122,6 @@ describe('TemplateForm Component', () => {
 
 			expect(props.fieldTemplate).toBeUndefined();
 			expect(props.modelTemplate).toBeUndefined();
-			expect(props.fieldName).toBeUndefined();
 			expect(props.availableFields).toBeUndefined();
 		});
 	});
