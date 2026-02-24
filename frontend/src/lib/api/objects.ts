@@ -20,10 +20,9 @@ interface ObjectFieldReferenceResponse {
  */
 interface ModelValidatorResponse {
 	id: string;
-	functionName: string;
-	mode: 'before' | 'after';
-	functionBody: string;
-	description: string | null;
+	templateId: string;
+	parameters: Record<string, string> | null;
+	fieldMappings: Record<string, string>;
 }
 
 /**
@@ -55,10 +54,9 @@ function transformFieldReference(response: ObjectFieldReferenceResponse): Object
 function transformModelValidator(response: ModelValidatorResponse): InlineModelValidator {
 	return {
 		id: response.id,
-		functionName: response.functionName,
-		mode: response.mode,
-		functionBody: response.functionBody,
-		description: response.description ?? undefined
+		templateId: response.templateId,
+		parameters: response.parameters,
+		fieldMappings: response.fieldMappings
 	};
 }
 
@@ -108,7 +106,7 @@ export interface CreateObjectRequest {
 	name: string;
 	description?: string;
 	fields: ObjectFieldReference[];
-	validators?: { functionName: string; mode: 'before' | 'after'; functionBody: string; description?: string }[];
+	validators?: { templateId: string; parameters?: Record<string, string>; fieldMappings: Record<string, string> }[];
 }
 
 /**
@@ -118,7 +116,7 @@ export interface UpdateObjectRequest {
 	name?: string;
 	description?: string;
 	fields?: ObjectFieldReference[];
-	validators?: { functionName: string; mode: 'before' | 'after'; functionBody: string; description?: string }[];
+	validators?: { templateId: string; parameters?: Record<string, string>; fieldMappings: Record<string, string> }[];
 }
 
 // ============================================================================

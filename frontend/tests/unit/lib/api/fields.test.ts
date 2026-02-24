@@ -62,6 +62,25 @@ describe('Fields API Service', () => {
       expect(result[0].constraints[0].name).toBe('max_length');
     });
 
+    it('should transform field validators with template data', async () => {
+      const responseWithValidators = {
+        ...MOCK_FIELD_RESPONSE,
+        validators: [
+          { id: 'v-1', templateId: 'tmpl-strip-normalize', parameters: { case: 'lowercase' } }
+        ]
+      };
+      (apiGet as any).mockResolvedValue([responseWithValidators]);
+
+      const result = await listFields();
+
+      expect(result[0].validators).toHaveLength(1);
+      expect(result[0].validators[0]).toEqual({
+        id: 'v-1',
+        templateId: 'tmpl-strip-normalize',
+        parameters: { case: 'lowercase' }
+      });
+    });
+
     it('should filter by namespace', async () => {
       (apiGet as any).mockResolvedValue([]);
 

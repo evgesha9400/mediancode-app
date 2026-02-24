@@ -46,6 +46,31 @@ describe('Objects API Service', () => {
       expect(result[0].fields).toHaveLength(2);
     });
 
+    it('should transform model validators with template data', async () => {
+      const responseWithValidators = {
+        ...MOCK_OBJECT_RESPONSE,
+        validators: [
+          {
+            id: 'v-1',
+            templateId: 'tmpl-password-confirm',
+            parameters: null,
+            fieldMappings: { password_field: 'password', confirm_field: 'confirm_password' }
+          }
+        ]
+      };
+      (apiGet as any).mockResolvedValue([responseWithValidators]);
+
+      const result = await listObjects();
+
+      expect(result[0].validators).toHaveLength(1);
+      expect(result[0].validators[0]).toEqual({
+        id: 'v-1',
+        templateId: 'tmpl-password-confirm',
+        parameters: null,
+        fieldMappings: { password_field: 'password', confirm_field: 'confirm_password' }
+      });
+    });
+
     it('should filter by namespace', async () => {
       (apiGet as any).mockResolvedValue([]);
 

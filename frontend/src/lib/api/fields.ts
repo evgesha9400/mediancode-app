@@ -35,10 +35,8 @@ function buildTypeIdToNameMap(): Record<string, string> {
  */
 interface FieldValidatorResponse {
 	id: string;
-	functionName: string;
-	mode: 'before' | 'after';
-	functionBody: string;
-	description: string | null;
+	templateId: string;
+	parameters: Record<string, string> | null;
 }
 
 /**
@@ -73,10 +71,8 @@ function transformFieldConstraintValue(response: FieldConstraintValueResponse): 
 function transformFieldValidator(response: FieldValidatorResponse): InlineFieldValidator {
 	return {
 		id: response.id,
-		functionName: response.functionName,
-		mode: response.mode,
-		functionBody: response.functionBody,
-		description: response.description ?? undefined
+		templateId: response.templateId,
+		parameters: response.parameters
 	};
 }
 
@@ -138,7 +134,7 @@ export interface CreateFieldRequest {
 	description?: string;
 	defaultValue?: string;
 	constraints: { constraintId: string; value: string | null }[];
-	validators?: { functionName: string; mode: 'before' | 'after'; functionBody: string; description?: string }[];
+	validators?: { templateId: string; parameters?: Record<string, string> }[];
 }
 
 /**
@@ -150,7 +146,7 @@ export interface UpdateFieldRequest {
 	description?: string;
 	defaultValue?: string;
 	constraints?: { constraintId: string; value: string | null }[];
-	validators?: { functionName: string; mode: 'before' | 'after'; functionBody: string; description?: string }[];
+	validators?: { templateId: string; parameters?: Record<string, string> }[];
 }
 
 // ============================================================================
