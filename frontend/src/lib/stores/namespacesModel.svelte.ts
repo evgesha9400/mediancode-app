@@ -16,6 +16,8 @@ import {
   type CreateNamespaceRequest,
   type UpdateNamespaceRequest
 } from '$lib/domain/mutations';
+import { namespacesStore } from './namespaces';
+import { get } from 'svelte/store';
 import { composeState } from '$lib/utils/compose';
 import { showToast } from './toasts';
 
@@ -252,6 +254,16 @@ export function createNamespacesModel(config: NamespacesModelConfig): Namespaces
         showToast(result.error || 'Failed to update namespace', 'error', 5000);
       }
       return;
+    }
+
+    // If this namespace was set as default, clear isDefault on all others in local store
+    if (result.data!.isDefault) {
+      const currentNamespaces = get(namespacesStore);
+      namespacesStore.set(
+        currentNamespaces.map(ns =>
+          ns.id === result.data!.id ? result.data! : { ...ns, isDefault: false }
+        )
+      );
     }
 
     listState.selectedItem = result.data!;

@@ -230,6 +230,26 @@
             </div>
           </div>
 
+          <!-- Default Namespace Toggle -->
+          <div>
+            <h3 class="text-sm text-mono-700 mb-2 font-medium">Default Namespace</h3>
+            <label class="flex items-center space-x-3 cursor-pointer">
+              <input
+                type="checkbox"
+                bind:checked={workflow.editedItem.isDefault}
+                disabled={workflow.editedItem.isDefault}
+                class="w-4 h-4 rounded border-mono-300 text-mono-900 focus:ring-mono-400 disabled:opacity-50 disabled:cursor-not-allowed"
+              />
+              <span class="text-sm text-mono-600">
+                {#if workflow.editedItem.isDefault}
+                  This is your default namespace
+                {:else}
+                  Set as default namespace
+                {/if}
+              </span>
+            </label>
+            <p class="text-xs text-mono-500 mt-1">The default namespace is auto-selected when the app loads.</p>
+          </div>
         {/if}
       </div>
     {/if}
