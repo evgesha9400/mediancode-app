@@ -65,10 +65,10 @@
               <div class="flex items-center justify-between text-xs">
                 <div class="flex items-center space-x-2">
                   <span class="font-mono text-mono-700">{field.name}</span>
-                  {#if fieldRef.required}
-                    <span class="text-xs text-mono-500 bg-mono-200 px-1.5 py-0.5 rounded">required</span>
-                  {:else}
+                  {#if fieldRef.optional}
                     <span class="text-xs text-mono-400">optional</span>
+                  {:else}
+                    <span class="text-xs text-mono-500 bg-mono-200 px-1.5 py-0.5 rounded">required</span>
                   {/if}
                 </div>
                 <span class="text-mono-500 bg-mono-100 px-1.5 py-0.5 rounded">{field.type}</span>

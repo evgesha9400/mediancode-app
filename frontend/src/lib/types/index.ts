@@ -151,7 +151,7 @@ export interface ApiEndpoint {
 // Object Builder types
 export interface ObjectFieldReference {
   fieldId: string;
-  required: boolean;
+  optional: boolean;
 }
 
 export interface ObjectDefinition {
