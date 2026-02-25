@@ -15,7 +15,7 @@ interface NamespaceResponse {
 	name: string;
 	description: string | null;
 	isDefault: boolean;
-	locked?: boolean;
+	locked: boolean;
 }
 
 /**
@@ -27,7 +27,7 @@ function transformNamespace(response: NamespaceResponse): Namespace {
 		name: response.name,
 		description: response.description ?? undefined,
 		isDefault: response.isDefault,
-		locked: response.locked ?? response.isDefault
+		locked: response.locked
 	};
 }
 
@@ -57,6 +57,7 @@ export async function getNamespace(id: string): Promise<Namespace> {
 export interface CreateNamespaceRequest {
 	name: string;
 	description?: string;
+	isDefault?: boolean;
 }
 
 /**

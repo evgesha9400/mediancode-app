@@ -200,6 +200,22 @@
           ></textarea>
         </div>
 
+        <!-- Default toggle (create mode) -->
+        {#if isCreating}
+          <div>
+            <h3 class="text-sm text-mono-700 mb-2 font-medium">Default Namespace</h3>
+            <label class="flex items-center space-x-3 cursor-pointer">
+              <input
+                type="checkbox"
+                bind:checked={workflow.editedItem.isDefault}
+                class="w-4 h-4 rounded border-mono-300 text-mono-900 focus:ring-mono-400"
+              />
+              <span class="text-sm text-mono-600">Set as default namespace</span>
+            </label>
+            <p class="text-xs text-mono-500 mt-1">The default namespace is auto-selected when the app loads.</p>
+          </div>
+        {/if}
+
         <!-- Entity Counts (only when editing) -->
         {#if !isCreating}
           {@const details = getNamespaceEntityDetails(workflow.editedItem.id)}

@@ -176,7 +176,8 @@ export function createNamespacesModel(config: NamespacesModelConfig): Namespaces
       ok: true,
       data: {
         name: item.name,
-        description: item.description
+        description: item.description,
+        ...(item.isDefault ? { isDefault: true } : {})
       }
     };
   }
@@ -193,6 +194,12 @@ export function createNamespacesModel(config: NamespacesModelConfig): Namespaces
   }
 
   function deletionGuard(item: Namespace): { canDelete: boolean; tooltip: string } {
+    if (item.locked) {
+      return { canDelete: false, tooltip: 'Cannot delete the Global namespace' };
+    }
+    if (item.isDefault) {
+      return { canDelete: false, tooltip: 'Cannot delete the default namespace' };
+    }
     const details = getNamespaceEntityDetails(item.id);
     if (details.total > 0) {
       return { canDelete: false, tooltip: `Cannot delete: Contains ${details.total} entities` };
@@ -300,6 +307,16 @@ export function createNamespacesModel(config: NamespacesModelConfig): Namespaces
         showToast(result.error || 'Failed to create namespace', 'error', 5000);
       }
       return;
+    }
+
+    // If this namespace was created as default, clear isDefault on all others in local store
+    if (result.data!.isDefault) {
+      const currentNamespaces = get(namespacesStore);
+      namespacesStore.set(
+        currentNamespaces.map(ns =>
+          ns.id === result.data!.id ? result.data! : { ...ns, isDefault: false }
+        )
+      );
     }
 
     showToast(`Namespace "${result.data!.name}" created successfully`, 'success', 3000);
