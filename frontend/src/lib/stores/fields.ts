@@ -55,6 +55,7 @@ export function searchFields(fields: Field[], query: string): Field[] {
 	return fields.filter(field =>
 		field.name.toLowerCase().includes(lowerQuery) ||
 		field.type.toLowerCase().includes(lowerQuery) ||
+		(field.container && field.container.toLowerCase().includes(lowerQuery)) ||
 		field.description?.toLowerCase().includes(lowerQuery) ||
 		field.constraints.some(c => c.name.toLowerCase().includes(lowerQuery))
 	);

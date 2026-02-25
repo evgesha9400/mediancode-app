@@ -184,6 +184,7 @@ export function createFieldsModel(config: FieldsModelConfig): FieldsModelState {
       namespaceId: getActiveNamespaceId(),
       name: '',
       type: getDefaultType(),
+      container: null,
       constraints: [],
       validators: [],
       usedInApis: [],
@@ -201,6 +202,7 @@ export function createFieldsModel(config: FieldsModelConfig): FieldsModelState {
         namespaceId: item.namespaceId,
         name: item.name,
         typeId,
+        container: item.container,
         description: item.description,
         defaultValue: item.defaultValue,
         constraints: item.constraints.map(c => ({ constraintId: c.constraintId, value: c.value })),
@@ -219,6 +221,7 @@ export function createFieldsModel(config: FieldsModelConfig): FieldsModelState {
       data: {
         name: item.name,
         typeId,
+        container: item.container,
         description: item.description,
         defaultValue: item.defaultValue,
         constraints: item.constraints.map(c => ({ constraintId: c.constraintId, value: c.value })),
