@@ -114,15 +114,8 @@
           onclick={() => state.selectItem(type)}
           class="cursor-pointer transition-colors {state.selectedItem?.name === type.name ? 'bg-mono-100' : 'hover:bg-mono-50'}"
         >
-          <td class="px-6 py-4 whitespace-nowrap">
-            <div class="flex items-center">
-              <span class="w-5 flex-shrink-0 flex items-center justify-center">
-                {#if isSystemEntity(type)}
-                  <i class="fa-solid fa-lock text-mono-400 text-xs leading-none" title="System — read-only"></i>
-                {/if}
-              </span>
-              <span class="text-sm text-mono-900 font-medium">{type.name}</span>
-            </div>
+          <td class="px-6 py-4 whitespace-nowrap text-sm text-mono-900 font-medium">
+            {type.name}
           </td>
           <td class="px-6 py-4 whitespace-nowrap">
             <Pill>{type.pythonType}</Pill>
@@ -150,6 +143,12 @@
   <DrawerContent>
     {#if state.selectedItem}
       <div class="space-y-6">
+        {#if isSystemEntity(state.selectedItem)}
+          <div class="flex items-center space-x-2 px-3 py-2 bg-mono-50 border border-mono-200 rounded-md">
+            <i class="fa-solid fa-lock text-mono-400 text-sm"></i>
+            <span class="text-sm text-mono-600">System type — read-only</span>
+          </div>
+        {/if}
         <DetailField label="Name" value={state.selectedItem.name} />
         <DetailField label="Python Type" value={state.selectedItem.pythonType} />
         <DetailField label="Description" value={state.selectedItem.description} />
