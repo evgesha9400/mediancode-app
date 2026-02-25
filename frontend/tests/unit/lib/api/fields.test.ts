@@ -35,6 +35,7 @@ const MOCK_FIELD_RESPONSE = {
   namespaceId: 'ns-1',
   name: 'email',
   typeId: 'type-str',
+  container: null,
   description: 'User email',
   defaultValue: null,
   constraints: [
@@ -79,6 +80,17 @@ describe('Fields API Service', () => {
         templateId: 'tmpl-strip-normalize',
         parameters: { case: 'lowercase' }
       });
+    });
+
+    it('should transform field with List container', async () => {
+      (apiGet as any).mockResolvedValue([{
+        ...MOCK_FIELD_RESPONSE,
+        container: 'List'
+      }]);
+
+      const result = await listFields();
+
+      expect(result[0].container).toBe('List');
     });
 
     it('should filter by namespace', async () => {

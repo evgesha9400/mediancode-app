@@ -47,6 +47,7 @@ interface FieldResponse {
 	namespaceId: string;
 	name: string;
 	typeId: string;
+	container: string | null;
 	description: string | null;
 	defaultValue: string | null;
 	constraints: FieldConstraintValueResponse[];
@@ -91,6 +92,7 @@ function transformField(response: FieldResponse, typeMap: Record<string, string>
 		namespaceId: response.namespaceId,
 		name: response.name,
 		type: typeName ?? 'str',
+		container: response.container,
 		description: response.description ?? undefined,
 		defaultValue: response.defaultValue ?? undefined,
 		constraints: response.constraints.map(transformFieldConstraintValue),
@@ -131,6 +133,7 @@ export interface CreateFieldRequest {
 	namespaceId: string;
 	name: string;
 	typeId: string;
+	container?: string | null;
 	description?: string;
 	defaultValue?: string;
 	constraints: { constraintId: string; value: string | null }[];
@@ -143,6 +146,7 @@ export interface CreateFieldRequest {
 export interface UpdateFieldRequest {
 	name?: string;
 	typeId?: string;
+	container?: string | null;
 	description?: string;
 	defaultValue?: string;
 	constraints?: { constraintId: string; value: string | null }[];
