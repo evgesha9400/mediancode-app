@@ -183,7 +183,8 @@ export function createNamespacesModel(config: NamespacesModelConfig): Namespaces
       ok: true,
       data: {
         name: item.name,
-        description: item.description
+        description: item.description,
+        isDefault: item.isDefault
       }
     };
   }

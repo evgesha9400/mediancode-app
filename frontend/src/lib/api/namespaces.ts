@@ -63,6 +63,7 @@ export interface CreateNamespaceRequest {
 export interface UpdateNamespaceRequest {
 	name?: string;
 	description?: string;
+	isDefault?: boolean;
 }
 
 // ============================================================================
