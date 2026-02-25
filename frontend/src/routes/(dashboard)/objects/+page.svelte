@@ -73,7 +73,7 @@
 
     workflow.editedItem = {
       ...workflow.editedItem,
-      fields: [...workflow.editedItem.fields, { fieldId, required: false }]
+      fields: [...workflow.editedItem.fields, { fieldId, optional: false }]
     };
   }
 
@@ -85,10 +85,10 @@
     };
   }
 
-  function toggleFieldRequired(fieldId: string) {
+  function toggleFieldOptional(fieldId: string) {
     if (!workflow.editedItem) return;
     const newFields = workflow.editedItem.fields.map(f =>
-      f.fieldId === fieldId ? { ...f, required: !f.required } : f
+      f.fieldId === fieldId ? { ...f, optional: !f.optional } : f
     );
     workflow.editedItem = {
       ...workflow.editedItem,
@@ -321,15 +321,15 @@
                         <div class="flex-1"></div>
                       {/if}
 
-                      <!-- Required Checkbox -->
+                      <!-- Optional Checkbox -->
                       <label class="flex items-center space-x-2 cursor-pointer">
                         <input
                           type="checkbox"
-                          checked={fieldRef.required}
-                          onchange={() => toggleFieldRequired(fieldRef.fieldId)}
+                          checked={fieldRef.optional}
+                          onchange={() => toggleFieldOptional(fieldRef.fieldId)}
                           class="h-4 w-4 border-mono-300 rounded text-mono-900 focus:ring-2 focus:ring-mono-400"
                         />
-                        <span class="text-sm text-mono-600 whitespace-nowrap">Required</span>
+                        <span class="text-sm text-mono-600 whitespace-nowrap">Optional</span>
                       </label>
 
                       <!-- Delete Button (aligned to the right) -->
