@@ -113,12 +113,6 @@
           onSort={workflow.handleSort}
         />
         <SortableColumn
-          column="locked"
-          label="Status"
-          {sorts}
-          onSort={workflow.handleSort}
-        />
-        <SortableColumn
           column="entityCount"
           label="Entities"
           {sorts}
@@ -138,8 +132,6 @@
               <span class="text-sm text-mono-900 font-medium">{namespace.name}</span>
               {#if namespace.name?.toLowerCase() === 'global'}
                 <i class="fa-solid fa-earth-americas text-mono-400 text-xs" title="Global"></i>
-              {:else if namespace.locked}
-                <i class="fa-solid fa-lock text-mono-400 text-xs" title="Locked"></i>
               {/if}
               {#if namespace.isDefault}
                 <span class="px-1.5 py-0.5 text-xs rounded bg-mono-900 text-white">Default</span>
@@ -148,17 +140,6 @@
           </td>
           <td class="px-6 py-4 text-sm text-mono-500">
             {namespace.description || '-'}
-          </td>
-          <td class="px-6 py-4 whitespace-nowrap">
-            {#if namespace.locked}
-              <span class="px-2 py-1 text-xs rounded-full bg-mono-200 text-mono-600">
-                Locked
-              </span>
-            {:else}
-              <span class="px-2 py-1 text-xs rounded-full bg-green-100 text-green-700">
-                Editable
-              </span>
-            {/if}
           </td>
           <td class="px-6 py-4 whitespace-nowrap">
             <div class="flex items-center space-x-2">
