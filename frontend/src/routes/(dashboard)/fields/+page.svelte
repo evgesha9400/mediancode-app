@@ -108,6 +108,16 @@
     };
   }
 
+  function handleContainerChange(container: string | null) {
+    if (!workflow.editedItem) return;
+    workflow.editedItem = {
+      ...workflow.editedItem,
+      container,
+      constraints: [],
+      defaultValue: ''
+    };
+  }
+
   function addFieldConstraint(constraintName: string) {
     if (!workflow.editedItem) return;
 
@@ -283,7 +293,7 @@
           </td>
           <td class="px-6 py-4 whitespace-nowrap">
             <span class="px-2 py-1 text-xs rounded-full bg-mono-900 text-white">
-              {field.type}
+              {field.container ? `${field.container}[${field.type}]` : field.type}
             </span>
           </td>
           <td class="px-6 py-4 whitespace-nowrap">
@@ -347,6 +357,27 @@
           required
           error={workflow.visibleErrors.name}
         />
+
+        <!-- Container -->
+        <div>
+          <FormLabel label="Container" />
+          <div class="flex space-x-2">
+            <button
+              type="button"
+              onclick={() => handleContainerChange(null)}
+              class="px-3 py-1.5 text-sm rounded-md border transition-colors {workflow.editedItem.container === null ? 'bg-mono-900 text-white border-mono-900' : 'bg-white text-mono-600 border-mono-300 hover:border-mono-400'}"
+            >
+              None
+            </button>
+            <button
+              type="button"
+              onclick={() => handleContainerChange('List')}
+              class="px-3 py-1.5 text-sm rounded-md border transition-colors {workflow.editedItem.container === 'List' ? 'bg-mono-900 text-white border-mono-900' : 'bg-white text-mono-600 border-mono-300 hover:border-mono-400'}"
+            >
+              List
+            </button>
+          </div>
+        </div>
 
         <!-- Type -->
         <div>
