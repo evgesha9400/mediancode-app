@@ -183,6 +183,16 @@ export function createNamespacesModel(config: NamespacesModelConfig): Namespaces
   }
 
   function toUpdatePayload(item: Namespace): { ok: true; data: UpdateNamespaceRequest } | { ok: false; error: string } {
+    // Global namespace: only isDefault can be changed
+    if (item.locked) {
+      return {
+        ok: true,
+        data: {
+          ...(item.isDefault ? { isDefault: true } : {})
+        }
+      };
+    }
+
     return {
       ok: true,
       data: {
