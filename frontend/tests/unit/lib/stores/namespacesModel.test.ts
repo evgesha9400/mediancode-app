@@ -42,7 +42,7 @@ vi.mock('$lib/stores/toasts', () => ({
 // ---------------------------------------------------------------------------
 
 import { createNamespacesModel, type NamespacesModelConfig, type NamespacesModelState } from '$lib/stores/namespacesModel.svelte';
-import { updateNamespaceAction, deleteNamespaceAction } from '$lib/domain/mutations';
+import { createNamespaceAction, updateNamespaceAction, deleteNamespaceAction } from '$lib/domain/mutations';
 import { showToast } from '$lib/stores/toasts';
 import { page } from '$app/state';
 import { goto } from '$app/navigation';
@@ -194,6 +194,46 @@ describe('namespacesModel - Deletion Guard', () => {
 
     expect(model.canDelete).toBe(false);
     expect(model.deleteTooltip).toContain('5');
+  });
+
+  it('should block deletion of locked namespace', () => {
+    const items = [makeNamespace({ id: 'global-id', name: 'Global', isDefault: true, locked: true })];
+    ({ model, cleanup } = createTestModel({
+      itemsStore: () => items
+    }));
+
+    model.selectItem(items[0]);
+    flushSync();
+
+    expect(model.canDelete).toBe(false);
+    expect(model.deleteTooltip).toBe('Cannot delete the Global namespace');
+  });
+
+  it('should block deletion of default namespace', () => {
+    const items = [makeNamespace({ id: 'ns-1', name: 'My NS', isDefault: true, locked: false })];
+    ({ model, cleanup } = createTestModel({
+      itemsStore: () => items
+    }));
+
+    model.selectItem(items[0]);
+    flushSync();
+
+    expect(model.canDelete).toBe(false);
+    expect(model.deleteTooltip).toBe('Cannot delete the default namespace');
+  });
+
+  it('should allow deletion of non-default, non-locked, empty namespace', () => {
+    const items = [makeNamespace({ id: 'ns-1', name: 'Regular', isDefault: false, locked: false })];
+    ({ model, cleanup } = createTestModel({
+      itemsStore: () => items,
+      getNamespaceEntityDetails: () => emptyDetails
+    }));
+
+    model.selectItem(items[0]);
+    flushSync();
+
+    expect(model.canDelete).toBe(true);
+    expect(model.deleteTooltip).toBe('');
   });
 });
 
@@ -377,6 +417,52 @@ describe('namespacesModel - Undo', () => {
     flushSync();
 
     expect(model.editedItem!.name).toBe('original');
+  });
+});
+
+describe('namespacesModel - Create Payload', () => {
+  let model: NamespacesModelState;
+  let cleanup: () => void;
+
+  beforeEach(() => vi.clearAllMocks());
+  afterEach(() => cleanup?.());
+
+  it('should include isDefault when true', async () => {
+    ({ model, cleanup } = createTestModel());
+
+    const created = makeNamespace({ id: 'ns-new', name: 'New NS', isDefault: true });
+    (createNamespaceAction as Mock).mockResolvedValue({ success: true, data: created });
+
+    model.openCreate();
+    flushSync();
+
+    model.editedItem!.name = 'New NS';
+    model.editedItem!.isDefault = true;
+    flushSync();
+
+    await model.handleCreate();
+
+    expect(createNamespaceAction).toHaveBeenCalledWith(
+      expect.objectContaining({ name: 'New NS', isDefault: true })
+    );
+  });
+
+  it('should omit isDefault when false', async () => {
+    ({ model, cleanup } = createTestModel());
+
+    const created = makeNamespace({ id: 'ns-new', name: 'New NS' });
+    (createNamespaceAction as Mock).mockResolvedValue({ success: true, data: created });
+
+    model.openCreate();
+    flushSync();
+
+    model.editedItem!.name = 'New NS';
+    flushSync();
+
+    await model.handleCreate();
+
+    const payload = (createNamespaceAction as Mock).mock.calls[0][0];
+    expect(payload).not.toHaveProperty('isDefault');
   });
 });
 

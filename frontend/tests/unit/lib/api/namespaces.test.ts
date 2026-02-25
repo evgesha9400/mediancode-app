@@ -25,7 +25,7 @@ describe('Namespaces API Service', () => {
   describe('listNamespaces', () => {
     it('should list all namespaces', async () => {
       const mockResponse = [
-        { id: 'ns-1', name: 'global', description: null,isDefault: false }
+        { id: 'ns-1', name: 'global', description: null, isDefault: false, locked: false }
       ];
       (apiGet as any).mockResolvedValue(mockResponse);
 
@@ -40,7 +40,7 @@ describe('Namespaces API Service', () => {
 
   describe('getNamespace', () => {
     it('should get namespace by ID', async () => {
-      const mockResponse = { id: 'ns-1', name: 'global', description: 'Test desc',isDefault: true };
+      const mockResponse = { id: 'ns-1', name: 'global', description: 'Test desc', isDefault: true, locked: true };
       (apiGet as any).mockResolvedValue(mockResponse);
 
       const result = await getNamespace('ns-1');
@@ -51,18 +51,39 @@ describe('Namespaces API Service', () => {
     });
 
     it('should transform null description to undefined', async () => {
-      const mockResponse = { id: 'ns-1', name: 'test', description: null,isDefault: false };
+      const mockResponse = { id: 'ns-1', name: 'test', description: null, isDefault: false, locked: false };
       (apiGet as any).mockResolvedValue(mockResponse);
 
       const result = await getNamespace('ns-1');
 
       expect(result.description).toBeUndefined();
     });
+
+    it('should pass through locked: true for Global namespace', async () => {
+      const mockResponse = { id: 'ns-1', name: 'Global', description: null, isDefault: true, locked: true };
+      (apiGet as any).mockResolvedValue(mockResponse);
+
+      const result = await getNamespace('ns-1');
+
+      expect(result.locked).toBe(true);
+      expect(result.isDefault).toBe(true);
+    });
+
+    it('should pass through locked: false for user namespace', async () => {
+      const mockResponse = { id: 'ns-2', name: 'My Project', description: 'desc', isDefault: false, locked: false };
+      (apiGet as any).mockResolvedValue(mockResponse);
+
+      const result = await getNamespace('ns-2');
+
+      expect(result.locked).toBe(false);
+      expect(result.isDefault).toBe(false);
+    });
+
   });
 
   describe('createNamespaceApi', () => {
     it('should create namespace and transform response', async () => {
-      const mockResponse = { id: 'ns-new', name: 'new', description: null,isDefault: false };
+      const mockResponse = { id: 'ns-new', name: 'new', description: null, isDefault: false, locked: false };
       (apiPost as any).mockResolvedValue(mockResponse);
 
       const result = await createNamespaceApi({ name: 'new' });
@@ -74,7 +95,7 @@ describe('Namespaces API Service', () => {
 
   describe('updateNamespaceApi', () => {
     it('should update namespace and transform response', async () => {
-      const mockResponse = { id: 'ns-1', name: 'updated', description: 'new desc',isDefault: false };
+      const mockResponse = { id: 'ns-1', name: 'updated', description: 'new desc', isDefault: false, locked: false };
       (apiPut as any).mockResolvedValue(mockResponse);
 
       const result = await updateNamespaceApi('ns-1', { name: 'updated', description: 'new desc' });
