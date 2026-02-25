@@ -95,6 +95,7 @@ describe('TemplateForm Component', () => {
 					namespaceId: 'ns1',
 					name: 'email',
 					type: 'str',
+					container: null,
 					description: 'Email field',
 					constraints: [],
 					validators: [],

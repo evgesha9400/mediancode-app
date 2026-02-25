@@ -15,6 +15,7 @@ import { GLOBAL_NAMESPACE_ID } from '$lib/constants';
 function makeField(overrides: Partial<Field> & { id: string; name: string; type: Field['type'] }): Field {
 	return {
 		namespaceId: GLOBAL_NAMESPACE_ID,
+		container: null,
 		description: '',
 		defaultValue: '',
 		constraints: [],

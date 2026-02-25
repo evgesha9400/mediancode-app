@@ -149,6 +149,7 @@ describe('namespaces store - Entity Count', () => {
 				namespaceId: GLOBAL_NAMESPACE_ID,
 				name: 'test_field',
 				type: 'str' as const,
+				container: null,
 				constraints: [],
 				validators: [],
 				usedInApis: []
@@ -171,6 +172,7 @@ describe('namespaces store - Entity Count', () => {
 				namespaceId: GLOBAL_NAMESPACE_ID,
 				name: 'test_field',
 				type: 'str' as const,
+				container: null,
 				constraints: [],
 				validators: [],
 				usedInApis: []

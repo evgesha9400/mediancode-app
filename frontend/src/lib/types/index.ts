@@ -177,6 +177,7 @@ export interface Field {
   namespaceId: string;
   name: string;
   type: string;
+  container: string | null;
   description?: string;
   defaultValue?: string;
   constraints: FieldConstraintValue[];

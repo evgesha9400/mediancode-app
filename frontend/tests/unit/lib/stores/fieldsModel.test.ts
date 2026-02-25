@@ -68,6 +68,7 @@ function makeField(overrides: Partial<Field> & { id: string; name: string }): Fi
   return {
     namespaceId: 'ns-1',
     type: 'str',
+    container: null,
     description: '',
     defaultValue: '',
     constraints: [],

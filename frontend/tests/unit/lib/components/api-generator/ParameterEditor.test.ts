@@ -37,6 +37,7 @@ describe('ParameterEditor Component', () => {
 						namespaceId: 'ns-1',
 						name: 'user_id',
 						type: 'int',
+						container: null,
 						description: 'User identifier',
 						constraints: [],
 						validators: [],
@@ -47,6 +48,7 @@ describe('ParameterEditor Component', () => {
 						namespaceId: 'ns-1',
 						name: 'item_id',
 						type: 'str',
+						container: null,
 						constraints: [],
 						validators: [],
 						usedInApis: []

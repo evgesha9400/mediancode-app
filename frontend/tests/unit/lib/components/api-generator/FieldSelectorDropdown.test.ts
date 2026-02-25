@@ -33,6 +33,7 @@ describe('FieldSelectorDropdown Component', () => {
 						namespaceId: 'ns-1',
 						name: 'username',
 						type: 'str',
+						container: null,
 						description: 'User name',
 						constraints: [],
 						validators: [],

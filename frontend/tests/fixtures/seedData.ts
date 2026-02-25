@@ -128,6 +128,7 @@ export const initialFields: Field[] = [
 		namespaceId: GLOBAL_NAMESPACE_ID,
 		name: 'email',
 		type: 'str',
+		container: null,
 		description: 'User email address',
 		defaultValue: '',
 		constraints: [
@@ -141,6 +142,7 @@ export const initialFields: Field[] = [
 		namespaceId: GLOBAL_NAMESPACE_ID,
 		name: 'username',
 		type: 'str',
+		container: null,
 		description: 'Unique username for the user account',
 		defaultValue: '',
 		constraints: [
@@ -155,6 +157,7 @@ export const initialFields: Field[] = [
 		namespaceId: GLOBAL_NAMESPACE_ID,
 		name: 'password',
 		type: 'str',
+		container: null,
 		description: 'Encrypted user password',
 		defaultValue: '',
 		constraints: [
@@ -169,6 +172,7 @@ export const initialFields: Field[] = [
 		namespaceId: GLOBAL_NAMESPACE_ID,
 		name: 'user_id',
 		type: 'uuid',
+		container: null,
 		description: 'Unique identifier for user',
 		defaultValue: 'uuid.uuid4()',
 		constraints: [],
@@ -180,6 +184,7 @@ export const initialFields: Field[] = [
 		namespaceId: GLOBAL_NAMESPACE_ID,
 		name: 'created_at',
 		type: 'datetime',
+		container: null,
 		description: 'Timestamp when the record was created',
 		defaultValue: 'datetime.now()',
 		constraints: [],
@@ -191,6 +196,7 @@ export const initialFields: Field[] = [
 		namespaceId: GLOBAL_NAMESPACE_ID,
 		name: 'updated_at',
 		type: 'datetime',
+		container: null,
 		description: 'Timestamp when the record was last updated',
 		defaultValue: 'datetime.now()',
 		constraints: [],
@@ -202,6 +208,7 @@ export const initialFields: Field[] = [
 		namespaceId: GLOBAL_NAMESPACE_ID,
 		name: 'price',
 		type: 'float',
+		container: null,
 		description: 'Product or service price',
 		defaultValue: '0.0',
 		constraints: [],
@@ -213,6 +220,7 @@ export const initialFields: Field[] = [
 		namespaceId: GLOBAL_NAMESPACE_ID,
 		name: 'status',
 		type: 'str',
+		container: null,
 		description: 'Current status of the entity',
 		defaultValue: "'active'",
 		constraints: [],
@@ -224,6 +232,7 @@ export const initialFields: Field[] = [
 		namespaceId: GLOBAL_NAMESPACE_ID,
 		name: 'website',
 		type: 'str',
+		container: null,
 		description: 'Company website URL',
 		defaultValue: '',
 		constraints: [
@@ -238,6 +247,7 @@ export const initialFields: Field[] = [
 		namespaceId: GLOBAL_NAMESPACE_ID,
 		name: 'phone',
 		type: 'str',
+		container: null,
 		description: 'Contact phone number',
 		defaultValue: '',
 		constraints: [],
@@ -250,6 +260,7 @@ export const initialFields: Field[] = [
 		namespaceId: USER_NAMESPACE_ID,
 		name: 'product_name',
 		type: 'str',
+		container: null,
 		description: 'Product name in user namespace',
 		defaultValue: '',
 		constraints: [
@@ -264,6 +275,7 @@ export const initialFields: Field[] = [
 		namespaceId: USER_NAMESPACE_ID,
 		name: 'quantity',
 		type: 'int',
+		container: null,
 		description: 'Product quantity in user namespace',
 		defaultValue: '0',
 		constraints: [
@@ -277,6 +289,7 @@ export const initialFields: Field[] = [
 		namespaceId: USER_NAMESPACE_ID,
 		name: 'product_price',
 		type: 'float',
+		container: null,
 		description: 'Product price in user namespace',
 		defaultValue: '0.0',
 		constraints: [
