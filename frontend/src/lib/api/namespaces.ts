@@ -27,7 +27,7 @@ function transformNamespace(response: NamespaceResponse): Namespace {
 		name: response.name,
 		description: response.description ?? undefined,
 		isDefault: response.isDefault,
-		locked: response.locked ?? false
+		locked: response.locked ?? response.isDefault
 	};
 }
 

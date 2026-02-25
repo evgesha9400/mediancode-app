@@ -187,7 +187,7 @@ export function createNamespacesModel(config: NamespacesModelConfig): Namespaces
       data: {
         name: item.name,
         description: item.description,
-        isDefault: item.isDefault
+        ...(item.isDefault ? { isDefault: true } : {})
       }
     };
   }

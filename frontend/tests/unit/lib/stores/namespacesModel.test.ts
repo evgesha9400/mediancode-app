@@ -306,8 +306,7 @@ describe('namespacesModel - Save (Update)', () => {
 
     expect(updateNamespaceAction).toHaveBeenCalledWith('ns-1', {
       name: 'test',
-      description: 'new desc',
-      isDefault: false
+      description: 'new desc'
     });
   });
 });
