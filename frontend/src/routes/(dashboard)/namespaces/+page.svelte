@@ -21,6 +21,7 @@
     FormLabel,
     TableEmptyState
   } from '$lib/components';
+  import { SYSTEM_NAMESPACE_ID } from '$lib/utils/namespace';
   import type { FilterConfig, Namespace } from '$lib/types';
   import { STORE_NAMES } from '$lib/stores/loader';
   import { page } from '$app/state';
@@ -60,7 +61,7 @@
   let sorts = $derived(workflow.sorts);
   let activeFiltersCount = $derived(workflow.activeFiltersCount);
 
-  let isLocked = $derived(workflow.editedItem?.locked ?? false);
+  let isReadOnly = $derived(workflow.editedItem?.id === SYSTEM_NAMESPACE_ID);
   let isCreating = $derived(workflow.mode === 'creating');
 </script>
 
@@ -162,20 +163,27 @@
 
 <Drawer open={workflow.drawerOpen}>
   <DrawerHeader
-    title={isCreating ? 'Create Namespace' : isLocked ? 'View Namespace' : 'Edit Namespace'}
+    title={isCreating ? 'Create Namespace' : isReadOnly ? 'Namespace Details' : 'Edit Namespace'}
     onClose={workflow.closeDrawer}
   />
 
   <DrawerContent>
     {#if workflow.editedItem}
       <div class="space-y-4">
+        {#if isReadOnly}
+          <div class="flex items-center space-x-2 px-3 py-2 bg-mono-50 border border-mono-200 rounded-md">
+            <i class="fa-solid fa-lock text-mono-400 text-sm"></i>
+            <span class="text-sm text-mono-600">System namespace — read-only</span>
+          </div>
+        {/if}
+
         <!-- Namespace Name -->
         <FormField
           id="namespace-name"
           label="Name"
           bind:value={workflow.editedItem.name}
-          disabled={isLocked}
-          required={!isLocked}
+          disabled={isReadOnly}
+          required={!isReadOnly}
           placeholder={isCreating ? 'my-namespace' : ''}
           error={workflow.visibleErrors.name}
         />
@@ -186,10 +194,10 @@
           <textarea
             id="namespace-description"
             bind:value={workflow.editedItem.description}
-            disabled={isLocked}
+            disabled={isReadOnly}
             rows="3"
             placeholder={isCreating ? 'Optional description...' : ''}
-            class="w-full px-3 py-2 border border-mono-300 rounded-md focus:ring-2 focus:ring-mono-400 focus:border-transparent {isLocked ? 'bg-mono-100 cursor-not-allowed' : ''}"
+            class="w-full px-3 py-2 border border-mono-300 rounded-md focus:ring-2 focus:ring-mono-400 focus:border-transparent {isReadOnly ? 'bg-mono-100 cursor-not-allowed' : ''}"
           ></textarea>
         </div>
 
@@ -222,29 +230,6 @@
             </div>
           </div>
 
-          <!-- Status -->
-          <div>
-            <h3 class="text-sm text-mono-700 mb-2 font-medium">Status</h3>
-            <div class="bg-mono-50 rounded-md p-3 space-y-2">
-              {#if isLocked}
-                <div class="flex items-center space-x-2 text-mono-600">
-                  <i class="fa-solid fa-lock"></i>
-                  <span class="text-sm">This namespace is locked and cannot be edited or deleted.</span>
-                </div>
-              {:else}
-                <div class="flex items-center space-x-2 text-green-600">
-                  <i class="fa-solid fa-unlock"></i>
-                  <span class="text-sm">This namespace can be edited and deleted.</span>
-                </div>
-              {/if}
-              {#if workflow.editedItem.isDefault}
-                <div class="flex items-center space-x-2 text-mono-700">
-                  <i class="fa-solid fa-star"></i>
-                  <span class="text-sm">This is your default namespace.</span>
-                </div>
-              {/if}
-            </div>
-          </div>
         {/if}
       </div>
     {/if}
@@ -260,7 +245,7 @@
         canDelete={false}
         onCreate={workflow.handleCreate}
       />
-    {:else if workflow.editedItem && !isLocked}
+    {:else if workflow.editedItem && !isReadOnly}
       <CrudDrawerFooter
         mode="editing"
         isSaving={workflow.isSaving}
@@ -275,7 +260,7 @@
         onDeleteConfirm={workflow.handleDelete}
         onDeleteCancel={() => workflow.showDeleteConfirm = false}
       />
-    {:else if workflow.editedItem && isLocked}
+    {:else if workflow.editedItem && isReadOnly}
       <button
         type="button"
         onclick={workflow.closeDrawer}
