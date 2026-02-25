@@ -12,7 +12,7 @@ import type { ObjectDefinition, ObjectFieldReference, InlineModelValidator } fro
  */
 interface ObjectFieldReferenceResponse {
 	fieldId: string;
-	required: boolean;
+	optional: boolean;
 }
 
 /**
@@ -44,7 +44,7 @@ interface ObjectResponse {
 function transformFieldReference(response: ObjectFieldReferenceResponse): ObjectFieldReference {
 	return {
 		fieldId: response.fieldId,
-		required: response.required
+		optional: response.optional
 	};
 }
 
