@@ -349,6 +349,55 @@ describe('namespacesModel - Save (Update)', () => {
       description: 'new desc'
     });
   });
+
+  it('should send only isDefault for locked namespace', async () => {
+    const items = [makeNamespace({ id: 'global-id', name: 'Global', isDefault: false, locked: true })];
+    ({ model, cleanup } = createTestModel({
+      itemsStore: () => items
+    }));
+
+    (updateNamespaceAction as Mock).mockResolvedValue({
+      success: true,
+      data: makeNamespace({ id: 'global-id', name: 'Global', isDefault: true, locked: true })
+    });
+
+    model.selectItem(items[0]);
+    flushSync();
+
+    model.editedItem!.isDefault = true;
+    flushSync();
+
+    await model.handleSave();
+
+    expect(updateNamespaceAction).toHaveBeenCalledWith('global-id', { isDefault: true });
+    const payload = (updateNamespaceAction as Mock).mock.calls[0][1];
+    expect(payload).not.toHaveProperty('name');
+    expect(payload).not.toHaveProperty('description');
+  });
+
+  it('should send name and description for non-locked namespace', async () => {
+    const items = [makeNamespace({ id: 'ns-1', name: 'My NS', description: 'My desc', isDefault: false, locked: false })];
+    ({ model, cleanup } = createTestModel({
+      itemsStore: () => items
+    }));
+
+    (updateNamespaceAction as Mock).mockResolvedValue({
+      success: true,
+      data: makeNamespace({ id: 'ns-1', name: 'My NS', description: 'Updated desc' })
+    });
+
+    model.selectItem(items[0]);
+    flushSync();
+
+    model.editedItem!.description = 'Updated desc';
+    flushSync();
+
+    await model.handleSave();
+
+    const payload = (updateNamespaceAction as Mock).mock.calls[0][1];
+    expect(payload).toHaveProperty('name', 'My NS');
+    expect(payload).toHaveProperty('description', 'Updated desc');
+  });
 });
 
 describe('namespacesModel - Delete', () => {
