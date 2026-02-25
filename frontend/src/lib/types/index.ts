@@ -99,6 +99,7 @@ export interface Namespace {
   name: string;
   description?: string;
   isDefault: boolean; // true for the user's default namespace
+  locked: boolean; // true for system namespaces (e.g. Global); read-only in the UI
 }
 
 // API Generator types

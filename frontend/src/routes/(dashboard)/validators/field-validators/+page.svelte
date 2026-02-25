@@ -115,7 +115,7 @@
 </Table>
 
 <Drawer open={state.drawerOpen}>
-  <DrawerHeader title="Field Validator Template" onClose={state.closeDrawer} />
+  <DrawerHeader title="Field Validator Details" onClose={state.closeDrawer} />
 
   <DrawerContent>
     {#if state.selectedItem}

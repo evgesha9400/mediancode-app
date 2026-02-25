@@ -26,12 +26,14 @@ export const initialNamespaces: Namespace[] = [
 		id: GLOBAL_NAMESPACE_ID,
 		name: 'global',
 		description: 'Immutable global templates and examples',
+		locked: true,
 		isDefault: false
 	},
 	{
 		id: USER_NAMESPACE_ID,
 		name: 'user',
 		description: 'User-created entities for testing namespace isolation',
+		locked: false,
 		isDefault: true
 	}
 ];

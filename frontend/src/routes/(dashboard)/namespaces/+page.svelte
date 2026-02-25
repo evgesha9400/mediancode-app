@@ -21,7 +21,6 @@
     FormLabel,
     TableEmptyState
   } from '$lib/components';
-  import { SYSTEM_NAMESPACE_ID } from '$lib/utils/namespace';
   import type { FilterConfig, Namespace } from '$lib/types';
   import { STORE_NAMES } from '$lib/stores/loader';
   import { page } from '$app/state';
@@ -43,7 +42,7 @@
       key: 'onlyUserCreated',
       label: 'Show',
       toggleLabel: 'User-created only',
-      predicate: (item: Namespace) => item.id !== SYSTEM_NAMESPACE_ID
+      predicate: (item: Namespace) => !item.locked
     }
   ];
 
@@ -61,7 +60,7 @@
   let sorts = $derived(workflow.sorts);
   let activeFiltersCount = $derived(workflow.activeFiltersCount);
 
-  let isReadOnly = $derived(workflow.editedItem?.id === SYSTEM_NAMESPACE_ID);
+  let isReadOnly = $derived(workflow.editedItem?.locked === true);
   let isCreating = $derived(workflow.mode === 'creating');
 </script>
 

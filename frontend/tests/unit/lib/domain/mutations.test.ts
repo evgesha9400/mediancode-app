@@ -107,7 +107,7 @@ const ENDPOINT_1 = {
 };
 
 const NAMESPACE_1 = {
-  id: 'ns-1', name: 'Test NS', description: '', slug: 'test'
+  id: 'ns-1', name: 'Test NS', description: '', locked: false, slug: 'test'
 };
 
 // ---------------------------------------------------------------------------

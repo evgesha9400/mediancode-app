@@ -166,7 +166,8 @@ export function createNamespacesModel(config: NamespacesModelConfig): Namespaces
       id: '',
       name: '',
       description: '',
-      isDefault: false
+      isDefault: false,
+      locked: false
     };
   }
 

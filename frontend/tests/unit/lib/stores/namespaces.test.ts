@@ -22,6 +22,7 @@ import type { Namespace } from '$lib/types';
 function makeNamespace(overrides: Partial<Namespace> & { id: string; name: string }): Namespace {
 	return {
 		description: '',
+		locked: false,
 		isDefault: false,
 		...overrides
 	};

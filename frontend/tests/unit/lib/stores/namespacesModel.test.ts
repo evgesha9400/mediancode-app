@@ -59,6 +59,7 @@ const nonEmptyDetails = { total: 5, fields: 2, fieldConstraints: 1, objects: 1, 
 function makeNamespace(overrides: Partial<Namespace> & { id: string; name: string }): Namespace {
   return {
     description: '',
+    locked: false,
     isDefault: false,
     ...overrides
   };
@@ -305,7 +306,8 @@ describe('namespacesModel - Save (Update)', () => {
 
     expect(updateNamespaceAction).toHaveBeenCalledWith('ns-1', {
       name: 'test',
-      description: 'new desc'
+      description: 'new desc',
+      isDefault: false
     });
   });
 });

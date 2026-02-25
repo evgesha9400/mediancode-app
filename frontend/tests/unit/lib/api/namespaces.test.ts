@@ -33,7 +33,7 @@ describe('Namespaces API Service', () => {
 
       expect(apiGet).toHaveBeenCalledWith('/namespaces');
       expect(result).toEqual([
-        { id: 'ns-1', name: 'global', description: undefined,isDefault: false }
+        { id: 'ns-1', name: 'global', description: undefined, locked: false, isDefault: false }
       ]);
     });
   });

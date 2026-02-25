@@ -15,6 +15,7 @@ interface NamespaceResponse {
 	name: string;
 	description: string | null;
 	isDefault: boolean;
+	locked?: boolean;
 }
 
 /**
@@ -25,7 +26,8 @@ function transformNamespace(response: NamespaceResponse): Namespace {
 		id: response.id,
 		name: response.name,
 		description: response.description ?? undefined,
-		isDefault: response.isDefault
+		isDefault: response.isDefault,
+		locked: response.locked ?? false
 	};
 }
 
