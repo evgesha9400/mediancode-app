@@ -48,6 +48,7 @@ export class NamespacesPage {
 	readonly drawerCloseButton: Locator;
 	readonly namespaceNameInput: Locator;
 	readonly namespaceDescriptionTextarea: Locator;
+	readonly defaultCheckbox: Locator;
 
 	// Drawer actions
 	readonly saveButton: Locator;
@@ -85,12 +86,13 @@ export class NamespacesPage {
 
 		// Drawer (handles create, edit, and view)
 		this.drawer = page.locator('[class*="fixed"][class*="right-0"]').filter({
-			has: page.locator('text=/Create Namespace|Edit Namespace|View Namespace/')
+			has: page.locator('text=/Create Namespace|Edit Namespace|Namespace Details/')
 		});
 		this.createButton = page.getByRole('button', { name: 'Create', exact: true });
 		this.drawerCloseButton = page.locator('button[aria-label="Close drawer"]');
 		this.namespaceNameInput = page.locator('#namespace-name');
 		this.namespaceDescriptionTextarea = page.locator('#namespace-description');
+		this.defaultCheckbox = page.getByLabel(/set as default namespace/i);
 
 		// Drawer actions (CrudDrawerFooter)
 		this.saveButton = page.getByRole('button', { name: 'Save', exact: true });
@@ -414,5 +416,31 @@ export class NamespacesPage {
 	 */
 	async isDeleteEnabled(): Promise<boolean> {
 		return await this.deleteButton.isEnabled();
+	}
+
+	// ============================================================================
+	// Default Checkbox Methods
+	// ============================================================================
+
+	/**
+	 * Check if the "Set as default" checkbox is visible
+	 */
+	async isDefaultCheckboxVisible(): Promise<boolean> {
+		return await this.defaultCheckbox.isVisible();
+	}
+
+	/**
+	 * Check if the "Set as default" checkbox is checked
+	 */
+	async isDefaultChecked(): Promise<boolean> {
+		return await this.defaultCheckbox.isChecked();
+	}
+
+	/**
+	 * Toggle the "Set as default" checkbox
+	 */
+	async toggleDefault() {
+		await this.defaultCheckbox.check();
+		await this.delay();
 	}
 }
