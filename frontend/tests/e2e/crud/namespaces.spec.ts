@@ -7,7 +7,7 @@
  * Uses authenticatedTest for Clerk auth and E2EApiClient for cleanup.
  *
  * Adaptations for system namespaces:
- * - The "Global" namespace is locked and cannot be deleted.
+ * - The "Global" namespace is a system namespace and cannot be deleted.
  * - The "User-created only" filter is applied once at the start and kept active
  *   throughout the test so row counts reflect only test-created data.
  * - The filter step toggles this filter off/on to verify it works.

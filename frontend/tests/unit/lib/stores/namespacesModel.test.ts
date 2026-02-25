@@ -2,7 +2,7 @@
 //
 // Unit tests for the Namespaces per-entity CRUD model.
 // Tests entity-specific logic: validation, payload mapping, deletion guard
-// (locked + entity count), locked namespace save guard, and CRUD action flows.
+// (entity count), and CRUD action flows.
 // Note: Namespaces use a modal for creation, so no openCreate/handleCreate.
 
 import { describe, it, expect, vi, beforeEach, afterEach, type Mock } from 'vitest';
@@ -59,7 +59,6 @@ const nonEmptyDetails = { total: 5, fields: 2, fieldConstraints: 1, objects: 1, 
 function makeNamespace(overrides: Partial<Namespace> & { id: string; name: string }): Namespace {
   return {
     description: '',
-    locked: false,
     isDefault: false,
     ...overrides
   };
@@ -168,8 +167,8 @@ describe('namespacesModel - Deletion Guard', () => {
 
   afterEach(() => cleanup?.());
 
-  it('should allow deletion when namespace is empty and unlocked', () => {
-    const items = [makeNamespace({ id: 'ns-1', name: 'empty', locked: false })];
+  it('should allow deletion when namespace is empty', () => {
+    const items = [makeNamespace({ id: 'ns-1', name: 'empty' })];
     ({ model, cleanup } = createTestModel({
       itemsStore: () => items,
       getNamespaceEntityDetails: () => emptyDetails
@@ -182,22 +181,8 @@ describe('namespacesModel - Deletion Guard', () => {
     expect(model.deleteTooltip).toBe('');
   });
 
-  it('should block deletion when namespace is locked', () => {
-    const items = [makeNamespace({ id: 'ns-1', name: 'locked', locked: true })];
-    ({ model, cleanup } = createTestModel({
-      itemsStore: () => items,
-      getNamespaceEntityDetails: () => emptyDetails
-    }));
-
-    model.selectItem(items[0]);
-    flushSync();
-
-    expect(model.canDelete).toBe(false);
-    expect(model.deleteTooltip).toContain('locked');
-  });
-
   it('should block deletion when namespace contains entities', () => {
-    const items = [makeNamespace({ id: 'ns-1', name: 'populated', locked: false })];
+    const items = [makeNamespace({ id: 'ns-1', name: 'populated' })];
     ({ model, cleanup } = createTestModel({
       itemsStore: () => items,
       getNamespaceEntityDetails: () => nonEmptyDetails
@@ -217,25 +202,6 @@ describe('namespacesModel - Save (Update)', () => {
 
   beforeEach(() => vi.clearAllMocks());
   afterEach(() => cleanup?.());
-
-  it('should block save on locked namespaces', async () => {
-    const items = [makeNamespace({ id: 'ns-1', name: 'locked', locked: true })];
-    ({ model, cleanup } = createTestModel({
-      itemsStore: () => items
-    }));
-
-    model.selectItem(items[0]);
-    flushSync();
-
-    await model.handleSave();
-
-    expect(updateNamespaceAction).not.toHaveBeenCalled();
-    expect(showToast).toHaveBeenCalledWith(
-      expect.stringContaining('locked'),
-      'error',
-      3000
-    );
-  });
 
   it('should not save when form is invalid', async () => {
     const items = [makeNamespace({ id: 'ns-1', name: 'test' })];

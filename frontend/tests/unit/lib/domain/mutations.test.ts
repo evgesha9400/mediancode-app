@@ -107,7 +107,7 @@ const ENDPOINT_1 = {
 };
 
 const NAMESPACE_1 = {
-  id: 'ns-1', name: 'Test NS', description: '', locked: false, slug: 'test'
+  id: 'ns-1', name: 'Test NS', description: '', slug: 'test'
 };
 
 // ---------------------------------------------------------------------------
@@ -410,15 +410,6 @@ describe('Namespace Actions', () => {
 
       expect(result.success).toBe(false);
       expect(result.error).toContain('not found');
-    });
-
-    it('returns error when namespace is locked', async () => {
-      namespacesStore.set([{ ...NAMESPACE_1, locked: true }] as any);
-
-      const result = await deleteNamespaceAction('ns-1');
-
-      expect(result.success).toBe(false);
-      expect(result.error).toContain('locked');
     });
 
     it('returns error when namespace has entities', async () => {

@@ -43,7 +43,7 @@
       key: 'onlyUserCreated',
       label: 'Show',
       toggleLabel: 'User-created only',
-      predicate: (item: Namespace) => !item.locked
+      predicate: (item: Namespace) => item.id !== SYSTEM_NAMESPACE_ID
     }
   ];
 

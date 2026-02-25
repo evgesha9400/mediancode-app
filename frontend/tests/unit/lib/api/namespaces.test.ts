@@ -25,7 +25,7 @@ describe('Namespaces API Service', () => {
   describe('listNamespaces', () => {
     it('should list all namespaces', async () => {
       const mockResponse = [
-        { id: 'ns-1', name: 'global', description: null, locked: true, isDefault: false }
+        { id: 'ns-1', name: 'global', description: null,isDefault: false }
       ];
       (apiGet as any).mockResolvedValue(mockResponse);
 
@@ -33,14 +33,14 @@ describe('Namespaces API Service', () => {
 
       expect(apiGet).toHaveBeenCalledWith('/namespaces');
       expect(result).toEqual([
-        { id: 'ns-1', name: 'global', description: undefined, locked: true, isDefault: false }
+        { id: 'ns-1', name: 'global', description: undefined,isDefault: false }
       ]);
     });
   });
 
   describe('getNamespace', () => {
     it('should get namespace by ID', async () => {
-      const mockResponse = { id: 'ns-1', name: 'global', description: 'Test desc', locked: false, isDefault: true };
+      const mockResponse = { id: 'ns-1', name: 'global', description: 'Test desc',isDefault: true };
       (apiGet as any).mockResolvedValue(mockResponse);
 
       const result = await getNamespace('ns-1');
@@ -51,7 +51,7 @@ describe('Namespaces API Service', () => {
     });
 
     it('should transform null description to undefined', async () => {
-      const mockResponse = { id: 'ns-1', name: 'test', description: null, locked: false, isDefault: false };
+      const mockResponse = { id: 'ns-1', name: 'test', description: null,isDefault: false };
       (apiGet as any).mockResolvedValue(mockResponse);
 
       const result = await getNamespace('ns-1');
@@ -62,7 +62,7 @@ describe('Namespaces API Service', () => {
 
   describe('createNamespaceApi', () => {
     it('should create namespace and transform response', async () => {
-      const mockResponse = { id: 'ns-new', name: 'new', description: null, locked: false, isDefault: false };
+      const mockResponse = { id: 'ns-new', name: 'new', description: null,isDefault: false };
       (apiPost as any).mockResolvedValue(mockResponse);
 
       const result = await createNamespaceApi({ name: 'new' });
@@ -74,7 +74,7 @@ describe('Namespaces API Service', () => {
 
   describe('updateNamespaceApi', () => {
     it('should update namespace and transform response', async () => {
-      const mockResponse = { id: 'ns-1', name: 'updated', description: 'new desc', locked: false, isDefault: false };
+      const mockResponse = { id: 'ns-1', name: 'updated', description: 'new desc',isDefault: false };
       (apiPut as any).mockResolvedValue(mockResponse);
 
       const result = await updateNamespaceApi('ns-1', { name: 'updated', description: 'new desc' });

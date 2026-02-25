@@ -164,7 +164,6 @@ export function createNamespacesModel(config: NamespacesModelConfig): Namespaces
       id: '',
       name: '',
       description: '',
-      locked: false,
       isDefault: false
     };
   }
@@ -190,9 +189,6 @@ export function createNamespacesModel(config: NamespacesModelConfig): Namespaces
   }
 
   function deletionGuard(item: Namespace): { canDelete: boolean; tooltip: string } {
-    if (item.locked) {
-      return { canDelete: false, tooltip: 'Cannot delete locked namespaces' };
-    }
     const details = getNamespaceEntityDetails(item.id);
     if (details.total > 0) {
       return { canDelete: false, tooltip: `Cannot delete: Contains ${details.total} entities` };
@@ -231,12 +227,6 @@ export function createNamespacesModel(config: NamespacesModelConfig): Namespaces
   // --- Save (update existing) ---
   async function handleSave() {
     if (!listState.editedItem || isSaving) return;
-
-    // Pre-save guard: locked namespace check
-    if (listState.editedItem.locked) {
-      showToast('Cannot edit locked namespaces', 'error', 3000);
-      return;
-    }
 
     formTouched = true;
     if (!isFormValid) return;

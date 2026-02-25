@@ -313,13 +313,9 @@ export async function updateNamespaceAction(
 }
 
 export async function deleteNamespaceAction(id: string): Promise<ActionResult<void>> {
-	// Pre-flight: locked namespace guard
 	const namespace = getNamespaceById(id);
 	if (!namespace) {
 		return { success: false, error: `Namespace with ID "${id}" not found.` };
-	}
-	if (namespace.locked) {
-		return { success: false, error: `Cannot delete the "${namespace.name}" namespace because it is locked.` };
 	}
 
 	// Pre-flight: entity count guard

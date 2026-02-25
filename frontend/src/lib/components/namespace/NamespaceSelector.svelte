@@ -2,8 +2,8 @@
   NamespaceSelector - Dropdown selector for switching between namespaces
 
   Displays the current active namespace and allows users to switch between
-  available namespaces. The selector shows a globe icon for the global namespace,
-  a lock icon for other locked namespaces, and a layer-group icon for user-created namespaces.
+  available namespaces. The selector shows a globe icon for the global namespace
+  and a layer-group icon for user-created namespaces.
 
   @component
   @example
@@ -71,8 +71,6 @@
   >
     {#if isGlobalNamespace($activeNamespace)}
       <i class="fa-solid fa-earth-americas text-mono-400 text-xs"></i>
-    {:else if $activeNamespace?.locked}
-      <i class="fa-solid fa-lock text-mono-400 text-xs"></i>
     {:else}
       <i class="fa-solid fa-layer-group text-mono-400 text-xs"></i>
     {/if}
@@ -100,8 +98,6 @@
           >
             {#if isGlobalNamespace(namespace)}
               <i class="fa-solid fa-earth-americas text-mono-400 text-xs w-4"></i>
-            {:else if namespace.locked}
-              <i class="fa-solid fa-lock text-mono-400 text-xs w-4"></i>
             {:else}
               <i class="fa-solid fa-layer-group text-mono-400 text-xs w-4"></i>
             {/if}

@@ -22,7 +22,6 @@ import type { Namespace } from '$lib/types';
 function makeNamespace(overrides: Partial<Namespace> & { id: string; name: string }): Namespace {
 	return {
 		description: '',
-		locked: false,
 		isDefault: false,
 		...overrides
 	};
@@ -40,7 +39,6 @@ describe('namespaces store - Basic Operations', () => {
 		const globalNs = namespaces.find(ns => ns.id === GLOBAL_NAMESPACE_ID);
 		expect(globalNs).toBeDefined();
 		expect(globalNs?.name).toBe('global');
-		expect(globalNs?.locked).toBe(true);
 	});
 
 	it('should have active namespace set to global by default', () => {
