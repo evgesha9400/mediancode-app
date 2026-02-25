@@ -102,7 +102,12 @@
               <i class="fa-solid fa-layer-group text-mono-400 text-xs w-4"></i>
             {/if}
             <div class="flex-1 min-w-0">
-              <span class="text-sm text-mono-800 block truncate">{namespace.name}</span>
+              <div class="flex items-center space-x-1.5">
+                <span class="text-sm text-mono-800 block truncate">{namespace.name}</span>
+                {#if namespace.isDefault}
+                  <span class="px-1 py-0.5 text-[10px] rounded bg-mono-200 text-mono-600 flex-shrink-0">Default</span>
+                {/if}
+              </div>
               {#if namespace.description}
                 <span class="text-xs text-mono-500 block truncate">{namespace.description}</span>
               {/if}
