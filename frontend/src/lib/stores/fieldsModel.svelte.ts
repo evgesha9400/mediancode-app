@@ -166,6 +166,15 @@ export function createFieldsModel(config: FieldsModelConfig): FieldsModelState {
     if (!item.type) errors.type = 'Type is required';
     const emptyParam = item.constraints.find(c => c.value === null || c.value === '');
     if (emptyParam) errors.constraints = `Constraint "${emptyParam.name}" requires a value`;
+
+    if (item.defaultValue && item.defaultValue !== 'None') {
+      if (item.type === 'int' && !/^-?\d+$/.test(item.defaultValue)) {
+        errors.defaultValue = 'Default value must be a whole number';
+      }
+      if (item.type === 'float' && !/^-?\d+(\.\d+)?$/.test(item.defaultValue)) {
+        errors.defaultValue = 'Default value must be a number';
+      }
+    }
     return errors;
   }
 

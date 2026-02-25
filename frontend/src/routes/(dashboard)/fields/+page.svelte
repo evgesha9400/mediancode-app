@@ -23,7 +23,8 @@
     FieldConstraintEditor,
     TypeSelectorDropdown,
     TemplateGallery,
-    TemplateForm
+    TemplateForm,
+    DefaultValueInput
   } from '$lib/components';
   import type { FilterConfig, InlineFieldValidator, FieldValidatorTemplate } from '$lib/types';
   import { fieldValidatorTemplatesStore, getFieldValidatorTemplateById } from '$lib/stores/fieldValidatorTemplates';
@@ -302,7 +303,7 @@
             {/if}
           </td>
           <td class="px-6 py-4 whitespace-nowrap text-sm text-mono-500">
-            {field.defaultValue || '-'}
+            {field.defaultValue !== undefined && field.defaultValue !== '' ? field.defaultValue : '-'}
           </td>
           <td class="px-6 py-4 whitespace-nowrap">
             <div class="flex items-center space-x-2">
@@ -377,13 +378,15 @@
         <!-- Default Value -->
         <div>
           <FormLabel label="Default Value" forId="fields-default-value" />
-          <input
+          <DefaultValueInput
             id="fields-default-value"
-            type="text"
-            bind:value={workflow.editedItem.defaultValue}
-            placeholder="None"
-            class="w-full px-3 py-2 border border-mono-300 rounded-md focus:ring-2 focus:ring-mono-400 focus:border-transparent"
+            fieldType={workflow.editedItem.type}
+            value={workflow.editedItem.defaultValue ?? ''}
+            onChange={(v) => { workflow.editedItem = { ...workflow.editedItem!, defaultValue: v }; }}
           />
+          {#if workflow.visibleErrors.defaultValue}
+            <p class="text-xs text-red-500 mt-1">{workflow.visibleErrors.defaultValue}</p>
+          {/if}
         </div>
 
         <!-- Validators -->

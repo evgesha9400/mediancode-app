@@ -16,7 +16,7 @@ const FIELD_A = {
 	name: 'e2e_is_active',
 	type: 'bool',
 	description: 'Whether the user account is currently active',
-	defaultValue: 'true'
+	defaultValue: 'True'
 };
 
 const FIELD_B = {

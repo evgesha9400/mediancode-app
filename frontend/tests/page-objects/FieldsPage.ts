@@ -244,17 +244,43 @@ export class FieldsPage {
 	}
 
 	/**
-	 * Get default value from drawer
+	 * Get default value from drawer.
+	 * Handles the DefaultValueInput component which shows either a text input
+	 * or a preset pill (None/True/False).
 	 */
 	async getDefaultValue(): Promise<string> {
+		// Check if a preset pill is visible (preset selected state)
+		const presetPill = this.fieldDefaultValueInput.locator('..').locator('span.rounded-full');
+		if (await presetPill.isVisible()) {
+			return (await presetPill.textContent()) ?? '';
+		}
 		return await this.fieldDefaultValueInput.inputValue();
 	}
 
 	/**
-	 * Set default value in drawer
+	 * Set default value in drawer.
+	 * For presets (None, True, False): opens dropdown and clicks the option.
+	 * For free text: types into the input.
 	 */
 	async setDefaultValue(value: string) {
-		await this.fieldDefaultValueInput.fill(value);
+		const presets = ['None', 'True', 'False'];
+
+		if (presets.includes(value)) {
+			// Click the dropdown caret button (last button child in the wrapper)
+			const wrapper = this.fieldDefaultValueInput.locator('..').locator('..');
+			const caretButton = wrapper.locator('button[title="Select preset value"]');
+			await caretButton.click();
+			// Click the preset option in the dropdown
+			const option = wrapper.locator('.absolute.z-10 button', { hasText: value });
+			await option.click();
+		} else {
+			// Clear any existing preset first
+			const clearButton = this.fieldDefaultValueInput.locator('..').locator('..').locator('button[title="Clear preset"]');
+			if (await clearButton.isVisible()) {
+				await clearButton.click();
+			}
+			await this.fieldDefaultValueInput.fill(value);
+		}
 		await this.delay();
 	}
 
