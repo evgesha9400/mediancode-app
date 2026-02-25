@@ -49,6 +49,8 @@ export interface ApiNamespace {
 	id: string;
 	name: string;
 	description?: string;
+	isDefault?: boolean;
+	locked?: boolean;
 }
 
 export interface ApiEndpoint {
@@ -117,6 +119,16 @@ export class E2EApiClient {
 		return { status: r.status, data: r.ok ? ((await r.json()) as T) : undefined, error: r.ok ? undefined : await r.text() };
 	}
 
+	private async put<T>(path: string, data: unknown): Promise<ApiResponse<T>> {
+		const r = await fetch(`${this.baseUrl}${path}`, {
+			method: 'PUT',
+			headers: this.headers(),
+			body: JSON.stringify(data),
+			signal: AbortSignal.timeout(API_TIMEOUT)
+		});
+		return { status: r.status, data: r.ok ? ((await r.json()) as T) : undefined, error: r.ok ? undefined : await r.text() };
+	}
+
 	private async del(path: string): Promise<ApiResponse<void>> {
 		const r = await fetch(`${this.baseUrl}${path}`, {
 			method: 'DELETE',
@@ -155,7 +167,7 @@ export class E2EApiClient {
 	async listNamespaces() { return this.get<ApiNamespace[]>('/namespaces'); }
 	async createNamespace(ns: Omit<ApiNamespace, 'id'>) { return this.post<ApiNamespace>('/namespaces', ns); }
 	async getNamespace(id: string) { return this.get<ApiNamespace>(`/namespaces/${id}`); }
-	async updateNamespace(id: string, ns: Partial<ApiNamespace>) { return this.patch<ApiNamespace>(`/namespaces/${id}`, ns); }
+	async updateNamespace(id: string, ns: Partial<ApiNamespace>) { return this.put<ApiNamespace>(`/namespaces/${id}`, ns); }
 	async deleteNamespace(id: string) { return this.del(`/namespaces/${id}`); }
 
 	// ---- Endpoints ----

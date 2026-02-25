@@ -127,3 +127,41 @@ test('Namespace lifecycle: create, search, filter, update, delete', async ({ pag
 	// --- Verify empty state ---
 	expect(await namespaces.getRowCount()).toBe(0);
 });
+
+test('Global namespace: set as default', async ({ page }) => {
+	const api = await E2EApiClient.fromPage(page);
+	const namespaces = new NamespacesPage(page);
+
+	// --- Setup: clean slate and create a temp namespace via UI ---
+	await api.deleteAllNamespaces();
+	await namespaces.goto();
+
+	// Create a temp namespace and set it as default (via UI)
+	await namespaces.createNewNamespace({ name: 'e2e_temp_default', description: 'Temporary default' });
+	await namespaces.clickRow('e2e_temp_default');
+	await namespaces.toggleDefault();
+	await namespaces.save();
+
+	// --- Click Global namespace row ---
+	await namespaces.clickRow('Global');
+	expect(await namespaces.isDrawerOpen()).toBe(true);
+
+	// --- Verify name/description are read-only ---
+	await expect(namespaces.namespaceNameInput).toBeDisabled();
+	await expect(namespaces.namespaceDescriptionTextarea).toBeDisabled();
+
+	// --- Verify default checkbox is unchecked and enabled ---
+	expect(await namespaces.isDefaultChecked()).toBe(false);
+
+	// --- Toggle default and save ---
+	await namespaces.toggleDefault();
+	await namespaces.save();
+
+	// --- Verify Global is now shown as default in the table ---
+	await namespaces.clickRow('Global');
+	expect(await namespaces.isDefaultChecked()).toBe(true);
+	await namespaces.closeDrawer();
+
+	// --- Cleanup ---
+	await api.deleteAllNamespaces();
+});

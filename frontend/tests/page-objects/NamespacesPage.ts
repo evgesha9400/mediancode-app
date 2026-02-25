@@ -92,7 +92,7 @@ export class NamespacesPage {
 		this.drawerCloseButton = page.locator('button[aria-label="Close drawer"]');
 		this.namespaceNameInput = page.locator('#namespace-name');
 		this.namespaceDescriptionTextarea = page.locator('#namespace-description');
-		this.defaultCheckbox = page.getByLabel(/set as default namespace/i);
+		this.defaultCheckbox = page.locator('label').filter({ hasText: /default namespace/i }).locator('input[type="checkbox"]');
 
 		// Drawer actions (CrudDrawerFooter)
 		this.saveButton = page.getByRole('button', { name: 'Save', exact: true });
@@ -440,7 +440,7 @@ export class NamespacesPage {
 	 * Toggle the "Set as default" checkbox
 	 */
 	async toggleDefault() {
-		await this.defaultCheckbox.check();
+		await this.defaultCheckbox.click();
 		await this.delay();
 	}
 }
