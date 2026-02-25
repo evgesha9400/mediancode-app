@@ -164,15 +164,8 @@
         onclick={() => state.selectItem(fc)}
         class="cursor-pointer transition-colors {isSelected(fc) ? 'bg-mono-100' : 'hover:bg-mono-50'}"
       >
-        <td class="px-6 py-4 whitespace-nowrap">
-          <div class="flex items-center">
-            <span class="w-5 flex-shrink-0 flex items-center justify-center">
-              {#if isSystemEntity(fc)}
-                <i class="fa-solid fa-lock text-mono-400 text-xs leading-none" title="System — read-only"></i>
-              {/if}
-            </span>
-            <span class="text-sm text-mono-900 font-medium">{fc.name}</span>
-          </div>
+        <td class="px-6 py-4 whitespace-nowrap text-sm text-mono-900 font-medium">
+          {fc.name}
         </td>
         <td class="px-6 py-4">
           <div class="flex flex-wrap gap-1">
