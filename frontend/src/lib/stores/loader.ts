@@ -152,12 +152,13 @@ export async function loadStoresFromApi(): Promise<void> {
 	apisStore.set(apis);
 	endpointsStore.set(endpoints);
 
-	// Set active namespace to global if it exists, otherwise first namespace
-	const globalNamespace = namespaces.find(ns => ns.id === GLOBAL_NAMESPACE_ID);
-	if (globalNamespace) {
-		activeNamespaceId.set(GLOBAL_NAMESPACE_ID);
-	} else if (namespaces.length > 0) {
-		activeNamespaceId.set(namespaces[0].id);
+	// Set active namespace: prefer user's default, fall back to global, then first
+	const defaultNamespace = namespaces.find(ns => ns.isDefault);
+	if (defaultNamespace) {
+		activeNamespaceId.set(defaultNamespace.id);
+	} else {
+		const globalNamespace = namespaces.find(ns => ns.id === GLOBAL_NAMESPACE_ID);
+		activeNamespaceId.set(globalNamespace?.id ?? namespaces[0]?.id ?? GLOBAL_NAMESPACE_ID);
 	}
 
 	storeLoadingState.set({
