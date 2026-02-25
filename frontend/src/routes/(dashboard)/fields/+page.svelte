@@ -386,18 +386,6 @@
           />
         </div>
 
-        <!-- Constraints -->
-        <FieldConstraintEditor
-          constraints={workflow.editedItem.constraints}
-          availableConstraints={availableFieldConstraints}
-          allConstraintMeta={fieldConstraints}
-          selectedNames={selectedFieldConstraintNames}
-          onAdd={addFieldConstraint}
-          onRemove={removeFieldConstraint}
-          onParamChange={updateConstraintParam}
-          error={workflow.visibleErrors.constraints}
-        />
-
         <!-- Validators -->
         <div>
           <h3 class="text-sm text-mono-700 mb-2 font-medium">Validators ({workflow.editedItem.validators.length})</h3>
@@ -454,6 +442,18 @@
             {/if}
           </div>
         </div>
+
+        <!-- Constraints -->
+        <FieldConstraintEditor
+          constraints={workflow.editedItem.constraints}
+          availableConstraints={availableFieldConstraints}
+          allConstraintMeta={fieldConstraints}
+          selectedNames={selectedFieldConstraintNames}
+          onAdd={addFieldConstraint}
+          onRemove={removeFieldConstraint}
+          onParamChange={updateConstraintParam}
+          error={workflow.visibleErrors.constraints}
+        />
 
         <!-- Used In APIs -->
         <div>
