@@ -18,20 +18,29 @@
 - Modify: `/Users/evgesha/Documents/Projects/median-code-backend/src/api/models/database.py` (FieldModel class, ~line 311-356)
 - Modify: `/Users/evgesha/Documents/Projects/median-code-backend/src/api/migrations/versions/4141ad7f2255_initial_schema.py` (fields table, ~line 217-241)
 
-**Step 1: Add column to FieldModel**
+**Step 1: Add column to FieldModel with CHECK constraint**
 
 In `database.py`, add to `FieldModel` after the `default_value` column:
 
 ```python
+from sqlalchemy import CheckConstraint
+
 container: Mapped[str | None] = mapped_column(String, nullable=True, default=None)
+
+__table_args__ = (
+    CheckConstraint("container IN ('List')", name="ck_fields_container"),
+)
 ```
 
-**Step 2: Add column to migration**
+Note: If `FieldModel` already has a `__table_args__`, merge the new `CheckConstraint` into the existing tuple.
+
+**Step 2: Add column and CHECK constraint to migration**
 
 In the initial schema migration, inside the `fields` table definition, add:
 
 ```python
 sa.Column("container", sa.String(), nullable=True),
+sa.CheckConstraint("container IN ('List')", name="ck_fields_container"),
 ```
 
 **Step 3: Run tests to verify model loads**

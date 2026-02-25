@@ -21,6 +21,8 @@ The frontend has no way to express composite field types like `List[str]` or `Li
 **Database — update existing migration:**
 - Add `container` column to `FieldModel`: `Mapped[str | None]`, nullable, default `None`
 - Valid values: `None` (plain type), `"List"`
+- Add `CHECK` constraint: `CHECK (container IN ('List'))` — DB-level validation without PG enum rigidity
+- Three-layer validation: DB CHECK constraint → Pydantic `@field_validator` → Frontend toggle UI
 
 **API schemas (`src/api/schemas/field.py`):**
 - `FieldCreate`: add `container: str | None = None`
