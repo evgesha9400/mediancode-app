@@ -62,6 +62,12 @@
 
   let isReadOnly = $derived(workflow.editedItem?.locked === true);
   let isCreating = $derived(workflow.mode === 'creating');
+  let hasDefaultChanged = $derived(
+    isReadOnly &&
+    workflow.editedItem != null &&
+    workflow.originalItem != null &&
+    workflow.editedItem.isDefault !== workflow.originalItem.isDefault
+  );
 </script>
 
 <PageHeader title="Namespaces">
@@ -296,6 +302,20 @@
         onDeleteCancel={() => workflow.showDeleteConfirm = false}
       />
     {:else if workflow.editedItem && isReadOnly}
+      {#if hasDefaultChanged}
+        <button
+          type="button"
+          onclick={workflow.handleSave}
+          disabled={workflow.isSaving}
+          class="w-full px-4 py-2 rounded-md transition-colors font-medium {workflow.isSaving ? 'bg-mono-300 text-mono-500 cursor-not-allowed' : 'bg-mono-900 text-white hover:bg-mono-800 cursor-pointer'}"
+        >
+          {#if workflow.isSaving}
+            Saving...
+          {:else}
+            Save
+          {/if}
+        </button>
+      {/if}
       <button
         type="button"
         onclick={workflow.closeDrawer}
