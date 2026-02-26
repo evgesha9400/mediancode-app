@@ -406,7 +406,7 @@
                   <div class="flex items-center space-x-2 p-2 bg-white rounded border border-mono-200">
                     <div class="flex items-center space-x-2 flex-1 min-w-0">
                       <span class="text-sm text-mono-700 truncate">{tmpl?.name ?? validator.templateId}</span>
-                      <span class="px-2 py-0.5 text-xs rounded-full bg-mono-100 text-mono-600 shrink-0">{tmpl?.mode ?? 'after'}</span>
+                      <Pill class="shrink-0">{tmpl?.mode ?? 'after'}</Pill>
                     </div>
                     <button
                       type="button"
