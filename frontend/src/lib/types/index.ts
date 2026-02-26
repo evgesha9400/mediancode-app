@@ -104,11 +104,13 @@ export interface Namespace {
 
 // API Generator types
 export type HttpMethod = 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
+export const HTTP_METHODS: HttpMethod[] = ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'];
 
 // Response shape types
 // Request body: ONLY single object (no arrays, no primitives)
 // Response body: ONLY object or array of objects (no primitives)
 export type ResponseShape = 'object' | 'list';
+export const RESPONSE_SHAPES: ResponseShape[] = ['object', 'list'];
 export type ResponseItemShape = 'object'; // Only objects allowed in lists
 
 export interface Api {
@@ -185,6 +187,8 @@ export interface Field {
   usedInApis: string[];
 }
 
+export const CONTAINER_VALUES = ['List'] as const;
+
 // Field constraint types
 export interface FieldConstraintBase {
   id: string;
@@ -231,6 +235,8 @@ export interface FieldMappingDefinition {
   compatibleTypes: string[];
   required: boolean;
 }
+
+export const VALIDATOR_MODES = ['before', 'after'] as const;
 
 export interface FieldValidatorTemplate {
   id: string;
