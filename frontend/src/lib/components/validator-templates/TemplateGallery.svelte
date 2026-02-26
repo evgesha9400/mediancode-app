@@ -18,6 +18,8 @@
 </script>
 
 <script lang="ts">
+  import { Pill } from '../pill';
+
   interface Props extends TemplateGalleryProps {}
 
   let {
@@ -80,7 +82,7 @@
         >
           <div class="flex items-center justify-between">
             <span class="text-sm text-mono-900 font-medium">{template.name}</span>
-            <span class="px-2 py-0.5 text-xs rounded-full bg-mono-100 text-mono-600">{template.mode}</span>
+            <Pill>{template.mode}</Pill>
           </div>
           <p class="text-xs text-mono-500 mt-1">{template.description}</p>
           <div class="flex flex-wrap gap-1 mt-1">
@@ -101,7 +103,7 @@
         >
           <div class="flex items-center justify-between">
             <span class="text-sm text-mono-900 font-medium">{template.name}</span>
-            <span class="px-2 py-0.5 text-xs rounded-full bg-mono-100 text-mono-600">{template.mode}</span>
+            <Pill>{template.mode}</Pill>
           </div>
           <p class="text-xs text-mono-500 mt-1">{template.description}</p>
           <div class="flex flex-wrap gap-1 mt-1">
