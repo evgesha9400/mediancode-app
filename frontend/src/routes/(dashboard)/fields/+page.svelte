@@ -26,6 +26,7 @@
     TemplateForm,
     DefaultValueInput
   } from '$lib/components';
+  import { CONTAINER_VALUES } from '$lib/types';
   import type { FilterConfig, InlineFieldValidator, FieldValidatorTemplate } from '$lib/types';
   import { fieldValidatorTemplatesStore, getFieldValidatorTemplateById } from '$lib/stores/fieldValidatorTemplates';
   import { STORE_NAMES } from '$lib/stores/loader';
@@ -368,8 +369,8 @@
               </button>
               <button
                 type="button"
-                onclick={() => handleContainerChange('List')}
-                class="px-3 py-1.5 text-sm rounded-md border transition-colors {workflow.editedItem.container === 'List' ? 'bg-mono-900 text-white border-mono-900' : 'bg-white text-mono-600 border-mono-300 hover:border-mono-400'}"
+                onclick={() => handleContainerChange(CONTAINER_VALUES[0])}
+                class="px-3 py-1.5 text-sm rounded-md border transition-colors {workflow.editedItem.container === CONTAINER_VALUES[0] ? 'bg-mono-900 text-white border-mono-900' : 'bg-white text-mono-600 border-mono-300 hover:border-mono-400'}"
               >
                 List
               </button>
