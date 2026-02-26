@@ -120,6 +120,11 @@
   <DrawerContent>
     {#if state.selectedItem}
       <div class="space-y-6">
+        <div class="flex items-center space-x-2 px-3 py-2 bg-mono-50 border border-mono-200 rounded-md">
+          <i class="fa-solid fa-lock text-mono-400 text-sm"></i>
+          <span class="text-sm text-mono-600">System model validator — read-only</span>
+        </div>
+
         <DetailField label="Name">
           <p class="text-mono-900 font-medium">{state.selectedItem.name}</p>
         </DetailField>
