@@ -170,6 +170,19 @@
   <DrawerContent>
     {#if workflow.editedItem}
     <div class="space-y-4">
+      <!-- Namespace (read-only) -->
+      <div>
+        <FormLabel label="Namespace" forId="api-namespace" />
+        <input
+          id="api-namespace"
+          type="text"
+          value={activeNamespaceName}
+          disabled
+          class="w-full px-3 py-1.5 text-sm border border-mono-300 rounded-md bg-mono-50 text-mono-500 cursor-not-allowed"
+        />
+        <p class="text-xs text-mono-500 mt-1">Uses the currently active namespace</p>
+      </div>
+
       <FormField
         id="api-title"
         label="API Title"
@@ -211,19 +224,6 @@
         bind:value={workflow.editedItem.baseUrl}
         placeholder="/api/v1"
       />
-
-      <!-- Namespace (read-only) -->
-      <div>
-        <FormLabel label="Namespace" forId="api-namespace" />
-        <input
-          id="api-namespace"
-          type="text"
-          value={activeNamespaceName}
-          disabled
-          class="w-full px-3 py-1.5 text-sm border border-mono-300 rounded-md bg-mono-50 text-mono-500 cursor-not-allowed"
-        />
-        <p class="text-xs text-mono-500 mt-1">Uses the currently active namespace</p>
-      </div>
     </div>
     {/if}
   </DrawerContent>

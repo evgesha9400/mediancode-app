@@ -137,7 +137,7 @@
           class="px-4 py-2 border border-mono-300 text-mono-700 rounded-md flex items-center space-x-2 hover:bg-mono-50 cursor-pointer transition-colors"
         >
           <i class="fa-solid fa-pen-to-square"></i>
-          <span>Edit</span>
+          <span>Edit API</span>
         </button>
       </div>
     </div>
