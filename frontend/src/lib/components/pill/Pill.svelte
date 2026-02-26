@@ -2,7 +2,8 @@
   import type { Snippet } from 'svelte';
 
   export interface PillProps {
-    variant?: 'default' | 'light';
+    size?: 'default' | 'sm';
+    class?: string;
     children?: Snippet;
   }
 </script>
@@ -10,15 +11,15 @@
 <script lang="ts">
   interface Props extends PillProps {}
 
-  let { variant = 'default', children }: Props = $props();
+  let { size = 'default', class: extraClass = '', children }: Props = $props();
 
-  const classes = {
-    default: 'bg-mono-200 text-mono-700',
-    light: 'bg-mono-100 text-mono-600'
+  const sizeClasses = {
+    default: 'px-2 py-0.5 text-xs',
+    sm: 'px-1.5 py-0.5 text-[10px]'
   };
 </script>
 
-<span class="px-2 py-0.5 text-xs rounded-full {classes[variant]}">
+<span class="rounded-full {sizeClasses[size]} bg-mono-200 text-mono-700 {extraClass}">
   {#if children}
     {@render children()}
   {/if}

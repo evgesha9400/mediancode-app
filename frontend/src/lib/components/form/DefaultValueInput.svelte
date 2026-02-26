@@ -8,6 +8,8 @@
 </script>
 
 <script lang="ts">
+  import { Pill } from '../pill';
+
   type InputKind = 'text' | 'integer' | 'float' | 'bool';
 
   const PRESETS = ['None', 'True', 'False'] as const;
@@ -68,7 +70,7 @@
     {#if isPreset}
       <!-- Preset selected: show as a pill with clear button -->
       <div class="flex-1 flex items-center px-3 py-1.5 gap-2">
-        <span class="px-2 py-0.5 text-xs rounded-full bg-mono-200 text-mono-700 font-medium">{value}</span>
+        <Pill class="font-medium">{value}</Pill>
         <button
           type="button"
           onclick={clearPreset}

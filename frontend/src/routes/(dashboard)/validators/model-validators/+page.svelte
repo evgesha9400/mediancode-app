@@ -89,12 +89,12 @@
           <span class="text-sm text-mono-900 font-medium">{template.name}</span>
         </td>
         <td class="px-6 py-4 whitespace-nowrap">
-          <Pill variant="light">{template.mode}</Pill>
+          <Pill>{template.mode}</Pill>
         </td>
         <td class="px-6 py-4">
           <div class="flex flex-wrap gap-1">
             {#each template.fieldMappings as fm}
-              <span class="px-2 py-0.5 text-xs rounded-full bg-mono-100 text-mono-600">{fm.label}</span>
+              <Pill>{fm.label}</Pill>
             {/each}
           </div>
         </td>
@@ -127,7 +127,7 @@
         <DetailField label="Description" value={state.selectedItem.description} />
 
         <DetailField label="Mode">
-          <Pill variant="light">{state.selectedItem.mode}</Pill>
+          <Pill>{state.selectedItem.mode}</Pill>
         </DetailField>
 
         <DetailField label="Field Mappings">
@@ -143,7 +143,7 @@
                 {#if fm.compatibleTypes.length > 0}
                   <div class="flex flex-wrap gap-1 mt-1">
                     {#each fm.compatibleTypes as ctype}
-                      <span class="px-1.5 py-0.5 text-[10px] rounded-full bg-mono-200 text-mono-600">{ctype}</span>
+                      <Pill size="sm">{ctype}</Pill>
                     {/each}
                   </div>
                 {/if}
@@ -159,7 +159,7 @@
                 <div class="p-2 bg-mono-50 rounded border border-mono-200">
                   <div class="flex items-center space-x-2">
                     <span class="text-sm text-mono-700 font-medium">{param.label}</span>
-                    <span class="px-1.5 py-0.5 text-[10px] rounded-full bg-mono-200 text-mono-600">{param.type}</span>
+                    <Pill size="sm">{param.type}</Pill>
                     {#if param.required}
                       <span class="text-red-500 text-xs">required</span>
                     {/if}

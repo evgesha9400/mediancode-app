@@ -140,7 +140,7 @@
                 <i class="fa-solid fa-earth-americas text-mono-400 text-xs" title="Global"></i>
               {/if}
               {#if namespace.isDefault}
-                <span class="px-1.5 py-0.5 text-xs rounded bg-mono-900 text-white">Default</span>
+                <Pill>Default</Pill>
               {/if}
             </div>
           </td>

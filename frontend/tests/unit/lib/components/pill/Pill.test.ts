@@ -19,12 +19,12 @@ describe('Pill Component', () => {
 			expect(props).toBeDefined();
 		});
 
-		it('PillProps accepts optional variant property with default value', () => {
-			const defaultProps: PillProps = { variant: 'default' };
-			const lightProps: PillProps = { variant: 'light' };
+		it('PillProps accepts optional size property', () => {
+			const defaultProps: PillProps = { size: 'default' };
+			const smProps: PillProps = { size: 'sm' };
 
-			expect(defaultProps.variant).toBe('default');
-			expect(lightProps.variant).toBe('light');
+			expect(defaultProps.size).toBe('default');
+			expect(smProps.size).toBe('sm');
 		});
 
 		it('PillProps accepts optional children snippet', () => {
@@ -39,7 +39,7 @@ describe('Pill Component', () => {
 		it('PillProps optional properties default to undefined', () => {
 			const props: PillProps = {};
 
-			expect(props.variant).toBeUndefined();
+			expect(props.size).toBeUndefined();
 			expect(props.children).toBeUndefined();
 		});
 	});
