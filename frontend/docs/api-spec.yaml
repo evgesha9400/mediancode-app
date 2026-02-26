@@ -1088,6 +1088,12 @@ components:
           - 00000000-0000-0000-0005-000000000001
         method:
           type: string
+          enum:
+          - GET
+          - POST
+          - PUT
+          - PATCH
+          - DELETE
           title: Method
           examples:
           - GET
@@ -1144,6 +1150,9 @@ components:
           - true
         responseShape:
           type: string
+          enum:
+          - object
+          - list
           title: Responseshape
           examples:
           - object
