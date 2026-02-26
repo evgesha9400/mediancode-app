@@ -194,7 +194,7 @@
           bind:value={workflow.editedItem.description}
           rows="3"
           placeholder="Describe what this API does..."
-          class="w-full px-3 py-2 border border-mono-300 rounded-md focus:ring-2 focus:ring-mono-400 focus:border-transparent"
+          class="w-full px-3 py-1.5 text-sm border border-mono-300 rounded-md focus:ring-2 focus:ring-mono-400 focus:border-transparent"
         ></textarea>
       </div>
 
@@ -220,7 +220,7 @@
           type="text"
           value={activeNamespaceName}
           disabled
-          class="w-full px-3 py-2 border border-mono-300 rounded-md bg-mono-50 text-mono-500 cursor-not-allowed"
+          class="w-full px-3 py-1.5 text-sm border border-mono-300 rounded-md bg-mono-50 text-mono-500 cursor-not-allowed"
         />
         <p class="text-xs text-mono-500 mt-1">Uses the currently active namespace</p>
       </div>

@@ -67,7 +67,7 @@
   >
     {#if isPreset}
       <!-- Preset selected: show as a pill with clear button -->
-      <div class="flex-1 flex items-center px-3 py-2 gap-2">
+      <div class="flex-1 flex items-center px-3 py-1.5 gap-2">
         <span class="px-2 py-0.5 text-xs rounded-full bg-mono-200 text-mono-700 font-medium">{value}</span>
         <button
           type="button"
@@ -88,7 +88,7 @@
         disabled={kind === 'bool'}
         oninput={handleInputChange}
         placeholder={kind === 'text' ? 'e.g. default text' : kind === 'integer' ? 'e.g. 0' : kind === 'float' ? 'e.g. 0.0' : 'Select a value...'}
-        class="flex-1 min-w-0 px-3 py-2 text-sm border-0 outline-none bg-transparent {kind === 'bool' ? 'cursor-default text-mono-400' : ''}"
+        class="flex-1 min-w-0 px-3 py-1.5 text-sm border-0 outline-none bg-transparent {kind === 'bool' ? 'cursor-default text-mono-400' : ''}"
       />
     {/if}
 
@@ -97,7 +97,7 @@
       type="button"
       onclick={toggleDropdown}
       onblur={handleBlur}
-      class="px-2.5 py-2 text-mono-400 hover:text-mono-600 transition-colors cursor-pointer shrink-0 border-l border-mono-200"
+      class="px-2.5 py-1.5 text-mono-400 hover:text-mono-600 transition-colors cursor-pointer shrink-0 border-l border-mono-200"
       title="Select preset value"
     >
       <i class="fa-solid fa-chevron-down text-xs {dropdownOpen ? 'rotate-180' : ''} transition-transform"></i>

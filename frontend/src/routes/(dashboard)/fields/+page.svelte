@@ -344,7 +344,7 @@
             type="text"
             value={allNamespaces.find(ns => ns.id === workflow.editedItem?.namespaceId)?.name ?? ''}
             disabled
-            class="w-full px-3 py-2 border border-mono-300 rounded-md bg-mono-50 text-mono-500 cursor-not-allowed"
+            class="w-full px-3 py-1.5 text-sm border border-mono-300 rounded-md bg-mono-50 text-mono-500 cursor-not-allowed"
           />
           <p class="text-xs text-mono-500 mt-1">Namespace cannot be changed after creation</p>
         </div>
@@ -358,41 +358,41 @@
           error={workflow.visibleErrors.name}
         />
 
-        <!-- Container -->
-        <div>
-          <FormLabel label="Container" />
-          <div class="flex space-x-2">
-            <button
-              type="button"
-              onclick={() => handleContainerChange(null)}
-              class="px-3 py-1.5 text-sm rounded-md border transition-colors {workflow.editedItem.container === null ? 'bg-mono-900 text-white border-mono-900' : 'bg-white text-mono-600 border-mono-300 hover:border-mono-400'}"
-            >
-              None
-            </button>
-            <button
-              type="button"
-              onclick={() => handleContainerChange('List')}
-              class="px-3 py-1.5 text-sm rounded-md border transition-colors {workflow.editedItem.container === 'List' ? 'bg-mono-900 text-white border-mono-900' : 'bg-white text-mono-600 border-mono-300 hover:border-mono-400'}"
-            >
-              List
-            </button>
+        <!-- Container + Type -->
+        <div class="flex gap-4">
+          <div class="shrink-0">
+            <FormLabel label="Container" />
+            <div class="flex space-x-2">
+              <button
+                type="button"
+                onclick={() => handleContainerChange(null)}
+                class="px-3 py-1.5 text-sm rounded-md border transition-colors {workflow.editedItem.container === null ? 'bg-mono-900 text-white border-mono-900' : 'bg-white text-mono-600 border-mono-300 hover:border-mono-400'}"
+              >
+                None
+              </button>
+              <button
+                type="button"
+                onclick={() => handleContainerChange('List')}
+                class="px-3 py-1.5 text-sm rounded-md border transition-colors {workflow.editedItem.container === 'List' ? 'bg-mono-900 text-white border-mono-900' : 'bg-white text-mono-600 border-mono-300 hover:border-mono-400'}"
+              >
+                List
+              </button>
+            </div>
           </div>
-        </div>
-
-        <!-- Type -->
-        <div>
-          <FormLabel label="Type" forId="fields-type" required />
-          <TypeSelectorDropdown
-            id="fields-type"
-            availableTypes={selectableTypes}
-            selectedTypeName={workflow.editedItem.type}
-            onSelect={handleTypeChange}
-            placeholder="Search types..."
-            error={!!workflow.visibleErrors.type}
-          />
-          {#if workflow.visibleErrors.type}
-            <p class="text-xs text-red-500 mt-1">{workflow.visibleErrors.type}</p>
-          {/if}
+          <div class="flex-1 min-w-0">
+            <FormLabel label="Type" forId="fields-type" required />
+            <TypeSelectorDropdown
+              id="fields-type"
+              availableTypes={selectableTypes}
+              selectedTypeName={workflow.editedItem.type}
+              onSelect={handleTypeChange}
+              placeholder="Search types..."
+              error={!!workflow.visibleErrors.type}
+            />
+            {#if workflow.visibleErrors.type}
+              <p class="text-xs text-red-500 mt-1">{workflow.visibleErrors.type}</p>
+            {/if}
+          </div>
         </div>
 
         <!-- Description -->
@@ -402,7 +402,7 @@
             id="fields-description"
             bind:value={workflow.editedItem.description}
             rows="3"
-            class="w-full px-3 py-2 border border-mono-300 rounded-md focus:ring-2 focus:ring-mono-400 focus:border-transparent"
+            class="w-full px-3 py-1.5 text-sm border border-mono-300 rounded-md focus:ring-2 focus:ring-mono-400 focus:border-transparent"
           ></textarea>
         </div>
 

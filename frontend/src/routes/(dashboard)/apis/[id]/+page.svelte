@@ -227,7 +227,7 @@
             bind:value={apiState.editForm.description}
             rows="3"
             placeholder="Describe what this API does..."
-            class="w-full px-3 py-2 border border-mono-300 rounded-md focus:ring-2 focus:ring-mono-400 focus:border-transparent"
+            class="w-full px-3 py-1.5 text-sm border border-mono-300 rounded-md focus:ring-2 focus:ring-mono-400 focus:border-transparent"
           ></textarea>
         </div>
 

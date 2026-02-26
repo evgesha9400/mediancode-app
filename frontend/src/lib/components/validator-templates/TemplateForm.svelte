@@ -123,7 +123,7 @@
           <select
             id="param-{param.key}"
             bind:value={params[param.key]}
-            class="w-full px-3 py-2 border border-mono-300 rounded-md text-sm focus:ring-2 focus:ring-mono-400 focus:border-transparent bg-white"
+            class="w-full px-3 py-1.5 border border-mono-300 rounded-md text-sm focus:ring-2 focus:ring-mono-400 focus:border-transparent bg-white"
           >
             <option value="">Select...</option>
             {#each param.options as opt}
@@ -137,7 +137,7 @@
             step={param.type === 'number' ? 'any' : undefined}
             bind:value={params[param.key]}
             placeholder={param.placeholder}
-            class="w-full px-3 py-2 border border-mono-300 rounded-md text-sm focus:ring-2 focus:ring-mono-400 focus:border-transparent"
+            class="w-full px-3 py-1.5 border border-mono-300 rounded-md text-sm focus:ring-2 focus:ring-mono-400 focus:border-transparent"
           />
         {/if}
       </div>
@@ -155,7 +155,7 @@
         <select
           id="role-{fm.key}"
           bind:value={mappings[fm.key]}
-          class="w-full px-3 py-2 border border-mono-300 rounded-md text-sm focus:ring-2 focus:ring-mono-400 focus:border-transparent bg-white"
+          class="w-full px-3 py-1.5 border border-mono-300 rounded-md text-sm focus:ring-2 focus:ring-mono-400 focus:border-transparent bg-white"
         >
           <option value="">Select a field...</option>
           {#each candidates as field}
@@ -177,7 +177,7 @@
           <select
             id="mparam-{param.key}"
             bind:value={params[param.key]}
-            class="w-full px-3 py-2 border border-mono-300 rounded-md text-sm focus:ring-2 focus:ring-mono-400 focus:border-transparent bg-white"
+            class="w-full px-3 py-1.5 border border-mono-300 rounded-md text-sm focus:ring-2 focus:ring-mono-400 focus:border-transparent bg-white"
           >
             <option value="">Select...</option>
             {#each param.options as opt}
@@ -191,7 +191,7 @@
             step={param.type === 'number' ? 'any' : undefined}
             bind:value={params[param.key]}
             placeholder={param.placeholder}
-            class="w-full px-3 py-2 border border-mono-300 rounded-md text-sm focus:ring-2 focus:ring-mono-400 focus:border-transparent"
+            class="w-full px-3 py-1.5 border border-mono-300 rounded-md text-sm focus:ring-2 focus:ring-mono-400 focus:border-transparent"
           />
         {/if}
       </div>

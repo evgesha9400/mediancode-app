@@ -95,7 +95,7 @@
           {placeholder}
           bind:value={searchQuery}
           data-testid={SEARCH_INPUT_ID}
-          class="w-full pl-10 pr-4 py-2 border border-mono-300 rounded-md focus:ring-2 focus:ring-mono-400 focus:border-transparent"
+          class="w-full pl-10 pr-4 py-1.5 text-sm border border-mono-300 rounded-md focus:ring-2 focus:ring-mono-400 focus:border-transparent"
         />
         <i class="fa-solid fa-search absolute left-3 top-1/2 transform -translate-y-1/2 text-mono-400"></i>
       </div>
@@ -104,7 +104,7 @@
           type="button"
           onclick={() => onFilterClick?.()}
           data-testid={FILTER_TOGGLE_ID}
-          class="flex items-center space-x-2 px-3 py-2 border rounded-md transition-colors {showFilter ? (active ? 'bg-mono-100 border-mono-400 text-mono-900' : 'bg-white border-mono-300 text-mono-700 hover:bg-mono-50') : 'hidden'}"
+          class="flex items-center space-x-2 px-3 py-1.5 text-sm border rounded-md transition-colors {showFilter ? (active ? 'bg-mono-100 border-mono-400 text-mono-900' : 'bg-white border-mono-300 text-mono-700 hover:bg-mono-50') : 'hidden'}"
         >
           <i class="fa-solid fa-filter {active ? 'text-mono-900' : 'text-mono-500'}"></i>
           <span>Filter</span>

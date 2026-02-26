@@ -202,7 +202,7 @@
             disabled={isReadOnly}
             rows="3"
             placeholder={isCreating ? 'Optional description...' : ''}
-            class="w-full px-3 py-2 border border-mono-300 rounded-md focus:ring-2 focus:ring-mono-400 focus:border-transparent {isReadOnly ? 'bg-mono-100 cursor-not-allowed' : ''}"
+            class="w-full px-3 py-1.5 text-sm border border-mono-300 rounded-md focus:ring-2 focus:ring-mono-400 focus:border-transparent {isReadOnly ? 'bg-mono-100 cursor-not-allowed' : ''}"
           ></textarea>
         </div>
 
