@@ -16,6 +16,7 @@
     RequestBodyEditor,
     ResponseBodyEditor
   } from '$lib/components';
+  import { HTTP_METHODS } from '$lib/types';
   import { createApiDetailState } from '$lib/stores/apiDetailState.svelte';
   import { getApiById } from '$lib/stores/apis';
   import { namespacesStore } from '$lib/stores/namespaces';
@@ -414,11 +415,9 @@
                 bind:value={apiState.editedEndpoint.method}
                 class="px-3 py-1.5 border border-mono-300 rounded-md focus:ring-2 focus:ring-mono-400 focus:border-transparent text-sm"
               >
-                <option value="GET">GET</option>
-                <option value="POST">POST</option>
-                <option value="PUT">PUT</option>
-                <option value="PATCH">PATCH</option>
-                <option value="DELETE">DELETE</option>
+                {#each HTTP_METHODS as method}
+                  <option value={method}>{method}</option>
+                {/each}
               </select>
               <div class="flex-1 flex items-center border border-mono-300 rounded-md focus-within:ring-2 focus-within:ring-mono-400 focus-within:border-transparent">
                 <span class="px-3 py-1.5 text-sm font-mono text-mono-500 bg-mono-50 border-r border-mono-300">/</span>
