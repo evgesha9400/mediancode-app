@@ -319,7 +319,10 @@
 
   <!-- Endpoint Drawer -->
   <Drawer open={apiState.endpointDrawerOpen} maxWidth={1200}>
-    <DrawerHeader title="Edit Endpoint" onClose={apiState.closeEndpointDrawer} />
+    <DrawerHeader
+        title={apiState.isCreating ? 'Create Endpoint' : 'Edit Endpoint'}
+        onClose={apiState.isCreating ? apiState.handleCancelCreate : apiState.closeEndpointDrawer}
+    />
 
     <DrawerContent>
       {#if apiState.editedEndpoint}
@@ -484,7 +487,32 @@
 
     <DrawerFooter>
       {#if apiState.editedEndpoint}
-        {#if !apiState.showEndpointDeleteConfirm}
+        {#if apiState.isCreating}
+          <div class="flex space-x-2">
+            <button
+              type="button"
+              onclick={apiState.handleCreateEndpoint}
+              disabled={!apiState.hasEndpointChanges || apiState.isSaving}
+              class="flex-1 px-4 py-2 rounded-md transition-colors font-medium flex items-center justify-center space-x-2 {apiState.hasEndpointChanges && !apiState.isSaving ? 'bg-mono-900 text-white hover:bg-mono-800 cursor-pointer' : 'bg-mono-300 text-mono-500 cursor-not-allowed'}"
+            >
+              {#if apiState.isSaving}
+                <i class="fa-solid fa-spinner fa-spin"></i>
+                <span>Creating...</span>
+              {:else}
+                <i class="fa-solid fa-plus"></i>
+                <span>Create</span>
+              {/if}
+            </button>
+            <button
+              type="button"
+              onclick={apiState.handleCancelCreate}
+              disabled={apiState.isSaving}
+              class="flex-1 px-4 py-2 border border-mono-300 text-mono-700 rounded-md hover:bg-mono-50 cursor-pointer transition-colors font-medium flex items-center justify-center space-x-2"
+            >
+              <span>Cancel</span>
+            </button>
+          </div>
+        {:else if !apiState.showEndpointDeleteConfirm}
           <div class="flex space-x-2">
             <button
               type="button"
