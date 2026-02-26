@@ -16,7 +16,7 @@ import {
   type CreateNamespaceRequest,
   type UpdateNamespaceRequest
 } from '$lib/domain/mutations';
-import { namespacesStore } from './namespaces';
+import { namespacesStore, activeNamespaceId } from './namespaces';
 import { get } from 'svelte/store';
 import { composeState } from '$lib/utils/compose';
 import { showToast } from './toasts';
@@ -275,6 +275,7 @@ export function createNamespacesModel(config: NamespacesModelConfig): Namespaces
     }
 
     // If this namespace was set as default, clear isDefault on all others in local store
+    // and switch the active namespace so other pages reflect the change immediately
     if (result.data!.isDefault) {
       const currentNamespaces = get(namespacesStore);
       namespacesStore.set(
@@ -282,6 +283,7 @@ export function createNamespacesModel(config: NamespacesModelConfig): Namespaces
           ns.id === result.data!.id ? result.data! : { ...ns, isDefault: false }
         )
       );
+      activeNamespaceId.set(result.data!.id);
     }
 
     listState.selectedItem = result.data!;
@@ -320,6 +322,7 @@ export function createNamespacesModel(config: NamespacesModelConfig): Namespaces
     }
 
     // If this namespace was created as default, clear isDefault on all others in local store
+    // and switch the active namespace so other pages reflect the change immediately
     if (result.data!.isDefault) {
       const currentNamespaces = get(namespacesStore);
       namespacesStore.set(
@@ -327,6 +330,7 @@ export function createNamespacesModel(config: NamespacesModelConfig): Namespaces
           ns.id === result.data!.id ? result.data! : { ...ns, isDefault: false }
         )
       );
+      activeNamespaceId.set(result.data!.id);
     }
 
     showToast(`Namespace "${result.data!.name}" created successfully`, 'success', 3000);
