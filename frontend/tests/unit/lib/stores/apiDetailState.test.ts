@@ -548,31 +548,59 @@ describe('apiDetailState - Endpoint CRUD', () => {
   });
   afterEach(() => cleanup?.());
 
-  it('should add a new endpoint via createEndpointAction', async () => {
-    const newEndpoint = makeEndpoint({ id: 'ep-new', apiId: 'api-1', path: '/' });
+  it('should open create drawer with defaults when adding endpoint', () => {
+    ({ state, cleanup } = createTestState());
+    flushSync();
+
+    state.handleAddEndpoint();
+    flushSync();
+
+    expect(state.isCreating).toBe(true);
+    expect(state.endpointDrawerOpen).toBe(true);
+    expect(state.editedEndpoint).toEqual(expect.objectContaining({
+      id: '',
+      apiId: 'api-1',
+      method: 'GET',
+      path: '/'
+    }));
+    expect(createEndpointAction).not.toHaveBeenCalled();
+  });
+
+  it('should create endpoint via handleCreateEndpoint', async () => {
+    const newEndpoint = makeEndpoint({ id: 'ep-new', apiId: 'api-1', path: '/items' });
     (createEndpointAction as Mock).mockResolvedValue({ success: true, data: newEndpoint });
 
     ({ state, cleanup } = createTestState());
     flushSync();
 
-    await state.handleAddEndpoint();
+    state.handleAddEndpoint();
+    flushSync();
+    state.editedEndpoint = { ...state.editedEndpoint!, path: '/items' };
+    flushSync();
+
+    await state.handleCreateEndpoint();
 
     expect(createEndpointAction).toHaveBeenCalledWith(expect.objectContaining({
       apiId: 'api-1',
       method: 'GET',
-      path: '/'
+      path: '/items'
     }));
+    expect(showToast).toHaveBeenCalledWith('Endpoint created successfully', 'success');
+    expect(state.isCreating).toBe(false);
   });
 
-  it('should show error toast when adding endpoint fails', async () => {
-    (createEndpointAction as Mock).mockResolvedValue({ success: false, error: 'Add failed' });
+  it('should show error toast when creating endpoint fails', async () => {
+    (createEndpointAction as Mock).mockResolvedValue({ success: false, error: 'Create failed' });
 
     ({ state, cleanup } = createTestState());
     flushSync();
 
-    await state.handleAddEndpoint();
+    state.handleAddEndpoint();
+    flushSync();
 
-    expect(showToast).toHaveBeenCalledWith('Add failed', 'error');
+    await state.handleCreateEndpoint();
+
+    expect(showToast).toHaveBeenCalledWith('Create failed', 'error');
   });
 
   it('should save endpoint via updateEndpointAction', async () => {
