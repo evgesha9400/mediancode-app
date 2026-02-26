@@ -388,28 +388,61 @@ export function createApiDetailState(config: ApiDetailStateConfig): ApiDetailSta
 	// Endpoint List Operations
 	// ============================================================================
 
-	async function handleAddEndpoint(): Promise<void> {
+	function handleAddEndpoint(): void {
+		closeEditDrawer();
+		isCreating = true;
+		selectedEndpoint = null;
+		editedEndpoint = {
+			id: '',
+			apiId,
+			method: CREATE_DEFAULTS.method,
+			path: CREATE_DEFAULTS.path,
+			description: CREATE_DEFAULTS.description,
+			pathParams: [],
+			useEnvelope: CREATE_DEFAULTS.useEnvelope,
+			responseShape: CREATE_DEFAULTS.responseShape,
+			expanded: false
+		};
+		endpointDrawerOpen = true;
+		tagInputValue = '';
+		tagDropdownOpen = false;
+	}
+
+	async function handleCreateEndpoint(): Promise<void> {
+		if (!editedEndpoint) return;
+
 		isSaving = true;
 		try {
 			const result = await createEndpointAction({
 				apiId,
-				method: 'GET',
-				path: '/',
-				description: '',
-				pathParams: [],
-				useEnvelope: true,
-				responseShape: 'object'
+				method: editedEndpoint.method,
+				path: editedEndpoint.path,
+				description: editedEndpoint.description,
+				tagName: editedEndpoint.tagName,
+				pathParams: editedEndpoint.pathParams,
+				queryParamsObjectId: editedEndpoint.queryParamsObjectId,
+				requestBodyObjectId: editedEndpoint.requestBodyObjectId,
+				responseBodyObjectId: editedEndpoint.responseBodyObjectId,
+				useEnvelope: editedEndpoint.useEnvelope,
+				responseShape: editedEndpoint.responseShape
 			});
 
 			if (!result.success) {
-				showToast(result.error ?? 'Failed to add endpoint', 'error');
+				showToast(result.error ?? 'Failed to create endpoint', 'error');
 				return;
 			}
 
-			openEndpoint(result.data!);
+			showToast('Endpoint created successfully', 'success');
+			isCreating = false;
+			closeEndpointDrawer();
 		} finally {
 			isSaving = false;
 		}
+	}
+
+	function handleCancelCreate(): void {
+		isCreating = false;
+		closeEndpointDrawer();
 	}
 
 	function handleDeleteEndpointClick(): void {
