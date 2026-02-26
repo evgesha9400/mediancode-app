@@ -18,6 +18,11 @@
   import { buildResponsePreviewFromObject } from '$lib/utils/examples';
   import ObjectSelectorDropdown from './ObjectSelectorDropdown.svelte';
 
+  const SHAPE_OPTIONS: { value: ResponseShape; label: string; icon: string }[] = [
+    { value: 'object', label: 'Object', icon: 'fa-solid fa-box' },
+    { value: 'list', label: 'List of Objects', icon: 'fa-solid fa-list' }
+  ];
+
   interface Props extends ResponseBodyEditorProps {}
 
   let {
@@ -58,26 +63,18 @@
     <div>
       <div class="block text-sm text-mono-700 mb-2 font-medium">Response Shape</div>
       <div class="flex gap-1">
-        <button
-          type="button"
-          onclick={() => onSetResponseShape('object')}
-          class="flex-1 px-1.5 py-1 text-sm border rounded-md transition-colors {responseShape === 'object'
-            ? 'bg-mono-900 text-white border-mono-900'
-            : 'bg-white text-mono-700 border-mono-300 hover:border-mono-400'}"
-        >
-          <i class="fa-solid fa-box mr-1.5"></i>
-          Object
-        </button>
-        <button
-          type="button"
-          onclick={() => onSetResponseShape('list')}
-          class="flex-1 px-1.5 py-1 text-sm border rounded-md transition-colors {responseShape === 'list'
-            ? 'bg-mono-900 text-white border-mono-900'
-            : 'bg-white text-mono-700 border-mono-300 hover:border-mono-400'}"
-        >
-          <i class="fa-solid fa-list mr-1.5"></i>
-          List of Objects
-        </button>
+        {#each SHAPE_OPTIONS as option}
+          <button
+            type="button"
+            onclick={() => onSetResponseShape(option.value)}
+            class="flex-1 px-1.5 py-1 text-sm border rounded-md transition-colors {responseShape === option.value
+              ? 'bg-mono-900 text-white border-mono-900'
+              : 'bg-white text-mono-700 border-mono-300 hover:border-mono-400'}"
+          >
+            <i class="{option.icon} mr-1.5"></i>
+            {option.label}
+          </button>
+        {/each}
       </div>
     </div>
 
