@@ -1598,6 +1598,14 @@ components:
             $ref: '#/components/schemas/FieldValidatorInput'
           type: array
           title: Validators
+        container:
+          anyOf:
+          - type: string
+            const: List
+          - type: 'null'
+          title: Container
+          examples:
+          - List
       type: object
       required:
       - namespaceId
@@ -1677,6 +1685,12 @@ components:
             $ref: '#/components/schemas/FieldValidatorResponse'
           type: array
           title: Validators
+        container:
+          anyOf:
+          - type: string
+            const: List
+          - type: 'null'
+          title: Container
       type: object
       required:
       - id
@@ -1741,6 +1755,14 @@ components:
             type: array
           - type: 'null'
           title: Validators
+        container:
+          anyOf:
+          - type: string
+            const: List
+          - type: 'null'
+          title: Container
+          examples:
+          - List
       type: object
       title: FieldUpdate
       description: 'Request schema for updating a field.
