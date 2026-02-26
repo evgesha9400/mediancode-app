@@ -14,8 +14,7 @@
     ParameterEditor,
     QueryParametersEditor,
     RequestBodyEditor,
-    ResponseBodyEditor,
-    NamespaceSelector
+    ResponseBodyEditor
   } from '$lib/components';
   import { createApiDetailState } from '$lib/stores/apiDetailState.svelte';
   import { getApiById } from '$lib/stores/apis';
@@ -197,10 +196,17 @@
 
     <DrawerContent>
       <div class="space-y-4">
-        <!-- Namespace -->
+        <!-- Namespace (Read-only) -->
         <div>
           <FormLabel label="Namespace" forId="edit-namespace" />
-          <NamespaceSelector />
+          <input
+            id="edit-namespace"
+            type="text"
+            value={namespaceName}
+            disabled
+            class="w-full px-3 py-1.5 text-sm border border-mono-300 rounded-md bg-mono-50 text-mono-500 cursor-not-allowed"
+          />
+          <p class="text-xs text-mono-500 mt-1">Namespace cannot be changed after creation</p>
         </div>
 
         <!-- API Title -->
