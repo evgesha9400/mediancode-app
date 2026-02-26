@@ -666,6 +666,7 @@ export function createApiDetailState(config: ApiDetailStateConfig): ApiDetailSta
 		cancelEditDelete,
 
 		// Endpoint drawer
+		get isCreating() { return isCreating; },
 		get endpointDrawerOpen() { return endpointDrawerOpen; },
 		set endpointDrawerOpen(v: boolean) { endpointDrawerOpen = v; },
 		get selectedEndpoint() { return selectedEndpoint; },
@@ -686,6 +687,8 @@ export function createApiDetailState(config: ApiDetailStateConfig): ApiDetailSta
 
 		// Endpoint list actions
 		handleAddEndpoint,
+		handleCreateEndpoint,
+		handleCancelCreate,
 		handleDeleteEndpoint,
 		handleDeleteEndpointClick,
 		cancelDeleteEndpoint,
