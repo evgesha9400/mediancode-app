@@ -81,6 +81,7 @@ export interface ApiDetailState {
 	cancelEditDelete: () => void;
 
 	// --- Endpoint drawer ---
+	readonly isCreating: boolean;
 	endpointDrawerOpen: boolean;
 	selectedEndpoint: ApiEndpoint | null;
 	editedEndpoint: ApiEndpoint | null;
@@ -102,7 +103,9 @@ export interface ApiDetailState {
 	handleTagSelect: (tagName: string | undefined) => void;
 
 	// Endpoint list actions
-	handleAddEndpoint: () => Promise<void>;
+	handleAddEndpoint: () => void;
+	handleCreateEndpoint: () => Promise<void>;
+	handleCancelCreate: () => void;
 	handleDeleteEndpoint: () => Promise<void>;
 	handleDeleteEndpointClick: () => void;
 	cancelDeleteEndpoint: () => void;
@@ -327,15 +330,44 @@ export function createApiDetailState(config: ApiDetailStateConfig): ApiDetailSta
 	// Endpoint deletion confirmation state
 	let showEndpointDeleteConfirm = $state(false);
 
+	// Create mode state
+	let isCreating = $state(false);
+
 	// Loading state
 	let isSaving = $state(false);
 
+	// Defaults used when creating a new endpoint (also used for change detection)
+	const CREATE_DEFAULTS = {
+		method: 'GET' as const,
+		path: '/',
+		description: '',
+		tagName: undefined as string | undefined,
+		pathParams: [] as { name: string; fieldId: string }[],
+		queryParamsObjectId: undefined as string | undefined,
+		requestBodyObjectId: undefined as string | undefined,
+		responseBodyObjectId: undefined as string | undefined,
+		useEnvelope: true,
+		responseShape: 'object' as const
+	};
+
 	// Derived: Track if there are unsaved endpoint changes
-	let hasEndpointChanges = $derived(
-		editedEndpoint && selectedEndpoint
-			? JSON.stringify(editedEndpoint) !== JSON.stringify(selectedEndpoint)
-			: false
-	);
+	let hasEndpointChanges = $derived.by(() => {
+		if (!editedEndpoint) return false;
+		if (isCreating) {
+			return editedEndpoint.method !== CREATE_DEFAULTS.method
+				|| editedEndpoint.path !== CREATE_DEFAULTS.path
+				|| editedEndpoint.description !== CREATE_DEFAULTS.description
+				|| editedEndpoint.tagName !== CREATE_DEFAULTS.tagName
+				|| editedEndpoint.pathParams.length !== CREATE_DEFAULTS.pathParams.length
+				|| editedEndpoint.queryParamsObjectId !== CREATE_DEFAULTS.queryParamsObjectId
+				|| editedEndpoint.requestBodyObjectId !== CREATE_DEFAULTS.requestBodyObjectId
+				|| editedEndpoint.responseBodyObjectId !== CREATE_DEFAULTS.responseBodyObjectId
+				|| editedEndpoint.useEnvelope !== CREATE_DEFAULTS.useEnvelope
+				|| editedEndpoint.responseShape !== CREATE_DEFAULTS.responseShape;
+		}
+		if (!selectedEndpoint) return false;
+		return JSON.stringify(editedEndpoint) !== JSON.stringify(selectedEndpoint);
+	});
 
 	// ============================================================================
 	// Tag Operations
