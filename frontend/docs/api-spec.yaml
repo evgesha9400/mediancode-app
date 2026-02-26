@@ -1849,6 +1849,9 @@ components:
           title: Compatibletypes
         mode:
           type: string
+          enum:
+          - before
+          - after
           title: Mode
         parameters:
           items:
@@ -1978,6 +1981,9 @@ components:
           title: Description
         mode:
           type: string
+          enum:
+          - before
+          - after
           title: Mode
         parameters:
           items:
