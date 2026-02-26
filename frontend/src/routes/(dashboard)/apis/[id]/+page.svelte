@@ -499,7 +499,6 @@
                 <i class="fa-solid fa-spinner fa-spin"></i>
                 <span>Creating...</span>
               {:else}
-                <i class="fa-solid fa-plus"></i>
                 <span>Create</span>
               {/if}
             </button>
@@ -520,7 +519,6 @@
               disabled={!apiState.hasEndpointChanges}
               class="flex-1 px-4 py-2 rounded-md transition-colors font-medium flex items-center justify-center space-x-2 {apiState.hasEndpointChanges ? 'bg-mono-900 text-white hover:bg-mono-800 cursor-pointer' : 'bg-mono-300 text-mono-500 cursor-not-allowed'}"
             >
-              <i class="fa-solid fa-save"></i>
               <span>Save</span>
             </button>
             <button
@@ -529,7 +527,6 @@
               disabled={!apiState.hasEndpointChanges}
               class="flex-1 px-4 py-2 border rounded-md transition-colors font-medium flex items-center justify-center space-x-2 {apiState.hasEndpointChanges ? 'border-mono-300 text-mono-700 hover:bg-mono-50 cursor-pointer' : 'border-mono-200 text-mono-400 cursor-not-allowed bg-mono-50'}"
             >
-              <i class="fa-solid fa-undo"></i>
               <span>Undo</span>
             </button>
             <button
@@ -537,7 +534,6 @@
               onclick={() => apiState.handleDuplicateEndpoint(apiState.editedEndpoint!.id)}
               class="flex-1 px-4 py-2 border border-mono-300 text-mono-700 rounded-md hover:bg-mono-50 transition-colors font-medium flex items-center justify-center space-x-2"
             >
-              <i class="fa-solid fa-copy"></i>
               <span>Duplicate</span>
             </button>
             <button
