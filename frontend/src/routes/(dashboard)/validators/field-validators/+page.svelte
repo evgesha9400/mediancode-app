@@ -164,9 +164,6 @@
           </DetailField>
         {/if}
 
-        <DetailField label="Code Template">
-          <pre class="p-3 bg-mono-900 text-mono-100 rounded-md text-xs overflow-x-auto whitespace-pre font-mono">{state.selectedItem.bodyTemplate}</pre>
-        </DetailField>
       </div>
     {/if}
   </DrawerContent>
