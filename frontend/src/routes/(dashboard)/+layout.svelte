@@ -6,6 +6,7 @@
   import ToastContainer from '$lib/components/toast/ToastContainer.svelte';
   import { clerkState } from '$lib/clerk';
   import { loadStoresFromApi, storeLoadingState } from '$lib/stores/loader';
+  import { sidebarState } from '$lib/stores/sidebar.svelte';
 
   let { children } = $props();
 
@@ -24,6 +25,11 @@
     if (browser && $clerkState.isLoaded && $clerkState.isSignedIn) {
       loadStoresFromApi();
     }
+  });
+
+  // Monitor viewport width for sidebar collapse
+  $effect(() => {
+    return sidebarState.initViewportMonitoring();
   });
 </script>
 

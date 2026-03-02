@@ -3,6 +3,7 @@
     endpointNamespaceId: string;
     selectedObjectId?: string;
     onSelectObject: (objectId: string | undefined) => void;
+    onCreateNewObject?: () => void;
   }
 </script>
 
@@ -13,7 +14,7 @@
 
   interface Props extends QueryParametersEditorProps {}
 
-  let { endpointNamespaceId, selectedObjectId, onSelectObject }: Props = $props();
+  let { endpointNamespaceId, selectedObjectId, onSelectObject, onCreateNewObject }: Props = $props();
 
   // Filter objects to only show those in the endpoint's namespace
   const namespacedObjects = $derived($objectsStore.filter(obj => obj.namespaceId === endpointNamespaceId));
@@ -38,6 +39,7 @@
       availableObjects={namespacedObjects}
       selectedObjectId={selectedObjectId}
       onSelect={onSelectObject}
+      onCreateNew={onCreateNewObject}
       placeholder="Select object for query parameters..."
     />
 

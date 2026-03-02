@@ -17,10 +17,10 @@
 // Component imports - these should all compile successfully
 import {
   // Drawer components
-  Drawer,
   DrawerHeader,
   DrawerContent,
   DrawerFooter,
+  DrawerStack,
 
   // Table components
   Table,
@@ -53,10 +53,10 @@ import {
 // Type imports - these should all compile successfully
 import type {
   // Drawer types
-  DrawerProps,
   DrawerHeaderProps,
   DrawerContentProps,
   DrawerFooterProps,
+  DrawerStackProps,
 
   // Table types
   TableProps,
@@ -93,10 +93,10 @@ import type {
 
 // Collect all components to verify they're constructable (have default exports)
 const components = [
-  Drawer,
   DrawerHeader,
   DrawerContent,
   DrawerFooter,
+  DrawerStack,
   Table,
   SortableColumn,
   EmptyState,
@@ -114,10 +114,10 @@ const components = [
 
 // Type assertions for prop interfaces - ensures types are valid
 export type PropTypes = [
-  DrawerProps,
   DrawerHeaderProps,
   DrawerContentProps,
   DrawerFooterProps,
+  DrawerStackProps,
   TableProps,
   SortableColumnProps,
   EmptyStateProps,

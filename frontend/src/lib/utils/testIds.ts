@@ -25,12 +25,6 @@ export function getSortColumnId(column: string): string {
 	return `sort-${column}`;
 }
 
-// Drawer
-export const DRAWER_ID = 'drawer';
-export const DRAWER_SAVE_ID = 'drawer-save';
-export const DRAWER_CANCEL_ID = 'drawer-cancel';
-export const DRAWER_DELETE_ID = 'drawer-delete';
-
 // Empty state
 export const EMPTY_STATE_ID = 'empty-state';
 

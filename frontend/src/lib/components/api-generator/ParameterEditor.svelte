@@ -6,13 +6,14 @@
     fieldId: string;
     availableFields: Field[];
     onFieldSelect: (fieldId: string) => void;
+    onCreateNewField?: () => void;
   }
 </script>
 
 <script lang="ts">
   interface Props extends ParameterEditorProps {}
 
-  let { paramName, fieldId, availableFields, onFieldSelect }: Props = $props();
+  let { paramName, fieldId, availableFields, onFieldSelect, onCreateNewField }: Props = $props();
 
   let dropdownOpen = $state(false);
   let searchQuery = $state('');
@@ -112,6 +113,18 @@
                 {/if}
               </button>
             {/each}
+          {/if}
+          {#if onCreateNewField}
+            <div class="border-t border-mono-200 p-1.5">
+              <button
+                type="button"
+                class="w-full text-left px-3 py-1.5 text-xs text-mono-600 hover:bg-mono-50 hover:text-mono-900 rounded cursor-pointer flex items-center space-x-2"
+                onmousedown={(e) => { e.preventDefault(); onCreateNewField?.(); }}
+              >
+                <i class="fa-solid fa-plus text-xs"></i>
+                <span>Create new field</span>
+              </button>
+            </div>
           {/if}
         </div>
       {/if}

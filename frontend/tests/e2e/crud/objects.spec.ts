@@ -22,7 +22,7 @@ const HELPER_FIELD = {
 };
 
 const OBJ_A = {
-	name: 'e2e_alpha_object',
+	name: 'E2eAlphaObject',
 	description: 'E2E test object alpha for CRUD lifecycle'
 };
 
@@ -34,7 +34,7 @@ test('Object lifecycle: create, add field, update, delete', async ({ page }) => 
 	const { data: existingObjects } = await apiClient.listObjects();
 	if (existingObjects) {
 		for (const obj of existingObjects) {
-			if (obj.name.startsWith('e2e_')) {
+			if (obj.name.startsWith('e2e_') || obj.name.startsWith('E2e')) {
 				await apiClient.deleteObject(obj.id);
 			}
 		}

@@ -202,6 +202,46 @@ describe('fieldsModel - Validation', () => {
 
     expect(model.isFormValid).toBe(true);
   });
+
+  it('should show snake_case error immediately when name is invalid (before save)', () => {
+    ({ model, cleanup } = createTestModel());
+
+    model.openCreate();
+    flushSync();
+
+    model.editedItem!.name = 'InvalidName';
+    flushSync();
+
+    // Case error should be visible immediately (no save attempt needed)
+    expect(model.visibleErrors).toEqual(
+      expect.objectContaining({ name: 'Must be snake_case (e.g. user_email)' })
+    );
+  });
+
+  it('should NOT show required error before save attempt', () => {
+    ({ model, cleanup } = createTestModel());
+
+    model.openCreate();
+    flushSync();
+
+    // Name is empty, but no save attempt yet — no visible error
+    expect(model.visibleErrors).toEqual({});
+  });
+
+  it('should clear immediate error when name becomes valid', () => {
+    ({ model, cleanup } = createTestModel());
+
+    model.openCreate();
+    flushSync();
+
+    model.editedItem!.name = 'InvalidName';
+    flushSync();
+    expect(model.visibleErrors).toHaveProperty('name');
+
+    model.editedItem!.name = 'valid_name';
+    flushSync();
+    expect(model.visibleErrors).not.toHaveProperty('name');
+  });
 });
 
 describe('fieldsModel - Draft Creation', () => {
@@ -270,7 +310,20 @@ describe('fieldsModel - Deletion Guard', () => {
     expect(model.deleteTooltip).toBe('');
   });
 
-  it('should block deletion when field is used in APIs', () => {
+  it('should allow deletion when field is used in only one API', () => {
+    const items = [makeField({ id: 'f-1', name: 'email', usedInApis: ['api-1'] })];
+    ({ model, cleanup } = createTestModel({
+      itemsStore: () => items
+    }));
+
+    model.selectItem(items[0]);
+    flushSync();
+
+    expect(model.canDelete).toBe(true);
+    expect(model.deleteTooltip).toBe('');
+  });
+
+  it('should block deletion when field is used in multiple APIs', () => {
     const items = [makeField({ id: 'f-1', name: 'email', usedInApis: ['api-1', 'api-2'] })];
     ({ model, cleanup } = createTestModel({
       itemsStore: () => items

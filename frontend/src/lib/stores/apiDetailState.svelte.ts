@@ -28,6 +28,7 @@ import {
 	deleteEndpointAction
 } from '$lib/domain/mutations';
 import { reconcilePathParams, normalizeEndpoint } from '$lib/domain/endpointReducer';
+import { isValidSnakeCaseName } from '$lib/utils/validation';
 
 /**
  * Toast message constants
@@ -95,6 +96,7 @@ export interface ApiDetailState {
 
 	// Derived state
 	readonly hasEndpointChanges: boolean;
+	readonly pathError: string;
 
 	// Loading state for async operations
 	readonly isSaving: boolean;
@@ -335,6 +337,7 @@ export function createApiDetailState(config: ApiDetailStateConfig): ApiDetailSta
 
 	// Loading state
 	let isSaving = $state(false);
+	let pathError = $state('');
 
 	// Defaults used when creating a new endpoint (also used for change detection)
 	const CREATE_DEFAULTS = {
@@ -410,6 +413,7 @@ export function createApiDetailState(config: ApiDetailStateConfig): ApiDetailSta
 
 	async function handleCreateEndpoint(): Promise<void> {
 		if (!editedEndpoint) return;
+		if (pathError) return;
 
 		isSaving = true;
 		try {
@@ -517,11 +521,13 @@ export function createApiDetailState(config: ApiDetailStateConfig): ApiDetailSta
 		endpointDrawerOpen = true;
 		tagInputValue = normalized.tagName ?? '';
 		tagDropdownOpen = false;
+		pathError = '';
 	}
 
 	function closeEndpointDrawer(): void {
 		endpointDrawerOpen = false;
 		showEndpointDeleteConfirm = false;
+		pathError = '';
 		setTimeout(() => {
 			selectedEndpoint = null;
 			editedEndpoint = null;
@@ -530,6 +536,7 @@ export function createApiDetailState(config: ApiDetailStateConfig): ApiDetailSta
 
 	async function handleSaveEndpoint(): Promise<boolean> {
 		if (!editedEndpoint || !selectedEndpoint) return false;
+		if (pathError) return false;
 
 		isSaving = true;
 		try {
@@ -565,6 +572,7 @@ export function createApiDetailState(config: ApiDetailStateConfig): ApiDetailSta
 		if (!selectedEndpoint) return;
 		editedEndpoint = deepClone(selectedEndpoint);
 		tagInputValue = editedEndpoint?.tagName ?? '';
+		pathError = '';
 	}
 
 	// ============================================================================
@@ -575,6 +583,11 @@ export function createApiDetailState(config: ApiDetailStateConfig): ApiDetailSta
 		if (!editedEndpoint) return;
 		const { path, pathParams } = reconcilePathParams(newPath, editedEndpoint.pathParams);
 		editedEndpoint = { ...editedEndpoint, path, pathParams };
+
+		const invalidParam = pathParams.find(p => p.name && !isValidSnakeCaseName(p.name));
+		pathError = invalidParam
+			? `Path parameter '${invalidParam.name}' must be snake_case (e.g. user_id)`
+			: '';
 	}
 
 	function handlePathParamUpdate(paramName: string, fieldId: string): void {
@@ -681,6 +694,7 @@ export function createApiDetailState(config: ApiDetailStateConfig): ApiDetailSta
 		set showEndpointDeleteConfirm(v: boolean) { showEndpointDeleteConfirm = v; },
 		get hasEndpointChanges() { return hasEndpointChanges; },
 		get isSaving() { return isSaving; },
+		get pathError() { return pathError; },
 
 		// Tag actions
 		handleTagSelect,

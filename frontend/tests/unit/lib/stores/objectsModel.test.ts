@@ -159,6 +159,46 @@ describe('objectsModel - Validation', () => {
 
     expect(model.isFormValid).toBe(false);
   });
+
+  it('should show PascalCase error immediately when name is invalid (before save)', () => {
+    ({ model, cleanup } = createTestModel());
+
+    model.openCreate();
+    flushSync();
+
+    model.editedItem!.name = 'invalid_name';
+    flushSync();
+
+    // Case error should be visible immediately (no save attempt needed)
+    expect(model.visibleErrors).toEqual(
+      expect.objectContaining({ name: 'Must be PascalCase (e.g. UserEmail)' })
+    );
+  });
+
+  it('should NOT show required error before save attempt', () => {
+    ({ model, cleanup } = createTestModel());
+
+    model.openCreate();
+    flushSync();
+
+    // Name is empty, but no save attempt yet — no visible error
+    expect(model.visibleErrors).toEqual({});
+  });
+
+  it('should clear immediate error when name becomes valid', () => {
+    ({ model, cleanup } = createTestModel());
+
+    model.openCreate();
+    flushSync();
+
+    model.editedItem!.name = 'invalid_name';
+    flushSync();
+    expect(model.visibleErrors).toHaveProperty('name');
+
+    model.editedItem!.name = 'ValidName';
+    flushSync();
+    expect(model.visibleErrors).not.toHaveProperty('name');
+  });
 });
 
 describe('objectsModel - Draft Creation', () => {
@@ -214,8 +254,21 @@ describe('objectsModel - Deletion Guard', () => {
     expect(model.deleteTooltip).toBe('');
   });
 
-  it('should block deletion when object is used in APIs', () => {
+  it('should allow deletion when object is used in only one API', () => {
     const items = [makeObject({ id: 'o-1', name: 'User', usedInApis: ['api-1'] })];
+    ({ model, cleanup } = createTestModel({
+      itemsStore: () => items
+    }));
+
+    model.selectItem(items[0]);
+    flushSync();
+
+    expect(model.canDelete).toBe(true);
+    expect(model.deleteTooltip).toBe('');
+  });
+
+  it('should block deletion when object is used in multiple APIs', () => {
+    const items = [makeObject({ id: 'o-1', name: 'User', usedInApis: ['api-1', 'api-2'] })];
     ({ model, cleanup } = createTestModel({
       itemsStore: () => items
     }));
@@ -331,7 +384,7 @@ describe('objectsModel - Save (Update)', () => {
 
     model.selectItem(items[0]);
     flushSync();
-    model.editedItem!.name = 'duplicate';
+    model.editedItem!.name = 'Duplicate';
     flushSync();
 
     await model.handleSave();

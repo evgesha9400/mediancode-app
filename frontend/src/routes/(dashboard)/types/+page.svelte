@@ -7,9 +7,7 @@
     FilterPanel,
     Table,
     SortableColumn,
-    Drawer,
-    DrawerHeader,
-    DrawerContent,
+    DrawerStack,
     DetailField,
     Pill,
     TableEmptyState
@@ -138,25 +136,29 @@
     {/snippet}
   </Table>
 
-<Drawer open={state.drawerOpen}>
-  <DrawerHeader title="Type Details" onClose={state.closeDrawer} />
-  <DrawerContent>
-    {#if state.selectedItem}
-      <div class="space-y-6">
-        {#if isSystemEntity(state.selectedItem)}
-          <div class="flex items-center space-x-2 px-3 py-2 bg-mono-50 border border-mono-200 rounded-md">
-            <i class="fa-solid fa-lock text-mono-400 text-sm"></i>
-            <span class="text-sm text-mono-600">System type — read-only</span>
-          </div>
-        {/if}
-        <DetailField label="Name" value={state.selectedItem.name} />
-        <DetailField label="Python Type" value={state.selectedItem.pythonType} />
-        <DetailField label="Description" value={state.selectedItem.description} />
-        <DetailField label="Used in Fields">
-          <Pill>{state.selectedItem.usedInFields}</Pill>
-          <span class="text-sm text-mono-600 ml-2">fields</span>
-        </DetailField>
-      </div>
-    {/if}
-  </DrawerContent>
-</Drawer>
+{#snippet typeDetailContent(_: { close: () => void })}
+  {#if state.selectedItem}
+    <div class="space-y-6">
+      {#if isSystemEntity(state.selectedItem)}
+        <div class="flex items-center space-x-2 px-3 py-2 bg-mono-50 border border-mono-200 rounded-md">
+          <i class="fa-solid fa-lock text-mono-400 text-sm"></i>
+          <span class="text-sm text-mono-600">System type — read-only</span>
+        </div>
+      {/if}
+      <DetailField label="Name" value={state.selectedItem.name} />
+      <DetailField label="Python Type" value={state.selectedItem.pythonType} />
+      <DetailField label="Description" value={state.selectedItem.description} />
+      <DetailField label="Used in Fields">
+        <Pill>{state.selectedItem.usedInFields}</Pill>
+        <span class="text-sm text-mono-600 ml-2">fields</span>
+      </DetailField>
+    </div>
+  {/if}
+{/snippet}
+
+<DrawerStack
+  panels={state.drawerOpen
+    ? [{ id: 'type', title: 'Type Details', width: 520, minWidth: 320, content: typeDetailContent }]
+    : []}
+  onPopPanel={state.closeDrawer}
+/>

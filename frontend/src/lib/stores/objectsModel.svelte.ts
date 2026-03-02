@@ -18,6 +18,7 @@ import {
 } from '$lib/domain/mutations';
 import { buildDeletionTooltip } from '$lib/utils/references';
 import { composeState } from '$lib/utils/compose';
+import { isValidPascalCaseName } from '$lib/utils/validation';
 import { showToast } from './toasts';
 
 // ============================================================================
@@ -145,7 +146,15 @@ export function createObjectsModel(config: ObjectsModelConfig): ObjectsModelStat
   });
 
   let isFormValid = $derived(listState.editedItem !== null && Object.keys(formErrors).length === 0);
-  let visibleErrors = $derived({ ...(formTouched ? formErrors : {}), ...serverErrors });
+  let immediateErrors = $derived.by(() => {
+    const item = listState.editedItem;
+    if (!item || !item.name.trim()) return {};
+    if (!isValidPascalCaseName(item.name)) {
+      return { name: formErrors.name };
+    }
+    return {};
+  });
+  let visibleErrors = $derived({ ...immediateErrors, ...(formTouched ? formErrors : {}), ...serverErrors });
 
   // --- Derived deletion guard ---
   let deletionGuardResult = $derived.by(() => {
@@ -160,7 +169,11 @@ export function createObjectsModel(config: ObjectsModelConfig): ObjectsModelStat
 
   function validate(item: ObjectDefinition): Record<string, string> {
     const errors: Record<string, string> = {};
-    if (!item.name.trim()) errors.name = 'Object name is required';
+    if (!item.name.trim()) {
+      errors.name = 'Object name is required';
+    } else if (!isValidPascalCaseName(item.name)) {
+      errors.name = 'Must be PascalCase (e.g. UserEmail)';
+    }
     return errors;
   }
 
@@ -214,10 +227,10 @@ export function createObjectsModel(config: ObjectsModelConfig): ObjectsModelStat
   }
 
   function deletionGuard(item: ObjectDefinition): { canDelete: boolean; tooltip: string } {
-    const hasRefs = item.usedInApis.length > 0;
+    const hasMultipleRefs = item.usedInApis.length > 1;
     return {
-      canDelete: !hasRefs,
-      tooltip: hasRefs
+      canDelete: !hasMultipleRefs,
+      tooltip: hasMultipleRefs
         ? buildDeletionTooltip('object', 'API', item.usedInApis.map(api => ({ name: api })))
         : ''
     };

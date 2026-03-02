@@ -6,13 +6,14 @@
     selectedObjectId?: string;
     onSelect: (objectId: string | undefined) => void;
     placeholder?: string;
+    onCreateNew?: () => void;
   }
 </script>
 
 <script lang="ts">
   interface Props extends ObjectSelectorDropdownProps {}
 
-  let { availableObjects, selectedObjectId, onSelect, placeholder = 'Select object...' }: Props = $props();
+  let { availableObjects, selectedObjectId, onSelect, placeholder = 'Select object...', onCreateNew }: Props = $props();
 
   let searchQuery = $state('');
   let dropdownOpen = $state(false);
@@ -90,46 +91,52 @@
     {/if}
   </div>
 
-  {#if dropdownOpen && filteredObjects.length > 0}
+  {#if dropdownOpen}
     <div class="absolute z-10 w-full mt-1 bg-white border border-mono-300 rounded-md shadow-lg max-h-60 overflow-auto">
-      {#each filteredObjects as object (object.id)}
-        <button
-          type="button"
-          onclick={() => handleSelect(object.id)}
-          class="w-full px-3 py-2 text-left hover:bg-mono-50 border-b border-mono-100 last:border-b-0 transition-colors"
-        >
-          <div class="flex items-start justify-between">
-            <div class="flex-1">
-              <div class="flex items-center space-x-2">
-                <i class="fa-solid fa-cube text-mono-500 text-xs"></i>
-                <span class="font-mono text-sm text-mono-700">{object.name}</span>
-                <span class="text-xs text-mono-500 bg-mono-100 px-2 py-0.5 rounded">
-                  {object.fields.length} fields
-                </span>
+      {#if filteredObjects.length > 0}
+        {#each filteredObjects as object (object.id)}
+          <button
+            type="button"
+            onclick={() => handleSelect(object.id)}
+            class="w-full px-3 py-2 text-left hover:bg-mono-50 border-b border-mono-100 last:border-b-0 transition-colors"
+          >
+            <div class="flex items-start justify-between">
+              <div class="flex-1">
+                <div class="flex items-center space-x-2">
+                  <i class="fa-solid fa-cube text-mono-500 text-xs"></i>
+                  <span class="font-mono text-sm text-mono-700">{object.name}</span>
+                  <span class="text-xs text-mono-500 bg-mono-100 px-2 py-0.5 rounded">
+                    {object.fields.length} fields
+                  </span>
+                </div>
+                {#if object.description}
+                  <p class="text-xs text-mono-500 mt-1">{object.description}</p>
+                {/if}
               </div>
-              {#if object.description}
-                <p class="text-xs text-mono-500 mt-1">{object.description}</p>
-              {/if}
             </div>
-          </div>
-        </button>
-      {/each}
-    </div>
-  {/if}
-
-  {#if dropdownOpen && filteredObjects.length === 0 && searchQuery.trim()}
-    <div class="absolute z-10 w-full mt-1 bg-white border border-mono-300 rounded-md shadow-lg">
-      <div class="px-3 py-2 text-sm text-mono-500">
-        No objects found matching "{searchQuery}"
-      </div>
-    </div>
-  {/if}
-
-  {#if dropdownOpen && filteredObjects.length === 0 && !searchQuery.trim()}
-    <div class="absolute z-10 w-full mt-1 bg-white border border-mono-300 rounded-md shadow-lg">
-      <div class="px-3 py-2 text-sm text-mono-500">
-        No objects available in this namespace. Create objects in the same namespace first.
-      </div>
+          </button>
+        {/each}
+      {:else if searchQuery.trim()}
+        <div class="px-3 py-2 text-sm text-mono-500">
+          No objects found matching "{searchQuery}"
+        </div>
+      {:else}
+        <div class="px-3 py-2 text-sm text-mono-500">
+          No objects available in this namespace. Create objects in the same namespace first.
+        </div>
+      {/if}
+      {#if onCreateNew}
+        <div class="border-t border-mono-200 p-2">
+          <button
+            type="button"
+            class="w-full text-left px-3 py-2 text-sm text-mono-600 hover:bg-mono-50 hover:text-mono-900 rounded cursor-pointer flex items-center space-x-2"
+            onmousedown={(e) => { e.preventDefault(); onCreateNew?.(); }}
+          >
+            <i class="fa-solid fa-plus text-xs"></i>
+            <span>Create new object</span>
+          </button>
+        </div>
+      {/if}
     </div>
   {/if}
 </div>

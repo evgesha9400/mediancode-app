@@ -1,6 +1,6 @@
 <script lang="ts">
   import { objectsStore, searchObjects, type ObjectDefinition } from '$lib/stores/objects';
-  import { fieldsStore, getFieldById } from '$lib/stores/fields';
+  import { fieldsStore } from '$lib/stores/fields';
   import { activeNamespaceId, namespacesStore } from '$lib/stores/namespaces';
   import { createObjectsModel } from '$lib/stores/objectsModel.svelte';
   import {
@@ -9,22 +9,20 @@
     Table,
     SortableColumn,
     Pill,
-    FormField,
-    FormLabel,
     TableEmptyState,
-    Drawer,
-    DrawerHeader,
-    DrawerContent,
-    DrawerFooter,
+    DrawerStack,
     CrudDrawerFooter,
-    FieldSelectorDropdown,
     NamespaceSelector,
-    TemplateGallery,
-    TemplateForm
+    ObjectFormContent
   } from '$lib/components';
-  import type { InlineModelValidator, Field } from '$lib/types';
-  import type { ModelValidatorTemplate } from '$lib/types';
-  import { modelValidatorTemplatesStore, getModelValidatorTemplateById } from '$lib/stores/modelValidatorTemplates';
+  import { FieldFormContent } from '$lib/components/form';
+  import type { Field } from '$lib/types';
+  import { modelValidatorTemplatesStore } from '$lib/stores/modelValidatorTemplates';
+  import { typesStore, getTypeIdByName } from '$lib/stores/types';
+  import { fieldConstraintsStore } from '$lib/stores/fieldConstraints';
+  import { fieldValidatorTemplatesStore } from '$lib/stores/fieldValidatorTemplates';
+  import { createFieldAction } from '$lib/domain/mutations';
+  import { showToast } from '$lib/stores/toasts';
   import { STORE_NAMES } from '$lib/stores/loader';
   import { page } from '$app/state';
   import { goto } from '$app/navigation';
@@ -60,90 +58,101 @@
   let sorts = $derived(workflow.sorts);
 
   let fields = $derived($fieldsStore);
+  let modelValidatorTemplates = $derived($modelValidatorTemplatesStore);
 
   // Filter fields to only show those in the object's namespace
   let namespacedFields = $derived(workflow.editedItem ? fields.filter(f => f.namespaceId === workflow.editedItem!.namespaceId) : []);
 
-  // Derive selected field IDs for the FieldSelectorDropdown
-  let selectedFieldIds = $derived(workflow.editedItem?.fields.map(f => f.fieldId) ?? []);
+  // Namespace name for field form
+  let objectNamespaceName = $derived(
+    allNamespaces.find(ns => ns.id === workflow.editedItem?.namespaceId)?.name ?? 'No namespace selected'
+  );
 
-  // Entity-specific UI helpers (not abstractable into workflow)
-  function addField(fieldId: string) {
-    if (!workflow.editedItem) return;
+  // ============================================================================
+  // Inline Field Creation Overlay
+  // ============================================================================
 
-    workflow.editedItem = {
-      ...workflow.editedItem,
-      fields: [...workflow.editedItem.fields, { fieldId, optional: false }]
-    };
-  }
+  let fieldCreateOpen = $state(false);
+  let editedNewField = $state<Field | null>(null);
+  let fieldFormTouched = $state(false);
+  let fieldSaving = $state(false);
 
-  function removeField(fieldId: string) {
-    if (!workflow.editedItem) return;
-    workflow.editedItem = {
-      ...workflow.editedItem,
-      fields: workflow.editedItem.fields.filter(f => f.fieldId !== fieldId)
-    };
-  }
-
-  function toggleFieldOptional(fieldId: string) {
-    if (!workflow.editedItem) return;
-    const newFields = workflow.editedItem.fields.map(f =>
-      f.fieldId === fieldId ? { ...f, optional: !f.optional } : f
-    );
-    workflow.editedItem = {
-      ...workflow.editedItem,
-      fields: newFields
-    };
-  }
-
-  // --- Validator template UI state ---
-  let validatorGalleryOpen = $state(false);
-  let selectedModelTemplate = $state<ModelValidatorTemplate | null>(null);
-
-  let modelTemplates = $derived($modelValidatorTemplatesStore);
-
-  // Resolve object's fields to full Field objects for template role dropdowns
-  let objectFieldDefinitions = $derived.by((): Field[] => {
-    if (!workflow.editedItem) return [];
-    return workflow.editedItem.fields
-      .map(ref => getFieldById(ref.fieldId))
-      .filter((f): f is Field => f !== undefined);
+  let fieldFormErrors = $derived.by(() => {
+    if (!editedNewField) return {};
+    const errors: Record<string, string> = {};
+    if (!editedNewField.name.trim()) errors.name = 'Field name is required';
+    if (!editedNewField.type) errors.type = 'Type is required';
+    return errors;
   });
+  let fieldFormValid = $derived(editedNewField !== null && Object.keys(fieldFormErrors).length === 0);
+  let fieldVisibleErrors = $derived(fieldFormTouched ? fieldFormErrors : {});
 
-  function openValidatorGallery() {
-    selectedModelTemplate = null;
-    validatorGalleryOpen = true;
-  }
-
-  function handleSelectModelTemplate(template: ModelValidatorTemplate) {
-    selectedModelTemplate = template;
-  }
-
-  function handleAddValidator(validator: { templateId: string; parameters?: Record<string, string>; fieldMappings?: Record<string, string> }) {
-    if (!workflow.editedItem) return;
-    const newValidator: InlineModelValidator = {
+  function openFieldCreate() {
+    editedNewField = {
       id: '',
-      templateId: validator.templateId,
-      parameters: validator.parameters ?? null,
-      fieldMappings: validator.fieldMappings ?? {}
+      namespaceId: workflow.editedItem?.namespaceId ?? $activeNamespaceId,
+      name: '',
+      type: $typesStore.length > 0 ? $typesStore[0].name : 'str',
+      container: null,
+      constraints: [],
+      validators: [],
+      usedInApis: [],
+      description: '',
+      defaultValue: ''
     };
-    workflow.editedItem = {
-      ...workflow.editedItem,
-      validators: [...workflow.editedItem.validators, newValidator]
-    };
-    validatorGalleryOpen = false;
-    selectedModelTemplate = null;
+    fieldFormTouched = false;
+    fieldCreateOpen = true;
   }
 
-  function removeValidator(index: number) {
-    if (!workflow.editedItem) return;
-    workflow.editedItem = {
-      ...workflow.editedItem,
-      validators: workflow.editedItem.validators.filter((_, i) => i !== index)
-    };
+  function closeFieldCreate() {
+    fieldCreateOpen = false;
+    editedNewField = null;
   }
 
+  async function handleCreateField() {
+    fieldFormTouched = true;
+    if (!fieldFormValid || !editedNewField) return;
 
+    const typeId = getTypeIdByName(editedNewField.type);
+    if (!typeId) {
+      showToast(`Unknown type "${editedNewField.type}"`, 'error');
+      return;
+    }
+
+    fieldSaving = true;
+    try {
+      const result = await createFieldAction({
+        namespaceId: editedNewField.namespaceId,
+        name: editedNewField.name,
+        typeId,
+        container: editedNewField.container,
+        description: editedNewField.description,
+        defaultValue: editedNewField.defaultValue,
+        constraints: editedNewField.constraints.map(c => ({ constraintId: c.constraintId, value: c.value })),
+        validators: editedNewField.validators.length > 0
+          ? editedNewField.validators.map(v => ({ templateId: v.templateId, parameters: v.parameters ?? undefined }))
+          : undefined
+      });
+
+      if (!result.success) {
+        showToast(result.error ?? 'Failed to create field', 'error');
+        return;
+      }
+
+      // Auto-add the new field to the object being edited/created
+      if (workflow.editedItem) {
+        workflow.editedItem = {
+          ...workflow.editedItem,
+          fields: [...workflow.editedItem.fields, { fieldId: result.data!.id, optional: false }]
+        };
+      }
+
+      showToast(`Field "${editedNewField.name}" created`, 'success');
+      closeFieldCreate();
+    } finally {
+      fieldSaving = false;
+    }
+  }
 </script>
 
 <PageHeader title="Objects">
@@ -241,227 +250,104 @@
     {/snippet}
   </Table>
 
-<Drawer open={workflow.drawerOpen} maxWidth={720}>
-  <DrawerHeader title={workflow.mode === 'creating' ? 'Create Object' : 'Edit Object'} onClose={workflow.closeDrawer} />
+{#snippet objectFormContent(_: { close: () => void })}
+  {#if workflow.editedItem}
+    <ObjectFormContent
+      bind:editedItem={workflow.editedItem}
+      mode={workflow.mode === 'creating' ? 'creating' : 'editing'}
+      namespaceName={objectNamespaceName}
+      availableFields={namespacedFields}
+      {modelValidatorTemplates}
+      visibleErrors={workflow.visibleErrors}
+      onCreateNewField={openFieldCreate}
+    />
+  {/if}
+{/snippet}
 
-  <DrawerContent>
-    {#if workflow.editedItem}
-      <div class="space-y-4">
-        <!-- Namespace (Read-only - uses active namespace from selector) -->
-        <div>
-          <FormLabel label="Namespace" forId="object-namespace" />
-          <input
-            id="object-namespace"
-            type="text"
-            value={allNamespaces.find(ns => ns.id === workflow.editedItem?.namespaceId)?.name ?? 'No namespace selected'}
-            disabled
-            class="w-full px-3 py-2 border border-mono-200 rounded-lg bg-mono-100 text-mono-500 cursor-not-allowed"
-          />
-          <p class="mt-1 text-xs text-mono-500">
-            Namespace is determined by the selector above
-          </p>
-        </div>
+{#snippet objectFormFooter(_: { close: () => void })}
+  {#if workflow.editedItem}
+    <CrudDrawerFooter
+      mode={workflow.mode === 'creating' ? 'creating' : 'editing'}
+      isSaving={workflow.isSaving}
+      isFormValid={workflow.isFormValid}
+      hasChanges={workflow.hasChanges}
+      canDelete={workflow.canDelete}
+      deleteTooltip={workflow.deleteTooltip}
+      showDeleteConfirm={workflow.showDeleteConfirm}
+      isDeleting={workflow.isDeleting}
+      onCreate={workflow.handleCreate}
+      onSave={workflow.handleSave}
+      onUndo={workflow.handleUndo}
+      onDeleteRequest={() => workflow.showDeleteConfirm = true}
+      onDeleteConfirm={workflow.handleDelete}
+      onDeleteCancel={() => workflow.showDeleteConfirm = false}
+    />
+  {/if}
+{/snippet}
 
-        <!-- Object Name -->
-        <FormField
-          id="object-name"
-          label="Object Name"
-          bind:value={workflow.editedItem.name}
-          required
-          error={workflow.visibleErrors.name}
-        />
+{#snippet fieldFormContent(_: { close: () => void })}
+  {#if editedNewField}
+    <FieldFormContent
+      bind:editedItem={editedNewField}
+      mode="creating"
+      namespaceName={objectNamespaceName}
+      selectableTypes={$typesStore}
+      fieldConstraintDefinitions={$fieldConstraintsStore}
+      fieldValidatorTemplates={$fieldValidatorTemplatesStore}
+      visibleErrors={fieldVisibleErrors}
+    />
+  {/if}
+{/snippet}
 
-        <!-- Description -->
-        <div>
-          <FormLabel label="Description" forId="object-description" />
-          <textarea
-            id="object-description"
-            bind:value={workflow.editedItem.description}
-            rows="3"
-            class="w-full px-3 py-2 border border-mono-300 rounded-md focus:ring-2 focus:ring-mono-400 focus:border-transparent"
-          ></textarea>
-        </div>
+{#snippet fieldFormFooter(_: { close: () => void })}
+  <div class="flex space-x-2">
+    <button
+      type="button"
+      onclick={handleCreateField}
+      disabled={fieldSaving}
+      class="flex-1 px-4 py-2 rounded-md transition-colors font-medium flex items-center justify-center space-x-2 {!fieldSaving ? 'bg-mono-900 text-white hover:bg-mono-800 cursor-pointer' : 'bg-mono-300 text-mono-500 cursor-not-allowed'}"
+    >
+      {#if fieldSaving}
+        <i class="fa-solid fa-spinner fa-spin"></i>
+        <span>Creating...</span>
+      {:else}
+        <span>Create Field</span>
+      {/if}
+    </button>
+    <button
+      type="button"
+      onclick={closeFieldCreate}
+      disabled={fieldSaving}
+      class="flex-1 px-4 py-2 border border-mono-300 text-mono-700 rounded-md hover:bg-mono-50 cursor-pointer transition-colors font-medium"
+    >
+      Cancel
+    </button>
+  </div>
+{/snippet}
 
-        <!-- Fields -->
-        <div>
-          <h3 class="text-sm text-mono-700 mb-2 font-medium">Fields ({workflow.editedItem.fields.length})</h3>
-
-          <div class="space-y-2">
-            <!-- Field Selector Dropdown -->
-            <FieldSelectorDropdown
-              availableFields={namespacedFields}
-              selectedFieldIds={selectedFieldIds}
-              onSelect={addField}
-              placeholder="Add field to object..."
-            />
-
-            <!-- Selected Fields -->
-            {#if workflow.editedItem.fields.length === 0}
-              <div class="p-3 bg-mono-50 rounded border border-mono-200">
-                <p class="text-xs text-mono-500">No fields selected</p>
-              </div>
-            {:else}
-              <div class="p-2 bg-mono-50 rounded border border-mono-200 space-y-2">
-                {#each workflow.editedItem.fields as fieldRef}
-                  {@const field = getFieldById(fieldRef.fieldId)}
-                  {#if field}
-                    <div class="flex items-center space-x-2 p-2 bg-white rounded border border-mono-200">
-                      <!-- Field Name and Type -->
-                      <div class="flex items-center space-x-2">
-                        <span class="font-mono text-sm text-mono-700">{field.name}</span>
-                        <span class="text-xs text-mono-500 bg-mono-100 px-2 py-0.5 rounded">{field.type}</span>
-                      </div>
-
-                      <!-- Description (if available) -->
-                      {#if field.description}
-                        <div class="flex-1 text-xs text-mono-500">
-                          {field.description}
-                        </div>
-                      {:else}
-                        <div class="flex-1"></div>
-                      {/if}
-
-                      <!-- Optional Checkbox -->
-                      <label class="flex items-center space-x-2 cursor-pointer">
-                        <input
-                          type="checkbox"
-                          checked={fieldRef.optional}
-                          onchange={() => toggleFieldOptional(fieldRef.fieldId)}
-                          class="h-4 w-4 border-mono-300 rounded text-mono-900 focus:ring-2 focus:ring-mono-400"
-                        />
-                        <span class="text-sm text-mono-600 whitespace-nowrap">Optional</span>
-                      </label>
-
-                      <!-- Delete Button (aligned to the right) -->
-                      <button
-                        type="button"
-                        onclick={() => removeField(fieldRef.fieldId)}
-                        class="text-red-700 hover:text-red-600 transition-colors"
-                        title="Remove field"
-                      >
-                        <i class="fa-solid fa-xmark"></i>
-                      </button>
-                    </div>
-                  {:else}
-                    <!-- Missing field fallback - field was deleted from registry -->
-                    <div class="flex items-center gap-2 py-1.5">
-                      <i class="fa-solid fa-triangle-exclamation text-red-500 text-sm"></i>
-                      <span class="flex-1 text-sm text-red-700">
-                        Field not found <span class="font-mono text-xs text-red-500">({fieldRef.fieldId})</span>
-                      </span>
-                      <button
-                        type="button"
-                        onclick={() => removeField(fieldRef.fieldId)}
-                        class="p-1 text-red-700 hover:text-red-600 hover:bg-red-100 rounded transition-colors"
-                        title="Remove missing field reference"
-                      >
-                        <i class="fa-solid fa-xmark"></i>
-                      </button>
-                    </div>
-                  {/if}
-                {/each}
-              </div>
-            {/if}
-          </div>
-        </div>
-
-        <!-- Validators -->
-        <div>
-          <h3 class="text-sm text-mono-700 mb-2 font-medium">Validators ({workflow.editedItem.validators.length})</h3>
-
-          <div class="space-y-2">
-            {#if !validatorGalleryOpen}
-              <button
-                type="button"
-                onclick={openValidatorGallery}
-                class="w-full px-3 py-2 border border-dashed border-mono-300 rounded-md text-sm text-mono-500 hover:border-mono-400 hover:text-mono-700 transition-colors cursor-pointer"
-              >
-                <i class="fa-solid fa-plus mr-1"></i> Add Validator
-              </button>
-            {:else if selectedModelTemplate}
-              <div class="p-3 bg-mono-50 rounded border border-mono-200">
-                <TemplateForm
-                  kind="model"
-                  modelTemplate={selectedModelTemplate}
-                  availableFields={objectFieldDefinitions}
-                  onAdd={handleAddValidator}
-                  onBack={() => selectedModelTemplate = null}
-                />
-              </div>
-            {:else}
-              <div class="p-3 bg-mono-50 rounded border border-mono-200">
-                <TemplateGallery
-                  kind="model"
-                  modelTemplates={modelTemplates}
-                  onSelectModel={handleSelectModelTemplate}
-                  onClose={() => validatorGalleryOpen = false}
-                />
-              </div>
-            {/if}
-
-            {#if workflow.editedItem.validators.length > 0}
-              <div class="p-2 bg-mono-50 rounded border border-mono-200 space-y-2">
-                {#each workflow.editedItem.validators as validator, index}
-                  {@const tmpl = getModelValidatorTemplateById(validator.templateId)}
-                  <div class="flex items-center space-x-2 p-2 bg-white rounded border border-mono-200">
-                    <div class="flex items-center space-x-2 flex-1 min-w-0">
-                      <span class="text-sm text-mono-700 truncate">{tmpl?.name ?? validator.templateId}</span>
-                      <Pill class="shrink-0">{tmpl?.mode ?? 'after'}</Pill>
-                    </div>
-                    <button
-                      type="button"
-                      onclick={() => removeValidator(index)}
-                      class="text-red-700 hover:text-red-600 transition-colors shrink-0"
-                      title="Remove validator"
-                    >
-                      <i class="fa-solid fa-xmark"></i>
-                    </button>
-                  </div>
-                {/each}
-              </div>
-            {/if}
-          </div>
-        </div>
-
-        <!-- Used In APIs -->
-        <div>
-          <h3 class="text-sm text-mono-700 mb-2 font-medium">Used In APIs ({workflow.editedItem.usedInApis.length})</h3>
-          <div class="space-y-2">
-            {#each workflow.editedItem.usedInApis as api}
-              <div class="flex items-center justify-between p-3 bg-mono-50 rounded-md">
-                <div class="flex items-center space-x-2">
-                  <i class="fa-solid fa-code text-mono-400"></i>
-                  <span class="text-sm text-mono-900">{api}</span>
-                </div>
-              </div>
-            {/each}
-            {#if workflow.editedItem.usedInApis.length === 0}
-              <p class="text-sm text-mono-500 italic">Not used in any APIs</p>
-            {/if}
-          </div>
-        </div>
-      </div>
-    {/if}
-  </DrawerContent>
-
-  <DrawerFooter>
-    {#if workflow.editedItem}
-      <CrudDrawerFooter
-        mode={workflow.mode === 'creating' ? 'creating' : 'editing'}
-        isSaving={workflow.isSaving}
-        isFormValid={workflow.isFormValid}
-        hasChanges={workflow.hasChanges}
-        canDelete={workflow.canDelete}
-        deleteTooltip={workflow.deleteTooltip}
-        showDeleteConfirm={workflow.showDeleteConfirm}
-        isDeleting={workflow.isDeleting}
-        onCreate={workflow.handleCreate}
-        onSave={workflow.handleSave}
-        onUndo={workflow.handleUndo}
-        onDeleteRequest={() => workflow.showDeleteConfirm = true}
-        onDeleteConfirm={workflow.handleDelete}
-        onDeleteCancel={() => workflow.showDeleteConfirm = false}
-      />
-    {/if}
-  </DrawerFooter>
-</Drawer>
+<DrawerStack
+  panels={workflow.drawerOpen
+    ? [
+        {
+          id: 'object',
+          title: workflow.mode === 'creating' ? 'Create Object' : 'Edit Object',
+          width: 720,
+          minWidth: 500,
+          content: objectFormContent,
+          footer: objectFormFooter
+        },
+        ...(fieldCreateOpen
+          ? [{
+              id: 'field',
+              title: 'Create Field',
+              width: 480,
+              minWidth: 380,
+              content: fieldFormContent,
+              footer: fieldFormFooter
+            }]
+          : [])
+      ]
+    : []
+  }
+  onPopPanel={fieldCreateOpen ? closeFieldCreate : workflow.closeDrawer}
+/>

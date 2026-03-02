@@ -11,10 +11,7 @@
     FilterPanel,
     Table,
     SortableColumn,
-    Drawer,
-    DrawerHeader,
-    DrawerContent,
-    DrawerFooter,
+    DrawerStack,
     CrudDrawerFooter,
     Pill,
     FormField,
@@ -166,163 +163,165 @@
     {/snippet}
   </Table>
 
-<Drawer open={workflow.drawerOpen}>
-  <DrawerHeader
-    title={isCreating ? 'Create Namespace' : isReadOnly ? 'Namespace Details' : 'Edit Namespace'}
-    onClose={workflow.closeDrawer}
-  />
-
-  <DrawerContent>
-    {#if workflow.editedItem}
-      <div class="space-y-4">
-        {#if isReadOnly}
-          <div class="flex items-center space-x-2 px-3 py-2 bg-mono-50 border border-mono-200 rounded-md">
-            <i class="fa-solid fa-lock text-mono-400 text-sm"></i>
-            <span class="text-sm text-mono-600">System namespace — read-only</span>
-          </div>
-        {/if}
-
-        <!-- Namespace Name -->
-        <FormField
-          id="namespace-name"
-          label="Name"
-          bind:value={workflow.editedItem.name}
-          disabled={isReadOnly}
-          required={!isReadOnly}
-          placeholder={isCreating ? 'my-namespace' : ''}
-          error={workflow.visibleErrors.name}
-        />
-
-        <!-- Description -->
-        <div>
-          <FormLabel label="Description" forId="namespace-description" />
-          <textarea
-            id="namespace-description"
-            bind:value={workflow.editedItem.description}
-            disabled={isReadOnly}
-            rows="3"
-            placeholder={isCreating ? 'Optional description...' : ''}
-            class="w-full px-3 py-1.5 text-sm border border-mono-300 rounded-md focus:ring-2 focus:ring-mono-400 focus:border-transparent {isReadOnly ? 'bg-mono-100 cursor-not-allowed' : ''}"
-          ></textarea>
+{#snippet namespaceFormContent(_: { close: () => void })}
+  {#if workflow.editedItem}
+    <div class="space-y-4">
+      {#if isReadOnly}
+        <div class="flex items-center space-x-2 px-3 py-2 bg-mono-50 border border-mono-200 rounded-md">
+          <i class="fa-solid fa-lock text-mono-400 text-sm"></i>
+          <span class="text-sm text-mono-600">System namespace — read-only</span>
         </div>
+      {/if}
 
-        <!-- Default toggle (create mode) -->
-        {#if isCreating}
-          <div>
-            <h3 class="text-sm text-mono-700 mb-2 font-medium">Default Namespace</h3>
-            <label class="flex items-center space-x-3 cursor-pointer">
-              <input
-                type="checkbox"
-                bind:checked={workflow.editedItem.isDefault}
-                class="w-4 h-4 rounded border-mono-300 text-mono-900 focus:ring-mono-400"
-              />
-              <span class="text-sm text-mono-600">Set as default namespace</span>
-            </label>
-            <p class="text-xs text-mono-500 mt-1">The default namespace is auto-selected when the app loads.</p>
-          </div>
-        {/if}
+      <FormField
+        id="namespace-name"
+        label="Name"
+        bind:value={workflow.editedItem.name}
+        disabled={isReadOnly}
+        required={!isReadOnly}
+        placeholder={isCreating ? 'my-namespace' : ''}
+        error={workflow.visibleErrors.name}
+      />
 
-        <!-- Entity Counts (only when editing) -->
-        {#if !isCreating}
-          {@const details = getNamespaceEntityDetails(workflow.editedItem.id)}
-          <div>
-            <h3 class="text-sm text-mono-700 mb-2 font-medium">Contents</h3>
-            <div class="bg-mono-50 rounded-md p-3 space-y-2">
-              <div class="flex justify-between text-sm">
-                <span class="text-mono-600">Fields</span>
-                <span class="text-mono-900 font-medium">{details.fields}</span>
-              </div>
-              <div class="flex justify-between text-sm">
-                <span class="text-mono-600">Field Constraints</span>
-                <span class="text-mono-900 font-medium">{details.fieldConstraints}</span>
-              </div>
-              <div class="flex justify-between text-sm">
-                <span class="text-mono-600">Objects</span>
-                <span class="text-mono-900 font-medium">{details.objects}</span>
-              </div>
-              <div class="flex justify-between text-sm">
-                <span class="text-mono-600">Endpoints</span>
-                <span class="text-mono-900 font-medium">{details.endpoints}</span>
-              </div>
-              <div class="flex justify-between text-sm border-t border-mono-200 pt-2 mt-2">
-                <span class="text-mono-700 font-medium">Total</span>
-                <span class="text-mono-900 font-bold">{details.total}</span>
-              </div>
+      <div>
+        <FormLabel label="Description" forId="namespace-description" />
+        <textarea
+          id="namespace-description"
+          bind:value={workflow.editedItem.description}
+          disabled={isReadOnly}
+          rows="3"
+          placeholder={isCreating ? 'Optional description...' : ''}
+          class="w-full px-3 py-1.5 text-sm border border-mono-300 rounded-md focus:ring-2 focus:ring-mono-400 focus:border-transparent {isReadOnly ? 'bg-mono-100 cursor-not-allowed' : ''}"
+        ></textarea>
+      </div>
+
+      {#if isCreating}
+        <div>
+          <h3 class="text-sm text-mono-700 mb-2 font-medium">Default Namespace</h3>
+          <label class="flex items-center space-x-3 cursor-pointer">
+            <input
+              type="checkbox"
+              bind:checked={workflow.editedItem.isDefault}
+              class="w-4 h-4 rounded border-mono-300 text-mono-900 focus:ring-mono-400"
+            />
+            <span class="text-sm text-mono-600">Set as default namespace</span>
+          </label>
+          <p class="text-xs text-mono-500 mt-1">The default namespace is auto-selected when the app loads.</p>
+        </div>
+      {/if}
+
+      {#if !isCreating}
+        {@const details = getNamespaceEntityDetails(workflow.editedItem.id)}
+        <div>
+          <h3 class="text-sm text-mono-700 mb-2 font-medium">Contents</h3>
+          <div class="bg-mono-50 rounded-md p-3 space-y-2">
+            <div class="flex justify-between text-sm">
+              <span class="text-mono-600">Fields</span>
+              <span class="text-mono-900 font-medium">{details.fields}</span>
+            </div>
+            <div class="flex justify-between text-sm">
+              <span class="text-mono-600">Field Constraints</span>
+              <span class="text-mono-900 font-medium">{details.fieldConstraints}</span>
+            </div>
+            <div class="flex justify-between text-sm">
+              <span class="text-mono-600">Objects</span>
+              <span class="text-mono-900 font-medium">{details.objects}</span>
+            </div>
+            <div class="flex justify-between text-sm">
+              <span class="text-mono-600">Endpoints</span>
+              <span class="text-mono-900 font-medium">{details.endpoints}</span>
+            </div>
+            <div class="flex justify-between text-sm border-t border-mono-200 pt-2 mt-2">
+              <span class="text-mono-700 font-medium">Total</span>
+              <span class="text-mono-900 font-bold">{details.total}</span>
             </div>
           </div>
+        </div>
 
-          <!-- Default Namespace Toggle -->
-          <div>
-            <h3 class="text-sm text-mono-700 mb-2 font-medium">Default Namespace</h3>
-            <label class="flex items-center space-x-3 cursor-pointer">
-              <input
-                type="checkbox"
-                bind:checked={workflow.editedItem.isDefault}
-                disabled={workflow.editedItem.isDefault}
-                class="w-4 h-4 rounded border-mono-300 text-mono-900 focus:ring-mono-400 disabled:opacity-50 disabled:cursor-not-allowed"
-              />
-              <span class="text-sm text-mono-600">
-                {#if workflow.editedItem.isDefault}
-                  This is your default namespace
-                {:else}
-                  Set as default namespace
-                {/if}
-              </span>
-            </label>
-            <p class="text-xs text-mono-500 mt-1">The default namespace is auto-selected when the app loads.</p>
-          </div>
-        {/if}
-      </div>
-    {/if}
-  </DrawerContent>
-
-  <DrawerFooter>
-    {#if isCreating}
-      <CrudDrawerFooter
-        mode="creating"
-        isSaving={workflow.isSaving}
-        isFormValid={workflow.isFormValid}
-        hasChanges={false}
-        canDelete={false}
-        onCreate={workflow.handleCreate}
-      />
-    {:else if workflow.editedItem && !isReadOnly}
-      <CrudDrawerFooter
-        mode="editing"
-        isSaving={workflow.isSaving}
-        hasChanges={workflow.hasChanges}
-        canDelete={workflow.canDelete}
-        deleteTooltip={workflow.deleteTooltip}
-        showDeleteConfirm={workflow.showDeleteConfirm}
-        isDeleting={workflow.isDeleting}
-        onSave={workflow.handleSave}
-        onUndo={workflow.handleUndo}
-        onDeleteRequest={() => workflow.showDeleteConfirm = true}
-        onDeleteConfirm={workflow.handleDelete}
-        onDeleteCancel={() => workflow.showDeleteConfirm = false}
-      />
-    {:else if workflow.editedItem && isReadOnly}
-      {#if hasDefaultChanged}
-        <button
-          type="button"
-          onclick={workflow.handleSave}
-          disabled={workflow.isSaving}
-          class="w-full px-4 py-2 rounded-md transition-colors font-medium {workflow.isSaving ? 'bg-mono-300 text-mono-500 cursor-not-allowed' : 'bg-mono-900 text-white hover:bg-mono-800 cursor-pointer'}"
-        >
-          {#if workflow.isSaving}
-            Saving...
-          {:else}
-            Save
-          {/if}
-        </button>
+        <div>
+          <h3 class="text-sm text-mono-700 mb-2 font-medium">Default Namespace</h3>
+          <label class="flex items-center space-x-3 cursor-pointer">
+            <input
+              type="checkbox"
+              bind:checked={workflow.editedItem.isDefault}
+              disabled={workflow.editedItem.isDefault}
+              class="w-4 h-4 rounded border-mono-300 text-mono-900 focus:ring-mono-400 disabled:opacity-50 disabled:cursor-not-allowed"
+            />
+            <span class="text-sm text-mono-600">
+              {#if workflow.editedItem.isDefault}
+                This is your default namespace
+              {:else}
+                Set as default namespace
+              {/if}
+            </span>
+          </label>
+          <p class="text-xs text-mono-500 mt-1">The default namespace is auto-selected when the app loads.</p>
+        </div>
       {/if}
+    </div>
+  {/if}
+{/snippet}
+
+{#snippet namespaceFormFooter(_: { close: () => void })}
+  {#if isCreating}
+    <CrudDrawerFooter
+      mode="creating"
+      isSaving={workflow.isSaving}
+      isFormValid={workflow.isFormValid}
+      hasChanges={false}
+      canDelete={false}
+      onCreate={workflow.handleCreate}
+    />
+  {:else if workflow.editedItem && !isReadOnly}
+    <CrudDrawerFooter
+      mode="editing"
+      isSaving={workflow.isSaving}
+      hasChanges={workflow.hasChanges}
+      canDelete={workflow.canDelete}
+      deleteTooltip={workflow.deleteTooltip}
+      showDeleteConfirm={workflow.showDeleteConfirm}
+      isDeleting={workflow.isDeleting}
+      onSave={workflow.handleSave}
+      onUndo={workflow.handleUndo}
+      onDeleteRequest={() => workflow.showDeleteConfirm = true}
+      onDeleteConfirm={workflow.handleDelete}
+      onDeleteCancel={() => workflow.showDeleteConfirm = false}
+    />
+  {:else if workflow.editedItem && isReadOnly}
+    {#if hasDefaultChanged}
       <button
         type="button"
-        onclick={workflow.closeDrawer}
-        class="w-full px-4 py-2 border border-mono-300 text-mono-700 rounded-md hover:bg-mono-50 transition-colors font-medium"
+        onclick={workflow.handleSave}
+        disabled={workflow.isSaving}
+        class="w-full px-4 py-2 rounded-md transition-colors font-medium {workflow.isSaving ? 'bg-mono-300 text-mono-500 cursor-not-allowed' : 'bg-mono-900 text-white hover:bg-mono-800 cursor-pointer'}"
       >
-        Close
+        {#if workflow.isSaving}
+          Saving...
+        {:else}
+          Save
+        {/if}
       </button>
     {/if}
-  </DrawerFooter>
-</Drawer>
+    <button
+      type="button"
+      onclick={workflow.closeDrawer}
+      class="w-full px-4 py-2 border border-mono-300 text-mono-700 rounded-md hover:bg-mono-50 transition-colors font-medium"
+    >
+      Close
+    </button>
+  {/if}
+{/snippet}
+
+<DrawerStack
+  panels={workflow.drawerOpen
+    ? [{
+        id: 'namespace',
+        title: isCreating ? 'Create Namespace' : isReadOnly ? 'Namespace Details' : 'Edit Namespace',
+        width: 520,
+        minWidth: 320,
+        content: namespaceFormContent,
+        footer: namespaceFormFooter
+      }]
+    : []}
+  onPopPanel={workflow.closeDrawer}
+/>

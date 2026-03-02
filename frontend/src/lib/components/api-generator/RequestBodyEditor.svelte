@@ -3,6 +3,7 @@
     endpointNamespaceId: string;
     selectedObjectId?: string;
     onSelectObject: (objectId: string | undefined) => void;
+    onCreateNewObject?: () => void;
   }
 </script>
 
@@ -14,7 +15,7 @@
 
   interface Props extends RequestBodyEditorProps {}
 
-  let { endpointNamespaceId, selectedObjectId, onSelectObject }: Props = $props();
+  let { endpointNamespaceId, selectedObjectId, onSelectObject, onCreateNewObject }: Props = $props();
 
   // Filter objects to only show those in the endpoint's namespace
   const namespacedObjects = $derived($objectsStore.filter(obj => obj.namespaceId === endpointNamespaceId));
@@ -30,7 +31,7 @@
   );
 </script>
 
-<div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+<div class="request-body-grid">
   <!-- Left Column: Request Body Object Selection -->
   <div>
     <h3 class="text-sm text-mono-700 flex items-center font-medium mb-2">
@@ -44,6 +45,7 @@
         availableObjects={namespacedObjects}
         selectedObjectId={selectedObjectId}
         onSelect={onSelectObject}
+        onCreateNew={onCreateNewObject}
         placeholder="Select object for request body..."
       />
 
@@ -100,3 +102,16 @@
     </div>
   </div>
 </div>
+
+<style>
+  .request-body-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+  @container (min-width: 700px) {
+    .request-body-grid {
+      grid-template-columns: repeat(2, 1fr);
+    }
+  }
+</style>

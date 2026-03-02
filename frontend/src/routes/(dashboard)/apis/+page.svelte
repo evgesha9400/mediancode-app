@@ -11,10 +11,7 @@
     SearchBar,
     Table,
     SortableColumn,
-    Drawer,
-    DrawerHeader,
-    DrawerContent,
-    DrawerFooter,
+    DrawerStack,
     CrudDrawerFooter,
     TableEmptyState,
     FormField,
@@ -163,14 +160,9 @@
     {/snippet}
   </Table>
 
-<!-- Create API Drawer -->
-<Drawer open={workflow.mode === 'creating'} maxWidth={520}>
-  <DrawerHeader title="Create API" onClose={workflow.closeDrawer} />
-
-  <DrawerContent>
-    {#if workflow.editedItem}
+{#snippet createApiContent(_: { close: () => void })}
+  {#if workflow.editedItem}
     <div class="space-y-4">
-      <!-- Namespace (read-only) -->
       <div>
         <FormLabel label="Namespace" forId="api-namespace" />
         <input
@@ -199,7 +191,6 @@
         placeholder="1.0.0"
       />
 
-      <!-- Description -->
       <div>
         <FormLabel label="Description" forId="api-description" />
         <textarea
@@ -225,17 +216,30 @@
         placeholder="/api/v1"
       />
     </div>
-    {/if}
-  </DrawerContent>
+  {/if}
+{/snippet}
 
-  <DrawerFooter>
-    <CrudDrawerFooter
-      mode="creating"
-      isSaving={workflow.isSaving}
-      isFormValid={workflow.isFormValid}
-      hasChanges={false}
-      canDelete={false}
-      onCreate={workflow.handleCreate}
-    />
-  </DrawerFooter>
-</Drawer>
+{#snippet createApiFooter(_: { close: () => void })}
+  <CrudDrawerFooter
+    mode="creating"
+    isSaving={workflow.isSaving}
+    isFormValid={workflow.isFormValid}
+    hasChanges={false}
+    canDelete={false}
+    onCreate={workflow.handleCreate}
+  />
+{/snippet}
+
+<DrawerStack
+  panels={workflow.mode === 'creating'
+    ? [{
+        id: 'create-api',
+        title: 'Create API',
+        width: 520,
+        minWidth: 380,
+        content: createApiContent,
+        footer: createApiFooter
+      }]
+    : []}
+  onPopPanel={workflow.closeDrawer}
+/>

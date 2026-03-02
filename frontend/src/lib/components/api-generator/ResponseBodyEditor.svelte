@@ -9,6 +9,7 @@
     onSelectObject: (objectId: string | undefined) => void;
     onEnvelopeToggle: (enabled: boolean) => void;
     onSetResponseShape: (shape: ResponseShape) => void;
+    onCreateNewObject?: () => void;
   }
 </script>
 
@@ -32,7 +33,8 @@
     responseShape,
     onSelectObject,
     onEnvelopeToggle,
-    onSetResponseShape
+    onSetResponseShape,
+    onCreateNewObject
   }: Props = $props();
 
   // Filter objects to only show those in the endpoint's namespace
@@ -56,7 +58,7 @@
   );
 </script>
 
-<div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+<div class="response-body-grid">
   <!-- Left Column: Response Shape & Response Object -->
   <div class="space-y-4">
     <!-- Response Shape Selection -->
@@ -91,6 +93,7 @@
           availableObjects={namespacedObjects}
           selectedObjectId={selectedObjectId}
           onSelect={onSelectObject}
+          onCreateNew={onCreateNewObject}
           placeholder="Select object for response..."
         />
 
@@ -161,3 +164,16 @@
     </div>
   </div>
 </div>
+
+<style>
+  .response-body-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+  @container (min-width: 700px) {
+    .response-body-grid {
+      grid-template-columns: repeat(2, 1fr);
+    }
+  }
+</style>

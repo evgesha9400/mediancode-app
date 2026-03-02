@@ -3,10 +3,7 @@
   import { goto } from '$app/navigation';
   import { untrack } from 'svelte';
   import {
-    Drawer,
-    DrawerHeader,
-    DrawerContent,
-    DrawerFooter,
+    DrawerStack,
     Pill,
     FormField,
     FormLabel,
@@ -16,11 +13,20 @@
     RequestBodyEditor,
     ResponseBodyEditor
   } from '$lib/components';
+  import { ObjectFormContent, FieldFormContent } from '$lib/components/form';
   import { HTTP_METHODS } from '$lib/types';
+  import type { ObjectDefinition, Field } from '$lib/types';
+  import { isValidSnakeCaseName, isValidPascalCaseName } from '$lib/utils/validation';
   import { createApiDetailState } from '$lib/stores/apiDetailState.svelte';
   import { getApiById } from '$lib/stores/apis';
   import { namespacesStore } from '$lib/stores/namespaces';
   import { fieldsStore } from '$lib/stores/fields';
+  import { typesStore, getTypeIdByName } from '$lib/stores/types';
+  import { fieldConstraintsStore } from '$lib/stores/fieldConstraints';
+  import { fieldValidatorTemplatesStore } from '$lib/stores/fieldValidatorTemplates';
+  import { modelValidatorTemplatesStore } from '$lib/stores/modelValidatorTemplates';
+  import { createObjectAction, createFieldAction } from '$lib/domain/mutations';
+  import { showToast } from '$lib/stores/toasts';
 
   // Get API ID from URL
   let apiId = $derived(page.params.id ?? '');
@@ -60,6 +66,195 @@
     const trimmed = apiState.tagInputValue.trim();
     if (trimmed) {
       apiState.handleTagSelect(trimmed);
+    }
+  }
+
+  // ============================================================================
+  // Inline Object Creation Overlay
+  // ============================================================================
+
+  let objectCreateOpen = $state(false);
+  let editedNewObject = $state<ObjectDefinition | null>(null);
+  let objectCreateTarget = $state<'query' | 'request' | 'response'>('request');
+  let objectFormTouched = $state(false);
+  let objectSaving = $state(false);
+
+  let objectFormErrors = $derived.by(() => {
+    if (!editedNewObject) return {};
+    const errors: Record<string, string> = {};
+    if (!editedNewObject.name.trim()) {
+      errors.name = 'Object name is required';
+    } else if (!isValidPascalCaseName(editedNewObject.name)) {
+      errors.name = 'Must be PascalCase (e.g. UserEmail)';
+    }
+    return errors;
+  });
+  let objectFormValid = $derived(editedNewObject !== null && Object.keys(objectFormErrors).length === 0);
+  let objectImmediateErrors = $derived.by((): Record<string, string> => {
+    if (!editedNewObject || !editedNewObject.name.trim()) return {};
+    if (!isValidPascalCaseName(editedNewObject.name)) {
+      return { name: objectFormErrors.name };
+    }
+    return {};
+  });
+  let objectVisibleErrors = $derived({ ...objectImmediateErrors, ...(objectFormTouched ? objectFormErrors : {}) });
+
+  function openObjectCreate(target: 'query' | 'request' | 'response') {
+    objectCreateTarget = target;
+    editedNewObject = {
+      id: '',
+      namespaceId: apiState.apiNamespaceId,
+      name: '',
+      description: '',
+      fields: [],
+      validators: [],
+      usedInApis: []
+    };
+    objectFormTouched = false;
+    objectCreateOpen = true;
+  }
+
+  function closeObjectCreate() {
+    objectCreateOpen = false;
+    editedNewObject = null;
+  }
+
+  async function handleCreateObject() {
+    objectFormTouched = true;
+    if (!objectFormValid || !editedNewObject) return;
+
+    objectSaving = true;
+    try {
+      const result = await createObjectAction({
+        namespaceId: editedNewObject.namespaceId,
+        name: editedNewObject.name,
+        description: editedNewObject.description,
+        fields: editedNewObject.fields,
+        validators: editedNewObject.validators.length > 0
+          ? editedNewObject.validators.map(v => ({
+              templateId: v.templateId,
+              parameters: v.parameters ?? undefined,
+              fieldMappings: v.fieldMappings
+            }))
+          : undefined
+      });
+
+      if (!result.success) {
+        showToast(result.error ?? 'Failed to create object', 'error');
+        return;
+      }
+
+      // Auto-select the new object in the appropriate selector
+      const newObjectId = result.data!.id;
+      if (objectCreateTarget === 'query') {
+        apiState.handleSelectQueryParamsObject(newObjectId);
+      } else if (objectCreateTarget === 'request') {
+        apiState.handleSelectRequestBodyObject(newObjectId);
+      } else {
+        apiState.handleSelectResponseBodyObject(newObjectId);
+      }
+
+      showToast(`Object "${editedNewObject.name}" created`, 'success');
+      closeObjectCreate();
+    } finally {
+      objectSaving = false;
+    }
+  }
+
+  // ============================================================================
+  // Inline Field Creation Overlay (from within Object creation)
+  // ============================================================================
+
+  let fieldCreateOpen = $state(false);
+  let editedNewField = $state<Field | null>(null);
+  let fieldFormTouched = $state(false);
+  let fieldSaving = $state(false);
+
+  let fieldFormErrors = $derived.by(() => {
+    if (!editedNewField) return {};
+    const errors: Record<string, string> = {};
+    if (!editedNewField.name.trim()) {
+      errors.name = 'Field name is required';
+    } else if (!isValidSnakeCaseName(editedNewField.name)) {
+      errors.name = 'Must be snake_case (e.g. user_email)';
+    }
+    if (!editedNewField.type) errors.type = 'Type is required';
+    return errors;
+  });
+  let fieldFormValid = $derived(editedNewField !== null && Object.keys(fieldFormErrors).length === 0);
+  let fieldImmediateErrors = $derived.by((): Record<string, string> => {
+    if (!editedNewField || !editedNewField.name.trim()) return {};
+    if (!isValidSnakeCaseName(editedNewField.name)) {
+      return { name: fieldFormErrors.name };
+    }
+    return {};
+  });
+  let fieldVisibleErrors = $derived({ ...fieldImmediateErrors, ...(fieldFormTouched ? fieldFormErrors : {}) });
+
+  function openFieldCreate() {
+    editedNewField = {
+      id: '',
+      namespaceId: apiState.apiNamespaceId,
+      name: '',
+      type: $typesStore.length > 0 ? $typesStore[0].name : 'str',
+      container: null,
+      constraints: [],
+      validators: [],
+      usedInApis: [],
+      description: '',
+      defaultValue: ''
+    };
+    fieldFormTouched = false;
+    fieldCreateOpen = true;
+  }
+
+  function closeFieldCreate() {
+    fieldCreateOpen = false;
+    editedNewField = null;
+  }
+
+  async function handleCreateField() {
+    fieldFormTouched = true;
+    if (!fieldFormValid || !editedNewField) return;
+
+    const typeId = getTypeIdByName(editedNewField.type);
+    if (!typeId) {
+      showToast(`Unknown type "${editedNewField.type}"`, 'error');
+      return;
+    }
+
+    fieldSaving = true;
+    try {
+      const result = await createFieldAction({
+        namespaceId: editedNewField.namespaceId,
+        name: editedNewField.name,
+        typeId,
+        container: editedNewField.container,
+        description: editedNewField.description,
+        defaultValue: editedNewField.defaultValue,
+        constraints: editedNewField.constraints.map(c => ({ constraintId: c.constraintId, value: c.value })),
+        validators: editedNewField.validators.length > 0
+          ? editedNewField.validators.map(v => ({ templateId: v.templateId, parameters: v.parameters ?? undefined }))
+          : undefined
+      });
+
+      if (!result.success) {
+        showToast(result.error ?? 'Failed to create field', 'error');
+        return;
+      }
+
+      // Auto-add the new field to the object being created
+      if (editedNewObject) {
+        editedNewObject = {
+          ...editedNewObject,
+          fields: [...editedNewObject.fields, { fieldId: result.data!.id, optional: false }]
+        };
+      }
+
+      showToast(`Field "${editedNewField.name}" created`, 'success');
+      closeFieldCreate();
+    } finally {
+      fieldSaving = false;
     }
   }
 </script>
@@ -191,146 +386,134 @@
     </div>
   </div>
 
-  <!-- Edit API Drawer -->
-  <Drawer open={apiState.editDrawerOpen} maxWidth={520}>
-    <DrawerHeader title="Edit API" onClose={apiState.closeEditDrawer} />
-
-    <DrawerContent>
-      <div class="space-y-4">
-        <!-- Namespace (Read-only) -->
-        <div>
-          <FormLabel label="Namespace" forId="edit-namespace" />
-          <input
-            id="edit-namespace"
-            type="text"
-            value={namespaceName}
-            disabled
-            class="w-full px-3 py-1.5 text-sm border border-mono-300 rounded-md bg-mono-50 text-mono-500 cursor-not-allowed"
-          />
-          <p class="text-xs text-mono-500 mt-1">Namespace cannot be changed after creation</p>
-        </div>
-
-        <!-- API Title -->
-        <FormField
-          id="edit-title"
-          label="API Title"
-          bind:value={apiState.editForm.title}
-          required
+  {#snippet editApiFormContent(_: { close: () => void })}
+    <div class="space-y-4">
+      <!-- Namespace (Read-only) -->
+      <div>
+        <FormLabel label="Namespace" forId="edit-namespace" />
+        <input
+          id="edit-namespace"
+          type="text"
+          value={namespaceName}
+          disabled
+          class="w-full px-3 py-1.5 text-sm border border-mono-300 rounded-md bg-mono-50 text-mono-500 cursor-not-allowed"
         />
-
-        <!-- Version -->
-        <FormField
-          id="edit-version"
-          label="Version"
-          bind:value={apiState.editForm.version}
-          placeholder="1.0.0"
-        />
-
-        <!-- Description -->
-        <div>
-          <FormLabel label="Description" forId="edit-description" />
-          <textarea
-            id="edit-description"
-            bind:value={apiState.editForm.description}
-            rows="3"
-            placeholder="Describe what this API does..."
-            class="w-full px-3 py-1.5 text-sm border border-mono-300 rounded-md focus:ring-2 focus:ring-mono-400 focus:border-transparent"
-          ></textarea>
-        </div>
-
-        <!-- Server URL -->
-        <FormField
-          id="edit-server-url"
-          label="Server URL"
-          bind:value={apiState.editForm.serverUrl}
-          placeholder="https://api.example.com"
-        />
-
-        <!-- Base URL -->
-        <FormField
-          id="edit-base-url"
-          label="Base URL"
-          bind:value={apiState.editForm.baseUrl}
-          placeholder="/api/v1"
-        />
+        <p class="text-xs text-mono-500 mt-1">Namespace cannot be changed after creation</p>
       </div>
-    </DrawerContent>
 
-    <DrawerFooter>
-      {#if !apiState.showEditDeleteConfirm}
-        <button
-          type="button"
-          onclick={apiState.handleEditSave}
-          disabled={!apiState.hasEditChanges || apiState.isSaving}
-          class="w-full px-4 py-2 rounded-md transition-colors font-medium {apiState.hasEditChanges && !apiState.isSaving ? 'bg-mono-900 text-white hover:bg-mono-800 cursor-pointer' : 'bg-mono-300 text-mono-500 cursor-not-allowed'}"
-        >
-          {#if apiState.isSaving}
-            <i class="fa-solid fa-spinner fa-spin mr-2"></i>
-            Saving...
-          {:else}
-            Save Changes
-          {/if}
-        </button>
-        <button
-          type="button"
-          onclick={apiState.handleEditUndo}
-          disabled={!apiState.hasEditChanges}
-          class="w-full px-4 py-2 border rounded-md transition-colors font-medium {apiState.hasEditChanges ? 'border-mono-300 text-mono-700 hover:bg-mono-50 cursor-pointer' : 'border-mono-200 text-mono-400 cursor-not-allowed bg-mono-50'}"
-        >
-          Undo
-        </button>
-        <button
-          type="button"
-          onclick={apiState.handleEditDeleteClick}
-          class="w-full px-4 py-2 bg-mono-100 text-red-700 rounded-md hover:bg-red-50 cursor-pointer transition-colors font-medium flex items-center justify-center space-x-2"
-        >
-          <i class="fa-solid fa-xmark"></i>
-          <span>Delete API</span>
-        </button>
-      {:else}
-        <div class="bg-red-50 border border-red-200 rounded-md p-3">
-          <p class="text-sm text-red-800 mb-2">Delete this API and all its endpoints?</p>
-          <div class="flex space-x-2">
-            <button
-              type="button"
-              onclick={apiState.handleDeleteApi}
-              disabled={apiState.isSaving}
-              class="flex-1 px-3 py-1.5 rounded-md text-sm font-medium transition-colors {apiState.isSaving ? 'bg-red-400 text-white cursor-not-allowed' : 'bg-red-600 text-white hover:bg-red-700 cursor-pointer'}"
-            >
-              {#if apiState.isSaving}
-                <i class="fa-solid fa-spinner fa-spin mr-1"></i>
-                Deleting...
-              {:else}
-                Yes, Delete
-              {/if}
-            </button>
-            <button
-              type="button"
-              onclick={apiState.cancelEditDelete}
-              disabled={apiState.isSaving}
-              class="flex-1 px-3 py-1.5 border border-mono-300 text-mono-700 rounded-md hover:bg-mono-50 text-sm font-medium"
-            >
-              Cancel
-            </button>
-          </div>
+      <!-- API Title -->
+      <FormField
+        id="edit-title"
+        label="API Title"
+        bind:value={apiState.editForm.title}
+        required
+      />
+
+      <!-- Version -->
+      <FormField
+        id="edit-version"
+        label="Version"
+        bind:value={apiState.editForm.version}
+        placeholder="1.0.0"
+      />
+
+      <!-- Description -->
+      <div>
+        <FormLabel label="Description" forId="edit-description" />
+        <textarea
+          id="edit-description"
+          bind:value={apiState.editForm.description}
+          rows="3"
+          placeholder="Describe what this API does..."
+          class="w-full px-3 py-1.5 text-sm border border-mono-300 rounded-md focus:ring-2 focus:ring-mono-400 focus:border-transparent"
+        ></textarea>
+      </div>
+
+      <!-- Server URL -->
+      <FormField
+        id="edit-server-url"
+        label="Server URL"
+        bind:value={apiState.editForm.serverUrl}
+        placeholder="https://api.example.com"
+      />
+
+      <!-- Base URL -->
+      <FormField
+        id="edit-base-url"
+        label="Base URL"
+        bind:value={apiState.editForm.baseUrl}
+        placeholder="/api/v1"
+      />
+    </div>
+  {/snippet}
+
+  {#snippet editApiFormFooter(_: { close: () => void })}
+    {#if !apiState.showEditDeleteConfirm}
+      <button
+        type="button"
+        onclick={apiState.handleEditSave}
+        disabled={!apiState.hasEditChanges || apiState.isSaving}
+        class="w-full px-4 py-2 rounded-md transition-colors font-medium {apiState.hasEditChanges && !apiState.isSaving ? 'bg-mono-900 text-white hover:bg-mono-800 cursor-pointer' : 'bg-mono-300 text-mono-500 cursor-not-allowed'}"
+      >
+        {#if apiState.isSaving}
+          <i class="fa-solid fa-spinner fa-spin mr-2"></i>
+          Saving...
+        {:else}
+          Save Changes
+        {/if}
+      </button>
+      <button
+        type="button"
+        onclick={apiState.handleEditUndo}
+        disabled={!apiState.hasEditChanges}
+        class="w-full px-4 py-2 border rounded-md transition-colors font-medium {apiState.hasEditChanges ? 'border-mono-300 text-mono-700 hover:bg-mono-50 cursor-pointer' : 'border-mono-200 text-mono-400 cursor-not-allowed bg-mono-50'}"
+      >
+        Undo
+      </button>
+      <button
+        type="button"
+        onclick={apiState.handleEditDeleteClick}
+        class="w-full px-4 py-2 bg-mono-100 text-red-700 rounded-md hover:bg-red-50 cursor-pointer transition-colors font-medium flex items-center justify-center space-x-2"
+      >
+        <i class="fa-solid fa-xmark"></i>
+        <span>Delete API</span>
+      </button>
+    {:else}
+      <div class="bg-red-50 border border-red-200 rounded-md p-3">
+        <p class="text-sm text-red-800 mb-2">Delete this API and all its endpoints?</p>
+        <div class="flex space-x-2">
+          <button
+            type="button"
+            onclick={apiState.handleDeleteApi}
+            disabled={apiState.isSaving}
+            class="flex-1 px-3 py-1.5 rounded-md text-sm font-medium transition-colors {apiState.isSaving ? 'bg-red-400 text-white cursor-not-allowed' : 'bg-red-600 text-white hover:bg-red-700 cursor-pointer'}"
+          >
+            {#if apiState.isSaving}
+              <i class="fa-solid fa-spinner fa-spin mr-1"></i>
+              Deleting...
+            {:else}
+              Yes, Delete
+            {/if}
+          </button>
+          <button
+            type="button"
+            onclick={apiState.cancelEditDelete}
+            disabled={apiState.isSaving}
+            class="flex-1 px-3 py-1.5 border border-mono-300 text-mono-700 rounded-md hover:bg-mono-50 text-sm font-medium"
+          >
+            Cancel
+          </button>
         </div>
-      {/if}
-    </DrawerFooter>
-  </Drawer>
+      </div>
+    {/if}
+  {/snippet}
 
-  <!-- Endpoint Drawer -->
-  <Drawer open={apiState.endpointDrawerOpen} maxWidth={1200}>
-    <DrawerHeader
-        title={apiState.isCreating ? 'Create Endpoint' : 'Edit Endpoint'}
-        onClose={apiState.isCreating ? apiState.handleCancelCreate : apiState.closeEndpointDrawer}
-    />
-
-    <DrawerContent>
-      {#if apiState.editedEndpoint}
-        <div class="space-y-6">
-          <!-- Tag and Description (same line) -->
-          <div class="flex space-x-4">
-            <div class="w-56 relative">
+  {#snippet endpointFormContent(_: { close: () => void })}
+    {#if apiState.editedEndpoint}
+        <div class="space-y-6" style="container-type: inline-size;">
+          <!-- Tag and Description -->
+          <div class="endpoint-tag-description">
+            <div class="relative">
               <h3 class="text-sm text-mono-700 mb-2 flex items-center font-medium">
                 <i class="fa-solid fa-tag mr-2"></i>
                 Tag
@@ -390,7 +573,7 @@
                 </div>
               {/if}
             </div>
-            <div class="flex-1">
+            <div>
               <h3 class="text-sm text-mono-700 mb-2 flex items-center font-medium">
                 <i class="fa-solid fa-align-left mr-2"></i>
                 Description
@@ -410,7 +593,7 @@
               <i class="fa-solid fa-route mr-2"></i>
               Method & Path
             </h3>
-            <div class="flex items-center space-x-2">
+            <div class="endpoint-method-path">
               <select
                 bind:value={apiState.editedEndpoint.method}
                 class="px-3 py-1.5 border border-mono-300 rounded-md focus:ring-2 focus:ring-mono-400 focus:border-transparent text-sm"
@@ -419,7 +602,7 @@
                   <option value={method}>{method}</option>
                 {/each}
               </select>
-              <div class="flex-1 flex items-center border border-mono-300 rounded-md focus-within:ring-2 focus-within:ring-mono-400 focus-within:border-transparent">
+              <div class="endpoint-path-input flex items-center border border-mono-300 rounded-md focus-within:ring-2 focus-within:ring-mono-400 focus-within:border-transparent">
                 <span class="px-3 py-1.5 text-sm font-mono text-mono-500 bg-mono-50 border-r border-mono-300">/</span>
                 <input
                   type="text"
@@ -430,6 +613,9 @@
                 />
               </div>
             </div>
+            {#if apiState.pathError}
+              <p class="text-xs text-red-500 mt-1">{apiState.pathError}</p>
+            {/if}
           </div>
 
           <!-- Path Parameters -->
@@ -450,6 +636,7 @@
                     fieldId={param.fieldId}
                     {availableFields}
                     onFieldSelect={(fieldId) => apiState.handlePathParamUpdate(param.name, fieldId)}
+                    onCreateNewField={openFieldCreate}
                   />
                 {/each}
               </div>
@@ -461,6 +648,7 @@
             endpointNamespaceId={apiState.apiNamespaceId}
             selectedObjectId={apiState.editedEndpoint.queryParamsObjectId}
             onSelectObject={apiState.handleSelectQueryParamsObject}
+            onCreateNewObject={() => openObjectCreate('query')}
           />
 
           <!-- Request Body Editor -->
@@ -468,6 +656,7 @@
             endpointNamespaceId={apiState.apiNamespaceId}
             selectedObjectId={apiState.editedEndpoint.requestBodyObjectId}
             onSelectObject={apiState.handleSelectRequestBodyObject}
+            onCreateNewObject={() => openObjectCreate('request')}
           />
 
           <!-- Response Body Editor -->
@@ -479,13 +668,14 @@
             onSelectObject={apiState.handleSelectResponseBodyObject}
             onEnvelopeToggle={apiState.handleEnvelopeToggle}
             onSetResponseShape={apiState.handleSetResponseShape}
+            onCreateNewObject={() => openObjectCreate('response')}
           />
         </div>
       {/if}
-    </DrawerContent>
+  {/snippet}
 
-    <DrawerFooter>
-      {#if apiState.editedEndpoint}
+  {#snippet endpointFormFooter(_: { close: () => void })}
+    {#if apiState.editedEndpoint}
         {#if apiState.isCreating}
           <div class="flex space-x-2">
             <button
@@ -498,7 +688,7 @@
                 <i class="fa-solid fa-spinner fa-spin"></i>
                 <span>Creating...</span>
               {:else}
-                <span>Create</span>
+                <span>Create Endpoint</span>
               {/if}
             </button>
             <button
@@ -566,6 +756,142 @@
           </div>
         {/if}
       {/if}
-    </DrawerFooter>
-  </Drawer>
+  {/snippet}
+
+  {#snippet objectFormContent(_: { close: () => void })}
+    {#if editedNewObject}
+      <ObjectFormContent
+        bind:editedItem={editedNewObject}
+        mode="creating"
+        {namespaceName}
+        {availableFields}
+        modelValidatorTemplates={$modelValidatorTemplatesStore}
+        visibleErrors={objectVisibleErrors}
+        onCreateNewField={openFieldCreate}
+      />
+    {/if}
+  {/snippet}
+
+  {#snippet objectFormFooter(_: { close: () => void })}
+    <div class="flex space-x-2">
+      <button
+        type="button"
+        onclick={handleCreateObject}
+        disabled={objectSaving}
+        class="flex-1 px-4 py-2 rounded-md transition-colors font-medium flex items-center justify-center space-x-2 {!objectSaving ? 'bg-mono-900 text-white hover:bg-mono-800 cursor-pointer' : 'bg-mono-300 text-mono-500 cursor-not-allowed'}"
+      >
+        {#if objectSaving}
+          <i class="fa-solid fa-spinner fa-spin"></i>
+          <span>Creating...</span>
+        {:else}
+          <span>Create Object</span>
+        {/if}
+      </button>
+      <button
+        type="button"
+        onclick={closeObjectCreate}
+        disabled={objectSaving}
+        class="flex-1 px-4 py-2 border border-mono-300 text-mono-700 rounded-md hover:bg-mono-50 cursor-pointer transition-colors font-medium"
+      >
+        Cancel
+      </button>
+    </div>
+  {/snippet}
+
+  {#snippet fieldFormContent(_: { close: () => void })}
+    {#if editedNewField}
+      <FieldFormContent
+        bind:editedItem={editedNewField}
+        mode="creating"
+        {namespaceName}
+        selectableTypes={$typesStore}
+        fieldConstraintDefinitions={$fieldConstraintsStore}
+        fieldValidatorTemplates={$fieldValidatorTemplatesStore}
+        visibleErrors={fieldVisibleErrors}
+      />
+    {/if}
+  {/snippet}
+
+  {#snippet fieldFormFooter(_: { close: () => void })}
+    <div class="flex space-x-2">
+      <button
+        type="button"
+        onclick={handleCreateField}
+        disabled={fieldSaving}
+        class="flex-1 px-4 py-2 rounded-md transition-colors font-medium flex items-center justify-center space-x-2 {!fieldSaving ? 'bg-mono-900 text-white hover:bg-mono-800 cursor-pointer' : 'bg-mono-300 text-mono-500 cursor-not-allowed'}"
+      >
+        {#if fieldSaving}
+          <i class="fa-solid fa-spinner fa-spin"></i>
+          <span>Creating...</span>
+        {:else}
+          <span>Create Field</span>
+        {/if}
+      </button>
+      <button
+        type="button"
+        onclick={closeFieldCreate}
+        disabled={fieldSaving}
+        class="flex-1 px-4 py-2 border border-mono-300 text-mono-700 rounded-md hover:bg-mono-50 cursor-pointer transition-colors font-medium"
+      >
+        Cancel
+      </button>
+    </div>
+  {/snippet}
+
+  <!-- Unified DrawerStack: always mounted, panels array controls visibility -->
+  <DrawerStack
+    panels={[
+      ...(apiState.editDrawerOpen
+        ? [{ id: 'edit-api', title: 'Edit API', width: 520, minWidth: 380, content: editApiFormContent, footer: editApiFormFooter }]
+        : []),
+      ...(apiState.endpointDrawerOpen
+        ? [{ id: 'endpoint', title: apiState.isCreating ? 'Create Endpoint' : 'Edit Endpoint', width: 1200, minWidth: 700, content: endpointFormContent, footer: endpointFormFooter }]
+        : []),
+      ...(objectCreateOpen
+        ? [{ id: 'object', title: 'Create Object', width: 480, minWidth: 380, content: objectFormContent, footer: objectFormFooter }]
+        : []),
+      ...(fieldCreateOpen
+        ? [{ id: 'field', title: 'Create Field', width: 420, minWidth: 380, content: fieldFormContent, footer: fieldFormFooter }]
+        : [])
+    ]}
+    onPopPanel={() => {
+      if (fieldCreateOpen) closeFieldCreate();
+      else if (objectCreateOpen) closeObjectCreate();
+      else if (apiState.endpointDrawerOpen) {
+        if (apiState.isCreating) apiState.handleCancelCreate();
+        else apiState.closeEndpointDrawer();
+      }
+      else if (apiState.editDrawerOpen) apiState.closeEditDrawer();
+    }}
+  />
 {/if}
+
+<style>
+  .endpoint-tag-description {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+  @container (min-width: 700px) {
+    .endpoint-tag-description {
+      grid-template-columns: repeat(2, 1fr);
+    }
+  }
+  .endpoint-method-path {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+  .endpoint-path-input {
+    flex: 1;
+  }
+  @container (max-width: 700px) {
+    .endpoint-method-path {
+      flex-direction: column;
+      align-items: stretch;
+    }
+    .endpoint-path-input {
+      flex: none;
+    }
+  }
+</style>

@@ -5,10 +5,6 @@ import {
   FILTER_TOGGLE_ID,
   FILTER_PANEL_ID,
   TABLE_ID,
-  DRAWER_ID,
-  DRAWER_SAVE_ID,
-  DRAWER_CANCEL_ID,
-  DRAWER_DELETE_ID,
   EMPTY_STATE_ID,
   ERROR_STATE_ID,
   RETRY_BUTTON_ID,
@@ -25,10 +21,6 @@ describe('testIds - Constants', () => {
     expect(FILTER_TOGGLE_ID).toBe('filter-toggle');
     expect(FILTER_PANEL_ID).toBe('filter-panel');
     expect(TABLE_ID).toBe('data-table');
-    expect(DRAWER_ID).toBe('drawer');
-    expect(DRAWER_SAVE_ID).toBe('drawer-save');
-    expect(DRAWER_CANCEL_ID).toBe('drawer-cancel');
-    expect(DRAWER_DELETE_ID).toBe('drawer-delete');
     expect(EMPTY_STATE_ID).toBe('empty-state');
     expect(ERROR_STATE_ID).toBe('error-state');
     expect(RETRY_BUTTON_ID).toBe('retry-button');

@@ -11,6 +11,11 @@
 <script module lang="ts">
   export interface ClerkSidebarUserProps {
     /**
+     * Whether the sidebar is in collapsed (icon-only) mode
+     */
+    collapsed?: boolean;
+
+    /**
      * Optional CSS class to apply to the container
      */
     class?: string;
@@ -20,10 +25,11 @@
 <script lang="ts">
   import { onDestroy } from 'svelte';
   import { getClerk, clerkAppearance, clerkState } from '$lib/clerk';
+  import { Tooltip } from '$lib/components/tooltip';
 
   interface Props extends ClerkSidebarUserProps {}
 
-  let { class: className = '' }: Props = $props();
+  let { collapsed = false, class: className = '' }: Props = $props();
 
   let buttonContainer: HTMLDivElement;
   let isMounted = $state(false);
@@ -97,21 +103,28 @@
 
 <div class="flex items-center gap-3 {className}" data-testid="clerk-sidebar-user">
   <!-- Clerk UserButton (avatar with dropdown) -->
-  <div bind:this={buttonContainer} class="flex-shrink-0"></div>
+  <Tooltip text={userName} position="right" disabled={!collapsed}>
+    <div
+      bind:this={buttonContainer}
+      class="flex-shrink-0 rounded-md transition-colors {collapsed ? 'hover:bg-mono-800 p-1' : ''}"
+    ></div>
+  </Tooltip>
 
-  <!-- User info -->
-  {#if $clerkState.isSignedIn && user}
-    <div class="flex-1 min-w-0">
-      <p class="text-sm font-medium text-white truncate">{userName}</p>
-      {#if userEmail}
-        <p class="text-xs text-mono-400 truncate">{userEmail}</p>
-      {/if}
-    </div>
-  {:else if !$clerkState.isLoaded}
-    <!-- Loading state -->
-    <div class="flex-1 min-w-0">
-      <div class="h-4 w-24 bg-mono-700 rounded animate-pulse"></div>
-      <div class="h-3 w-32 bg-mono-700 rounded animate-pulse mt-1"></div>
-    </div>
+  <!-- User info (hidden when collapsed) -->
+  {#if !collapsed}
+    {#if $clerkState.isSignedIn && user}
+      <div class="flex-1 min-w-0">
+        <p class="text-sm font-medium text-white truncate">{userName}</p>
+        {#if userEmail}
+          <p class="text-xs text-mono-400 truncate">{userEmail}</p>
+        {/if}
+      </div>
+    {:else if !$clerkState.isLoaded}
+      <!-- Loading state -->
+      <div class="flex-1 min-w-0">
+        <div class="h-4 w-24 bg-mono-700 rounded animate-pulse"></div>
+        <div class="h-3 w-32 bg-mono-700 rounded animate-pulse mt-1"></div>
+      </div>
+    {/if}
   {/if}
 </div>

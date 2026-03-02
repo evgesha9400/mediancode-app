@@ -5,9 +5,7 @@
     SearchBar,
     Table,
     SortableColumn,
-    Drawer,
-    DrawerHeader,
-    DrawerContent,
+    DrawerStack,
     DetailField,
     Pill,
     TableEmptyState
@@ -114,71 +112,73 @@
   {/snippet}
 </Table>
 
-<Drawer open={state.drawerOpen}>
-  <DrawerHeader title="Model Validator Details" onClose={state.closeDrawer} />
+{#snippet modelValidatorDetailContent(_: { close: () => void })}
+  {#if state.selectedItem}
+    <div class="space-y-6">
+      <div class="flex items-center space-x-2 px-3 py-2 bg-mono-50 border border-mono-200 rounded-md">
+        <i class="fa-solid fa-lock text-mono-400 text-sm"></i>
+        <span class="text-sm text-mono-600">System model validator — read-only</span>
+      </div>
 
-  <DrawerContent>
-    {#if state.selectedItem}
-      <div class="space-y-6">
-        <div class="flex items-center space-x-2 px-3 py-2 bg-mono-50 border border-mono-200 rounded-md">
-          <i class="fa-solid fa-lock text-mono-400 text-sm"></i>
-          <span class="text-sm text-mono-600">System model validator — read-only</span>
+      <DetailField label="Name">
+        <p class="text-mono-900 font-medium">{state.selectedItem.name}</p>
+      </DetailField>
+
+      <DetailField label="Description" value={state.selectedItem.description} />
+
+      <DetailField label="Mode">
+        <Pill>{state.selectedItem.mode}</Pill>
+      </DetailField>
+
+      <DetailField label="Field Mappings">
+        <div class="space-y-2">
+          {#each state.selectedItem.fieldMappings as fm}
+            <div class="p-2 bg-mono-50 rounded border border-mono-200">
+              <div class="flex items-center space-x-2">
+                <span class="text-sm text-mono-700 font-medium">{fm.label}</span>
+                {#if fm.required}
+                  <span class="text-red-500 text-xs">required</span>
+                {/if}
+              </div>
+              {#if fm.compatibleTypes.length > 0}
+                <div class="flex flex-wrap gap-1 mt-1">
+                  {#each fm.compatibleTypes as ctype}
+                    <Pill size="sm">{ctype}</Pill>
+                  {/each}
+                </div>
+              {/if}
+            </div>
+          {/each}
         </div>
+      </DetailField>
 
-        <DetailField label="Name">
-          <p class="text-mono-900 font-medium">{state.selectedItem.name}</p>
-        </DetailField>
-
-        <DetailField label="Description" value={state.selectedItem.description} />
-
-        <DetailField label="Mode">
-          <Pill>{state.selectedItem.mode}</Pill>
-        </DetailField>
-
-        <DetailField label="Field Mappings">
+      {#if state.selectedItem.parameters.length > 0}
+        <DetailField label="Parameters">
           <div class="space-y-2">
-            {#each state.selectedItem.fieldMappings as fm}
+            {#each state.selectedItem.parameters as param}
               <div class="p-2 bg-mono-50 rounded border border-mono-200">
                 <div class="flex items-center space-x-2">
-                  <span class="text-sm text-mono-700 font-medium">{fm.label}</span>
-                  {#if fm.required}
+                  <span class="text-sm text-mono-700 font-medium">{param.label}</span>
+                  <Pill size="sm">{param.type}</Pill>
+                  {#if param.required}
                     <span class="text-red-500 text-xs">required</span>
                   {/if}
                 </div>
-                {#if fm.compatibleTypes.length > 0}
-                  <div class="flex flex-wrap gap-1 mt-1">
-                    {#each fm.compatibleTypes as ctype}
-                      <Pill size="sm">{ctype}</Pill>
-                    {/each}
-                  </div>
+                {#if param.placeholder}
+                  <p class="text-xs text-mono-500 mt-1">e.g. {param.placeholder}</p>
                 {/if}
               </div>
             {/each}
           </div>
         </DetailField>
+      {/if}
+    </div>
+  {/if}
+{/snippet}
 
-        {#if state.selectedItem.parameters.length > 0}
-          <DetailField label="Parameters">
-            <div class="space-y-2">
-              {#each state.selectedItem.parameters as param}
-                <div class="p-2 bg-mono-50 rounded border border-mono-200">
-                  <div class="flex items-center space-x-2">
-                    <span class="text-sm text-mono-700 font-medium">{param.label}</span>
-                    <Pill size="sm">{param.type}</Pill>
-                    {#if param.required}
-                      <span class="text-red-500 text-xs">required</span>
-                    {/if}
-                  </div>
-                  {#if param.placeholder}
-                    <p class="text-xs text-mono-500 mt-1">e.g. {param.placeholder}</p>
-                  {/if}
-                </div>
-              {/each}
-            </div>
-          </DetailField>
-        {/if}
-
-      </div>
-    {/if}
-  </DrawerContent>
-</Drawer>
+<DrawerStack
+  panels={state.drawerOpen
+    ? [{ id: 'model-validator', title: 'Model Validator Details', width: 520, minWidth: 320, content: modelValidatorDetailContent }]
+    : []}
+  onPopPanel={state.closeDrawer}
+/>

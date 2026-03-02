@@ -18,6 +18,7 @@ import {
 } from '$lib/domain/mutations';
 import { buildDeletionTooltip } from '$lib/utils/references';
 import { composeState } from '$lib/utils/compose';
+import { isValidSnakeCaseName } from '$lib/utils/validation';
 import { showToast } from './toasts';
 
 // ============================================================================
@@ -147,7 +148,15 @@ export function createFieldsModel(config: FieldsModelConfig): FieldsModelState {
   });
 
   let isFormValid = $derived(listState.editedItem !== null && Object.keys(formErrors).length === 0);
-  let visibleErrors = $derived({ ...(formTouched ? formErrors : {}), ...serverErrors });
+  let immediateErrors = $derived.by(() => {
+    const item = listState.editedItem;
+    if (!item || !item.name.trim()) return {};
+    if (!isValidSnakeCaseName(item.name)) {
+      return { name: formErrors.name };
+    }
+    return {};
+  });
+  let visibleErrors = $derived({ ...immediateErrors, ...(formTouched ? formErrors : {}), ...serverErrors });
 
   // --- Derived deletion guard ---
   let deletionGuardResult = $derived.by(() => {
@@ -162,7 +171,11 @@ export function createFieldsModel(config: FieldsModelConfig): FieldsModelState {
 
   function validate(item: Field): Record<string, string> {
     const errors: Record<string, string> = {};
-    if (!item.name.trim()) errors.name = 'Field name is required';
+    if (!item.name.trim()) {
+      errors.name = 'Field name is required';
+    } else if (!isValidSnakeCaseName(item.name)) {
+      errors.name = 'Must be snake_case (e.g. user_email)';
+    }
     if (!item.type) errors.type = 'Type is required';
     const emptyParam = item.constraints.find(c => c.value === null || c.value === '');
     if (emptyParam) errors.constraints = `Constraint "${emptyParam.name}" requires a value`;
@@ -231,10 +244,10 @@ export function createFieldsModel(config: FieldsModelConfig): FieldsModelState {
   }
 
   function deletionGuard(item: Field): { canDelete: boolean; tooltip: string } {
-    const hasRefs = item.usedInApis.length > 0;
+    const hasMultipleRefs = item.usedInApis.length > 1;
     return {
-      canDelete: !hasRefs,
-      tooltip: hasRefs
+      canDelete: !hasMultipleRefs,
+      tooltip: hasMultipleRefs
         ? buildDeletionTooltip('field', 'API', item.usedInApis.map(api => ({ name: api })))
         : ''
     };

@@ -11,9 +11,7 @@
     Pill,
     DetailField,
     TableEmptyState,
-    Drawer,
-    DrawerHeader,
-    DrawerContent
+    DrawerStack
   } from '$lib/components';
   import type { FilterConfig } from '$lib/types';
   import { STORE_NAMES } from '$lib/stores/loader';
@@ -215,79 +213,81 @@
   {/snippet}
 </Table>
 
-<Drawer open={state.drawerOpen}>
-  <DrawerHeader title="Field Constraint Details" onClose={state.closeDrawer} />
+{#snippet constraintDetailContent(_: { close: () => void })}
+  {#if selectedFieldConstraint}
+    <div class="space-y-6">
+      {#if isSystemItem}
+        <div class="flex items-center space-x-2 px-3 py-2 bg-mono-50 border border-mono-200 rounded-md">
+          <i class="fa-solid fa-lock text-mono-400 text-sm"></i>
+          <span class="text-sm text-mono-600">System field constraint — read-only</span>
+        </div>
+      {/if}
 
-  <DrawerContent>
-    {#if selectedFieldConstraint}
-      <div class="space-y-6">
-        {#if isSystemItem}
-          <div class="flex items-center space-x-2 px-3 py-2 bg-mono-50 border border-mono-200 rounded-md">
-            <i class="fa-solid fa-lock text-mono-400 text-sm"></i>
-            <span class="text-sm text-mono-600">System field constraint — read-only</span>
-          </div>
-        {/if}
+      <DetailField label="Name" value={selectedFieldConstraint.name} />
+      <DetailField label="Description" value={selectedFieldConstraint.description} />
 
-        <DetailField label="Name" value={selectedFieldConstraint.name} />
+      <DetailField label="Parameter Types">
+        <div class="flex flex-wrap gap-1.5 mt-1">
+          {#each selectedFieldConstraint.parameterTypes as ptype}
+            <Pill>{ptype}</Pill>
+          {/each}
+        </div>
+      </DetailField>
 
-        <DetailField label="Description" value={selectedFieldConstraint.description} />
+      <DetailField label="Compatible Types">
+        <div class="flex flex-wrap gap-1.5 mt-1">
+          {#each selectedFieldConstraint.compatibleTypes as ctype}
+            <Pill>{ctype}</Pill>
+          {/each}
+        </div>
+      </DetailField>
 
-        <DetailField label="Parameter Types">
-          <div class="flex flex-wrap gap-1.5 mt-1">
-            {#each selectedFieldConstraint.parameterTypes as ptype}
-              <Pill>{ptype}</Pill>
+      {#if selectedFieldConstraint.docsUrl}
+        <DetailField label="Documentation">
+          <a
+            href={selectedFieldConstraint.docsUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            class="text-sm text-mono-900 underline hover:text-mono-600 transition-colors"
+          >
+            View Docs <i class="fa-solid fa-arrow-up-right-from-square text-xs"></i>
+          </a>
+        </DetailField>
+      {/if}
+
+      <DetailField label="Used In Fields ({fieldsUsingSelected.length})">
+        {#if fieldsUsingSelected.length > 0}
+          <div class="space-y-2">
+            {#each fieldsUsingSelected as field}
+              <button
+                type="button"
+                onclick={() => navigateToField(field.fieldId)}
+                class="w-full flex items-center justify-between p-3 bg-mono-50 rounded-md hover:bg-mono-100 cursor-pointer transition-colors group"
+              >
+                <div class="flex items-center space-x-2">
+                  <i class="fa-solid fa-table-list text-mono-400 group-hover:text-mono-600 transition-colors"></i>
+                  <span class="text-sm text-mono-900 group-hover:text-mono-700 transition-colors">{field.name}</span>
+                </div>
+                <div class="flex items-center space-x-2">
+                  <span class="text-xs text-mono-500 bg-mono-200 px-2 py-1 rounded">
+                    ID: {field.fieldId}
+                  </span>
+                  <i class="fa-solid fa-arrow-right text-mono-400 group-hover:text-mono-600 transition-colors text-xs"></i>
+                </div>
+              </button>
             {/each}
           </div>
-        </DetailField>
-
-        <DetailField label="Compatible Types">
-          <div class="flex flex-wrap gap-1.5 mt-1">
-            {#each selectedFieldConstraint.compatibleTypes as ctype}
-              <Pill>{ctype}</Pill>
-            {/each}
-          </div>
-        </DetailField>
-
-        {#if selectedFieldConstraint.docsUrl}
-          <DetailField label="Documentation">
-            <a
-              href={selectedFieldConstraint.docsUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              class="text-sm text-mono-900 underline hover:text-mono-600 transition-colors"
-            >
-              View Docs <i class="fa-solid fa-arrow-up-right-from-square text-xs"></i>
-            </a>
-          </DetailField>
+        {:else}
+          <p class="text-sm text-mono-500 italic">Not used in any fields yet</p>
         {/if}
+      </DetailField>
+    </div>
+  {/if}
+{/snippet}
 
-        <DetailField label="Used In Fields ({fieldsUsingSelected.length})">
-          {#if fieldsUsingSelected.length > 0}
-            <div class="space-y-2">
-              {#each fieldsUsingSelected as field}
-                <button
-                  type="button"
-                  onclick={() => navigateToField(field.fieldId)}
-                  class="w-full flex items-center justify-between p-3 bg-mono-50 rounded-md hover:bg-mono-100 cursor-pointer transition-colors group"
-                >
-                  <div class="flex items-center space-x-2">
-                    <i class="fa-solid fa-table-list text-mono-400 group-hover:text-mono-600 transition-colors"></i>
-                    <span class="text-sm text-mono-900 group-hover:text-mono-700 transition-colors">{field.name}</span>
-                  </div>
-                  <div class="flex items-center space-x-2">
-                    <span class="text-xs text-mono-500 bg-mono-200 px-2 py-1 rounded">
-                      ID: {field.fieldId}
-                    </span>
-                    <i class="fa-solid fa-arrow-right text-mono-400 group-hover:text-mono-600 transition-colors text-xs"></i>
-                  </div>
-                </button>
-              {/each}
-            </div>
-          {:else}
-            <p class="text-sm text-mono-500 italic">Not used in any fields yet</p>
-          {/if}
-        </DetailField>
-      </div>
-    {/if}
-  </DrawerContent>
-</Drawer>
+<DrawerStack
+  panels={state.drawerOpen
+    ? [{ id: 'field-constraint', title: 'Field Constraint Details', width: 520, minWidth: 320, content: constraintDetailContent }]
+    : []}
+  onPopPanel={state.closeDrawer}
+/>

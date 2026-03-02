@@ -89,7 +89,9 @@ test('API lifecycle: create, search, edit, delete', async ({ page }) => {
 	// --- Edit API via drawer on detail page ---
 	const editButton = page.getByRole('button', { name: /Edit/i }).first();
 	await editButton.click();
-	const editDrawer = page.locator('[class*="fixed"][class*="right-0"]');
+	const editDrawer = page
+		.locator('[class*="fixed"][class*="right-0"]')
+		.filter({ hasText: 'Edit API' });
 	await editDrawer.waitFor({ state: 'visible' });
 
 	// Update description
