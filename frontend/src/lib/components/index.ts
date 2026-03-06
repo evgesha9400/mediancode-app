@@ -34,6 +34,9 @@ export * from './api-generator';
 // Validator template components
 export * from './validator-templates';
 
+// Modal components
+export * from './modal';
+
 // Pill component
 export * from './pill';
 
