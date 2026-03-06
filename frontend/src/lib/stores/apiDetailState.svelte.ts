@@ -28,7 +28,7 @@ import {
 	deleteEndpointAction
 } from '$lib/domain/mutations';
 import { reconcilePathParams, normalizeEndpoint } from '$lib/domain/endpointReducer';
-import { isValidSnakeCaseName } from '$lib/utils/validation';
+import { isValidSnakeCaseName, isValidPascalCaseName } from '$lib/utils/validation';
 
 /**
  * Toast message constants
@@ -72,6 +72,9 @@ export interface ApiDetailState {
 	readonly editDrawerOpen: boolean;
 	editForm: { title: string; version: string; description: string; serverUrl: string; baseUrl: string };
 	readonly hasEditChanges: boolean;
+	readonly editFormErrors: Record<string, string>;
+	readonly editFormValid: boolean;
+	readonly editVisibleErrors: Record<string, string>;
 	readonly showEditDeleteConfirm: boolean;
 	openEditDrawer: () => void;
 	closeEditDrawer: () => void;
@@ -238,6 +241,29 @@ export function createApiDetailState(config: ApiDetailStateConfig): ApiDetailSta
 	let originalEditFormSnapshot = $state('');
 	let hasEditChanges = $derived(JSON.stringify(editForm) !== originalEditFormSnapshot);
 	let showEditDeleteConfirm = $state(false);
+	let editFormTouched = $state(false);
+
+	let editFormErrors = $derived.by(() => {
+		const errors: Record<string, string> = {};
+		if (!editForm.title.trim()) {
+			errors.title = 'API title is required';
+		} else if (!isValidPascalCaseName(editForm.title)) {
+			errors.title = 'Must be PascalCase (e.g. UserApi)';
+		}
+		return errors;
+	});
+
+	let editFormValid = $derived(Object.keys(editFormErrors).length === 0);
+
+	let editImmediateErrors = $derived.by(() => {
+		if (!editForm.title.trim()) return {};
+		if (!isValidPascalCaseName(editForm.title)) {
+			return { title: editFormErrors.title };
+		}
+		return {};
+	});
+
+	let editVisibleErrors = $derived({ ...editImmediateErrors, ...(editFormTouched ? editFormErrors : {}) });
 
 	function openEditDrawer(): void {
 		// Close endpoint drawer first
@@ -253,6 +279,7 @@ export function createApiDetailState(config: ApiDetailStateConfig): ApiDetailSta
 			originalEditFormSnapshot = JSON.stringify(editForm);
 		}
 		showEditDeleteConfirm = false;
+		editFormTouched = false;
 		editDrawerOpen = true;
 	}
 
@@ -262,6 +289,9 @@ export function createApiDetailState(config: ApiDetailStateConfig): ApiDetailSta
 	}
 
 	async function handleEditSave(): Promise<void> {
+		editFormTouched = true;
+		if (!editFormValid) return;
+
 		isSaving = true;
 		try {
 			const result = await updateApiAction(apiId, {
@@ -669,6 +699,9 @@ export function createApiDetailState(config: ApiDetailStateConfig): ApiDetailSta
 		get editForm() { return editForm; },
 		set editForm(v) { editForm = v; },
 		get hasEditChanges() { return hasEditChanges; },
+		get editFormErrors() { return editFormErrors; },
+		get editFormValid() { return editFormValid; },
+		get editVisibleErrors() { return editVisibleErrors; },
 		get showEditDeleteConfirm() { return showEditDeleteConfirm; },
 		openEditDrawer,
 		closeEditDrawer,

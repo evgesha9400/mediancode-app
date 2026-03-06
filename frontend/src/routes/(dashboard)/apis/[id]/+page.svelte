@@ -406,6 +406,7 @@
         id="edit-title"
         label="API Title"
         bind:value={apiState.editForm.title}
+        error={apiState.editVisibleErrors?.title}
         required
       />
 

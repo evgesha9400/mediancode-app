@@ -361,13 +361,13 @@ describe('apiDetailState - Edit API Drawer', () => {
     state.openEditDrawer();
     flushSync();
 
-    state.editForm = { ...state.editForm, title: 'Updated Title' };
+    state.editForm = { ...state.editForm, title: 'UpdatedTitle' };
     flushSync();
 
     await state.handleEditSave();
 
     expect(updateApiAction).toHaveBeenCalledWith('api-1', expect.objectContaining({
-      title: 'Updated Title'
+      title: 'UpdatedTitle'
     }));
     expect(showToast).toHaveBeenCalledWith(
       expect.stringContaining('saved'),
@@ -390,6 +390,74 @@ describe('apiDetailState - Edit API Drawer', () => {
     await state.handleEditSave();
 
     expect(showToast).toHaveBeenCalledWith('Save failed', 'error');
+  });
+});
+
+describe('apiDetailState - Edit Form Validation', () => {
+  let state: ApiDetailState;
+  let cleanup: () => void;
+
+  beforeEach(() => {
+    apisStore.set([makeApi({ id: 'api-1', title: 'MyApi', version: '1.0.0' })]);
+    flushSync();
+  });
+  afterEach(() => cleanup?.());
+
+  it('should have editFormErrors when title is empty', () => {
+    ({ state, cleanup } = createTestState());
+    flushSync();
+
+    state.openEditDrawer();
+    flushSync();
+
+    state.editForm = { ...state.editForm, title: '' };
+    flushSync();
+
+    expect(state.editFormErrors.title).toBe('API title is required');
+    expect(state.editFormValid).toBe(false);
+  });
+
+  it('should have editFormErrors when title is not PascalCase', () => {
+    ({ state, cleanup } = createTestState());
+    flushSync();
+
+    state.openEditDrawer();
+    flushSync();
+
+    state.editForm = { ...state.editForm, title: 'my_api' };
+    flushSync();
+
+    expect(state.editFormErrors.title).toBe('Must be PascalCase (e.g. UserApi)');
+    expect(state.editFormValid).toBe(false);
+  });
+
+  it('should have no editFormErrors when title is valid PascalCase', () => {
+    ({ state, cleanup } = createTestState());
+    flushSync();
+
+    state.openEditDrawer();
+    flushSync();
+
+    state.editForm = { ...state.editForm, title: 'MyApi' };
+    flushSync();
+
+    expect(state.editFormErrors).toEqual({});
+    expect(state.editFormValid).toBe(true);
+  });
+
+  it('should prevent save when title is invalid', async () => {
+    ({ state, cleanup } = createTestState());
+    flushSync();
+
+    state.openEditDrawer();
+    flushSync();
+
+    state.editForm = { ...state.editForm, title: 'my_api' };
+    flushSync();
+
+    await state.handleEditSave();
+
+    expect(updateApiAction).not.toHaveBeenCalled();
   });
 });
 
