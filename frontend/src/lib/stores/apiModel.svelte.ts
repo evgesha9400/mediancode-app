@@ -17,6 +17,7 @@ import {
 	type UpdateApiRequest
 } from '$lib/domain/mutations';
 import { composeState } from '$lib/utils/compose';
+import { isValidPascalCaseName } from '$lib/utils/validation';
 import { showToast } from './toasts';
 
 // ============================================================================
@@ -136,8 +137,16 @@ export function createApiModel(config: ApiModelConfig): ApiModelState {
 		return validate(listState.editedItem);
 	});
 
+	let immediateErrors = $derived.by(() => {
+		if (!listState.editedItem || !listState.editedItem.title.trim()) return {};
+		if (!isValidPascalCaseName(listState.editedItem.title)) {
+			return { title: formErrors.title };
+		}
+		return {};
+	});
+
 	let isFormValid = $derived(listState.editedItem !== null && Object.keys(formErrors).length === 0);
-	let visibleErrors = $derived({ ...(formTouched ? formErrors : {}), ...serverErrors });
+	let visibleErrors = $derived({ ...immediateErrors, ...(formTouched ? formErrors : {}), ...serverErrors });
 
 	// --- Derived deletion guard (APIs are always deletable) ---
 	let canDelete = $derived(true);
@@ -147,7 +156,11 @@ export function createApiModel(config: ApiModelConfig): ApiModelState {
 
 	function validate(item: Api): Record<string, string> {
 		const errors: Record<string, string> = {};
-		if (!item.title.trim()) errors.title = 'API title is required';
+		if (!item.title.trim()) {
+			errors.title = 'API title is required';
+		} else if (!isValidPascalCaseName(item.title)) {
+			errors.title = 'Must be PascalCase (e.g. UserApi)';
+		}
 		return errors;
 	}
 

@@ -143,7 +143,43 @@ describe('apiModel - Validation', () => {
     model.openCreate();
     flushSync();
 
-    model.editedItem!.title = 'My API';
+    model.editedItem!.title = 'MyApi';
+    flushSync();
+
+    expect(model.isFormValid).toBe(true);
+  });
+
+  it('should reject snake_case title', () => {
+    ({ model, cleanup } = createTestModel());
+
+    model.openCreate();
+    flushSync();
+
+    model.editedItem!.title = 'my_api';
+    flushSync();
+
+    expect(model.isFormValid).toBe(false);
+  });
+
+  it('should reject title with consecutive uppercase', () => {
+    ({ model, cleanup } = createTestModel());
+
+    model.openCreate();
+    flushSync();
+
+    model.editedItem!.title = 'MyAPI';
+    flushSync();
+
+    expect(model.isFormValid).toBe(false);
+  });
+
+  it('should accept valid PascalCase title', () => {
+    ({ model, cleanup } = createTestModel());
+
+    model.openCreate();
+    flushSync();
+
+    model.editedItem!.title = 'MyApi';
     flushSync();
 
     expect(model.isFormValid).toBe(true);
@@ -243,19 +279,19 @@ describe('apiModel - Create', () => {
 
   it('should call createApiAction with correct payload', async () => {
     ({ model, cleanup } = createTestModel());
-    const newApi = makeApi({ id: 'a-new', title: 'New API' });
+    const newApi = makeApi({ id: 'a-new', title: 'NewApi' });
     (createApiAction as Mock).mockResolvedValue({ success: true, data: newApi });
 
     model.openCreate();
     flushSync();
-    model.editedItem!.title = 'New API';
+    model.editedItem!.title = 'NewApi';
     flushSync();
 
     await model.handleCreate();
 
     expect(createApiAction).toHaveBeenCalledWith(expect.objectContaining({
       namespaceId: 'ns-1',
-      title: 'New API',
+      title: 'NewApi',
       version: '1.0.0',
       baseUrl: '/api/v1'
     }));
@@ -268,12 +304,12 @@ describe('apiModel - Create', () => {
 
   it('should navigate to new API detail page after creation', async () => {
     ({ model, cleanup } = createTestModel());
-    const newApi = makeApi({ id: 'a-new', title: 'New API' });
+    const newApi = makeApi({ id: 'a-new', title: 'NewApi' });
     (createApiAction as Mock).mockResolvedValue({ success: true, data: newApi });
 
     model.openCreate();
     flushSync();
-    model.editedItem!.title = 'New API';
+    model.editedItem!.title = 'NewApi';
     flushSync();
 
     await model.handleCreate();
@@ -299,7 +335,7 @@ describe('apiModel - Create', () => {
 
     model.openCreate();
     flushSync();
-    model.editedItem!.title = 'New API';
+    model.editedItem!.title = 'NewApi';
     flushSync();
 
     await model.handleCreate();
