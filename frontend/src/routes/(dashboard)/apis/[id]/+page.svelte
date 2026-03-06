@@ -11,7 +11,8 @@
     ParameterEditor,
     QueryParametersEditor,
     RequestBodyEditor,
-    ResponseBodyEditor
+    ResponseBodyEditor,
+    GenerateModal
   } from '$lib/components';
   import { ObjectFormContent, FieldFormContent } from '$lib/components/form';
   import { HTTP_METHODS } from '$lib/types';
@@ -213,6 +214,12 @@
     editedNewField = null;
   }
 
+  // ============================================================================
+  // Code Generation Modal
+  // ============================================================================
+
+  let generateModalOpen = $state(false);
+
   async function handleCreateField() {
     fieldFormTouched = true;
     if (!fieldFormValid || !editedNewField) return;
@@ -321,8 +328,15 @@
       <!-- Right side -->
       <div class="flex items-center space-x-2">
         <button
-          onclick={apiState.handleAddEndpoint}
+          onclick={() => generateModalOpen = true}
           class="px-4 py-2 bg-mono-900 text-white rounded-md flex items-center space-x-2 hover:bg-mono-800 cursor-pointer transition-colors"
+        >
+          <i class="fa-solid fa-code"></i>
+          <span>Generate Code</span>
+        </button>
+        <button
+          onclick={apiState.handleAddEndpoint}
+          class="px-4 py-2 border border-mono-300 text-mono-700 rounded-md flex items-center space-x-2 hover:bg-mono-50 cursor-pointer transition-colors"
         >
           <i class="fa-solid fa-plus"></i>
           <span>Add Endpoint</span>
@@ -864,6 +878,14 @@
       }
       else if (apiState.editDrawerOpen) apiState.closeEditDrawer();
     }}
+  />
+
+  <!-- Generate Code Modal -->
+  <GenerateModal
+    open={generateModalOpen}
+    apiId={apiId}
+    apiTitle={apiState.api?.title ?? 'api'}
+    onClose={() => generateModalOpen = false}
   />
 {/if}
 
