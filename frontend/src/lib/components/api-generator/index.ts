@@ -22,3 +22,4 @@ export type { ObjectSelectorDropdownProps } from './ObjectSelectorDropdown.svelt
 export type { FieldConstraintSelectorDropdownProps } from './FieldConstraintSelectorDropdown.svelte';
 export type { FieldConstraintEditorProps } from './FieldConstraintEditor.svelte';
 export type { TypeSelectorDropdownProps } from './TypeSelectorDropdown.svelte';
+export type { GenerateModalProps } from './GenerateModal.svelte';

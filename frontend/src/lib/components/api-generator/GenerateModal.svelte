@@ -2,7 +2,7 @@
   import { Modal } from '$lib/components/modal';
   import { generateApi } from '$lib/api/apis';
 
-  interface GenerateModalProps {
+  export interface GenerateModalProps {
     open: boolean;
     apiId: string;
     apiTitle: string;

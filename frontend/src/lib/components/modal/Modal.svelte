@@ -1,7 +1,7 @@
 <script lang="ts">
   import { onMount } from 'svelte';
 
-  interface ModalProps {
+  export interface ModalProps {
     open: boolean;
     onClose?: () => void;
     preventCloseOnOverlay?: boolean;
