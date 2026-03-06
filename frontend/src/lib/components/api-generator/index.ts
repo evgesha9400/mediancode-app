@@ -9,6 +9,7 @@ export { default as ObjectSelectorDropdown } from './ObjectSelectorDropdown.svel
 export { default as FieldConstraintSelectorDropdown } from './FieldConstraintSelectorDropdown.svelte';
 export { default as FieldConstraintEditor } from './FieldConstraintEditor.svelte';
 export { default as TypeSelectorDropdown } from './TypeSelectorDropdown.svelte';
+export { default as GenerateModal } from './GenerateModal.svelte';
 
 // API Generator component types
 export type { EndpointItemProps } from './EndpointItem.svelte';
