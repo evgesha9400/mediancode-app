@@ -4,11 +4,12 @@ vi.mock('$lib/api/client', () => ({
   apiGet: vi.fn(),
   apiPost: vi.fn(),
   apiPut: vi.fn(),
-  apiDelete: vi.fn()
+  apiDelete: vi.fn(),
+  apiPostBlob: vi.fn()
 }));
 
-import { listApis, getApi, createApiApi, updateApiApi, deleteApiApi } from '$lib/api/apis';
-import { apiGet, apiPost, apiPut, apiDelete } from '$lib/api/client';
+import { listApis, getApi, createApiApi, updateApiApi, deleteApiApi, generateApi } from '$lib/api/apis';
+import { apiGet, apiPost, apiPut, apiDelete, apiPostBlob } from '$lib/api/client';
 
 const MOCK_API_RESPONSE = {
   id: 'a-1',
@@ -88,6 +89,18 @@ describe('APIs API Service', () => {
       await deleteApiApi('a-1');
 
       expect(apiDelete).toHaveBeenCalledWith('/apis/a-1');
+    });
+  });
+
+  describe('generateApi', () => {
+    it('should call apiPostBlob with correct endpoint', async () => {
+      const mockBlob = new Blob(['zip-content'], { type: 'application/zip' });
+      (apiPostBlob as any).mockResolvedValue(mockBlob);
+
+      const result = await generateApi('a-1');
+
+      expect(apiPostBlob).toHaveBeenCalledWith('/apis/a-1/generate');
+      expect(result).toBe(mockBlob);
     });
   });
 });

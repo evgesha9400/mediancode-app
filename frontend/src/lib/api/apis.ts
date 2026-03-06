@@ -4,7 +4,7 @@
  * CRUD methods for API operations.
  */
 
-import { apiGet, apiPost, apiPut, apiDelete } from './client';
+import { apiGet, apiPost, apiPut, apiDelete, apiPostBlob } from './client';
 import type { Api } from '$lib/types';
 
 /**
@@ -119,4 +119,11 @@ export async function updateApiApi(id: string, data: UpdateApiRequest): Promise<
  */
 export async function deleteApiApi(id: string): Promise<void> {
 	await apiDelete<void>(`/apis/${id}`);
+}
+
+/**
+ * Generate FastAPI code for an API and return as a zip blob
+ */
+export async function generateApi(apiId: string): Promise<Blob> {
+	return apiPostBlob(`/apis/${apiId}/generate`);
 }
