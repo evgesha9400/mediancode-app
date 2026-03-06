@@ -25,6 +25,10 @@ function uniqueSuffix(): string {
 	return `${Date.now()}_${Math.random().toString(36).substring(2, 8)}`;
 }
 
+function capitalize(s: string): string {
+	return s.charAt(0).toUpperCase() + s.slice(1).toLowerCase();
+}
+
 /**
  * Generate a unique field name for E2E tests
  * @param context Optional context to include in the name (e.g., 'crud', 'update')
@@ -41,8 +45,9 @@ export function fieldName(context?: string): string {
  * @returns Object name like 'e2e_object_1706789012345_abc123'
  */
 export function objectName(context?: string): string {
-	const suffix = uniqueSuffix();
-	return context ? `${E2E_PREFIX}${context}_${suffix}` : `${E2E_PREFIX}object_${suffix}`;
+	const suffix = Date.now().toString(36);
+	const ctx = context ? capitalize(context) : 'Gen';
+	return `${ctx}TestObject${suffix}`;
 }
 
 /**
@@ -51,8 +56,9 @@ export function objectName(context?: string): string {
  * @returns API name like 'e2e_api_1706789012345_abc123'
  */
 export function apiName(context?: string): string {
-	const suffix = uniqueSuffix();
-	return context ? `${E2E_PREFIX}${context}_${suffix}` : `${E2E_PREFIX}api_${suffix}`;
+	const suffix = Date.now().toString(36);
+	const ctx = context ? capitalize(context) : 'Gen';
+	return `${ctx}TestApi${suffix}`;
 }
 
 /**
@@ -100,7 +106,7 @@ export function organizationName(context?: string): string {
  * @returns true if the name starts with the E2E prefix
  */
 export function isE2ETestData(name: string): boolean {
-	return name.startsWith(E2E_PREFIX) || name.startsWith('e2e-') || name.startsWith('E2E ');
+	return name.startsWith(E2E_PREFIX) || name.startsWith('e2e-') || name.startsWith('E2E ') || /^[A-Z].*Test(?:Api|Object)\w*$/.test(name);
 }
 
 /**
