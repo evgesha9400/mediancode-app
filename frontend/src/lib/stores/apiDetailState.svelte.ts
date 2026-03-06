@@ -255,7 +255,7 @@ export function createApiDetailState(config: ApiDetailStateConfig): ApiDetailSta
 
 	let editFormValid = $derived(Object.keys(editFormErrors).length === 0);
 
-	let editImmediateErrors = $derived.by(() => {
+	let editImmediateErrors = $derived.by((): Record<string, string> => {
 		if (!editForm.title.trim()) return {};
 		if (!isValidPascalCaseName(editForm.title)) {
 			return { title: editFormErrors.title };
@@ -263,7 +263,7 @@ export function createApiDetailState(config: ApiDetailStateConfig): ApiDetailSta
 		return {};
 	});
 
-	let editVisibleErrors = $derived({ ...editImmediateErrors, ...(editFormTouched ? editFormErrors : {}) });
+	let editVisibleErrors: Record<string, string> = $derived({ ...editImmediateErrors, ...(editFormTouched ? editFormErrors : {}) });
 
 	function openEditDrawer(): void {
 		// Close endpoint drawer first

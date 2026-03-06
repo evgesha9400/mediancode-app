@@ -16,14 +16,14 @@ import { ApisPage } from '../../page-objects';
 import { E2EApiClient } from '../../helpers';
 
 const API_A = {
-	title: 'e2e_alpha_api',
+	title: 'AlphaTestApi',
 	version: '1.0.0',
 	description: 'E2E test API alpha for CRUD lifecycle',
 	baseUrl: '/api/v1'
 };
 
 const API_B = {
-	title: 'e2e_beta_api',
+	title: 'BetaTestApi',
 	version: '2.0.0',
 	description: 'E2E test API beta for CRUD lifecycle',
 	baseUrl: '/api/v2'
@@ -37,7 +37,7 @@ test('API lifecycle: create, search, edit, delete', async ({ page }) => {
 	const { data: existing } = await apiClient.listApis();
 	if (existing) {
 		for (const api of existing) {
-			if (api.title?.startsWith('e2e_')) {
+			if (api.title === 'AlphaTestApi' || api.title === 'BetaTestApi' || api.title?.startsWith('e2e_')) {
 				await apiClient.deleteApi(api.id);
 			}
 		}
@@ -47,7 +47,7 @@ test('API lifecycle: create, search, edit, delete', async ({ page }) => {
 	await apis.goto();
 
 	// --- Verify our test APIs don't exist ---
-	await apis.search('e2e_');
+	await apis.search('TestApi');
 	expect(await apis.hasApi(API_A.title)).toBe(false);
 	expect(await apis.hasApi(API_B.title)).toBe(false);
 	await apis.clearSearch();
@@ -72,7 +72,7 @@ test('API lifecycle: create, search, edit, delete', async ({ page }) => {
 	expect(await apis.hasApi(API_B.title)).toBe(true);
 
 	// --- Search for API A ---
-	await apis.search('alpha');
+	await apis.search('Alpha');
 	expect(await apis.hasApi(API_A.title)).toBe(true);
 	expect(await apis.hasApi(API_B.title)).toBe(false);
 
