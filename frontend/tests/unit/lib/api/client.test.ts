@@ -11,7 +11,7 @@ vi.mock('$lib/stores/organization', () => ({
   getActiveOrganizationId: vi.fn(() => null)
 }));
 
-import { apiClient, apiGet, apiPost, apiPut, apiDelete, ApiError } from '$lib/api/client';
+import { apiClient, apiGet, apiPost, apiPut, apiDelete, apiPostBlob, ApiError } from '$lib/api/client';
 import { getClerk } from '$lib/clerk';
 import { getActiveOrganizationId } from '$lib/stores/organization';
 
@@ -242,5 +242,72 @@ describe('ApiError', () => {
 
     expect(error.message).toBe('API Error: 500 Internal Server Error');
     expect(error.detail).toBeUndefined();
+  });
+});
+
+describe('API Client - apiPostBlob', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    (getClerk as any).mockReturnValue(null);
+    (getActiveOrganizationId as any).mockReturnValue(null);
+  });
+
+  it('should return a Blob for successful response', async () => {
+    const zipContent = new Uint8Array([80, 75, 3, 4]); // PK zip magic bytes
+    server.use(
+      http.post(`${API_BASE}/generate`, () => {
+        return new HttpResponse(zipContent, {
+          headers: { 'Content-Type': 'application/zip' }
+        });
+      })
+    );
+
+    const result = await apiPostBlob('/generate');
+
+    expect(result).toBeDefined();
+    expect(typeof result.arrayBuffer).toBe('function');
+    const arrayBuffer = await result.arrayBuffer();
+    expect(new Uint8Array(arrayBuffer)).toEqual(zipContent);
+  });
+
+  it('should include auth and org headers', async () => {
+    let capturedAuthHeader: string | null = null;
+    let capturedOrgHeader: string | null = null;
+    server.use(
+      http.post(`${API_BASE}/auth-blob`, ({ request }) => {
+        capturedAuthHeader = request.headers.get('Authorization');
+        capturedOrgHeader = request.headers.get('X-Organization-Id');
+        return new HttpResponse(new Uint8Array([1]), {
+          headers: { 'Content-Type': 'application/octet-stream' }
+        });
+      })
+    );
+
+    (getClerk as any).mockReturnValue({
+      session: { getToken: vi.fn().mockResolvedValue('blob-token') }
+    });
+    (getActiveOrganizationId as any).mockReturnValue('org-456');
+
+    await apiPostBlob('/auth-blob');
+
+    expect(capturedAuthHeader).toBe('Bearer blob-token');
+    expect(capturedOrgHeader).toBe('org-456');
+  });
+
+  it('should throw ApiError with detail for non-2xx response', async () => {
+    server.use(
+      http.post(`${API_BASE}/fail-blob`, () => {
+        return HttpResponse.json({ detail: 'Insufficient credits' }, { status: 402 });
+      })
+    );
+
+    try {
+      await apiPostBlob('/fail-blob');
+      expect.fail('Should have thrown');
+    } catch (err) {
+      expect(err).toBeInstanceOf(ApiError);
+      expect((err as ApiError).status).toBe(402);
+      expect((err as ApiError).detail).toBe('Insufficient credits');
+    }
   });
 });

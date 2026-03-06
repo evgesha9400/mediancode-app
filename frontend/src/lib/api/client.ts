@@ -171,3 +171,47 @@ export function apiPut<T>(endpoint: string, body?: unknown, options?: Omit<ApiRe
 export function apiDelete<T>(endpoint: string, options?: Omit<ApiRequestOptions, 'method' | 'body'>): Promise<T> {
 	return apiClient<T>(endpoint, { ...options, method: 'DELETE' });
 }
+
+/**
+ * POST request that returns a Blob (for binary responses like zip files)
+ */
+export async function apiPostBlob(endpoint: string, options?: Omit<ApiRequestOptions, 'method' | 'body'>): Promise<Blob> {
+	const { skipAuth = false, ...fetchOptions } = options || {};
+
+	const headers: HeadersInit = {
+		...(options?.headers || {})
+	};
+
+	if (!skipAuth) {
+		const token = await getAuthToken();
+		if (token) {
+			(headers as Record<string, string>)['Authorization'] = `Bearer ${token}`;
+		}
+	}
+
+	const orgId = getActiveOrganizationId();
+	if (orgId) {
+		(headers as Record<string, string>)['X-Organization-Id'] = orgId;
+	}
+
+	const url = `${API_BASE_URL}${endpoint}`;
+
+	const response = await fetch(url, {
+		...fetchOptions,
+		method: 'POST',
+		headers
+	});
+
+	if (!response.ok) {
+		let detail: string | undefined;
+		try {
+			const errorBody = await response.json();
+			detail = errorBody.detail || errorBody.message;
+		} catch {
+			// Response body is not JSON or empty
+		}
+		throw new ApiError(response, detail);
+	}
+
+	return response.blob();
+}
