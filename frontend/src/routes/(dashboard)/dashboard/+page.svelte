@@ -3,18 +3,58 @@
   import { fieldsStore } from '$lib/stores/fields';
   import { fieldConstraintsStore } from '$lib/stores/fieldConstraints';
   import { objectsStore } from '$lib/stores/objects';
-  import { apisStore } from '$lib/stores/apis';
+  import { apisStore, endpointsStore } from '$lib/stores/apis';
   import { clerkState } from '$lib/clerk';
   import { storeLoadingState, reloadStores, STORE_NAMES } from '$lib/stores/loader';
   import { StatCard } from '$lib/components';
+  import { QuickActions, ProjectChecklist, ApiReadinessCard } from '$lib/components/dashboard';
+  import { GenerateModal } from '$lib/components/api-generator';
 
   let totalTypes = $derived($typesBaseStore.length);
   let totalFields = $derived($fieldsStore.length);
   let totalFieldConstraints = $derived($fieldConstraintsStore.length);
   let totalObjects = $derived($objectsStore.length);
-  let totalApis = $derived($apisStore.length);
   let userName = $derived($clerkState.user?.firstName || $clerkState.user?.fullName || 'Developer');
   let errors = $derived($storeLoadingState.storeErrors);
+
+  // Quick actions / checklist flags
+  let hasFields = $derived($fieldsStore.length > 0);
+  let hasObjects = $derived($objectsStore.length > 0);
+  let hasApis = $derived($apisStore.length > 0);
+  let hasConfiguredEndpoint = $derived(
+    $endpointsStore.some(e => !!e.responseBodyObjectId)
+  );
+
+  // API readiness computation
+  let apiReadiness = $derived(
+    $apisStore
+      .map(api => {
+        const endpoints = $endpointsStore.filter(e => e.apiId === api.id);
+        const readyEndpoints = endpoints.filter(e => e.responseBodyObjectId);
+        let status: 'ready' | 'needs-endpoints' | 'incomplete';
+        if (endpoints.length === 0) {
+          status = 'needs-endpoints';
+        } else if (readyEndpoints.length > 0) {
+          status = 'ready';
+        } else {
+          status = 'incomplete';
+        }
+        return { api, status, endpointCount: endpoints.length, readyEndpointCount: readyEndpoints.length };
+      })
+      .sort((a, b) => new Date(b.api.updatedAt).getTime() - new Date(a.api.updatedAt).getTime())
+      .slice(0, 5)
+  );
+
+  // Generate modal state
+  let generateModalOpen = $state(false);
+  let generateApiId = $state('');
+  let generateApiTitle = $state('');
+
+  function openGenerateModal(apiId: string, apiTitle: string) {
+    generateApiId = apiId;
+    generateApiTitle = apiTitle;
+    generateModalOpen = true;
+  }
 
   function hasError(storeName: typeof STORE_NAMES[keyof typeof STORE_NAMES]): boolean {
     return errors.includes(storeName);
@@ -27,38 +67,75 @@
 
 <!-- Header -->
 <div class="bg-white border-b border-mono-200 py-4 px-6">
-    <div>
-      <h1 class="text-2xl text-mono-800 font-semibold">Dashboard</h1>
-      <p class="text-sm text-mono-500 mt-1">Welcome back, {userName}! Here's your overview</p>
+  <div>
+    <h1 class="text-2xl text-mono-800 font-semibold">Dashboard</h1>
+    <p class="text-sm text-mono-500 mt-1">Welcome back, {userName}! Here's your overview</p>
+  </div>
+</div>
+
+<!-- Main Dashboard Content -->
+<div class="flex-1 overflow-auto p-6 space-y-6">
+  <!-- Quick Actions / Onboarding -->
+  <section>
+    <QuickActions {hasFields} {hasObjects} {hasApis} />
+  </section>
+
+  <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <!-- Left column: Checklist + Stats -->
+    <div class="lg:col-span-1 space-y-6">
+      <ProjectChecklist {hasFields} {hasObjects} {hasApis} {hasConfiguredEndpoint} />
+
+      <!-- Entity Stats -->
+      <section>
+        <h2 class="text-xs uppercase tracking-wider text-mono-400 mb-3 font-medium">Components</h2>
+        <div class="grid grid-cols-2 gap-3">
+          <StatCard title="Types" value={totalTypes} icon="fa-shapes" error={hasError(STORE_NAMES.TYPES)} onRetry={handleRetry} />
+          <StatCard title="Constraints" value={totalFieldConstraints} icon="fa-shield-halved" error={hasError(STORE_NAMES.FIELD_CONSTRAINTS)} onRetry={handleRetry} />
+          <StatCard title="Fields" value={totalFields} icon="fa-table-list" error={hasError(STORE_NAMES.FIELDS)} onRetry={handleRetry} />
+          <StatCard title="Objects" value={totalObjects} icon="fa-cubes" error={hasError(STORE_NAMES.OBJECTS)} onRetry={handleRetry} />
+        </div>
+      </section>
+
+      <!-- Account -->
+      <section>
+        <h2 class="text-xs uppercase tracking-wider text-mono-400 mb-3 font-medium">Account</h2>
+        <StatCard title="Generations" value="∞" icon="fa-bolt" trend="Unlimited during beta" />
+      </section>
+    </div>
+
+    <!-- Right column: API Readiness -->
+    <div class="lg:col-span-2">
+      <section>
+        <h2 class="text-xs uppercase tracking-wider text-mono-400 mb-3 font-medium">Your APIs</h2>
+        {#if apiReadiness.length > 0}
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+            {#each apiReadiness as item}
+              <ApiReadinessCard
+                apiId={item.api.id}
+                title={item.api.title}
+                version={item.api.version}
+                endpointCount={item.endpointCount}
+                readyEndpointCount={item.readyEndpointCount}
+                status={item.status}
+                onGenerate={() => openGenerateModal(item.api.id, item.api.title)}
+              />
+            {/each}
+          </div>
+        {:else}
+          <div class="bg-white rounded-lg border border-mono-200 p-6 text-center">
+            <i class="fa-solid fa-code text-mono-300 text-2xl mb-2 block"></i>
+            <p class="text-sm text-mono-500">No APIs yet. Create your first API to get started.</p>
+          </div>
+        {/if}
+      </section>
     </div>
   </div>
+</div>
 
-  <!-- Main Dashboard Content -->
-  <div class="flex-1 overflow-auto p-6 space-y-8">
-    <!-- Core Components Section -->
-    <section>
-      <h2 class="text-xs uppercase tracking-wider text-mono-400 mb-3 font-medium">Core Components</h2>
-      <div class="flex flex-wrap gap-6">
-        <div class="w-40"><StatCard title="Types" value={totalTypes} icon="fa-shapes" error={hasError(STORE_NAMES.TYPES)} onRetry={handleRetry} /></div>
-        <div class="w-40"><StatCard title="Field Constraints" value={totalFieldConstraints} icon="fa-check-circle" error={hasError(STORE_NAMES.FIELD_CONSTRAINTS)} onRetry={handleRetry} /></div>
-        <div class="w-40"><StatCard title="Fields" value={totalFields} icon="fa-table-list" error={hasError(STORE_NAMES.FIELDS)} onRetry={handleRetry} /></div>
-        <div class="w-40"><StatCard title="Objects" value={totalObjects} icon="fa-cubes" error={hasError(STORE_NAMES.OBJECTS)} onRetry={handleRetry} /></div>
-      </div>
-    </section>
-
-    <!-- APIs Section -->
-    <section>
-      <h2 class="text-xs uppercase tracking-wider text-mono-400 mb-3 font-medium">APIs</h2>
-      <div class="flex flex-wrap gap-6">
-        <div class="w-40"><StatCard title="Generated APIs" value={totalApis} icon="fa-code" error={hasError(STORE_NAMES.APIS)} onRetry={handleRetry} /></div>
-      </div>
-    </section>
-
-    <!-- Account Section -->
-    <section>
-      <h2 class="text-xs uppercase tracking-wider text-mono-400 mb-3 font-medium">Account</h2>
-      <div class="flex flex-wrap gap-6">
-        <div class="w-40"><StatCard title="Generations" value="∞" icon="fa-bolt" trend="Unlimited during beta" /></div>
-      </div>
-    </section>
-  </div>
+<!-- Generate Modal -->
+<GenerateModal
+  open={generateModalOpen}
+  apiId={generateApiId}
+  apiTitle={generateApiTitle}
+  onClose={() => generateModalOpen = false}
+/>

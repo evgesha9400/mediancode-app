@@ -43,6 +43,9 @@ export * from './pill';
 // Form components
 export * from './form';
 
+// Dashboard components
+export * from './dashboard';
+
 // Standalone components
 export { default as Sidebar } from './Sidebar.svelte';
 export { default as StatCard } from './StatCard.svelte';
