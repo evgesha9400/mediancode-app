@@ -89,7 +89,7 @@
 					<span class="text-mono-500">Production API</span>
 				</h1>
 				<p class="text-lg sm:text-xl text-mono-500 leading-relaxed max-w-lg">
-					Define your data models. Get a complete FastAPI application with PostgreSQL, SQLAlchemy, Pydantic schemas, and AWS CDK infrastructure — instantly.
+					Define your data models. Get a complete FastAPI application with PostgreSQL, SQLAlchemy, Pydantic schemas, and AWS CDK infrastructure. Instantly.
 				</p>
 			</div>
 
@@ -161,7 +161,7 @@
 	<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
 		<div class="text-center mb-12 lg:mb-16">
 			<h2 class="text-3xl sm:text-4xl font-bold text-mono-900 mb-4 tracking-tight">Everything Your API Needs</h2>
-			<p class="text-lg text-mono-500 max-w-2xl mx-auto">A complete, deployable FastAPI application — not fragments you have to stitch together.</p>
+			<p class="text-lg text-mono-500 max-w-2xl mx-auto">A complete, deployable FastAPI application, not fragments you have to stitch together.</p>
 		</div>
 
 		<div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -178,7 +178,7 @@
 					<i class="fa-solid fa-database text-white"></i>
 				</div>
 				<h3 class="text-lg font-semibold text-mono-900 mb-2">SQLAlchemy Models</h3>
-				<p class="text-sm text-mono-500 leading-relaxed">Database models with proper column types, relationships, foreign keys, and constraints — ready for PostgreSQL.</p>
+				<p class="text-sm text-mono-500 leading-relaxed">Database models with proper column types, relationships, foreign keys, and constraints, ready for PostgreSQL.</p>
 			</div>
 
 			<div class="bg-white p-7 rounded-xl border border-mono-200 hover:border-mono-300 transition-colors">
@@ -194,7 +194,7 @@
 					<i class="fa-solid fa-cloud text-white"></i>
 				</div>
 				<h3 class="text-lg font-semibold text-mono-900 mb-2">AWS CDK Infrastructure</h3>
-				<p class="text-sm text-mono-500 leading-relaxed">Optional deployment code for AWS — Lambda, API Gateway, RDS, and all the glue. Run <code class="text-mono-700 bg-mono-100 px-1 rounded">cdk deploy</code> and go live.</p>
+				<p class="text-sm text-mono-500 leading-relaxed">Optional deployment code for AWS including Lambda, API Gateway, RDS, and all the glue. Run <code class="text-mono-700 bg-mono-100 px-1 rounded">cdk deploy</code> and go live.</p>
 			</div>
 
 			<div class="bg-white p-7 rounded-xl border border-mono-200 hover:border-mono-300 transition-colors">
@@ -210,7 +210,7 @@
 					<i class="fa-solid fa-check-double text-white"></i>
 				</div>
 				<h3 class="text-lg font-semibold text-mono-900 mb-2">Validator Templates</h3>
-				<p class="text-sm text-mono-500 leading-relaxed">Common field and model validators from a curated gallery — email normalization, date ranges, confirmation matching, and more.</p>
+				<p class="text-sm text-mono-500 leading-relaxed">Common field and model validators from a curated gallery including email normalization, date ranges, confirmation matching, and more.</p>
 			</div>
 		</div>
 	</div>
@@ -229,7 +229,7 @@
 			<div class="relative text-center px-6 lg:px-10">
 				<div class="w-14 h-14 bg-mono-900 text-white rounded-2xl flex items-center justify-center text-xl font-bold mx-auto mb-6">1</div>
 				<h3 class="text-xl font-semibold text-mono-900 mb-3">Define Your Models</h3>
-				<p class="text-sm text-mono-500 leading-relaxed">Use the visual interface to declare your data objects, field types, relationships, and constraints. No YAML, no JSON — just forms and dropdowns.</p>
+				<p class="text-sm text-mono-500 leading-relaxed">Use the visual interface to declare your data objects, field types, relationships, and constraints. No YAML, no JSON. Just forms and dropdowns.</p>
 				<div class="hidden lg:block absolute top-7 left-[calc(50%+48px)] w-[calc(100%-96px)] h-px bg-mono-200"></div>
 			</div>
 
@@ -237,7 +237,7 @@
 			<div class="relative text-center px-6 lg:px-10">
 				<div class="w-14 h-14 bg-mono-900 text-white rounded-2xl flex items-center justify-center text-xl font-bold mx-auto mb-6">2</div>
 				<h3 class="text-xl font-semibold text-mono-900 mb-3">Generate Instantly</h3>
-				<p class="text-sm text-mono-500 leading-relaxed">One click. Median Code produces a complete FastAPI project — endpoints, models, schemas, migrations, and infrastructure. Same input, same output, every time.</p>
+				<p class="text-sm text-mono-500 leading-relaxed">One click. Median Code produces a complete FastAPI project with endpoints, models, schemas, migrations, and infrastructure. Same input, same output, every time.</p>
 				<div class="hidden lg:block absolute top-7 left-[calc(50%+48px)] w-[calc(100%-96px)] h-px bg-mono-200"></div>
 			</div>
 
@@ -245,7 +245,7 @@
 			<div class="text-center px-6 lg:px-10">
 				<div class="w-14 h-14 bg-mono-900 text-white rounded-2xl flex items-center justify-center text-xl font-bold mx-auto mb-6">3</div>
 				<h3 class="text-xl font-semibold text-mono-900 mb-3">Download & Deploy</h3>
-				<p class="text-sm text-mono-500 leading-relaxed">Download the full project, add your business logic, and deploy. Use the included CDK stack or your own infrastructure. It's your code — own it.</p>
+				<p class="text-sm text-mono-500 leading-relaxed">Download the full project, add your business logic, and deploy. Use the included CDK stack or your own infrastructure. It's your code. Own it.</p>
 			</div>
 		</div>
 	</div>
@@ -262,7 +262,7 @@
 					<span class="text-mono-400">The median.</span>
 				</h2>
 				<p class="text-base text-mono-400 leading-relaxed mb-8">
-					We target the statistical center of what developers build. 90% of the code you'd write for any new API is the same structural work — models, schemas, routes, config. Median Code generates all of it so you can focus on the 10% that makes your project unique.
+					We target the statistical center of what developers build. 90% of the code you'd write for any new API is the same structural work like models, schemas, routes, and config. Median Code generates all of it so you can focus on the 10% that makes your project unique.
 				</p>
 				<div class="space-y-4">
 					<div class="flex items-start space-x-3">
