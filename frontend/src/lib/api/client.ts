@@ -174,11 +174,16 @@ export function apiDelete<T>(endpoint: string, options?: Omit<ApiRequestOptions,
 
 /**
  * POST request that returns a Blob (for binary responses like zip files)
+ *
+ * @param endpoint - API endpoint path
+ * @param body - Optional JSON body to send with the request
+ * @param options - Additional request options
  */
-export async function apiPostBlob(endpoint: string, options?: Omit<ApiRequestOptions, 'method' | 'body'>): Promise<Blob> {
+export async function apiPostBlob(endpoint: string, body?: unknown, options?: Omit<ApiRequestOptions, 'method' | 'body'>): Promise<Blob> {
 	const { skipAuth = false, ...fetchOptions } = options || {};
 
 	const headers: HeadersInit = {
+		...(body ? { 'Content-Type': 'application/json' } : {}),
 		...(options?.headers || {})
 	};
 
@@ -199,7 +204,8 @@ export async function apiPostBlob(endpoint: string, options?: Omit<ApiRequestOpt
 	const response = await fetch(url, {
 		...fetchOptions,
 		method: 'POST',
-		headers
+		headers,
+		body: body ? JSON.stringify(body) : undefined
 	});
 
 	if (!response.ok) {

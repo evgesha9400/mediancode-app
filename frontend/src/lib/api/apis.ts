@@ -122,8 +122,23 @@ export async function deleteApiApi(id: string): Promise<void> {
 }
 
 /**
- * Generate FastAPI code for an API and return as a zip blob
+ * Options for code generation
  */
-export async function generateApi(apiId: string): Promise<Blob> {
-	return apiPostBlob(`/apis/${apiId}/generate`);
+export interface GenerateOptions {
+	healthcheck?: string | null;
+	responsePlaceholders?: boolean;
+	formatCode?: boolean;
+	generateSwagger?: boolean;
+	databaseEnabled?: boolean;
+	databaseSeedData?: boolean;
+}
+
+/**
+ * Generate FastAPI code for an API and return as a zip blob
+ *
+ * @param apiId - API ID to generate code for
+ * @param options - Optional generation options (backend applies defaults for omitted values)
+ */
+export async function generateApi(apiId: string, options?: GenerateOptions): Promise<Blob> {
+	return apiPostBlob(`/apis/${apiId}/generate`, options);
 }

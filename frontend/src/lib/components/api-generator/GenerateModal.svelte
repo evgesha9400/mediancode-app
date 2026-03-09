@@ -1,6 +1,6 @@
 <script lang="ts">
   import { Modal } from '$lib/components/modal';
-  import { generateApi } from '$lib/api/apis';
+  import { generateApi, type GenerateOptions } from '$lib/api/apis';
 
   export interface GenerateModalProps {
     open: boolean;
@@ -14,12 +14,29 @@
   let generating = $state(false);
   let error = $state<string | null>(null);
 
+  // Generation options (initialized to backend defaults)
+  let healthcheckEnabled = $state(true);
+  let healthcheckPath = $state('/health');
+  let healthcheck = $derived<string | null>(healthcheckEnabled ? healthcheckPath : null);
+  let responsePlaceholders = $state(true);
+  let formatCode = $state(true);
+  let generateSwagger = $state(true);
+  let databaseEnabled = $state(false);
+  let databaseSeedData = $state(true);
+
   async function handleGenerate() {
     generating = true;
     error = null;
 
     try {
-      const blob = await generateApi(apiId);
+      const blob = await generateApi(apiId, {
+        healthcheck,
+        responsePlaceholders,
+        formatCode,
+        generateSwagger,
+        databaseEnabled,
+        databaseSeedData
+      });
 
       // Trigger browser download
       const url = URL.createObjectURL(blob);
@@ -46,9 +63,79 @@
     <h2 class="text-lg font-semibold text-mono-900 mb-4">Generate Code</h2>
 
     <!-- Credit cost -->
-    <div class="flex items-center space-x-2 text-sm text-mono-600 mb-6">
+    <div class="flex items-center space-x-2 text-sm text-mono-600 mb-4">
       <i class="fa-solid fa-coins text-mono-400"></i>
       <span>This will use <strong class="text-mono-900">1 credit</strong></span>
+    </div>
+
+    <!-- Options -->
+    <div class="mb-6">
+      <div class="flex items-center space-x-2 mb-3">
+        <i class="fa-solid fa-gear text-mono-400 text-sm"></i>
+        <span class="text-sm font-medium text-mono-700">Options</span>
+      </div>
+
+      <div class="space-y-3">
+        <!-- Healthcheck endpoint -->
+        <div>
+          <label class="flex items-center space-x-2 cursor-pointer">
+            <input type="checkbox" bind:checked={healthcheckEnabled}
+              class="w-4 h-4 text-mono-900 border-mono-300 rounded focus:ring-2 focus:ring-mono-400" />
+            <span class="text-xs text-mono-700">Healthcheck endpoint</span>
+          </label>
+          {#if healthcheckEnabled}
+            <div class="mt-1.5 ml-6">
+              <input
+                type="text"
+                bind:value={healthcheckPath}
+                placeholder="/health"
+                class="w-full px-3 py-1.5 text-sm border border-mono-300 rounded-md focus:ring-2 focus:ring-mono-400 focus:outline-none"
+              />
+            </div>
+          {/if}
+        </div>
+
+        <!-- Response placeholders -->
+        <label class="flex items-center space-x-2 cursor-pointer">
+          <input type="checkbox" bind:checked={responsePlaceholders}
+            class="w-4 h-4 text-mono-900 border-mono-300 rounded focus:ring-2 focus:ring-mono-400" />
+          <span class="text-xs text-mono-700">Generate response placeholders</span>
+        </label>
+
+        <!-- Format code -->
+        <label class="flex items-center space-x-2 cursor-pointer">
+          <input type="checkbox" bind:checked={formatCode}
+            class="w-4 h-4 text-mono-900 border-mono-300 rounded focus:ring-2 focus:ring-mono-400" />
+          <span class="text-xs text-mono-700">Format code with Black</span>
+        </label>
+
+        <!-- Generate swagger -->
+        <label class="flex items-center space-x-2 cursor-pointer">
+          <input type="checkbox" bind:checked={generateSwagger}
+            class="w-4 h-4 text-mono-900 border-mono-300 rounded focus:ring-2 focus:ring-mono-400" />
+          <span class="text-xs text-mono-700">Generate swagger.yaml</span>
+        </label>
+
+        <!-- Database support -->
+        <div>
+          <label class="flex items-center space-x-2 cursor-pointer">
+            <input type="checkbox" bind:checked={databaseEnabled}
+              class="w-4 h-4 text-mono-900 border-mono-300 rounded focus:ring-2 focus:ring-mono-400" />
+            <span class="text-xs text-mono-700">Database support</span>
+            <span class="text-xs text-mono-400">SQLAlchemy, Alembic, Docker Compose</span>
+          </label>
+
+          <!-- Seed data (nested under database) -->
+          <div class="mt-2 ml-6">
+            <label class="flex items-center space-x-2 {databaseEnabled ? 'cursor-pointer' : 'opacity-50 cursor-not-allowed'}">
+              <input type="checkbox" bind:checked={databaseSeedData}
+                disabled={!databaseEnabled}
+                class="w-4 h-4 text-mono-900 border-mono-300 rounded focus:ring-2 focus:ring-mono-400" />
+              <span class="text-xs text-mono-700">Include seed data helpers</span>
+            </label>
+          </div>
+        </div>
+      </div>
     </div>
 
     <!-- Error -->
