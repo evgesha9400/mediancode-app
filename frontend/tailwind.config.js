@@ -17,6 +17,7 @@ export default {
         'mono-700': '#404040',
         'mono-800': '#262626',
         'mono-900': '#171717',
+        'mono-950': '#0a0a0a',
         'red-50': '#fef2f2',
         'red-100': '#fee2e2',
         'red-200': '#fecaca',
