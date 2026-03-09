@@ -99,7 +99,18 @@ describe('APIs API Service', () => {
 
       const result = await generateApi('a-1');
 
-      expect(apiPostBlob).toHaveBeenCalledWith('/apis/a-1/generate');
+      expect(apiPostBlob).toHaveBeenCalledWith('/apis/a-1/generate', undefined);
+      expect(result).toBe(mockBlob);
+    });
+
+    it('should pass generation options as body', async () => {
+      const mockBlob = new Blob(['zip-content'], { type: 'application/zip' });
+      (apiPostBlob as any).mockResolvedValue(mockBlob);
+
+      const options = { databaseEnabled: true, formatCode: false };
+      const result = await generateApi('a-1', options);
+
+      expect(apiPostBlob).toHaveBeenCalledWith('/apis/a-1/generate', options);
       expect(result).toBe(mockBlob);
     });
   });
