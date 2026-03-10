@@ -82,7 +82,7 @@ export class FieldsPage {
 
 		// Filter
 		this.filterButton = page.locator('button').filter({ has: page.locator('i.fa-filter') });
-		this.filterPanel = page.locator('.bg-mono-900.rounded-lg.shadow-xl.border');
+		this.filterPanel = page.locator('[data-testid="filter-panel"]');
 		this.clearFiltersButton = page.getByRole('button', { name: /clear all/i });
 
 		// Table
@@ -250,7 +250,7 @@ export class FieldsPage {
 	 */
 	async getDefaultValue(): Promise<string> {
 		// Check if a preset pill is visible (preset selected state)
-		const presetPill = this.fieldDefaultValueInput.locator('..').locator('span.rounded-full');
+		const presetPill = this.fieldDefaultValueInput.locator('..').locator('span.bg-mono-800');
 		if (await presetPill.isVisible()) {
 			return (await presetPill.textContent()) ?? '';
 		}

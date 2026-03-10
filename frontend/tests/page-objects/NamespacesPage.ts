@@ -72,7 +72,7 @@ export class NamespacesPage {
 
 		// Filter
 		this.filterButton = page.locator('button').filter({ has: page.locator('i.fa-filter') });
-		this.filterPanel = page.locator('.bg-mono-900.rounded-lg.shadow-xl.border');
+		this.filterPanel = page.locator('[data-testid="filter-panel"]');
 		this.clearFiltersButton = page.getByRole('button', { name: /clear all/i });
 
 		// Table

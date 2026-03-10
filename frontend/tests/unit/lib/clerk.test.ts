@@ -73,7 +73,7 @@ describe('Clerk Integration', () => {
 		});
 
 		it('should define colorPrimary in variables', () => {
-			expect(clerkAppearance.variables.colorPrimary).toBe('#171717');
+			expect(clerkAppearance.variables.colorPrimary).toBe('#4ade80');
 		});
 
 		it('should define formButtonPrimary in elements', () => {
