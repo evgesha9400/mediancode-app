@@ -59,11 +59,11 @@ export class LandingPage {
 
 		// Features section - use #features ID
 		this.featuresSection = page.locator('#features');
-		this.featureCards = this.featuresSection.locator('.bg-white.rounded-xl.border');
+		this.featureCards = this.featuresSection.locator('.p-8');
 
 		// How it works section - use #how-it-works ID
 		this.howItWorksSection = page.locator('#how-it-works');
-		this.stepCards = this.howItWorksSection.locator('.text-center');
+		this.stepCards = this.howItWorksSection.locator('.relative');
 
 		// Philosophy section - use #philosophy ID
 		this.philosophySection = page.locator('#philosophy');
