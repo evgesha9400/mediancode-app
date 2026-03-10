@@ -160,9 +160,9 @@
     {#each filteredFieldConstraints as fc}
       <tr
         onclick={() => state.selectItem(fc)}
-        class="cursor-pointer transition-colors {isSelected(fc) ? 'bg-mono-100' : 'hover:bg-mono-50'}"
+        class="cursor-pointer transition-colors {isSelected(fc) ? 'bg-mono-800' : 'hover:bg-mono-950'}"
       >
-        <td class="px-6 py-4 whitespace-nowrap text-sm text-mono-900 font-medium">
+        <td class="px-6 py-4 whitespace-nowrap text-sm text-mono-100 font-medium">
           {fc.name}
         </td>
         <td class="px-6 py-4">
@@ -179,7 +179,7 @@
             {/each}
           </div>
         </td>
-        <td class="px-6 py-4 text-sm text-mono-500 max-w-xs truncate">
+        <td class="px-6 py-4 text-sm text-mono-400 max-w-xs truncate">
           {fc.description.split('.')[0]}.
         </td>
         <td class="px-6 py-4 whitespace-nowrap text-sm">
@@ -189,19 +189,19 @@
               target="_blank"
               rel="noopener noreferrer"
               onclick={(e) => e.stopPropagation()}
-              class="text-mono-600 hover:text-mono-900 transition-colors"
+              class="text-mono-400 hover:text-mono-100 transition-colors"
               title="View documentation"
             >
               <i class="fa-solid fa-arrow-up-right-from-square"></i>
             </a>
           {:else}
-            <span class="text-mono-300">-</span>
+            <span class="text-mono-600">-</span>
           {/if}
         </td>
         <td class="px-6 py-4 whitespace-nowrap">
           <div class="flex items-center space-x-2">
             <Pill>{fc.usedInFields}</Pill>
-            <span class="text-sm text-mono-600">fields</span>
+            <span class="text-sm text-mono-400">fields</span>
           </div>
         </td>
       </tr>
@@ -217,9 +217,9 @@
   {#if selectedFieldConstraint}
     <div class="space-y-6">
       {#if isSystemItem}
-        <div class="flex items-center space-x-2 px-3 py-2 bg-mono-50 border border-mono-200 rounded-md">
+        <div class="flex items-center space-x-2 px-3 py-2 bg-mono-950 border border-mono-700 rounded-md">
           <i class="fa-solid fa-lock text-mono-400 text-sm"></i>
-          <span class="text-sm text-mono-600">System field constraint — read-only</span>
+          <span class="text-sm text-mono-400">System field constraint — read-only</span>
         </div>
       {/if}
 
@@ -248,7 +248,7 @@
             href={selectedFieldConstraint.docsUrl}
             target="_blank"
             rel="noopener noreferrer"
-            class="text-sm text-mono-900 underline hover:text-mono-600 transition-colors"
+            class="text-sm text-mono-100 underline hover:text-mono-400 transition-colors"
           >
             View Docs <i class="fa-solid fa-arrow-up-right-from-square text-xs"></i>
           </a>
@@ -262,23 +262,23 @@
               <button
                 type="button"
                 onclick={() => navigateToField(field.fieldId)}
-                class="w-full flex items-center justify-between p-3 bg-mono-50 rounded-md hover:bg-mono-100 cursor-pointer transition-colors group"
+                class="w-full flex items-center justify-between p-3 bg-mono-950 rounded-md hover:bg-mono-800 cursor-pointer transition-colors group"
               >
                 <div class="flex items-center space-x-2">
-                  <i class="fa-solid fa-table-list text-mono-400 group-hover:text-mono-600 transition-colors"></i>
-                  <span class="text-sm text-mono-900 group-hover:text-mono-700 transition-colors">{field.name}</span>
+                  <i class="fa-solid fa-table-list text-mono-400 group-hover:text-mono-300 transition-colors"></i>
+                  <span class="text-sm text-mono-100 group-hover:text-mono-300 transition-colors">{field.name}</span>
                 </div>
                 <div class="flex items-center space-x-2">
-                  <span class="text-xs text-mono-500 bg-mono-200 px-2 py-1 rounded">
+                  <span class="text-xs text-mono-400 bg-mono-700 px-2 py-1 rounded">
                     ID: {field.fieldId}
                   </span>
-                  <i class="fa-solid fa-arrow-right text-mono-400 group-hover:text-mono-600 transition-colors text-xs"></i>
+                  <i class="fa-solid fa-arrow-right text-mono-400 group-hover:text-mono-300 transition-colors text-xs"></i>
                 </div>
               </button>
             {/each}
           </div>
         {:else}
-          <p class="text-sm text-mono-500 italic">Not used in any fields yet</p>
+          <p class="text-sm text-mono-400 italic">Not used in any fields yet</p>
         {/if}
       </DetailField>
     </div>

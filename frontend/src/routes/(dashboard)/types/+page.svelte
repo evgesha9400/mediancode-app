@@ -110,21 +110,21 @@
       {#each filteredTypes as type}
         <tr
           onclick={() => state.selectItem(type)}
-          class="cursor-pointer transition-colors {state.selectedItem?.name === type.name ? 'bg-mono-100' : 'hover:bg-mono-50'}"
+          class="cursor-pointer transition-colors {state.selectedItem?.name === type.name ? 'bg-mono-800' : 'hover:bg-mono-950'}"
         >
-          <td class="px-6 py-4 whitespace-nowrap text-sm text-mono-900 font-medium">
+          <td class="px-6 py-4 whitespace-nowrap text-sm text-mono-100 font-medium">
             {type.name}
           </td>
           <td class="px-6 py-4 whitespace-nowrap">
             <Pill>{type.pythonType}</Pill>
           </td>
-          <td class="px-6 py-4 text-sm text-mono-500">
+          <td class="px-6 py-4 text-sm text-mono-400">
             {type.description}
           </td>
           <td class="px-6 py-4 whitespace-nowrap">
             <div class="flex items-center space-x-2">
               <Pill>{type.usedInFields}</Pill>
-              <span class="text-sm text-mono-600">fields</span>
+              <span class="text-sm text-mono-400">fields</span>
             </div>
           </td>
         </tr>
@@ -140,9 +140,9 @@
   {#if state.selectedItem}
     <div class="space-y-6">
       {#if isSystemEntity(state.selectedItem)}
-        <div class="flex items-center space-x-2 px-3 py-2 bg-mono-50 border border-mono-200 rounded-md">
+        <div class="flex items-center space-x-2 px-3 py-2 bg-mono-950 border border-mono-700 rounded-md">
           <i class="fa-solid fa-lock text-mono-400 text-sm"></i>
-          <span class="text-sm text-mono-600">System type — read-only</span>
+          <span class="text-sm text-mono-400">System type — read-only</span>
         </div>
       {/if}
       <DetailField label="Name" value={state.selectedItem.name} />
@@ -150,7 +150,7 @@
       <DetailField label="Description" value={state.selectedItem.description} />
       <DetailField label="Used in Fields">
         <Pill>{state.selectedItem.usedInFields}</Pill>
-        <span class="text-sm text-mono-600 ml-2">fields</span>
+        <span class="text-sm text-mono-400 ml-2">fields</span>
       </DetailField>
     </div>
   {/if}

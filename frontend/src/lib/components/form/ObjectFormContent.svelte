@@ -112,9 +112,9 @@
       type="text"
       value={namespaceName}
       disabled
-      class="w-full px-3 py-2 border border-mono-200 rounded-lg bg-mono-100 text-mono-500 cursor-not-allowed"
+      class="w-full px-3 py-2 border border-mono-700 rounded-lg bg-mono-800 text-mono-400 cursor-not-allowed"
     />
-    <p class="mt-1 text-xs text-mono-500">
+    <p class="mt-1 text-xs text-mono-400">
       Namespace is determined by the selector above
     </p>
   </div>
@@ -135,13 +135,13 @@
       id="object-description"
       bind:value={editedItem.description}
       rows="3"
-      class="w-full px-3 py-2 border border-mono-300 rounded-md focus:ring-2 focus:ring-mono-400 focus:border-transparent"
+      class="w-full px-3 py-2 border border-mono-600 rounded-md bg-mono-900 text-mono-100 focus:ring-2 focus:ring-green-400 focus:border-transparent"
     ></textarea>
   </div>
 
   <!-- Fields -->
   <div>
-    <h3 class="text-sm text-mono-700 mb-2 font-medium">Fields ({editedItem.fields.length})</h3>
+    <h3 class="text-sm text-mono-300 mb-2 font-medium">Fields ({editedItem.fields.length})</h3>
 
     <div class="space-y-2">
       <!-- Field Selector Dropdown -->
@@ -155,24 +155,24 @@
 
       <!-- Selected Fields -->
       {#if editedItem.fields.length === 0}
-        <div class="p-3 bg-mono-50 rounded border border-mono-200">
-          <p class="text-xs text-mono-500">No fields selected</p>
+        <div class="p-3 bg-mono-800 rounded border border-mono-700">
+          <p class="text-xs text-mono-400">No fields selected</p>
         </div>
       {:else}
-        <div class="p-2 bg-mono-50 rounded border border-mono-200 space-y-2">
+        <div class="p-2 bg-mono-800 rounded border border-mono-700 space-y-2">
           {#each editedItem.fields as fieldRef}
             {@const field = getFieldById(fieldRef.fieldId)}
             {#if field}
-              <div class="flex items-center space-x-2 p-2 bg-white rounded border border-mono-200">
+              <div class="flex items-center space-x-2 p-2 bg-mono-900 rounded border border-mono-700">
                 <!-- Field Name and Type -->
                 <div class="flex items-center space-x-2">
-                  <span class="font-mono text-sm text-mono-700">{field.name}</span>
-                  <span class="text-xs text-mono-500 bg-mono-100 px-2 py-0.5 rounded">{field.type}</span>
+                  <span class="font-mono text-sm text-mono-300">{field.name}</span>
+                  <span class="text-xs text-mono-400 bg-mono-800 px-2 py-0.5 rounded">{field.type}</span>
                 </div>
 
                 <!-- Description (if available) -->
                 {#if field.description}
-                  <div class="flex-1 text-xs text-mono-500">
+                  <div class="flex-1 text-xs text-mono-400">
                     {field.description}
                   </div>
                 {:else}
@@ -185,9 +185,9 @@
                     type="checkbox"
                     checked={fieldRef.optional}
                     onchange={() => toggleFieldOptional(fieldRef.fieldId)}
-                    class="h-4 w-4 border-mono-300 rounded text-mono-900 focus:ring-2 focus:ring-mono-400"
+                    class="h-4 w-4 border-mono-600 rounded text-green-400 focus:ring-2 focus:ring-green-400"
                   />
-                  <span class="text-sm text-mono-600 whitespace-nowrap">Optional</span>
+                  <span class="text-sm text-mono-400 whitespace-nowrap">Optional</span>
                 </label>
 
                 <!-- Delete Button -->
@@ -225,19 +225,19 @@
 
   <!-- Validators -->
   <div>
-    <h3 class="text-sm text-mono-700 mb-2 font-medium">Validators ({editedItem.validators.length})</h3>
+    <h3 class="text-sm text-mono-300 mb-2 font-medium">Validators ({editedItem.validators.length})</h3>
 
     <div class="space-y-2">
       {#if !validatorGalleryOpen}
         <button
           type="button"
           onclick={openValidatorGallery}
-          class="w-full px-3 py-2 border border-dashed border-mono-300 rounded-md text-sm text-mono-500 hover:border-mono-400 hover:text-mono-700 transition-colors cursor-pointer"
+          class="w-full px-3 py-2 border border-dashed border-mono-600 rounded-md text-sm text-mono-400 hover:border-mono-500 hover:text-mono-300 transition-colors cursor-pointer"
         >
           <i class="fa-solid fa-plus mr-1"></i> Add Validator
         </button>
       {:else if selectedModelTemplate}
-        <div class="p-3 bg-mono-50 rounded border border-mono-200">
+        <div class="p-3 bg-mono-800 rounded border border-mono-700">
           <TemplateForm
             kind="model"
             modelTemplate={selectedModelTemplate}
@@ -247,7 +247,7 @@
           />
         </div>
       {:else}
-        <div class="p-3 bg-mono-50 rounded border border-mono-200">
+        <div class="p-3 bg-mono-800 rounded border border-mono-700">
           <TemplateGallery
             kind="model"
             modelTemplates={modelValidatorTemplates}
@@ -258,12 +258,12 @@
       {/if}
 
       {#if editedItem.validators.length > 0}
-        <div class="p-2 bg-mono-50 rounded border border-mono-200 space-y-2">
+        <div class="p-2 bg-mono-800 rounded border border-mono-700 space-y-2">
           {#each editedItem.validators as validator, index}
             {@const tmpl = getModelValidatorTemplateById(validator.templateId)}
-            <div class="flex items-center space-x-2 p-2 bg-white rounded border border-mono-200">
+            <div class="flex items-center space-x-2 p-2 bg-mono-900 rounded border border-mono-700">
               <div class="flex items-center space-x-2 flex-1 min-w-0">
-                <span class="text-sm text-mono-700 truncate">{tmpl?.name ?? validator.templateId}</span>
+                <span class="text-sm text-mono-300 truncate">{tmpl?.name ?? validator.templateId}</span>
                 <Pill class="shrink-0">{tmpl?.mode ?? 'after'}</Pill>
               </div>
               <button
@@ -284,18 +284,18 @@
   <!-- Used In APIs (only when editing) -->
   {#if mode === 'editing'}
     <div>
-      <h3 class="text-sm text-mono-700 mb-2 font-medium">Used In APIs ({editedItem.usedInApis.length})</h3>
+      <h3 class="text-sm text-mono-300 mb-2 font-medium">Used In APIs ({editedItem.usedInApis.length})</h3>
       <div class="space-y-2">
         {#each editedItem.usedInApis as api}
-          <div class="flex items-center justify-between p-3 bg-mono-50 rounded-md">
+          <div class="flex items-center justify-between p-3 bg-mono-800 rounded-md">
             <div class="flex items-center space-x-2">
               <i class="fa-solid fa-code text-mono-400"></i>
-              <span class="text-sm text-mono-900">{api}</span>
+              <span class="text-sm text-mono-100">{api}</span>
             </div>
           </div>
         {/each}
         {#if editedItem.usedInApis.length === 0}
-          <p class="text-sm text-mono-500 italic">Not used in any APIs</p>
+          <p class="text-sm text-mono-400 italic">Not used in any APIs</p>
         {/if}
       </div>
     </div>

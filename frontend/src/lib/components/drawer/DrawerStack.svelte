@@ -62,7 +62,7 @@
 {#if panels.length > 0}
   <!-- svelte-ignore a11y_no_static_element_interactions -->
   <div
-    class="fixed top-0 right-0 h-screen z-[60] bg-black/20"
+    class="fixed top-0 right-0 h-screen z-[60] bg-black/40"
     style="width: calc(100vw - {sidebarState.width}px);"
     onclick={onPopPanel}
     onkeydown={(e) => { if (e.key === 'Escape') onPopPanel(); }}
@@ -78,9 +78,9 @@
       {#if i === 0}
         <!-- Leftmost visible panel: flexible width, shrinks to fit -->
         <div
-          class="h-full flex flex-col bg-white overflow-hidden relative"
+          class="h-full flex flex-col bg-mono-900 overflow-hidden relative"
           class:border-r={i < visiblePanels.length - 1}
-          class:border-mono-200={i < visiblePanels.length - 1}
+          class:border-mono-700={i < visiblePanels.length - 1}
           style="flex: 1 1 0; max-width: {panel.width}px;{visiblePanels.length > 1 && panel.minWidth ? ` min-width: ${panel.minWidth}px;` : ''}"
         >
           <DrawerHeader title={panel.title} onClose={onPopPanel} />
@@ -93,16 +93,15 @@
             </DrawerFooter>
           {/if}
           {#if i < visiblePanels.length - 1}
-            <div class="absolute inset-0 bg-white/60 z-10"></div>
+            <div class="absolute inset-0 bg-mono-900/60 z-10"></div>
           {/if}
         </div>
       {:else}
         <!-- Stacked panel: fixed width, slides in from right pushing base panel left -->
         <div
-          class="flex-shrink-0 h-full flex flex-col bg-white overflow-hidden relative"
-          class:shadow-xl={i === visiblePanels.length - 1}
+          class="flex-shrink-0 h-full flex flex-col bg-mono-900 overflow-hidden relative {i === visiblePanels.length - 1 ? 'shadow-xl shadow-black/30' : ''}"
           class:border-r={i < visiblePanels.length - 1}
-          class:border-mono-200={i < visiblePanels.length - 1}
+          class:border-mono-700={i < visiblePanels.length - 1}
           style="width: {panel.width}px;"
           transition:slide|global={{ duration: 400, axis: 'x' }}
         >
@@ -116,7 +115,7 @@
             </DrawerFooter>
           {/if}
           {#if i < visiblePanels.length - 1}
-            <div class="absolute inset-0 bg-white/60 z-10"></div>
+            <div class="absolute inset-0 bg-mono-900/60 z-10"></div>
           {/if}
         </div>
       {/if}

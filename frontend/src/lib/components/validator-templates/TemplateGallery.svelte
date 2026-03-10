@@ -50,13 +50,13 @@
 
 <div class="space-y-3">
   <div class="flex items-center justify-between">
-    <h3 class="text-sm text-mono-700 font-medium">
+    <h3 class="text-sm text-mono-300 font-medium">
       {kind === 'field' ? 'Field Validator Templates' : 'Model Validator Templates'}
     </h3>
     <button
       type="button"
       onclick={onClose}
-      class="text-mono-500 hover:text-mono-700 transition-colors"
+      class="text-mono-400 hover:text-mono-300 transition-colors"
       title="Close gallery"
     >
       <i class="fa-solid fa-xmark"></i>
@@ -68,7 +68,7 @@
     type="text"
     bind:value={search}
     placeholder="Search templates..."
-    class="w-full px-3 py-2 border border-mono-300 rounded-md text-sm focus:ring-2 focus:ring-mono-400 focus:border-transparent"
+    class="w-full px-3 py-2 border border-mono-600 rounded-md text-sm bg-mono-900 text-mono-100 focus:ring-2 focus:ring-green-400 focus:border-transparent"
   />
 
   <!-- Template cards -->
@@ -78,42 +78,42 @@
         <button
           type="button"
           onclick={() => onSelectField?.(template)}
-          class="w-full text-left p-3 bg-white rounded border border-mono-200 hover:border-mono-400 hover:bg-mono-50 transition-colors cursor-pointer"
+          class="w-full text-left p-3 bg-mono-900 rounded border border-mono-700 hover:border-mono-400 hover:bg-mono-800 transition-colors cursor-pointer"
         >
           <div class="flex items-center justify-between">
-            <span class="text-sm text-mono-900 font-medium">{template.name}</span>
+            <span class="text-sm text-mono-100 font-medium">{template.name}</span>
             <Pill>{template.mode}</Pill>
           </div>
-          <p class="text-xs text-mono-500 mt-1">{template.description}</p>
+          <p class="text-xs text-mono-400 mt-1">{template.description}</p>
           <div class="flex flex-wrap gap-1 mt-1">
             {#each template.compatibleTypes as ctype}
-              <span class="px-1.5 py-0.5 text-[10px] rounded-full bg-mono-200 text-mono-600">{ctype}</span>
+              <span class="px-1.5 py-0.5 text-[10px] rounded-full bg-mono-700 text-mono-400">{ctype}</span>
             {/each}
           </div>
         </button>
       {:else}
-        <p class="text-xs text-mono-500 italic p-2">No matching templates</p>
+        <p class="text-xs text-mono-400 italic p-2">No matching templates</p>
       {/each}
     {:else}
       {#each filteredModelTemplates as template}
         <button
           type="button"
           onclick={() => onSelectModel?.(template)}
-          class="w-full text-left p-3 bg-white rounded border border-mono-200 hover:border-mono-400 hover:bg-mono-50 transition-colors cursor-pointer"
+          class="w-full text-left p-3 bg-mono-900 rounded border border-mono-700 hover:border-mono-400 hover:bg-mono-800 transition-colors cursor-pointer"
         >
           <div class="flex items-center justify-between">
-            <span class="text-sm text-mono-900 font-medium">{template.name}</span>
+            <span class="text-sm text-mono-100 font-medium">{template.name}</span>
             <Pill>{template.mode}</Pill>
           </div>
-          <p class="text-xs text-mono-500 mt-1">{template.description}</p>
+          <p class="text-xs text-mono-400 mt-1">{template.description}</p>
           <div class="flex flex-wrap gap-1 mt-1">
             {#each template.fieldMappings as fm}
-              <span class="px-1.5 py-0.5 text-[10px] rounded-full bg-mono-200 text-mono-600">{fm.label}</span>
+              <span class="px-1.5 py-0.5 text-[10px] rounded-full bg-mono-700 text-mono-400">{fm.label}</span>
             {/each}
           </div>
         </button>
       {:else}
-        <p class="text-xs text-mono-500 italic p-2">No matching templates</p>
+        <p class="text-xs text-mono-400 italic p-2">No matching templates</p>
       {/each}
     {/if}
   </div>

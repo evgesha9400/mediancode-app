@@ -102,28 +102,28 @@
     <button
       type="button"
       onclick={onBack}
-      class="text-mono-500 hover:text-mono-700 transition-colors"
+      class="text-mono-400 hover:text-mono-300 transition-colors"
       title="Back to templates"
     >
       <i class="fa-solid fa-arrow-left"></i>
     </button>
-    <h3 class="text-sm text-mono-700 font-medium">{templateName}</h3>
+    <h3 class="text-sm text-mono-300 font-medium">{templateName}</h3>
   </div>
 
-  <p class="text-xs text-mono-500">{templateDescription}</p>
+  <p class="text-xs text-mono-400">{templateDescription}</p>
 
   <!-- Parameters (field validators) -->
   {#if kind === 'field' && fieldTemplate?.parameters}
     {#each fieldTemplate.parameters as param}
       <div>
-        <label for="param-{param.key}" class="block text-xs text-mono-700 mb-1 font-medium">
+        <label for="param-{param.key}" class="block text-xs text-mono-300 mb-1 font-medium">
           {param.label} {#if param.required}<span class="text-red-500">*</span>{/if}
         </label>
         {#if param.type === 'select' && param.options}
           <select
             id="param-{param.key}"
             bind:value={params[param.key]}
-            class="w-full px-3 py-1.5 border border-mono-300 rounded-md text-sm focus:ring-2 focus:ring-mono-400 focus:border-transparent bg-white"
+            class="w-full px-3 py-1.5 border border-mono-600 rounded-md text-sm focus:ring-2 focus:ring-green-400 focus:border-transparent bg-mono-900 text-mono-100"
           >
             <option value="">Select...</option>
             {#each param.options as opt}
@@ -137,7 +137,7 @@
             step={param.type === 'number' ? 'any' : undefined}
             bind:value={params[param.key]}
             placeholder={param.placeholder}
-            class="w-full px-3 py-1.5 border border-mono-300 rounded-md text-sm focus:ring-2 focus:ring-mono-400 focus:border-transparent"
+            class="w-full px-3 py-1.5 border border-mono-600 rounded-md text-sm focus:ring-2 focus:ring-green-400 focus:border-transparent bg-mono-900 text-mono-100"
           />
         {/if}
       </div>
@@ -149,13 +149,13 @@
     {#each modelTemplate.fieldMappings as fm}
       {@const candidates = fieldsForRole(fm.compatibleTypes)}
       <div>
-        <label for="role-{fm.key}" class="block text-xs text-mono-700 mb-1 font-medium">
+        <label for="role-{fm.key}" class="block text-xs text-mono-300 mb-1 font-medium">
           {fm.label} {#if fm.required}<span class="text-red-500">*</span>{/if}
         </label>
         <select
           id="role-{fm.key}"
           bind:value={mappings[fm.key]}
-          class="w-full px-3 py-1.5 border border-mono-300 rounded-md text-sm focus:ring-2 focus:ring-mono-400 focus:border-transparent bg-white"
+          class="w-full px-3 py-1.5 border border-mono-600 rounded-md text-sm focus:ring-2 focus:ring-green-400 focus:border-transparent bg-mono-900 text-mono-100"
         >
           <option value="">Select a field...</option>
           {#each candidates as field}
@@ -170,14 +170,14 @@
   {#if kind === 'model' && modelTemplate?.parameters}
     {#each modelTemplate.parameters as param}
       <div>
-        <label for="mparam-{param.key}" class="block text-xs text-mono-700 mb-1 font-medium">
+        <label for="mparam-{param.key}" class="block text-xs text-mono-300 mb-1 font-medium">
           {param.label} {#if param.required}<span class="text-red-500">*</span>{/if}
         </label>
         {#if param.type === 'select' && param.options}
           <select
             id="mparam-{param.key}"
             bind:value={params[param.key]}
-            class="w-full px-3 py-1.5 border border-mono-300 rounded-md text-sm focus:ring-2 focus:ring-mono-400 focus:border-transparent bg-white"
+            class="w-full px-3 py-1.5 border border-mono-600 rounded-md text-sm focus:ring-2 focus:ring-green-400 focus:border-transparent bg-mono-900 text-mono-100"
           >
             <option value="">Select...</option>
             {#each param.options as opt}
@@ -191,7 +191,7 @@
             step={param.type === 'number' ? 'any' : undefined}
             bind:value={params[param.key]}
             placeholder={param.placeholder}
-            class="w-full px-3 py-1.5 border border-mono-300 rounded-md text-sm focus:ring-2 focus:ring-mono-400 focus:border-transparent"
+            class="w-full px-3 py-1.5 border border-mono-600 rounded-md text-sm focus:ring-2 focus:ring-green-400 focus:border-transparent bg-mono-900 text-mono-100"
           />
         {/if}
       </div>
@@ -202,7 +202,7 @@
   {#if template?.bodyTemplate}
     {@const allMappings = { ...mappings, ...params }}
     <div>
-      <span class="block text-xs text-mono-700 mb-1 font-medium">Code Preview</span>
+      <span class="block text-xs text-mono-300 mb-1 font-medium">Code Preview</span>
       <pre class="p-3 bg-mono-900 text-mono-100 rounded-md text-xs overflow-x-auto whitespace-pre font-mono">{previewBody(template.bodyTemplate, allMappings)}</pre>
     </div>
   {/if}
@@ -212,7 +212,7 @@
     type="button"
     onclick={handleSubmit}
     disabled={!isValid}
-    class="w-full px-4 py-2 bg-mono-900 text-white rounded-md text-sm hover:bg-mono-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+    class="w-full px-4 py-2 bg-green-400 text-mono-950 font-bold rounded-md text-sm hover:bg-green-300 transition-colors disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
   >
     Add Validator
   </button>

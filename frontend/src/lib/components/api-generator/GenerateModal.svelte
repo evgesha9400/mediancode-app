@@ -60,19 +60,19 @@
 <Modal {open} onClose={generating ? undefined : onClose} preventCloseOnOverlay={generating}>
   <div class="p-6">
     <!-- Header -->
-    <h2 class="text-lg font-semibold text-mono-900 mb-4">Generate Code</h2>
+    <h2 class="text-lg font-semibold text-mono-100 mb-4">Generate Code</h2>
 
     <!-- Credit cost -->
-    <div class="flex items-center space-x-2 text-sm text-mono-600 mb-4">
+    <div class="flex items-center space-x-2 text-sm text-mono-400 mb-4">
       <i class="fa-solid fa-coins text-mono-400"></i>
-      <span>This will use <strong class="text-mono-900">1 credit</strong></span>
+      <span>This will use <strong class="text-mono-100">1 credit</strong></span>
     </div>
 
     <!-- Options -->
     <div class="mb-6">
       <div class="flex items-center space-x-2 mb-3">
         <i class="fa-solid fa-gear text-mono-400 text-sm"></i>
-        <span class="text-sm font-medium text-mono-700">Options</span>
+        <span class="text-sm font-medium text-mono-300">Options</span>
       </div>
 
       <div class="space-y-3">
@@ -80,8 +80,8 @@
         <div>
           <label class="flex items-center space-x-2 cursor-pointer">
             <input type="checkbox" bind:checked={healthcheckEnabled}
-              class="w-4 h-4 text-mono-900 border-mono-300 rounded focus:ring-2 focus:ring-mono-400" />
-            <span class="text-xs text-mono-700">Healthcheck endpoint</span>
+              class="w-4 h-4 text-green-400 border-mono-600 rounded focus:ring-2 focus:ring-green-400 bg-mono-900" />
+            <span class="text-xs text-mono-300">Healthcheck endpoint</span>
           </label>
           {#if healthcheckEnabled}
             <div class="mt-1.5 ml-6">
@@ -89,7 +89,7 @@
                 type="text"
                 bind:value={healthcheckPath}
                 placeholder="/health"
-                class="w-full px-3 py-1.5 text-sm border border-mono-300 rounded-md focus:ring-2 focus:ring-mono-400 focus:outline-none"
+                class="w-full px-3 py-1.5 text-sm border border-mono-600 rounded-md bg-mono-900 text-mono-100 focus:ring-2 focus:ring-green-400 focus:outline-none"
               />
             </div>
           {/if}
@@ -98,30 +98,30 @@
         <!-- Response placeholders -->
         <label class="flex items-center space-x-2 cursor-pointer">
           <input type="checkbox" bind:checked={responsePlaceholders}
-            class="w-4 h-4 text-mono-900 border-mono-300 rounded focus:ring-2 focus:ring-mono-400" />
-          <span class="text-xs text-mono-700">Generate response placeholders</span>
+            class="w-4 h-4 text-green-400 border-mono-600 rounded focus:ring-2 focus:ring-green-400 bg-mono-900" />
+          <span class="text-xs text-mono-300">Generate response placeholders</span>
         </label>
 
         <!-- Format code -->
         <label class="flex items-center space-x-2 cursor-pointer">
           <input type="checkbox" bind:checked={formatCode}
-            class="w-4 h-4 text-mono-900 border-mono-300 rounded focus:ring-2 focus:ring-mono-400" />
-          <span class="text-xs text-mono-700">Format code with Black</span>
+            class="w-4 h-4 text-green-400 border-mono-600 rounded focus:ring-2 focus:ring-green-400 bg-mono-900" />
+          <span class="text-xs text-mono-300">Format code with Black</span>
         </label>
 
         <!-- Generate swagger -->
         <label class="flex items-center space-x-2 cursor-pointer">
           <input type="checkbox" bind:checked={generateSwagger}
-            class="w-4 h-4 text-mono-900 border-mono-300 rounded focus:ring-2 focus:ring-mono-400" />
-          <span class="text-xs text-mono-700">Generate swagger.yaml</span>
+            class="w-4 h-4 text-green-400 border-mono-600 rounded focus:ring-2 focus:ring-green-400 bg-mono-900" />
+          <span class="text-xs text-mono-300">Generate swagger.yaml</span>
         </label>
 
         <!-- Database support -->
         <div>
           <label class="flex items-center space-x-2 cursor-pointer">
             <input type="checkbox" bind:checked={databaseEnabled}
-              class="w-4 h-4 text-mono-900 border-mono-300 rounded focus:ring-2 focus:ring-mono-400" />
-            <span class="text-xs text-mono-700">Database support</span>
+              class="w-4 h-4 text-green-400 border-mono-600 rounded focus:ring-2 focus:ring-green-400 bg-mono-900" />
+            <span class="text-xs text-mono-300">Database support</span>
             <span class="text-xs text-mono-400">SQLAlchemy, Alembic, Docker Compose</span>
           </label>
 
@@ -130,8 +130,8 @@
             <label class="flex items-center space-x-2 {databaseEnabled ? 'cursor-pointer' : 'opacity-50 cursor-not-allowed'}">
               <input type="checkbox" bind:checked={databaseSeedData}
                 disabled={!databaseEnabled}
-                class="w-4 h-4 text-mono-900 border-mono-300 rounded focus:ring-2 focus:ring-mono-400" />
-              <span class="text-xs text-mono-700">Include seed data helpers</span>
+                class="w-4 h-4 text-green-400 border-mono-600 rounded focus:ring-2 focus:ring-green-400 bg-mono-900" />
+              <span class="text-xs text-mono-300">Include seed data helpers</span>
             </label>
           </div>
         </div>
@@ -140,8 +140,8 @@
 
     <!-- Error -->
     {#if error}
-      <div class="bg-red-50 border border-red-200 rounded-md p-3 mb-4">
-        <p class="text-sm text-red-700">{error}</p>
+      <div class="bg-red-400/10 border border-red-400/30 rounded-md p-3 mb-4">
+        <p class="text-sm text-red-400">{error}</p>
       </div>
     {/if}
 
@@ -151,7 +151,7 @@
         type="button"
         onclick={onClose}
         disabled={generating}
-        class="px-4 py-2 border border-mono-300 text-mono-700 rounded-md transition-colors font-medium {generating ? 'opacity-50 cursor-not-allowed' : 'hover:bg-mono-50 cursor-pointer'}"
+        class="px-4 py-2 border border-mono-600 text-mono-300 rounded-md transition-colors font-medium {generating ? 'opacity-50 cursor-not-allowed' : 'hover:bg-mono-800 cursor-pointer'}"
       >
         Cancel
       </button>
@@ -159,7 +159,7 @@
         type="button"
         onclick={handleGenerate}
         disabled={generating}
-        class="px-4 py-2 rounded-md transition-colors font-medium flex items-center space-x-2 {generating ? 'bg-mono-600 text-white cursor-not-allowed' : 'bg-mono-900 text-white hover:bg-mono-800 cursor-pointer'}"
+        class="px-4 py-2 rounded-md transition-colors font-medium flex items-center space-x-2 {generating ? 'bg-mono-700 text-mono-400 cursor-not-allowed' : 'bg-green-400 text-mono-950 font-bold hover:bg-green-300 cursor-pointer'}"
       >
         {#if generating}
           <i class="fa-solid fa-spinner fa-spin"></i>

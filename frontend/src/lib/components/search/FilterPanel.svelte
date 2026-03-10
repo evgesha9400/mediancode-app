@@ -110,13 +110,13 @@
   ></div>
 
   <!-- Panel -->
-  <div data-testid={FILTER_PANEL_ID} class="absolute right-0 top-full mt-2 w-72 bg-white rounded-lg shadow-xl border border-mono-200 z-20 overflow-hidden">
-    <div class="p-4 border-b border-mono-100 flex justify-between items-center bg-mono-50">
-      <h3 class="font-medium text-mono-900">Filters</h3>
+  <div data-testid={FILTER_PANEL_ID} class="absolute right-0 top-full mt-2 w-72 bg-mono-900 rounded-lg shadow-xl shadow-black/30 border border-mono-700 z-20 overflow-hidden">
+    <div class="p-4 border-b border-mono-700 flex justify-between items-center bg-mono-800">
+      <h3 class="font-medium text-mono-100">Filters</h3>
       <button
         type="button"
         onclick={clearFilters}
-        class="text-xs text-mono-500 hover:text-mono-800 hover:underline"
+        class="text-xs text-mono-400 hover:text-mono-100 hover:underline"
       >
         Clear all
       </button>
@@ -125,11 +125,11 @@
     <div class="p-4 space-y-6 max-h-[60vh] overflow-y-auto">
       {#each config as section, i}
         {#if i > 0}
-          <div class="h-px bg-mono-100"></div>
+          <div class="h-px bg-mono-700"></div>
         {/if}
 
         <div>
-          <h4 class="text-xs font-semibold text-mono-500 uppercase tracking-wider mb-3">{section.label}</h4>
+          <h4 class="text-xs font-semibold text-mono-400 uppercase tracking-wider mb-3">{section.label}</h4>
 
           {#if section.type === 'checkbox-group' && section.options}
             <div class="space-y-2">
@@ -140,10 +140,10 @@
                       type="checkbox"
                       checked={ensureArray(state[section.key]).includes(option.value)}
                       onchange={() => toggleCheckbox(section.key, option.value)}
-                      class="peer h-4 w-4 rounded border-mono-300 text-mono-900 focus:ring-mono-500"
+                      class="peer h-4 w-4 rounded border-mono-600 text-green-400 focus:ring-green-400"
                     />
                   </div>
-                  <span class="text-sm text-mono-700 group-hover:text-mono-900">{option.label}</span>
+                  <span class="text-sm text-mono-300 group-hover:text-mono-100">{option.label}</span>
                 </label>
               {/each}
             </div>
@@ -153,9 +153,9 @@
                 type="checkbox"
                 checked={Boolean(state[section.key])}
                 onchange={(event) => setToggle(section.key, (event.currentTarget as HTMLInputElement).checked)}
-                class="h-4 w-4 rounded border-mono-300 text-mono-900 focus:ring-mono-500"
+                class="h-4 w-4 rounded border-mono-600 text-green-400 focus:ring-green-400"
               />
-              <span class="text-sm text-mono-700 group-hover:text-mono-900">{section.toggleLabel ?? section.label}</span>
+              <span class="text-sm text-mono-300 group-hover:text-mono-100">{section.toggleLabel ?? section.label}</span>
             </label>
           {/if}
         </div>

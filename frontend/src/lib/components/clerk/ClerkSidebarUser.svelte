@@ -49,7 +49,7 @@
         // Hide the default trigger content, we'll show our own
         userButtonTrigger: 'p-0 focus:shadow-none',
         userButtonAvatarBox: 'w-10 h-10',
-        userButtonPopoverCard: 'bg-white border border-mono-200 shadow-xl',
+        userButtonPopoverCard: 'bg-mono-900 border border-mono-700 shadow-xl shadow-black/30',
       }
     };
   }

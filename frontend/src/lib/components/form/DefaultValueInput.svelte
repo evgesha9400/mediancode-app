@@ -65,7 +65,7 @@
 
 <div class="relative">
   <div
-    class="flex items-center w-full border border-mono-300 rounded-md focus-within:ring-2 focus-within:ring-mono-400 focus-within:border-transparent overflow-hidden"
+    class="flex items-center w-full border border-mono-600 rounded-md bg-mono-900 focus-within:ring-2 focus-within:ring-green-400 focus-within:border-transparent overflow-hidden"
   >
     {#if isPreset}
       <!-- Preset selected: show as a pill with clear button -->
@@ -74,7 +74,7 @@
         <button
           type="button"
           onclick={clearPreset}
-          class="text-mono-400 hover:text-mono-600 transition-colors cursor-pointer"
+          class="text-mono-400 hover:text-mono-200 transition-colors cursor-pointer"
           title="Clear preset"
         >
           <i class="fa-solid fa-xmark text-xs"></i>
@@ -90,7 +90,7 @@
         disabled={kind === 'bool'}
         oninput={handleInputChange}
         placeholder={kind === 'text' ? 'e.g. default text' : kind === 'integer' ? 'e.g. 0' : kind === 'float' ? 'e.g. 0.0' : 'Select a value...'}
-        class="flex-1 min-w-0 px-3 py-1.5 text-sm border-0 outline-none bg-transparent {kind === 'bool' ? 'cursor-default text-mono-400' : ''}"
+        class="flex-1 min-w-0 px-3 py-1.5 text-sm border-0 outline-none bg-transparent text-mono-100 {kind === 'bool' ? 'cursor-default text-mono-400' : ''}"
       />
     {/if}
 
@@ -99,7 +99,7 @@
       type="button"
       onclick={toggleDropdown}
       onblur={handleBlur}
-      class="px-2.5 py-1.5 text-mono-400 hover:text-mono-600 transition-colors cursor-pointer shrink-0 border-l border-mono-200"
+      class="px-2.5 py-1.5 text-mono-400 hover:text-mono-200 transition-colors cursor-pointer shrink-0 border-l border-mono-700"
       title="Select preset value"
     >
       <i class="fa-solid fa-chevron-down text-xs {dropdownOpen ? 'rotate-180' : ''} transition-transform"></i>
@@ -108,12 +108,12 @@
 
   <!-- Dropdown options -->
   {#if dropdownOpen}
-    <div class="absolute z-10 w-full mt-1 bg-white border border-mono-300 rounded-md shadow-lg">
+    <div class="absolute z-10 w-full mt-1 bg-mono-900 border border-mono-600 rounded-md shadow-lg shadow-black/30">
       {#each presetOptions as option}
         <button
           type="button"
           onclick={() => selectPreset(option)}
-          class="w-full px-3 py-2 text-left text-sm hover:bg-mono-50 transition-colors {value === option ? 'bg-mono-50 text-mono-900 font-medium' : 'text-mono-700'} first:rounded-t-md last:rounded-b-md"
+          class="w-full px-3 py-2 text-left text-sm hover:bg-mono-800 transition-colors {value === option ? 'bg-mono-800 text-mono-100 font-medium' : 'text-mono-300'} first:rounded-t-md last:rounded-b-md"
         >
           {option}
         </button>

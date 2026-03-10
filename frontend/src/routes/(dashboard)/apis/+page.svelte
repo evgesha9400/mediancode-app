@@ -67,7 +67,7 @@
       <button
         type="button"
         onclick={workflow.openCreate}
-        class="px-4 py-2 bg-mono-900 text-white rounded-md flex items-center space-x-2 hover:bg-mono-800 cursor-pointer transition-colors"
+        class="px-4 py-2 bg-green-400 text-mono-950 font-bold rounded-md flex items-center space-x-2 hover:bg-green-300 cursor-pointer transition-colors"
       >
         <i class="fa-solid fa-plus"></i>
         <span>New API</span>
@@ -124,28 +124,28 @@
       {#each filteredApis as api}
         <tr
           onclick={() => handleOpenApi(api)}
-          class="cursor-pointer transition-colors hover:bg-mono-50"
+          class="cursor-pointer transition-colors hover:bg-mono-950"
         >
           <td class="px-6 py-4 whitespace-nowrap">
-            <div class="text-sm text-mono-900 font-medium">{api.title || 'Untitled API'}</div>
+            <div class="text-sm text-mono-100 font-medium">{api.title || 'Untitled API'}</div>
             {#if api.description}
-              <div class="text-xs text-mono-500 truncate max-w-xs">{api.description}</div>
+              <div class="text-xs text-mono-400 truncate max-w-xs">{api.description}</div>
             {/if}
           </td>
           <td class="px-6 py-4 whitespace-nowrap">
             <Pill>{api.version}</Pill>
           </td>
           <td class="px-6 py-4 whitespace-nowrap">
-            <code class="text-sm text-mono-600 font-mono">{api.baseUrl}</code>
+            <code class="text-sm text-mono-400 font-mono">{api.baseUrl}</code>
           </td>
           <td class="px-6 py-4 whitespace-nowrap">
             <div class="flex items-center space-x-2">
               <Pill>{api.endpointCount}</Pill>
-              <span class="text-sm text-mono-600">endpoints</span>
+              <span class="text-sm text-mono-400">endpoints</span>
             </div>
           </td>
           <td class="px-6 py-4 whitespace-nowrap">
-            <span class="text-sm text-mono-600">{api.namespaceName}</span>
+            <span class="text-sm text-mono-400">{api.namespaceName}</span>
           </td>
         </tr>
       {/each}
@@ -170,9 +170,9 @@
           type="text"
           value={activeNamespaceName}
           disabled
-          class="w-full px-3 py-1.5 text-sm border border-mono-300 rounded-md bg-mono-50 text-mono-500 cursor-not-allowed"
+          class="w-full px-3 py-1.5 text-sm border border-mono-600 rounded-md bg-mono-950 text-mono-400 cursor-not-allowed"
         />
-        <p class="text-xs text-mono-500 mt-1">Uses the currently active namespace</p>
+        <p class="text-xs text-mono-400 mt-1">Uses the currently active namespace</p>
       </div>
 
       <FormField
@@ -198,7 +198,7 @@
           bind:value={workflow.editedItem.description}
           rows="3"
           placeholder="Describe what this API does..."
-          class="w-full px-3 py-1.5 text-sm border border-mono-300 rounded-md focus:ring-2 focus:ring-mono-400 focus:border-transparent"
+          class="w-full px-3 py-1.5 text-sm border border-mono-600 rounded-md focus:ring-2 focus:ring-green-400 focus:border-transparent"
         ></textarea>
       </div>
 

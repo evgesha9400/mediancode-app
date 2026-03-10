@@ -95,7 +95,7 @@
       <button
         type="button"
         onclick={workflow.openCreate}
-        class="px-4 py-2 bg-mono-900 text-white rounded-md flex items-center space-x-2 hover:bg-mono-800 cursor-pointer transition-colors"
+        class="px-4 py-2 bg-green-400 text-mono-950 font-bold rounded-md flex items-center space-x-2 hover:bg-green-300 cursor-pointer transition-colors"
       >
         <i class="fa-solid fa-plus"></i>
         <span>Add Field</span>
@@ -169,18 +169,18 @@
       {#each filteredFields as field}
         <tr
           onclick={() => workflow.selectItem(field)}
-          class="cursor-pointer transition-colors {workflow.isSelected(field) ? 'bg-mono-100' : 'hover:bg-mono-50'}"
+          class="cursor-pointer transition-colors {workflow.isSelected(field) ? 'bg-mono-800' : 'hover:bg-mono-950'}"
         >
           <td class="px-6 py-4 whitespace-nowrap">
-            <div class="text-sm text-mono-900 font-medium">{field.name}</div>
+            <div class="text-sm text-mono-100 font-medium">{field.name}</div>
           </td>
           <td class="px-6 py-4 whitespace-nowrap">
             <Pill>{field.container ? `${field.container}[${field.type}]` : field.type}</Pill>
           </td>
           <td class="px-6 py-4 whitespace-nowrap">
-            <span class="text-sm text-mono-600">{field.namespaceName}</span>
+            <span class="text-sm text-mono-400">{field.namespaceName}</span>
           </td>
-          <td class="px-6 py-4 text-sm text-mono-500">
+          <td class="px-6 py-4 text-sm text-mono-400">
             {#if field.constraints.length > 0}
               <div class="flex flex-wrap gap-1">
                 {#each field.constraints as constraintValue}
@@ -191,13 +191,13 @@
               <span>-</span>
             {/if}
           </td>
-          <td class="px-6 py-4 whitespace-nowrap text-sm text-mono-500">
+          <td class="px-6 py-4 whitespace-nowrap text-sm text-mono-400">
             {field.defaultValue !== undefined && field.defaultValue !== '' ? field.defaultValue : '-'}
           </td>
           <td class="px-6 py-4 whitespace-nowrap">
             <div class="flex items-center space-x-2">
               <Pill>{field.usedInApis.length}</Pill>
-              <span class="text-sm text-mono-600">APIs</span>
+              <span class="text-sm text-mono-400">APIs</span>
             </div>
           </td>
         </tr>

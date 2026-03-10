@@ -24,38 +24,38 @@
       case 'GET':
         return {
           badge: 'bg-blue-500 text-white',
-          row: 'bg-blue-50',
-          border: 'border-blue-200'
+          row: 'bg-blue-400/10',
+          border: 'border-blue-400/30'
         };
       case 'POST':
         return {
           badge: 'bg-green-500 text-white',
-          row: 'bg-green-50',
-          border: 'border-green-200'
+          row: 'bg-green-400/10',
+          border: 'border-green-400/30'
         };
       case 'PUT':
         return {
           badge: 'bg-amber-500 text-white',
-          row: 'bg-amber-50',
-          border: 'border-amber-200'
+          row: 'bg-amber-400/10',
+          border: 'border-amber-400/30'
         };
       case 'PATCH':
         return {
           badge: 'bg-teal-500 text-white',
-          row: 'bg-teal-50',
-          border: 'border-teal-200'
+          row: 'bg-teal-400/10',
+          border: 'border-teal-400/30'
         };
       case 'DELETE':
         return {
           badge: 'bg-red-500 text-white',
-          row: 'bg-red-50',
-          border: 'border-red-200'
+          row: 'bg-red-400/10',
+          border: 'border-red-400/30'
         };
       default:
         return {
           badge: 'bg-mono-500 text-white',
-          row: 'bg-mono-50',
-          border: 'border-mono-200'
+          row: 'bg-mono-800',
+          border: 'border-mono-700'
         };
     }
   }
@@ -72,9 +72,9 @@
     <span class="w-[70px] text-center flex-shrink-0 px-2 py-1 text-xs font-medium rounded {colors.badge}">
       {endpoint.method}
     </span>
-    <span class="text-sm font-medium text-mono-900">{endpoint.path}</span>
+    <span class="text-sm font-medium text-mono-100">{endpoint.path}</span>
     {#if endpoint.description}
-      <span class="text-xs text-mono-500">{endpoint.description}</span>
+      <span class="text-xs text-mono-400">{endpoint.description}</span>
     {/if}
   </div>
   <i class="fa-solid fa-chevron-right text-mono-400"></i>

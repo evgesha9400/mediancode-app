@@ -19,7 +19,7 @@
   };
 </script>
 
-<span class="rounded-full {sizeClasses[size]} bg-mono-200 text-mono-700 {extraClass}">
+<span class="rounded-full {sizeClasses[size]} bg-mono-800 text-mono-300 {extraClass}">
   {#if children}
     {@render children()}
   {/if}

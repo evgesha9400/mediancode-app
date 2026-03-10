@@ -66,10 +66,10 @@
 </script>
 
 <!-- Header -->
-<div class="bg-white border-b border-mono-200 py-4 px-6">
+<div class="bg-mono-950 border-b-2 border-mono-700 py-4 px-6">
   <div>
-    <h1 class="text-2xl text-mono-800 font-semibold">Dashboard</h1>
-    <p class="text-sm text-mono-500 mt-1">Welcome back, {userName}! Here's your overview</p>
+    <h1 class="text-2xl text-mono-100 font-semibold">Dashboard</h1>
+    <p class="text-sm text-mono-400 mt-1">Welcome back, {userName}! Here's your overview</p>
   </div>
 </div>
 
@@ -87,7 +87,7 @@
 
       <!-- Entity Stats -->
       <section>
-        <h2 class="text-xs uppercase tracking-wider text-mono-400 mb-3 font-medium">Components</h2>
+        <h2 class="text-xs uppercase tracking-wider text-mono-500 mb-3 font-medium">Components</h2>
         <div class="grid grid-cols-2 gap-3">
           <StatCard title="Types" value={totalTypes} icon="fa-shapes" error={hasError(STORE_NAMES.TYPES)} onRetry={handleRetry} />
           <StatCard title="Constraints" value={totalFieldConstraints} icon="fa-shield-halved" error={hasError(STORE_NAMES.FIELD_CONSTRAINTS)} onRetry={handleRetry} />
@@ -98,7 +98,7 @@
 
       <!-- Account -->
       <section>
-        <h2 class="text-xs uppercase tracking-wider text-mono-400 mb-3 font-medium">Account</h2>
+        <h2 class="text-xs uppercase tracking-wider text-mono-500 mb-3 font-medium">Account</h2>
         <StatCard title="Generations" value="∞" icon="fa-bolt" trend="Unlimited during beta" />
       </section>
     </div>
@@ -106,7 +106,7 @@
     <!-- Right column: API Readiness -->
     <div class="lg:col-span-2">
       <section>
-        <h2 class="text-xs uppercase tracking-wider text-mono-400 mb-3 font-medium">Your APIs</h2>
+        <h2 class="text-xs uppercase tracking-wider text-mono-500 mb-3 font-medium">Your APIs</h2>
         {#if apiReadiness.length > 0}
           <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
             {#each apiReadiness as item}
@@ -122,9 +122,9 @@
             {/each}
           </div>
         {:else}
-          <div class="bg-white rounded-lg border border-mono-200 p-6 text-center">
-            <i class="fa-solid fa-code text-mono-300 text-2xl mb-2 block"></i>
-            <p class="text-sm text-mono-500">No APIs yet. Create your first API to get started.</p>
+          <div class="bg-mono-900 rounded-lg border border-mono-700 p-6 text-center">
+            <i class="fa-solid fa-code text-mono-600 text-2xl mb-2 block"></i>
+            <p class="text-sm text-mono-400">No APIs yet. Create your first API to get started.</p>
           </div>
         {/if}
       </section>

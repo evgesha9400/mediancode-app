@@ -15,10 +15,10 @@
 </script>
 
 <div>
-  <h3 class="text-sm text-mono-500 mb-1 font-medium">{label}</h3>
+  <h3 class="text-sm text-mono-400 mb-1 font-medium">{label}</h3>
   {#if children}
     {@render children()}
   {:else if value !== undefined}
-    <p class="text-mono-900">{value}</p>
+    <p class="text-mono-100">{value}</p>
   {/if}
 </div>

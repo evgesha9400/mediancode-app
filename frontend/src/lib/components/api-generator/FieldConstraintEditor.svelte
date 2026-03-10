@@ -40,7 +40,7 @@
 </script>
 
 <div>
-  <h3 class="text-sm text-mono-700 mb-2 font-medium">Field Constraints ({constraints.length})</h3>
+  <h3 class="text-sm text-mono-300 mb-2 font-medium">Field Constraints ({constraints.length})</h3>
 
   <div class="space-y-2">
     <FieldConstraintSelectorDropdown
@@ -51,18 +51,18 @@
     />
 
     {#if constraints.length === 0}
-      <div class="p-3 bg-mono-50 rounded border border-mono-200">
-        <p class="text-xs text-mono-500">No field constraints selected</p>
+      <div class="p-3 bg-mono-800 rounded border border-mono-700">
+        <p class="text-xs text-mono-400">No field constraints selected</p>
       </div>
     {:else}
-      <div class="p-2 bg-mono-50 rounded border border-mono-200 space-y-2">
+      <div class="p-2 bg-mono-800 rounded border border-mono-700 space-y-2">
         {#each constraints as constraintValue, index}
           {@const constraintMeta = allConstraintMeta.find(v => v.name === constraintValue.name)}
           {#if constraintMeta}
-            <div class="flex items-center space-x-2 p-2 bg-white rounded border border-mono-200">
+            <div class="flex items-center space-x-2 p-2 bg-mono-900 rounded border border-mono-700">
               <div class="flex items-center space-x-2 shrink-0">
-                <span class="font-mono text-sm text-mono-700">{constraintMeta.name}</span>
-                <span class="text-xs text-mono-500 bg-mono-100 px-2 py-0.5 rounded">{constraintMeta.parameterTypes.join(', ')}</span>
+                <span class="font-mono text-sm text-mono-300">{constraintMeta.name}</span>
+                <span class="text-xs text-mono-400 bg-mono-800 px-2 py-0.5 rounded">{constraintMeta.parameterTypes.join(', ')}</span>
               </div>
 
               <input
@@ -71,13 +71,13 @@
                 value={constraintValue.value ?? ''}
                 oninput={(e) => onParamChange(index, e.currentTarget.value, constraintMeta.parameterTypes)}
                 placeholder={constraintMeta.parameterTypes.includes('str') ? 'e.g. ^[a-z]+$' : 'Value'}
-                class="flex-1 min-w-0 px-2 py-1 border border-mono-300 rounded text-sm focus:ring-2 focus:ring-mono-400 focus:border-transparent"
+                class="flex-1 min-w-0 px-2 py-1 border border-mono-600 rounded text-sm bg-mono-900 text-mono-100 focus:ring-2 focus:ring-green-400 focus:border-transparent"
               />
 
               <button
                 type="button"
                 onclick={() => onRemove(index)}
-                class="text-red-700 hover:text-red-600 transition-colors shrink-0"
+                class="text-red-400 hover:text-red-300 transition-colors shrink-0"
                 title="Remove field constraint"
                 aria-label="Remove field constraint"
               >
@@ -86,14 +86,14 @@
             </div>
           {:else}
             <div class="flex items-center gap-2 py-1.5">
-              <i class="fa-solid fa-triangle-exclamation text-red-500 text-sm"></i>
-              <span class="flex-1 text-sm text-red-700">
-                Field constraint not found <span class="font-mono text-xs text-red-500">({constraintValue.name})</span>
+              <i class="fa-solid fa-triangle-exclamation text-red-400 text-sm"></i>
+              <span class="flex-1 text-sm text-red-400">
+                Field constraint not found <span class="font-mono text-xs text-red-400">({constraintValue.name})</span>
               </span>
               <button
                 type="button"
                 onclick={() => onRemove(index)}
-                class="p-1 text-red-700 hover:text-red-600 hover:bg-red-100 rounded transition-colors"
+                class="p-1 text-red-400 hover:text-red-300 hover:bg-red-400/10 rounded transition-colors"
                 title="Remove missing field constraint reference"
                 aria-label="Remove field constraint"
               >

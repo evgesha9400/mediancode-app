@@ -161,7 +161,7 @@
       <button
         type="button"
         onclick={workflow.openCreate}
-        class="px-4 py-2 bg-mono-900 text-white rounded-md flex items-center space-x-2 hover:bg-mono-800 cursor-pointer transition-colors"
+        class="px-4 py-2 bg-green-400 text-mono-950 font-bold rounded-md flex items-center space-x-2 hover:bg-green-300 cursor-pointer transition-colors"
       >
         <i class="fa-solid fa-plus"></i>
         <span>Create Object</span>
@@ -218,27 +218,27 @@
       {#each filteredObjects as object}
         <tr
           onclick={() => workflow.selectItem(object)}
-          class="cursor-pointer transition-colors {workflow.isSelected(object) ? 'bg-mono-100' : 'hover:bg-mono-50'}"
+          class="cursor-pointer transition-colors {workflow.isSelected(object) ? 'bg-mono-800' : 'hover:bg-mono-950'}"
         >
           <td class="px-6 py-4 whitespace-nowrap">
-            <div class="text-sm text-mono-900 font-medium">{object.name}</div>
+            <div class="text-sm text-mono-100 font-medium">{object.name}</div>
           </td>
           <td class="px-6 py-4 whitespace-nowrap">
-            <span class="text-sm text-mono-600">{object.namespaceName}</span>
+            <span class="text-sm text-mono-400">{object.namespaceName}</span>
           </td>
           <td class="px-6 py-4 whitespace-nowrap">
             <div class="flex items-center space-x-2">
               <Pill>{object.fields.length}</Pill>
-              <span class="text-sm text-mono-600">fields</span>
+              <span class="text-sm text-mono-400">fields</span>
             </div>
           </td>
           <td class="px-6 py-4 whitespace-nowrap">
             <div class="flex items-center space-x-2">
               <Pill>{object.usedInApis.length}</Pill>
-              <span class="text-sm text-mono-600">APIs</span>
+              <span class="text-sm text-mono-400">APIs</span>
             </div>
           </td>
-          <td class="px-6 py-4 text-sm text-mono-500">
+          <td class="px-6 py-4 text-sm text-mono-400">
             {object.description || '-'}
           </td>
         </tr>
@@ -305,7 +305,7 @@
       type="button"
       onclick={handleCreateField}
       disabled={fieldSaving}
-      class="flex-1 px-4 py-2 rounded-md transition-colors font-medium flex items-center justify-center space-x-2 {!fieldSaving ? 'bg-mono-900 text-white hover:bg-mono-800 cursor-pointer' : 'bg-mono-300 text-mono-500 cursor-not-allowed'}"
+      class="flex-1 px-4 py-2 rounded-md transition-colors font-medium flex items-center justify-center space-x-2 {!fieldSaving ? 'bg-green-400 text-mono-950 hover:bg-green-300 font-bold cursor-pointer' : 'bg-mono-700 text-mono-500 cursor-not-allowed'}"
     >
       {#if fieldSaving}
         <i class="fa-solid fa-spinner fa-spin"></i>
@@ -318,7 +318,7 @@
       type="button"
       onclick={closeFieldCreate}
       disabled={fieldSaving}
-      class="flex-1 px-4 py-2 border border-mono-300 text-mono-700 rounded-md hover:bg-mono-50 cursor-pointer transition-colors font-medium"
+      class="flex-1 px-4 py-2 border border-mono-600 text-mono-300 rounded-md hover:bg-mono-950 cursor-pointer transition-colors font-medium"
     >
       Cancel
     </button>

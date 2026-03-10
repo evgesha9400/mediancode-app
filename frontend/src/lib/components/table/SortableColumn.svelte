@@ -25,11 +25,11 @@
   let ariaLabel = $derived(getMultiSortAriaLabel(column, label, sorts));
 </script>
 
-<th scope="col" class="px-6 py-3 text-left text-xs text-mono-500 tracking-wider font-medium">
+<th scope="col" class="px-6 py-3 text-left text-xs text-mono-400 tracking-wider font-medium">
   <button
     type="button"
     onclick={handleClick}
-    class="flex items-center space-x-1 hover:text-mono-700 transition-colors"
+    class="flex items-center space-x-1 hover:text-mono-200 transition-colors"
     aria-label={ariaLabel}
     title="Click to sort, Shift+Click to add to sort"
   >

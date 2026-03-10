@@ -72,7 +72,7 @@
       <button
         type="button"
         onclick={workflow.openCreate}
-        class="px-4 py-2 bg-mono-900 text-white rounded-md flex items-center space-x-2 hover:bg-mono-800 cursor-pointer transition-colors"
+        class="px-4 py-2 bg-green-400 text-mono-950 font-bold rounded-md flex items-center space-x-2 hover:bg-green-300 cursor-pointer transition-colors"
       >
         <i class="fa-solid fa-plus"></i>
         <span>Add Namespace</span>
@@ -128,11 +128,11 @@
       {#each filteredNamespaces as namespace}
         <tr
           onclick={() => workflow.selectItem(namespace)}
-          class="cursor-pointer transition-colors {workflow.isSelected(namespace) ? 'bg-mono-100' : 'hover:bg-mono-50'}"
+          class="cursor-pointer transition-colors {workflow.isSelected(namespace) ? 'bg-mono-800' : 'hover:bg-mono-950'}"
         >
           <td class="px-6 py-4 whitespace-nowrap">
             <div class="flex items-center space-x-2">
-              <span class="text-sm text-mono-900 font-medium">{namespace.name}</span>
+              <span class="text-sm text-mono-100 font-medium">{namespace.name}</span>
               {#if namespace.name?.toLowerCase() === 'global'}
                 <i class="fa-solid fa-earth-americas text-mono-400 text-xs" title="Global"></i>
               {/if}
@@ -141,13 +141,13 @@
               {/if}
             </div>
           </td>
-          <td class="px-6 py-4 text-sm text-mono-500">
+          <td class="px-6 py-4 text-sm text-mono-400">
             {namespace.description || '-'}
           </td>
           <td class="px-6 py-4 whitespace-nowrap">
             <div class="flex items-center space-x-2">
               <Pill>{namespace.entityCount}</Pill>
-              <span class="text-sm text-mono-600">total</span>
+              <span class="text-sm text-mono-400">total</span>
             </div>
           </td>
         </tr>
@@ -167,9 +167,9 @@
   {#if workflow.editedItem}
     <div class="space-y-4">
       {#if isReadOnly}
-        <div class="flex items-center space-x-2 px-3 py-2 bg-mono-50 border border-mono-200 rounded-md">
+        <div class="flex items-center space-x-2 px-3 py-2 bg-mono-950 border border-mono-700 rounded-md">
           <i class="fa-solid fa-lock text-mono-400 text-sm"></i>
-          <span class="text-sm text-mono-600">System namespace — read-only</span>
+          <span class="text-sm text-mono-400">System namespace — read-only</span>
         </div>
       {/if}
 
@@ -191,63 +191,63 @@
           disabled={isReadOnly}
           rows="3"
           placeholder={isCreating ? 'Optional description...' : ''}
-          class="w-full px-3 py-1.5 text-sm border border-mono-300 rounded-md focus:ring-2 focus:ring-mono-400 focus:border-transparent {isReadOnly ? 'bg-mono-100 cursor-not-allowed' : ''}"
+          class="w-full px-3 py-1.5 text-sm border border-mono-600 rounded-md focus:ring-2 focus:ring-green-400 focus:border-transparent {isReadOnly ? 'bg-mono-800 cursor-not-allowed' : ''}"
         ></textarea>
       </div>
 
       {#if isCreating}
         <div>
-          <h3 class="text-sm text-mono-700 mb-2 font-medium">Default Namespace</h3>
+          <h3 class="text-sm text-mono-300 mb-2 font-medium">Default Namespace</h3>
           <label class="flex items-center space-x-3 cursor-pointer">
             <input
               type="checkbox"
               bind:checked={workflow.editedItem.isDefault}
-              class="w-4 h-4 rounded border-mono-300 text-mono-900 focus:ring-mono-400"
+              class="w-4 h-4 rounded border-mono-600 text-mono-100 focus:ring-green-400"
             />
-            <span class="text-sm text-mono-600">Set as default namespace</span>
+            <span class="text-sm text-mono-400">Set as default namespace</span>
           </label>
-          <p class="text-xs text-mono-500 mt-1">The default namespace is auto-selected when the app loads.</p>
+          <p class="text-xs text-mono-400 mt-1">The default namespace is auto-selected when the app loads.</p>
         </div>
       {/if}
 
       {#if !isCreating}
         {@const details = getNamespaceEntityDetails(workflow.editedItem.id)}
         <div>
-          <h3 class="text-sm text-mono-700 mb-2 font-medium">Contents</h3>
-          <div class="bg-mono-50 rounded-md p-3 space-y-2">
+          <h3 class="text-sm text-mono-300 mb-2 font-medium">Contents</h3>
+          <div class="bg-mono-950 rounded-md p-3 space-y-2">
             <div class="flex justify-between text-sm">
-              <span class="text-mono-600">Fields</span>
-              <span class="text-mono-900 font-medium">{details.fields}</span>
+              <span class="text-mono-400">Fields</span>
+              <span class="text-mono-100 font-medium">{details.fields}</span>
             </div>
             <div class="flex justify-between text-sm">
-              <span class="text-mono-600">Field Constraints</span>
-              <span class="text-mono-900 font-medium">{details.fieldConstraints}</span>
+              <span class="text-mono-400">Field Constraints</span>
+              <span class="text-mono-100 font-medium">{details.fieldConstraints}</span>
             </div>
             <div class="flex justify-between text-sm">
-              <span class="text-mono-600">Objects</span>
-              <span class="text-mono-900 font-medium">{details.objects}</span>
+              <span class="text-mono-400">Objects</span>
+              <span class="text-mono-100 font-medium">{details.objects}</span>
             </div>
             <div class="flex justify-between text-sm">
-              <span class="text-mono-600">Endpoints</span>
-              <span class="text-mono-900 font-medium">{details.endpoints}</span>
+              <span class="text-mono-400">Endpoints</span>
+              <span class="text-mono-100 font-medium">{details.endpoints}</span>
             </div>
-            <div class="flex justify-between text-sm border-t border-mono-200 pt-2 mt-2">
-              <span class="text-mono-700 font-medium">Total</span>
-              <span class="text-mono-900 font-bold">{details.total}</span>
+            <div class="flex justify-between text-sm border-t border-mono-700 pt-2 mt-2">
+              <span class="text-mono-300 font-medium">Total</span>
+              <span class="text-mono-100 font-bold">{details.total}</span>
             </div>
           </div>
         </div>
 
         <div>
-          <h3 class="text-sm text-mono-700 mb-2 font-medium">Default Namespace</h3>
+          <h3 class="text-sm text-mono-300 mb-2 font-medium">Default Namespace</h3>
           <label class="flex items-center space-x-3 cursor-pointer">
             <input
               type="checkbox"
               bind:checked={workflow.editedItem.isDefault}
               disabled={workflow.editedItem.isDefault}
-              class="w-4 h-4 rounded border-mono-300 text-mono-900 focus:ring-mono-400 disabled:opacity-50 disabled:cursor-not-allowed"
+              class="w-4 h-4 rounded border-mono-600 text-mono-100 focus:ring-green-400 disabled:opacity-50 disabled:cursor-not-allowed"
             />
-            <span class="text-sm text-mono-600">
+            <span class="text-sm text-mono-400">
               {#if workflow.editedItem.isDefault}
                 This is your default namespace
               {:else}
@@ -255,7 +255,7 @@
               {/if}
             </span>
           </label>
-          <p class="text-xs text-mono-500 mt-1">The default namespace is auto-selected when the app loads.</p>
+          <p class="text-xs text-mono-400 mt-1">The default namespace is auto-selected when the app loads.</p>
         </div>
       {/if}
     </div>
@@ -293,7 +293,7 @@
         type="button"
         onclick={workflow.handleSave}
         disabled={workflow.isSaving}
-        class="w-full px-4 py-2 rounded-md transition-colors font-medium {workflow.isSaving ? 'bg-mono-300 text-mono-500 cursor-not-allowed' : 'bg-mono-900 text-white hover:bg-mono-800 cursor-pointer'}"
+        class="w-full px-4 py-2 rounded-md transition-colors font-medium {workflow.isSaving ? 'bg-mono-700 text-mono-500 cursor-not-allowed' : 'bg-green-400 text-mono-950 hover:bg-green-300 font-bold cursor-pointer'}"
       >
         {#if workflow.isSaving}
           Saving...
@@ -305,7 +305,7 @@
     <button
       type="button"
       onclick={workflow.closeDrawer}
-      class="w-full px-4 py-2 border border-mono-300 text-mono-700 rounded-md hover:bg-mono-50 transition-colors font-medium"
+      class="w-full px-4 py-2 border border-mono-600 text-mono-300 rounded-md hover:bg-mono-950 transition-colors font-medium"
     >
       Close
     </button>

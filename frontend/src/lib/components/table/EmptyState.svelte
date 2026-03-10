@@ -57,13 +57,13 @@
 </script>
 
 <div data-testid={EMPTY_STATE_ID} class="flex flex-col items-center justify-center py-12 px-6">
-  <i class="fa-solid {icon} text-4xl {variant === 'error' ? 'text-red-400' : 'text-mono-300'} mb-4"></i>
-  <h3 class="text-lg font-medium {variant === 'error' ? 'text-red-600' : 'text-mono-900'} mb-2">{title}</h3>
-  <p class="text-sm text-mono-500">{message}</p>
+  <i class="fa-solid {icon} text-4xl {variant === 'error' ? 'text-red-400' : 'text-mono-600'} mb-4"></i>
+  <h3 class="text-lg font-medium {variant === 'error' ? 'text-red-400' : 'text-mono-100'} mb-2">{title}</h3>
+  <p class="text-sm text-mono-400">{message}</p>
   {#if actionLabel && onAction}
     <button
       onclick={onAction}
-      class="mt-4 px-4 py-2 text-sm bg-mono-900 text-white rounded-md hover:bg-mono-800 transition-colors"
+      class="mt-4 px-4 py-2 text-sm bg-green-400 text-mono-950 font-bold rounded-md hover:bg-green-300 transition-colors"
     >
       {actionLabel}
     </button>

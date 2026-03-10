@@ -65,7 +65,7 @@
   <button
     type="button"
     onclick={toggleDropdown}
-    class="flex items-center space-x-2 px-3 py-1.5 rounded-md border border-mono-300 bg-white hover:bg-mono-50 transition-colors text-sm"
+    class="flex items-center space-x-2 px-3 py-1.5 rounded-md border border-mono-600 bg-mono-900 hover:bg-mono-800 transition-colors text-sm"
     aria-haspopup="listbox"
     aria-expanded={isOpen}
   >
@@ -74,25 +74,25 @@
     {:else}
       <i class="fa-solid fa-layer-group text-mono-400 text-xs"></i>
     {/if}
-    <span class="text-mono-700">{$activeNamespace?.name ?? 'Select namespace'}</span>
+    <span class="text-mono-300">{$activeNamespace?.name ?? 'Select namespace'}</span>
     <i class="fa-solid fa-chevron-down text-mono-400 text-xs transition-transform" class:rotate-180={isOpen}></i>
   </button>
 
   {#if isOpen}
     <div
-      class="absolute top-full right-0 mt-1 w-56 bg-white rounded-lg shadow-xl border border-mono-200 z-50 overflow-hidden"
+      class="absolute top-full right-0 mt-1 w-56 bg-mono-900 rounded-lg shadow-xl shadow-black/30 border border-mono-700 z-50 overflow-hidden"
       role="listbox"
     >
-      <div class="p-2 border-b border-mono-100 bg-mono-50">
-        <span class="text-xs font-medium text-mono-500 uppercase tracking-wider">Namespace</span>
+      <div class="p-2 border-b border-mono-700 bg-mono-800">
+        <span class="text-xs font-medium text-mono-400 uppercase tracking-wider">Namespace</span>
       </div>
       <div class="py-1 max-h-60 overflow-y-auto">
         {#each $namespacesStore as namespace}
           <button
             type="button"
             onclick={() => selectNamespace(namespace)}
-            class="w-full px-3 py-2 flex items-center space-x-2 hover:bg-mono-50 transition-colors text-left"
-            class:bg-mono-100={$activeNamespaceId === namespace.id}
+            class="w-full px-3 py-2 flex items-center space-x-2 hover:bg-mono-800 transition-colors text-left"
+            class:bg-mono-800={$activeNamespaceId === namespace.id}
             role="option"
             aria-selected={$activeNamespaceId === namespace.id}
           >
@@ -103,17 +103,17 @@
             {/if}
             <div class="flex-1 min-w-0">
               <div class="flex items-center space-x-1.5">
-                <span class="text-sm text-mono-800 block truncate">{namespace.name}</span>
+                <span class="text-sm text-mono-100 block truncate">{namespace.name}</span>
                 {#if namespace.isDefault}
-                  <span class="px-1 py-0.5 text-[10px] rounded bg-mono-200 text-mono-600 flex-shrink-0">Default</span>
+                  <span class="px-1 py-0.5 text-[10px] rounded bg-mono-700 text-mono-400 flex-shrink-0">Default</span>
                 {/if}
               </div>
               {#if namespace.description}
-                <span class="text-xs text-mono-500 block truncate">{namespace.description}</span>
+                <span class="text-xs text-mono-400 block truncate">{namespace.description}</span>
               {/if}
             </div>
             {#if $activeNamespaceId === namespace.id}
-              <i class="fa-solid fa-check text-mono-600 text-xs"></i>
+              <i class="fa-solid fa-check text-green-400 text-xs"></i>
             {/if}
           </button>
         {/each}

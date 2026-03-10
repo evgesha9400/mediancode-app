@@ -81,10 +81,10 @@
     {#each filteredTemplates as template}
       <tr
         onclick={() => state.selectItem(template)}
-        class="cursor-pointer transition-colors {state.selectedItem?.id === template.id ? 'bg-mono-100' : 'hover:bg-mono-50'}"
+        class="cursor-pointer transition-colors {state.selectedItem?.id === template.id ? 'bg-mono-800' : 'hover:bg-mono-950'}"
       >
         <td class="px-6 py-4 whitespace-nowrap">
-          <span class="text-sm text-mono-900 font-medium">{template.name}</span>
+          <span class="text-sm text-mono-100 font-medium">{template.name}</span>
         </td>
         <td class="px-6 py-4 whitespace-nowrap">
           <Pill>{template.mode}</Pill>
@@ -96,7 +96,7 @@
             {/each}
           </div>
         </td>
-        <td class="px-6 py-4 text-sm text-mono-500 max-w-xs truncate">
+        <td class="px-6 py-4 text-sm text-mono-400 max-w-xs truncate">
           {template.description}
         </td>
       </tr>
@@ -115,13 +115,13 @@
 {#snippet modelValidatorDetailContent(_: { close: () => void })}
   {#if state.selectedItem}
     <div class="space-y-6">
-      <div class="flex items-center space-x-2 px-3 py-2 bg-mono-50 border border-mono-200 rounded-md">
+      <div class="flex items-center space-x-2 px-3 py-2 bg-mono-950 border border-mono-700 rounded-md">
         <i class="fa-solid fa-lock text-mono-400 text-sm"></i>
-        <span class="text-sm text-mono-600">System model validator — read-only</span>
+        <span class="text-sm text-mono-400">System model validator — read-only</span>
       </div>
 
       <DetailField label="Name">
-        <p class="text-mono-900 font-medium">{state.selectedItem.name}</p>
+        <p class="text-mono-100 font-medium">{state.selectedItem.name}</p>
       </DetailField>
 
       <DetailField label="Description" value={state.selectedItem.description} />
@@ -133,9 +133,9 @@
       <DetailField label="Field Mappings">
         <div class="space-y-2">
           {#each state.selectedItem.fieldMappings as fm}
-            <div class="p-2 bg-mono-50 rounded border border-mono-200">
+            <div class="p-2 bg-mono-950 rounded border border-mono-700">
               <div class="flex items-center space-x-2">
-                <span class="text-sm text-mono-700 font-medium">{fm.label}</span>
+                <span class="text-sm text-mono-300 font-medium">{fm.label}</span>
                 {#if fm.required}
                   <span class="text-red-500 text-xs">required</span>
                 {/if}
@@ -156,16 +156,16 @@
         <DetailField label="Parameters">
           <div class="space-y-2">
             {#each state.selectedItem.parameters as param}
-              <div class="p-2 bg-mono-50 rounded border border-mono-200">
+              <div class="p-2 bg-mono-950 rounded border border-mono-700">
                 <div class="flex items-center space-x-2">
-                  <span class="text-sm text-mono-700 font-medium">{param.label}</span>
+                  <span class="text-sm text-mono-300 font-medium">{param.label}</span>
                   <Pill size="sm">{param.type}</Pill>
                   {#if param.required}
                     <span class="text-red-500 text-xs">required</span>
                   {/if}
                 </div>
                 {#if param.placeholder}
-                  <p class="text-xs text-mono-500 mt-1">e.g. {param.placeholder}</p>
+                  <p class="text-xs text-mono-400 mt-1">e.g. {param.placeholder}</p>
                 {/if}
               </div>
             {/each}

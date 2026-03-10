@@ -78,7 +78,7 @@
         <Tooltip text={dashboardItem.label} position="right" disabled={!collapsed}>
           <a
             href={dashboardItem.href}
-            class="rounded-md cursor-pointer {isActive(dashboardItem.href) ? 'bg-mono-800' : 'hover:bg-mono-800'} {collapsed ? 'flex justify-center py-2' : 'flex items-center space-x-2 px-2 py-1.5'}"
+            class="rounded-md cursor-pointer {isActive(dashboardItem.href) ? 'bg-green-400/10 text-green-400 border-l-2 border-green-400' : 'hover:bg-mono-800 hover:text-green-400'} {collapsed ? 'flex justify-center py-2' : 'flex items-center space-x-2 px-2 py-1.5'}"
           >
             <i class="fa-solid {dashboardItem.icon} {collapsed ? 'text-base' : 'w-5'}"></i>
             {#if !collapsed}
@@ -91,7 +91,7 @@
 
     <!-- Catalog -->
     {#if !collapsed}
-      <h2 class="text-xs uppercase tracking-wider text-mono-400 mb-3 font-medium">Catalog</h2>
+      <h2 class="text-xs uppercase tracking-wider text-mono-500 mb-3 font-bold">Catalog</h2>
     {:else}
       <div class="border-t border-mono-700 my-2"></div>
     {/if}
@@ -101,7 +101,7 @@
           <Tooltip text={item.label} position="right" disabled={!collapsed}>
             <a
               href={item.href}
-              class="rounded-md cursor-pointer {isActive(item.href) ? 'bg-mono-800' : 'hover:bg-mono-800'} {collapsed ? 'flex justify-center py-2' : 'flex items-center space-x-2 px-2 py-1.5'}"
+              class="rounded-md cursor-pointer {isActive(item.href) ? 'bg-green-400/10 text-green-400 border-l-2 border-green-400' : 'hover:bg-mono-800 hover:text-green-400'} {collapsed ? 'flex justify-center py-2' : 'flex items-center space-x-2 px-2 py-1.5'}"
             >
               <i class="fa-solid {item.icon} {collapsed ? 'text-base' : 'w-5'}"></i>
               {#if !collapsed}
@@ -115,7 +115,7 @@
 
     <!-- Components -->
     {#if !collapsed}
-      <h2 class="text-xs uppercase tracking-wider text-mono-400 mb-3 font-medium">Components</h2>
+      <h2 class="text-xs uppercase tracking-wider text-mono-500 mb-3 font-bold">Components</h2>
     {:else}
       <div class="border-t border-mono-700 my-2"></div>
     {/if}
@@ -125,7 +125,7 @@
           <Tooltip text={item.label} position="right" disabled={!collapsed}>
             <a
               href={item.href}
-              class="rounded-md cursor-pointer {isActive(item.href) ? 'bg-mono-800' : 'hover:bg-mono-800'} {collapsed ? 'flex justify-center py-2' : 'flex items-center space-x-2 px-2 py-1.5'}"
+              class="rounded-md cursor-pointer {isActive(item.href) ? 'bg-green-400/10 text-green-400 border-l-2 border-green-400' : 'hover:bg-mono-800 hover:text-green-400'} {collapsed ? 'flex justify-center py-2' : 'flex items-center space-x-2 px-2 py-1.5'}"
             >
               <i class="fa-solid {item.icon} {collapsed ? 'text-base' : 'w-5'}"></i>
               {#if !collapsed}

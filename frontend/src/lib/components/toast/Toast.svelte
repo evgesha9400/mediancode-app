@@ -35,31 +35,31 @@
   const toastStyles = {
     success: {
       icon: 'fa-solid fa-check-circle',
-      bgColor: 'bg-green-50',
-      borderColor: 'border-green-200',
-      textColor: 'text-green-800',
-      iconColor: 'text-green-600'
+      bgColor: 'bg-green-400/10',
+      borderColor: 'border-green-400/30',
+      textColor: 'text-green-400',
+      iconColor: 'text-green-400'
     },
     error: {
       icon: 'fa-solid fa-exclamation-circle',
-      bgColor: 'bg-red-50',
-      borderColor: 'border-red-200',
-      textColor: 'text-red-800',
-      iconColor: 'text-red-600'
+      bgColor: 'bg-red-400/10',
+      borderColor: 'border-red-400/30',
+      textColor: 'text-red-400',
+      iconColor: 'text-red-400'
     },
     warning: {
       icon: 'fa-solid fa-exclamation-triangle',
-      bgColor: 'bg-amber-50',
-      borderColor: 'border-amber-200',
-      textColor: 'text-amber-800',
-      iconColor: 'text-amber-600'
+      bgColor: 'bg-amber-400/10',
+      borderColor: 'border-amber-400/30',
+      textColor: 'text-amber-400',
+      iconColor: 'text-amber-400'
     },
     info: {
       icon: 'fa-solid fa-info-circle',
-      bgColor: 'bg-blue-50',
-      borderColor: 'border-blue-200',
-      textColor: 'text-blue-800',
-      iconColor: 'text-blue-600'
+      bgColor: 'bg-blue-400/10',
+      borderColor: 'border-blue-400/30',
+      textColor: 'text-blue-400',
+      iconColor: 'text-blue-400'
     }
   };
 
