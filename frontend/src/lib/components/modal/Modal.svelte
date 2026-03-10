@@ -50,7 +50,7 @@
     onclick={handleBackdropClick}
     class="backdrop:bg-black/50 bg-transparent p-0 m-0 fixed inset-0 flex items-center justify-center w-full h-full"
   >
-    <div class="bg-white rounded-lg shadow-xl {maxWidth} w-full mx-4">
+    <div class="bg-mono-900 border-2 border-mono-700 shadow-xl shadow-black/30 {maxWidth} w-full mx-4">
       {@render children()}
     </div>
   </dialog>
