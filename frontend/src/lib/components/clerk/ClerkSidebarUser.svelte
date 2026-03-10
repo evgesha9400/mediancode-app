@@ -80,6 +80,9 @@
       clerk.mountUserButton(buttonContainer, {
         showName: false,
         appearance: getAppearance(),
+        userProfileProps: {
+          appearance: clerkAppearance,
+        },
       });
       isMounted = true;
     } catch (error) {

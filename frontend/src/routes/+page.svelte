@@ -24,7 +24,7 @@
 <header id="header" class="bg-mono-950 border-b-2 border-mono-700 sticky top-0 z-50">
 	<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
 		<div class="flex items-center justify-between h-16">
-			<a href="/" onclick={scrollToTop} class="flex items-center space-x-3 cursor-pointer">
+			<a href="/" onclick={scrollToTop} class="flex items-center space-x-3 cursor-pointer hover:opacity-80 transition-opacity">
 				<Logo size="md" variant="dark" />
 				<span class="text-base font-mono font-semibold text-mono-100 tracking-tight">median-code</span>
 			</a>

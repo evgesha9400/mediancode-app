@@ -63,11 +63,11 @@
   <div class="border-b border-mono-800 {collapsed ? 'p-3' : 'p-4'}">
     <a
       href="/"
-      class="flex items-center hover:opacity-80 transition-opacity cursor-pointer {collapsed ? 'justify-center' : 'space-x-2'}"
+      class="flex items-center hover:opacity-80 transition-opacity cursor-pointer {collapsed ? 'justify-center' : 'space-x-3'}"
     >
       <Logo size="md" variant="dark" />
       {#if !collapsed}
-        <h1 class="text-lg font-semibold whitespace-nowrap">Median Code</h1>
+        <span class="text-base font-mono font-semibold text-mono-100 tracking-tight whitespace-nowrap">median-code</span>
       {/if}
     </a>
   </div>
