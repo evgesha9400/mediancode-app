@@ -65,7 +65,7 @@
   <button
     type="button"
     onclick={toggleDropdown}
-    class="flex items-center space-x-2 px-3 py-1.5 rounded-md border border-mono-600 bg-mono-900 hover:bg-mono-800 transition-colors text-sm"
+    class="flex items-center space-x-2 px-3 py-1.5 border border-mono-600 bg-mono-900 hover:bg-mono-800 transition-colors text-sm"
     aria-haspopup="listbox"
     aria-expanded={isOpen}
   >
@@ -80,7 +80,7 @@
 
   {#if isOpen}
     <div
-      class="absolute top-full right-0 mt-1 w-56 bg-mono-900 rounded-lg shadow-xl shadow-black/30 border border-mono-700 z-50 overflow-hidden"
+      class="absolute top-full right-0 mt-1 w-56 bg-mono-900 shadow-xl shadow-black/30 border border-mono-700 z-50 overflow-hidden"
       role="listbox"
     >
       <div class="p-2 border-b border-mono-700 bg-mono-800">
@@ -105,7 +105,7 @@
               <div class="flex items-center space-x-1.5">
                 <span class="text-sm text-mono-100 block truncate">{namespace.name}</span>
                 {#if namespace.isDefault}
-                  <span class="px-1 py-0.5 text-[10px] rounded bg-mono-700 text-mono-400 flex-shrink-0">Default</span>
+                  <span class="px-1 py-0.5 text-[10px] bg-mono-700 text-mono-400 flex-shrink-0">Default</span>
                 {/if}
               </div>
               {#if namespace.description}

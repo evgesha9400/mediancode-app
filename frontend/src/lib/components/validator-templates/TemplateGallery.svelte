@@ -68,7 +68,7 @@
     type="text"
     bind:value={search}
     placeholder="Search templates..."
-    class="w-full px-3 py-2 border border-mono-600 rounded-md text-sm bg-mono-900 text-mono-100 focus:ring-2 focus:ring-green-400 focus:border-transparent"
+    class="w-full px-3 py-2 border border-mono-600 text-sm bg-mono-900 text-mono-100 focus:ring-2 focus:ring-green-400 focus:border-transparent"
   />
 
   <!-- Template cards -->

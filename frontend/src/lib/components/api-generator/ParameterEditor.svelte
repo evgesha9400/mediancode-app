@@ -57,7 +57,7 @@
 
 <div class="flex items-center space-x-2 py-1.5">
   <!-- Param name (read-only) -->
-  <div class="w-32 px-2 py-1 text-xs bg-mono-800 border border-mono-700 rounded-md text-mono-300 font-mono shrink-0">
+  <div class="w-32 px-2 py-1 text-xs bg-mono-800 border border-mono-700 text-mono-300 font-mono shrink-0">
     {paramName}
   </div>
 
@@ -65,7 +65,7 @@
   <div class="flex-1 relative">
     {#if selectedField}
       <!-- Show selected field with clear button -->
-      <div class="flex items-center space-x-2 px-2 py-1 border border-mono-600 rounded-md bg-mono-900">
+      <div class="flex items-center space-x-2 px-2 py-1 border border-mono-600 bg-mono-900">
         <span class="font-mono text-xs text-mono-300">{selectedField.name}</span>
         <span class="text-xs text-mono-400 bg-mono-800 px-1.5 py-0.5 rounded">{selectedField.type}</span>
         <button
@@ -86,13 +86,13 @@
           onfocus={handleFocus}
           onblur={handleBlur}
           placeholder="Select field..."
-          class="w-full px-2 py-1 text-xs border border-mono-600 rounded-md bg-mono-900 text-mono-100 focus:ring-2 focus:ring-green-400 focus:border-transparent pr-7"
+          class="w-full px-2 py-1 text-xs border border-mono-600 bg-mono-900 text-mono-100 focus:ring-2 focus:ring-green-400 focus:border-transparent pr-7"
         />
         <i class="fa-solid fa-search absolute right-2 top-1/2 -translate-y-1/2 text-mono-400 text-xs pointer-events-none"></i>
       </div>
 
       {#if dropdownOpen}
-        <div class="absolute z-10 w-full mt-1 bg-mono-900 border border-mono-700 rounded-md shadow-lg shadow-black/30 max-h-48 overflow-auto">
+        <div class="absolute z-10 w-full mt-1 bg-mono-900 border border-mono-700 shadow-lg shadow-black/30 max-h-48 overflow-auto">
           {#if filteredFields.length === 0}
             <div class="px-3 py-2 text-xs text-mono-400">
               {searchQuery.trim() ? `No fields matching "${searchQuery}"` : 'No fields available'}

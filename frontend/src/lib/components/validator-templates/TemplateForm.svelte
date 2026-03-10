@@ -123,7 +123,7 @@
           <select
             id="param-{param.key}"
             bind:value={params[param.key]}
-            class="w-full px-3 py-1.5 border border-mono-600 rounded-md text-sm focus:ring-2 focus:ring-green-400 focus:border-transparent bg-mono-900 text-mono-100"
+            class="w-full px-3 py-1.5 border border-mono-600 text-sm focus:ring-2 focus:ring-green-400 focus:border-transparent bg-mono-900 text-mono-100"
           >
             <option value="">Select...</option>
             {#each param.options as opt}
@@ -137,7 +137,7 @@
             step={param.type === 'number' ? 'any' : undefined}
             bind:value={params[param.key]}
             placeholder={param.placeholder}
-            class="w-full px-3 py-1.5 border border-mono-600 rounded-md text-sm focus:ring-2 focus:ring-green-400 focus:border-transparent bg-mono-900 text-mono-100"
+            class="w-full px-3 py-1.5 border border-mono-600 text-sm focus:ring-2 focus:ring-green-400 focus:border-transparent bg-mono-900 text-mono-100"
           />
         {/if}
       </div>
@@ -155,7 +155,7 @@
         <select
           id="role-{fm.key}"
           bind:value={mappings[fm.key]}
-          class="w-full px-3 py-1.5 border border-mono-600 rounded-md text-sm focus:ring-2 focus:ring-green-400 focus:border-transparent bg-mono-900 text-mono-100"
+          class="w-full px-3 py-1.5 border border-mono-600 text-sm focus:ring-2 focus:ring-green-400 focus:border-transparent bg-mono-900 text-mono-100"
         >
           <option value="">Select a field...</option>
           {#each candidates as field}
@@ -177,7 +177,7 @@
           <select
             id="mparam-{param.key}"
             bind:value={params[param.key]}
-            class="w-full px-3 py-1.5 border border-mono-600 rounded-md text-sm focus:ring-2 focus:ring-green-400 focus:border-transparent bg-mono-900 text-mono-100"
+            class="w-full px-3 py-1.5 border border-mono-600 text-sm focus:ring-2 focus:ring-green-400 focus:border-transparent bg-mono-900 text-mono-100"
           >
             <option value="">Select...</option>
             {#each param.options as opt}
@@ -191,7 +191,7 @@
             step={param.type === 'number' ? 'any' : undefined}
             bind:value={params[param.key]}
             placeholder={param.placeholder}
-            class="w-full px-3 py-1.5 border border-mono-600 rounded-md text-sm focus:ring-2 focus:ring-green-400 focus:border-transparent bg-mono-900 text-mono-100"
+            class="w-full px-3 py-1.5 border border-mono-600 text-sm focus:ring-2 focus:ring-green-400 focus:border-transparent bg-mono-900 text-mono-100"
           />
         {/if}
       </div>
@@ -203,7 +203,7 @@
     {@const allMappings = { ...mappings, ...params }}
     <div>
       <span class="block text-xs text-mono-300 mb-1 font-medium">Code Preview</span>
-      <pre class="p-3 bg-mono-900 text-mono-100 rounded-md text-xs overflow-x-auto whitespace-pre font-mono">{previewBody(template.bodyTemplate, allMappings)}</pre>
+      <pre class="p-3 bg-mono-900 text-mono-100 text-xs overflow-x-auto whitespace-pre font-mono">{previewBody(template.bodyTemplate, allMappings)}</pre>
     </div>
   {/if}
 
@@ -212,7 +212,7 @@
     type="button"
     onclick={handleSubmit}
     disabled={!isValid}
-    class="w-full px-4 py-2 bg-green-400 text-mono-950 font-bold rounded-md text-sm hover:bg-green-300 transition-colors disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+    class="w-full px-4 py-2 bg-green-400 text-mono-950 font-bold text-sm tracking-wide hover:bg-green-300 transition-colors disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
   >
     Add Validator
   </button>

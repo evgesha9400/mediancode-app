@@ -110,7 +110,7 @@
   ></div>
 
   <!-- Panel -->
-  <div data-testid={FILTER_PANEL_ID} class="absolute right-0 top-full mt-2 w-72 bg-mono-900 rounded-lg shadow-xl shadow-black/30 border border-mono-700 z-20 overflow-hidden">
+  <div data-testid={FILTER_PANEL_ID} class="absolute right-0 top-full mt-2 w-72 bg-mono-900 shadow-xl shadow-black/30 border border-mono-700 z-20 overflow-hidden">
     <div class="p-4 border-b border-mono-700 flex justify-between items-center bg-mono-800">
       <h3 class="font-medium text-mono-100">Filters</h3>
       <button

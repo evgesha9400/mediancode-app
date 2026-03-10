@@ -89,7 +89,7 @@
                 type="text"
                 bind:value={healthcheckPath}
                 placeholder="/health"
-                class="w-full px-3 py-1.5 text-sm border border-mono-600 rounded-md bg-mono-900 text-mono-100 focus:ring-2 focus:ring-green-400 focus:outline-none"
+                class="w-full px-3 py-1.5 text-sm border border-mono-600 bg-mono-900 text-mono-100 focus:ring-2 focus:ring-green-400 focus:outline-none"
               />
             </div>
           {/if}
@@ -140,7 +140,7 @@
 
     <!-- Error -->
     {#if error}
-      <div class="bg-red-400/10 border border-red-400/30 rounded-md p-3 mb-4">
+      <div class="bg-red-400/10 border border-red-400/30 p-3 mb-4">
         <p class="text-sm text-red-400">{error}</p>
       </div>
     {/if}
@@ -151,7 +151,7 @@
         type="button"
         onclick={onClose}
         disabled={generating}
-        class="px-4 py-2 border border-mono-600 text-mono-300 rounded-md transition-colors font-medium {generating ? 'opacity-50 cursor-not-allowed' : 'hover:bg-mono-800 cursor-pointer'}"
+        class="px-4 py-2 border border-mono-600 text-mono-300 transition-colors font-medium {generating ? 'opacity-50 cursor-not-allowed' : 'hover:bg-mono-800 cursor-pointer'}"
       >
         Cancel
       </button>
@@ -159,7 +159,7 @@
         type="button"
         onclick={handleGenerate}
         disabled={generating}
-        class="px-4 py-2 rounded-md transition-colors font-medium flex items-center space-x-2 {generating ? 'bg-mono-700 text-mono-400 cursor-not-allowed' : 'bg-green-400 text-mono-950 font-bold hover:bg-green-300 cursor-pointer'}"
+        class="px-4 py-2 transition-colors font-medium tracking-wide flex items-center space-x-2 {generating ? 'bg-mono-700 text-mono-400 cursor-not-allowed' : 'bg-green-400 text-mono-950 font-bold hover:bg-green-300 cursor-pointer'}"
       >
         {#if generating}
           <i class="fa-solid fa-spinner fa-spin"></i>

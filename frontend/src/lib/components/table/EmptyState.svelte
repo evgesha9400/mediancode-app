@@ -63,7 +63,7 @@
   {#if actionLabel && onAction}
     <button
       onclick={onAction}
-      class="mt-4 px-4 py-2 text-sm bg-green-400 text-mono-950 font-bold rounded-md hover:bg-green-300 transition-colors"
+      class="mt-4 px-4 py-2 text-sm bg-green-400 text-mono-950 font-bold tracking-wide hover:bg-green-300 transition-colors"
     >
       {actionLabel}
     </button>

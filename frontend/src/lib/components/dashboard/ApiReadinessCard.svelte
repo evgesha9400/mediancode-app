@@ -26,7 +26,7 @@
   let config = $derived(statusConfig[status]);
 </script>
 
-<div class="bg-mono-900 rounded-lg border-2 border-mono-700 p-4" data-testid="api-readiness-card-{apiId}">
+<div class="bg-mono-900 border-2 border-mono-700 p-4" data-testid="api-readiness-card-{apiId}">
   <div class="flex items-start justify-between mb-3">
     <div class="min-w-0">
       <button
@@ -37,7 +37,7 @@
       </button>
       <span class="text-xs text-mono-400">v{version}</span>
     </div>
-    <span class="text-xs px-2 py-0.5 rounded-full border shrink-0 ml-2 {config.color}">
+    <span class="text-xs px-2 py-0.5 border shrink-0 ml-2 {config.color}">
       {config.label}
     </span>
   </div>
@@ -54,7 +54,7 @@
     {#if status === 'ready'}
       <button
         onclick={onGenerate}
-        class="text-xs px-3 py-1 bg-green-400 text-mono-950 font-bold rounded-md hover:bg-green-300 transition-colors cursor-pointer flex items-center space-x-1"
+        class="text-xs px-3 py-1 bg-green-400 text-mono-950 font-bold tracking-wide hover:bg-green-300 transition-colors cursor-pointer flex items-center space-x-1"
         data-testid="api-generate-btn-{apiId}"
       >
         <i class="fa-solid fa-code text-[10px]"></i>
@@ -63,7 +63,7 @@
     {:else}
       <button
         onclick={() => goto(`/apis/${apiId}`)}
-        class="text-xs px-3 py-1 border border-mono-600 text-mono-400 rounded-md font-medium hover:bg-mono-800 transition-colors cursor-pointer"
+        class="text-xs px-3 py-1 border border-mono-600 text-mono-400 font-medium hover:bg-mono-800 transition-colors cursor-pointer"
       >
         Configure
       </button>

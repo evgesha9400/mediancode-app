@@ -17,13 +17,13 @@
   let { title, value, icon, trend, error = false, onRetry }: Props = $props();
 </script>
 
-<div class="bg-mono-900 rounded-lg border-2 {error ? 'border-red-400/30' : 'border-mono-700'} p-6 h-full" data-testid={getStatCardTestId(title)}>
+<div class="bg-mono-900 border-2 {error ? 'border-red-400/30' : 'border-mono-700'} p-6 h-full" data-testid={getStatCardTestId(title)}>
   <div class="flex items-center justify-between gap-3 mb-4">
-    <div class="w-12 h-12 {error ? 'bg-red-400/10' : 'bg-mono-800'} rounded-lg flex items-center justify-center">
+    <div class="w-12 h-12 {error ? 'border-2 border-red-400/30' : 'border-2 border-green-400'} flex items-center justify-center">
       {#if error}
         <i class="fa-solid fa-circle-exclamation text-red-400 text-xl"></i>
       {:else}
-        <i class="fa-solid {icon} text-mono-300 text-xl"></i>
+        <i class="fa-solid {icon} text-green-400 text-xl"></i>
       {/if}
     </div>
     {#if trend && !error}

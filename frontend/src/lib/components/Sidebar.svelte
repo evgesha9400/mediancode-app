@@ -78,7 +78,7 @@
         <Tooltip text={dashboardItem.label} position="right" disabled={!collapsed}>
           <a
             href={dashboardItem.href}
-            class="rounded-md cursor-pointer {isActive(dashboardItem.href) ? 'bg-green-400/10 text-green-400 border-l-2 border-green-400' : 'hover:bg-mono-800 hover:text-green-400'} {collapsed ? 'flex justify-center py-2' : 'flex items-center space-x-2 px-2 py-1.5'}"
+            class="cursor-pointer {isActive(dashboardItem.href) ? 'bg-green-400/10 text-green-400 border-l-2 border-green-400' : 'hover:bg-mono-800 hover:text-green-400'} {collapsed ? 'flex justify-center py-2' : 'flex items-center space-x-2 px-2 py-1.5'}"
           >
             <i class="fa-solid {dashboardItem.icon} {collapsed ? 'text-base' : 'w-5'}"></i>
             {#if !collapsed}
@@ -101,7 +101,7 @@
           <Tooltip text={item.label} position="right" disabled={!collapsed}>
             <a
               href={item.href}
-              class="rounded-md cursor-pointer {isActive(item.href) ? 'bg-green-400/10 text-green-400 border-l-2 border-green-400' : 'hover:bg-mono-800 hover:text-green-400'} {collapsed ? 'flex justify-center py-2' : 'flex items-center space-x-2 px-2 py-1.5'}"
+              class="cursor-pointer {isActive(item.href) ? 'bg-green-400/10 text-green-400 border-l-2 border-green-400' : 'hover:bg-mono-800 hover:text-green-400'} {collapsed ? 'flex justify-center py-2' : 'flex items-center space-x-2 px-2 py-1.5'}"
             >
               <i class="fa-solid {item.icon} {collapsed ? 'text-base' : 'w-5'}"></i>
               {#if !collapsed}
@@ -125,7 +125,7 @@
           <Tooltip text={item.label} position="right" disabled={!collapsed}>
             <a
               href={item.href}
-              class="rounded-md cursor-pointer {isActive(item.href) ? 'bg-green-400/10 text-green-400 border-l-2 border-green-400' : 'hover:bg-mono-800 hover:text-green-400'} {collapsed ? 'flex justify-center py-2' : 'flex items-center space-x-2 px-2 py-1.5'}"
+              class="cursor-pointer {isActive(item.href) ? 'bg-green-400/10 text-green-400 border-l-2 border-green-400' : 'hover:bg-mono-800 hover:text-green-400'} {collapsed ? 'flex justify-center py-2' : 'flex items-center space-x-2 px-2 py-1.5'}"
             >
               <i class="fa-solid {item.icon} {collapsed ? 'text-base' : 'w-5'}"></i>
               {#if !collapsed}

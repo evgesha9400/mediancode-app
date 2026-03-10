@@ -43,7 +43,7 @@
 </script>
 
 {#if !dismissed}
-  <div class="bg-mono-900 rounded-lg border-2 border-mono-700 p-5" data-testid="project-checklist">
+  <div class="bg-mono-900 border-2 border-mono-700 p-5" data-testid="project-checklist">
     <div class="flex items-center justify-between mb-4">
       <div class="flex items-center space-x-2">
         <h3 class="text-sm font-semibold text-mono-100">Project Setup</h3>

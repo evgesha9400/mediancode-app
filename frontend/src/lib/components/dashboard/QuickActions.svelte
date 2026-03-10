@@ -23,10 +23,10 @@
 </script>
 
 {#if isEmpty}
-  <div class="bg-mono-900 rounded-lg border-2 border-mono-700 p-6" data-testid="dashboard-onboarding">
+  <div class="bg-mono-900 border-2 border-mono-700 p-6" data-testid="dashboard-onboarding">
     <div class="flex items-start space-x-4">
-      <div class="w-10 h-10 bg-mono-800 rounded-lg flex items-center justify-center shrink-0">
-        <i class="fa-solid fa-rocket text-mono-300"></i>
+      <div class="w-10 h-10 border-2 border-green-400 flex items-center justify-center shrink-0">
+        <i class="fa-solid fa-rocket text-green-400"></i>
       </div>
       <div>
         <h3 class="text-base font-semibold text-mono-100 mb-1">Get started with Median Code</h3>
@@ -35,7 +35,7 @@
         </p>
         <button
           onclick={() => goto('/fields')}
-          class="px-4 py-2 bg-green-400 text-mono-950 font-bold rounded-md text-sm hover:bg-green-300 transition-colors cursor-pointer"
+          class="px-4 py-2 bg-green-400 text-mono-950 font-bold text-sm tracking-wide hover:bg-green-300 transition-colors cursor-pointer"
           data-testid="onboarding-start-btn"
         >
           Create your first Field
@@ -48,7 +48,7 @@
     {#each actions as action}
       <button
         onclick={() => goto(action.href)}
-        class="flex items-center space-x-2 px-4 py-2.5 bg-transparent border border-mono-600 rounded-lg text-sm font-medium text-mono-300 hover:bg-mono-800 hover:border-mono-400 transition-colors cursor-pointer"
+        class="flex items-center space-x-2 px-4 py-2.5 bg-transparent border border-mono-600 text-sm font-medium text-mono-300 hover:bg-mono-800 hover:border-mono-400 transition-colors cursor-pointer"
       >
         <i class="fa-solid {action.icon} text-mono-400"></i>
         <span>{action.label}</span>

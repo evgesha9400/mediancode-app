@@ -62,7 +62,7 @@
   <div class="relative">
     {#if selectedObject}
       <!-- Display selected object with clear button -->
-      <div class="w-full px-3 py-1.5 border border-mono-600 rounded-md bg-mono-900 flex items-center justify-between">
+      <div class="w-full px-3 py-1.5 border border-mono-600 bg-mono-900 flex items-center justify-between">
         <div class="flex items-center space-x-2">
           <i class="fa-solid fa-cube text-mono-400 text-xs"></i>
           <span class="font-mono text-sm text-mono-300">{selectedObject.name}</span>
@@ -85,14 +85,14 @@
         onfocus={handleFocus}
         onblur={handleBlur}
         placeholder={placeholder}
-        class="w-full px-3 py-1.5 border border-mono-600 rounded-md bg-mono-900 text-mono-100 focus:ring-2 focus:ring-green-400 focus:border-transparent text-sm pr-8"
+        class="w-full px-3 py-1.5 border border-mono-600 bg-mono-900 text-mono-100 focus:ring-2 focus:ring-green-400 focus:border-transparent text-sm pr-8"
       />
       <i class="fa-solid fa-search absolute right-3 top-1/2 -translate-y-1/2 text-mono-400 text-xs pointer-events-none"></i>
     {/if}
   </div>
 
   {#if dropdownOpen}
-    <div class="absolute z-10 w-full mt-1 bg-mono-900 border border-mono-700 rounded-md shadow-lg shadow-black/30 max-h-60 overflow-auto">
+    <div class="absolute z-10 w-full mt-1 bg-mono-900 border border-mono-700 shadow-lg shadow-black/30 max-h-60 overflow-auto">
       {#if filteredObjects.length > 0}
         {#each filteredObjects as object (object.id)}
           <button

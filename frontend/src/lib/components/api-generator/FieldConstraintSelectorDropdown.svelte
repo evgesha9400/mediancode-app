@@ -75,13 +75,13 @@
       onclick={handleClick}
       onblur={handleBlur}
       placeholder={placeholder}
-      class="w-full px-3 py-1.5 border border-mono-600 rounded-md bg-mono-900 text-mono-100 focus:ring-2 focus:ring-green-400 focus:border-transparent text-sm pr-8"
+      class="w-full px-3 py-1.5 border border-mono-600 bg-mono-900 text-mono-100 focus:ring-2 focus:ring-green-400 focus:border-transparent text-sm pr-8"
     />
     <i class="fa-solid fa-search absolute right-3 top-1/2 -translate-y-1/2 text-mono-400 text-xs pointer-events-none"></i>
   </div>
 
   {#if dropdownOpen && filteredFieldConstraints.length > 0}
-    <div class="absolute z-10 w-full mt-1 bg-mono-900 border border-mono-700 rounded-md shadow-lg shadow-black/30 max-h-60 overflow-auto">
+    <div class="absolute z-10 w-full mt-1 bg-mono-900 border border-mono-700 shadow-lg shadow-black/30 max-h-60 overflow-auto">
       {#each filteredFieldConstraints as fc (fc.name)}
         <button
           type="button"
@@ -105,13 +105,13 @@
   {/if}
 
   {#if dropdownOpen && filteredFieldConstraints.length === 0 && searchQuery.trim()}
-    <div class="absolute z-10 w-full mt-1 bg-mono-900 border border-mono-700 rounded-md shadow-lg shadow-black/30">
+    <div class="absolute z-10 w-full mt-1 bg-mono-900 border border-mono-700 shadow-lg shadow-black/30">
       <div class="px-3 py-2 text-sm text-mono-400">
         No field constraints found matching "{searchQuery}"
       </div>
     </div>
   {:else if dropdownOpen && filteredFieldConstraints.length === 0 && !searchQuery.trim()}
-    <div class="absolute z-10 w-full mt-1 bg-mono-900 border border-mono-700 rounded-md shadow-lg shadow-black/30">
+    <div class="absolute z-10 w-full mt-1 bg-mono-900 border border-mono-700 shadow-lg shadow-black/30">
       <div class="px-3 py-2 text-sm text-mono-400">
         All available field constraints are already selected
       </div>

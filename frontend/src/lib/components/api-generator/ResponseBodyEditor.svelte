@@ -69,7 +69,7 @@
           <button
             type="button"
             onclick={() => onSetResponseShape(option.value)}
-            class="flex-1 px-1.5 py-1 text-sm border rounded-md transition-colors {responseShape === option.value
+            class="flex-1 px-1.5 py-1 text-sm border transition-colors {responseShape === option.value
               ? 'bg-green-400 text-mono-950 border-green-400 font-bold'
               : 'bg-mono-900 text-mono-300 border-mono-600 hover:border-mono-400'}"
           >

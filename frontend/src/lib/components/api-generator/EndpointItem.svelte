@@ -66,7 +66,7 @@
 <button
   type="button"
   onclick={onClick}
-  class="w-full border {colors.border} rounded-lg overflow-hidden {colors.row} flex items-center justify-between p-2 cursor-pointer hover:brightness-95 text-left transition-all"
+  class="w-full border {colors.border} overflow-hidden {colors.row} flex items-center justify-between p-2 cursor-pointer hover:brightness-95 text-left transition-all"
 >
   <div class="flex items-center space-x-3">
     <span class="w-[70px] text-center flex-shrink-0 px-2 py-1 text-xs font-medium rounded {colors.badge}">
