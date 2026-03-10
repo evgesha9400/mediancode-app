@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { untrack } from 'svelte';
   import { Modal } from '$lib/components/modal';
   import { generateApi, type GenerateOptions } from '$lib/api/apis';
 
@@ -23,6 +24,17 @@
   let generateSwagger = $state(true);
   let databaseEnabled = $state(false);
   let databaseSeedData = $state(true);
+
+  // Mutual exclusivity: database + response placeholders cannot both be enabled
+  let savedResponsePlaceholders = true;
+  $effect(() => {
+    if (databaseEnabled) {
+      savedResponsePlaceholders = untrack(() => responsePlaceholders);
+      responsePlaceholders = false;
+    } else {
+      responsePlaceholders = savedResponsePlaceholders;
+    }
+  });
 
   async function handleGenerate() {
     generating = true;
@@ -95,12 +107,20 @@
           {/if}
         </div>
 
-        <!-- Response placeholders -->
-        <label class="flex items-center space-x-2 cursor-pointer">
-          <input type="checkbox" bind:checked={responsePlaceholders}
-            class="w-4 h-4 text-green-400 border-mono-600 rounded focus:ring-2 focus:ring-green-400 bg-mono-900" />
-          <span class="text-xs text-mono-300">Generate response placeholders</span>
-        </label>
+        <!-- Response placeholders (disabled when database is enabled) -->
+        <div class="relative group">
+          <label class="flex items-center space-x-2 {databaseEnabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}">
+            <input type="checkbox" bind:checked={responsePlaceholders}
+              disabled={databaseEnabled}
+              class="w-4 h-4 text-green-400 border-mono-600 rounded focus:ring-2 focus:ring-green-400 bg-mono-900" />
+            <span class="text-xs text-mono-300">Generate response placeholders</span>
+          </label>
+          {#if databaseEnabled}
+            <div class="absolute left-0 -top-8 hidden group-hover:block bg-mono-700 text-mono-100 text-xs px-2 py-1 whitespace-nowrap z-10">
+              Not available when database is enabled
+            </div>
+          {/if}
+        </div>
 
         <!-- Format code -->
         <label class="flex items-center space-x-2 cursor-pointer">
