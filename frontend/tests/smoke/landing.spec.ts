@@ -22,11 +22,8 @@ test.describe('Landing Page - Smoke Tests', () => {
 		// Hero heading should be visible
 		await expect(landingPage.heroHeading).toBeVisible();
 
-		// Email input should be present
-		await expect(landingPage.heroEmailInput).toBeVisible();
-
-		// Submit button should be present
-		await expect(landingPage.heroSubmitButton).toBeVisible();
+		// Sign-up link should be present
+		await expect(landingPage.heroSignUpLink).toBeVisible();
 	});
 
 	test('should display navigation elements', async () => {
@@ -45,8 +42,8 @@ test.describe('Landing Page - Smoke Tests', () => {
 		// How it works section
 		await expect(landingPage.howItWorksSection).toBeVisible();
 
-		// Benefits section
-		await expect(landingPage.benefitsSection).toBeVisible();
+		// Philosophy section
+		await expect(landingPage.philosophySection).toBeVisible();
 
 		// CTA section
 		await expect(landingPage.ctaSection).toBeVisible();

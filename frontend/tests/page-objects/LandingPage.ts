@@ -22,9 +22,7 @@ export class LandingPage {
 	// Hero section
 	readonly heroSection: Locator;
 	readonly heroHeading: Locator;
-	readonly heroEmailInput: Locator;
-	readonly heroSubmitButton: Locator;
-	readonly heroSuccessMessage: Locator;
+	readonly heroSignUpLink: Locator;
 
 	// Features section
 	readonly featuresSection: Locator;
@@ -34,15 +32,12 @@ export class LandingPage {
 	readonly howItWorksSection: Locator;
 	readonly stepCards: Locator;
 
-	// Benefits section
-	readonly benefitsSection: Locator;
-	readonly benefitItems: Locator;
+	// Philosophy section
+	readonly philosophySection: Locator;
 
 	// CTA section
 	readonly ctaSection: Locator;
-	readonly ctaEmailInput: Locator;
-	readonly ctaSubmitButton: Locator;
-	readonly ctaSuccessMessage: Locator;
+	readonly ctaSignUpLink: Locator;
 
 	// Footer
 	readonly footer: Locator;
@@ -60,27 +55,22 @@ export class LandingPage {
 		// Hero section - scoped to #hero
 		this.heroSection = page.locator('#hero');
 		this.heroHeading = this.heroSection.locator('h1');
-		this.heroEmailInput = this.heroSection.locator('input[type="email"]');
-		this.heroSubmitButton = this.heroSection.locator('button[type="submit"]');
-		this.heroSuccessMessage = this.heroSection.locator('text=Thanks! We\'ll notify you when we launch.');
+		this.heroSignUpLink = this.heroSection.locator('a[href="/signup"]');
 
 		// Features section - use #features ID
 		this.featuresSection = page.locator('#features');
-		this.featureCards = this.featuresSection.locator('.bg-white.rounded-lg.border');
+		this.featureCards = this.featuresSection.locator('.bg-white.rounded-xl.border');
 
 		// How it works section - use #how-it-works ID
 		this.howItWorksSection = page.locator('#how-it-works');
 		this.stepCards = this.howItWorksSection.locator('.text-center');
 
-		// Benefits section - use #benefits ID
-		this.benefitsSection = page.locator('#benefits');
-		this.benefitItems = this.benefitsSection.locator('.flex.items-start');
+		// Philosophy section - use #philosophy ID
+		this.philosophySection = page.locator('#philosophy');
 
 		// CTA section - scoped to #final-cta
 		this.ctaSection = page.locator('#final-cta');
-		this.ctaEmailInput = this.ctaSection.locator('input[type="email"]');
-		this.ctaSubmitButton = this.ctaSection.locator('button[type="submit"]');
-		this.ctaSuccessMessage = this.ctaSection.locator('text=Thanks! We\'ll notify you when we launch.');
+		this.ctaSignUpLink = this.ctaSection.locator('a[href="/signup"]');
 
 		// Footer - use #footer ID
 		this.footer = page.locator('#footer');
@@ -91,22 +81,6 @@ export class LandingPage {
 	 */
 	async goto() {
 		await this.page.goto('/');
-	}
-
-	/**
-	 * Submit the hero email form
-	 */
-	async submitHeroForm(email: string) {
-		await this.heroEmailInput.fill(email);
-		await this.heroSubmitButton.click();
-	}
-
-	/**
-	 * Submit the CTA email form
-	 */
-	async submitCTAForm(email: string) {
-		await this.ctaEmailInput.fill(email);
-		await this.ctaSubmitButton.click();
 	}
 
 	/**
@@ -144,11 +118,11 @@ export class LandingPage {
 	/**
 	 * Scroll to a specific section
 	 */
-	async scrollToSection(section: 'features' | 'how-it-works' | 'benefits' | 'cta') {
+	async scrollToSection(section: 'features' | 'how-it-works' | 'philosophy' | 'cta') {
 		const sectionMap = {
 			'features': this.featuresSection,
 			'how-it-works': this.howItWorksSection,
-			'benefits': this.benefitsSection,
+			'philosophy': this.philosophySection,
 			'cta': this.ctaSection
 		};
 
