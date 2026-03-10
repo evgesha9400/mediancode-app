@@ -5,6 +5,6 @@
 @tailwind utilities;
 
 body {
-  font-family: 'Inter', sans-serif;
-  color-scheme: light;
+  font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  color-scheme: dark;
 }

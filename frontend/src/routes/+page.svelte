@@ -20,12 +20,6 @@
 	}
 </script>
 
-<svelte:head>
-	<link rel="preconnect" href="https://fonts.googleapis.com">
-	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="anonymous">
-	<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:ital,wght@0,100..800;1,100..800&display=swap" rel="stylesheet">
-</svelte:head>
-
 <!-- Header -->
 <header id="header" class="bg-mono-950 border-b-2 border-mono-700 sticky top-0 z-50">
 	<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -436,11 +430,6 @@
 </footer>
 
 <style>
-	/* JetBrains Mono override for this page */
-	:global(.font-mono) {
-		font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace !important;
-	}
-
 	/* Smooth scrolling for anchor links */
 	:global(html) {
 		scroll-behavior: smooth;

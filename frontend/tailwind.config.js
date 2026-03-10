@@ -5,6 +5,7 @@ export default {
     extend: {
       fontFamily: {
         'inter': ['Inter', 'sans-serif'],
+        'mono': ['JetBrains Mono', 'ui-monospace', 'SFMono-Regular', 'Menlo', 'Monaco', 'Consolas', 'monospace'],
       },
       colors: {
         'mono-50': '#fafafa',
@@ -24,6 +25,7 @@ export default {
         'red-600': '#dc2626',
         'red-700': '#b91c1c',
         'red-800': '#991b1b',
+        'green-400': '#4ade80',
       }
     }
   },
