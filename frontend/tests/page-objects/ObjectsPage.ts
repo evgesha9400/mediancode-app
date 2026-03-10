@@ -318,7 +318,7 @@ export class ObjectsPage {
 	async getFieldCount(): Promise<number> {
 		// Use more specific locator to match only the outer field row container
 		// (not the nested label which also has .flex.items-center.space-x-2)
-		const fieldRows = this.page.locator('.flex.items-center.space-x-2.p-2.bg-white.rounded.border');
+		const fieldRows = this.page.locator('.flex.items-center.space-x-2.p-2.bg-mono-900.rounded.border');
 		return await fieldRows.count();
 	}
 

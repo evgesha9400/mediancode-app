@@ -72,7 +72,7 @@ export class NamespacesPage {
 
 		// Filter
 		this.filterButton = page.locator('button').filter({ has: page.locator('i.fa-filter') });
-		this.filterPanel = page.locator('.bg-white.rounded-lg.shadow-xl.border');
+		this.filterPanel = page.locator('.bg-mono-900.rounded-lg.shadow-xl.border');
 		this.clearFiltersButton = page.getByRole('button', { name: /clear all/i });
 
 		// Table
@@ -171,7 +171,7 @@ export class NamespacesPage {
 		for (let i = 0; i < count; i++) {
 			const row = this.tableRows.nth(i);
 			const nameCell = row.locator('td').first();
-			const nameSpan = nameCell.locator('.text-mono-900.font-medium');
+			const nameSpan = nameCell.locator('.text-mono-100.font-medium');
 			const name = await nameSpan.textContent();
 			if (name) names.push(name.trim());
 		}

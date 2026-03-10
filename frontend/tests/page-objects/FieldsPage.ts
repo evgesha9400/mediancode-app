@@ -82,7 +82,7 @@ export class FieldsPage {
 
 		// Filter
 		this.filterButton = page.locator('button').filter({ has: page.locator('i.fa-filter') });
-		this.filterPanel = page.locator('.bg-white.rounded-lg.shadow-xl.border');
+		this.filterPanel = page.locator('.bg-mono-900.rounded-lg.shadow-xl.border');
 		this.clearFiltersButton = page.getByRole('button', { name: /clear all/i });
 
 		// Table
@@ -111,7 +111,7 @@ export class FieldsPage {
 		this.constraintSelectorInput = page.getByPlaceholder('Add field constraint...');
 		this.constraintDropdownOptions = this.constraintSelectorInput.locator('..').locator('..').locator('.absolute.z-10 button');
 		// Individual field constraint rows - identified by having a "Remove field constraint" button
-		this.constraintRows = page.locator('.flex.items-center.space-x-2.p-2.bg-white').filter({ has: page.getByRole('button', { name: 'Remove field constraint' }) });
+		this.constraintRows = page.locator('.flex.items-center.space-x-2.p-2.bg-mono-900').filter({ has: page.getByRole('button', { name: 'Remove field constraint' }) });
 
 		// Drawer actions
 		this.saveButton = page.getByRole('button', { name: 'Save', exact: true });

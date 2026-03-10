@@ -138,7 +138,7 @@ export class ApisPage {
 		for (let i = 0; i < count; i++) {
 			const row = this.tableRows.nth(i);
 			const titleCell = row.locator('td').first();
-			const titleDiv = titleCell.locator('.text-mono-900.font-medium');
+			const titleDiv = titleCell.locator('.text-mono-100.font-medium');
 			const title = await titleDiv.textContent();
 			if (title) titles.push(title.trim());
 		}

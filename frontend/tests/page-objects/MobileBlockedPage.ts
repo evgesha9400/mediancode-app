@@ -21,8 +21,8 @@ export class MobileBlockedPage {
 		// Mobile blocked elements
 		this.heading = page.locator('h1');
 		this.message = page.locator('p').first();
-		// Target the specific SVG icon in the rounded bg-mono-100 container
-		this.icon = page.locator('.bg-mono-100.rounded-full svg');
+		// Target the specific SVG icon in the rounded container
+		this.icon = page.locator('.bg-mono-800.rounded-full svg');
 	}
 
 	/**
