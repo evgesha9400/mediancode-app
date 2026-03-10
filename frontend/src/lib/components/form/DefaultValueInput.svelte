@@ -65,7 +65,7 @@
 
 <div class="relative">
   <div
-    class="flex items-center w-full border border-mono-600 rounded-md bg-mono-900 focus-within:ring-2 focus-within:ring-green-400 focus-within:border-transparent overflow-hidden"
+    class="flex items-center w-full border border-mono-600 bg-mono-900 focus-within:ring-2 focus-within:ring-green-400 focus-within:border-transparent overflow-hidden"
   >
     {#if isPreset}
       <!-- Preset selected: show as a pill with clear button -->
@@ -108,12 +108,12 @@
 
   <!-- Dropdown options -->
   {#if dropdownOpen}
-    <div class="absolute z-10 w-full mt-1 bg-mono-900 border border-mono-600 rounded-md shadow-lg shadow-black/30">
+    <div class="absolute z-10 w-full mt-1 bg-mono-900 border border-mono-600 shadow-lg shadow-black/30">
       {#each presetOptions as option}
         <button
           type="button"
           onclick={() => selectPreset(option)}
-          class="w-full px-3 py-2 text-left text-sm hover:bg-mono-800 transition-colors {value === option ? 'bg-mono-800 text-mono-100 font-medium' : 'text-mono-300'} first:rounded-t-md last:rounded-b-md"
+          class="w-full px-3 py-2 text-left text-sm hover:bg-mono-800 transition-colors {value === option ? 'bg-mono-800 text-mono-100 font-medium' : 'text-mono-300'}"
         >
           {option}
         </button>

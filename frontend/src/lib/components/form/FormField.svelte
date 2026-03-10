@@ -34,7 +34,7 @@
 		bind:value
 		{placeholder}
 		{disabled}
-		class="w-full px-3 py-1.5 text-sm border border-mono-600 rounded-md bg-mono-900 text-mono-100 focus:ring-2 focus:ring-green-400 focus:border-transparent {error ? 'border-red-500' : ''} {disabled ? 'bg-mono-800 cursor-not-allowed' : ''}"
+		class="w-full px-3 py-1.5 text-sm border border-mono-600 bg-mono-900 text-mono-100 focus:ring-2 focus:ring-green-400 focus:border-transparent {error ? 'border-red-500' : ''} {disabled ? 'bg-mono-800 cursor-not-allowed' : ''}"
 	/>
 	{#if error}
 		<p class="text-xs text-red-500 mt-1">{error}</p>

@@ -147,7 +147,7 @@
       type="text"
       value={namespaceName}
       disabled
-      class="w-full px-3 py-1.5 text-sm border border-mono-600 rounded-md bg-mono-800 text-mono-400 cursor-not-allowed"
+      class="w-full px-3 py-1.5 text-sm border border-mono-600 bg-mono-800 text-mono-400 cursor-not-allowed"
     />
     <p class="text-xs text-mono-400 mt-1">Namespace cannot be changed after creation</p>
   </div>
@@ -169,14 +169,14 @@
         <button
           type="button"
           onclick={() => handleContainerChangeInternal(null)}
-          class="px-3 py-1.5 text-sm rounded-md border transition-colors {editedItem.container === null ? 'bg-green-400 text-mono-950 font-bold border-green-400' : 'bg-mono-900 text-mono-400 border-mono-600 hover:border-mono-500'}"
+          class="px-3 py-1.5 text-sm border transition-colors {editedItem.container === null ? 'bg-green-400 text-mono-950 font-bold border-green-400' : 'bg-mono-900 text-mono-400 border-mono-600 hover:border-mono-500'}"
         >
           None
         </button>
         <button
           type="button"
           onclick={() => handleContainerChangeInternal(CONTAINER_VALUES[0])}
-          class="px-3 py-1.5 text-sm rounded-md border transition-colors {editedItem.container === CONTAINER_VALUES[0] ? 'bg-green-400 text-mono-950 font-bold border-green-400' : 'bg-mono-900 text-mono-400 border-mono-600 hover:border-mono-500'}"
+          class="px-3 py-1.5 text-sm border transition-colors {editedItem.container === CONTAINER_VALUES[0] ? 'bg-green-400 text-mono-950 font-bold border-green-400' : 'bg-mono-900 text-mono-400 border-mono-600 hover:border-mono-500'}"
         >
           List
         </button>
@@ -205,7 +205,7 @@
       id="fields-description"
       bind:value={editedItem.description}
       rows="3"
-      class="w-full px-3 py-1.5 text-sm border border-mono-600 rounded-md bg-mono-900 text-mono-100 focus:ring-2 focus:ring-green-400 focus:border-transparent"
+      class="w-full px-3 py-1.5 text-sm border border-mono-600 bg-mono-900 text-mono-100 focus:ring-2 focus:ring-green-400 focus:border-transparent"
     ></textarea>
   </div>
 
@@ -232,7 +232,7 @@
         <button
           type="button"
           onclick={openValidatorGallery}
-          class="w-full px-3 py-2 border border-dashed border-mono-600 rounded-md text-sm text-mono-400 hover:border-mono-500 hover:text-mono-300 transition-colors cursor-pointer"
+          class="w-full px-3 py-2 border border-dashed border-mono-600 text-sm text-mono-400 hover:border-mono-500 hover:text-mono-300 transition-colors cursor-pointer"
         >
           <i class="fa-solid fa-plus mr-1"></i> Add Validator
         </button>
@@ -298,7 +298,7 @@
       <h3 class="text-sm text-mono-300 mb-2 font-medium">Used In APIs ({editedItem.usedInApis.length})</h3>
       <div class="space-y-2">
         {#each editedItem.usedInApis as api}
-          <div class="flex items-center justify-between p-3 bg-mono-800 rounded-md">
+          <div class="flex items-center justify-between p-3 bg-mono-800">
             <div class="flex items-center space-x-2">
               <i class="fa-solid fa-code text-mono-400"></i>
               <span class="text-sm text-mono-100">{api}</span>
