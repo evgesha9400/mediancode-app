@@ -72,7 +72,7 @@
       <button
         type="button"
         onclick={workflow.openCreate}
-        class="px-4 py-2 bg-green-400 text-mono-950 font-bold rounded-md flex items-center space-x-2 hover:bg-green-300 cursor-pointer transition-colors"
+        class="px-4 py-2 bg-green-400 text-mono-950 font-bold tracking-wide flex items-center space-x-2 hover:bg-green-300 cursor-pointer transition-colors"
       >
         <i class="fa-solid fa-plus"></i>
         <span>Add Namespace</span>
@@ -167,7 +167,7 @@
   {#if workflow.editedItem}
     <div class="space-y-4">
       {#if isReadOnly}
-        <div class="flex items-center space-x-2 px-3 py-2 bg-mono-950 border border-mono-700 rounded-md">
+        <div class="flex items-center space-x-2 px-3 py-2 bg-mono-950 border border-mono-700">
           <i class="fa-solid fa-lock text-mono-400 text-sm"></i>
           <span class="text-sm text-mono-400">System namespace — read-only</span>
         </div>
@@ -191,7 +191,7 @@
           disabled={isReadOnly}
           rows="3"
           placeholder={isCreating ? 'Optional description...' : ''}
-          class="w-full px-3 py-1.5 text-sm border border-mono-600 rounded-md focus:ring-2 focus:ring-green-400 focus:border-transparent {isReadOnly ? 'bg-mono-800 cursor-not-allowed' : ''}"
+          class="w-full px-3 py-1.5 text-sm border border-mono-600 focus:ring-2 focus:ring-green-400 focus:border-transparent {isReadOnly ? 'bg-mono-800 cursor-not-allowed' : ''}"
         ></textarea>
       </div>
 
@@ -214,7 +214,7 @@
         {@const details = getNamespaceEntityDetails(workflow.editedItem.id)}
         <div>
           <h3 class="text-sm text-mono-300 mb-2 font-medium">Contents</h3>
-          <div class="bg-mono-950 rounded-md p-3 space-y-2">
+          <div class="bg-mono-950 p-3 space-y-2">
             <div class="flex justify-between text-sm">
               <span class="text-mono-400">Fields</span>
               <span class="text-mono-100 font-medium">{details.fields}</span>
@@ -293,7 +293,7 @@
         type="button"
         onclick={workflow.handleSave}
         disabled={workflow.isSaving}
-        class="w-full px-4 py-2 rounded-md transition-colors font-medium {workflow.isSaving ? 'bg-mono-700 text-mono-500 cursor-not-allowed' : 'bg-green-400 text-mono-950 hover:bg-green-300 font-bold cursor-pointer'}"
+        class="w-full px-4 py-2 transition-colors font-medium {workflow.isSaving ? 'bg-mono-700 text-mono-500 cursor-not-allowed' : 'bg-green-400 text-mono-950 hover:bg-green-300 font-bold tracking-wide cursor-pointer'}"
       >
         {#if workflow.isSaving}
           Saving...
@@ -305,7 +305,7 @@
     <button
       type="button"
       onclick={workflow.closeDrawer}
-      class="w-full px-4 py-2 border border-mono-600 text-mono-300 rounded-md hover:bg-mono-950 transition-colors font-medium"
+      class="w-full px-4 py-2 border border-mono-600 text-mono-300 hover:bg-mono-950 transition-colors font-medium"
     >
       Close
     </button>

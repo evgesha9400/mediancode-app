@@ -67,7 +67,7 @@
       <button
         type="button"
         onclick={workflow.openCreate}
-        class="px-4 py-2 bg-green-400 text-mono-950 font-bold rounded-md flex items-center space-x-2 hover:bg-green-300 cursor-pointer transition-colors"
+        class="px-4 py-2 bg-green-400 text-mono-950 font-bold tracking-wide flex items-center space-x-2 hover:bg-green-300 cursor-pointer transition-colors"
       >
         <i class="fa-solid fa-plus"></i>
         <span>New API</span>
@@ -170,7 +170,7 @@
           type="text"
           value={activeNamespaceName}
           disabled
-          class="w-full px-3 py-1.5 text-sm border border-mono-600 rounded-md bg-mono-950 text-mono-400 cursor-not-allowed"
+          class="w-full px-3 py-1.5 text-sm border border-mono-600 bg-mono-950 text-mono-400 cursor-not-allowed"
         />
         <p class="text-xs text-mono-400 mt-1">Uses the currently active namespace</p>
       </div>
@@ -198,7 +198,7 @@
           bind:value={workflow.editedItem.description}
           rows="3"
           placeholder="Describe what this API does..."
-          class="w-full px-3 py-1.5 text-sm border border-mono-600 rounded-md focus:ring-2 focus:ring-green-400 focus:border-transparent"
+          class="w-full px-3 py-1.5 text-sm border border-mono-600 focus:ring-2 focus:ring-green-400 focus:border-transparent"
         ></textarea>
       </div>
 

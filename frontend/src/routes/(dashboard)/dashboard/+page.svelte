@@ -122,7 +122,7 @@
             {/each}
           </div>
         {:else}
-          <div class="bg-mono-900 rounded-lg border border-mono-700 p-6 text-center">
+          <div class="bg-mono-900 border-2 border-mono-700 p-6 text-center">
             <i class="fa-solid fa-code text-mono-600 text-2xl mb-2 block"></i>
             <p class="text-sm text-mono-400">No APIs yet. Create your first API to get started.</p>
           </div>

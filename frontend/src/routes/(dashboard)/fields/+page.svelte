@@ -95,7 +95,7 @@
       <button
         type="button"
         onclick={workflow.openCreate}
-        class="px-4 py-2 bg-green-400 text-mono-950 font-bold rounded-md flex items-center space-x-2 hover:bg-green-300 cursor-pointer transition-colors"
+        class="px-4 py-2 bg-green-400 text-mono-950 font-bold tracking-wide flex items-center space-x-2 hover:bg-green-300 cursor-pointer transition-colors"
       >
         <i class="fa-solid fa-plus"></i>
         <span>Add Field</span>

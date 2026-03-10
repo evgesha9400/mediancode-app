@@ -217,7 +217,7 @@
   {#if selectedFieldConstraint}
     <div class="space-y-6">
       {#if isSystemItem}
-        <div class="flex items-center space-x-2 px-3 py-2 bg-mono-950 border border-mono-700 rounded-md">
+        <div class="flex items-center space-x-2 px-3 py-2 bg-mono-950 border border-mono-700">
           <i class="fa-solid fa-lock text-mono-400 text-sm"></i>
           <span class="text-sm text-mono-400">System field constraint — read-only</span>
         </div>
@@ -262,7 +262,7 @@
               <button
                 type="button"
                 onclick={() => navigateToField(field.fieldId)}
-                class="w-full flex items-center justify-between p-3 bg-mono-950 rounded-md hover:bg-mono-800 cursor-pointer transition-colors group"
+                class="w-full flex items-center justify-between p-3 bg-mono-950 hover:bg-mono-800 cursor-pointer transition-colors group"
               >
                 <div class="flex items-center space-x-2">
                   <i class="fa-solid fa-table-list text-mono-400 group-hover:text-mono-300 transition-colors"></i>

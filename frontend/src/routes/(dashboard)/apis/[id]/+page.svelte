@@ -274,7 +274,7 @@
       <p class="text-mono-400 mb-4">The API you're looking for doesn't exist or has been deleted.</p>
       <button
         onclick={() => goto('/apis')}
-        class="px-4 py-2 bg-green-400 text-mono-950 font-bold rounded-md hover:bg-green-300"
+        class="px-4 py-2 bg-green-400 text-mono-950 font-bold tracking-wide hover:bg-green-300"
       >
         Back to APIs
       </button>
@@ -329,21 +329,21 @@
       <div class="flex items-center space-x-2">
         <button
           onclick={() => generateModalOpen = true}
-          class="px-4 py-2 bg-green-400 text-mono-950 font-bold rounded-md flex items-center space-x-2 hover:bg-green-300 cursor-pointer transition-colors"
+          class="px-4 py-2 bg-green-400 text-mono-950 font-bold tracking-wide flex items-center space-x-2 hover:bg-green-300 cursor-pointer transition-colors"
         >
           <i class="fa-solid fa-code"></i>
           <span>Generate Code</span>
         </button>
         <button
           onclick={apiState.handleAddEndpoint}
-          class="px-4 py-2 border border-mono-600 text-mono-300 rounded-md flex items-center space-x-2 hover:bg-mono-950 cursor-pointer transition-colors"
+          class="px-4 py-2 border border-mono-600 text-mono-300 flex items-center space-x-2 hover:bg-mono-950 cursor-pointer transition-colors"
         >
           <i class="fa-solid fa-plus"></i>
           <span>Add Endpoint</span>
         </button>
         <button
           onclick={apiState.openEditDrawer}
-          class="px-4 py-2 border border-mono-600 text-mono-300 rounded-md flex items-center space-x-2 hover:bg-mono-950 cursor-pointer transition-colors"
+          class="px-4 py-2 border border-mono-600 text-mono-300 flex items-center space-x-2 hover:bg-mono-950 cursor-pointer transition-colors"
         >
           <i class="fa-solid fa-pen-to-square"></i>
           <span>Edit API</span>
@@ -356,7 +356,7 @@
   <div class="flex-1 overflow-auto">
     <div class="max-w-7xl mx-auto p-6">
       {#if apiState.endpoints.length === 0}
-        <div class="bg-mono-900 rounded-lg border border-mono-700">
+        <div class="bg-mono-900 border-2 border-mono-700">
           <div class="text-center py-8 text-mono-400">
             <i class="fa-solid fa-route text-2xl mb-2 text-mono-600"></i>
             <p class="text-sm">No endpoints yet. Create your first API endpoint.</p>
@@ -364,7 +364,7 @@
         </div>
       {:else}
         <!-- Swagger-style flush tag sections -->
-        <div class="rounded-lg overflow-hidden border border-mono-700">
+        <div class="overflow-hidden border-2 border-mono-700">
           {#each apiState.allTagSections as section, i (section.tag)}
             {@const isExpanded = apiState.expandedTags.has(section.tag)}
             <div class="{i < apiState.allTagSections.length - 1 ? 'border-b border-mono-700' : ''}">
@@ -410,7 +410,7 @@
           type="text"
           value={namespaceName}
           disabled
-          class="w-full px-3 py-1.5 text-sm border border-mono-600 rounded-md bg-mono-950 text-mono-400 cursor-not-allowed"
+          class="w-full px-3 py-1.5 text-sm border border-mono-600 bg-mono-950 text-mono-400 cursor-not-allowed"
         />
         <p class="text-xs text-mono-400 mt-1">Namespace cannot be changed after creation</p>
       </div>
@@ -440,7 +440,7 @@
           bind:value={apiState.editForm.description}
           rows="3"
           placeholder="Describe what this API does..."
-          class="w-full px-3 py-1.5 text-sm border border-mono-600 rounded-md focus:ring-2 focus:ring-green-400 focus:border-transparent"
+          class="w-full px-3 py-1.5 text-sm border border-mono-600 focus:ring-2 focus:ring-green-400 focus:border-transparent"
         ></textarea>
       </div>
 
@@ -468,7 +468,7 @@
         type="button"
         onclick={apiState.handleEditSave}
         disabled={!apiState.hasEditChanges || apiState.isSaving}
-        class="w-full px-4 py-2 rounded-md transition-colors font-medium {apiState.hasEditChanges && !apiState.isSaving ? 'bg-green-400 text-mono-950 hover:bg-green-300 font-bold cursor-pointer' : 'bg-mono-700 text-mono-500 cursor-not-allowed'}"
+        class="w-full px-4 py-2 transition-colors font-medium {apiState.hasEditChanges && !apiState.isSaving ? 'bg-green-400 text-mono-950 hover:bg-green-300 font-bold tracking-wide cursor-pointer' : 'bg-mono-700 text-mono-500 cursor-not-allowed'}"
       >
         {#if apiState.isSaving}
           <i class="fa-solid fa-spinner fa-spin mr-2"></i>
@@ -481,27 +481,27 @@
         type="button"
         onclick={apiState.handleEditUndo}
         disabled={!apiState.hasEditChanges}
-        class="w-full px-4 py-2 border rounded-md transition-colors font-medium {apiState.hasEditChanges ? 'border-mono-600 text-mono-300 hover:bg-mono-950 cursor-pointer' : 'border-mono-700 text-mono-400 cursor-not-allowed bg-mono-950'}"
+        class="w-full px-4 py-2 border transition-colors font-medium {apiState.hasEditChanges ? 'border-mono-600 text-mono-300 hover:bg-mono-950 cursor-pointer' : 'border-mono-700 text-mono-400 cursor-not-allowed bg-mono-950'}"
       >
         Undo
       </button>
       <button
         type="button"
         onclick={apiState.handleEditDeleteClick}
-        class="w-full px-4 py-2 bg-mono-800 text-red-400 rounded-md hover:bg-red-400/10 cursor-pointer transition-colors font-medium flex items-center justify-center space-x-2"
+        class="w-full px-4 py-2 bg-mono-800 text-red-400 hover:bg-red-400/10 cursor-pointer transition-colors font-medium flex items-center justify-center space-x-2"
       >
         <i class="fa-solid fa-xmark"></i>
         <span>Delete API</span>
       </button>
     {:else}
-      <div class="bg-red-400/10 border border-red-400/30 rounded-md p-3">
+      <div class="bg-red-400/10 border border-red-400/30 p-3">
         <p class="text-sm text-red-400 mb-2">Delete this API and all its endpoints?</p>
         <div class="flex space-x-2">
           <button
             type="button"
             onclick={apiState.handleDeleteApi}
             disabled={apiState.isSaving}
-            class="flex-1 px-3 py-1.5 rounded-md text-sm font-medium transition-colors {apiState.isSaving ? 'bg-red-400 text-white cursor-not-allowed' : 'bg-red-600 text-white hover:bg-red-700 cursor-pointer'}"
+            class="flex-1 px-3 py-1.5 text-sm font-medium transition-colors {apiState.isSaving ? 'bg-red-400 text-white cursor-not-allowed' : 'bg-red-600 text-white hover:bg-red-700 cursor-pointer'}"
           >
             {#if apiState.isSaving}
               <i class="fa-solid fa-spinner fa-spin mr-1"></i>
@@ -514,7 +514,7 @@
             type="button"
             onclick={apiState.cancelEditDelete}
             disabled={apiState.isSaving}
-            class="flex-1 px-3 py-1.5 border border-mono-600 text-mono-300 rounded-md hover:bg-mono-950 text-sm font-medium"
+            class="flex-1 px-3 py-1.5 border border-mono-600 text-mono-300 hover:bg-mono-950 text-sm font-medium"
           >
             Cancel
           </button>
@@ -546,7 +546,7 @@
                     }
                   }}
                   placeholder="Type or select tag..."
-                  class="w-full px-3 py-1.5 border border-mono-600 rounded-md focus:ring-2 focus:ring-green-400 focus:border-transparent text-sm pr-8"
+                  class="w-full px-3 py-1.5 border border-mono-600 focus:ring-2 focus:ring-green-400 focus:border-transparent text-sm pr-8"
                 />
                 {#if apiState.tagInputValue}
                   <button
@@ -562,7 +562,7 @@
                 {/if}
               </div>
               {#if apiState.tagDropdownOpen}
-                <div class="absolute z-10 w-full mt-1 bg-mono-900 border border-mono-600 rounded-md shadow-lg shadow-black/30 max-h-48 overflow-auto">
+                <div class="absolute z-10 w-full mt-1 bg-mono-900 border border-mono-600 shadow-lg shadow-black/30 max-h-48 overflow-auto">
                   {#if apiState.tagInputValue.trim() && !exactTagMatch}
                     <button
                       type="button"
@@ -597,7 +597,7 @@
                 type="text"
                 bind:value={apiState.editedEndpoint.description}
                 placeholder="Add a description for this endpoint..."
-                class="w-full px-3 py-1.5 border border-mono-600 rounded-md focus:ring-2 focus:ring-green-400 focus:border-transparent text-sm"
+                class="w-full px-3 py-1.5 border border-mono-600 focus:ring-2 focus:ring-green-400 focus:border-transparent text-sm"
               />
             </div>
           </div>
@@ -611,13 +611,13 @@
             <div class="endpoint-method-path">
               <select
                 bind:value={apiState.editedEndpoint.method}
-                class="px-3 py-1.5 border border-mono-600 rounded-md focus:ring-2 focus:ring-green-400 focus:border-transparent text-sm"
+                class="px-3 py-1.5 border border-mono-600 focus:ring-2 focus:ring-green-400 focus:border-transparent text-sm"
               >
                 {#each HTTP_METHODS as method}
                   <option value={method}>{method}</option>
                 {/each}
               </select>
-              <div class="endpoint-path-input flex items-center border border-mono-600 rounded-md focus-within:ring-2 focus-within:ring-green-400 focus-within:border-transparent">
+              <div class="endpoint-path-input flex items-center border border-mono-600 focus-within:ring-2 focus-within:ring-green-400 focus-within:border-transparent">
                 <span class="px-3 py-1.5 text-sm font-mono text-mono-400 bg-mono-950 border-r border-mono-600">/</span>
                 <input
                   type="text"
@@ -697,7 +697,7 @@
               type="button"
               onclick={apiState.handleCreateEndpoint}
               disabled={!apiState.hasEndpointChanges || apiState.isSaving}
-              class="flex-1 px-4 py-2 rounded-md transition-colors font-medium flex items-center justify-center space-x-2 {apiState.hasEndpointChanges && !apiState.isSaving ? 'bg-green-400 text-mono-950 hover:bg-green-300 font-bold cursor-pointer' : 'bg-mono-700 text-mono-500 cursor-not-allowed'}"
+              class="flex-1 px-4 py-2 transition-colors font-medium flex items-center justify-center space-x-2 {apiState.hasEndpointChanges && !apiState.isSaving ? 'bg-green-400 text-mono-950 hover:bg-green-300 font-bold tracking-wide cursor-pointer' : 'bg-mono-700 text-mono-500 cursor-not-allowed'}"
             >
               {#if apiState.isSaving}
                 <i class="fa-solid fa-spinner fa-spin"></i>
@@ -710,7 +710,7 @@
               type="button"
               onclick={apiState.handleCancelCreate}
               disabled={apiState.isSaving}
-              class="flex-1 px-4 py-2 border border-mono-600 text-mono-300 rounded-md hover:bg-mono-950 cursor-pointer transition-colors font-medium flex items-center justify-center space-x-2"
+              class="flex-1 px-4 py-2 border border-mono-600 text-mono-300 hover:bg-mono-950 cursor-pointer transition-colors font-medium flex items-center justify-center space-x-2"
             >
               <span>Cancel</span>
             </button>
@@ -721,7 +721,7 @@
               type="button"
               onclick={apiState.handleSaveEndpoint}
               disabled={!apiState.hasEndpointChanges}
-              class="flex-1 px-4 py-2 rounded-md transition-colors font-medium flex items-center justify-center space-x-2 {apiState.hasEndpointChanges ? 'bg-green-400 text-mono-950 hover:bg-green-300 font-bold cursor-pointer' : 'bg-mono-700 text-mono-500 cursor-not-allowed'}"
+              class="flex-1 px-4 py-2 transition-colors font-medium flex items-center justify-center space-x-2 {apiState.hasEndpointChanges ? 'bg-green-400 text-mono-950 hover:bg-green-300 font-bold tracking-wide cursor-pointer' : 'bg-mono-700 text-mono-500 cursor-not-allowed'}"
             >
               <span>Save</span>
             </button>
@@ -729,41 +729,41 @@
               type="button"
               onclick={apiState.handleUndoEndpoint}
               disabled={!apiState.hasEndpointChanges}
-              class="flex-1 px-4 py-2 border rounded-md transition-colors font-medium flex items-center justify-center space-x-2 {apiState.hasEndpointChanges ? 'border-mono-600 text-mono-300 hover:bg-mono-950 cursor-pointer' : 'border-mono-700 text-mono-400 cursor-not-allowed bg-mono-950'}"
+              class="flex-1 px-4 py-2 border transition-colors font-medium flex items-center justify-center space-x-2 {apiState.hasEndpointChanges ? 'border-mono-600 text-mono-300 hover:bg-mono-950 cursor-pointer' : 'border-mono-700 text-mono-400 cursor-not-allowed bg-mono-950'}"
             >
               <span>Undo</span>
             </button>
             <button
               type="button"
               onclick={() => apiState.handleDuplicateEndpoint(apiState.editedEndpoint!.id)}
-              class="flex-1 px-4 py-2 border border-mono-600 text-mono-300 rounded-md hover:bg-mono-950 transition-colors font-medium flex items-center justify-center space-x-2"
+              class="flex-1 px-4 py-2 border border-mono-600 text-mono-300 hover:bg-mono-950 transition-colors font-medium flex items-center justify-center space-x-2"
             >
               <span>Duplicate</span>
             </button>
             <button
               type="button"
               onclick={apiState.handleDeleteEndpointClick}
-              class="flex-1 px-4 py-2 border border-mono-600 text-red-400 rounded-md hover:bg-red-400/10 transition-colors font-medium flex items-center justify-center space-x-2"
+              class="flex-1 px-4 py-2 border border-mono-600 text-red-400 hover:bg-red-400/10 transition-colors font-medium flex items-center justify-center space-x-2"
             >
               <i class="fa-solid fa-xmark"></i>
               <span>Delete</span>
             </button>
           </div>
         {:else}
-          <div class="bg-red-400/10 border border-red-400/30 rounded-md p-3">
+          <div class="bg-red-400/10 border border-red-400/30 p-3">
             <p class="text-sm text-red-400 mb-2">Are you sure?</p>
             <div class="flex space-x-2">
               <button
                 type="button"
                 onclick={apiState.handleDeleteEndpoint}
-                class="flex-1 px-3 py-1.5 bg-red-600 text-white rounded-md hover:bg-red-700 text-sm font-medium"
+                class="flex-1 px-3 py-1.5 bg-red-600 text-white hover:bg-red-700 text-sm font-medium"
               >
                 Yes, Delete
               </button>
               <button
                 type="button"
                 onclick={apiState.cancelDeleteEndpoint}
-                class="flex-1 px-3 py-1.5 border border-mono-600 text-mono-300 rounded-md hover:bg-mono-950 text-sm font-medium"
+                class="flex-1 px-3 py-1.5 border border-mono-600 text-mono-300 hover:bg-mono-950 text-sm font-medium"
               >
                 Cancel
               </button>
@@ -793,7 +793,7 @@
         type="button"
         onclick={handleCreateObject}
         disabled={objectSaving}
-        class="flex-1 px-4 py-2 rounded-md transition-colors font-medium flex items-center justify-center space-x-2 {!objectSaving ? 'bg-green-400 text-mono-950 hover:bg-green-300 font-bold cursor-pointer' : 'bg-mono-700 text-mono-500 cursor-not-allowed'}"
+        class="flex-1 px-4 py-2 transition-colors font-medium flex items-center justify-center space-x-2 {!objectSaving ? 'bg-green-400 text-mono-950 hover:bg-green-300 font-bold tracking-wide cursor-pointer' : 'bg-mono-700 text-mono-500 cursor-not-allowed'}"
       >
         {#if objectSaving}
           <i class="fa-solid fa-spinner fa-spin"></i>
@@ -806,7 +806,7 @@
         type="button"
         onclick={closeObjectCreate}
         disabled={objectSaving}
-        class="flex-1 px-4 py-2 border border-mono-600 text-mono-300 rounded-md hover:bg-mono-950 cursor-pointer transition-colors font-medium"
+        class="flex-1 px-4 py-2 border border-mono-600 text-mono-300 hover:bg-mono-950 cursor-pointer transition-colors font-medium"
       >
         Cancel
       </button>
@@ -833,7 +833,7 @@
         type="button"
         onclick={handleCreateField}
         disabled={fieldSaving}
-        class="flex-1 px-4 py-2 rounded-md transition-colors font-medium flex items-center justify-center space-x-2 {!fieldSaving ? 'bg-green-400 text-mono-950 hover:bg-green-300 font-bold cursor-pointer' : 'bg-mono-700 text-mono-500 cursor-not-allowed'}"
+        class="flex-1 px-4 py-2 transition-colors font-medium flex items-center justify-center space-x-2 {!fieldSaving ? 'bg-green-400 text-mono-950 hover:bg-green-300 font-bold tracking-wide cursor-pointer' : 'bg-mono-700 text-mono-500 cursor-not-allowed'}"
       >
         {#if fieldSaving}
           <i class="fa-solid fa-spinner fa-spin"></i>
@@ -846,7 +846,7 @@
         type="button"
         onclick={closeFieldCreate}
         disabled={fieldSaving}
-        class="flex-1 px-4 py-2 border border-mono-600 text-mono-300 rounded-md hover:bg-mono-950 cursor-pointer transition-colors font-medium"
+        class="flex-1 px-4 py-2 border border-mono-600 text-mono-300 hover:bg-mono-950 cursor-pointer transition-colors font-medium"
       >
         Cancel
       </button>

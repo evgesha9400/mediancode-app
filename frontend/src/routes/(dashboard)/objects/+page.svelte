@@ -161,7 +161,7 @@
       <button
         type="button"
         onclick={workflow.openCreate}
-        class="px-4 py-2 bg-green-400 text-mono-950 font-bold rounded-md flex items-center space-x-2 hover:bg-green-300 cursor-pointer transition-colors"
+        class="px-4 py-2 bg-green-400 text-mono-950 font-bold tracking-wide flex items-center space-x-2 hover:bg-green-300 cursor-pointer transition-colors"
       >
         <i class="fa-solid fa-plus"></i>
         <span>Create Object</span>
@@ -305,7 +305,7 @@
       type="button"
       onclick={handleCreateField}
       disabled={fieldSaving}
-      class="flex-1 px-4 py-2 rounded-md transition-colors font-medium flex items-center justify-center space-x-2 {!fieldSaving ? 'bg-green-400 text-mono-950 hover:bg-green-300 font-bold cursor-pointer' : 'bg-mono-700 text-mono-500 cursor-not-allowed'}"
+      class="flex-1 px-4 py-2 transition-colors font-medium flex items-center justify-center space-x-2 {!fieldSaving ? 'bg-green-400 text-mono-950 hover:bg-green-300 font-bold tracking-wide cursor-pointer' : 'bg-mono-700 text-mono-500 cursor-not-allowed'}"
     >
       {#if fieldSaving}
         <i class="fa-solid fa-spinner fa-spin"></i>
@@ -318,7 +318,7 @@
       type="button"
       onclick={closeFieldCreate}
       disabled={fieldSaving}
-      class="flex-1 px-4 py-2 border border-mono-600 text-mono-300 rounded-md hover:bg-mono-950 cursor-pointer transition-colors font-medium"
+      class="flex-1 px-4 py-2 border border-mono-600 text-mono-300 hover:bg-mono-950 cursor-pointer transition-colors font-medium"
     >
       Cancel
     </button>
