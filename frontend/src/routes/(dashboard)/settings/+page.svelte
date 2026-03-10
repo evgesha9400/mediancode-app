@@ -11,7 +11,7 @@
     </div>
     <a
       href="/settings/organization"
-      class="inline-flex items-center space-x-2 px-4 py-2 bg-green-400 text-mono-950 font-bold rounded-md hover:bg-green-300 transition-colors text-sm"
+      class="inline-flex items-center space-x-2 px-4 py-2 bg-green-400 text-mono-950 font-bold tracking-wide hover:bg-green-300 transition-colors text-sm"
     >
       <i class="fa-solid fa-building"></i>
       <span>Organization Settings</span>
@@ -24,7 +24,7 @@
   <!-- User Profile Section -->
   <section>
     <h2 class="text-xs uppercase tracking-wider text-mono-500 mb-3 font-medium">Account</h2>
-    <div class="bg-mono-900 rounded-lg border border-mono-700 overflow-hidden">
+    <div class="bg-mono-900 border-2 border-mono-700 overflow-hidden">
       <ClerkUserProfile />
     </div>
   </section>

@@ -106,7 +106,7 @@
   <Tooltip text={userName} position="right" disabled={!collapsed}>
     <div
       bind:this={buttonContainer}
-      class="flex-shrink-0 rounded-md transition-colors {collapsed ? 'hover:bg-mono-800 p-1' : ''}"
+      class="flex-shrink-0 transition-colors {collapsed ? 'hover:bg-mono-800 p-1' : ''}"
     ></div>
   </Tooltip>
 

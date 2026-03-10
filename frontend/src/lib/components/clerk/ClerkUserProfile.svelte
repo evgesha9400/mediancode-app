@@ -86,7 +86,7 @@
       <i class="fa-solid fa-spinner fa-spin text-2xl text-mono-400"></i>
     </div>
   {:else if hasError}
-    <div class="p-6 bg-mono-950 rounded-lg border border-mono-700 text-center">
+    <div class="p-6 bg-mono-950 border-2 border-mono-700 text-center">
       <i class="fa-solid fa-exclamation-circle text-2xl text-mono-400 mb-2"></i>
       <p class="text-mono-400">Unable to load user profile</p>
     </div>

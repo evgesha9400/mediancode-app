@@ -10,9 +10,9 @@
 
 		<h1 class="text-3xl font-bold text-mono-100">Desktop Required</h1>
 
-		<div class="bg-mono-900 border border-mono-700 rounded-lg p-6 space-y-4">
-			<div class="w-12 h-12 bg-mono-800 rounded-full flex items-center justify-center mx-auto">
-				<svg class="w-6 h-6 text-mono-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+		<div class="bg-mono-900 border-2 border-mono-700 p-6 space-y-4">
+			<div class="w-12 h-12 border-2 border-green-400 flex items-center justify-center mx-auto">
+				<svg class="w-6 h-6 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
 					<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
 				</svg>
 			</div>
@@ -30,7 +30,7 @@
 
 		<a
 			href="https://mediancode.com"
-			class="inline-block px-6 py-3 bg-green-400 text-mono-950 font-bold rounded-lg hover:bg-green-300 transition-colors"
+			class="inline-block px-6 py-3 bg-green-400 text-mono-950 font-bold tracking-wide hover:bg-green-300 transition-colors"
 		>
 			Return to Homepage
 		</a>

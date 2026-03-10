@@ -14,26 +14,25 @@ export interface ClerkState {
  */
 export const clerkAppearance = {
   variables: {
-    colorPrimary: '#171717',      // mono-900
-    colorText: '#171717',         // mono-900
-    colorTextSecondary: '#525252', // mono-600
-    colorBackground: '#ffffff',
-    colorInputBackground: '#fafafa', // mono-50
-    colorInputText: '#171717',    // mono-900
-    borderRadius: '0.5rem',
-    colorDanger: '#dc2626',       // red-600
-    colorSuccess: '#16a34a',      // green-600
-    colorWarning: '#d97706',      // amber-600
+    colorBackground: '#171717',      // mono-900
+    colorInputBackground: '#171717', // mono-900
+    colorText: '#f5f5f5',            // mono-100
+    colorTextSecondary: '#a3a3a3',   // mono-400
+    colorPrimary: '#4ade80',         // green-400
+    colorInputText: '#f5f5f5',       // mono-100
+    borderRadius: '0',               // sharp corners
+    colorNeutral: '#a3a3a3',         // mono-400
+    colorDanger: '#dc2626',          // red-600
+    colorSuccess: '#16a34a',         // green-600
+    colorWarning: '#d97706',         // amber-600
   },
   elements: {
-    // Card styling
-    card: 'shadow-lg border border-mono-200',
-    // Button styling
-    formButtonPrimary: 'bg-mono-900 hover:bg-mono-800',
-    // Input styling
-    formFieldInput: 'border-mono-300 focus:ring-mono-900 focus:border-mono-900',
-    // Avatar styling
-    avatarBox: 'border-2 border-mono-200',
+    card: 'shadow-none bg-mono-900 border-2 border-mono-700',
+    formButtonPrimary: 'bg-green-400 text-mono-950 hover:bg-green-300 font-bold tracking-wide',
+    formFieldInput: 'bg-mono-900 border-mono-600 text-mono-100',
+    avatarBox: 'border-2 border-mono-700',
+    footerActionLink: 'text-green-400 hover:text-green-300',
+    socialButtonsIconButton__github: '[&>img]:invert',
   }
 };
 
@@ -153,12 +152,12 @@ function createMockClerk() {
     mountSignIn: (element: HTMLElement) => {
       element.innerHTML = `
         <div class="cl-component" data-clerk-component="sign-in" data-testid="clerk-mock-signin">
-          <div class="text-center p-8 border border-mono-200 rounded-lg bg-white">
+          <div class="text-center p-8 border-2 border-mono-700 bg-mono-900">
             <div class="mb-4">
               <i class="fa-solid fa-vial text-4xl text-mono-400"></i>
             </div>
-            <h2 class="text-xl font-semibold text-mono-900 mb-2">Mock Sign In</h2>
-            <p class="text-mono-600">Clerk is running in mock mode for testing</p>
+            <h2 class="text-xl font-semibold text-mono-100 mb-2">Mock Sign In</h2>
+            <p class="text-mono-400">Clerk is running in mock mode for testing</p>
           </div>
         </div>
       `;
@@ -166,12 +165,12 @@ function createMockClerk() {
     mountSignUp: (element: HTMLElement) => {
       element.innerHTML = `
         <div class="cl-component" data-clerk-component="sign-up" data-testid="clerk-mock-signup">
-          <div class="text-center p-8 border border-mono-200 rounded-lg bg-white">
+          <div class="text-center p-8 border-2 border-mono-700 bg-mono-900">
             <div class="mb-4">
               <i class="fa-solid fa-vial text-4xl text-mono-400"></i>
             </div>
-            <h2 class="text-xl font-semibold text-mono-900 mb-2">Mock Sign Up</h2>
-            <p class="text-mono-600">Clerk is running in mock mode for testing</p>
+            <h2 class="text-xl font-semibold text-mono-100 mb-2">Mock Sign Up</h2>
+            <p class="text-mono-400">Clerk is running in mock mode for testing</p>
           </div>
         </div>
       `;
@@ -191,17 +190,17 @@ function createMockClerk() {
     mountUserProfile: (element: HTMLElement) => {
       element.innerHTML = `
         <div class="cl-component" data-clerk-component="user-profile" data-testid="clerk-mock-user-profile">
-          <div class="p-8 border border-mono-200 rounded-lg bg-white">
+          <div class="p-8 border-2 border-mono-700 bg-mono-900">
             <div class="flex items-center space-x-4 mb-6">
-              <div class="w-16 h-16 rounded-full bg-mono-200 flex items-center justify-center">
+              <div class="w-16 h-16 rounded-full border-2 border-mono-700 flex items-center justify-center">
                 <i class="fa-solid fa-user text-2xl text-mono-500"></i>
               </div>
               <div>
-                <h2 class="text-xl font-semibold text-mono-900">Mock User Profile</h2>
-                <p class="text-mono-600">Clerk is running in mock mode for testing</p>
+                <h2 class="text-xl font-semibold text-mono-100">Mock User Profile</h2>
+                <p class="text-mono-400">Clerk is running in mock mode for testing</p>
               </div>
             </div>
-            <div class="space-y-4 text-mono-600">
+            <div class="space-y-4 text-mono-400">
               <p>Profile management features would appear here in production.</p>
             </div>
           </div>
@@ -214,17 +213,17 @@ function createMockClerk() {
     mountOrganizationProfile: (element: HTMLElement) => {
       element.innerHTML = `
         <div class="cl-component" data-clerk-component="organization-profile" data-testid="clerk-mock-organization-profile">
-          <div class="p-8 border border-mono-200 rounded-lg bg-white">
+          <div class="p-8 border-2 border-mono-700 bg-mono-900">
             <div class="flex items-center space-x-4 mb-6">
-              <div class="w-16 h-16 rounded-lg bg-mono-200 flex items-center justify-center">
+              <div class="w-16 h-16 border-2 border-mono-700 flex items-center justify-center">
                 <i class="fa-solid fa-building text-2xl text-mono-500"></i>
               </div>
               <div>
-                <h2 class="text-xl font-semibold text-mono-900">Mock Organization Profile</h2>
-                <p class="text-mono-600">Clerk is running in mock mode for testing</p>
+                <h2 class="text-xl font-semibold text-mono-100">Mock Organization Profile</h2>
+                <p class="text-mono-400">Clerk is running in mock mode for testing</p>
               </div>
             </div>
-            <div class="space-y-4 text-mono-600">
+            <div class="space-y-4 text-mono-400">
               <p>Organization management features would appear here in production.</p>
             </div>
           </div>
@@ -237,17 +236,17 @@ function createMockClerk() {
     mountCreateOrganization: (element: HTMLElement) => {
       element.innerHTML = `
         <div class="cl-component" data-clerk-component="create-organization" data-testid="clerk-mock-create-organization">
-          <div class="p-8 border border-mono-200 rounded-lg bg-white">
+          <div class="p-8 border-2 border-mono-700 bg-mono-900">
             <div class="flex items-center space-x-4 mb-6">
-              <div class="w-16 h-16 rounded-lg bg-mono-200 flex items-center justify-center">
+              <div class="w-16 h-16 border-2 border-mono-700 flex items-center justify-center">
                 <i class="fa-solid fa-plus text-2xl text-mono-500"></i>
               </div>
               <div>
-                <h2 class="text-xl font-semibold text-mono-900">Mock Create Organization</h2>
-                <p class="text-mono-600">Clerk is running in mock mode for testing</p>
+                <h2 class="text-xl font-semibold text-mono-100">Mock Create Organization</h2>
+                <p class="text-mono-400">Clerk is running in mock mode for testing</p>
               </div>
             </div>
-            <div class="space-y-4 text-mono-600">
+            <div class="space-y-4 text-mono-400">
               <p>Organization creation form would appear here in production.</p>
             </div>
           </div>

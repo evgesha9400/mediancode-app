@@ -36,17 +36,16 @@
 							colorTextSecondary: '#a3a3a3',
 							colorPrimary: '#4ade80',
 							colorInputText: '#f5f5f5',
-							borderRadius: '0.375rem',
+							borderRadius: '0',
 							colorNeutral: '#a3a3a3',
 						},
 						elements: {
 							rootBox: 'mx-auto',
-							card: 'shadow-none bg-mono-900 border-2 border-mono-700 rounded-lg',
-							logoBox: 'height: 48px',
-							logoImage: 'height: 48px; width: 48px',
-							formButtonPrimary: 'bg-green-400 text-mono-950 hover:bg-green-300 font-bold',
+							card: 'shadow-none bg-mono-900 border-2 border-mono-700',
+							formButtonPrimary: 'bg-green-400 text-mono-950 hover:bg-green-300 font-bold tracking-wide',
 							formFieldInput: 'bg-mono-900 border-mono-600 text-mono-100',
 							footerActionLink: 'text-green-400 hover:text-green-300',
+							socialButtonsIconButton__github: '[&>img]:invert',
 						}
 					},
 					branding: {
