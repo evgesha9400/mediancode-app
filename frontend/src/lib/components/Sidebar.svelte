@@ -37,13 +37,13 @@
     { href: '/validators/field-constraints', label: 'Field Constraints', icon: 'fa-shield-halved' },
     { href: '/validators/field-validators', label: 'Field Validators', icon: 'fa-bolt' },
     { href: '/validators/model-validators', label: 'Model Validators', icon: 'fa-diagram-project' },
-    { href: '/fields', label: 'Fields', icon: 'fa-table-list' },
-    { href: '/objects', label: 'Objects', icon: 'fa-cubes' },
   ];
 
   const componentItems: NavItem[] = [
-    { href: '/namespaces', label: 'Namespaces', icon: 'fa-layer-group' },
+    { href: '/fields', label: 'Fields', icon: 'fa-table-list' },
+    { href: '/objects', label: 'Objects', icon: 'fa-cubes' },
     { href: '/apis', label: 'APIs', icon: 'fa-code' },
+    { href: '/namespaces', label: 'Namespaces', icon: 'fa-layer-group' },
   ];
 
   function isActive(href: string): boolean {
