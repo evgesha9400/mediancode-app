@@ -30,7 +30,6 @@
 							rootBox: 'mx-auto',
 							card: 'shadow-none bg-mono-900 border-2 border-mono-700',
 							headerTitle: 'hidden',
-							headerSubtitle: 'hidden',
 							logoBox: 'hidden',
 							formButtonPrimary: 'bg-green-400 text-mono-950 hover:bg-green-300 font-bold tracking-wide',
 							formFieldInput: 'bg-mono-900 border-mono-600 text-mono-100',
