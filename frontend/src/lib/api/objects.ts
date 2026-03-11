@@ -13,6 +13,7 @@ import type { ObjectDefinition, ObjectFieldReference, InlineModelValidator } fro
 interface ObjectFieldReferenceResponse {
 	fieldId: string;
 	optional: boolean;
+	isPk: boolean;
 }
 
 /**
@@ -44,7 +45,8 @@ interface ObjectResponse {
 function transformFieldReference(response: ObjectFieldReferenceResponse): ObjectFieldReference {
 	return {
 		fieldId: response.fieldId,
-		optional: response.optional
+		optional: response.optional,
+		isPk: response.isPk ?? false
 	};
 }
 

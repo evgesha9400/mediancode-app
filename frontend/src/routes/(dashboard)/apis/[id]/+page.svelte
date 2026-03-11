@@ -254,7 +254,7 @@
       if (editedNewObject) {
         editedNewObject = {
           ...editedNewObject,
-          fields: [...editedNewObject.fields, { fieldId: result.data!.id, optional: false }]
+          fields: [...editedNewObject.fields, { fieldId: result.data!.id, optional: false, isPk: false }]
         };
       }
 

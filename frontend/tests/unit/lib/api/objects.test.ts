@@ -22,8 +22,8 @@ const MOCK_OBJECT_RESPONSE = {
   name: 'User',
   description: 'User model',
   fields: [
-    { fieldId: 'f-1', optional: false },
-    { fieldId: 'f-2', optional: true }
+    { fieldId: 'f-1', optional: false, isPk: false },
+    { fieldId: 'f-2', optional: true, isPk: false }
   ],
   validators: [],
   usedInApis: ['api-1']
@@ -98,7 +98,7 @@ describe('Objects API Service', () => {
       const result = await createObjectApi({
         namespaceId: 'ns-1',
         name: 'User',
-        fields: [{ fieldId: 'f-1', optional: false }]
+        fields: [{ fieldId: 'f-1', optional: false, isPk: false }]
       });
 
       expect(apiPost).toHaveBeenCalledWith('/objects', expect.any(Object));

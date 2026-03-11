@@ -49,7 +49,7 @@
   function addField(fieldId: string) {
     editedItem = {
       ...editedItem,
-      fields: [...editedItem.fields, { fieldId, optional: false }]
+      fields: [...editedItem.fields, { fieldId, optional: false, isPk: false }]
     };
   }
 
@@ -64,6 +64,17 @@
     const newFields = editedItem.fields.map(f =>
       f.fieldId === fieldId ? { ...f, optional: !f.optional } : f
     );
+    editedItem = { ...editedItem, fields: newFields };
+  }
+
+  function toggleFieldPk(fieldId: string) {
+    const newFields = editedItem.fields.map(f => {
+      if (f.fieldId === fieldId) {
+        const newIsPk = !f.isPk;
+        return { ...f, isPk: newIsPk, optional: newIsPk ? false : f.optional };
+      }
+      return { ...f, isPk: false };
+    });
     editedItem = { ...editedItem, fields: newFields };
   }
 
@@ -179,11 +190,23 @@
                   <div class="flex-1"></div>
                 {/if}
 
+                <!-- PK Toggle -->
+                <button
+                  type="button"
+                  onclick={() => toggleFieldPk(fieldRef.fieldId)}
+                  class="flex items-center space-x-1 px-2 py-0.5 text-xs font-medium border transition-colors {fieldRef.isPk ? 'bg-green-900/30 text-green-400 border-green-700' : 'bg-mono-800 text-mono-500 border-mono-700 hover:text-mono-300 hover:border-mono-600'}"
+                  title={fieldRef.isPk ? 'Remove primary key' : 'Set as primary key'}
+                >
+                  <i class="fa-solid fa-key text-[10px]"></i>
+                  <span>PK</span>
+                </button>
+
                 <!-- Optional Checkbox -->
-                <label class="flex items-center space-x-2 cursor-pointer">
+                <label class="flex items-center space-x-2 {fieldRef.isPk ? 'opacity-40 cursor-not-allowed' : 'cursor-pointer'}" title={fieldRef.isPk ? 'Primary key fields cannot be optional' : ''}>
                   <input
                     type="checkbox"
                     checked={fieldRef.optional}
+                    disabled={fieldRef.isPk}
                     onchange={() => toggleFieldOptional(fieldRef.fieldId)}
                     class="h-4 w-4 border-mono-600 rounded text-green-400 focus:ring-2 focus:ring-green-400"
                   />

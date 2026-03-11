@@ -154,6 +154,7 @@ export interface ApiEndpoint {
 export interface ObjectFieldReference {
   fieldId: string;
   optional: boolean;
+  isPk: boolean;
 }
 
 export interface ObjectDefinition {
