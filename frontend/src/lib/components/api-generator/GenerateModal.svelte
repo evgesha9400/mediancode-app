@@ -20,8 +20,6 @@
   let healthcheckPath = $state('/health');
   let healthcheck = $derived<string | null>(healthcheckEnabled ? healthcheckPath : null);
   let responsePlaceholders = $state(true);
-  let formatCode = $state(true);
-  let generateSwagger = $state(true);
   let databaseEnabled = $state(false);
   let databaseSeedData = $state(true);
 
@@ -44,8 +42,6 @@
       const blob = await generateApi(apiId, {
         healthcheck,
         responsePlaceholders,
-        formatCode,
-        generateSwagger,
         databaseEnabled,
         databaseSeedData
       });
@@ -121,20 +117,6 @@
             </div>
           {/if}
         </div>
-
-        <!-- Format code -->
-        <label class="flex items-center space-x-2 cursor-pointer">
-          <input type="checkbox" bind:checked={formatCode}
-            class="w-4 h-4 text-green-400 border-mono-600 rounded focus:ring-2 focus:ring-green-400 bg-mono-900" />
-          <span class="text-xs text-mono-300">Format code with Black</span>
-        </label>
-
-        <!-- Generate swagger -->
-        <label class="flex items-center space-x-2 cursor-pointer">
-          <input type="checkbox" bind:checked={generateSwagger}
-            class="w-4 h-4 text-green-400 border-mono-600 rounded focus:ring-2 focus:ring-green-400 bg-mono-900" />
-          <span class="text-xs text-mono-300">Generate swagger.yaml</span>
-        </label>
 
         <!-- Database support -->
         <div>

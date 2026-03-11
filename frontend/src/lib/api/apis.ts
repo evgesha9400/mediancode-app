@@ -127,8 +127,6 @@ export async function deleteApiApi(id: string): Promise<void> {
 export interface GenerateOptions {
 	healthcheck?: string | null;
 	responsePlaceholders?: boolean;
-	formatCode?: boolean;
-	generateSwagger?: boolean;
 	databaseEnabled?: boolean;
 	databaseSeedData?: boolean;
 }
