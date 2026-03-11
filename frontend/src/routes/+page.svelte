@@ -26,7 +26,7 @@
 		<div class="flex items-center justify-between h-16">
 			<a href="/" onclick={scrollToTop} class="flex items-center space-x-3 cursor-pointer hover:opacity-80 transition-opacity">
 				<Logo size="md" variant="dark" />
-				<span class="text-base font-mono font-semibold text-mono-100 tracking-tight">median-code</span>
+				<span class="text-lg font-mono font-semibold text-mono-100 tracking-tight">Median Code</span>
 			</a>
 			<button onclick={toggleMobileMenu} aria-label="Toggle mobile menu" class="md:hidden w-10 h-10 flex items-center justify-center">
 				<i class="fa-solid {mobileMenuOpen ? 'fa-times' : 'fa-bars'} text-white text-xl"></i>
@@ -420,7 +420,7 @@
 		<div class="flex flex-col sm:flex-row items-start sm:items-center justify-between space-y-4 sm:space-y-0">
 			<div class="flex items-center space-x-3">
 				<Logo size="md" variant="dark" />
-				<span class="text-base font-mono font-semibold text-mono-100 tracking-tight">median-code</span>
+				<span class="text-lg font-mono font-semibold text-mono-100 tracking-tight">Median Code</span>
 			</div>
 			<div class="text-mono-500 text-xs font-mono uppercase tracking-widest">
 				&copy; {new Date().getFullYear()} Median Code. Deterministic API generation.

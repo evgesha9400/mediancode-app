@@ -68,7 +68,7 @@
 		<div class="text-center space-y-4">
 			<div class="flex items-center justify-center space-x-3 mb-8">
 				<Logo size="lg" variant="dark" />
-				<h1 class="text-3xl font-mono font-bold text-mono-100">median-code</h1>
+				<h1 class="text-3xl font-mono font-bold text-mono-100">Median Code</h1>
 			</div>
 			<p class="text-mono-400">Loading...</p>
 		</div>
@@ -76,7 +76,7 @@
 		<div class="text-center space-y-4">
 			<div class="flex items-center justify-center space-x-3 mb-8">
 				<Logo size="lg" variant="dark" />
-				<h1 class="text-3xl font-mono font-bold text-mono-100">median-code</h1>
+				<h1 class="text-3xl font-mono font-bold text-mono-100">Median Code</h1>
 			</div>
 			<p class="text-mono-400">Redirecting to dashboard...</p>
 		</div>
@@ -85,7 +85,7 @@
 			<!-- Logo above Clerk form -->
 			<div class="flex items-center justify-center space-x-3 mb-8">
 				<Logo size="lg" variant="dark" />
-				<h1 class="text-3xl font-mono font-bold text-mono-100">median-code</h1>
+				<h1 class="text-3xl font-mono font-bold text-mono-100">Median Code</h1>
 			</div>
 			<div bind:this={clerkMountDiv}></div>
 		</div>

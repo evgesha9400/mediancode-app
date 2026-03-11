@@ -67,7 +67,7 @@
     >
       <Logo size="md" variant="dark" />
       {#if !collapsed}
-        <span class="text-base font-mono font-semibold text-mono-100 tracking-tight whitespace-nowrap">median-code</span>
+        <span class="text-lg font-mono font-semibold text-mono-100 tracking-tight whitespace-nowrap">Median Code</span>
       {/if}
     </a>
   </div>
