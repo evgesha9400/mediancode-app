@@ -107,7 +107,7 @@ describe('APIs API Service', () => {
       const mockBlob = new Blob(['zip-content'], { type: 'application/zip' });
       (apiPostBlob as any).mockResolvedValue(mockBlob);
 
-      const options = { databaseEnabled: true, databaseSeedData: false };
+      const options = { databaseEnabled: true };
       const result = await generateApi('a-1', options);
 
       expect(apiPostBlob).toHaveBeenCalledWith('/apis/a-1/generate', options);

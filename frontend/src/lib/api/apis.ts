@@ -128,7 +128,6 @@ export interface GenerateOptions {
 	healthcheck?: string | null;
 	responsePlaceholders?: boolean;
 	databaseEnabled?: boolean;
-	databaseSeedData?: boolean;
 }
 
 /**
