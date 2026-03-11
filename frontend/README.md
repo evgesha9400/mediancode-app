@@ -30,11 +30,9 @@ median-code/
 │   │   │   ├── namespaces/          # Namespaces management
 │   │   │   └── settings/            # Settings pages
 │   │   ├── signin/                  # Sign-in page
-│   │   ├── signup/                  # Sign-up page
-│   │   └── mobile-blocked/          # Mobile device blocking
+│   │   └── signup/                  # Sign-up page
 │   └── lib/
 │       ├── clerk.ts                 # Clerk authentication
-│       ├── deviceDetection.ts       # Mobile device detection
 │       ├── components/              # UI components (barrel exports)
 │       │   ├── api-generator/       # API generator components
 │       │   ├── drawer/              # Drawer components
@@ -92,7 +90,6 @@ median-code/
 - `/` - Landing page (marketing)
 - `/signin` - Sign-in page with Clerk authentication
 - `/signup` - Sign-up page for new users
-- `/mobile-blocked` - Mobile device blocking page
 
 **Dashboard Routes** (authenticated, redirect to `/signin` when not signed in):
 - `/dashboard` - Dashboard home with overview stats
@@ -292,7 +289,6 @@ The dashboard uses Clerk for authentication with support for:
 
 **Public Routes** (no authentication required):
 - `/` - Landing page
-- `/mobile-blocked` - Mobile blocking page
 
 **Protected Routes** (authentication required — all routes in the `(dashboard)` route group):
 - `/dashboard`, `/types`, `/validators/*`, `/fields`, `/objects`, `/apis`, `/apis/[id]`, `/namespaces`, `/settings`

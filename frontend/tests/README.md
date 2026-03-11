@@ -23,8 +23,7 @@ tests/
 ├── smoke/                   # Playwright smoke coverage (core user paths)
 │   ├── auth.spec.ts
 │   ├── dashboard.spec.ts
-│   ├── landing.spec.ts
-│   └── mobile-blocked.spec.ts
+│   └── landing.spec.ts
 │
 ├── e2e/                     # Playwright backend-integration flows
 │   ├── crud/                # CRUD workflows against real backend
