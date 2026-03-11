@@ -137,6 +137,10 @@
 				</div>
 				<div class="flex items-center space-x-2.5">
 					<i class="fa-solid fa-check text-green-400 text-xs font-bold"></i>
+					<span>Human-readable code</span>
+				</div>
+				<div class="flex items-center space-x-2.5">
+					<i class="fa-solid fa-check text-green-400 text-xs font-bold"></i>
 					<span>Ready to deploy</span>
 				</div>
 			</div>
@@ -158,15 +162,15 @@
 				<div class="p-6 font-mono text-sm leading-loose">
 					<div class="terminal-line" style="--line-index: 0"><span class="text-green-400">$</span> <span class="text-mono-100">median generate --api "My API"</span></div>
 					<div class="terminal-line" style="--line-index: 1"><span class="text-green-400">[OK]</span> <span class="text-mono-400">Parsed 2 objects, 8 fields, 4 endpoints</span></div>
-					<div class="terminal-line" style="--line-index: 2"><span class="text-green-400">[OK]</span> <span class="text-mono-400">Generated</span> <span class="text-mono-300">models/user.py</span> <span class="text-mono-500">(42 lines)</span></div>
-					<div class="terminal-line" style="--line-index: 3"><span class="text-green-400">[OK]</span> <span class="text-mono-400">Generated</span> <span class="text-mono-300">models/order.py</span> <span class="text-mono-500">(38 lines)</span></div>
-					<div class="terminal-line" style="--line-index: 4"><span class="text-green-400">[OK]</span> <span class="text-mono-400">Generated</span> <span class="text-mono-300">schemas/user.py</span> <span class="text-mono-500">(31 lines)</span></div>
-					<div class="terminal-line" style="--line-index: 5"><span class="text-green-400">[OK]</span> <span class="text-mono-400">Generated</span> <span class="text-mono-300">schemas/order.py</span> <span class="text-mono-500">(28 lines)</span></div>
-					<div class="terminal-line" style="--line-index: 6"><span class="text-green-400">[OK]</span> <span class="text-mono-400">Generated</span> <span class="text-mono-300">routes/users.py</span> <span class="text-mono-500">(67 lines)</span></div>
-					<div class="terminal-line" style="--line-index: 7"><span class="text-green-400">[OK]</span> <span class="text-mono-400">Generated</span> <span class="text-mono-300">routes/orders.py</span> <span class="text-mono-500">(61 lines)</span></div>
-					<div class="terminal-line" style="--line-index: 8"><span class="text-green-400">[OK]</span> <span class="text-mono-400">Generated</span> <span class="text-mono-300">alembic/versions/001_initial.py</span></div>
-					<div class="terminal-line" style="--line-index: 9"><span class="text-green-400">[OK]</span> <span class="text-mono-400">Generated</span> <span class="text-mono-300">infra/cdk_stack.py</span></div>
-					<div class="terminal-line mt-1" style="--line-index: 10"><span class="text-mono-100 font-bold">Done.</span> <span class="text-mono-300">12 files, 398 lines.</span> <span class="text-green-400">Ready to deploy.</span></div>
+					<div class="terminal-line" style="--line-index: 2"><span class="text-green-400">[OK]</span> <span class="text-mono-400">Generated</span> <span class="text-mono-300">models/user.py</span> <span class="text-mono-500">(63 lines)</span></div>
+					<div class="terminal-line" style="--line-index: 3"><span class="text-green-400">[OK]</span> <span class="text-mono-400">Generated</span> <span class="text-mono-300">models/order.py</span> <span class="text-mono-500">(56 lines)</span></div>
+					<div class="terminal-line" style="--line-index: 4"><span class="text-green-400">[OK]</span> <span class="text-mono-400">Generated</span> <span class="text-mono-300">schemas/user.py</span> <span class="text-mono-500">(49 lines)</span></div>
+					<div class="terminal-line" style="--line-index: 5"><span class="text-green-400">[OK]</span> <span class="text-mono-400">Generated</span> <span class="text-mono-300">schemas/order.py</span> <span class="text-mono-500">(44 lines)</span></div>
+					<div class="terminal-line" style="--line-index: 6"><span class="text-green-400">[OK]</span> <span class="text-mono-400">Generated</span> <span class="text-mono-300">routes/users.py</span> <span class="text-mono-500">(112 lines)</span></div>
+					<div class="terminal-line" style="--line-index: 7"><span class="text-green-400">[OK]</span> <span class="text-mono-400">Generated</span> <span class="text-mono-300">routes/orders.py</span> <span class="text-mono-500">(97 lines)</span></div>
+					<div class="terminal-line" style="--line-index: 8"><span class="text-green-400">[OK]</span> <span class="text-mono-400">Generated</span> <span class="text-mono-300">alembic/versions/001_initial.py</span> <span class="text-mono-500">(48 lines)</span></div>
+					<div class="terminal-line" style="--line-index: 9"><span class="text-green-400">[OK]</span> <span class="text-mono-400">Generated</span> <span class="text-mono-300">infra/cdk_stack.py</span> <span class="text-mono-500">(86 lines)</span></div>
+					<div class="terminal-line mt-1" style="--line-index: 10"><span class="text-mono-100 font-bold">Done.</span> <span class="text-mono-300">12 files, 654 lines.</span> <span class="text-green-400">Ready to deploy.</span></div>
 				</div>
 			</div>
 		</div>
@@ -328,11 +332,18 @@
 							<span class="text-mono-500 text-sm font-mono block mt-1">Same inputs produce identical output. No AI guessing, no ambiguity, no surprises.</span>
 						</div>
 					</div>
-					<div class="flex items-start space-x-4 py-5 border-t-2 border-b-2 border-mono-700">
+					<div class="flex items-start space-x-4 py-5 border-t-2 border-mono-700">
 						<span class="text-green-400 font-mono text-sm mt-0.5 flex-shrink-0 font-bold">></span>
 						<div>
 							<span class="text-white font-mono font-bold uppercase tracking-wide text-sm">A starting point, not a cage</span>
-							<span class="text-mono-500 text-sm font-mono block mt-1">The generated code is clean, readable, and designed for humans or LLMs to extend immediately.</span>
+							<span class="text-mono-500 text-sm font-mono block mt-1">Download the full project, add your business logic, and deploy. It's your code to own and extend.</span>
+						</div>
+					</div>
+					<div class="flex items-start space-x-4 py-5 border-t-2 border-b-2 border-mono-700">
+						<span class="text-green-400 font-mono text-sm mt-0.5 flex-shrink-0 font-bold">></span>
+						<div>
+							<span class="text-white font-mono font-bold uppercase tracking-wide text-sm">Readable, not generated-looking</span>
+							<span class="text-mono-500 text-sm font-mono block mt-1">Clean naming, proper structure, no auto-gen noise. Code that reads like a senior dev wrote it by hand.</span>
 						</div>
 					</div>
 				</div>
