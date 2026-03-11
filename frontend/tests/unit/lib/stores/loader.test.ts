@@ -117,6 +117,9 @@ import { modelValidatorTemplatesStore } from '$lib/stores/modelValidatorTemplate
 beforeEach(() => {
   vi.clearAllMocks();
 
+  // Suppress info-level noise (success/reset messages) — always expected
+  vi.spyOn(console, 'log').mockImplementation(() => {});
+
   // Reset loading state to initial
   storeLoadingState.set({
     isLoading: false,
@@ -286,6 +289,8 @@ describe('loader - loadStoresFromApi', () => {
   });
 
   it('should track phase 1 errors without blocking phase 2', async () => {
+    vi.spyOn(console, 'error').mockImplementation(() => {});
+    vi.spyOn(console, 'warn').mockImplementation(() => {});
     (listTypes as ReturnType<typeof vi.fn>).mockRejectedValue(new Error('Types fetch failed'));
 
     await loadStoresFromApi();
@@ -299,6 +304,8 @@ describe('loader - loadStoresFromApi', () => {
   });
 
   it('should track phase 2 errors', async () => {
+    vi.spyOn(console, 'error').mockImplementation(() => {});
+    vi.spyOn(console, 'warn').mockImplementation(() => {});
     (listFields as ReturnType<typeof vi.fn>).mockRejectedValue(new Error('Fields fetch failed'));
     (listApis as ReturnType<typeof vi.fn>).mockRejectedValue(new Error('APIs fetch failed'));
 
@@ -311,6 +318,8 @@ describe('loader - loadStoresFromApi', () => {
   });
 
   it('should use empty arrays for failed stores', async () => {
+    vi.spyOn(console, 'error').mockImplementation(() => {});
+    vi.spyOn(console, 'warn').mockImplementation(() => {});
     (listTypes as ReturnType<typeof vi.fn>).mockRejectedValue(new Error('fail'));
     (listFields as ReturnType<typeof vi.fn>).mockRejectedValue(new Error('fail'));
 

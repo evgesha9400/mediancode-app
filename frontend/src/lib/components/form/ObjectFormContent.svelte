@@ -24,6 +24,9 @@
     Pill
   } from '$lib/components';
   import { getModelValidatorTemplateById } from '$lib/stores/modelValidatorTemplates';
+  import { showToast } from '$lib/stores/toasts';
+
+  const ALLOWED_PK_TYPES = new Set(['int', 'uuid']);
 
   let {
     editedItem = $bindable(),
@@ -68,6 +71,17 @@
   }
 
   function toggleFieldPk(fieldId: string) {
+    const targetRef = editedItem.fields.find(f => f.fieldId === fieldId);
+    if (targetRef && !targetRef.isPk) {
+      const field = getFieldById(fieldId);
+      if (field && !ALLOWED_PK_TYPES.has(field.type)) {
+        showToast(
+          `Cannot set '${field.name}' as primary key — only int and uuid types are supported`,
+          'error'
+        );
+        return;
+      }
+    }
     const newFields = editedItem.fields.map(f => {
       if (f.fieldId === fieldId) {
         const newIsPk = !f.isPk;
@@ -173,6 +187,7 @@
         <div class="p-2 bg-mono-800 rounded border border-mono-700 space-y-2">
           {#each editedItem.fields as fieldRef}
             {@const field = getFieldById(fieldRef.fieldId)}
+            {@const pkCompatible = field ? ALLOWED_PK_TYPES.has(field.type) : false}
             {#if field}
               <div class="flex items-center space-x-2 p-2 bg-mono-900 rounded border border-mono-700">
                 <!-- Field Name and Type -->
@@ -194,8 +209,17 @@
                 <button
                   type="button"
                   onclick={() => toggleFieldPk(fieldRef.fieldId)}
-                  class="flex items-center space-x-1 px-2 py-0.5 text-xs font-medium border transition-colors {fieldRef.isPk ? 'bg-green-900/30 text-green-400 border-green-700' : 'bg-mono-800 text-mono-500 border-mono-700 hover:text-mono-300 hover:border-mono-600'}"
-                  title={fieldRef.isPk ? 'Remove primary key' : 'Set as primary key'}
+                  disabled={!pkCompatible && !fieldRef.isPk}
+                  class="flex items-center space-x-1 px-2 py-0.5 text-xs font-medium border transition-colors {fieldRef.isPk
+                    ? 'bg-green-900/30 text-green-400 border-green-700'
+                    : pkCompatible
+                      ? 'bg-mono-800 text-mono-500 border-mono-700 hover:text-mono-300 hover:border-mono-600'
+                      : 'bg-mono-800 text-mono-600 border-mono-700 opacity-40 cursor-not-allowed'}"
+                  title={fieldRef.isPk
+                    ? 'Remove primary key'
+                    : pkCompatible
+                      ? 'Set as primary key'
+                      : 'Only int and uuid fields can be primary keys'}
                 >
                   <i class="fa-solid fa-key text-[10px]"></i>
                   <span>PK</span>
