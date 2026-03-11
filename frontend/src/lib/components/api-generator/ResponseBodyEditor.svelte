@@ -159,7 +159,7 @@
         </label>
       </div>
     </div>
-    <div class="p-3 bg-mono-900 rounded text-white text-sm overflow-x-auto">
+    <div class="p-3 bg-mono-950 rounded border border-mono-700 text-white text-sm overflow-x-auto">
       <pre>{previewJson}</pre>
     </div>
   </div>
