@@ -25,7 +25,7 @@
   } from '$lib/components';
   import { getModelValidatorTemplateById } from '$lib/stores/modelValidatorTemplates';
   import { objectsStore, getObjectById } from '$lib/stores/objects';
-  import { getApiById } from '$lib/stores/apis';
+  import { apisStore } from '$lib/stores/apis';
   import { showToast } from '$lib/stores/toasts';
   import { generateId } from '$lib/utils/ids';
   import { goto } from '$app/navigation';
@@ -595,7 +595,7 @@
       <h3 class="text-sm text-mono-300 mb-2 font-medium">Used In APIs ({editedItem.usedInApis.length})</h3>
       <div class="space-y-1">
         {#each editedItem.usedInApis as apiId}
-          {@const api = getApiById(apiId)}
+          {@const api = $apisStore.find(a => a.id === apiId)}
           <button
             type="button"
             onclick={() => goto(`/apis/${apiId}`)}

@@ -28,6 +28,8 @@
     DefaultValueInput,
     Pill
   } from '$lib/components';
+  import { apisStore } from '$lib/stores/apis';
+  import { goto } from '$app/navigation';
   import { getFieldValidatorTemplateById } from '$lib/stores/fieldValidatorTemplates';
 
   let {
@@ -296,14 +298,22 @@
   {#if mode === 'editing'}
     <div>
       <h3 class="text-sm text-mono-300 mb-2 font-medium">Used In APIs ({editedItem.usedInApis.length})</h3>
-      <div class="space-y-2">
-        {#each editedItem.usedInApis as api}
-          <div class="flex items-center justify-between p-3 bg-mono-800">
-            <div class="flex items-center space-x-2">
-              <i class="fa-solid fa-code text-mono-400"></i>
-              <span class="text-sm text-mono-100">{api}</span>
-            </div>
-          </div>
+      <div class="space-y-1">
+        {#each editedItem.usedInApis as apiId}
+          {@const api = $apisStore.find(a => a.id === apiId)}
+          <button
+            type="button"
+            onclick={() => goto(`/apis/${apiId}`)}
+            class="flex items-center space-x-2 w-full px-3 py-2 bg-mono-800 rounded border border-mono-700 hover:border-mono-600 hover:bg-mono-700 transition-colors text-left"
+          >
+            <i class="fa-solid fa-code text-mono-400 text-xs"></i>
+            <span class="text-sm text-mono-100">{api?.title ?? apiId}</span>
+            {#if api?.version}
+              <span class="text-xs text-mono-500">{api.version}</span>
+            {/if}
+            <div class="flex-1"></div>
+            <i class="fa-solid fa-arrow-right text-mono-600 text-xs"></i>
+          </button>
         {/each}
         {#if editedItem.usedInApis.length === 0}
           <p class="text-sm text-mono-400 italic">Not used in any APIs</p>
