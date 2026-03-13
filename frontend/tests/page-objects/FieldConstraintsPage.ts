@@ -85,7 +85,7 @@ export class FieldConstraintsPage {
 		this.fieldConstraintDescriptionDisplay = page.locator('h3:has-text("Description") + p');
 		this.fieldConstraintParameterTypesDisplay = page.locator('h3:has-text("Parameter Types")');
 		this.fieldConstraintDocsLink = page.locator('a').filter({ hasText: 'View Docs' });
-		this.fieldReferenceButtons = page.locator('button').filter({ has: page.locator('i.fa-table-list') });
+		this.fieldReferenceButtons = page.locator('button').filter({ has: page.locator('i.fa-vector-square') });
 
 		// Drawer actions
 		this.deleteButton = page.getByRole('button').filter({ has: page.locator('span', { hasText: 'Delete' }) });

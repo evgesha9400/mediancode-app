@@ -91,7 +91,7 @@
         <div class="grid grid-cols-2 gap-3">
           <StatCard title="Types" value={totalTypes} icon="fa-shapes" error={hasError(STORE_NAMES.TYPES)} onRetry={handleRetry} />
           <StatCard title="Constraints" value={totalFieldConstraints} icon="fa-shield-halved" error={hasError(STORE_NAMES.FIELD_CONSTRAINTS)} onRetry={handleRetry} />
-          <StatCard title="Fields" value={totalFields} icon="fa-table-list" error={hasError(STORE_NAMES.FIELDS)} onRetry={handleRetry} />
+          <StatCard title="Fields" value={totalFields} icon="fa-vector-square" error={hasError(STORE_NAMES.FIELDS)} onRetry={handleRetry} />
           <StatCard title="Objects" value={totalObjects} icon="fa-cubes" error={hasError(STORE_NAMES.OBJECTS)} onRetry={handleRetry} />
         </div>
       </section>

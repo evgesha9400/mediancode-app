@@ -40,7 +40,7 @@
   ];
 
   const componentItems: NavItem[] = [
-    { href: '/fields', label: 'Fields', icon: 'fa-table-list' },
+    { href: '/fields', label: 'Fields', icon: 'fa-vector-square' },
     { href: '/objects', label: 'Objects', icon: 'fa-cubes' },
     { href: '/apis', label: 'APIs', icon: 'fa-code' },
     { href: '/namespaces', label: 'Namespaces', icon: 'fa-layer-group' },

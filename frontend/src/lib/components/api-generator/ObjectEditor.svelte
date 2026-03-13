@@ -4,10 +4,8 @@
   export interface ObjectEditorProps {
     endpointNamespaceId: string;
     selectedObjectId?: string;
-    useEnvelope: boolean;
     responseShape: ResponseShape;
     onSelectObject: (objectId: string | undefined) => void;
-    onEnvelopeToggle: (enabled: boolean) => void;
     onSetResponseShape: (shape: ResponseShape) => void;
     onCreateNewObject?: () => void;
   }
@@ -29,10 +27,8 @@
   let {
     endpointNamespaceId,
     selectedObjectId,
-    useEnvelope,
     responseShape,
     onSelectObject,
-    onEnvelopeToggle,
     onSetResponseShape,
     onCreateNewObject
   }: Props = $props();
@@ -41,9 +37,10 @@
   const namespacedObjects = $derived($objectsStore.filter(obj => obj.namespaceId === endpointNamespaceId));
 
   // Build preview JSON using shared utilities (appears flag filters fields automatically)
+  // Response preview always shows without envelope wrapping (envelope is always enabled on the endpoint)
   const requestPreviewJson = $derived(buildRequestPreviewFromObject(selectedObjectId, $objectsStore));
   const responsePreviewJson = $derived(
-    buildResponsePreviewFromObject(responseShape, selectedObjectId, useEnvelope, $objectsStore)
+    buildResponsePreviewFromObject(responseShape, selectedObjectId, false, $objectsStore)
   );
 
   // Get the selected object for display
@@ -116,54 +113,39 @@
     </div>
   </div>
 
-  <!-- Response Shape Selection -->
-  <div>
-    <div class="block text-sm text-mono-300 mb-2 font-medium">Response Shape</div>
-    <div class="flex gap-1">
-      {#each SHAPE_OPTIONS as option}
-        <button
-          type="button"
-          onclick={() => onSetResponseShape(option.value)}
-          class="flex-1 px-1.5 py-1 text-sm border transition-colors {responseShape === option.value
-            ? 'bg-green-400 text-mono-950 border-green-400 font-bold'
-            : 'bg-mono-900 text-mono-300 border-mono-600 hover:border-mono-400'}"
-        >
-          <i class="{option.icon} mr-1.5"></i>
-          {option.label}
-        </button>
-      {/each}
-    </div>
-  </div>
-
-  <!-- Previews (side-by-side) -->
-  <div class="object-editor-previews">
-    <!-- Request Preview -->
-    <div>
-      <h3 class="text-sm text-mono-300 flex items-center font-medium mb-2">
+  <!-- Request & Response Previews -->
+  <div class="object-editor-grid">
+    <!-- Request column -->
+    <div class="space-y-2">
+      <h3 class="text-sm text-mono-300 flex items-center font-medium">
         <i class="fa-solid fa-arrow-up mr-2"></i>
-        Request Preview
+        Request
       </h3>
+      <div class="request-spacer"></div>
       <div class="p-3 bg-mono-950 rounded border border-mono-700 text-white text-sm overflow-x-auto">
         <pre>{requestPreviewJson}</pre>
       </div>
     </div>
 
-    <!-- Response Preview -->
-    <div>
-      <div class="flex items-center justify-between mb-2">
-        <h3 class="text-sm text-mono-300 flex items-center font-medium">
-          <i class="fa-solid fa-arrow-down mr-2"></i>
-          Response Preview (200)
-        </h3>
-        <label class="flex items-center space-x-2 cursor-pointer">
-          <input
-            type="checkbox"
-            checked={useEnvelope}
-            onchange={(e) => onEnvelopeToggle(e.currentTarget.checked)}
-            class="w-4 h-4 text-green-400 border-mono-600 rounded focus:ring-2 focus:ring-green-400 bg-mono-900"
-          />
-          <span class="text-xs text-mono-300">Use envelope</span>
-        </label>
+    <!-- Response column -->
+    <div class="space-y-2">
+      <h3 class="text-sm text-mono-300 flex items-center font-medium">
+        <i class="fa-solid fa-arrow-down mr-2"></i>
+        Response
+      </h3>
+      <div class="flex gap-1">
+        {#each SHAPE_OPTIONS as option}
+          <button
+            type="button"
+            onclick={() => onSetResponseShape(option.value)}
+            class="flex-1 px-1.5 py-1 text-sm border transition-colors {responseShape === option.value
+              ? 'bg-green-400 text-mono-950 border-green-400 font-bold'
+              : 'bg-mono-900 text-mono-300 border-mono-600 hover:border-mono-400'}"
+          >
+            <i class="{option.icon} mr-1.5"></i>
+            {option.label}
+          </button>
+        {/each}
       </div>
       <div class="p-3 bg-mono-950 rounded border border-mono-700 text-white text-sm overflow-x-auto">
         <pre>{responsePreviewJson}</pre>
@@ -173,14 +155,21 @@
 </div>
 
 <style>
-  .object-editor-previews {
+  .object-editor-grid {
     display: grid;
     grid-template-columns: 1fr;
     gap: 1rem;
   }
+  .request-spacer {
+    display: none;
+  }
   @container (min-width: 700px) {
-    .object-editor-previews {
+    .object-editor-grid {
       grid-template-columns: repeat(2, 1fr);
+    }
+    .request-spacer {
+      display: block;
+      height: 30px;
     }
   }
 </style>

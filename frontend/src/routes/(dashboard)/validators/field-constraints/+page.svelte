@@ -265,7 +265,7 @@
                 class="w-full flex items-center justify-between p-3 bg-mono-950 hover:bg-mono-800 cursor-pointer transition-colors group"
               >
                 <div class="flex items-center space-x-2">
-                  <i class="fa-solid fa-table-list text-mono-400 group-hover:text-mono-300 transition-colors"></i>
+                  <i class="fa-solid fa-vector-square text-mono-400 group-hover:text-mono-300 transition-colors"></i>
                   <span class="text-sm text-mono-100 group-hover:text-mono-300 transition-colors">{field.name}</span>
                 </div>
                 <div class="flex items-center space-x-2">

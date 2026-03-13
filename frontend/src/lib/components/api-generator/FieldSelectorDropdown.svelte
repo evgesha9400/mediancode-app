@@ -76,6 +76,7 @@
             <div class="flex items-start justify-between">
               <div class="flex-1">
                 <div class="flex items-center space-x-2">
+                  <i class="fa-solid fa-vector-square text-mono-400 text-xs"></i>
                   <span class="font-mono text-sm text-mono-300">{field.name}</span>
                   <span class="text-xs text-mono-400 bg-mono-800 px-2 py-0.5 rounded">{field.type}</span>
                 </div>

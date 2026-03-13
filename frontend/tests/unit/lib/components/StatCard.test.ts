@@ -17,12 +17,12 @@ describe('StatCard Component', () => {
 			const props: StatCardProps = {
 				title: 'Total Fields',
 				value: 42,
-				icon: 'fa-table-list'
+				icon: 'fa-vector-square'
 			};
 
 			expect(props.title).toBe('Total Fields');
 			expect(props.value).toBe(42);
-			expect(props.icon).toBe('fa-table-list');
+			expect(props.icon).toBe('fa-vector-square');
 		});
 
 		it('StatCardProps value accepts string or number', () => {

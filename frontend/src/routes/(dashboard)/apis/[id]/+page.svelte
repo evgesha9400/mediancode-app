@@ -668,10 +668,8 @@
           <ObjectEditor
             endpointNamespaceId={apiState.apiNamespaceId}
             selectedObjectId={apiState.editedEndpoint.objectId}
-            useEnvelope={apiState.editedEndpoint.useEnvelope}
             responseShape={apiState.editedEndpoint.responseShape}
             onSelectObject={apiState.handleSelectObject}
-            onEnvelopeToggle={apiState.handleEnvelopeToggle}
             onSetResponseShape={apiState.handleSetResponseShape}
             onCreateNewObject={() => openObjectCreate('body')}
           />

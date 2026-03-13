@@ -16,7 +16,7 @@
   let isEmpty = $derived(!hasFields && !hasObjects && !hasApis);
 
   const actions = [
-    { label: 'Create Field', icon: 'fa-table-list', href: '/fields' },
+    { label: 'Create Field', icon: 'fa-vector-square', href: '/fields' },
     { label: 'Create Object', icon: 'fa-cubes', href: '/objects' },
     { label: 'Create API', icon: 'fa-code', href: '/apis' },
   ];
