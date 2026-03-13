@@ -89,3 +89,6 @@ claude_output_*.txt
 
 # Git Worktrees
 .worktrees/
+
+# Superpowers brainstorming
+.superpowers/

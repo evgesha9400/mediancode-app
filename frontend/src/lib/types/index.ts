@@ -142,8 +142,7 @@ export interface ApiEndpoint {
   tagName?: string;  // Tag name reference (string, not UUID)
   pathParams: PathParam[];
   queryParamsObjectId?: string; // Select ONE object for query parameters (optional)
-  requestBodyObjectId?: string; // Select ONE object for request body (optional - only POST/PUT/PATCH methods)
-  responseBodyObjectId?: string; // Select ONE object for response body (for both single object and array of objects)
+  objectId?: string; // Select ONE object for request/response body (appears flag controls which fields appear where)
   useEnvelope: boolean;
   // Response shape configuration (object or list of objects only)
   responseShape: ResponseShape;
@@ -151,10 +150,25 @@ export interface ApiEndpoint {
 }
 
 // Object Builder types
+export type FieldAppearance = 'both' | 'request' | 'response';
+
 export interface ObjectFieldReference {
   fieldId: string;
   optional: boolean;
   isPk: boolean;
+  appears: FieldAppearance;
+}
+
+export type Cardinality = 'has_one' | 'has_many' | 'references' | 'many_to_many';
+
+export interface ObjectRelationship {
+  id: string;
+  sourceObjectId: string;
+  targetObjectId: string;
+  name: string;
+  cardinality: Cardinality;
+  isInferred: boolean;
+  inverseId?: string;
 }
 
 export interface ObjectDefinition {
@@ -163,6 +177,7 @@ export interface ObjectDefinition {
   name: string;
   description?: string;
   fields: ObjectFieldReference[];
+  relationships: ObjectRelationship[];
   validators: InlineModelValidator[];
   usedInApis: string[];
 }
