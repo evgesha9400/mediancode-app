@@ -5,7 +5,8 @@
  */
 
 import { apiGet, apiPost, apiPut, apiDelete } from './client';
-import type { ObjectDefinition, ObjectFieldReference, InlineModelValidator } from '$lib/types';
+import type { ObjectDefinition, ObjectFieldReference, ObjectRelationship, InlineModelValidator } from '$lib/types';
+import type { FieldAppearance, Cardinality } from '$lib/types';
 
 /**
  * Backend object field reference response
@@ -14,6 +15,20 @@ interface ObjectFieldReferenceResponse {
 	fieldId: string;
 	optional: boolean;
 	isPk: boolean;
+	appears: string;
+}
+
+/**
+ * Backend API response for object relationship
+ */
+interface ObjectRelationshipResponse {
+	id: string;
+	sourceObjectId: string;
+	targetObjectId: string;
+	name: string;
+	cardinality: string;
+	isInferred: boolean;
+	inverseId: string | null;
 }
 
 /**
@@ -35,6 +50,7 @@ interface ObjectResponse {
 	name: string;
 	description: string | null;
 	fields: ObjectFieldReferenceResponse[];
+	relationships: ObjectRelationshipResponse[];
 	validators: ModelValidatorResponse[];
 	usedInApis: string[];
 }
@@ -46,7 +62,23 @@ function transformFieldReference(response: ObjectFieldReferenceResponse): Object
 	return {
 		fieldId: response.fieldId,
 		optional: response.optional,
-		isPk: response.isPk ?? false
+		isPk: response.isPk ?? false,
+		appears: (response.appears as FieldAppearance) ?? 'both'
+	};
+}
+
+/**
+ * Transform backend relationship response to frontend type
+ */
+function transformRelationship(response: ObjectRelationshipResponse): ObjectRelationship {
+	return {
+		id: response.id,
+		sourceObjectId: response.sourceObjectId,
+		targetObjectId: response.targetObjectId,
+		name: response.name,
+		cardinality: response.cardinality as Cardinality,
+		isInferred: response.isInferred,
+		inverseId: response.inverseId ?? undefined
 	};
 }
 
@@ -72,6 +104,7 @@ function transformObject(response: ObjectResponse): ObjectDefinition {
 		name: response.name,
 		description: response.description ?? undefined,
 		fields: response.fields.map(transformFieldReference),
+		relationships: (response.relationships ?? []).map(transformRelationship),
 		validators: (response.validators ?? []).map(transformModelValidator),
 		usedInApis: response.usedInApis
 	};
@@ -155,4 +188,29 @@ export async function updateObjectApi(id: string, data: UpdateObjectRequest): Pr
  */
 export async function deleteObjectApi(id: string): Promise<void> {
 	await apiDelete<void>(`/objects/${id}`);
+}
+
+// ============================================================================
+// Relationship Methods
+// ============================================================================
+
+/**
+ * Create a relationship on an object (auto-creates bidirectional inverse on backend)
+ */
+export async function createRelationshipApi(
+	objectId: string,
+	data: { targetObjectId: string; name: string; cardinality: string }
+): Promise<ObjectDefinition> {
+	const response = await apiPost<ObjectResponse>(`/objects/${objectId}/relationships`, data);
+	return transformObject(response);
+}
+
+/**
+ * Delete a relationship (auto-deletes bidirectional inverse on backend)
+ */
+export async function deleteRelationshipApi(
+	objectId: string,
+	relationshipId: string
+): Promise<void> {
+	await apiDelete<void>(`/objects/${objectId}/relationships/${relationshipId}`);
 }
