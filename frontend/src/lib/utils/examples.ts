@@ -1,6 +1,6 @@
 /**
  * Shared utility functions for generating example values and preview JSON
- * Used by both RequestBodyEditor and ResponseBodyEditor components
+ * Used by the ObjectEditor component for request/response previews
  */
 
 import type { ResponseShape } from '$lib/types';

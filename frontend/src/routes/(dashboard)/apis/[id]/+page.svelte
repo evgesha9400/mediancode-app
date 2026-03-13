@@ -10,8 +10,7 @@
     EndpointItem,
     ParameterEditor,
     QueryParametersEditor,
-    RequestBodyEditor,
-    ResponseBodyEditor,
+    ObjectEditor,
     GenerateModal
   } from '$lib/components';
   import { ObjectFormContent, FieldFormContent } from '$lib/components/form';
@@ -665,16 +664,8 @@
             onCreateNewObject={() => openObjectCreate('query')}
           />
 
-          <!-- Request Body Editor -->
-          <RequestBodyEditor
-            endpointNamespaceId={apiState.apiNamespaceId}
-            selectedObjectId={apiState.editedEndpoint.objectId}
-            onSelectObject={apiState.handleSelectObject}
-            onCreateNewObject={() => openObjectCreate('body')}
-          />
-
-          <!-- Response Body Editor -->
-          <ResponseBodyEditor
+          <!-- Object Editor (merged request + response) -->
+          <ObjectEditor
             endpointNamespaceId={apiState.apiNamespaceId}
             selectedObjectId={apiState.editedEndpoint.objectId}
             useEnvelope={apiState.editedEndpoint.useEnvelope}
