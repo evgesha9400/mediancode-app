@@ -129,11 +129,8 @@ export interface ApiDetailState {
 	// Query parameters object selection
 	handleSelectQueryParamsObject: (objectId: string | undefined) => void;
 
-	// Request body object selection
-	handleSelectRequestBodyObject: (objectId: string | undefined) => void;
-
-	// Response body object selection
-	handleSelectResponseBodyObject: (objectId: string | undefined) => void;
+	// Object selection (merged request/response body)
+	handleSelectObject: (objectId: string | undefined) => void;
 	handleEnvelopeToggle: (enabled: boolean) => void;
 
 	// Response shape configuration
@@ -377,8 +374,7 @@ export function createApiDetailState(config: ApiDetailStateConfig): ApiDetailSta
 		tagName: undefined as string | undefined,
 		pathParams: [] as { name: string; fieldId: string }[],
 		queryParamsObjectId: undefined as string | undefined,
-		requestBodyObjectId: undefined as string | undefined,
-		responseBodyObjectId: undefined as string | undefined,
+		objectId: undefined as string | undefined,
 		useEnvelope: true,
 		responseShape: 'object' as const
 	};
@@ -393,8 +389,7 @@ export function createApiDetailState(config: ApiDetailStateConfig): ApiDetailSta
 				|| editedEndpoint.tagName !== CREATE_DEFAULTS.tagName
 				|| editedEndpoint.pathParams.length !== CREATE_DEFAULTS.pathParams.length
 				|| editedEndpoint.queryParamsObjectId !== CREATE_DEFAULTS.queryParamsObjectId
-				|| editedEndpoint.requestBodyObjectId !== CREATE_DEFAULTS.requestBodyObjectId
-				|| editedEndpoint.responseBodyObjectId !== CREATE_DEFAULTS.responseBodyObjectId
+				|| editedEndpoint.objectId !== CREATE_DEFAULTS.objectId
 				|| editedEndpoint.useEnvelope !== CREATE_DEFAULTS.useEnvelope
 				|| editedEndpoint.responseShape !== CREATE_DEFAULTS.responseShape;
 		}
@@ -455,8 +450,7 @@ export function createApiDetailState(config: ApiDetailStateConfig): ApiDetailSta
 				tagName: editedEndpoint.tagName,
 				pathParams: editedEndpoint.pathParams,
 				queryParamsObjectId: editedEndpoint.queryParamsObjectId,
-				requestBodyObjectId: editedEndpoint.requestBodyObjectId,
-				responseBodyObjectId: editedEndpoint.responseBodyObjectId,
+				objectId: editedEndpoint.objectId,
 				useEnvelope: editedEndpoint.useEnvelope,
 				responseShape: editedEndpoint.responseShape
 			});
@@ -523,8 +517,7 @@ export function createApiDetailState(config: ApiDetailStateConfig): ApiDetailSta
 				tagName: original.tagName,
 				pathParams: original.pathParams.map(p => ({ ...p })),
 				queryParamsObjectId: original.queryParamsObjectId,
-				requestBodyObjectId: original.requestBodyObjectId,
-				responseBodyObjectId: original.responseBodyObjectId,
+				objectId: original.objectId,
 				useEnvelope: original.useEnvelope,
 				responseShape: original.responseShape
 			});
@@ -577,8 +570,7 @@ export function createApiDetailState(config: ApiDetailStateConfig): ApiDetailSta
 				tagName: editedEndpoint.tagName ?? null,
 				pathParams: editedEndpoint.pathParams,
 				queryParamsObjectId: editedEndpoint.queryParamsObjectId ?? null,
-				requestBodyObjectId: editedEndpoint.requestBodyObjectId ?? null,
-				responseBodyObjectId: editedEndpoint.responseBodyObjectId ?? null,
+				objectId: editedEndpoint.objectId ?? null,
 				useEnvelope: editedEndpoint.useEnvelope,
 				responseShape: editedEndpoint.responseShape
 			});
@@ -638,21 +630,12 @@ export function createApiDetailState(config: ApiDetailStateConfig): ApiDetailSta
 	}
 
 	// ============================================================================
-	// Request Body Object Selection
+	// Object Selection (merged request/response body)
 	// ============================================================================
 
-	function handleSelectRequestBodyObject(objectId: string | undefined): void {
+	function handleSelectObject(objectId: string | undefined): void {
 		if (!editedEndpoint) return;
-		editedEndpoint = { ...editedEndpoint, requestBodyObjectId: objectId };
-	}
-
-	// ============================================================================
-	// Response Body Object Selection
-	// ============================================================================
-
-	function handleSelectResponseBodyObject(objectId: string | undefined): void {
-		if (!editedEndpoint) return;
-		editedEndpoint = { ...editedEndpoint, responseBodyObjectId: objectId };
+		editedEndpoint = { ...editedEndpoint, objectId };
 	}
 
 	function handleEnvelopeToggle(enabled: boolean): void {
@@ -675,7 +658,7 @@ export function createApiDetailState(config: ApiDetailStateConfig): ApiDetailSta
 			...editedEndpoint,
 			useEnvelope: true,
 			responseShape: 'object',
-			responseBodyObjectId: undefined
+			objectId: undefined
 		};
 	}
 
@@ -751,8 +734,7 @@ export function createApiDetailState(config: ApiDetailStateConfig): ApiDetailSta
 		handlePathChange,
 		handlePathParamUpdate,
 		handleSelectQueryParamsObject,
-		handleSelectRequestBodyObject,
-		handleSelectResponseBodyObject,
+		handleSelectObject,
 		handleEnvelopeToggle,
 		handleSetResponseShape,
 		handleResetResponseDefaults,

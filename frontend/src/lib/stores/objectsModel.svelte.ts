@@ -184,6 +184,7 @@ export function createObjectsModel(config: ObjectsModelConfig): ObjectsModelStat
       name: '',
       description: '',
       fields: [],
+      relationships: [],
       validators: [],
       usedInApis: []
     };

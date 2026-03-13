@@ -52,7 +52,7 @@
   function addField(fieldId: string) {
     editedItem = {
       ...editedItem,
-      fields: [...editedItem.fields, { fieldId, optional: false, isPk: false }]
+      fields: [...editedItem.fields, { fieldId, optional: false, isPk: false, appears: 'both' as const }]
     };
   }
 

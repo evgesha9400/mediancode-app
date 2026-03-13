@@ -76,7 +76,7 @@
 
   let objectCreateOpen = $state(false);
   let editedNewObject = $state<ObjectDefinition | null>(null);
-  let objectCreateTarget = $state<'query' | 'request' | 'response'>('request');
+  let objectCreateTarget = $state<'query' | 'body'>('body');
   let objectFormTouched = $state(false);
   let objectSaving = $state(false);
 
@@ -100,7 +100,7 @@
   });
   let objectVisibleErrors = $derived({ ...objectImmediateErrors, ...(objectFormTouched ? objectFormErrors : {}) });
 
-  function openObjectCreate(target: 'query' | 'request' | 'response') {
+  function openObjectCreate(target: 'query' | 'body') {
     objectCreateTarget = target;
     editedNewObject = {
       id: '',
@@ -108,6 +108,7 @@
       name: '',
       description: '',
       fields: [],
+      relationships: [],
       validators: [],
       usedInApis: []
     };
@@ -149,10 +150,8 @@
       const newObjectId = result.data!.id;
       if (objectCreateTarget === 'query') {
         apiState.handleSelectQueryParamsObject(newObjectId);
-      } else if (objectCreateTarget === 'request') {
-        apiState.handleSelectRequestBodyObject(newObjectId);
       } else {
-        apiState.handleSelectResponseBodyObject(newObjectId);
+        apiState.handleSelectObject(newObjectId);
       }
 
       showToast(`Object "${editedNewObject.name}" created`, 'success');
@@ -254,7 +253,7 @@
       if (editedNewObject) {
         editedNewObject = {
           ...editedNewObject,
-          fields: [...editedNewObject.fields, { fieldId: result.data!.id, optional: false, isPk: false }]
+          fields: [...editedNewObject.fields, { fieldId: result.data!.id, optional: false, isPk: false, appears: 'both' as const }]
         };
       }
 
@@ -669,21 +668,21 @@
           <!-- Request Body Editor -->
           <RequestBodyEditor
             endpointNamespaceId={apiState.apiNamespaceId}
-            selectedObjectId={apiState.editedEndpoint.requestBodyObjectId}
-            onSelectObject={apiState.handleSelectRequestBodyObject}
-            onCreateNewObject={() => openObjectCreate('request')}
+            selectedObjectId={apiState.editedEndpoint.objectId}
+            onSelectObject={apiState.handleSelectObject}
+            onCreateNewObject={() => openObjectCreate('body')}
           />
 
           <!-- Response Body Editor -->
           <ResponseBodyEditor
             endpointNamespaceId={apiState.apiNamespaceId}
-            selectedObjectId={apiState.editedEndpoint.responseBodyObjectId}
+            selectedObjectId={apiState.editedEndpoint.objectId}
             useEnvelope={apiState.editedEndpoint.useEnvelope}
             responseShape={apiState.editedEndpoint.responseShape}
-            onSelectObject={apiState.handleSelectResponseBodyObject}
+            onSelectObject={apiState.handleSelectObject}
             onEnvelopeToggle={apiState.handleEnvelopeToggle}
             onSetResponseShape={apiState.handleSetResponseShape}
-            onCreateNewObject={() => openObjectCreate('response')}
+            onCreateNewObject={() => openObjectCreate('body')}
           />
         </div>
       {/if}
