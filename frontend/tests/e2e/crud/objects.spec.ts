@@ -21,6 +21,12 @@ const HELPER_FIELD = {
 	description: 'Helper field for object CRUD test'
 };
 
+const HELPER_FIELD_2 = {
+	name: 'e2e_obj_helper_field_2',
+	type: 'int',
+	description: 'Second helper field for object reorder test'
+};
+
 const OBJ_A = {
 	name: 'E2eAlphaObject',
 	description: 'E2E test object alpha for CRUD lifecycle'
@@ -42,7 +48,7 @@ test('Object lifecycle: create, add field, update, delete', async ({ page }) => 
 	const { data: existingFields } = await apiClient.listFields();
 	if (existingFields) {
 		for (const field of existingFields) {
-			if (field.name === HELPER_FIELD.name) {
+			if (field.name === HELPER_FIELD.name || field.name === HELPER_FIELD_2.name) {
 				await apiClient.deleteField(field.id);
 			}
 		}
@@ -53,6 +59,8 @@ test('Object lifecycle: create, add field, update, delete', async ({ page }) => 
 	await fields.goto();
 	await fields.createNewField(HELPER_FIELD);
 	expect(await fields.hasField(HELPER_FIELD.name)).toBe(true);
+	await fields.createNewField(HELPER_FIELD_2);
+	expect(await fields.hasField(HELPER_FIELD_2.name)).toBe(true);
 
 	// --- Navigate to objects page ---
 	const objects = new ObjectsPage(page);
@@ -78,11 +86,30 @@ test('Object lifecycle: create, add field, update, delete', async ({ page }) => 
 	expect(await objects.getObjectName()).toBe(OBJ_A.name);
 	expect(await objects.getObjectDescription()).toBe(OBJ_A.description);
 
-	// --- Add field to object ---
+	// --- Add fields to object ---
 	const initialFieldCount = await objects.getFieldCount();
 	await objects.addField(HELPER_FIELD.name);
+	await objects.addField(HELPER_FIELD_2.name);
 	const newFieldCount = await objects.getFieldCount();
-	expect(newFieldCount).toBe(initialFieldCount + 1);
+	expect(newFieldCount).toBe(initialFieldCount + 2);
+
+	// --- Reorder fields via drag-and-drop ---
+	const namesBefore = await objects.getFieldNames();
+	expect(namesBefore).toContain(HELPER_FIELD.name);
+	expect(namesBefore).toContain(HELPER_FIELD_2.name);
+
+	// Find the indices of our two helper fields
+	const idx1 = namesBefore.indexOf(HELPER_FIELD.name);
+	const idx2 = namesBefore.indexOf(HELPER_FIELD_2.name);
+
+	// Drag second helper field to first helper field's position (swap)
+	await objects.reorderField(idx2, idx1);
+
+	const namesAfter = await objects.getFieldNames();
+	// After reorder, the second field should now appear before the first
+	const newIdx1 = namesAfter.indexOf(HELPER_FIELD.name);
+	const newIdx2 = namesAfter.indexOf(HELPER_FIELD_2.name);
+	expect(newIdx2).toBeLessThan(newIdx1);
 
 	// --- Update description ---
 	await objects.setObjectDescription(UPDATED_DESCRIPTION);
@@ -95,7 +122,7 @@ test('Object lifecycle: create, add field, update, delete', async ({ page }) => 
 	// --- Verify updates persisted ---
 	await objects.clickRow(OBJ_A.name);
 	expect(await objects.getObjectDescription()).toBe(UPDATED_DESCRIPTION);
-	expect(await objects.getFieldCount()).toBeGreaterThan(0);
+	expect(await objects.getFieldCount()).toBeGreaterThanOrEqual(2);
 	await objects.closeDrawer();
 
 	// --- Delete object ---
@@ -110,11 +137,18 @@ test('Object lifecycle: create, add field, update, delete', async ({ page }) => 
 	expect(await objects.hasObject(OBJ_A.name)).toBe(false);
 	await objects.clearSearch();
 
-	// --- Cleanup helper field ---
+	// --- Cleanup helper fields ---
 	await fields.goto();
 	await fields.search(HELPER_FIELD.name);
 	if (await fields.hasField(HELPER_FIELD.name)) {
 		await fields.clickRow(HELPER_FIELD.name);
+		await fields.clickDelete();
+		await fields.confirmDelete();
+	}
+	await fields.clearSearch();
+	await fields.search(HELPER_FIELD_2.name);
+	if (await fields.hasField(HELPER_FIELD_2.name)) {
+		await fields.clickRow(HELPER_FIELD_2.name);
 		await fields.clickDelete();
 		await fields.confirmDelete();
 	}

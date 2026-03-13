@@ -42,6 +42,7 @@ export class ObjectsPage {
 	// Field selector dropdown
 	readonly fieldSelectorInput: Locator;
 	readonly fieldDropdownOptions: Locator;
+	readonly fieldGripHandles: Locator;
 
 	// Drawer actions
 	readonly saveButton: Locator;
@@ -93,6 +94,7 @@ export class ObjectsPage {
 		// Field selector dropdown
 		this.fieldSelectorInput = page.getByPlaceholder('Add field to object...');
 		this.fieldDropdownOptions = page.locator('.absolute.z-10.w-full button');
+		this.fieldGripHandles = page.locator('.fa-grip-vertical').locator('..');
 
 		// Drawer actions
 		this.saveButton = page.getByRole('button', { name: 'Save', exact: true });
@@ -320,6 +322,66 @@ export class ObjectsPage {
 		// (not the nested label which also has .flex.items-center.space-x-2)
 		const fieldRows = this.page.locator('.flex.items-center.space-x-2.p-2.bg-mono-900.rounded.border');
 		return await fieldRows.count();
+	}
+
+	/**
+	 * Get ordered list of field names in the drawer
+	 */
+	async getFieldNames(): Promise<string[]> {
+		const fieldRows = this.page.locator('.flex.items-center.space-x-2.p-2.bg-mono-900.rounded.border');
+		const count = await fieldRows.count();
+		const names: string[] = [];
+		for (let i = 0; i < count; i++) {
+			const nameSpan = fieldRows.nth(i).locator('.font-mono.text-sm.text-mono-300');
+			const text = await nameSpan.textContent();
+			if (text) names.push(text.trim());
+		}
+		return names;
+	}
+
+	/**
+	 * Reorder a field by dragging its grip handle to another field's grip handle position.
+	 * svelte-dnd-action's dragHandleZone works as follows:
+	 * 1. mousedown on the handle sets isItemsDragDisabled=false (synchronous)
+	 * 2. The zone updates, registering mousedown listeners on item elements
+	 * 3. The mousedown event bubbles from handle to item, triggering the zone's listener
+	 * 4. On mousemove (>= 3px), the drag actually starts
+	 * We use Playwright's low-level mouse API to simulate this sequence.
+	 * @param fromIndex - 0-based index of the field to drag
+	 * @param toIndex - 0-based index of the target position
+	 */
+	async reorderField(fromIndex: number, toIndex: number) {
+		const sourceHandle = this.fieldGripHandles.nth(fromIndex);
+		const targetHandle = this.fieldGripHandles.nth(toIndex);
+
+		const sourceBox = await sourceHandle.boundingBox();
+		const targetBox = await targetHandle.boundingBox();
+		if (!sourceBox || !targetBox) throw new Error('Could not get bounding boxes for drag handles');
+
+		const sourceX = sourceBox.x + sourceBox.width / 2;
+		const sourceY = sourceBox.y + sourceBox.height / 2;
+		const targetX = targetBox.x + targetBox.width / 2;
+		const targetY = targetBox.y + targetBox.height / 2;
+
+		// Move to the source handle and press down
+		await this.page.mouse.move(sourceX, sourceY);
+		await this.page.mouse.down();
+		// Small pause to let the store update and zone re-register listeners
+		await this.page.waitForTimeout(100);
+
+		// Move past the MIN_MOVEMENT_BEFORE_DRAG_START_PX threshold (3px in svelte-dnd-action)
+		// then continue to the target position in steps
+		const steps = 20;
+		for (let i = 1; i <= steps; i++) {
+			await this.page.mouse.move(
+				sourceX + (targetX - sourceX) * (i / steps),
+				sourceY + (targetY - sourceY) * (i / steps)
+			);
+		}
+		// Hold at the target briefly so the library can finalize the position
+		await this.page.waitForTimeout(200);
+		await this.page.mouse.up();
+		await this.delay();
 	}
 
 	/**

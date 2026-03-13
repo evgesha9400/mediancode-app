@@ -14,7 +14,7 @@
   import type { ObjectDefinition } from '$lib/stores/objects';
   import type { Field } from '$lib/stores/fields';
   import { getFieldById } from '$lib/stores/fields';
-  import type { ModelValidatorTemplate, InlineModelValidator, FieldAppearance, ObjectRelationship, Cardinality } from '$lib/types';
+  import type { ModelValidatorTemplate, InlineModelValidator, FieldAppearance, ObjectFieldReference, ObjectRelationship, Cardinality } from '$lib/types';
   import {
     FormField,
     FormLabel,
@@ -27,6 +27,9 @@
   import { objectsStore, getObjectById } from '$lib/stores/objects';
   import { showToast } from '$lib/stores/toasts';
   import { generateId } from '$lib/utils/ids';
+  import { dragHandleZone, dragHandle } from 'svelte-dnd-action';
+  import type { DndEvent } from 'svelte-dnd-action';
+  import { flip } from 'svelte/animate';
 
   const ALLOWED_PK_TYPES = new Set(['int', 'uuid']);
 
@@ -42,6 +45,38 @@
 
   // Derive selected field IDs for the FieldSelectorDropdown
   let selectedFieldIds = $derived(editedItem.fields.map(f => f.fieldId));
+
+  // --- Drag-and-drop field reordering ---
+  type DndItem = ObjectFieldReference & { id: string };
+
+  // Mutable state for dndzone — synced from editedItem.fields
+  let dndItems: DndItem[] = $state(
+    editedItem.fields.map(f => ({ ...f, id: f.fieldId }))
+  );
+
+  // Re-sync when editedItem.fields changes externally (undo, field add/remove)
+  $effect(() => {
+    dndItems = editedItem.fields.map(f => ({ ...f, id: f.fieldId }));
+  });
+
+  // Map library items back to clean ObjectFieldReference[] (strip `id` and any library-injected properties)
+  function toDomainFields(items: DndItem[]): ObjectFieldReference[] {
+    return items.map(item => ({
+      fieldId: item.fieldId,
+      optional: item.optional,
+      isPk: item.isPk,
+      appears: item.appears
+    }));
+  }
+
+  function handleDndConsider(e: CustomEvent<DndEvent<DndItem>>) {
+    dndItems = e.detail.items;
+  }
+
+  function handleDndFinalize(e: CustomEvent<DndEvent<DndItem>>) {
+    dndItems = e.detail.items;
+    editedItem = { ...editedItem, fields: toDomainFields(e.detail.items) };
+  }
 
   // Resolve object's fields to full Field objects for template role dropdowns
   let objectFieldDefinitions = $derived.by((): Field[] => {
@@ -264,12 +299,23 @@
           <p class="text-xs text-mono-400">No fields selected</p>
         </div>
       {:else}
-        <div class="p-2 bg-mono-800 rounded border border-mono-700 space-y-2">
-          {#each editedItem.fields as fieldRef}
-            {@const field = getFieldById(fieldRef.fieldId)}
+        <div
+          use:dragHandleZone={{ items: dndItems, flipDurationMs: 150, type: 'fields' }}
+          onconsider={handleDndConsider}
+          onfinalize={handleDndFinalize}
+          class="p-2 bg-mono-800 rounded border border-mono-700 space-y-2"
+        >
+          {#each dndItems as item (item.id)}
+            {@const field = getFieldById(item.fieldId)}
             {@const pkCompatible = field ? ALLOWED_PK_TYPES.has(field.type) : false}
+            <div animate:flip={{ duration: 150 }}>
             {#if field}
               <div class="flex items-center space-x-2 p-2 bg-mono-900 rounded border border-mono-700">
+                <!-- Drag Handle -->
+                <div use:dragHandle class="text-mono-600 hover:text-mono-400 cursor-grab">
+                  <i class="fa-solid fa-grip-vertical text-xs"></i>
+                </div>
+
                 <!-- Field Name and Type -->
                 <div class="flex items-center space-x-2">
                   <span class="font-mono text-sm text-mono-300">{field.name}</span>
@@ -288,14 +334,14 @@
                 <!-- PK Toggle -->
                 <button
                   type="button"
-                  onclick={() => toggleFieldPk(fieldRef.fieldId)}
-                  disabled={!pkCompatible && !fieldRef.isPk}
-                  class="flex items-center space-x-1 px-2 py-0.5 text-xs font-medium border transition-colors {fieldRef.isPk
+                  onclick={() => toggleFieldPk(item.fieldId)}
+                  disabled={!pkCompatible && !item.isPk}
+                  class="flex items-center space-x-1 px-2 py-0.5 text-xs font-medium border transition-colors {item.isPk
                     ? 'bg-green-900/30 text-green-400 border-green-700'
                     : pkCompatible
                       ? 'bg-mono-800 text-mono-500 border-mono-700 hover:text-mono-300 hover:border-mono-600'
                       : 'bg-mono-800 text-mono-600 border-mono-700 opacity-40 cursor-not-allowed'}"
-                  title={fieldRef.isPk
+                  title={item.isPk
                     ? 'Remove primary key'
                     : pkCompatible
                       ? 'Set as primary key'
@@ -306,34 +352,34 @@
                 </button>
 
                 <!-- Appears-in Segmented Control -->
-                <div class="flex border border-mono-700 rounded overflow-hidden {fieldRef.isPk ? 'opacity-40 pointer-events-none' : ''}">
+                <div class="flex border border-mono-700 rounded overflow-hidden {item.isPk ? 'opacity-40 pointer-events-none' : ''}">
                   <button
                     type="button"
-                    onclick={() => setFieldAppears(fieldRef.fieldId, 'both')}
-                    class="px-2 py-0.5 text-xs font-medium transition-colors {fieldRef.appears === 'both' ? 'bg-blue-500/20 text-blue-400 border-r border-blue-500/50' : 'bg-mono-800 text-mono-500 border-r border-mono-700 hover:text-mono-300'}"
+                    onclick={() => setFieldAppears(item.fieldId, 'both')}
+                    class="px-2 py-0.5 text-xs font-medium transition-colors {item.appears === 'both' ? 'bg-blue-500/20 text-blue-400 border-r border-blue-500/50' : 'bg-mono-800 text-mono-500 border-r border-mono-700 hover:text-mono-300'}"
                     title="Include in both request and response"
                   >Both</button>
                   <button
                     type="button"
-                    onclick={() => setFieldAppears(fieldRef.fieldId, 'request')}
-                    class="px-2 py-0.5 text-xs font-medium transition-colors {fieldRef.appears === 'request' ? 'bg-yellow-500/20 text-yellow-400 border-r border-yellow-500/50' : 'bg-mono-800 text-mono-500 border-r border-mono-700 hover:text-mono-300'}"
+                    onclick={() => setFieldAppears(item.fieldId, 'request')}
+                    class="px-2 py-0.5 text-xs font-medium transition-colors {item.appears === 'request' ? 'bg-yellow-500/20 text-yellow-400 border-r border-yellow-500/50' : 'bg-mono-800 text-mono-500 border-r border-mono-700 hover:text-mono-300'}"
                     title="Include in request only"
                   >Req</button>
                   <button
                     type="button"
-                    onclick={() => setFieldAppears(fieldRef.fieldId, 'response')}
-                    class="px-2 py-0.5 text-xs font-medium transition-colors {fieldRef.appears === 'response' ? 'bg-green-500/20 text-green-400' : 'bg-mono-800 text-mono-500 hover:text-mono-300'}"
+                    onclick={() => setFieldAppears(item.fieldId, 'response')}
+                    class="px-2 py-0.5 text-xs font-medium transition-colors {item.appears === 'response' ? 'bg-green-500/20 text-green-400' : 'bg-mono-800 text-mono-500 hover:text-mono-300'}"
                     title="Include in response only"
                   >Res</button>
                 </div>
 
                 <!-- Optional Checkbox -->
-                <label class="flex items-center space-x-2 {fieldRef.isPk || fieldRef.appears === 'response' ? 'opacity-40 cursor-not-allowed' : 'cursor-pointer'}" title={fieldRef.isPk ? 'Primary key fields cannot be optional' : fieldRef.appears === 'response' ? 'Response-only fields are not optional' : ''}>
+                <label class="flex items-center space-x-2 {item.isPk || item.appears === 'response' ? 'opacity-40 cursor-not-allowed' : 'cursor-pointer'}" title={item.isPk ? 'Primary key fields cannot be optional' : item.appears === 'response' ? 'Response-only fields are not optional' : ''}>
                   <input
                     type="checkbox"
-                    checked={fieldRef.optional}
-                    disabled={fieldRef.isPk || fieldRef.appears === 'response'}
-                    onchange={() => toggleFieldOptional(fieldRef.fieldId)}
+                    checked={item.optional}
+                    disabled={item.isPk || item.appears === 'response'}
+                    onchange={() => toggleFieldOptional(item.fieldId)}
                     class="h-4 w-4 border-mono-600 rounded text-green-400 focus:ring-2 focus:ring-green-400"
                   />
                   <span class="text-sm text-mono-400 whitespace-nowrap">Optional</span>
@@ -342,7 +388,7 @@
                 <!-- Delete Button -->
                 <button
                   type="button"
-                  onclick={() => removeField(fieldRef.fieldId)}
+                  onclick={() => removeField(item.fieldId)}
                   class="text-red-700 hover:text-red-600 transition-colors"
                   title="Remove field"
                 >
@@ -354,11 +400,11 @@
               <div class="flex items-center gap-2 py-1.5">
                 <i class="fa-solid fa-triangle-exclamation text-red-500 text-sm"></i>
                 <span class="flex-1 text-sm text-red-700">
-                  Field not found <span class="font-mono text-xs text-red-500">({fieldRef.fieldId})</span>
+                  Field not found <span class="font-mono text-xs text-red-500">({item.fieldId})</span>
                 </span>
                 <button
                   type="button"
-                  onclick={() => removeField(fieldRef.fieldId)}
+                  onclick={() => removeField(item.fieldId)}
                   class="p-1 text-red-700 hover:text-red-600 hover:bg-red-100 rounded transition-colors"
                   title="Remove missing field reference"
                 >
@@ -366,6 +412,7 @@
                 </button>
               </div>
             {/if}
+            </div>
           {/each}
         </div>
       {/if}

@@ -67,6 +67,7 @@
   "license": "ISC",
   "dependencies": {
     "@clerk/clerk-js": "^5.108.0",
+    "svelte-dnd-action": "^0.9.69",
     "three": "^0.182.0"
   },
   "overrides": {
