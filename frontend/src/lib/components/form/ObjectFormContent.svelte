@@ -25,6 +25,7 @@
   } from '$lib/components';
   import { getModelValidatorTemplateById } from '$lib/stores/modelValidatorTemplates';
   import { objectsStore, getObjectById } from '$lib/stores/objects';
+  import { getFkHint } from '$lib/domain/relationships';
   import { apisStore } from '$lib/stores/apis';
   import { showToast } from '$lib/stores/toasts';
   import { generateId } from '$lib/utils/ids';
@@ -457,6 +458,7 @@
         <div class="p-2 bg-mono-800 rounded border border-mono-700 space-y-2">
           {#each editedItem.relationships || [] as rel}
             {@const targetObj = getObjectById(rel.targetObjectId)}
+            {@const fkHint = getFkHint(rel, editedItem.fields, getFieldById, !!targetObj)}
             <div class="flex items-center space-x-2 p-2 bg-mono-900 rounded {rel.isInferred ? 'border border-dashed border-mono-600 opacity-60' : 'border border-mono-700'}">
               <!-- Name Input -->
               {#if rel.isInferred}
@@ -490,15 +492,10 @@
                 → {targetObj?.name ?? 'Unknown'}
               </span>
 
-              <!-- FK Hint for references -->
-              {#if rel.cardinality === 'references' && targetObj}
-                {@const fkName = rel.name + '_id'}
-                {@const hasFk = editedItem.fields.some(f => {
-                  const field = getFieldById(f.fieldId);
-                  return field?.name === fkName;
-                })}
-                <span class="text-xs {hasFk ? 'text-green-400' : 'text-yellow-400'}">
-                  {hasFk ? `via ${fkName} ✓` : `missing ${fkName} ✗`}
+              <!-- FK Hint for references (only user-defined; inferred rels have FK on the other side) -->
+              {#if fkHint}
+                <span class="text-xs {fkHint.hasFk ? 'text-green-400' : 'text-yellow-400'}">
+                  {fkHint.hasFk ? `via ${fkHint.fkName} ✓` : `missing ${fkHint.fkName} ✗`}
                 </span>
               {/if}
 
