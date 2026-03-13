@@ -27,8 +27,7 @@ interface EndpointResponse {
 	tagName: string | null;
 	pathParams: PathParamResponse[];
 	queryParamsObjectId: string | null;
-	requestBodyObjectId: string | null;
-	responseBodyObjectId: string | null;
+	objectId: string | null;
 	useEnvelope: boolean;
 	responseShape: string;
 }
@@ -56,8 +55,7 @@ function transformEndpoint(response: EndpointResponse): ApiEndpoint {
 		tagName: response.tagName ?? undefined,
 		pathParams: response.pathParams.map(transformParameter),
 		queryParamsObjectId: response.queryParamsObjectId ?? undefined,
-		requestBodyObjectId: response.requestBodyObjectId ?? undefined,
-		responseBodyObjectId: response.responseBodyObjectId ?? undefined,
+		objectId: response.objectId ?? undefined,
 		useEnvelope: response.useEnvelope,
 		responseShape: response.responseShape as ResponseShape,
 		expanded: false
@@ -98,8 +96,7 @@ export interface CreateEndpointRequest {
 	tagName?: string;
 	pathParams?: { name: string; fieldId: string }[];
 	queryParamsObjectId?: string;
-	requestBodyObjectId?: string;
-	responseBodyObjectId?: string;
+	objectId?: string;
 	useEnvelope?: boolean;
 	responseShape?: ResponseShape;
 }
@@ -114,8 +111,7 @@ export interface UpdateEndpointRequest {
 	tagName?: string | null;
 	pathParams?: { name: string; fieldId: string }[];
 	queryParamsObjectId?: string | null;
-	requestBodyObjectId?: string | null;
-	responseBodyObjectId?: string | null;
+	objectId?: string | null;
 	useEnvelope?: boolean;
 	responseShape?: ResponseShape;
 }
