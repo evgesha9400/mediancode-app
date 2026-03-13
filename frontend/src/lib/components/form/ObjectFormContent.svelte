@@ -14,7 +14,7 @@
   import type { ObjectDefinition } from '$lib/stores/objects';
   import type { Field } from '$lib/stores/fields';
   import { getFieldById } from '$lib/stores/fields';
-  import type { ModelValidatorTemplate, InlineModelValidator } from '$lib/types';
+  import type { ModelValidatorTemplate, InlineModelValidator, FieldAppearance } from '$lib/types';
   import {
     FormField,
     FormLabel,
@@ -85,9 +85,21 @@
     const newFields = editedItem.fields.map(f => {
       if (f.fieldId === fieldId) {
         const newIsPk = !f.isPk;
-        return { ...f, isPk: newIsPk, optional: newIsPk ? false : f.optional };
+        return { ...f, isPk: newIsPk, optional: newIsPk ? false : f.optional, appears: newIsPk ? 'response' as const : f.appears };
       }
       return { ...f, isPk: false };
+    });
+    editedItem = { ...editedItem, fields: newFields };
+  }
+
+  function setFieldAppears(fieldId: string, value: FieldAppearance) {
+    const fieldRef = editedItem.fields.find(f => f.fieldId === fieldId);
+    if (!fieldRef || fieldRef.isPk) return;
+    const newFields = editedItem.fields.map(f => {
+      if (f.fieldId === fieldId) {
+        return { ...f, appears: value, optional: value === 'response' ? false : f.optional };
+      }
+      return f;
     });
     editedItem = { ...editedItem, fields: newFields };
   }
@@ -225,12 +237,34 @@
                   <span>PK</span>
                 </button>
 
+                <!-- Appears-in Segmented Control -->
+                <div class="flex border border-mono-700 rounded overflow-hidden {fieldRef.isPk ? 'opacity-40 pointer-events-none' : ''}">
+                  <button
+                    type="button"
+                    onclick={() => setFieldAppears(fieldRef.fieldId, 'both')}
+                    class="px-2 py-0.5 text-xs font-medium transition-colors {fieldRef.appears === 'both' ? 'bg-blue-500/20 text-blue-400 border-r border-blue-500/50' : 'bg-mono-800 text-mono-500 border-r border-mono-700 hover:text-mono-300'}"
+                    title="Include in both request and response"
+                  >Both</button>
+                  <button
+                    type="button"
+                    onclick={() => setFieldAppears(fieldRef.fieldId, 'request')}
+                    class="px-2 py-0.5 text-xs font-medium transition-colors {fieldRef.appears === 'request' ? 'bg-yellow-500/20 text-yellow-400 border-r border-yellow-500/50' : 'bg-mono-800 text-mono-500 border-r border-mono-700 hover:text-mono-300'}"
+                    title="Include in request only"
+                  >Req</button>
+                  <button
+                    type="button"
+                    onclick={() => setFieldAppears(fieldRef.fieldId, 'response')}
+                    class="px-2 py-0.5 text-xs font-medium transition-colors {fieldRef.appears === 'response' ? 'bg-green-500/20 text-green-400' : 'bg-mono-800 text-mono-500 hover:text-mono-300'}"
+                    title="Include in response only"
+                  >Res</button>
+                </div>
+
                 <!-- Optional Checkbox -->
-                <label class="flex items-center space-x-2 {fieldRef.isPk ? 'opacity-40 cursor-not-allowed' : 'cursor-pointer'}" title={fieldRef.isPk ? 'Primary key fields cannot be optional' : ''}>
+                <label class="flex items-center space-x-2 {fieldRef.isPk || fieldRef.appears === 'response' ? 'opacity-40 cursor-not-allowed' : 'cursor-pointer'}" title={fieldRef.isPk ? 'Primary key fields cannot be optional' : fieldRef.appears === 'response' ? 'Response-only fields are not optional' : ''}>
                   <input
                     type="checkbox"
                     checked={fieldRef.optional}
-                    disabled={fieldRef.isPk}
+                    disabled={fieldRef.isPk || fieldRef.appears === 'response'}
                     onchange={() => toggleFieldOptional(fieldRef.fieldId)}
                     class="h-4 w-4 border-mono-600 rounded text-green-400 focus:ring-2 focus:ring-green-400"
                   />
