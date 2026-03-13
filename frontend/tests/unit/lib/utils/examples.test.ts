@@ -2,15 +2,43 @@ import { describe, it, expect, beforeEach } from 'vitest';
 import {
 	getExampleValueForType,
 	buildObjectFromObjectId,
+	buildRequestBodyFromObjectId,
+	buildResponseBodyFromObjectId,
 	buildRequestPreviewFromObject,
 	buildResponsePreviewFromObject
 } from '$lib/utils/examples';
 import { fieldsStore } from '$lib/stores/fields';
 import { objectsStore } from '$lib/stores/objects';
 import { initialFields } from '../../../fixtures/seedData';
-import type { ResponseShape } from '$lib/types';
+import type { ResponseShape, ObjectDefinition, Field } from '$lib/types';
 
 import { initialObjects, SEED_OBJECT_IDS } from '../../../fixtures/seedData';
+
+// Test object with mixed appears values
+const APPEARS_TEST_OBJECT_ID = 'test-appears-obj';
+const testFieldId = (name: string) => `test-field-${name}`;
+
+const appearsTestFields: Field[] = [
+	{ id: testFieldId('id'), namespaceId: 'ns-1', name: 'id', type: 'uuid', container: null, constraints: [], validators: [], usedInApis: [] },
+	{ id: testFieldId('name'), namespaceId: 'ns-1', name: 'name', type: 'str', container: null, constraints: [], validators: [], usedInApis: [] },
+	{ id: testFieldId('password'), namespaceId: 'ns-1', name: 'password', type: 'str', container: null, constraints: [], validators: [], usedInApis: [] },
+	{ id: testFieldId('created_at'), namespaceId: 'ns-1', name: 'created_at', type: 'datetime', container: null, constraints: [], validators: [], usedInApis: [] },
+];
+
+const appearsTestObject: ObjectDefinition = {
+	id: APPEARS_TEST_OBJECT_ID,
+	namespaceId: 'ns-1',
+	name: 'TestObj',
+	fields: [
+		{ fieldId: testFieldId('id'), optional: false, isPk: true, appears: 'response' },
+		{ fieldId: testFieldId('name'), optional: false, isPk: false, appears: 'both' },
+		{ fieldId: testFieldId('password'), optional: false, isPk: false, appears: 'request' },
+		{ fieldId: testFieldId('created_at'), optional: false, isPk: false, appears: 'response' },
+	],
+	relationships: [],
+	validators: [],
+	usedInApis: []
+};
 
 describe('examples - getExampleValueForType', () => {
 	it('should return correct example for string types', () => {
@@ -161,5 +189,63 @@ describe('examples - buildResponsePreviewFromObject', () => {
 		expect(parsed).toHaveProperty('data');
 		expect(Array.isArray(parsed.data)).toBe(true);
 		expect(parsed.data).toHaveLength(2);
+	});
+});
+
+describe('examples - buildRequestBodyFromObjectId (appears flag)', () => {
+	beforeEach(() => {
+		fieldsStore.set([...initialFields, ...appearsTestFields]);
+		objectsStore.set([...(initialObjects as any), appearsTestObject]);
+	});
+
+	it('should exclude PK fields from request preview', () => {
+		const obj = buildRequestBodyFromObjectId(APPEARS_TEST_OBJECT_ID);
+		expect(obj).not.toHaveProperty('id');
+	});
+
+	it('should exclude response-only fields from request preview', () => {
+		const obj = buildRequestBodyFromObjectId(APPEARS_TEST_OBJECT_ID);
+		expect(obj).not.toHaveProperty('created_at');
+	});
+
+	it('should include request-only fields in request preview', () => {
+		const obj = buildRequestBodyFromObjectId(APPEARS_TEST_OBJECT_ID);
+		expect(obj).toHaveProperty('password');
+	});
+
+	it('should include both fields in request preview', () => {
+		const obj = buildRequestBodyFromObjectId(APPEARS_TEST_OBJECT_ID);
+		expect(obj).toHaveProperty('name');
+	});
+
+	it('should return empty object for undefined objectId', () => {
+		expect(buildRequestBodyFromObjectId(undefined)).toEqual({});
+	});
+});
+
+describe('examples - buildResponseBodyFromObjectId (appears flag)', () => {
+	beforeEach(() => {
+		fieldsStore.set([...initialFields, ...appearsTestFields]);
+		objectsStore.set([...(initialObjects as any), appearsTestObject]);
+	});
+
+	it('should exclude request-only fields from response preview', () => {
+		const obj = buildResponseBodyFromObjectId(APPEARS_TEST_OBJECT_ID);
+		expect(obj).not.toHaveProperty('password');
+	});
+
+	it('should include response-only fields in response preview', () => {
+		const obj = buildResponseBodyFromObjectId(APPEARS_TEST_OBJECT_ID);
+		expect(obj).toHaveProperty('id');
+		expect(obj).toHaveProperty('created_at');
+	});
+
+	it('should include both fields in response preview', () => {
+		const obj = buildResponseBodyFromObjectId(APPEARS_TEST_OBJECT_ID);
+		expect(obj).toHaveProperty('name');
+	});
+
+	it('should return empty object for undefined objectId', () => {
+		expect(buildResponseBodyFromObjectId(undefined)).toEqual({});
 	});
 });

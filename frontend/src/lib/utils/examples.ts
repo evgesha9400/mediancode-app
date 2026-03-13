@@ -58,29 +58,53 @@ export function buildObjectFromObjectId(objectId: string | undefined, objects?: 
 }
 
 /**
+ * Build request body preview object, filtering by `appears` flag.
+ * Excludes PK fields and response-only fields.
+ */
+export function buildRequestBodyFromObjectId(objectId: string | undefined, objects?: any[]): Record<string, any> {
+	if (!objectId) return {};
+	const objectDef = getObjectById(objectId);
+	if (!objectDef) return {};
+
+	const obj: Record<string, any> = {};
+	objectDef.fields
+		.filter(fieldRef => !fieldRef.isPk && fieldRef.appears !== 'response')
+		.forEach(fieldRef => {
+			const field = getFieldById(fieldRef.fieldId);
+			if (field) obj[field.name] = getExampleValueForType(field.type);
+		});
+	return obj;
+}
+
+/**
+ * Build response body preview object, filtering by `appears` flag.
+ * Excludes request-only fields.
+ */
+export function buildResponseBodyFromObjectId(objectId: string | undefined, objects?: any[]): Record<string, any> {
+	if (!objectId) return {};
+	const objectDef = getObjectById(objectId);
+	if (!objectDef) return {};
+
+	const obj: Record<string, any> = {};
+	objectDef.fields
+		.filter(fieldRef => fieldRef.appears !== 'request')
+		.forEach(fieldRef => {
+			const field = getFieldById(fieldRef.fieldId);
+			if (field) obj[field.name] = getExampleValueForType(field.type);
+		});
+	return obj;
+}
+
+/**
  * Build request body preview JSON from an object ID
- *
- * @param objectId - The ID of the object definition to use for the request body
- * @param objects - Optional objects array for reactive dependencies (not used directly but ensures reactivity)
- * @returns JSON string representation of the request body
  */
 export function buildRequestPreviewFromObject(objectId: string | undefined, objects?: any[]): string {
-	const bodyContent = buildObjectFromObjectId(objectId, objects);
+	const bodyContent = buildRequestBodyFromObjectId(objectId, objects);
 	return JSON.stringify(bodyContent, null, 2);
 }
 
 /**
  * Build response body preview JSON from an object ID
- *
- * Supports two response shapes:
- * - object: Returns a single object built from the object definition
- * - list: Returns an array of objects
- *
- * @param shape - The response shape ('object' or 'list')
- * @param objectId - The ID of the object definition to use for the response
- * @param useEnvelope - Whether to wrap the response in a { data: ... } envelope
- * @param objects - Optional objects array for reactive dependencies (not used directly but ensures reactivity)
- * @returns JSON string representation of the response body
  */
 export function buildResponsePreviewFromObject(
 	shape: ResponseShape,
@@ -90,25 +114,20 @@ export function buildResponsePreviewFromObject(
 ): string {
 	let bodyContent: any;
 
-	const objectData = buildObjectFromObjectId(objectId, objects);
+	const objectData = buildResponseBodyFromObjectId(objectId, objects);
 
 	if (shape === 'object') {
-		// Object shape: return single object
 		bodyContent = objectData;
 	} else if (shape === 'list') {
-		// List shape: array of objects
 		if (Object.keys(objectData).length === 0) {
 			bodyContent = [];
 		} else {
-			bodyContent = [objectData, objectData]; // Show 2 example items
+			bodyContent = [objectData, objectData];
 		}
 	}
 
-	// Wrap in envelope if enabled
 	if (useEnvelope) {
-		bodyContent = {
-			data: bodyContent
-		};
+		bodyContent = { data: bodyContent };
 	}
 
 	return JSON.stringify(bodyContent, null, 2);
