@@ -18,6 +18,8 @@ import {
 } from '$lib/domain/mutations';
 import { createRelationshipApi, deleteRelationshipApi } from '$lib/api/objects';
 import { buildDeletionTooltip } from '$lib/utils/references';
+import { apisStore } from './apis';
+import { get } from 'svelte/store';
 import { composeState } from '$lib/utils/compose';
 import { isValidPascalCaseName } from '$lib/utils/validation';
 import { showToast } from './toasts';
@@ -234,7 +236,10 @@ export function createObjectsModel(config: ObjectsModelConfig): ObjectsModelStat
     return {
       canDelete: !hasMultipleRefs,
       tooltip: hasMultipleRefs
-        ? buildDeletionTooltip('object', 'API', item.usedInApis.map(api => ({ name: api })))
+        ? buildDeletionTooltip('object', 'API', item.usedInApis.map(apiId => {
+            const api = get(apisStore).find(a => a.id === apiId);
+            return { name: api?.title ?? apiId };
+          }))
         : ''
     };
   }

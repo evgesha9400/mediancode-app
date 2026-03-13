@@ -148,10 +148,6 @@
       <DetailField label="Name" value={state.selectedItem.name} />
       <DetailField label="Python Type" value={state.selectedItem.pythonType} />
       <DetailField label="Description" value={state.selectedItem.description} />
-      <DetailField label="Used in Fields">
-        <Pill>{state.selectedItem.usedInFields}</Pill>
-        <span class="text-sm text-mono-400 ml-2">fields</span>
-      </DetailField>
     </div>
   {/if}
 {/snippet}

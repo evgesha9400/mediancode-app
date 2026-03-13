@@ -1,6 +1,5 @@
 <script lang="ts">
   import { fieldConstraintsStore, searchFieldConstraints, type FieldConstraint } from '$lib/stores/fieldConstraints';
-  import { fieldsStore } from '$lib/stores/fields';
   import { isSystemEntity } from '$lib/utils/namespace';
   import {
     PageHeader,
@@ -76,18 +75,6 @@
   function isSelected(fc: FieldConstraint): boolean {
     return selectedFieldConstraint?.name === fc.name;
   }
-
-  function navigateToField(fieldId: string) {
-    goto(`/fields?highlight=${fieldId}`);
-  }
-
-  // Compute field references reactively from fieldsStore
-  let fieldsUsingSelected = $derived(
-    selectedFieldConstraint
-      ? $fieldsStore.filter(f => f.constraints.some(c => c.constraintId === selectedFieldConstraint!.id))
-          .map(f => ({ name: f.name, fieldId: f.id }))
-      : []
-  );
 
   let isSystemItem = $derived(selectedFieldConstraint ? isSystemEntity(selectedFieldConstraint) : false);
 </script>
@@ -255,32 +242,6 @@
         </DetailField>
       {/if}
 
-      <DetailField label="Used In Fields ({fieldsUsingSelected.length})">
-        {#if fieldsUsingSelected.length > 0}
-          <div class="space-y-2">
-            {#each fieldsUsingSelected as field}
-              <button
-                type="button"
-                onclick={() => navigateToField(field.fieldId)}
-                class="w-full flex items-center justify-between p-3 bg-mono-950 hover:bg-mono-800 cursor-pointer transition-colors group"
-              >
-                <div class="flex items-center space-x-2">
-                  <i class="fa-solid fa-vector-square text-mono-400 group-hover:text-mono-300 transition-colors"></i>
-                  <span class="text-sm text-mono-100 group-hover:text-mono-300 transition-colors">{field.name}</span>
-                </div>
-                <div class="flex items-center space-x-2">
-                  <span class="text-xs text-mono-400 bg-mono-700 px-2 py-1 rounded">
-                    ID: {field.fieldId}
-                  </span>
-                  <i class="fa-solid fa-arrow-right text-mono-400 group-hover:text-mono-300 transition-colors text-xs"></i>
-                </div>
-              </button>
-            {/each}
-          </div>
-        {:else}
-          <p class="text-sm text-mono-400 italic">Not used in any fields yet</p>
-        {/if}
-      </DetailField>
     </div>
   {/if}
 {/snippet}
