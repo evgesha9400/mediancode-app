@@ -769,30 +769,17 @@ describe('apiDetailState - Endpoint Editing Helpers', () => {
     expect(state.editedEndpoint!.queryParamsObjectId).toBe('obj-1');
   });
 
-  it('should update request body object', () => {
+  it('should update object', () => {
     ({ state, cleanup } = createTestState());
     flushSync();
 
     state.openEndpoint(state.endpoints[0]);
     flushSync();
 
-    state.handleSelectRequestBodyObject('obj-2');
+    state.handleSelectObject('obj-2');
     flushSync();
 
-    expect(state.editedEndpoint!.requestBodyObjectId).toBe('obj-2');
-  });
-
-  it('should update response body object', () => {
-    ({ state, cleanup } = createTestState());
-    flushSync();
-
-    state.openEndpoint(state.endpoints[0]);
-    flushSync();
-
-    state.handleSelectResponseBodyObject('obj-3');
-    flushSync();
-
-    expect(state.editedEndpoint!.responseBodyObjectId).toBe('obj-3');
+    expect(state.editedEndpoint!.objectId).toBe('obj-2');
   });
 
   it('should toggle envelope', () => {
@@ -830,7 +817,7 @@ describe('apiDetailState - Endpoint Editing Helpers', () => {
 
     state.handleEnvelopeToggle(false);
     state.handleSetResponseShape('list');
-    state.handleSelectResponseBodyObject('obj-1');
+    state.handleSelectObject('obj-1');
     flushSync();
 
     state.handleResetResponseDefaults();
@@ -838,7 +825,7 @@ describe('apiDetailState - Endpoint Editing Helpers', () => {
 
     expect(state.editedEndpoint!.useEnvelope).toBe(true);
     expect(state.editedEndpoint!.responseShape).toBe('object');
-    expect(state.editedEndpoint!.responseBodyObjectId).toBeUndefined();
+    expect(state.editedEndpoint!.objectId).toBeUndefined();
   });
 
   it('should handle tag select', () => {

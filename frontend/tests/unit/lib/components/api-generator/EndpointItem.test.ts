@@ -62,8 +62,7 @@ describe('EndpointItem Component', () => {
 					tagName: 'Users',
 					pathParams: [],
 					queryParamsObjectId: 'obj-1',
-					requestBodyObjectId: 'obj-2',
-					responseBodyObjectId: 'obj-3',
+					objectId: 'obj-2',
 					responseShape: 'list',
 					useEnvelope: true
 				},
@@ -72,8 +71,7 @@ describe('EndpointItem Component', () => {
 
 			expect(props.endpoint.tagName).toBe('Users');
 			expect(props.endpoint.queryParamsObjectId).toBe('obj-1');
-			expect(props.endpoint.requestBodyObjectId).toBe('obj-2');
-			expect(props.endpoint.responseBodyObjectId).toBe('obj-3');
+			expect(props.endpoint.objectId).toBe('obj-2');
 		});
 	});
 

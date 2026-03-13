@@ -25,8 +25,7 @@ const MOCK_ENDPOINT_RESPONSE = {
   tagName: 'users',
   pathParams: [{ name: 'userId', fieldId: 'f-1' }],
   queryParamsObjectId: 'o-1',
-  requestBodyObjectId: null,
-  responseBodyObjectId: 'o-2',
+  objectId: 'o-2',
   useEnvelope: true,
   responseShape: 'list'
 };
@@ -63,8 +62,7 @@ describe('Endpoints API Service', () => {
         ...MOCK_ENDPOINT_RESPONSE,
         tagName: null,
         queryParamsObjectId: null,
-        requestBodyObjectId: null,
-        responseBodyObjectId: null
+        objectId: null
       });
 
       const result = await getEndpoint('e-1');
@@ -72,8 +70,7 @@ describe('Endpoints API Service', () => {
       expect(apiGet).toHaveBeenCalledWith('/endpoints/e-1');
       expect(result.tagName).toBeUndefined();
       expect(result.queryParamsObjectId).toBeUndefined();
-      expect(result.requestBodyObjectId).toBeUndefined();
-      expect(result.responseBodyObjectId).toBeUndefined();
+      expect(result.objectId).toBeUndefined();
       expect(result.expanded).toBe(false);
     });
 

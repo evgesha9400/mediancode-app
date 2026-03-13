@@ -92,7 +92,7 @@ const FIELD_1 = {
 
 const OBJECT_1 = {
   id: 'o-1', name: 'User', namespaceId: 'ns-1', description: '',
-  fields: [], validators: [], usedInApis: []
+  fields: [], relationships: [], validators: [], usedInApis: []
 };
 
 const API_1 = {
@@ -102,8 +102,8 @@ const API_1 = {
 
 const ENDPOINT_1 = {
   id: 'e-1', apiId: 'a-1', path: '/users', method: 'GET', summary: '',
-  description: '', pathParams: [], queryParams: [], requestObjectId: null,
-  responseObjectId: null, responseShape: 'object', expanded: false
+  description: '', pathParams: [], queryParamsObjectId: undefined,
+  objectId: undefined, useEnvelope: true, responseShape: 'object', expanded: false
 };
 
 const NAMESPACE_1 = {
