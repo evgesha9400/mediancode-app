@@ -14,7 +14,7 @@
   import type { ObjectDefinition } from '$lib/stores/objects';
   import type { Field } from '$lib/stores/fields';
   import { getFieldById } from '$lib/stores/fields';
-  import type { ModelValidatorTemplate, InlineModelValidator, FieldAppearance } from '$lib/types';
+  import type { ModelValidatorTemplate, InlineModelValidator, FieldAppearance, ObjectRelationship, Cardinality } from '$lib/types';
   import {
     FormField,
     FormLabel,
@@ -24,7 +24,9 @@
     Pill
   } from '$lib/components';
   import { getModelValidatorTemplateById } from '$lib/stores/modelValidatorTemplates';
+  import { objectsStore, getObjectById } from '$lib/stores/objects';
   import { showToast } from '$lib/stores/toasts';
+  import { generateId } from '$lib/utils/ids';
 
   const ALLOWED_PK_TYPES = new Set(['int', 'uuid']);
 
@@ -102,6 +104,72 @@
       return f;
     });
     editedItem = { ...editedItem, fields: newFields };
+  }
+
+  // --- Relationship helpers ---
+  const CARDINALITY_OPTIONS: { value: Cardinality; label: string }[] = [
+    { value: 'has_one', label: 'has one' },
+    { value: 'has_many', label: 'has many' },
+    { value: 'references', label: 'references' },
+    { value: 'many_to_many', label: 'many ↔ many' }
+  ];
+
+  // Objects available as relationship targets (exclude self)
+  let availableTargetObjects = $derived(
+    $objectsStore.filter(o => o.id !== editedItem.id)
+  );
+
+  let relationshipDropdownOpen = $state(false);
+
+  function addRelationship(targetObjectId: string) {
+    const targetObj = getObjectById(targetObjectId);
+    if (!targetObj) return;
+    const defaultName = targetObj.name.toLowerCase() + 's';
+    const newRel: ObjectRelationship = {
+      id: generateId('rel'),
+      sourceObjectId: editedItem.id,
+      targetObjectId,
+      name: defaultName,
+      cardinality: 'has_many',
+      isInferred: false
+    };
+    editedItem = {
+      ...editedItem,
+      relationships: [...(editedItem.relationships || []), newRel]
+    };
+    relationshipDropdownOpen = false;
+  }
+
+  function removeRelationship(relId: string) {
+    editedItem = {
+      ...editedItem,
+      relationships: (editedItem.relationships || []).filter(r => r.id !== relId)
+    };
+  }
+
+  function updateRelationshipName(relId: string, name: string) {
+    editedItem = {
+      ...editedItem,
+      relationships: (editedItem.relationships || []).map(r =>
+        r.id === relId ? { ...r, name } : r
+      )
+    };
+  }
+
+  function updateRelationshipCardinality(relId: string, cardinality: Cardinality) {
+    editedItem = {
+      ...editedItem,
+      relationships: (editedItem.relationships || []).map(r => {
+        if (r.id !== relId) return r;
+        const targetObj = getObjectById(r.targetObjectId);
+        const autoName = targetObj
+          ? (cardinality === 'has_many' || cardinality === 'many_to_many'
+            ? targetObj.name.toLowerCase() + 's'
+            : targetObj.name.toLowerCase())
+          : r.name;
+        return { ...r, cardinality, name: autoName };
+      })
+    };
   }
 
   // --- Validator template UI state (local to this component) ---
@@ -299,6 +367,116 @@
               </div>
             {/if}
           {/each}
+        </div>
+      {/if}
+    </div>
+  </div>
+
+  <!-- Relationships -->
+  <div>
+    <h3 class="text-sm text-mono-300 mb-2 font-medium">Relationships ({(editedItem.relationships || []).length})</h3>
+
+    <div class="space-y-2">
+      <!-- Add Relationship Dropdown -->
+      {#if availableTargetObjects.length > 0}
+        <div class="relative">
+          <button
+            type="button"
+            onclick={() => relationshipDropdownOpen = !relationshipDropdownOpen}
+            class="w-full px-3 py-2 border border-dashed border-mono-600 text-sm text-mono-400 hover:border-mono-500 hover:text-mono-300 transition-colors cursor-pointer text-left"
+          >
+            <i class="fa-solid fa-plus mr-1"></i> Add relationship to object...
+          </button>
+          {#if relationshipDropdownOpen}
+            <div class="absolute z-10 mt-1 w-full bg-mono-800 border border-mono-600 rounded shadow-lg max-h-48 overflow-auto">
+              {#each availableTargetObjects as obj}
+                <button
+                  type="button"
+                  onclick={() => addRelationship(obj.id)}
+                  class="w-full text-left px-3 py-2 text-sm text-mono-300 hover:bg-mono-700 transition-colors"
+                >
+                  <i class="fa-solid fa-cube text-mono-500 mr-2"></i>{obj.name}
+                </button>
+              {/each}
+            </div>
+          {/if}
+        </div>
+      {/if}
+
+      <!-- Relationship Rows -->
+      {#if (editedItem.relationships || []).length > 0}
+        <div class="p-2 bg-mono-800 rounded border border-mono-700 space-y-2">
+          {#each editedItem.relationships || [] as rel}
+            {@const targetObj = getObjectById(rel.targetObjectId)}
+            <div class="flex items-center space-x-2 p-2 bg-mono-900 rounded {rel.isInferred ? 'border border-dashed border-mono-600 opacity-60' : 'border border-mono-700'}">
+              <!-- Name Input -->
+              {#if rel.isInferred}
+                <span class="font-mono text-sm text-mono-400 w-32 truncate" title={rel.name}>{rel.name}</span>
+              {:else}
+                <input
+                  type="text"
+                  value={rel.name}
+                  oninput={(e) => updateRelationshipName(rel.id, (e.target as HTMLInputElement).value)}
+                  class="font-mono text-sm text-mono-300 bg-mono-800 border border-mono-700 px-2 py-0.5 rounded w-32 focus:ring-1 focus:ring-green-400 focus:border-transparent"
+                />
+              {/if}
+
+              <!-- Cardinality Select -->
+              {#if rel.isInferred}
+                <span class="text-xs text-mono-400 bg-mono-800 px-2 py-0.5 rounded">{CARDINALITY_OPTIONS.find(o => o.value === rel.cardinality)?.label ?? rel.cardinality}</span>
+              {:else}
+                <select
+                  value={rel.cardinality}
+                  onchange={(e) => updateRelationshipCardinality(rel.id, (e.target as HTMLSelectElement).value as Cardinality)}
+                  class="text-xs text-mono-300 bg-mono-800 border border-mono-700 px-2 py-0.5 rounded focus:ring-1 focus:ring-green-400"
+                >
+                  {#each CARDINALITY_OPTIONS as opt}
+                    <option value={opt.value}>{opt.label}</option>
+                  {/each}
+                </select>
+              {/if}
+
+              <!-- Target Object Badge -->
+              <span class="text-xs font-medium px-2 py-0.5 rounded {rel.isInferred ? 'bg-mono-700 text-mono-400' : 'bg-blue-500/20 text-blue-400'}">
+                → {targetObj?.name ?? 'Unknown'}
+              </span>
+
+              <!-- FK Hint for references -->
+              {#if rel.cardinality === 'references' && targetObj}
+                {@const fkName = rel.name + '_id'}
+                {@const hasFk = editedItem.fields.some(f => {
+                  const field = getFieldById(f.fieldId);
+                  return field?.name === fkName;
+                })}
+                <span class="text-xs {hasFk ? 'text-green-400' : 'text-yellow-400'}">
+                  {hasFk ? `via ${fkName} ✓` : `missing ${fkName} ✗`}
+                </span>
+              {/if}
+
+              <!-- Inferred Badge -->
+              {#if rel.isInferred}
+                <span class="text-xs text-mono-500 bg-mono-700 px-2 py-0.5 rounded ml-auto">
+                  auto · on {targetObj?.name ?? '?'}
+                </span>
+              {:else}
+                <div class="flex-1"></div>
+              {/if}
+
+              <!-- Remove Button -->
+              <button
+                type="button"
+                onclick={() => removeRelationship(rel.id)}
+                class="text-red-700 hover:text-red-600 transition-colors shrink-0"
+                title={rel.isInferred ? 'Remove inferred relationship (removes both sides)' : 'Remove relationship'}
+              >
+                <i class="fa-solid fa-xmark"></i>
+              </button>
+            </div>
+          {/each}
+        </div>
+      {:else if availableTargetObjects.length === 0}
+        <div class="p-3 bg-mono-800 rounded border border-mono-700">
+          <p class="text-xs text-mono-400">Create other objects first to add relationships</p>
         </div>
       {/if}
     </div>

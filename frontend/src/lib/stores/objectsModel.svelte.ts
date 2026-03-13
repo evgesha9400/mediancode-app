@@ -16,10 +16,12 @@ import {
   type CreateObjectRequest,
   type UpdateObjectRequest
 } from '$lib/domain/mutations';
+import { createRelationshipApi, deleteRelationshipApi } from '$lib/api/objects';
 import { buildDeletionTooltip } from '$lib/utils/references';
 import { composeState } from '$lib/utils/compose';
 import { isValidPascalCaseName } from '$lib/utils/validation';
 import { showToast } from './toasts';
+import { objectsStore } from './objects';
 
 // ============================================================================
 // Configuration
@@ -294,8 +296,37 @@ export function createObjectsModel(config: ObjectsModelConfig): ObjectsModelStat
       return;
     }
 
-    listState.selectedItem = result.data!;
-    listState.originalItem = JSON.parse(JSON.stringify(result.data!));
+    // Diff relationships and persist changes via separate API calls
+    const originalRels = (listState.originalItem?.relationships || []).filter(r => !r.isInferred);
+    const editedRels = (listState.editedItem!.relationships || []).filter(r => !r.isInferred);
+    const originalRelIds = new Set(originalRels.map(r => r.id));
+    const editedRelIds = new Set(editedRels.map(r => r.id));
+
+    const addedRels = editedRels.filter(r => !originalRelIds.has(r.id));
+    const removedRels = originalRels.filter(r => !editedRelIds.has(r.id));
+
+    let latestObject = result.data!;
+    try {
+      for (const rel of removedRels) {
+        await deleteRelationshipApi(latestObject.id, rel.id);
+      }
+      for (const rel of addedRels) {
+        latestObject = await createRelationshipApi(latestObject.id, {
+          targetObjectId: rel.targetObjectId,
+          name: rel.name,
+          cardinality: rel.cardinality
+        });
+      }
+      // Update store with final state including backend-computed inverses
+      if (addedRels.length > 0 || removedRels.length > 0) {
+        objectsStore.update(objects => objects.map(o => o.id === latestObject.id ? latestObject : o));
+      }
+    } catch (err) {
+      showToast('Object updated but some relationship changes failed to save', 'error', 5000);
+    }
+
+    listState.selectedItem = latestObject;
+    listState.originalItem = JSON.parse(JSON.stringify(latestObject));
     showToast(`Object "${entityName}" updated successfully`, 'success', 3000);
     closeDrawer();
     isSaving = false;
@@ -327,6 +358,24 @@ export function createObjectsModel(config: ObjectsModelConfig): ObjectsModelStat
         showToast(result.error || 'Failed to create object', 'error', 5000);
       }
       return;
+    }
+
+    // Persist relationships via separate API calls
+    const userRelationships = (listState.editedItem!.relationships || []).filter(r => !r.isInferred);
+    if (userRelationships.length > 0) {
+      try {
+        for (const rel of userRelationships) {
+          const created = await createRelationshipApi(result.data!.id, {
+            targetObjectId: rel.targetObjectId,
+            name: rel.name,
+            cardinality: rel.cardinality
+          });
+          // Update store with backend response (includes inverse relationships)
+          objectsStore.update(objects => objects.map(o => o.id === created.id ? created : o));
+        }
+      } catch (err) {
+        showToast('Object created but some relationships failed to save', 'error', 5000);
+      }
     }
 
     showToast(`Object "${result.data!.name}" created successfully`, 'success', 3000);
