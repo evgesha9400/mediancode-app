@@ -152,12 +152,35 @@
     { value: 'many_to_many', label: 'many ↔ many' }
   ];
 
-  // Objects available as relationship targets (exclude self)
-  let availableTargetObjects = $derived(
-    $objectsStore.filter(o => o.id !== editedItem.id)
+  // IDs of objects already targeted by a relationship (user-defined or inferred)
+  let relatedObjectIds = $derived(
+    new Set((editedItem.relationships || []).map(r => r.targetObjectId))
   );
 
+  // Objects available as relationship targets (exclude self + already related)
+  let availableTargetObjects = $derived(
+    $objectsStore.filter(o => o.id !== editedItem.id && !relatedObjectIds.has(o.id))
+  );
+
+  let relationshipSearchQuery = $state('');
   let relationshipDropdownOpen = $state(false);
+
+  // Filter available targets by search query
+  let filteredTargetObjects = $derived.by(() => {
+    const q = relationshipSearchQuery.toLowerCase().trim();
+    if (!q) return availableTargetObjects;
+    return availableTargetObjects.filter(o => o.name.toLowerCase().includes(q));
+  });
+
+  function handleRelationshipFocus(): void {
+    relationshipDropdownOpen = true;
+  }
+
+  function handleRelationshipBlur(): void {
+    setTimeout(() => {
+      relationshipDropdownOpen = false;
+    }, 150);
+  }
 
   function addRelationship(targetObjectId: string) {
     const targetObj = getObjectById(targetObjectId);
@@ -175,6 +198,7 @@
       ...editedItem,
       relationships: [...(editedItem.relationships || []), newRel]
     };
+    relationshipSearchQuery = '';
     relationshipDropdownOpen = false;
   }
 
@@ -427,31 +451,47 @@
     <h3 class="text-sm text-mono-300 mb-2 font-medium">Relationships ({(editedItem.relationships || []).length})</h3>
 
     <div class="space-y-2">
-      <!-- Add Relationship Dropdown -->
-      {#if availableTargetObjects.length > 0}
+      <!-- Add Relationship Search Dropdown -->
+      <div class="relative">
         <div class="relative">
-          <button
-            type="button"
-            onclick={() => relationshipDropdownOpen = !relationshipDropdownOpen}
-            class="w-full px-3 py-2 border border-dashed border-mono-600 text-sm text-mono-400 hover:border-mono-500 hover:text-mono-300 transition-colors cursor-pointer text-left"
-          >
-            <i class="fa-solid fa-plus mr-1"></i> Add relationship to object...
-          </button>
-          {#if relationshipDropdownOpen}
-            <div class="absolute z-10 mt-1 w-full bg-mono-800 border border-mono-600 rounded shadow-lg max-h-48 overflow-auto">
-              {#each availableTargetObjects as obj}
+          <input
+            type="text"
+            bind:value={relationshipSearchQuery}
+            onfocus={handleRelationshipFocus}
+            onblur={handleRelationshipBlur}
+            placeholder="Add relationship to object..."
+            class="w-full px-3 py-1.5 border border-mono-600 bg-mono-900 text-mono-100 focus:ring-2 focus:ring-green-400 focus:border-transparent text-sm pr-8"
+          />
+          <i class="fa-solid fa-search absolute right-3 top-1/2 -translate-y-1/2 text-mono-400 text-xs pointer-events-none"></i>
+        </div>
+
+        {#if relationshipDropdownOpen}
+          <div class="absolute z-10 w-full mt-1 bg-mono-900 border border-mono-700 shadow-lg shadow-black/30 max-h-60 overflow-auto">
+            {#if filteredTargetObjects.length > 0}
+              {#each filteredTargetObjects as obj (obj.id)}
                 <button
                   type="button"
                   onclick={() => addRelationship(obj.id)}
-                  class="w-full text-left px-3 py-2 text-sm text-mono-300 hover:bg-mono-700 transition-colors"
+                  class="w-full px-3 py-2 text-left hover:bg-mono-800 border-b border-mono-700 last:border-b-0 transition-colors"
                 >
-                  <i class="fa-solid fa-cube text-mono-500 mr-2"></i>{obj.name}
+                  <div class="flex items-center space-x-2">
+                    <i class="fa-solid fa-cube text-mono-400 text-xs"></i>
+                    <span class="text-sm text-mono-300">{obj.name}</span>
+                  </div>
                 </button>
               {/each}
-            </div>
-          {/if}
-        </div>
-      {/if}
+            {:else if relationshipSearchQuery.trim()}
+              <div class="px-3 py-2 text-sm text-mono-400">
+                No objects found matching "{relationshipSearchQuery}"
+              </div>
+            {:else}
+              <div class="px-3 py-2 text-sm text-mono-400">
+                No objects available. Create other objects first to add relationships.
+              </div>
+            {/if}
+          </div>
+        {/if}
+      </div>
 
       <!-- Relationship Rows -->
       {#if (editedItem.relationships || []).length > 0}
@@ -499,13 +539,13 @@
                 </span>
               {/if}
 
+              <div class="flex-1"></div>
+
               <!-- Inferred Badge -->
               {#if rel.isInferred}
-                <span class="text-xs text-mono-500 bg-mono-700 px-2 py-0.5 rounded ml-auto">
+                <span class="text-xs text-mono-500 bg-mono-700 px-2 py-0.5 rounded">
                   auto · on {targetObj?.name ?? '?'}
                 </span>
-              {:else}
-                <div class="flex-1"></div>
               {/if}
 
               <!-- Remove Button -->
@@ -519,10 +559,6 @@
               </button>
             </div>
           {/each}
-        </div>
-      {:else if availableTargetObjects.length === 0}
-        <div class="p-3 bg-mono-800 rounded border border-mono-700">
-          <p class="text-xs text-mono-400">Create other objects first to add relationships</p>
         </div>
       {/if}
     </div>

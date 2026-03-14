@@ -19,8 +19,6 @@
 </script>
 
 <script lang="ts">
-  import { previewBody } from '$lib/utils/templatePreview';
-
   interface Props extends TemplateFormProps {}
 
   let {
@@ -196,15 +194,6 @@
         {/if}
       </div>
     {/each}
-  {/if}
-
-  <!-- Code Preview -->
-  {#if template?.bodyTemplate}
-    {@const allMappings = { ...mappings, ...params }}
-    <div>
-      <span class="block text-xs text-mono-300 mb-1 font-medium">Code Preview</span>
-      <pre class="p-3 bg-mono-900 text-mono-100 text-xs overflow-x-auto whitespace-pre font-mono">{previewBody(template.bodyTemplate, allMappings)}</pre>
-    </div>
   {/if}
 
   <!-- Add button -->
