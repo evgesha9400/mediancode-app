@@ -184,11 +184,12 @@ export function validateEndpointParams(input: ValidationInput): ValidationError[
 		}
 	}
 
-	// Rule 4: Detail endpoint -- no query params
-	if (isDetail && queryParams.length > 0) {
+	// Rule 4: Detail endpoint -- no field-mapped query params
+	// Legacy query params without a field are allowed (backward compat with backend)
+	if (isDetail && queryParams.some(qp => !!qp.field)) {
 		errors.push({
 			rule: 4,
-			message: 'Detail endpoints cannot have query parameters'
+			message: 'Detail endpoints cannot have query parameters with field references'
 		});
 	}
 

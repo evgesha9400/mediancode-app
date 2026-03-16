@@ -225,9 +225,9 @@ describe('validateEndpointParams', () => {
     });
   });
 
-  // Rule 4: Detail endpoint no query params
-  describe('Rule 4: detail has no query params', () => {
-    it('fails when detail endpoint has query params', () => {
+  // Rule 4: Detail endpoint no field-mapped query params
+  describe('Rule 4: detail has no field-mapped query params', () => {
+    it('fails when detail endpoint has query params with field references', () => {
       const errors = validate({
         responseShape: 'object',
         targetObjectId: 'obj-1',
@@ -238,6 +238,18 @@ describe('validateEndpointParams', () => {
       expect(errors).toContainEqual(
         expect.objectContaining({ rule: 4 })
       );
+    });
+
+    it('passes when detail endpoint has legacy query params without field', () => {
+      const errors = validate({
+        responseShape: 'object',
+        targetObjectId: 'obj-1',
+        targetFields: [{ name: 'id', type: 'uuid', isPk: true }],
+        pathParams: [{ name: 'id', field: 'id' }],
+        queryParams: [{ name: 'include', field: '', operator: 'eq', pagination: false }]
+      });
+      const rule4 = errors.filter(e => e.rule === 4);
+      expect(rule4).toEqual([]);
     });
   });
 
