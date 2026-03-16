@@ -5,7 +5,7 @@
  */
 
 import { apiGet, apiPost, apiPut, apiDelete } from './client';
-import type { ApiEndpoint, PathParam, HttpMethod, ResponseShape } from '$lib/types';
+import type { ApiEndpoint, PathParam, QueryParam, HttpMethod, ResponseShape, FilterOperator } from '$lib/types';
 
 /**
  * Backend path parameter response
@@ -13,6 +13,17 @@ import type { ApiEndpoint, PathParam, HttpMethod, ResponseShape } from '$lib/typ
 interface PathParamResponse {
 	name: string;
 	fieldId: string;
+	field: string; // field name on target object
+}
+
+/**
+ * Backend query parameter response
+ */
+interface QueryParamResponse {
+	name: string;
+	field: string;
+	operator: string;
+	pagination: boolean;
 }
 
 /**
@@ -26,7 +37,9 @@ interface EndpointResponse {
 	description: string;
 	tagName: string | null;
 	pathParams: PathParamResponse[];
-	queryParamsObjectId: string | null;
+	queryParams: QueryParamResponse[]; // NEW
+	queryParamsObjectId: string | null; // kept for backward compat
+	targetObjectId: string | null; // NEW
 	objectId: string | null;
 	useEnvelope: boolean;
 	responseShape: string;
@@ -38,7 +51,20 @@ interface EndpointResponse {
 function transformParameter(response: PathParamResponse): PathParam {
 	return {
 		name: response.name,
-		fieldId: response.fieldId
+		fieldId: response.fieldId,
+		field: response.field ?? ''
+	};
+}
+
+/**
+ * Transform backend query parameter to frontend type
+ */
+function transformQueryParam(response: QueryParamResponse): QueryParam {
+	return {
+		name: response.name,
+		field: response.field ?? '',
+		operator: (response.operator as FilterOperator) ?? 'eq',
+		pagination: response.pagination ?? false
 	};
 }
 
@@ -54,7 +80,9 @@ function transformEndpoint(response: EndpointResponse): ApiEndpoint {
 		description: response.description,
 		tagName: response.tagName ?? undefined,
 		pathParams: response.pathParams.map(transformParameter),
+		queryParams: (response.queryParams ?? []).map(transformQueryParam),
 		queryParamsObjectId: response.queryParamsObjectId ?? undefined,
+		targetObjectId: response.targetObjectId ?? undefined,
 		objectId: response.objectId ?? undefined,
 		useEnvelope: response.useEnvelope,
 		responseShape: response.responseShape as ResponseShape,
@@ -94,8 +122,10 @@ export interface CreateEndpointRequest {
 	path: string;
 	description?: string;
 	tagName?: string;
-	pathParams?: { name: string; fieldId: string }[];
-	queryParamsObjectId?: string;
+	pathParams?: { name: string; fieldId: string; field: string }[];
+	queryParams?: { name: string; field: string; operator: string; pagination: boolean }[];
+	queryParamsObjectId?: string; // deprecated, kept for compat
+	targetObjectId?: string;
 	objectId?: string;
 	useEnvelope?: boolean;
 	responseShape?: ResponseShape;
@@ -109,8 +139,10 @@ export interface UpdateEndpointRequest {
 	path?: string;
 	description?: string;
 	tagName?: string | null;
-	pathParams?: { name: string; fieldId: string }[];
-	queryParamsObjectId?: string | null;
+	pathParams?: { name: string; fieldId: string; field: string }[];
+	queryParams?: { name: string; field: string; operator: string; pagination: boolean }[];
+	queryParamsObjectId?: string | null; // deprecated
+	targetObjectId?: string | null;
 	objectId?: string | null;
 	useEnvelope?: boolean;
 	responseShape?: ResponseShape;
