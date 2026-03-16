@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { getCompatibleOperators } from '$lib/domain/paramInference';
+import { getCompatibleOperators, suggestFieldAndOperator } from '$lib/domain/paramInference';
 
 describe('getCompatibleOperators', () => {
   it('returns all operators for "all" types like str', () => {
@@ -50,5 +50,44 @@ describe('getCompatibleOperators', () => {
     expect(ops).toContain('eq');
     expect(ops).toContain('in');
     expect(ops).not.toContain('lt');
+  });
+});
+
+describe('suggestFieldAndOperator', () => {
+  const fieldNames = ['price', 'quantity', 'category', 'name', 'created_at', 'id'];
+
+  it('suggests field: price, operator: gte for "min_price"', () => {
+    const result = suggestFieldAndOperator('min_price', fieldNames);
+    expect(result).toEqual({ field: 'price', operator: 'gte' });
+  });
+
+  it('suggests field: quantity, operator: lte for "max_quantity"', () => {
+    const result = suggestFieldAndOperator('max_quantity', fieldNames);
+    expect(result).toEqual({ field: 'quantity', operator: 'lte' });
+  });
+
+  it('suggests field: category, operator: eq for "category"', () => {
+    const result = suggestFieldAndOperator('category', fieldNames);
+    expect(result).toEqual({ field: 'category', operator: 'eq' });
+  });
+
+  it('returns null when no field name matches', () => {
+    const result = suggestFieldAndOperator('foobar', fieldNames);
+    expect(result).toBeNull();
+  });
+
+  it('returns null for empty param name', () => {
+    const result = suggestFieldAndOperator('', fieldNames);
+    expect(result).toBeNull();
+  });
+
+  it('suggests field: created_at, operator: gte for "after_created_at"', () => {
+    const result = suggestFieldAndOperator('after_created_at', fieldNames);
+    expect(result).toEqual({ field: 'created_at', operator: 'gte' });
+  });
+
+  it('suggests field: created_at, operator: lte for "before_created_at"', () => {
+    const result = suggestFieldAndOperator('before_created_at', fieldNames);
+    expect(result).toEqual({ field: 'created_at', operator: 'lte' });
   });
 });
