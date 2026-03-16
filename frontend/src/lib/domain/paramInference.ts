@@ -3,7 +3,7 @@
 // Pure functions for parameter inference: operator compatibility,
 // auto-suggestions, and validation rules 1-7 from the design spec.
 
-import type { FilterOperator, PathParam, QueryParam, ResponseShape } from '$lib/types';
+import type { FilterOperator, PathParam, QueryParam, ResponseShape, ObjectDefinition, Field } from '$lib/types';
 import {
 	FILTER_OPERATORS,
 	COMPARABLE_TYPES,
@@ -224,4 +224,33 @@ export function validateEndpointParams(input: ValidationInput): ValidationError[
 	// Rule 7 is auto-enforced: param type is derived from field type, never user-editable
 
 	return errors;
+}
+
+// ============================================================================
+// Store-to-Domain Bridge
+// ============================================================================
+
+/**
+ * Resolve a target object ID into a flat array of TargetField objects.
+ * This bridges the store data (objects + fields) to the pure validation input.
+ */
+export function resolveTargetFields(
+	targetObjectId: string,
+	objects: ObjectDefinition[],
+	fields: Field[]
+): TargetField[] {
+	const obj = objects.find(o => o.id === targetObjectId);
+	if (!obj) return [];
+
+	const result: TargetField[] = [];
+	for (const ref of obj.fields) {
+		const field = fields.find(f => f.id === ref.fieldId);
+		if (!field) continue;
+		result.push({
+			name: field.name,
+			type: field.type,
+			isPk: ref.isPk
+		});
+	}
+	return result;
 }

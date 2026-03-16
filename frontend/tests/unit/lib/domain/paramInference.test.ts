@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
-import { getCompatibleOperators, suggestFieldAndOperator, validateEndpointParams } from '$lib/domain/paramInference';
-import type { ResponseShape, PathParam, QueryParam } from '$lib/types';
+import { getCompatibleOperators, suggestFieldAndOperator, validateEndpointParams, resolveTargetFields } from '$lib/domain/paramInference';
+import type { ResponseShape, PathParam, QueryParam, ObjectDefinition, Field } from '$lib/types';
 
 describe('getCompatibleOperators', () => {
   it('returns all operators for "all" types like str', () => {
@@ -295,5 +295,52 @@ describe('validateEndpointParams', () => {
         expect.objectContaining({ rule: 6, param: 'count_like' })
       );
     });
+  });
+});
+
+describe('resolveTargetFields', () => {
+  const fields: Field[] = [
+    { id: 'f-1', namespaceId: 'ns', name: 'id', type: 'uuid', container: null, constraints: [], validators: [], usedInApis: [] },
+    { id: 'f-2', namespaceId: 'ns', name: 'price', type: 'float', container: null, constraints: [], validators: [], usedInApis: [] },
+    { id: 'f-3', namespaceId: 'ns', name: 'name', type: 'str', container: null, constraints: [], validators: [], usedInApis: [] }
+  ];
+
+  const objects: ObjectDefinition[] = [
+    {
+      id: 'obj-1', namespaceId: 'ns', name: 'Product', fields: [
+        { fieldId: 'f-1', optional: false, isPk: true, appears: 'both' },
+        { fieldId: 'f-2', optional: false, isPk: false, appears: 'both' },
+        { fieldId: 'f-3', optional: true, isPk: false, appears: 'both' }
+      ],
+      relationships: [], validators: [], usedInApis: []
+    }
+  ];
+
+  it('resolves fields from target object', () => {
+    const result = resolveTargetFields('obj-1', objects, fields);
+    expect(result).toEqual([
+      { name: 'id', type: 'uuid', isPk: true },
+      { name: 'price', type: 'float', isPk: false },
+      { name: 'name', type: 'str', isPk: false }
+    ]);
+  });
+
+  it('returns empty array for unknown object', () => {
+    const result = resolveTargetFields('unknown', objects, fields);
+    expect(result).toEqual([]);
+  });
+
+  it('skips fields that cannot be resolved', () => {
+    const sparseObjects: ObjectDefinition[] = [
+      {
+        id: 'obj-2', namespaceId: 'ns', name: 'Sparse', fields: [
+          { fieldId: 'f-1', optional: false, isPk: true, appears: 'both' },
+          { fieldId: 'f-missing', optional: false, isPk: false, appears: 'both' }
+        ],
+        relationships: [], validators: [], usedInApis: []
+      }
+    ];
+    const result = resolveTargetFields('obj-2', sparseObjects, fields);
+    expect(result).toEqual([{ name: 'id', type: 'uuid', isPk: true }]);
   });
 });
