@@ -23,8 +23,10 @@ const MOCK_ENDPOINT_RESPONSE = {
   path: '/users',
   description: 'List users',
   tagName: 'users',
-  pathParams: [{ name: 'userId', fieldId: 'f-1' }],
+  pathParams: [{ name: 'userId', fieldId: 'f-1', field: 'user_id' }],
+  queryParams: [{ name: 'min_age', field: 'age', operator: 'gte', pagination: false }],
   queryParamsObjectId: 'o-1',
+  targetObjectId: 'o-3',
   objectId: 'o-2',
   useEnvelope: true,
   responseShape: 'list'
@@ -80,7 +82,7 @@ describe('Endpoints API Service', () => {
       const result = await getEndpoint('e-1');
 
       expect(result.pathParams).toHaveLength(1);
-      expect(result.pathParams[0]).toEqual({ name: 'userId', fieldId: 'f-1' });
+      expect(result.pathParams[0]).toEqual({ name: 'userId', fieldId: 'f-1', field: 'user_id' });
     });
   });
 

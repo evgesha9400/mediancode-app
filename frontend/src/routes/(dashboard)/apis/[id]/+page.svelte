@@ -11,7 +11,8 @@
     ParameterEditor,
     QueryParametersEditor,
     ObjectEditor,
-    GenerateModal
+    GenerateModal,
+    TargetObjectSelector
   } from '$lib/components';
   import { ObjectFormContent, FieldFormContent } from '$lib/components/form';
   import { HTTP_METHODS } from '$lib/types';
@@ -631,6 +632,16 @@
             {/if}
           </div>
 
+          <!-- Target Object -->
+          <TargetObjectSelector
+            endpointNamespaceId={apiState.apiNamespaceId}
+            responseShape={apiState.editedEndpoint.responseShape}
+            objectId={apiState.editedEndpoint.objectId}
+            targetObjectId={apiState.editedEndpoint.targetObjectId}
+            onSelectTarget={apiState.handleSelectTarget}
+            onCreateNewObject={() => openObjectCreate('body')}
+          />
+
           <!-- Path Parameters -->
           <div>
             <h3 class="text-sm text-mono-300 mb-2 flex items-center font-medium">
@@ -646,22 +657,24 @@
                 {#each apiState.editedEndpoint.pathParams as param (param.name)}
                   <ParameterEditor
                     paramName={param.name}
-                    fieldId={param.fieldId}
-                    {availableFields}
-                    onFieldSelect={(fieldId) => apiState.handlePathParamUpdate(param.name, fieldId)}
-                    onCreateNewField={openFieldCreate}
+                    fieldName={param.field}
+                    targetFields={apiState.targetFields}
+                    onFieldSelect={(fieldName) => apiState.handlePathParamFieldSelect(param.name, fieldName)}
                   />
                 {/each}
               </div>
             {/if}
           </div>
 
-          <!-- Query Parameters -->
+          <!-- Query Parameters (only visible for list endpoints) -->
           <QueryParametersEditor
-            endpointNamespaceId={apiState.apiNamespaceId}
-            selectedObjectId={apiState.editedEndpoint.queryParamsObjectId}
-            onSelectObject={apiState.handleSelectQueryParamsObject}
-            onCreateNewObject={() => openObjectCreate('query')}
+            queryParams={apiState.editedEndpoint.queryParams ?? []}
+            targetFields={apiState.targetFields}
+            responseShape={apiState.editedEndpoint.responseShape}
+            validationErrors={apiState.validationErrors}
+            onAdd={apiState.handleAddQueryParam}
+            onUpdate={apiState.handleUpdateQueryParam}
+            onRemove={apiState.handleRemoveQueryParam}
           />
 
           <!-- Object Editor (merged request + response) -->
@@ -673,6 +686,22 @@
             onSetResponseShape={apiState.handleSetResponseShape}
             onCreateNewObject={() => openObjectCreate('body')}
           />
+
+          <!-- Validation Errors -->
+          {#if apiState.validationErrors.length > 0}
+            {@const generalErrors = apiState.validationErrors.filter(e => ![4, 6].includes(e.rule))}
+            {#if generalErrors.length > 0}
+              <div class="p-3 bg-red-400/10 border border-red-400/30 rounded space-y-1">
+                <p class="text-xs text-red-400 font-medium">Validation Issues:</p>
+                {#each generalErrors as error}
+                  <p class="text-xs text-red-400 flex items-center gap-1">
+                    <i class="fa-solid fa-triangle-exclamation"></i>
+                    {error.message}{error.param ? ` (${error.param})` : ''}
+                  </p>
+                {/each}
+              </div>
+            {/if}
+          {/if}
         </div>
       {/if}
   {/snippet}

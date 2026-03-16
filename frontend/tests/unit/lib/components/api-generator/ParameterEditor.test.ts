@@ -16,67 +16,48 @@ describe('ParameterEditor Component', () => {
 		it('ParameterEditorProps interface accepts all required properties', () => {
 			const props: ParameterEditorProps = {
 				paramName: 'user_id',
-				fieldId: 'field-1',
-				availableFields: [],
+				fieldName: 'user_id',
+				targetFields: [],
 				onFieldSelect: () => {}
 			};
 
 			expect(props.paramName).toBe('user_id');
-			expect(props.fieldId).toBe('field-1');
-			expect(props.availableFields).toEqual([]);
+			expect(props.fieldName).toBe('user_id');
+			expect(props.targetFields).toEqual([]);
 			expect(typeof props.onFieldSelect).toBe('function');
 		});
 
-		it('ParameterEditorProps accepts field data for available fields', () => {
+		it('ParameterEditorProps accepts target field data', () => {
 			const props: ParameterEditorProps = {
 				paramName: 'item_id',
-				fieldId: 'field-2',
-				availableFields: [
-					{
-						id: 'field-1',
-						namespaceId: 'ns-1',
-						name: 'user_id',
-						type: 'int',
-						container: null,
-						description: 'User identifier',
-						constraints: [],
-						validators: [],
-						usedInApis: []
-					},
-					{
-						id: 'field-2',
-						namespaceId: 'ns-1',
-						name: 'item_id',
-						type: 'str',
-						container: null,
-						constraints: [],
-						validators: [],
-						usedInApis: []
-					}
+				fieldName: 'id',
+				targetFields: [
+					{ name: 'id', type: 'uuid', isPk: true },
+					{ name: 'store_id', type: 'uuid', isPk: false }
 				],
 				onFieldSelect: () => {}
 			};
 
-			expect(props.availableFields).toHaveLength(2);
-			expect(props.availableFields[0].name).toBe('user_id');
-			expect(props.availableFields[1].type).toBe('str');
+			expect(props.targetFields).toHaveLength(2);
+			expect(props.targetFields[0].name).toBe('id');
+			expect(props.targetFields[0].isPk).toBe(true);
 		});
 
-		it('ParameterEditorProps onFieldSelect receives field ID', () => {
-			let selectedFieldId: string | undefined;
+		it('ParameterEditorProps onFieldSelect receives field name', () => {
+			let selectedFieldName: string | undefined;
 
 			const props: ParameterEditorProps = {
 				paramName: 'id',
-				fieldId: '',
-				availableFields: [],
-				onFieldSelect: (fieldId) => {
-					selectedFieldId = fieldId;
+				fieldName: '',
+				targetFields: [],
+				onFieldSelect: (fieldName) => {
+					selectedFieldName = fieldName;
 				}
 			};
 
-			props.onFieldSelect('field-1');
+			props.onFieldSelect('user_id');
 
-			expect(selectedFieldId).toBe('field-1');
+			expect(selectedFieldName).toBe('user_id');
 		});
 	});
 
@@ -89,8 +70,8 @@ describe('ParameterEditor Component', () => {
 		it('ParameterEditorProps type exports correctly from barrel export', () => {
 			const props: ParameterEditorProps = {
 				paramName: 'test',
-				fieldId: '',
-				availableFields: [],
+				fieldName: '',
+				targetFields: [],
 				onFieldSelect: () => {}
 			};
 

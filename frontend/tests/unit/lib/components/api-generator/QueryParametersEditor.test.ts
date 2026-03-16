@@ -15,45 +15,64 @@ describe('QueryParametersEditor Component', () => {
 	describe('TypeScript Interface', () => {
 		it('QueryParametersEditorProps interface accepts all required properties', () => {
 			const props: QueryParametersEditorProps = {
-				endpointNamespaceId: 'ns-1',
-				onSelectObject: () => {}
+				queryParams: [],
+				targetFields: [],
+				responseShape: 'list',
+				validationErrors: [],
+				onAdd: () => {},
+				onUpdate: () => {},
+				onRemove: () => {}
 			};
 
-			expect(props.endpointNamespaceId).toBe('ns-1');
-			expect(typeof props.onSelectObject).toBe('function');
+			expect(props.queryParams).toEqual([]);
+			expect(props.responseShape).toBe('list');
+			expect(typeof props.onAdd).toBe('function');
 		});
 
-		it('QueryParametersEditorProps selectedObjectId is optional', () => {
-			const propsWithout: QueryParametersEditorProps = {
-				endpointNamespaceId: 'ns-1',
-				onSelectObject: () => {}
+		it('QueryParametersEditorProps accepts query param data', () => {
+			const props: QueryParametersEditorProps = {
+				queryParams: [
+					{ name: 'min_price', field: 'price', operator: 'gte', pagination: false },
+					{ name: 'limit', field: '', operator: 'eq', pagination: true }
+				],
+				targetFields: [
+					{ name: 'price', type: 'float', isPk: false }
+				],
+				responseShape: 'list',
+				validationErrors: [],
+				onAdd: () => {},
+				onUpdate: () => {},
+				onRemove: () => {}
 			};
 
-			expect(propsWithout.selectedObjectId).toBeUndefined();
-
-			const propsWith: QueryParametersEditorProps = {
-				...propsWithout,
-				selectedObjectId: 'obj-1'
-			};
-
-			expect(propsWith.selectedObjectId).toBe('obj-1');
+			expect(props.queryParams).toHaveLength(2);
+			expect(props.queryParams[0].field).toBe('price');
+			expect(props.queryParams[1].pagination).toBe(true);
 		});
 
-		it('QueryParametersEditorProps onSelectObject receives objectId or undefined', () => {
-			let selectedId: string | undefined;
+		it('QueryParametersEditorProps handlers receive correct arguments', () => {
+			let addCalled = false;
+			let updateArgs: { index: number; updates: any } | undefined;
+			let removeIndex: number | undefined;
 
 			const props: QueryParametersEditorProps = {
-				endpointNamespaceId: 'ns-1',
-				onSelectObject: (objectId) => {
-					selectedId = objectId;
-				}
+				queryParams: [],
+				targetFields: [],
+				responseShape: 'list',
+				validationErrors: [],
+				onAdd: () => { addCalled = true; },
+				onUpdate: (index, updates) => { updateArgs = { index, updates }; },
+				onRemove: (index) => { removeIndex = index; }
 			};
 
-			props.onSelectObject('obj-1');
-			expect(selectedId).toBe('obj-1');
+			props.onAdd();
+			expect(addCalled).toBe(true);
 
-			props.onSelectObject(undefined);
-			expect(selectedId).toBeUndefined();
+			props.onUpdate(0, { field: 'price' });
+			expect(updateArgs).toEqual({ index: 0, updates: { field: 'price' } });
+
+			props.onRemove(1);
+			expect(removeIndex).toBe(1);
 		});
 	});
 
@@ -65,8 +84,13 @@ describe('QueryParametersEditor Component', () => {
 
 		it('QueryParametersEditorProps type exports correctly from barrel export', () => {
 			const props: QueryParametersEditorProps = {
-				endpointNamespaceId: 'ns-1',
-				onSelectObject: () => {}
+				queryParams: [],
+				targetFields: [],
+				responseShape: 'list',
+				validationErrors: [],
+				onAdd: () => {},
+				onUpdate: () => {},
+				onRemove: () => {}
 			};
 
 			expect(props).toBeDefined();
