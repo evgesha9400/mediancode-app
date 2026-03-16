@@ -22,6 +22,7 @@ describe('EndpointItem Component', () => {
 					path: '/users',
 					description: 'List users',
 					pathParams: [],
+					queryParams: [],
 					responseShape: 'object',
 					useEnvelope: false
 				},
@@ -42,6 +43,7 @@ describe('EndpointItem Component', () => {
 					path: '/users',
 					description: '',
 					pathParams: [],
+					queryParams: [],
 					responseShape: 'object',
 					useEnvelope: false
 				},
@@ -61,6 +63,7 @@ describe('EndpointItem Component', () => {
 					description: 'Delete a user',
 					tagName: 'Users',
 					pathParams: [],
+					queryParams: [],
 					queryParamsObjectId: 'obj-1',
 					objectId: 'obj-2',
 					responseShape: 'list',
@@ -90,6 +93,7 @@ describe('EndpointItem Component', () => {
 					path: '/test',
 					description: '',
 					pathParams: [],
+					queryParams: [],
 					responseShape: 'object',
 					useEnvelope: false
 				},

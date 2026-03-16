@@ -204,6 +204,7 @@ describe('namespaces store - Entity Count', () => {
 				path: '/test',
 				description: '',
 				pathParams: [],
+				queryParams: [],
 				useEnvelope: true,
 				responseShape: 'object' as const
 			}

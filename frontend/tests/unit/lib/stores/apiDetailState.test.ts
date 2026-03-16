@@ -95,6 +95,7 @@ function makeEndpoint(overrides: Partial<ApiEndpoint> & { id: string; apiId: str
     path: '/',
     description: '',
     pathParams: [],
+    queryParams: [],
     useEnvelope: true,
     responseShape: 'object',
     ...overrides

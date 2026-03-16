@@ -12,12 +12,14 @@
  */
 
 import { fromStore } from 'svelte/store';
-import type { Api, ApiEndpoint, ResponseShape } from '$lib/types';
+import type { Api, ApiEndpoint, PathParam, QueryParam, ResponseShape } from '$lib/types';
 import {
 	apisStore,
 	endpointsStore,
 	getEndpointCountByTagName
 } from './apis';
+import { objectsStore } from './objects';
+import { fieldsStore } from './fields';
 import { showToast } from './toasts';
 import { deepClone } from '$lib/utils/ids';
 import {
@@ -28,6 +30,12 @@ import {
 	deleteEndpointAction
 } from '$lib/domain/mutations';
 import { reconcilePathParams, normalizeEndpoint } from '$lib/domain/endpointReducer';
+import {
+	validateEndpointParams,
+	resolveTargetFields,
+	type ValidationError,
+	type TargetField
+} from '$lib/domain/paramInference';
 import { isValidSnakeCaseName, isValidPascalCaseName } from '$lib/utils/validation';
 
 /**
@@ -125,8 +133,20 @@ export interface ApiDetailState {
 	// Endpoint editing actions
 	handlePathChange: (newPath: string) => void;
 	handlePathParamUpdate: (paramName: string, fieldId: string) => void;
+	handlePathParamFieldSelect: (paramName: string, fieldName: string) => void;
 
-	// Query parameters object selection
+	// Target object
+	readonly effectiveTargetId: string | undefined;
+	readonly targetFields: TargetField[];
+	readonly validationErrors: ValidationError[];
+	handleSelectTarget: (objectId: string | undefined) => void;
+
+	// Query param CRUD
+	handleAddQueryParam: () => void;
+	handleUpdateQueryParam: (index: number, updates: Partial<QueryParam>) => void;
+	handleRemoveQueryParam: (index: number) => void;
+
+	// Query parameters object selection (deprecated, kept for compat)
 	handleSelectQueryParamsObject: (objectId: string | undefined) => void;
 
 	// Object selection (merged request/response body)
@@ -158,8 +178,12 @@ export function createApiDetailState(config: ApiDetailStateConfig): ApiDetailSta
 	// Subscribe to stores reactively via fromStore (automatic cleanup)
 	const apisState = fromStore(apisStore);
 	const endpointsState = fromStore(endpointsStore);
+	const objectsState = fromStore(objectsStore);
+	const fieldsState = fromStore(fieldsStore);
 	let allApis = $derived(apisState.current);
 	let allEndpoints = $derived(endpointsState.current);
+	let allObjects = $derived(objectsState.current);
+	let allFields = $derived(fieldsState.current);
 
 	// The current API from store
 	let storedApi = $derived(allApis.find(a => a.id === apiId) ?? null);
@@ -372,12 +396,46 @@ export function createApiDetailState(config: ApiDetailStateConfig): ApiDetailSta
 		path: '/',
 		description: '',
 		tagName: undefined as string | undefined,
-		pathParams: [] as { name: string; fieldId: string }[],
+		pathParams: [] as PathParam[],
+		queryParams: [] as QueryParam[],
+		targetObjectId: undefined as string | undefined,
 		queryParamsObjectId: undefined as string | undefined,
 		objectId: undefined as string | undefined,
 		useEnvelope: true,
 		responseShape: 'object' as const
 	};
+
+	// ============================================================================
+	// Target Object and Validation (param inference)
+	// ============================================================================
+
+	// Resolved target object ID: for detail endpoints, inferred from objectId
+	let effectiveTargetId = $derived.by(() => {
+		if (!editedEndpoint) return undefined;
+		if (editedEndpoint.responseShape === 'object') {
+			return editedEndpoint.targetObjectId ?? editedEndpoint.objectId;
+		}
+		return editedEndpoint.targetObjectId;
+	});
+
+	// Fields on the target object (for populating dropdowns)
+	let targetFields = $derived.by((): TargetField[] => {
+		if (!effectiveTargetId) return [];
+		return resolveTargetFields(effectiveTargetId, allObjects, allFields);
+	});
+
+	// Live validation errors
+	let validationErrors = $derived.by((): ValidationError[] => {
+		if (!editedEndpoint) return [];
+		return validateEndpointParams({
+			responseShape: editedEndpoint.responseShape,
+			targetObjectId: editedEndpoint.targetObjectId,
+			objectId: editedEndpoint.objectId,
+			targetFields,
+			pathParams: editedEndpoint.pathParams,
+			queryParams: editedEndpoint.queryParams ?? []
+		});
+	});
 
 	// Derived: Track if there are unsaved endpoint changes
 	let hasEndpointChanges = $derived.by(() => {
@@ -388,6 +446,8 @@ export function createApiDetailState(config: ApiDetailStateConfig): ApiDetailSta
 				|| editedEndpoint.description !== CREATE_DEFAULTS.description
 				|| editedEndpoint.tagName !== CREATE_DEFAULTS.tagName
 				|| editedEndpoint.pathParams.length !== CREATE_DEFAULTS.pathParams.length
+				|| (editedEndpoint.queryParams ?? []).length !== CREATE_DEFAULTS.queryParams.length
+				|| editedEndpoint.targetObjectId !== CREATE_DEFAULTS.targetObjectId
 				|| editedEndpoint.queryParamsObjectId !== CREATE_DEFAULTS.queryParamsObjectId
 				|| editedEndpoint.objectId !== CREATE_DEFAULTS.objectId
 				|| editedEndpoint.useEnvelope !== CREATE_DEFAULTS.useEnvelope
@@ -427,6 +487,7 @@ export function createApiDetailState(config: ApiDetailStateConfig): ApiDetailSta
 			path: CREATE_DEFAULTS.path,
 			description: CREATE_DEFAULTS.description,
 			pathParams: [],
+			queryParams: [],
 			useEnvelope: CREATE_DEFAULTS.useEnvelope,
 			responseShape: CREATE_DEFAULTS.responseShape,
 			expanded: false
@@ -449,6 +510,8 @@ export function createApiDetailState(config: ApiDetailStateConfig): ApiDetailSta
 				description: editedEndpoint.description,
 				tagName: editedEndpoint.tagName,
 				pathParams: editedEndpoint.pathParams,
+				queryParams: editedEndpoint.queryParams ?? [],
+				targetObjectId: editedEndpoint.targetObjectId,
 				queryParamsObjectId: editedEndpoint.queryParamsObjectId,
 				objectId: editedEndpoint.objectId,
 				useEnvelope: editedEndpoint.useEnvelope,
@@ -516,6 +579,8 @@ export function createApiDetailState(config: ApiDetailStateConfig): ApiDetailSta
 				description: original.description,
 				tagName: original.tagName,
 				pathParams: original.pathParams.map(p => ({ ...p })),
+				queryParams: (original.queryParams ?? []).map(q => ({ ...q })),
+				targetObjectId: original.targetObjectId,
 				queryParamsObjectId: original.queryParamsObjectId,
 				objectId: original.objectId,
 				useEnvelope: original.useEnvelope,
@@ -569,6 +634,8 @@ export function createApiDetailState(config: ApiDetailStateConfig): ApiDetailSta
 				description: editedEndpoint.description,
 				tagName: editedEndpoint.tagName ?? null,
 				pathParams: editedEndpoint.pathParams,
+				queryParams: editedEndpoint.queryParams ?? [],
+				targetObjectId: editedEndpoint.targetObjectId ?? null,
 				queryParamsObjectId: editedEndpoint.queryParamsObjectId ?? null,
 				objectId: editedEndpoint.objectId ?? null,
 				useEnvelope: editedEndpoint.useEnvelope,
@@ -620,8 +687,64 @@ export function createApiDetailState(config: ApiDetailStateConfig): ApiDetailSta
 		editedEndpoint = { ...editedEndpoint, pathParams: updatedParams };
 	}
 
+	function handlePathParamFieldSelect(paramName: string, fieldName: string): void {
+		if (!editedEndpoint) return;
+		const updatedParams = editedEndpoint.pathParams.map(p =>
+			p.name === paramName ? { ...p, field: fieldName } : p
+		);
+		editedEndpoint = { ...editedEndpoint, pathParams: updatedParams };
+	}
+
 	// ============================================================================
-	// Query Parameters Object Selection
+	// Target Object Selection (param inference)
+	// ============================================================================
+
+	function handleSelectTarget(objectId: string | undefined): void {
+		if (!editedEndpoint) return;
+		editedEndpoint = {
+			...editedEndpoint,
+			targetObjectId: objectId,
+			// Clear path param field mappings when target changes (fields may no longer exist)
+			pathParams: editedEndpoint.pathParams.map(p => ({ ...p, field: '' })),
+			// Clear query params when target changes
+			queryParams: []
+		};
+	}
+
+	// ============================================================================
+	// Query Param CRUD
+	// ============================================================================
+
+	function handleAddQueryParam(): void {
+		if (!editedEndpoint) return;
+		const newParam: QueryParam = {
+			name: '',
+			field: '',
+			operator: 'eq',
+			pagination: false
+		};
+		editedEndpoint = {
+			...editedEndpoint,
+			queryParams: [...(editedEndpoint.queryParams ?? []), newParam]
+		};
+	}
+
+	function handleUpdateQueryParam(index: number, updates: Partial<QueryParam>): void {
+		if (!editedEndpoint) return;
+		const qps = [...(editedEndpoint.queryParams ?? [])];
+		qps[index] = { ...qps[index], ...updates };
+		editedEndpoint = { ...editedEndpoint, queryParams: qps };
+	}
+
+	function handleRemoveQueryParam(index: number): void {
+		if (!editedEndpoint) return;
+		const qps = [...(editedEndpoint.queryParams ?? [])];
+		qps.splice(index, 1);
+		editedEndpoint = { ...editedEndpoint, queryParams: qps };
+	}
+
+	// ============================================================================
+	// Query Parameters Object Selection (deprecated, kept for backward compat)
 	// ============================================================================
 
 	function handleSelectQueryParamsObject(objectId: string | undefined): void {
@@ -733,6 +856,19 @@ export function createApiDetailState(config: ApiDetailStateConfig): ApiDetailSta
 		// Endpoint editing actions
 		handlePathChange,
 		handlePathParamUpdate,
+		handlePathParamFieldSelect,
+
+		// Target object and validation
+		get effectiveTargetId() { return effectiveTargetId; },
+		get targetFields() { return targetFields; },
+		get validationErrors() { return validationErrors; },
+		handleSelectTarget,
+
+		// Query param CRUD
+		handleAddQueryParam,
+		handleUpdateQueryParam,
+		handleRemoveQueryParam,
+
 		handleSelectQueryParamsObject,
 		handleSelectObject,
 		handleEnvelopeToggle,
