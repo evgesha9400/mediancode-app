@@ -39,6 +39,7 @@ function makeEndpoint(overrides: Partial<ApiEndpoint> = {}): ApiEndpoint {
     method: 'GET',
     description: '',
     pathParams: [],
+    queryParams: [],
     useEnvelope: false,
     responseShape: 'object',
     expanded: true,
@@ -57,13 +58,13 @@ describe('reconcilePathParams', () => {
 
   it('extracts parameter names from path', () => {
     const result = reconcilePathParams('/users/{user_id}', []);
-    expect(result.pathParams).toEqual([{ name: 'user_id', fieldId: '' }]);
+    expect(result.pathParams).toEqual([{ name: 'user_id', fieldId: '', field: '' }]);
   });
 
   it('preserves existing parameter definitions', () => {
-    const existing = [{ name: 'user_id', fieldId: 'field-1' }];
+    const existing = [{ name: 'user_id', fieldId: 'field-1', field: 'user_id' }];
     const result = reconcilePathParams('/users/{user_id}', existing);
-    expect(result.pathParams).toEqual([{ name: 'user_id', fieldId: 'field-1' }]);
+    expect(result.pathParams).toEqual([{ name: 'user_id', fieldId: 'field-1', field: 'user_id' }]);
   });
 
   it('adds leading slash if missing', () => {
@@ -126,10 +127,19 @@ describe('buildDuplicateEndpoint', () => {
 
   it('deep copies pathParams', () => {
     const original = makeEndpoint({
-      pathParams: [{ name: 'id', fieldId: 'f-1' }]
+      pathParams: [{ name: 'id', fieldId: 'f-1', field: 'id' }]
     });
     const dup = buildDuplicateEndpoint(original);
-    expect(dup.pathParams).toEqual([{ name: 'id', fieldId: 'f-1' }]);
+    expect(dup.pathParams).toEqual([{ name: 'id', fieldId: 'f-1', field: 'id' }]);
     expect(dup.pathParams[0]).not.toBe(original.pathParams[0]);
+  });
+
+  it('deep copies queryParams', () => {
+    const original = makeEndpoint({
+      queryParams: [{ name: 'min_price', field: 'price', operator: 'gte' as any, pagination: false }]
+    });
+    const dup = buildDuplicateEndpoint(original);
+    expect(dup.queryParams).toEqual(original.queryParams);
+    expect(dup.queryParams[0]).not.toBe(original.queryParams[0]);
   });
 });

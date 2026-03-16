@@ -28,7 +28,7 @@ export function reconcilePathParams(
 		if (existing) return existing;
 
 		const matchedField = fields.find(f => f.name === paramName);
-		return { name: paramName, fieldId: matchedField?.id ?? '' };
+		return { name: paramName, fieldId: matchedField?.id ?? '', field: '' };
 	});
 
 	return { path, pathParams };
@@ -40,7 +40,12 @@ export function reconcilePathParams(
 export function normalizeEndpoint(endpoint: ApiEndpoint): ApiEndpoint {
 	return {
 		...endpoint,
-		responseShape: endpoint.responseShape ?? 'object'
+		responseShape: endpoint.responseShape ?? 'object',
+		queryParams: endpoint.queryParams ?? [],
+		pathParams: endpoint.pathParams.map(p => ({
+			...p,
+			field: p.field ?? '' // ensure field exists for legacy data
+		}))
 	};
 }
 
@@ -55,6 +60,7 @@ export function buildDuplicateEndpoint(original: ApiEndpoint): ApiEndpoint {
 		id: generateId('endpoint'),
 		path: `${original.path}-copy`,
 		expanded: false,
-		pathParams: original.pathParams.map(p => ({ ...p }))
+		pathParams: original.pathParams.map(p => ({ ...p })),
+		queryParams: (original.queryParams ?? []).map(q => ({ ...q }))
 	};
 }
