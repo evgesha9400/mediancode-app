@@ -3,7 +3,7 @@
 // Pure functions for parameter inference: operator compatibility,
 // auto-suggestions, and validation rules 1-7 from the design spec.
 
-import type { FilterOperator } from '$lib/types';
+import type { FilterOperator, PathParam, QueryParam, ResponseShape } from '$lib/types';
 import {
 	FILTER_OPERATORS,
 	COMPARABLE_TYPES,
@@ -80,4 +80,148 @@ export function suggestFieldAndOperator(
 	}
 
 	return null;
+}
+
+// ============================================================================
+// Validation
+// ============================================================================
+
+/**
+ * A field on the resolved target object, as seen by validation.
+ */
+export interface TargetField {
+	name: string;
+	type: string;
+	isPk: boolean;
+}
+
+/**
+ * Input for endpoint param validation.
+ */
+export interface ValidationInput {
+	responseShape: ResponseShape;
+	targetObjectId?: string;
+	objectId?: string; // the response/body object (used for detail target inference)
+	targetFields: TargetField[];
+	pathParams: PathParam[];
+	queryParams: QueryParam[];
+}
+
+/**
+ * A single validation error with a rule number and human-readable message.
+ */
+export interface ValidationError {
+	rule: number;
+	message: string;
+	param?: string; // the parameter name that triggered the error, if applicable
+}
+
+/**
+ * Validate an endpoint's parameter configuration against all 7 rules.
+ * Returns an empty array when everything is valid.
+ */
+export function validateEndpointParams(input: ValidationInput): ValidationError[] {
+	const errors: ValidationError[] = [];
+	const {
+		responseShape,
+		targetObjectId,
+		objectId,
+		targetFields,
+		pathParams,
+		queryParams
+	} = input;
+
+	const isDetail = responseShape === 'object';
+	const isList = responseShape === 'list';
+
+	// Rule 1: Target object is known
+	const effectiveTarget = isDetail ? (targetObjectId ?? objectId) : targetObjectId;
+	if (!effectiveTarget) {
+		errors.push({
+			rule: 1,
+			message: isList
+				? 'List endpoints require a target object'
+				: 'Target object could not be determined'
+		});
+		// Cannot validate further without a target
+		return errors;
+	}
+
+	// Rule 2: Every param field exists on target
+	const fieldNameSet = new Set(targetFields.map(f => f.name));
+
+	for (const pp of pathParams) {
+		if (pp.field && !fieldNameSet.has(pp.field)) {
+			errors.push({
+				rule: 2,
+				message: `Field "${pp.field}" does not exist on the target object`,
+				param: pp.name
+			});
+		}
+	}
+
+	for (const qp of queryParams) {
+		if (qp.pagination) continue; // pagination params have no field
+		if (qp.field && !fieldNameSet.has(qp.field)) {
+			errors.push({
+				rule: 2,
+				message: `Field "${qp.field}" does not exist on the target object`,
+				param: qp.name
+			});
+		}
+	}
+
+	// Rule 3: Detail endpoint -- last path param maps to PK
+	if (isDetail && pathParams.length > 0) {
+		const lastParam = pathParams[pathParams.length - 1];
+		const lastField = targetFields.find(f => f.name === lastParam.field);
+		if (!lastField || !lastField.isPk) {
+			errors.push({
+				rule: 3,
+				message: "Detail endpoint's identifying param must map to the primary key",
+				param: lastParam.name
+			});
+		}
+	}
+
+	// Rule 4: Detail endpoint -- no query params
+	if (isDetail && queryParams.length > 0) {
+		errors.push({
+			rule: 4,
+			message: 'Detail endpoints cannot have query parameters'
+		});
+	}
+
+	// Rule 5: List endpoint -- no path param maps to PK
+	if (isList) {
+		const pkFieldNames = new Set(targetFields.filter(f => f.isPk).map(f => f.name));
+		for (const pp of pathParams) {
+			if (pp.field && pkFieldNames.has(pp.field)) {
+				errors.push({
+					rule: 5,
+					message: `Path param "${pp.name}" maps to PK field "${pp.field}" -- use a detail endpoint instead`,
+					param: pp.name
+				});
+			}
+		}
+	}
+
+	// Rule 6: Operator compatible with field type
+	for (const qp of queryParams) {
+		if (qp.pagination) continue;
+		const field = targetFields.find(f => f.name === qp.field);
+		if (!field) continue; // already caught by rule 2
+		const compatible = getCompatibleOperators(field.type);
+		if (!compatible.includes(qp.operator)) {
+			errors.push({
+				rule: 6,
+				message: `Operator "${qp.operator}" is not valid for field type "${field.type}"`,
+				param: qp.name
+			});
+		}
+	}
+
+	// Rule 7 is auto-enforced: param type is derived from field type, never user-editable
+
+	return errors;
 }

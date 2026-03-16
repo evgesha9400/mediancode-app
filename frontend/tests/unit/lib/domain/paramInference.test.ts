@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
-import { getCompatibleOperators, suggestFieldAndOperator } from '$lib/domain/paramInference';
+import { getCompatibleOperators, suggestFieldAndOperator, validateEndpointParams } from '$lib/domain/paramInference';
+import type { ResponseShape, PathParam, QueryParam } from '$lib/types';
 
 describe('getCompatibleOperators', () => {
   it('returns all operators for "all" types like str', () => {
@@ -89,5 +90,210 @@ describe('suggestFieldAndOperator', () => {
   it('suggests field: created_at, operator: lte for "before_created_at"', () => {
     const result = suggestFieldAndOperator('before_created_at', fieldNames);
     expect(result).toEqual({ field: 'created_at', operator: 'lte' });
+  });
+});
+
+// Helper to build validation input concisely
+interface TargetField {
+  name: string;
+  type: string;
+  isPk: boolean;
+}
+
+function validate(opts: {
+  responseShape: ResponseShape;
+  targetObjectId?: string;
+  objectId?: string;
+  targetFields?: TargetField[];
+  pathParams?: { name: string; field: string }[];
+  queryParams?: { name: string; field: string; operator: string; pagination: boolean }[];
+}) {
+  return validateEndpointParams({
+    responseShape: opts.responseShape,
+    targetObjectId: opts.targetObjectId,
+    objectId: opts.objectId,
+    targetFields: opts.targetFields ?? [],
+    pathParams: (opts.pathParams ?? []).map(p => ({
+      name: p.name,
+      fieldId: '',
+      field: p.field
+    })),
+    queryParams: (opts.queryParams ?? []).map(q => ({
+      name: q.name,
+      field: q.field,
+      operator: q.operator as any,
+      pagination: q.pagination
+    }))
+  });
+}
+
+describe('validateEndpointParams', () => {
+  // Rule 1: Target object is known
+  describe('Rule 1: target is known', () => {
+    it('passes for detail endpoint with objectId (target inferred)', () => {
+      const errors = validate({
+        responseShape: 'object',
+        objectId: 'obj-1',
+        targetFields: [{ name: 'id', type: 'uuid', isPk: true }],
+        pathParams: [{ name: 'id', field: 'id' }]
+      });
+      expect(errors).toEqual([]);
+    });
+
+    it('fails for list endpoint without targetObjectId', () => {
+      const errors = validate({
+        responseShape: 'list',
+        targetObjectId: undefined,
+        targetFields: []
+      });
+      expect(errors).toContainEqual(
+        expect.objectContaining({ rule: 1 })
+      );
+    });
+  });
+
+  // Rule 2: Every param field exists on target
+  describe('Rule 2: field exists on target', () => {
+    it('fails when path param field does not exist on target', () => {
+      const errors = validate({
+        responseShape: 'object',
+        targetObjectId: 'obj-1',
+        targetFields: [{ name: 'id', type: 'uuid', isPk: true }],
+        pathParams: [{ name: 'store_id', field: 'store_id' }]
+      });
+      expect(errors).toContainEqual(
+        expect.objectContaining({ rule: 2, param: 'store_id' })
+      );
+    });
+
+    it('fails when query param field does not exist on target', () => {
+      const errors = validate({
+        responseShape: 'list',
+        targetObjectId: 'obj-1',
+        targetFields: [{ name: 'price', type: 'float', isPk: false }],
+        queryParams: [{ name: 'category', field: 'nonexistent', operator: 'eq', pagination: false }]
+      });
+      expect(errors).toContainEqual(
+        expect.objectContaining({ rule: 2, param: 'category' })
+      );
+    });
+
+    it('skips validation for pagination params', () => {
+      const errors = validate({
+        responseShape: 'list',
+        targetObjectId: 'obj-1',
+        targetFields: [{ name: 'id', type: 'uuid', isPk: true }],
+        queryParams: [{ name: 'limit', field: '', operator: 'eq', pagination: true }]
+      });
+      const rule2Errors = errors.filter(e => e.rule === 2);
+      expect(rule2Errors).toEqual([]);
+    });
+  });
+
+  // Rule 3: Detail endpoint last path param = PK
+  describe('Rule 3: detail last param is PK', () => {
+    it('passes when last path param maps to PK', () => {
+      const errors = validate({
+        responseShape: 'object',
+        targetObjectId: 'obj-1',
+        targetFields: [
+          { name: 'store_id', type: 'uuid', isPk: false },
+          { name: 'id', type: 'uuid', isPk: true }
+        ],
+        pathParams: [
+          { name: 'store_id', field: 'store_id' },
+          { name: 'item_id', field: 'id' }
+        ]
+      });
+      const rule3 = errors.filter(e => e.rule === 3);
+      expect(rule3).toEqual([]);
+    });
+
+    it('fails when last path param does not map to PK', () => {
+      const errors = validate({
+        responseShape: 'object',
+        targetObjectId: 'obj-1',
+        targetFields: [
+          { name: 'store_id', type: 'uuid', isPk: false },
+          { name: 'id', type: 'uuid', isPk: true }
+        ],
+        pathParams: [{ name: 'store_id', field: 'store_id' }]
+      });
+      expect(errors).toContainEqual(
+        expect.objectContaining({ rule: 3 })
+      );
+    });
+  });
+
+  // Rule 4: Detail endpoint no query params
+  describe('Rule 4: detail has no query params', () => {
+    it('fails when detail endpoint has query params', () => {
+      const errors = validate({
+        responseShape: 'object',
+        targetObjectId: 'obj-1',
+        targetFields: [{ name: 'id', type: 'uuid', isPk: true }],
+        pathParams: [{ name: 'id', field: 'id' }],
+        queryParams: [{ name: 'q', field: 'id', operator: 'eq', pagination: false }]
+      });
+      expect(errors).toContainEqual(
+        expect.objectContaining({ rule: 4 })
+      );
+    });
+  });
+
+  // Rule 5: List endpoint no path param = PK
+  describe('Rule 5: list path param not PK', () => {
+    it('fails when list endpoint has path param mapped to PK', () => {
+      const errors = validate({
+        responseShape: 'list',
+        targetObjectId: 'obj-1',
+        targetFields: [
+          { name: 'id', type: 'uuid', isPk: true },
+          { name: 'price', type: 'float', isPk: false }
+        ],
+        pathParams: [{ name: 'product_id', field: 'id' }]
+      });
+      expect(errors).toContainEqual(
+        expect.objectContaining({ rule: 5 })
+      );
+    });
+  });
+
+  // Rule 6: Operator compatible with field type
+  describe('Rule 6: operator-type compatibility', () => {
+    it('fails when using gte on str field', () => {
+      const errors = validate({
+        responseShape: 'list',
+        targetObjectId: 'obj-1',
+        targetFields: [{ name: 'name', type: 'str', isPk: false }],
+        queryParams: [{ name: 'min_name', field: 'name', operator: 'gte', pagination: false }]
+      });
+      expect(errors).toContainEqual(
+        expect.objectContaining({ rule: 6, param: 'min_name' })
+      );
+    });
+
+    it('passes when using ilike on str field', () => {
+      const errors = validate({
+        responseShape: 'list',
+        targetObjectId: 'obj-1',
+        targetFields: [{ name: 'name', type: 'str', isPk: false }],
+        queryParams: [{ name: 'search', field: 'name', operator: 'ilike', pagination: false }]
+      });
+      const rule6 = errors.filter(e => e.rule === 6);
+      expect(rule6).toEqual([]);
+    });
+
+    it('fails when using like on int field', () => {
+      const errors = validate({
+        responseShape: 'list',
+        targetObjectId: 'obj-1',
+        targetFields: [{ name: 'count', type: 'int', isPk: false }],
+        queryParams: [{ name: 'count_like', field: 'count', operator: 'like', pagination: false }]
+      });
+      expect(errors).toContainEqual(
+        expect.objectContaining({ rule: 6, param: 'count_like' })
+      );
+    });
   });
 });
