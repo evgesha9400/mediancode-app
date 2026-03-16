@@ -113,6 +113,28 @@ export type ResponseShape = 'object' | 'list';
 export const RESPONSE_SHAPES: ResponseShape[] = ['object', 'list'];
 export type ResponseItemShape = 'object'; // Only objects allowed in lists
 
+// Filter operator types for query parameter inference
+export type FilterOperator = 'eq' | 'gte' | 'lte' | 'gt' | 'lt' | 'like' | 'ilike' | 'in';
+
+export const FILTER_OPERATORS: FilterOperator[] = ['eq', 'gte', 'lte', 'gt', 'lt', 'like', 'ilike', 'in'];
+
+// Type categories for operator compatibility (values are type names from the types store)
+export const NUMERIC_TYPES = ['int', 'float', 'Decimal'] as const;
+export const COMPARABLE_TYPES = [...NUMERIC_TYPES, 'date', 'datetime', 'time'] as const;
+export const STRING_TYPES = ['str'] as const;
+
+// Map of which operators are valid for which type categories
+export const OPERATOR_TYPE_COMPATIBILITY: Record<FilterOperator, 'all' | 'comparable' | 'string'> = {
+  eq: 'all',
+  gte: 'comparable',
+  lte: 'comparable',
+  gt: 'comparable',
+  lt: 'comparable',
+  like: 'string',
+  ilike: 'string',
+  in: 'all'
+};
+
 export interface Api {
   id: string;
   namespaceId: string;
@@ -126,11 +148,25 @@ export interface Api {
 }
 
 /**
- * Path parameter referencing a field definition
+ * Path parameter referencing a field on the target object.
+ * `fieldId` is kept for backward compat during migration; `field` is the
+ * target-object field name used by the new inference system.
  */
 export interface PathParam {
   name: string;
-  fieldId: string;
+  fieldId: string;     // legacy: global field ID (kept for backward compat)
+  field: string;       // NEW: field name on the target object
+}
+
+/**
+ * Query parameter with field mapping and filter operator.
+ * When `pagination` is true, `field` and `operator` are unused.
+ */
+export interface QueryParam {
+  name: string;
+  field: string;       // field name on the target object (empty string when pagination)
+  operator: FilterOperator; // filter operation (defaults to 'eq' when pagination)
+  pagination: boolean; // true for limit/offset-style params
 }
 
 export interface ApiEndpoint {
@@ -141,7 +177,9 @@ export interface ApiEndpoint {
   description: string;
   tagName?: string;  // Tag name reference (string, not UUID)
   pathParams: PathParam[];
-  queryParamsObjectId?: string; // Select ONE object for query parameters (optional)
+  queryParams: QueryParam[];           // NEW: replaces queryParamsObjectId
+  queryParamsObjectId?: string;        // DEPRECATED: kept for backward compat during migration
+  targetObjectId?: string;             // NEW: the object all params resolve against
   objectId?: string; // Select ONE object for request/response body (appears flag controls which fields appear where)
   useEnvelope: boolean;
   // Response shape configuration (object or list of objects only)
