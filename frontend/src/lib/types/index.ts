@@ -160,13 +160,12 @@ export interface PathParam {
 
 /**
  * Query parameter with field mapping and filter operator.
- * When `pagination` is true, `field` and `operator` are unused.
+ * Pagination is handled at the endpoint level, not per-param.
  */
 export interface QueryParam {
   name: string;
-  field: string;       // field name on the target object (empty string when pagination)
-  operator: FilterOperator; // filter operation (defaults to 'eq' when pagination)
-  pagination: boolean; // true for limit/offset-style params
+  field: string;       // field name on the target object
+  operator: FilterOperator; // filter operation
 }
 
 export interface ApiEndpoint {
@@ -184,6 +183,7 @@ export interface ApiEndpoint {
   useEnvelope: boolean;
   // Response shape configuration (object or list of objects only)
   responseShape: ResponseShape;
+  pagination?: boolean;                // When true, auto-injects limit/offset params (list endpoints only)
   expanded?: boolean;
 }
 

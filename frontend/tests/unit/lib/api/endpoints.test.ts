@@ -24,12 +24,13 @@ const MOCK_ENDPOINT_RESPONSE = {
   description: 'List users',
   tagName: 'users',
   pathParams: [{ name: 'userId', fieldId: 'f-1', field: 'user_id' }],
-  queryParams: [{ name: 'min_age', field: 'age', operator: 'gte', pagination: false }],
+  queryParams: [{ name: 'min_age', field: 'age', operator: 'gte' }],
   queryParamsObjectId: 'o-1',
   targetObjectId: 'o-3',
   objectId: 'o-2',
   useEnvelope: true,
-  responseShape: 'list'
+  responseShape: 'list',
+  pagination: true
 };
 
 describe('Endpoints API Service', () => {

@@ -136,7 +136,7 @@ describe('buildDuplicateEndpoint', () => {
 
   it('deep copies queryParams', () => {
     const original = makeEndpoint({
-      queryParams: [{ name: 'min_price', field: 'price', operator: 'gte' as any, pagination: false }]
+      queryParams: [{ name: 'min_price', field: 'price', operator: 'gte' as any }]
     });
     const dup = buildDuplicateEndpoint(original);
     expect(dup.queryParams).toEqual(original.queryParams);

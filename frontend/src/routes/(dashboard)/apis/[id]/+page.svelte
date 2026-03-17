@@ -671,10 +671,12 @@
             queryParams={apiState.editedEndpoint.queryParams ?? []}
             targetFields={apiState.targetFields}
             responseShape={apiState.editedEndpoint.responseShape}
+            pagination={apiState.editedEndpoint.pagination ?? false}
             validationErrors={apiState.validationErrors}
             onAdd={apiState.handleAddQueryParam}
             onUpdate={apiState.handleUpdateQueryParam}
             onRemove={apiState.handleRemoveQueryParam}
+            onTogglePagination={apiState.handleTogglePagination}
           />
 
           <!-- Object Editor (merged request + response) -->

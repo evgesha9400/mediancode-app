@@ -146,6 +146,9 @@ export interface ApiDetailState {
 	handleUpdateQueryParam: (index: number, updates: Partial<QueryParam>) => void;
 	handleRemoveQueryParam: (index: number) => void;
 
+	// Pagination toggle
+	handleTogglePagination: () => void;
+
 	// Query parameters object selection (deprecated, kept for compat)
 	handleSelectQueryParamsObject: (objectId: string | undefined) => void;
 
@@ -402,7 +405,8 @@ export function createApiDetailState(config: ApiDetailStateConfig): ApiDetailSta
 		queryParamsObjectId: undefined as string | undefined,
 		objectId: undefined as string | undefined,
 		useEnvelope: true,
-		responseShape: 'object' as const
+		responseShape: 'object' as const,
+		pagination: false
 	};
 
 	// ============================================================================
@@ -451,7 +455,8 @@ export function createApiDetailState(config: ApiDetailStateConfig): ApiDetailSta
 				|| editedEndpoint.queryParamsObjectId !== CREATE_DEFAULTS.queryParamsObjectId
 				|| editedEndpoint.objectId !== CREATE_DEFAULTS.objectId
 				|| editedEndpoint.useEnvelope !== CREATE_DEFAULTS.useEnvelope
-				|| editedEndpoint.responseShape !== CREATE_DEFAULTS.responseShape;
+				|| editedEndpoint.responseShape !== CREATE_DEFAULTS.responseShape
+				|| (editedEndpoint.pagination ?? false) !== CREATE_DEFAULTS.pagination;
 		}
 		if (!selectedEndpoint) return false;
 		return JSON.stringify(editedEndpoint) !== JSON.stringify(selectedEndpoint);
@@ -490,6 +495,7 @@ export function createApiDetailState(config: ApiDetailStateConfig): ApiDetailSta
 			queryParams: [],
 			useEnvelope: CREATE_DEFAULTS.useEnvelope,
 			responseShape: CREATE_DEFAULTS.responseShape,
+			pagination: CREATE_DEFAULTS.pagination,
 			expanded: false
 		};
 		endpointDrawerOpen = true;
@@ -515,7 +521,8 @@ export function createApiDetailState(config: ApiDetailStateConfig): ApiDetailSta
 				queryParamsObjectId: editedEndpoint.queryParamsObjectId,
 				objectId: editedEndpoint.objectId,
 				useEnvelope: editedEndpoint.useEnvelope,
-				responseShape: editedEndpoint.responseShape
+				responseShape: editedEndpoint.responseShape,
+				pagination: editedEndpoint.pagination ?? false
 			});
 
 			if (!result.success) {
@@ -584,7 +591,8 @@ export function createApiDetailState(config: ApiDetailStateConfig): ApiDetailSta
 				queryParamsObjectId: original.queryParamsObjectId,
 				objectId: original.objectId,
 				useEnvelope: original.useEnvelope,
-				responseShape: original.responseShape
+				responseShape: original.responseShape,
+				pagination: original.pagination ?? false
 			});
 
 			if (result.success) {
@@ -639,7 +647,8 @@ export function createApiDetailState(config: ApiDetailStateConfig): ApiDetailSta
 				queryParamsObjectId: editedEndpoint.queryParamsObjectId ?? null,
 				objectId: editedEndpoint.objectId ?? null,
 				useEnvelope: editedEndpoint.useEnvelope,
-				responseShape: editedEndpoint.responseShape
+				responseShape: editedEndpoint.responseShape,
+				pagination: editedEndpoint.pagination ?? false
 			});
 
 			if (!result.success) {
@@ -706,8 +715,9 @@ export function createApiDetailState(config: ApiDetailStateConfig): ApiDetailSta
 			targetObjectId: objectId,
 			// Clear path param field mappings when target changes (fields may no longer exist)
 			pathParams: editedEndpoint.pathParams.map(p => ({ ...p, field: '' })),
-			// Clear query params when target changes
-			queryParams: []
+			// Clear query params and pagination when target changes
+			queryParams: [],
+			pagination: false
 		};
 	}
 
@@ -720,8 +730,7 @@ export function createApiDetailState(config: ApiDetailStateConfig): ApiDetailSta
 		const newParam: QueryParam = {
 			name: '',
 			field: '',
-			operator: 'eq',
-			pagination: false
+			operator: 'eq'
 		};
 		editedEndpoint = {
 			...editedEndpoint,
@@ -741,6 +750,18 @@ export function createApiDetailState(config: ApiDetailStateConfig): ApiDetailSta
 		const qps = [...(editedEndpoint.queryParams ?? [])];
 		qps.splice(index, 1);
 		editedEndpoint = { ...editedEndpoint, queryParams: qps };
+	}
+
+	// ============================================================================
+	// Pagination Toggle
+	// ============================================================================
+
+	function handleTogglePagination(): void {
+		if (!editedEndpoint) return;
+		editedEndpoint = {
+			...editedEndpoint,
+			pagination: !(editedEndpoint.pagination ?? false)
+		};
 	}
 
 	// ============================================================================
@@ -868,6 +889,9 @@ export function createApiDetailState(config: ApiDetailStateConfig): ApiDetailSta
 		handleAddQueryParam,
 		handleUpdateQueryParam,
 		handleRemoveQueryParam,
+
+		// Pagination toggle
+		handleTogglePagination,
 
 		handleSelectQueryParamsObject,
 		handleSelectObject,

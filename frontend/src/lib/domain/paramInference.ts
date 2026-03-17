@@ -161,7 +161,6 @@ export function validateEndpointParams(input: ValidationInput): ValidationError[
 	}
 
 	for (const qp of queryParams) {
-		if (qp.pagination) continue; // pagination params have no field
 		if (qp.field && !fieldNameSet.has(qp.field)) {
 			errors.push({
 				rule: 2,
@@ -209,7 +208,6 @@ export function validateEndpointParams(input: ValidationInput): ValidationError[
 
 	// Rule 6: Operator compatible with field type
 	for (const qp of queryParams) {
-		if (qp.pagination) continue;
 		const field = targetFields.find(f => f.name === qp.field);
 		if (!field) continue; // already caught by rule 2
 		const compatible = getCompatibleOperators(field.type);

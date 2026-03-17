@@ -23,7 +23,6 @@ interface QueryParamResponse {
 	name: string;
 	field: string;
 	operator: string;
-	pagination: boolean;
 }
 
 /**
@@ -43,6 +42,7 @@ interface EndpointResponse {
 	objectId: string | null;
 	useEnvelope: boolean;
 	responseShape: string;
+	pagination: boolean | null; // NEW: endpoint-level pagination toggle
 }
 
 /**
@@ -63,8 +63,7 @@ function transformQueryParam(response: QueryParamResponse): QueryParam {
 	return {
 		name: response.name,
 		field: response.field ?? '',
-		operator: (response.operator as FilterOperator) ?? 'eq',
-		pagination: response.pagination ?? false
+		operator: (response.operator as FilterOperator) ?? 'eq'
 	};
 }
 
@@ -86,6 +85,7 @@ function transformEndpoint(response: EndpointResponse): ApiEndpoint {
 		objectId: response.objectId ?? undefined,
 		useEnvelope: response.useEnvelope,
 		responseShape: response.responseShape as ResponseShape,
+		pagination: response.pagination ?? false,
 		expanded: false
 	};
 }
@@ -123,12 +123,13 @@ export interface CreateEndpointRequest {
 	description?: string;
 	tagName?: string;
 	pathParams?: { name: string; fieldId: string; field: string }[];
-	queryParams?: { name: string; field: string; operator: string; pagination: boolean }[];
+	queryParams?: { name: string; field: string; operator: string }[];
 	queryParamsObjectId?: string; // deprecated, kept for compat
 	targetObjectId?: string;
 	objectId?: string;
 	useEnvelope?: boolean;
 	responseShape?: ResponseShape;
+	pagination?: boolean;
 }
 
 /**
@@ -140,12 +141,13 @@ export interface UpdateEndpointRequest {
 	description?: string;
 	tagName?: string | null;
 	pathParams?: { name: string; fieldId: string; field: string }[];
-	queryParams?: { name: string; field: string; operator: string; pagination: boolean }[];
+	queryParams?: { name: string; field: string; operator: string }[];
 	queryParamsObjectId?: string | null; // deprecated
 	targetObjectId?: string | null;
 	objectId?: string | null;
 	useEnvelope?: boolean;
 	responseShape?: ResponseShape;
+	pagination?: boolean;
 }
 
 // ============================================================================

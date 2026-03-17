@@ -41,6 +41,7 @@ export function normalizeEndpoint(endpoint: ApiEndpoint): ApiEndpoint {
 	return {
 		...endpoint,
 		responseShape: endpoint.responseShape ?? 'object',
+		pagination: endpoint.pagination ?? false,
 		queryParams: endpoint.queryParams ?? [],
 		pathParams: endpoint.pathParams.map(p => ({
 			...p,

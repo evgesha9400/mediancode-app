@@ -27,7 +27,6 @@
 
   // Derived type display (read-only)
   const derivedType = $derived.by(() => {
-    if (param.pagination) return 'int';
     if (!selectedField) return '';
     if (param.operator === 'in') return `list[${selectedField.type}]`;
     return selectedField.type;
@@ -41,22 +40,13 @@
     onUpdate({ name });
 
     // Only suggest once per unique name
-    if (name && name !== lastSuggestedName && !param.pagination) {
+    if (name && name !== lastSuggestedName) {
       const fieldNames = targetFields.map(f => f.name);
       const suggestion = suggestFieldAndOperator(name, fieldNames);
       if (suggestion) {
         lastSuggestedName = name;
         onSuggest?.(suggestion);
       }
-    }
-  }
-
-  function handlePaginationToggle(): void {
-    const newPagination = !param.pagination;
-    if (newPagination) {
-      onUpdate({ pagination: true, field: '', operator: 'eq' });
-    } else {
-      onUpdate({ pagination: false });
     }
   }
 </script>
@@ -73,71 +63,52 @@
     />
   </div>
 
-  {#if param.pagination}
-    <!-- Pagination mode: simplified display -->
-    <div class="flex-1 flex items-center gap-2">
-      <span class="text-xs text-mono-400 bg-mono-800 px-2 py-1 rounded">pagination</span>
-      <span class="text-xs text-mono-400 bg-mono-800 px-1.5 py-0.5 rounded">int</span>
-    </div>
-  {:else}
-    <!-- Field dropdown -->
-    <div class="flex-1 min-w-0">
-      <select
-        value={param.field}
-        onchange={(e) => {
-          const newField = (e.target as HTMLSelectElement).value;
-          onUpdate({ field: newField });
-          // Reset operator if incompatible with new field type
-          const newFieldDef = targetFields.find(f => f.name === newField);
-          if (newFieldDef) {
-            const compat = getCompatibleOperators(newFieldDef.type);
-            if (!compat.includes(param.operator)) {
-              onUpdate({ field: newField, operator: compat[0] ?? 'eq' });
-            }
+  <!-- Field dropdown -->
+  <div class="flex-1 min-w-0">
+    <select
+      value={param.field}
+      onchange={(e) => {
+        const newField = (e.target as HTMLSelectElement).value;
+        onUpdate({ field: newField });
+        // Reset operator if incompatible with new field type
+        const newFieldDef = targetFields.find(f => f.name === newField);
+        if (newFieldDef) {
+          const compat = getCompatibleOperators(newFieldDef.type);
+          if (!compat.includes(param.operator)) {
+            onUpdate({ field: newField, operator: compat[0] ?? 'eq' });
           }
-        }}
-        class="w-full px-2 py-1 text-xs border border-mono-600 bg-mono-900 text-mono-100 focus:ring-2 focus:ring-green-400 focus:border-transparent"
-      >
-        <option value="">Select field...</option>
-        {#each targetFields as f (f.name)}
-          <option value={f.name}>{f.name} ({f.type})</option>
-        {/each}
-      </select>
-    </div>
+        }
+      }}
+      class="w-full px-2 py-1 text-xs border border-mono-600 bg-mono-900 text-mono-100 focus:ring-2 focus:ring-green-400 focus:border-transparent"
+    >
+      <option value="">Select field...</option>
+      {#each targetFields as f (f.name)}
+        <option value={f.name}>{f.name} ({f.type})</option>
+      {/each}
+    </select>
+  </div>
 
-    <!-- Operator dropdown -->
-    <div class="w-20 shrink-0">
-      <select
-        value={param.operator}
-        onchange={(e) => onUpdate({ operator: (e.target as HTMLSelectElement).value as FilterOperator })}
-        class="w-full px-2 py-1 text-xs border border-mono-600 bg-mono-900 text-mono-100 focus:ring-2 focus:ring-green-400 focus:border-transparent"
-      >
-        {#each availableOperators as op (op)}
-          <option value={op}>{op}</option>
-        {/each}
-      </select>
-    </div>
+  <!-- Operator dropdown -->
+  <div class="w-20 shrink-0">
+    <select
+      value={param.operator}
+      onchange={(e) => onUpdate({ operator: (e.target as HTMLSelectElement).value as FilterOperator })}
+      class="w-full px-2 py-1 text-xs border border-mono-600 bg-mono-900 text-mono-100 focus:ring-2 focus:ring-green-400 focus:border-transparent"
+    >
+      {#each availableOperators as op (op)}
+        <option value={op}>{op}</option>
+      {/each}
+    </select>
+  </div>
 
-    <!-- Derived type (read-only) -->
-    {#if derivedType}
-      <div class="w-20 shrink-0 flex items-center">
-        <span class="text-xs text-mono-400 bg-mono-800 px-1.5 py-1 rounded truncate" title={derivedType}>
-          {derivedType}
-        </span>
-      </div>
-    {/if}
+  <!-- Derived type (read-only) -->
+  {#if derivedType}
+    <div class="w-20 shrink-0 flex items-center">
+      <span class="text-xs text-mono-400 bg-mono-800 px-1.5 py-1 rounded truncate" title={derivedType}>
+        {derivedType}
+      </span>
+    </div>
   {/if}
-
-  <!-- Pagination checkbox -->
-  <label class="flex items-center gap-1 shrink-0 cursor-pointer" title="Pagination parameter (limit/offset)">
-    <input
-      type="checkbox"
-      checked={param.pagination}
-      onchange={handlePaginationToggle}
-      class="w-3.5 h-3.5 accent-green-400"
-    />
-    <span class="text-xs text-mono-400">Pag</span>
-  </label>
 
   <!-- Remove button -->
   <button

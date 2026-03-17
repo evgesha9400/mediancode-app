@@ -106,7 +106,7 @@ function validate(opts: {
   objectId?: string;
   targetFields?: TargetField[];
   pathParams?: { name: string; field: string }[];
-  queryParams?: { name: string; field: string; operator: string; pagination: boolean }[];
+  queryParams?: { name: string; field: string; operator: string }[];
 }) {
   return validateEndpointParams({
     responseShape: opts.responseShape,
@@ -121,8 +121,7 @@ function validate(opts: {
     queryParams: (opts.queryParams ?? []).map(q => ({
       name: q.name,
       field: q.field,
-      operator: q.operator as any,
-      pagination: q.pagination
+      operator: q.operator as any
     }))
   });
 }
@@ -171,19 +170,19 @@ describe('validateEndpointParams', () => {
         responseShape: 'list',
         targetObjectId: 'obj-1',
         targetFields: [{ name: 'price', type: 'float', isPk: false }],
-        queryParams: [{ name: 'category', field: 'nonexistent', operator: 'eq', pagination: false }]
+        queryParams: [{ name: 'category', field: 'nonexistent', operator: 'eq' }]
       });
       expect(errors).toContainEqual(
         expect.objectContaining({ rule: 2, param: 'category' })
       );
     });
 
-    it('skips validation for pagination params', () => {
+    it('skips validation for query params with empty field (no field mapped)', () => {
       const errors = validate({
         responseShape: 'list',
         targetObjectId: 'obj-1',
         targetFields: [{ name: 'id', type: 'uuid', isPk: true }],
-        queryParams: [{ name: 'limit', field: '', operator: 'eq', pagination: true }]
+        queryParams: [{ name: 'limit', field: '', operator: 'eq' }]
       });
       const rule2Errors = errors.filter(e => e.rule === 2);
       expect(rule2Errors).toEqual([]);
@@ -233,7 +232,7 @@ describe('validateEndpointParams', () => {
         targetObjectId: 'obj-1',
         targetFields: [{ name: 'id', type: 'uuid', isPk: true }],
         pathParams: [{ name: 'id', field: 'id' }],
-        queryParams: [{ name: 'q', field: 'id', operator: 'eq', pagination: false }]
+        queryParams: [{ name: 'q', field: 'id', operator: 'eq' }]
       });
       expect(errors).toContainEqual(
         expect.objectContaining({ rule: 4 })
@@ -246,7 +245,7 @@ describe('validateEndpointParams', () => {
         targetObjectId: 'obj-1',
         targetFields: [{ name: 'id', type: 'uuid', isPk: true }],
         pathParams: [{ name: 'id', field: 'id' }],
-        queryParams: [{ name: 'include', field: '', operator: 'eq', pagination: false }]
+        queryParams: [{ name: 'include', field: '', operator: 'eq' }]
       });
       const rule4 = errors.filter(e => e.rule === 4);
       expect(rule4).toEqual([]);
@@ -278,7 +277,7 @@ describe('validateEndpointParams', () => {
         responseShape: 'list',
         targetObjectId: 'obj-1',
         targetFields: [{ name: 'name', type: 'str', isPk: false }],
-        queryParams: [{ name: 'min_name', field: 'name', operator: 'gte', pagination: false }]
+        queryParams: [{ name: 'min_name', field: 'name', operator: 'gte' }]
       });
       expect(errors).toContainEqual(
         expect.objectContaining({ rule: 6, param: 'min_name' })
@@ -290,7 +289,7 @@ describe('validateEndpointParams', () => {
         responseShape: 'list',
         targetObjectId: 'obj-1',
         targetFields: [{ name: 'name', type: 'str', isPk: false }],
-        queryParams: [{ name: 'search', field: 'name', operator: 'ilike', pagination: false }]
+        queryParams: [{ name: 'search', field: 'name', operator: 'ilike' }]
       });
       const rule6 = errors.filter(e => e.rule === 6);
       expect(rule6).toEqual([]);
@@ -301,7 +300,7 @@ describe('validateEndpointParams', () => {
         responseShape: 'list',
         targetObjectId: 'obj-1',
         targetFields: [{ name: 'count', type: 'int', isPk: false }],
-        queryParams: [{ name: 'count_like', field: 'count', operator: 'like', pagination: false }]
+        queryParams: [{ name: 'count_like', field: 'count', operator: 'like' }]
       });
       expect(errors).toContainEqual(
         expect.objectContaining({ rule: 6, param: 'count_like' })
