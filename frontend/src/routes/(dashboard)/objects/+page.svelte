@@ -340,8 +340,8 @@
           ? [{
               id: 'field',
               title: 'Create Field',
-              width: 480,
-              minWidth: 380,
+              width: 720,
+              minWidth: 500,
               content: fieldFormContent,
               footer: fieldFormFooter
             }]
