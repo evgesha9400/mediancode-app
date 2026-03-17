@@ -1,5 +1,6 @@
 <script module lang="ts">
   import type { ResponseShape } from '$lib/types';
+  import type { ValidationError } from '$lib/domain/paramInference';
 
   export interface ObjectSelectorProps {
     endpointNamespaceId: string;
@@ -9,6 +10,8 @@
     responseShapeLocked?: boolean;
     /** Tooltip text shown when the toggle is locked */
     responseShapeLockedReason?: string;
+    /** Validation errors to display inline (e.g. rule 1 — no target object) */
+    validationErrors?: ValidationError[];
     onSelectObject: (objectId: string | undefined) => void;
     onSetResponseShape: (shape: ResponseShape) => void;
     onCreateNewObject?: () => void;
@@ -33,6 +36,7 @@
     responseShape,
     responseShapeLocked = false,
     responseShapeLockedReason = '',
+    validationErrors = [],
     onSelectObject,
     onSetResponseShape,
     onCreateNewObject
@@ -59,6 +63,16 @@
         onCreateNew={onCreateNewObject}
         placeholder="Select object for endpoint..."
       />
+      {#if validationErrors.length > 0}
+        <div class="mt-1 space-y-0.5">
+          {#each validationErrors as error}
+            <p class="text-xs text-red-400 flex items-center gap-1">
+              <i class="fa-solid fa-triangle-exclamation"></i>
+              {error.message}
+            </p>
+          {/each}
+        </div>
+      {/if}
     </div>
 
     <!-- Response shape toggle -->

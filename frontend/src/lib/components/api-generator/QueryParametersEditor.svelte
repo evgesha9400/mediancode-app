@@ -41,6 +41,14 @@
   // Filter validation errors for query params (rules 4, 6)
   const queryErrors = $derived(validationErrors.filter(e => e.rule === 4 || e.rule === 6));
 
+  // General query errors not tied to a specific param (e.g. rule 4)
+  const generalQueryErrors = $derived(queryErrors.filter(e => !e.param));
+
+  // Get errors for a specific query param by name
+  function errorsForParam(paramName: string): typeof queryErrors {
+    return queryErrors.filter(e => e.param === paramName);
+  }
+
   // Whether we have any rows to show (query params or pagination)
   const hasRows = $derived(queryParams.length > 0 || pagination);
 
@@ -160,6 +168,7 @@
           <QueryParamRow
             {param}
             {targetFields}
+            validationErrors={errorsForParam(param.name)}
             onUpdate={(updates) => onUpdate(i, updates)}
             onRemove={() => onRemove(i)}
             onSuggest={(suggestion) => onUpdate(i, { field: suggestion.field, operator: suggestion.operator })}
@@ -182,10 +191,10 @@
       </div>
     {/if}
 
-    <!-- Validation errors -->
-    {#if queryErrors.length > 0}
-      <div class="mt-2 space-y-1">
-        {#each queryErrors as error}
+    <!-- General query validation errors (not tied to a specific param) -->
+    {#if generalQueryErrors.length > 0}
+      <div class="mt-1 space-y-0.5">
+        {#each generalQueryErrors as error}
           <p class="text-xs text-red-400 flex items-center gap-1">
             <i class="fa-solid fa-triangle-exclamation"></i>
             {error.message}

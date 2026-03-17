@@ -1,12 +1,13 @@
 <script module lang="ts">
   import type { Field } from '$lib/types';
-  import type { TargetField } from '$lib/domain/paramInference';
+  import type { TargetField, ValidationError } from '$lib/domain/paramInference';
 
   export interface ParameterEditorProps {
     paramName: string;
     fieldName: string;
     targetFields: TargetField[];
     objectFields: Field[];
+    validationErrors?: ValidationError[];
     onFieldSelect: (fieldName: string) => void;
   }
 </script>
@@ -16,7 +17,7 @@
 
   interface Props extends ParameterEditorProps {}
 
-  let { paramName, fieldName, targetFields, objectFields, onFieldSelect }: Props = $props();
+  let { paramName, fieldName, targetFields, objectFields, validationErrors = [], onFieldSelect }: Props = $props();
 
   // Find the currently selected field
   const selectedField = $derived(targetFields.find(f => f.name === fieldName));
@@ -30,6 +31,9 @@
   // All field IDs except the currently linked one (for the dropdown's exclusion list)
   // We don't exclude any since path params should be able to pick any field
   const selectedFieldIds = $derived.by((): string[] => []);
+
+  // Errors specific to this parameter
+  const paramErrors = $derived(validationErrors.filter(e => e.param === paramName));
 
   // Handle field selection from dropdown: map fieldId to fieldName
   function handleFieldSelect(fieldId: string): void {
@@ -45,49 +49,68 @@
   }
 </script>
 
-<div class="flex items-center space-x-2 py-1.5">
-  <!-- Param name (read-only, extracted from path) -->
-  <div class="w-32 px-2 py-1 text-xs bg-mono-800 border border-mono-700 text-mono-300 font-mono shrink-0">
-    {paramName}
-  </div>
+<div class="border-b border-mono-700 last:border-b-0">
+  <div class="flex items-start gap-2 py-1.5">
+    <!-- Param name (read-only, extracted from path) -->
+    <div class="w-28 shrink-0">
+      <div class="w-full px-2 py-1 text-xs font-mono border border-mono-600 bg-mono-800 text-mono-300">
+        {paramName}
+      </div>
+    </div>
 
-  {#if isLinked}
-    <!-- Linked state: show field name, type, and change/unlink button -->
-    <div class="flex-1 flex items-center gap-2">
-      <div class="flex items-center gap-1.5 px-2 py-1 bg-mono-900 border border-mono-600 rounded text-xs">
-        <i class="fa-solid fa-link text-green-400 text-[10px]"></i>
-        <span class="font-mono text-mono-100">{fieldName}</span>
-        {#if selectedField?.isPk}
-          <span class="text-[10px] text-green-400 uppercase font-bold">PK</span>
+    {#if isLinked}
+      <!-- Linked state: show field name, type, and unlink button -->
+      <div class="flex-1 min-w-0">
+        <div class="w-full px-2 py-1 text-xs border border-mono-600 bg-mono-900 text-mono-100 flex items-center gap-1.5">
+          <i class="fa-solid fa-link text-green-400 text-[10px]"></i>
+          <span class="font-mono">{fieldName}</span>
+          {#if selectedField?.isPk}
+            <span class="text-[10px] text-green-400 uppercase font-bold">PK</span>
+          {/if}
+        </div>
+      </div>
+      <div class="w-20 shrink-0 flex items-center">
+        {#if derivedType}
+          <span class="text-xs text-mono-400 bg-mono-800 px-1.5 py-1 rounded truncate" title={derivedType}>{derivedType}</span>
         {/if}
       </div>
-      {#if derivedType}
-        <span class="text-xs text-mono-400 bg-mono-800 px-1.5 py-0.5 rounded">{derivedType}</span>
-      {/if}
       <button
         type="button"
         onclick={handleUnlink}
-        class="text-mono-400 hover:text-red-400 transition-colors p-0.5"
+        class="shrink-0 text-mono-400 hover:text-red-400 transition-colors p-1"
         title="Unlink field"
       >
         <i class="fa-solid fa-xmark text-xs"></i>
       </button>
-    </div>
-  {:else}
-    <!-- Unlinked state: show field selector dropdown -->
-    <div class="flex-1">
-      {#if objectFields.length > 0}
-        <FieldSelectorDropdown
-          availableFields={objectFields}
-          selectedFieldIds={selectedFieldIds}
-          onSelect={handleFieldSelect}
-          placeholder="Link to field..."
-        />
-      {:else}
-        <div class="px-2 py-1 text-xs text-mono-400 bg-mono-900 border border-mono-600 rounded">
-          Select an object to link fields
-        </div>
-      {/if}
-    </div>
+    {:else}
+      <!-- Unlinked state: show field selector dropdown -->
+      <div class="flex-1 min-w-0">
+        {#if objectFields.length > 0}
+          <FieldSelectorDropdown
+            availableFields={objectFields}
+            selectedFieldIds={selectedFieldIds}
+            onSelect={handleFieldSelect}
+            placeholder="Link to field..."
+          />
+        {:else}
+          <div class="w-full px-2 py-1 text-xs border border-mono-600 bg-mono-900 text-mono-400">
+            Select an object to link fields
+          </div>
+        {/if}
+      </div>
+      <!-- Spacer to align with type + remove columns -->
+      <div class="w-20 shrink-0"></div>
+      <div class="w-6 shrink-0"></div>
+    {/if}
+  </div>
+
+  <!-- Inline validation errors for this parameter -->
+  {#if paramErrors.length > 0}
+    {#each paramErrors as error}
+      <p class="text-xs text-red-400 flex items-center gap-1 pb-1.5 pl-1">
+        <i class="fa-solid fa-triangle-exclamation"></i>
+        {error.message}
+      </p>
+    {/each}
   {/if}
 </div>

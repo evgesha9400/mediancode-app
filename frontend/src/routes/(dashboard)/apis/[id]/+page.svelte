@@ -651,6 +651,7 @@
             responseShape={apiState.editedEndpoint.responseShape}
             responseShapeLocked={apiState.isDetailPath}
             responseShapeLockedReason="Detail endpoints return a single object"
+            validationErrors={apiState.validationErrors.filter(e => e.rule === 1)}
             onSelectObject={apiState.handleSelectObject}
             onSetResponseShape={apiState.handleSetResponseShape}
             onCreateNewObject={() => openObjectCreate('body')}
@@ -663,17 +664,25 @@
               Path Parameters
             </h3>
             {#if apiState.editedEndpoint.pathParams.length === 0}
-              <div class="px-3 py-1 bg-mono-950 rounded border border-mono-700">
+              <div class="px-3 py-2 bg-mono-950 rounded border border-mono-700">
                 <p class="text-xs text-mono-400">No path parameters. Add parameters to your URL path using <code class="bg-mono-800 px-1 rounded">{`{param_name}`}</code></p>
               </div>
             {:else}
-              <div class="px-3 py-1 bg-mono-950 rounded border border-mono-700 space-y-1">
+              <div class="px-3 py-1 bg-mono-950 rounded border border-mono-700">
+                <!-- Column headers -->
+                <div class="flex items-center gap-2 py-1 border-b border-mono-700 text-[10px] text-mono-500 uppercase tracking-wider">
+                  <div class="w-28 shrink-0">Name</div>
+                  <div class="flex-1">Field</div>
+                  <div class="w-20 shrink-0">Type</div>
+                  <div class="w-6 shrink-0"></div>
+                </div>
                 {#each apiState.editedEndpoint.pathParams as param (param.name)}
                   <ParameterEditor
                     paramName={param.name}
                     fieldName={param.field}
                     targetFields={apiState.targetFields}
                     objectFields={endpointObjectFields}
+                    validationErrors={apiState.validationErrors.filter(e => (e.rule === 2 || e.rule === 3 || e.rule === 5) && e.param === param.name)}
                     onFieldSelect={(fieldName) => apiState.handlePathParamFieldSelect(param.name, fieldName)}
                   />
                 {/each}
@@ -701,21 +710,6 @@
             responseShape={apiState.editedEndpoint.responseShape}
           />
 
-          <!-- Validation Errors -->
-          {#if apiState.validationErrors.length > 0}
-            {@const generalErrors = apiState.validationErrors.filter(e => ![4, 6].includes(e.rule))}
-            {#if generalErrors.length > 0}
-              <div class="p-3 bg-red-400/10 border border-red-400/30 rounded space-y-1">
-                <p class="text-xs text-red-400 font-medium">Validation Issues:</p>
-                {#each generalErrors as error}
-                  <p class="text-xs text-red-400 flex items-center gap-1">
-                    <i class="fa-solid fa-triangle-exclamation"></i>
-                    {error.message}{error.param ? ` (${error.param})` : ''}
-                  </p>
-                {/each}
-              </div>
-            {/if}
-          {/if}
         </div>
       {/if}
   {/snippet}
