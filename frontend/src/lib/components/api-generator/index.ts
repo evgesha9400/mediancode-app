@@ -2,7 +2,6 @@
 export { default as EndpointItem } from './EndpointItem.svelte';
 export { default as ParameterEditor } from './ParameterEditor.svelte';
 export { default as QueryParametersEditor } from './QueryParametersEditor.svelte';
-export { default as ObjectEditor } from './ObjectEditor.svelte';
 export { default as ObjectSelector } from './ObjectSelector.svelte';
 export { default as ResponsePreview } from './ResponsePreview.svelte';
 export { default as FieldSelectorDropdown } from './FieldSelectorDropdown.svelte';
@@ -17,7 +16,6 @@ export { default as QueryParamRow } from './QueryParamRow.svelte';
 export type { EndpointItemProps } from './EndpointItem.svelte';
 export type { ParameterEditorProps } from './ParameterEditor.svelte';
 export type { QueryParametersEditorProps } from './QueryParametersEditor.svelte';
-export type { ObjectEditorProps } from './ObjectEditor.svelte';
 export type { ObjectSelectorProps } from './ObjectSelector.svelte';
 export type { ResponsePreviewProps } from './ResponsePreview.svelte';
 export type { FieldSelectorDropdownProps } from './FieldSelectorDropdown.svelte';

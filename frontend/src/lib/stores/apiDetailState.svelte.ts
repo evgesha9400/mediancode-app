@@ -140,7 +140,6 @@ export interface ApiDetailState {
 	readonly validationErrors: ValidationError[];
 
 	// Query param CRUD
-	handleAddQueryParam: () => void;
 	handleAddQueryParamFromField: (fieldName: string) => void;
 	handleUpdateQueryParam: (index: number, updates: Partial<QueryParam>) => void;
 	handleRemoveQueryParam: (index: number) => void;
@@ -701,19 +700,6 @@ export function createApiDetailState(config: ApiDetailStateConfig): ApiDetailSta
 	// Query Param CRUD
 	// ============================================================================
 
-	function handleAddQueryParam(): void {
-		if (!editedEndpoint) return;
-		const newParam: QueryParam = {
-			name: '',
-			field: '',
-			operator: 'eq'
-		};
-		editedEndpoint = {
-			...editedEndpoint,
-			queryParams: [...(editedEndpoint.queryParams ?? []), newParam]
-		};
-	}
-
 	function handleAddQueryParamFromField(fieldName: string): void {
 		if (!editedEndpoint) return;
 		const newParam: QueryParam = {
@@ -891,7 +877,6 @@ export function createApiDetailState(config: ApiDetailStateConfig): ApiDetailSta
 		get validationErrors() { return validationErrors; },
 
 		// Query param CRUD
-		handleAddQueryParam,
 		handleAddQueryParamFromField,
 		handleUpdateQueryParam,
 		handleRemoveQueryParam,

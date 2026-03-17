@@ -1007,3 +1007,54 @@ describe('apiDetailState - Pagination Toggle', () => {
     expect(state.hasEndpointChanges).toBe(true);
   });
 });
+
+describe('apiDetailState - Query Param from Field', () => {
+  let state: ApiDetailState;
+  let cleanup: () => void;
+
+  beforeEach(() => {
+    apisStore.set([makeApi({ id: 'api-1' })]);
+    endpointsStore.set([
+      makeEndpoint({ id: 'ep-1', apiId: 'api-1', method: 'GET', path: '/items', responseShape: 'list' })
+    ]);
+    flushSync();
+  });
+  afterEach(() => cleanup?.());
+
+  it('should add query param with name and field pre-populated from field name', () => {
+    ({ state, cleanup } = createTestState());
+    flushSync();
+
+    state.openEndpoint(state.endpoints[0]);
+    flushSync();
+
+    expect(state.editedEndpoint!.queryParams).toEqual([]);
+
+    state.handleAddQueryParamFromField('price');
+    flushSync();
+
+    expect(state.editedEndpoint!.queryParams).toHaveLength(1);
+    expect(state.editedEndpoint!.queryParams[0]).toEqual({
+      name: 'price',
+      field: 'price',
+      operator: 'eq'
+    });
+  });
+
+  it('should append to existing query params', () => {
+    ({ state, cleanup } = createTestState());
+    flushSync();
+
+    state.openEndpoint(state.endpoints[0]);
+    flushSync();
+
+    state.handleAddQueryParamFromField('price');
+    flushSync();
+    state.handleAddQueryParamFromField('category');
+    flushSync();
+
+    expect(state.editedEndpoint!.queryParams).toHaveLength(2);
+    expect(state.editedEndpoint!.queryParams[1].name).toBe('category');
+    expect(state.editedEndpoint!.queryParams[1].field).toBe('category');
+  });
+});
