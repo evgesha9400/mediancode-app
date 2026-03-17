@@ -877,3 +877,133 @@ describe('apiDetailState - getEndpointsUsingTag', () => {
     expect(count).toBe(3);
   });
 });
+
+describe('apiDetailState - Pagination Toggle', () => {
+  let state: ApiDetailState;
+  let cleanup: () => void;
+
+  beforeEach(() => {
+    apisStore.set([makeApi({ id: 'api-1' })]);
+    endpointsStore.set([
+      makeEndpoint({ id: 'ep-1', apiId: 'api-1', method: 'GET', path: '/items', responseShape: 'list' })
+    ]);
+    flushSync();
+  });
+  afterEach(() => cleanup?.());
+
+  it('should toggle pagination from false to true', () => {
+    ({ state, cleanup } = createTestState());
+    flushSync();
+
+    state.openEndpoint(state.endpoints[0]);
+    flushSync();
+
+    expect(state.editedEndpoint!.pagination).toBeFalsy();
+
+    state.handleTogglePagination();
+    flushSync();
+
+    expect(state.editedEndpoint!.pagination).toBe(true);
+  });
+
+  it('should toggle pagination from true to false', () => {
+    endpointsStore.set([
+      makeEndpoint({ id: 'ep-1', apiId: 'api-1', method: 'GET', path: '/items', responseShape: 'list', pagination: true })
+    ]);
+    flushSync();
+
+    ({ state, cleanup } = createTestState());
+    flushSync();
+
+    state.openEndpoint(state.endpoints[0]);
+    flushSync();
+
+    expect(state.editedEndpoint!.pagination).toBe(true);
+
+    state.handleTogglePagination();
+    flushSync();
+
+    expect(state.editedEndpoint!.pagination).toBe(false);
+  });
+
+  it('should start with pagination false for new endpoints', () => {
+    ({ state, cleanup } = createTestState());
+    flushSync();
+
+    state.handleAddEndpoint();
+    flushSync();
+
+    expect(state.editedEndpoint!.pagination).toBe(false);
+  });
+
+  it('should clear pagination when target object changes', () => {
+    ({ state, cleanup } = createTestState());
+    flushSync();
+
+    state.openEndpoint(state.endpoints[0]);
+    flushSync();
+
+    state.handleTogglePagination();
+    flushSync();
+    expect(state.editedEndpoint!.pagination).toBe(true);
+
+    state.handleSelectTarget('obj-new');
+    flushSync();
+
+    expect(state.editedEndpoint!.pagination).toBe(false);
+  });
+
+  it('should include pagination in create payload', async () => {
+    const newEndpoint = makeEndpoint({ id: 'ep-new', apiId: 'api-1', path: '/items', pagination: true });
+    (createEndpointAction as Mock).mockResolvedValue({ success: true, data: newEndpoint });
+
+    ({ state, cleanup } = createTestState());
+    flushSync();
+
+    state.handleAddEndpoint();
+    flushSync();
+    state.editedEndpoint = { ...state.editedEndpoint!, path: '/items', pagination: true };
+    flushSync();
+
+    await state.handleCreateEndpoint();
+
+    expect(createEndpointAction).toHaveBeenCalledWith(expect.objectContaining({
+      pagination: true
+    }));
+  });
+
+  it('should include pagination in update payload', async () => {
+    const updatedEp = makeEndpoint({ id: 'ep-1', apiId: 'api-1', path: '/items', pagination: true });
+    (updateEndpointAction as Mock).mockResolvedValue({ success: true, data: updatedEp });
+
+    ({ state, cleanup } = createTestState());
+    flushSync();
+
+    state.openEndpoint(state.endpoints[0]);
+    flushSync();
+
+    state.handleTogglePagination();
+    flushSync();
+
+    await state.handleSaveEndpoint();
+
+    expect(updateEndpointAction).toHaveBeenCalledWith('ep-1', expect.objectContaining({
+      pagination: true
+    }));
+  });
+
+  it('should detect pagination change as unsaved change', () => {
+    ({ state, cleanup } = createTestState());
+    flushSync();
+
+    state.openEndpoint(state.endpoints[0]);
+    flushSync();
+
+    expect(state.hasEndpointChanges).toBe(false);
+
+    state.handleTogglePagination();
+    flushSync();
+
+    expect(state.hasEndpointChanges).toBe(true);
+  });
+});

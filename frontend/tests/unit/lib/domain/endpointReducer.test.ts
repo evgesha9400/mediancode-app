@@ -104,6 +104,18 @@ describe('normalizeEndpoint', () => {
     const result = normalizeEndpoint(ep);
     expect(result.responseShape).toBe('list');
   });
+
+  it('adds default pagination when missing', () => {
+    const ep = makeEndpoint({ pagination: undefined as any });
+    const result = normalizeEndpoint(ep);
+    expect(result.pagination).toBe(false);
+  });
+
+  it('preserves existing pagination', () => {
+    const ep = makeEndpoint({ pagination: true });
+    const result = normalizeEndpoint(ep);
+    expect(result.pagination).toBe(true);
+  });
 });
 
 describe('buildDuplicateEndpoint', () => {
