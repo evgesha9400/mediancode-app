@@ -10,7 +10,8 @@
     EndpointItem,
     ParameterEditor,
     QueryParametersEditor,
-    ObjectEditor,
+    ObjectSelector,
+    ResponsePreview,
     GenerateModal
   } from '$lib/components';
   import { ObjectFormContent, FieldFormContent } from '$lib/components/form';
@@ -631,8 +632,8 @@
             {/if}
           </div>
 
-          <!-- Object Editor (merged request + response; also the target for param inference) -->
-          <ObjectEditor
+          <!-- Object Selection + Response Shape (input controls, placed near top) -->
+          <ObjectSelector
             endpointNamespaceId={apiState.apiNamespaceId}
             selectedObjectId={apiState.editedEndpoint.objectId}
             responseShape={apiState.editedEndpoint.responseShape}
@@ -676,6 +677,12 @@
             onUpdate={apiState.handleUpdateQueryParam}
             onRemove={apiState.handleRemoveQueryParam}
             onTogglePagination={apiState.handleTogglePagination}
+          />
+
+          <!-- Request/Response Preview (output, placed at bottom) -->
+          <ResponsePreview
+            selectedObjectId={apiState.editedEndpoint.objectId}
+            responseShape={apiState.editedEndpoint.responseShape}
           />
 
           <!-- Validation Errors -->

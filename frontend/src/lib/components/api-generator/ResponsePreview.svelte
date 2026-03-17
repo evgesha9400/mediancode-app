@@ -1,0 +1,121 @@
+<script module lang="ts">
+  import type { ResponseShape } from '$lib/types';
+
+  export interface ResponsePreviewProps {
+    selectedObjectId?: string;
+    responseShape: ResponseShape;
+  }
+</script>
+
+<script lang="ts">
+  import { objectsStore } from '$lib/stores/objects';
+  import { getFieldById } from '$lib/stores/fields';
+  import { getObjectById } from '$lib/stores/objects';
+  import { buildRequestPreviewFromObject, buildResponsePreviewFromObject } from '$lib/utils/examples';
+
+  interface Props extends ResponsePreviewProps {}
+
+  let { selectedObjectId, responseShape }: Props = $props();
+
+  // Build preview JSON using shared utilities (appears flag filters fields automatically)
+  // Response preview always shows without envelope wrapping (envelope is always enabled on the endpoint)
+  const requestPreviewJson = $derived(buildRequestPreviewFromObject(selectedObjectId, $objectsStore));
+  const responsePreviewJson = $derived(
+    buildResponsePreviewFromObject(responseShape, selectedObjectId, false, $objectsStore)
+  );
+
+  // Get the selected object for display
+  const selectedObject = $derived(
+    selectedObjectId ? getObjectById(selectedObjectId) : undefined
+  );
+</script>
+
+<div class="space-y-4">
+  <h3 class="text-sm text-mono-300 flex items-center font-medium">
+    <i class="fa-solid fa-eye mr-2"></i>
+    Request & Response Preview
+  </h3>
+
+  <!-- Selected Object Field Summary -->
+  {#if selectedObject}
+    <div class="p-3 bg-mono-800 rounded border border-mono-700">
+      <div class="flex items-center justify-between mb-2">
+        <div class="flex items-center space-x-2">
+          <i class="fa-solid fa-cube text-mono-400 text-sm"></i>
+          <span class="font-mono text-sm text-mono-300">{selectedObject.name}</span>
+        </div>
+        <span class="text-xs text-mono-400">{selectedObject.fields.length} fields</span>
+      </div>
+
+      {#if selectedObject.description}
+        <p class="text-xs text-mono-400 mb-2">{selectedObject.description}</p>
+      {/if}
+
+      <!-- Field List -->
+      <div class="space-y-1 mt-2">
+        <p class="text-xs text-mono-400 font-medium">Fields:</p>
+        {#each selectedObject.fields as fieldRef (fieldRef.fieldId)}
+          {@const field = getFieldById(fieldRef.fieldId)}
+          {#if field}
+            <div class="flex items-center justify-between text-xs">
+              <span class="font-mono text-mono-300">{field.name}</span>
+              <div class="flex items-center space-x-2">
+                {#if fieldRef.appears !== 'both'}
+                  <span class="text-mono-500 text-[10px] uppercase">{fieldRef.appears}</span>
+                {/if}
+                <span class="text-mono-400 bg-mono-800 px-1.5 py-0.5 rounded">{field.type}</span>
+              </div>
+            </div>
+          {:else}
+            <div class="flex items-center gap-2 text-xs text-red-400">
+              <i class="fa-solid fa-triangle-exclamation"></i>
+              <span>Field not found ({fieldRef.fieldId})</span>
+            </div>
+          {/if}
+        {/each}
+      </div>
+    </div>
+  {:else}
+    <div class="p-3 bg-mono-800 rounded border border-mono-700">
+      <p class="text-xs text-mono-400">No object selected — select an object above to see previews</p>
+    </div>
+  {/if}
+
+  <!-- Request & Response JSON Previews -->
+  <div class="response-preview-grid">
+    <!-- Request column -->
+    <div class="space-y-2">
+      <h4 class="text-xs text-mono-400 flex items-center font-medium uppercase tracking-wider">
+        <i class="fa-solid fa-arrow-up mr-2"></i>
+        Request Body
+      </h4>
+      <div class="p-3 bg-mono-950 rounded border border-mono-700 text-white text-sm overflow-x-auto">
+        <pre>{requestPreviewJson}</pre>
+      </div>
+    </div>
+
+    <!-- Response column -->
+    <div class="space-y-2">
+      <h4 class="text-xs text-mono-400 flex items-center font-medium uppercase tracking-wider">
+        <i class="fa-solid fa-arrow-down mr-2"></i>
+        Response Body
+      </h4>
+      <div class="p-3 bg-mono-950 rounded border border-mono-700 text-white text-sm overflow-x-auto">
+        <pre>{responsePreviewJson}</pre>
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+  .response-preview-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+  @container (min-width: 700px) {
+    .response-preview-grid {
+      grid-template-columns: repeat(2, 1fr);
+    }
+  }
+</style>
