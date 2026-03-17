@@ -41,6 +41,9 @@
   // Filter validation errors for query params (rules 4, 6)
   const queryErrors = $derived(validationErrors.filter(e => e.rule === 4 || e.rule === 6));
 
+  // Whether we have any rows to show (query params or pagination)
+  const hasRows = $derived(queryParams.length > 0 || pagination);
+
   // Field IDs already linked to a query param (to exclude from dropdown)
   const linkedFieldIds = $derived.by(() => {
     const linkedNames = new Set(queryParams.map(qp => qp.field).filter(Boolean));
@@ -80,37 +83,7 @@
       </div>
     </div>
 
-    {#if pagination}
-      <!-- Pagination display (read-only) -->
-      <div class="px-3 py-2 bg-mono-950 rounded border border-mono-700 mb-2">
-        <div class="flex items-center justify-between mb-1.5">
-          <span class="text-[10px] text-mono-500 uppercase tracking-wider">Pagination</span>
-          <button
-            type="button"
-            onclick={onTogglePagination}
-            class="text-xs text-mono-400 hover:text-red-400 transition-colors flex items-center space-x-1"
-            title="Remove pagination"
-          >
-            <i class="fa-solid fa-xmark text-xs"></i>
-            <span>Remove</span>
-          </button>
-        </div>
-        <div class="flex items-center gap-3">
-          <div class="flex items-center gap-1.5">
-            <span class="text-xs font-mono text-mono-100">limit</span>
-            <span class="text-xs text-mono-400 bg-mono-800 px-1.5 py-0.5 rounded">int</span>
-            <span class="text-[10px] text-mono-500">ge=1, le=100</span>
-          </div>
-          <div class="flex items-center gap-1.5">
-            <span class="text-xs font-mono text-mono-100">offset</span>
-            <span class="text-xs text-mono-400 bg-mono-800 px-1.5 py-0.5 rounded">int</span>
-            <span class="text-[10px] text-mono-500">ge=0</span>
-          </div>
-        </div>
-      </div>
-    {/if}
-
-    {#if queryParams.length > 0}
+    {#if hasRows}
       <div class="px-3 py-1 bg-mono-950 rounded border border-mono-700 mb-2">
         <!-- Column headers -->
         <div class="flex items-center gap-2 py-1 border-b border-mono-700 text-[10px] text-mono-500 uppercase tracking-wider">
@@ -120,6 +93,69 @@
           <div class="w-20 shrink-0">Type</div>
           <div class="w-6 shrink-0"></div>
         </div>
+
+        <!-- Pagination rows (locked pair, displayed like regular rows but greyed out) -->
+        {#if pagination}
+          <div class="border-b border-mono-700 last:border-b-0 bg-mono-900/50">
+            <!-- limit row -->
+            <div class="flex items-start gap-2 py-1.5">
+              <div class="w-28 shrink-0">
+                <div class="w-full px-2 py-1 text-xs font-mono border border-mono-700 bg-mono-800 text-mono-400 cursor-not-allowed">
+                  limit
+                </div>
+              </div>
+              <div class="flex-1 min-w-0">
+                <div class="w-full px-2 py-1 text-xs border border-mono-700 bg-mono-800 text-mono-400 cursor-not-allowed">
+                  <i class="fa-solid fa-lock text-[10px] mr-1"></i>
+                  built-in
+                </div>
+              </div>
+              <div class="w-20 shrink-0">
+                <div class="w-full px-2 py-1 text-xs border border-mono-700 bg-mono-800 text-mono-400 cursor-not-allowed">
+                  ge/le
+                </div>
+              </div>
+              <div class="w-20 shrink-0 flex items-center">
+                <span class="text-xs text-mono-400 bg-mono-800 px-1.5 py-1 rounded truncate">int</span>
+              </div>
+              <!-- Spacer for alignment (remove button on offset row) -->
+              <div class="w-6 shrink-0"></div>
+            </div>
+            <!-- offset row -->
+            <div class="flex items-start gap-2 py-1.5">
+              <div class="w-28 shrink-0">
+                <div class="w-full px-2 py-1 text-xs font-mono border border-mono-700 bg-mono-800 text-mono-400 cursor-not-allowed">
+                  offset
+                </div>
+              </div>
+              <div class="flex-1 min-w-0">
+                <div class="w-full px-2 py-1 text-xs border border-mono-700 bg-mono-800 text-mono-400 cursor-not-allowed">
+                  <i class="fa-solid fa-lock text-[10px] mr-1"></i>
+                  built-in
+                </div>
+              </div>
+              <div class="w-20 shrink-0">
+                <div class="w-full px-2 py-1 text-xs border border-mono-700 bg-mono-800 text-mono-400 cursor-not-allowed">
+                  ge
+                </div>
+              </div>
+              <div class="w-20 shrink-0 flex items-center">
+                <span class="text-xs text-mono-400 bg-mono-800 px-1.5 py-1 rounded truncate">int</span>
+              </div>
+              <!-- Remove pagination (removes both limit and offset) -->
+              <button
+                type="button"
+                onclick={onTogglePagination}
+                class="shrink-0 text-mono-400 hover:text-red-400 transition-colors p-1"
+                title="Remove pagination (limit & offset)"
+              >
+                <i class="fa-solid fa-xmark text-xs"></i>
+              </button>
+            </div>
+          </div>
+        {/if}
+
+        <!-- Regular query param rows -->
         {#each queryParams as param, i (i)}
           <QueryParamRow
             {param}
