@@ -671,6 +671,7 @@
                     paramName={param.name}
                     fieldName={param.field}
                     targetFields={apiState.targetFields}
+                    objectFields={endpointObjectFields}
                     onFieldSelect={(fieldName) => apiState.handlePathParamFieldSelect(param.name, fieldName)}
                   />
                 {/each}

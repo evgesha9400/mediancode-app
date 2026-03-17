@@ -18,16 +18,18 @@ describe('ParameterEditor Component', () => {
 				paramName: 'user_id',
 				fieldName: 'user_id',
 				targetFields: [],
+				objectFields: [],
 				onFieldSelect: () => {}
 			};
 
 			expect(props.paramName).toBe('user_id');
 			expect(props.fieldName).toBe('user_id');
 			expect(props.targetFields).toEqual([]);
+			expect(props.objectFields).toEqual([]);
 			expect(typeof props.onFieldSelect).toBe('function');
 		});
 
-		it('ParameterEditorProps accepts target field data', () => {
+		it('ParameterEditorProps accepts target field and object field data', () => {
 			const props: ParameterEditorProps = {
 				paramName: 'item_id',
 				fieldName: 'id',
@@ -35,12 +37,17 @@ describe('ParameterEditor Component', () => {
 					{ name: 'id', type: 'uuid', isPk: true },
 					{ name: 'store_id', type: 'uuid', isPk: false }
 				],
+				objectFields: [
+					{ id: 'f-1', namespaceId: 'ns', name: 'id', type: 'uuid', container: null, constraints: [], validators: [], usedInApis: [] },
+					{ id: 'f-2', namespaceId: 'ns', name: 'store_id', type: 'uuid', container: null, constraints: [], validators: [], usedInApis: [] }
+				],
 				onFieldSelect: () => {}
 			};
 
 			expect(props.targetFields).toHaveLength(2);
 			expect(props.targetFields[0].name).toBe('id');
 			expect(props.targetFields[0].isPk).toBe(true);
+			expect(props.objectFields).toHaveLength(2);
 		});
 
 		it('ParameterEditorProps onFieldSelect receives field name', () => {
@@ -50,6 +57,7 @@ describe('ParameterEditor Component', () => {
 				paramName: 'id',
 				fieldName: '',
 				targetFields: [],
+				objectFields: [],
 				onFieldSelect: (fieldName) => {
 					selectedFieldName = fieldName;
 				}
@@ -72,6 +80,7 @@ describe('ParameterEditor Component', () => {
 				paramName: 'test',
 				fieldName: '',
 				targetFields: [],
+				objectFields: [],
 				onFieldSelect: () => {}
 			};
 

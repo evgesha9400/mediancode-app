@@ -665,9 +665,17 @@ export function createApiDetailState(config: ApiDetailStateConfig): ApiDetailSta
 	function handlePathChange(newPath: string): void {
 		if (!editedEndpoint) return;
 		const { path, pathParams } = reconcilePathParams(newPath, editedEndpoint.pathParams);
-		editedEndpoint = { ...editedEndpoint, path, pathParams };
 
-		const invalidParam = pathParams.find(p => p.name && !isValidSnakeCaseName(p.name));
+		// Auto-link new (unlinked) path params by name match against the target object
+		const autoLinkedParams = pathParams.map(p => {
+			if (p.field) return p; // already linked, preserve
+			const match = targetFields.find(f => f.name.toLowerCase() === p.name.toLowerCase());
+			return match ? { ...p, field: match.name } : p;
+		});
+
+		editedEndpoint = { ...editedEndpoint, path, pathParams: autoLinkedParams };
+
+		const invalidParam = autoLinkedParams.find(p => p.name && !isValidSnakeCaseName(p.name));
 		pathError = invalidParam
 			? `Path parameter '${invalidParam.name}' must be snake_case (e.g. user_id)`
 			: '';
@@ -760,11 +768,21 @@ export function createApiDetailState(config: ApiDetailStateConfig): ApiDetailSta
 
 	function handleSelectObject(objectId: string | undefined): void {
 		if (!editedEndpoint) return;
+
+		// Resolve field names on the new object for auto-linking
+		const newTargetFields = objectId
+			? resolveTargetFields(objectId, allObjects, allFields)
+			: [];
+		const fieldNameSet = new Set(newTargetFields.map(f => f.name.toLowerCase()));
+
 		editedEndpoint = {
 			...editedEndpoint,
 			objectId,
-			// Clear path param field mappings when object changes (fields may no longer exist)
-			pathParams: editedEndpoint.pathParams.map(p => ({ ...p, field: '' })),
+			// Auto-link path params by case-insensitive name match; clear if no match
+			pathParams: editedEndpoint.pathParams.map(p => {
+				const match = newTargetFields.find(f => f.name.toLowerCase() === p.name.toLowerCase());
+				return { ...p, field: match ? match.name : '' };
+			}),
 			// Clear query params and pagination when object changes
 			queryParams: [],
 			pagination: false
