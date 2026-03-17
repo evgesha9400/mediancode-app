@@ -102,7 +102,6 @@ interface TargetField {
 
 function validate(opts: {
   responseShape: ResponseShape;
-  targetObjectId?: string;
   objectId?: string;
   targetFields?: TargetField[];
   pathParams?: { name: string; field: string }[];
@@ -110,7 +109,6 @@ function validate(opts: {
 }) {
   return validateEndpointParams({
     responseShape: opts.responseShape,
-    targetObjectId: opts.targetObjectId,
     objectId: opts.objectId,
     targetFields: opts.targetFields ?? [],
     pathParams: (opts.pathParams ?? []).map(p => ({
@@ -139,10 +137,10 @@ describe('validateEndpointParams', () => {
       expect(errors).toEqual([]);
     });
 
-    it('fails for list endpoint without targetObjectId', () => {
+    it('fails for list endpoint without objectId', () => {
       const errors = validate({
         responseShape: 'list',
-        targetObjectId: undefined,
+        objectId: undefined,
         targetFields: []
       });
       expect(errors).toContainEqual(
@@ -156,7 +154,7 @@ describe('validateEndpointParams', () => {
     it('fails when path param field does not exist on target', () => {
       const errors = validate({
         responseShape: 'object',
-        targetObjectId: 'obj-1',
+        objectId: 'obj-1',
         targetFields: [{ name: 'id', type: 'uuid', isPk: true }],
         pathParams: [{ name: 'store_id', field: 'store_id' }]
       });
@@ -168,7 +166,7 @@ describe('validateEndpointParams', () => {
     it('fails when query param field does not exist on target', () => {
       const errors = validate({
         responseShape: 'list',
-        targetObjectId: 'obj-1',
+        objectId: 'obj-1',
         targetFields: [{ name: 'price', type: 'float', isPk: false }],
         queryParams: [{ name: 'category', field: 'nonexistent', operator: 'eq' }]
       });
@@ -180,7 +178,7 @@ describe('validateEndpointParams', () => {
     it('skips validation for query params with empty field (no field mapped)', () => {
       const errors = validate({
         responseShape: 'list',
-        targetObjectId: 'obj-1',
+        objectId: 'obj-1',
         targetFields: [{ name: 'id', type: 'uuid', isPk: true }],
         queryParams: [{ name: 'limit', field: '', operator: 'eq' }]
       });
@@ -194,7 +192,7 @@ describe('validateEndpointParams', () => {
     it('passes when last path param maps to PK', () => {
       const errors = validate({
         responseShape: 'object',
-        targetObjectId: 'obj-1',
+        objectId: 'obj-1',
         targetFields: [
           { name: 'store_id', type: 'uuid', isPk: false },
           { name: 'id', type: 'uuid', isPk: true }
@@ -211,7 +209,7 @@ describe('validateEndpointParams', () => {
     it('fails when last path param does not map to PK', () => {
       const errors = validate({
         responseShape: 'object',
-        targetObjectId: 'obj-1',
+        objectId: 'obj-1',
         targetFields: [
           { name: 'store_id', type: 'uuid', isPk: false },
           { name: 'id', type: 'uuid', isPk: true }
@@ -229,7 +227,7 @@ describe('validateEndpointParams', () => {
     it('fails when detail endpoint has query params with field references', () => {
       const errors = validate({
         responseShape: 'object',
-        targetObjectId: 'obj-1',
+        objectId: 'obj-1',
         targetFields: [{ name: 'id', type: 'uuid', isPk: true }],
         pathParams: [{ name: 'id', field: 'id' }],
         queryParams: [{ name: 'q', field: 'id', operator: 'eq' }]
@@ -242,7 +240,7 @@ describe('validateEndpointParams', () => {
     it('passes when detail endpoint has legacy query params without field', () => {
       const errors = validate({
         responseShape: 'object',
-        targetObjectId: 'obj-1',
+        objectId: 'obj-1',
         targetFields: [{ name: 'id', type: 'uuid', isPk: true }],
         pathParams: [{ name: 'id', field: 'id' }],
         queryParams: [{ name: 'include', field: '', operator: 'eq' }]
@@ -257,7 +255,7 @@ describe('validateEndpointParams', () => {
     it('fails when list endpoint has path param mapped to PK', () => {
       const errors = validate({
         responseShape: 'list',
-        targetObjectId: 'obj-1',
+        objectId: 'obj-1',
         targetFields: [
           { name: 'id', type: 'uuid', isPk: true },
           { name: 'price', type: 'float', isPk: false }
@@ -275,7 +273,7 @@ describe('validateEndpointParams', () => {
     it('fails when using gte on str field', () => {
       const errors = validate({
         responseShape: 'list',
-        targetObjectId: 'obj-1',
+        objectId: 'obj-1',
         targetFields: [{ name: 'name', type: 'str', isPk: false }],
         queryParams: [{ name: 'min_name', field: 'name', operator: 'gte' }]
       });
@@ -287,7 +285,7 @@ describe('validateEndpointParams', () => {
     it('passes when using ilike on str field', () => {
       const errors = validate({
         responseShape: 'list',
-        targetObjectId: 'obj-1',
+        objectId: 'obj-1',
         targetFields: [{ name: 'name', type: 'str', isPk: false }],
         queryParams: [{ name: 'search', field: 'name', operator: 'ilike' }]
       });
@@ -298,7 +296,7 @@ describe('validateEndpointParams', () => {
     it('fails when using like on int field', () => {
       const errors = validate({
         responseShape: 'list',
-        targetObjectId: 'obj-1',
+        objectId: 'obj-1',
         targetFields: [{ name: 'count', type: 'int', isPk: false }],
         queryParams: [{ name: 'count_like', field: 'count', operator: 'like' }]
       });

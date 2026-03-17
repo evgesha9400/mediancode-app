@@ -135,11 +135,9 @@ export interface ApiDetailState {
 	handlePathParamUpdate: (paramName: string, fieldId: string) => void;
 	handlePathParamFieldSelect: (paramName: string, fieldName: string) => void;
 
-	// Target object
-	readonly effectiveTargetId: string | undefined;
+	// Target object (resolved from objectId)
 	readonly targetFields: TargetField[];
 	readonly validationErrors: ValidationError[];
-	handleSelectTarget: (objectId: string | undefined) => void;
 
 	// Query param CRUD
 	handleAddQueryParam: () => void;
@@ -401,7 +399,6 @@ export function createApiDetailState(config: ApiDetailStateConfig): ApiDetailSta
 		tagName: undefined as string | undefined,
 		pathParams: [] as PathParam[],
 		queryParams: [] as QueryParam[],
-		targetObjectId: undefined as string | undefined,
 		queryParamsObjectId: undefined as string | undefined,
 		objectId: undefined as string | undefined,
 		useEnvelope: true,
@@ -413,19 +410,11 @@ export function createApiDetailState(config: ApiDetailStateConfig): ApiDetailSta
 	// Target Object and Validation (param inference)
 	// ============================================================================
 
-	// Resolved target object ID: for detail endpoints, inferred from objectId
-	let effectiveTargetId = $derived.by(() => {
-		if (!editedEndpoint) return undefined;
-		if (editedEndpoint.responseShape === 'object') {
-			return editedEndpoint.targetObjectId ?? editedEndpoint.objectId;
-		}
-		return editedEndpoint.targetObjectId;
-	});
-
 	// Fields on the target object (for populating dropdowns)
+	// Target is always objectId -- there is no separate target selection
 	let targetFields = $derived.by((): TargetField[] => {
-		if (!effectiveTargetId) return [];
-		return resolveTargetFields(effectiveTargetId, allObjects, allFields);
+		if (!editedEndpoint?.objectId) return [];
+		return resolveTargetFields(editedEndpoint.objectId, allObjects, allFields);
 	});
 
 	// Live validation errors
@@ -433,7 +422,6 @@ export function createApiDetailState(config: ApiDetailStateConfig): ApiDetailSta
 		if (!editedEndpoint) return [];
 		return validateEndpointParams({
 			responseShape: editedEndpoint.responseShape,
-			targetObjectId: editedEndpoint.targetObjectId,
 			objectId: editedEndpoint.objectId,
 			targetFields,
 			pathParams: editedEndpoint.pathParams,
@@ -451,7 +439,6 @@ export function createApiDetailState(config: ApiDetailStateConfig): ApiDetailSta
 				|| editedEndpoint.tagName !== CREATE_DEFAULTS.tagName
 				|| editedEndpoint.pathParams.length !== CREATE_DEFAULTS.pathParams.length
 				|| (editedEndpoint.queryParams ?? []).length !== CREATE_DEFAULTS.queryParams.length
-				|| editedEndpoint.targetObjectId !== CREATE_DEFAULTS.targetObjectId
 				|| editedEndpoint.queryParamsObjectId !== CREATE_DEFAULTS.queryParamsObjectId
 				|| editedEndpoint.objectId !== CREATE_DEFAULTS.objectId
 				|| editedEndpoint.useEnvelope !== CREATE_DEFAULTS.useEnvelope
@@ -517,7 +504,6 @@ export function createApiDetailState(config: ApiDetailStateConfig): ApiDetailSta
 				tagName: editedEndpoint.tagName,
 				pathParams: editedEndpoint.pathParams,
 				queryParams: editedEndpoint.queryParams ?? [],
-				targetObjectId: editedEndpoint.targetObjectId,
 				queryParamsObjectId: editedEndpoint.queryParamsObjectId,
 				objectId: editedEndpoint.objectId,
 				useEnvelope: editedEndpoint.useEnvelope,
@@ -587,7 +573,6 @@ export function createApiDetailState(config: ApiDetailStateConfig): ApiDetailSta
 				tagName: original.tagName,
 				pathParams: original.pathParams.map(p => ({ ...p })),
 				queryParams: (original.queryParams ?? []).map(q => ({ ...q })),
-				targetObjectId: original.targetObjectId,
 				queryParamsObjectId: original.queryParamsObjectId,
 				objectId: original.objectId,
 				useEnvelope: original.useEnvelope,
@@ -643,7 +628,6 @@ export function createApiDetailState(config: ApiDetailStateConfig): ApiDetailSta
 				tagName: editedEndpoint.tagName ?? null,
 				pathParams: editedEndpoint.pathParams,
 				queryParams: editedEndpoint.queryParams ?? [],
-				targetObjectId: editedEndpoint.targetObjectId ?? null,
 				queryParamsObjectId: editedEndpoint.queryParamsObjectId ?? null,
 				objectId: editedEndpoint.objectId ?? null,
 				useEnvelope: editedEndpoint.useEnvelope,
@@ -705,23 +689,6 @@ export function createApiDetailState(config: ApiDetailStateConfig): ApiDetailSta
 	}
 
 	// ============================================================================
-	// Target Object Selection (param inference)
-	// ============================================================================
-
-	function handleSelectTarget(objectId: string | undefined): void {
-		if (!editedEndpoint) return;
-		editedEndpoint = {
-			...editedEndpoint,
-			targetObjectId: objectId,
-			// Clear path param field mappings when target changes (fields may no longer exist)
-			pathParams: editedEndpoint.pathParams.map(p => ({ ...p, field: '' })),
-			// Clear query params and pagination when target changes
-			queryParams: [],
-			pagination: false
-		};
-	}
-
-	// ============================================================================
 	// Query Param CRUD
 	// ============================================================================
 
@@ -779,7 +746,15 @@ export function createApiDetailState(config: ApiDetailStateConfig): ApiDetailSta
 
 	function handleSelectObject(objectId: string | undefined): void {
 		if (!editedEndpoint) return;
-		editedEndpoint = { ...editedEndpoint, objectId };
+		editedEndpoint = {
+			...editedEndpoint,
+			objectId,
+			// Clear path param field mappings when object changes (fields may no longer exist)
+			pathParams: editedEndpoint.pathParams.map(p => ({ ...p, field: '' })),
+			// Clear query params and pagination when object changes
+			queryParams: [],
+			pagination: false
+		};
 	}
 
 	function handleEnvelopeToggle(enabled: boolean): void {
@@ -880,10 +855,8 @@ export function createApiDetailState(config: ApiDetailStateConfig): ApiDetailSta
 		handlePathParamFieldSelect,
 
 		// Target object and validation
-		get effectiveTargetId() { return effectiveTargetId; },
 		get targetFields() { return targetFields; },
 		get validationErrors() { return validationErrors; },
-		handleSelectTarget,
 
 		// Query param CRUD
 		handleAddQueryParam,

@@ -49,9 +49,4 @@
       <span class="text-xs text-mono-400 bg-mono-800 px-1.5 py-0.5 rounded">{derivedType}</span>
     </div>
   {/if}
-
-  <!-- Operator (always eq for path params, shown as read-only label) -->
-  <div class="shrink-0">
-    <span class="text-xs text-mono-400 bg-mono-800 px-1.5 py-0.5 rounded">eq</span>
-  </div>
 </div>

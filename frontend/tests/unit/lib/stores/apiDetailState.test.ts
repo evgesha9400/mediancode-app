@@ -947,7 +947,7 @@ describe('apiDetailState - Pagination Toggle', () => {
     flushSync();
     expect(state.editedEndpoint!.pagination).toBe(true);
 
-    state.handleSelectTarget('obj-new');
+    state.handleSelectObject('obj-new');
     flushSync();
 
     expect(state.editedEndpoint!.pagination).toBe(false);

@@ -11,8 +11,7 @@
     ParameterEditor,
     QueryParametersEditor,
     ObjectEditor,
-    GenerateModal,
-    TargetObjectSelector
+    GenerateModal
   } from '$lib/components';
   import { ObjectFormContent, FieldFormContent } from '$lib/components/form';
   import { HTTP_METHODS } from '$lib/types';
@@ -632,13 +631,13 @@
             {/if}
           </div>
 
-          <!-- Target Object -->
-          <TargetObjectSelector
+          <!-- Object Editor (merged request + response; also the target for param inference) -->
+          <ObjectEditor
             endpointNamespaceId={apiState.apiNamespaceId}
+            selectedObjectId={apiState.editedEndpoint.objectId}
             responseShape={apiState.editedEndpoint.responseShape}
-            objectId={apiState.editedEndpoint.objectId}
-            targetObjectId={apiState.editedEndpoint.targetObjectId}
-            onSelectTarget={apiState.handleSelectTarget}
+            onSelectObject={apiState.handleSelectObject}
+            onSetResponseShape={apiState.handleSetResponseShape}
             onCreateNewObject={() => openObjectCreate('body')}
           />
 
@@ -677,16 +676,6 @@
             onUpdate={apiState.handleUpdateQueryParam}
             onRemove={apiState.handleRemoveQueryParam}
             onTogglePagination={apiState.handleTogglePagination}
-          />
-
-          <!-- Object Editor (merged request + response) -->
-          <ObjectEditor
-            endpointNamespaceId={apiState.apiNamespaceId}
-            selectedObjectId={apiState.editedEndpoint.objectId}
-            responseShape={apiState.editedEndpoint.responseShape}
-            onSelectObject={apiState.handleSelectObject}
-            onSetResponseShape={apiState.handleSetResponseShape}
-            onCreateNewObject={() => openObjectCreate('body')}
           />
 
           <!-- Validation Errors -->

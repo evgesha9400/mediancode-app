@@ -100,8 +100,7 @@ export interface TargetField {
  */
 export interface ValidationInput {
 	responseShape: ResponseShape;
-	targetObjectId?: string;
-	objectId?: string; // the response/body object (used for detail target inference)
+	objectId?: string; // the object used for request/response body AND param inference target
 	targetFields: TargetField[];
 	pathParams: PathParam[];
 	queryParams: QueryParam[];
@@ -124,7 +123,6 @@ export function validateEndpointParams(input: ValidationInput): ValidationError[
 	const errors: ValidationError[] = [];
 	const {
 		responseShape,
-		targetObjectId,
 		objectId,
 		targetFields,
 		pathParams,
@@ -134,9 +132,8 @@ export function validateEndpointParams(input: ValidationInput): ValidationError[
 	const isDetail = responseShape === 'object';
 	const isList = responseShape === 'list';
 
-	// Rule 1: Target object is known
-	const effectiveTarget = isDetail ? (targetObjectId ?? objectId) : targetObjectId;
-	if (!effectiveTarget) {
+	// Rule 1: Target is known when objectId is set (for both detail and list)
+	if (!objectId) {
 		errors.push({
 			rule: 1,
 			message: isList

@@ -38,7 +38,6 @@ interface EndpointResponse {
 	pathParams: PathParamResponse[];
 	queryParams: QueryParamResponse[]; // NEW
 	queryParamsObjectId: string | null; // kept for backward compat
-	targetObjectId: string | null; // NEW
 	objectId: string | null;
 	useEnvelope: boolean;
 	responseShape: string;
@@ -81,7 +80,6 @@ function transformEndpoint(response: EndpointResponse): ApiEndpoint {
 		pathParams: response.pathParams.map(transformParameter),
 		queryParams: (response.queryParams ?? []).map(transformQueryParam),
 		queryParamsObjectId: response.queryParamsObjectId ?? undefined,
-		targetObjectId: response.targetObjectId ?? undefined,
 		objectId: response.objectId ?? undefined,
 		useEnvelope: response.useEnvelope,
 		responseShape: response.responseShape as ResponseShape,
@@ -125,7 +123,6 @@ export interface CreateEndpointRequest {
 	pathParams?: { name: string; fieldId: string; field: string }[];
 	queryParams?: { name: string; field: string; operator: string }[];
 	queryParamsObjectId?: string; // deprecated, kept for compat
-	targetObjectId?: string;
 	objectId?: string;
 	useEnvelope?: boolean;
 	responseShape?: ResponseShape;
@@ -143,7 +140,6 @@ export interface UpdateEndpointRequest {
 	pathParams?: { name: string; fieldId: string; field: string }[];
 	queryParams?: { name: string; field: string; operator: string }[];
 	queryParamsObjectId?: string | null; // deprecated
-	targetObjectId?: string | null;
 	objectId?: string | null;
 	useEnvelope?: boolean;
 	responseShape?: ResponseShape;

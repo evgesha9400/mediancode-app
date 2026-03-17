@@ -9,7 +9,6 @@ export { default as FieldConstraintSelectorDropdown } from './FieldConstraintSel
 export { default as FieldConstraintEditor } from './FieldConstraintEditor.svelte';
 export { default as TypeSelectorDropdown } from './TypeSelectorDropdown.svelte';
 export { default as GenerateModal } from './GenerateModal.svelte';
-export { default as TargetObjectSelector } from './TargetObjectSelector.svelte';
 export { default as QueryParamRow } from './QueryParamRow.svelte';
 
 // API Generator component types
@@ -23,5 +22,4 @@ export type { FieldConstraintSelectorDropdownProps } from './FieldConstraintSele
 export type { FieldConstraintEditorProps } from './FieldConstraintEditor.svelte';
 export type { TypeSelectorDropdownProps } from './TypeSelectorDropdown.svelte';
 export type { GenerateModalProps } from './GenerateModal.svelte';
-export type { TargetObjectSelectorProps } from './TargetObjectSelector.svelte';
 export type { QueryParamRowProps } from './QueryParamRow.svelte';

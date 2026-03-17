@@ -178,8 +178,7 @@ export interface ApiEndpoint {
   pathParams: PathParam[];
   queryParams: QueryParam[];           // NEW: replaces queryParamsObjectId
   queryParamsObjectId?: string;        // DEPRECATED: kept for backward compat during migration
-  targetObjectId?: string;             // NEW: the object all params resolve against
-  objectId?: string; // Select ONE object for request/response body (appears flag controls which fields appear where)
+  objectId?: string; // Select ONE object for request/response body; also the target for param inference
   useEnvelope: boolean;
   // Response shape configuration (object or list of objects only)
   responseShape: ResponseShape;
