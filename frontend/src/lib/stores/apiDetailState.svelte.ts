@@ -155,6 +155,8 @@ export interface ApiDetailState {
 	handleEnvelopeToggle: (enabled: boolean) => void;
 
 	// Response shape configuration
+	/** Whether the path ends with {param}, indicating a detail endpoint */
+	readonly isDetailPath: boolean;
 	handleSetResponseShape: (shape: ResponseShape) => void;
 	handleResetResponseDefaults: () => void;
 
@@ -658,6 +660,18 @@ export function createApiDetailState(config: ApiDetailStateConfig): ApiDetailSta
 	}
 
 	// ============================================================================
+	// Detail Path Detection
+	// ============================================================================
+
+	/** Regex: path ends with a {param} segment, indicating a detail endpoint */
+	const DETAIL_PATH_RE = /\{[^}]+\}$/;
+
+	// Derived: true when the current path ends with {param}
+	let isDetailPath = $derived(
+		editedEndpoint ? DETAIL_PATH_RE.test(editedEndpoint.path) : false
+	);
+
+	// ============================================================================
 	// Endpoint Editing Operations
 	// ============================================================================
 
@@ -672,7 +686,10 @@ export function createApiDetailState(config: ApiDetailStateConfig): ApiDetailSta
 			return match ? { ...p, field: match.name } : p;
 		});
 
-		editedEndpoint = { ...editedEndpoint, path, pathParams: autoLinkedParams };
+		// Auto-set response shape: detail paths always return a single object
+		const autoResponseShape = DETAIL_PATH_RE.test(path) ? 'object' as const : editedEndpoint.responseShape;
+
+		editedEndpoint = { ...editedEndpoint, path, pathParams: autoLinkedParams, responseShape: autoResponseShape };
 
 		const invalidParam = autoLinkedParams.find(p => p.name && !isValidSnakeCaseName(p.name));
 		pathError = invalidParam
@@ -786,6 +803,8 @@ export function createApiDetailState(config: ApiDetailStateConfig): ApiDetailSta
 
 	function handleSetResponseShape(shape: ResponseShape): void {
 		if (!editedEndpoint) return;
+		// Detail paths are locked to 'object' — ignore attempts to change
+		if (isDetailPath) return;
 		editedEndpoint = { ...editedEndpoint, responseShape: shape };
 	}
 
@@ -887,6 +906,7 @@ export function createApiDetailState(config: ApiDetailStateConfig): ApiDetailSta
 		handleSelectQueryParamsObject,
 		handleSelectObject,
 		handleEnvelopeToggle,
+		get isDetailPath() { return isDetailPath; },
 		handleSetResponseShape,
 		handleResetResponseDefaults,
 

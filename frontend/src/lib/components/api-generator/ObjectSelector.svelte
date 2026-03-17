@@ -5,6 +5,10 @@
     endpointNamespaceId: string;
     selectedObjectId?: string;
     responseShape: ResponseShape;
+    /** Whether the response shape toggle is locked (e.g. detail endpoint detected) */
+    responseShapeLocked?: boolean;
+    /** Tooltip text shown when the toggle is locked */
+    responseShapeLockedReason?: string;
     onSelectObject: (objectId: string | undefined) => void;
     onSetResponseShape: (shape: ResponseShape) => void;
     onCreateNewObject?: () => void;
@@ -13,11 +17,12 @@
 
 <script lang="ts">
   import { objectsStore } from '$lib/stores/objects';
+  import { Tooltip } from '$lib/components/tooltip';
   import ObjectSelectorDropdown from './ObjectSelectorDropdown.svelte';
 
-  const SHAPE_OPTIONS: { value: ResponseShape; label: string; icon: string }[] = [
-    { value: 'object', label: 'Object', icon: 'fa-solid fa-box' },
-    { value: 'list', label: 'List of Objects', icon: 'fa-solid fa-list' }
+  const SHAPE_OPTIONS: { value: ResponseShape; label: string }[] = [
+    { value: 'object', label: 'Object' },
+    { value: 'list', label: 'List' }
   ];
 
   interface Props extends ObjectSelectorProps {}
@@ -26,6 +31,8 @@
     endpointNamespaceId,
     selectedObjectId,
     responseShape,
+    responseShapeLocked = false,
+    responseShapeLockedReason = '',
     onSelectObject,
     onSetResponseShape,
     onCreateNewObject
@@ -57,20 +64,31 @@
     <!-- Response shape toggle -->
     <div>
       <p class="text-[10px] text-mono-500 uppercase tracking-wider mb-1">Response Shape</p>
-      <div class="flex gap-1">
-        {#each SHAPE_OPTIONS as option}
-          <button
-            type="button"
-            onclick={() => onSetResponseShape(option.value)}
-            class="flex-1 px-1.5 py-1.5 text-sm border transition-colors {responseShape === option.value
-              ? 'bg-green-400 text-mono-950 border-green-400 font-bold'
-              : 'bg-mono-900 text-mono-300 border-mono-600 hover:border-mono-400'}"
-          >
-            <i class="{option.icon} mr-1.5"></i>
-            {option.label}
-          </button>
-        {/each}
-      </div>
+      <Tooltip
+        text={responseShapeLocked ? responseShapeLockedReason : ''}
+        disabled={!responseShapeLocked}
+        position="bottom"
+      >
+        <div class="inline-flex rounded border border-mono-700 overflow-hidden">
+          {#each SHAPE_OPTIONS as option}
+            <button
+              type="button"
+              disabled={responseShapeLocked}
+              onclick={() => onSetResponseShape(option.value)}
+              class="px-3 py-1 text-xs font-medium whitespace-nowrap transition-colors
+                {responseShapeLocked
+                  ? 'cursor-not-allowed opacity-50 ' + (responseShape === option.value
+                    ? 'bg-mono-700 text-mono-300'
+                    : 'bg-mono-800 text-mono-500')
+                  : responseShape === option.value
+                    ? 'bg-mono-700 text-mono-100'
+                    : 'bg-mono-800 text-mono-400 hover:bg-mono-750 hover:text-mono-300'}"
+            >
+              {option.label}
+            </button>
+          {/each}
+        </div>
+      </Tooltip>
     </div>
   </div>
 </div>

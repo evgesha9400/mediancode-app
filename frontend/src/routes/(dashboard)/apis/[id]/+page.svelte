@@ -649,6 +649,8 @@
             endpointNamespaceId={apiState.apiNamespaceId}
             selectedObjectId={apiState.editedEndpoint.objectId}
             responseShape={apiState.editedEndpoint.responseShape}
+            responseShapeLocked={apiState.isDetailPath}
+            responseShapeLockedReason="Detail endpoints return a single object"
             onSelectObject={apiState.handleSelectObject}
             onSetResponseShape={apiState.handleSetResponseShape}
             onCreateNewObject={() => openObjectCreate('body')}

@@ -1008,6 +1008,73 @@ describe('apiDetailState - Pagination Toggle', () => {
   });
 });
 
+describe('apiDetailState - Detail Path Detection', () => {
+  let state: ApiDetailState;
+  let cleanup: () => void;
+
+  beforeEach(() => {
+    apisStore.set([makeApi({ id: 'api-1' })]);
+    endpointsStore.set([
+      makeEndpoint({ id: 'ep-1', apiId: 'api-1', method: 'GET', path: '/users' })
+    ]);
+    flushSync();
+  });
+  afterEach(() => cleanup?.());
+
+  it('should detect detail path ending with {param}', () => {
+    endpointsStore.set([
+      makeEndpoint({ id: 'ep-1', apiId: 'api-1', method: 'GET', path: '/users/{user_id}' })
+    ]);
+    flushSync();
+
+    ({ state, cleanup } = createTestState());
+    flushSync();
+
+    state.openEndpoint(state.endpoints[0]);
+    flushSync();
+
+    expect(state.isDetailPath).toBe(true);
+  });
+
+  it('should not detect detail path for list endpoints', () => {
+    ({ state, cleanup } = createTestState());
+    flushSync();
+
+    state.openEndpoint(state.endpoints[0]);
+    flushSync();
+
+    expect(state.isDetailPath).toBe(false);
+  });
+
+  it('should block handleSetResponseShape when path is a detail path', () => {
+    endpointsStore.set([
+      makeEndpoint({ id: 'ep-1', apiId: 'api-1', method: 'GET', path: '/users/{user_id}', responseShape: 'object' })
+    ]);
+    flushSync();
+
+    ({ state, cleanup } = createTestState());
+    flushSync();
+
+    state.openEndpoint(state.endpoints[0]);
+    flushSync();
+
+    expect(state.isDetailPath).toBe(true);
+
+    state.handleSetResponseShape('list');
+    flushSync();
+
+    // Should remain 'object' because detail path locks the toggle
+    expect(state.editedEndpoint!.responseShape).toBe('object');
+  });
+
+  it('should be false when no endpoint is open', () => {
+    ({ state, cleanup } = createTestState());
+    flushSync();
+
+    expect(state.isDetailPath).toBe(false);
+  });
+});
+
 describe('apiDetailState - Query Param from Field', () => {
   let state: ApiDetailState;
   let cleanup: () => void;
