@@ -141,6 +141,7 @@ export interface ApiDetailState {
 
 	// Query param CRUD
 	handleAddQueryParam: () => void;
+	handleAddQueryParamFromField: (fieldName: string) => void;
 	handleUpdateQueryParam: (index: number, updates: Partial<QueryParam>) => void;
 	handleRemoveQueryParam: (index: number) => void;
 
@@ -705,6 +706,19 @@ export function createApiDetailState(config: ApiDetailStateConfig): ApiDetailSta
 		};
 	}
 
+	function handleAddQueryParamFromField(fieldName: string): void {
+		if (!editedEndpoint) return;
+		const newParam: QueryParam = {
+			name: fieldName,
+			field: fieldName,
+			operator: 'eq'
+		};
+		editedEndpoint = {
+			...editedEndpoint,
+			queryParams: [...(editedEndpoint.queryParams ?? []), newParam]
+		};
+	}
+
 	function handleUpdateQueryParam(index: number, updates: Partial<QueryParam>): void {
 		if (!editedEndpoint) return;
 		const qps = [...(editedEndpoint.queryParams ?? [])];
@@ -860,6 +874,7 @@ export function createApiDetailState(config: ApiDetailStateConfig): ApiDetailSta
 
 		// Query param CRUD
 		handleAddQueryParam,
+		handleAddQueryParamFromField,
 		handleUpdateQueryParam,
 		handleRemoveQueryParam,
 

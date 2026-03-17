@@ -1,14 +1,16 @@
 <script module lang="ts">
   import type { QueryParam, FilterOperator, ResponseShape } from '$lib/types';
+  import type { Field } from '$lib/types';
   import type { TargetField, ValidationError } from '$lib/domain/paramInference';
 
   export interface QueryParametersEditorProps {
     queryParams: QueryParam[];
     targetFields: TargetField[];
+    objectFields: Field[];
     responseShape: ResponseShape;
     pagination: boolean;
     validationErrors: ValidationError[];
-    onAdd: () => void;
+    onAddFromField: (fieldName: string) => void;
     onUpdate: (index: number, updates: Partial<QueryParam>) => void;
     onRemove: (index: number) => void;
     onTogglePagination: () => void;
@@ -17,16 +19,18 @@
 
 <script lang="ts">
   import QueryParamRow from './QueryParamRow.svelte';
+  import FieldSelectorDropdown from './FieldSelectorDropdown.svelte';
 
   interface Props extends QueryParametersEditorProps {}
 
   let {
     queryParams,
     targetFields,
+    objectFields,
     responseShape,
     pagination,
     validationErrors,
-    onAdd,
+    onAddFromField,
     onUpdate,
     onRemove,
     onTogglePagination
@@ -36,6 +40,22 @@
 
   // Filter validation errors for query params (rules 4, 6)
   const queryErrors = $derived(validationErrors.filter(e => e.rule === 4 || e.rule === 6));
+
+  // Field IDs already linked to a query param (to exclude from dropdown)
+  const linkedFieldIds = $derived.by(() => {
+    const linkedNames = new Set(queryParams.map(qp => qp.field).filter(Boolean));
+    return objectFields
+      .filter(f => linkedNames.has(f.name))
+      .map(f => f.id);
+  });
+
+  // Handle field selection from the dropdown: map fieldId to fieldName
+  function handleFieldSelect(fieldId: string): void {
+    const field = objectFields.find(f => f.id === fieldId);
+    if (field) {
+      onAddFromField(field.name);
+    }
+  }
 </script>
 
 {#if !isDetail}
@@ -57,14 +77,6 @@
             <span>Add Pagination</span>
           </button>
         {/if}
-        <button
-          type="button"
-          onclick={onAdd}
-          class="text-xs text-mono-400 hover:text-mono-100 transition-colors flex items-center space-x-1"
-        >
-          <i class="fa-solid fa-plus text-xs"></i>
-          <span>Add</span>
-        </button>
       </div>
     </div>
 
@@ -98,12 +110,8 @@
       </div>
     {/if}
 
-    {#if queryParams.length === 0 && !pagination}
-      <div class="px-3 py-2 bg-mono-950 rounded border border-mono-700">
-        <p class="text-xs text-mono-400">No query parameters. Click "Add" to define filters for this list endpoint.</p>
-      </div>
-    {:else if queryParams.length > 0}
-      <div class="px-3 py-1 bg-mono-950 rounded border border-mono-700">
+    {#if queryParams.length > 0}
+      <div class="px-3 py-1 bg-mono-950 rounded border border-mono-700 mb-2">
         <!-- Column headers -->
         <div class="flex items-center gap-2 py-1 border-b border-mono-700 text-[10px] text-mono-500 uppercase tracking-wider">
           <div class="w-28 shrink-0">Name</div>
@@ -121,6 +129,20 @@
             onSuggest={(suggestion) => onUpdate(i, { field: suggestion.field, operator: suggestion.operator })}
           />
         {/each}
+      </div>
+    {/if}
+
+    <!-- Field selector dropdown to add query params -->
+    {#if objectFields.length > 0}
+      <FieldSelectorDropdown
+        availableFields={objectFields}
+        selectedFieldIds={linkedFieldIds}
+        onSelect={handleFieldSelect}
+        placeholder="Add query parameter from field..."
+      />
+    {:else if queryParams.length === 0 && !pagination}
+      <div class="px-3 py-2 bg-mono-950 rounded border border-mono-700">
+        <p class="text-xs text-mono-400">No query parameters. Select an object to add field-based filters.</p>
       </div>
     {/if}
 

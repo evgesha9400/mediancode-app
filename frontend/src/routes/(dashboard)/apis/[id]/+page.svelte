@@ -26,6 +26,7 @@
   import { fieldConstraintsStore } from '$lib/stores/fieldConstraints';
   import { fieldValidatorTemplatesStore } from '$lib/stores/fieldValidatorTemplates';
   import { modelValidatorTemplatesStore } from '$lib/stores/modelValidatorTemplates';
+  import { objectsStore } from '$lib/stores/objects';
   import { createObjectAction, createFieldAction } from '$lib/domain/mutations';
   import { showToast } from '$lib/stores/toasts';
 
@@ -45,6 +46,17 @@
   const availableFields = $derived(
     $fieldsStore.filter(f => f.namespaceId === apiState.apiNamespaceId)
   );
+
+  // Fields on the endpoint's selected object (for query param field selector)
+  const endpointObjectFields = $derived.by((): Field[] => {
+    const objectId = apiState.editedEndpoint?.objectId;
+    if (!objectId) return [];
+    const obj = $objectsStore.find(o => o.id === objectId);
+    if (!obj) return [];
+    return obj.fields
+      .map(ref => $fieldsStore.find(f => f.id === ref.fieldId))
+      .filter((f): f is Field => f !== undefined);
+  });
 
   // Namespace name for display
   let namespaceName = $derived(
@@ -670,10 +682,11 @@
           <QueryParametersEditor
             queryParams={apiState.editedEndpoint.queryParams ?? []}
             targetFields={apiState.targetFields}
+            objectFields={endpointObjectFields}
             responseShape={apiState.editedEndpoint.responseShape}
             pagination={apiState.editedEndpoint.pagination ?? false}
             validationErrors={apiState.validationErrors}
-            onAdd={apiState.handleAddQueryParam}
+            onAddFromField={apiState.handleAddQueryParamFromField}
             onUpdate={apiState.handleUpdateQueryParam}
             onRemove={apiState.handleRemoveQueryParam}
             onTogglePagination={apiState.handleTogglePagination}

@@ -17,10 +17,11 @@ describe('QueryParametersEditor Component', () => {
 			const props: QueryParametersEditorProps = {
 				queryParams: [],
 				targetFields: [],
+				objectFields: [],
 				responseShape: 'list',
 				pagination: false,
 				validationErrors: [],
-				onAdd: () => {},
+				onAddFromField: () => {},
 				onUpdate: () => {},
 				onRemove: () => {},
 				onTogglePagination: () => {}
@@ -29,7 +30,7 @@ describe('QueryParametersEditor Component', () => {
 			expect(props.queryParams).toEqual([]);
 			expect(props.responseShape).toBe('list');
 			expect(props.pagination).toBe(false);
-			expect(typeof props.onAdd).toBe('function');
+			expect(typeof props.onAddFromField).toBe('function');
 			expect(typeof props.onTogglePagination).toBe('function');
 		});
 
@@ -41,10 +42,13 @@ describe('QueryParametersEditor Component', () => {
 				targetFields: [
 					{ name: 'price', type: 'float', isPk: false }
 				],
+				objectFields: [
+					{ id: 'f-1', namespaceId: 'ns', name: 'price', type: 'float', container: null, constraints: [], validators: [], usedInApis: [] }
+				],
 				responseShape: 'list',
 				pagination: true,
 				validationErrors: [],
-				onAdd: () => {},
+				onAddFromField: () => {},
 				onUpdate: () => {},
 				onRemove: () => {},
 				onTogglePagination: () => {}
@@ -53,10 +57,11 @@ describe('QueryParametersEditor Component', () => {
 			expect(props.queryParams).toHaveLength(1);
 			expect(props.queryParams[0].field).toBe('price');
 			expect(props.pagination).toBe(true);
+			expect(props.objectFields).toHaveLength(1);
 		});
 
 		it('QueryParametersEditorProps handlers receive correct arguments', () => {
-			let addCalled = false;
+			let addFieldName: string | undefined;
 			let updateArgs: { index: number; updates: any } | undefined;
 			let removeIndex: number | undefined;
 			let paginationToggled = false;
@@ -64,17 +69,18 @@ describe('QueryParametersEditor Component', () => {
 			const props: QueryParametersEditorProps = {
 				queryParams: [],
 				targetFields: [],
+				objectFields: [],
 				responseShape: 'list',
 				pagination: false,
 				validationErrors: [],
-				onAdd: () => { addCalled = true; },
+				onAddFromField: (fieldName) => { addFieldName = fieldName; },
 				onUpdate: (index, updates) => { updateArgs = { index, updates }; },
 				onRemove: (index) => { removeIndex = index; },
 				onTogglePagination: () => { paginationToggled = true; }
 			};
 
-			props.onAdd();
-			expect(addCalled).toBe(true);
+			props.onAddFromField('price');
+			expect(addFieldName).toBe('price');
 
 			props.onUpdate(0, { field: 'price' });
 			expect(updateArgs).toEqual({ index: 0, updates: { field: 'price' } });
@@ -97,10 +103,11 @@ describe('QueryParametersEditor Component', () => {
 			const props: QueryParametersEditorProps = {
 				queryParams: [],
 				targetFields: [],
+				objectFields: [],
 				responseShape: 'list',
 				pagination: false,
 				validationErrors: [],
-				onAdd: () => {},
+				onAddFromField: () => {},
 				onUpdate: () => {},
 				onRemove: () => {},
 				onTogglePagination: () => {}
