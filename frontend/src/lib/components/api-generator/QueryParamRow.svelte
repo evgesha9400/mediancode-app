@@ -53,49 +53,24 @@
 </script>
 
 <div class="border-b border-mono-700 last:border-b-0">
-  <div class="flex items-start gap-2 py-1.5">
+  <div class="flex items-center gap-2 py-1.5">
     <!-- Name input -->
-    <div class="w-28 shrink-0">
+    <div class="w-32 shrink-0">
       <input
         type="text"
         value={param.name}
         oninput={handleNameInput}
         placeholder="param_name"
-        class="w-full px-3 py-1.5 text-sm font-mono border border-mono-600 bg-mono-900 text-mono-100 focus:ring-2 focus:ring-green-400 focus:border-transparent"
+        class="w-full px-3 text-sm font-mono border border-mono-600 bg-mono-900 text-mono-100 focus:ring-2 focus:ring-green-400 focus:border-transparent h-[34px]"
       />
     </div>
 
-    <!-- Field dropdown -->
-    <div class="flex-1 min-w-0">
-      <select
-        value={param.field}
-        onchange={(e) => {
-          const newField = (e.target as HTMLSelectElement).value;
-          onUpdate({ field: newField });
-          // Reset operator if incompatible with new field type
-          const newFieldDef = targetFields.find(f => f.name === newField);
-          if (newFieldDef) {
-            const compat = getCompatibleOperators(newFieldDef.type);
-            if (!compat.includes(param.operator)) {
-              onUpdate({ field: newField, operator: compat[0] ?? 'eq' });
-            }
-          }
-        }}
-        class="w-full px-3 py-1.5 text-sm border border-mono-600 bg-mono-900 text-mono-100 focus:ring-2 focus:ring-green-400 focus:border-transparent"
-      >
-        <option value="">Select field...</option>
-        {#each targetFields as f (f.name)}
-          <option value={f.name}>{f.name} ({f.type})</option>
-        {/each}
-      </select>
-    </div>
-
     <!-- Operator dropdown -->
-    <div class="w-20 shrink-0">
+    <div class="w-28 shrink-0">
       <select
         value={param.operator}
         onchange={(e) => onUpdate({ operator: (e.target as HTMLSelectElement).value as FilterOperator })}
-        class="w-full px-3 py-1.5 text-sm border border-mono-600 bg-mono-900 text-mono-100 focus:ring-2 focus:ring-green-400 focus:border-transparent"
+        class="w-full px-3 text-sm border border-mono-600 bg-mono-900 text-mono-100 focus:ring-2 focus:ring-green-400 focus:border-transparent h-[34px]"
       >
         {#each availableOperators as op (op)}
           <option value={op}>{op}</option>
@@ -103,24 +78,29 @@
       </select>
     </div>
 
-    <!-- Derived type (read-only) -->
-    {#if derivedType}
-      <div class="w-20 shrink-0 flex items-center">
-        <span class="text-xs text-mono-400 bg-mono-800 px-1.5 py-0.5 rounded truncate" title={derivedType}>
-          {derivedType}
-        </span>
+    <!-- Field display with type chip and delete inside (matches path param pattern) -->
+    <div class="flex-1 min-w-0">
+      <div class="w-full px-3 border border-mono-600 bg-mono-900 text-mono-100 flex items-center justify-between h-[34px]">
+        <div class="flex items-center gap-1.5">
+          {#if param.field}
+            <span class="font-mono text-sm">{param.field}</span>
+            {#if derivedType}
+              <span class="text-[11px] text-mono-400 bg-mono-800 px-1.5 rounded">{derivedType}</span>
+            {/if}
+          {:else}
+            <span class="text-sm text-mono-400">Select field...</span>
+          {/if}
+        </div>
+        <button
+          type="button"
+          onclick={onRemove}
+          class="text-red-400 hover:text-red-300 transition-colors text-sm"
+          title="Remove parameter"
+        >
+          <i class="fa-solid fa-xmark"></i>
+        </button>
       </div>
-    {/if}
-
-    <!-- Remove button -->
-    <button
-      type="button"
-      onclick={onRemove}
-      class="shrink-0 text-mono-400 hover:text-red-400 transition-colors p-1"
-      title="Remove parameter"
-    >
-      <i class="fa-solid fa-xmark text-xs"></i>
-    </button>
+    </div>
   </div>
 
   <!-- Inline validation errors for this parameter -->

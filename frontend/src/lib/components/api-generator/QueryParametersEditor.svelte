@@ -77,17 +77,15 @@
         Query Parameters
       </h3>
       <div class="flex items-center gap-2">
-        {#if !pagination}
-          <button
-            type="button"
-            onclick={onTogglePagination}
-            class="text-xs text-mono-400 hover:text-mono-100 transition-colors flex items-center space-x-1"
-            title="Add limit/offset pagination parameters"
-          >
-            <i class="fa-solid fa-arrows-up-down text-xs"></i>
-            <span>Add Pagination</span>
-          </button>
-        {/if}
+        <button
+          type="button"
+          onclick={onTogglePagination}
+          class="text-xs px-2 py-1 border transition-colors flex items-center space-x-1 {pagination ? 'text-red-400 border-red-400/50 hover:bg-red-400/10' : 'text-mono-400 border-mono-600 hover:text-mono-100 hover:border-mono-500'}"
+          title={pagination ? 'Remove limit/offset pagination parameters' : 'Add limit/offset pagination parameters'}
+        >
+          <i class="fa-solid {pagination ? 'fa-minus' : 'fa-plus'} text-[10px]"></i>
+          <span>{pagination ? 'Remove Pagination' : 'Add Pagination'}</span>
+        </button>
       </div>
     </div>
 
@@ -95,73 +93,10 @@
       <div class="px-3 py-1 bg-mono-950 rounded border border-mono-700 mb-2">
         <!-- Column headers -->
         <div class="flex items-center gap-2 py-1 border-b border-mono-700 text-[10px] text-mono-500 uppercase tracking-wider">
-          <div class="w-28 shrink-0">Name</div>
+          <div class="w-32 shrink-0">Name</div>
+          <div class="w-28 shrink-0">Operator</div>
           <div class="flex-1">Field</div>
-          <div class="w-20 shrink-0">Operator</div>
-          <div class="w-20 shrink-0">Type</div>
-          <div class="w-6 shrink-0"></div>
         </div>
-
-        <!-- Pagination rows (locked pair, displayed like regular rows but greyed out) -->
-        {#if pagination}
-          <div class="border-b border-mono-700 last:border-b-0 bg-mono-900/50">
-            <!-- limit row -->
-            <div class="flex items-start gap-2 py-1.5">
-              <div class="w-28 shrink-0">
-                <div class="w-full px-3 py-1.5 text-sm font-mono border border-mono-700 bg-mono-800 text-mono-400 cursor-not-allowed">
-                  limit
-                </div>
-              </div>
-              <div class="flex-1 min-w-0">
-                <div class="w-full px-3 py-1.5 text-sm border border-mono-700 bg-mono-800 text-mono-400 cursor-not-allowed">
-                  <i class="fa-solid fa-lock text-[10px] mr-1"></i>
-                  built-in
-                </div>
-              </div>
-              <div class="w-20 shrink-0">
-                <div class="w-full px-3 py-1.5 text-sm border border-mono-700 bg-mono-800 text-mono-400 cursor-not-allowed">
-                  ge/le
-                </div>
-              </div>
-              <div class="w-20 shrink-0 flex items-center">
-                <span class="text-xs text-mono-400 bg-mono-800 px-1.5 py-0.5 rounded truncate">int</span>
-              </div>
-              <!-- Spacer for alignment (remove button on offset row) -->
-              <div class="w-6 shrink-0"></div>
-            </div>
-            <!-- offset row -->
-            <div class="flex items-start gap-2 py-1.5">
-              <div class="w-28 shrink-0">
-                <div class="w-full px-3 py-1.5 text-sm font-mono border border-mono-700 bg-mono-800 text-mono-400 cursor-not-allowed">
-                  offset
-                </div>
-              </div>
-              <div class="flex-1 min-w-0">
-                <div class="w-full px-3 py-1.5 text-sm border border-mono-700 bg-mono-800 text-mono-400 cursor-not-allowed">
-                  <i class="fa-solid fa-lock text-[10px] mr-1"></i>
-                  built-in
-                </div>
-              </div>
-              <div class="w-20 shrink-0">
-                <div class="w-full px-3 py-1.5 text-sm border border-mono-700 bg-mono-800 text-mono-400 cursor-not-allowed">
-                  ge
-                </div>
-              </div>
-              <div class="w-20 shrink-0 flex items-center">
-                <span class="text-xs text-mono-400 bg-mono-800 px-1.5 py-0.5 rounded truncate">int</span>
-              </div>
-              <!-- Remove pagination (removes both limit and offset) -->
-              <button
-                type="button"
-                onclick={onTogglePagination}
-                class="shrink-0 text-mono-400 hover:text-red-400 transition-colors p-1"
-                title="Remove pagination (limit & offset)"
-              >
-                <i class="fa-solid fa-xmark text-xs"></i>
-              </button>
-            </div>
-          </div>
-        {/if}
 
         <!-- Regular query param rows -->
         {#each queryParams as param, i (i)}
@@ -174,6 +109,54 @@
             onSuggest={(suggestion) => onUpdate(i, { field: suggestion.field, operator: suggestion.operator })}
           />
         {/each}
+
+        <!-- Pagination rows at the bottom (locked pair) -->
+        {#if pagination}
+          <div class="border-t border-mono-700 bg-mono-900/50">
+            <div class="flex items-center gap-2 py-1.5">
+              <div class="w-32 shrink-0">
+                <div class="w-full px-3 text-sm font-mono border border-mono-700 bg-mono-800 text-mono-400 cursor-not-allowed flex items-center h-[34px]">
+                  limit
+                </div>
+              </div>
+              <div class="w-28 shrink-0">
+                <div class="w-full px-3 text-sm border border-mono-700 bg-mono-800 text-mono-400 cursor-not-allowed flex items-center h-[34px]">
+                  ge/le
+                </div>
+              </div>
+              <div class="flex-1 min-w-0">
+                <div class="w-full px-3 border border-mono-700 bg-mono-800 text-mono-400 cursor-not-allowed flex items-center h-[34px]">
+                  <div class="flex items-center gap-1.5">
+                    <span class="font-mono text-sm">limit</span>
+                    <span class="text-[11px] text-mono-400 bg-mono-700 px-1.5 rounded">int</span>
+                    <span class="text-[10px] text-mono-500 bg-mono-700/50 px-1.5 rounded uppercase">built-in</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="flex items-center gap-2 py-1.5">
+              <div class="w-32 shrink-0">
+                <div class="w-full px-3 text-sm font-mono border border-mono-700 bg-mono-800 text-mono-400 cursor-not-allowed flex items-center h-[34px]">
+                  offset
+                </div>
+              </div>
+              <div class="w-28 shrink-0">
+                <div class="w-full px-3 text-sm border border-mono-700 bg-mono-800 text-mono-400 cursor-not-allowed flex items-center h-[34px]">
+                  ge
+                </div>
+              </div>
+              <div class="flex-1 min-w-0">
+                <div class="w-full px-3 border border-mono-700 bg-mono-800 text-mono-400 cursor-not-allowed flex items-center h-[34px]">
+                  <div class="flex items-center gap-1.5">
+                    <span class="font-mono text-sm">offset</span>
+                    <span class="text-[11px] text-mono-400 bg-mono-700 px-1.5 rounded">int</span>
+                    <span class="text-[10px] text-mono-500 bg-mono-700/50 px-1.5 rounded uppercase">built-in</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        {/if}
       </div>
     {/if}
 

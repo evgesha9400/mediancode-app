@@ -50,38 +50,38 @@
 </script>
 
 <div class="border-b border-mono-700 last:border-b-0">
-  <div class="flex items-start gap-2 py-1.5">
+  <div class="flex items-center gap-2 py-1.5">
     <!-- Param name (read-only, extracted from path) -->
-    <div class="w-28 shrink-0">
-      <div class="w-full px-3 py-1.5 text-sm font-mono border border-mono-600 bg-mono-800 text-mono-300">
+    <div class="w-32 shrink-0">
+      <div class="w-full px-3 text-sm font-mono border border-mono-600 bg-mono-800 text-mono-300 flex items-center h-[34px]">
         {paramName}
       </div>
     </div>
 
     {#if isLinked}
-      <!-- Linked state: show field name, type, and unlink button -->
+      <!-- Linked state: field name + type chip inline (matches object field display) -->
       <div class="flex-1 min-w-0">
-        <div class="w-full px-3 py-1.5 text-sm border border-mono-600 bg-mono-900 text-mono-100 flex items-center gap-1.5">
-          <i class="fa-solid fa-link text-green-400 text-[10px]"></i>
-          <span class="font-mono">{fieldName}</span>
-          {#if selectedField?.isPk}
-            <span class="text-[10px] text-green-400 uppercase font-bold">PK</span>
-          {/if}
+        <div class="w-full px-3 border border-mono-600 bg-mono-900 text-mono-100 flex items-center justify-between h-[34px]">
+          <div class="flex items-center gap-1.5">
+            <i class="fa-solid fa-link text-green-400 text-[10px]"></i>
+            <span class="font-mono text-sm">{fieldName}</span>
+            {#if derivedType}
+              <span class="text-[11px] text-mono-400 bg-mono-800 px-1.5 rounded">{derivedType}</span>
+            {/if}
+            {#if selectedField?.isPk}
+              <span class="text-[10px] text-green-400 bg-green-400/10 px-1.5 rounded uppercase font-bold">PK</span>
+            {/if}
+          </div>
+          <button
+            type="button"
+            onclick={handleUnlink}
+            class="text-red-400 hover:text-red-300 transition-colors text-sm"
+            title="Unlink field"
+          >
+            <i class="fa-solid fa-xmark"></i>
+          </button>
         </div>
       </div>
-      <div class="w-20 shrink-0 flex items-center">
-        {#if derivedType}
-          <span class="text-xs text-mono-400 bg-mono-800 px-1.5 py-0.5 rounded truncate" title={derivedType}>{derivedType}</span>
-        {/if}
-      </div>
-      <button
-        type="button"
-        onclick={handleUnlink}
-        class="shrink-0 text-mono-400 hover:text-red-400 transition-colors p-1"
-        title="Unlink field"
-      >
-        <i class="fa-solid fa-xmark text-xs"></i>
-      </button>
     {:else}
       <!-- Unlinked state: show field selector dropdown -->
       <div class="flex-1 min-w-0">
@@ -98,9 +98,6 @@
           </div>
         {/if}
       </div>
-      <!-- Spacer to align with type + remove columns -->
-      <div class="w-20 shrink-0"></div>
-      <div class="w-6 shrink-0"></div>
     {/if}
   </div>
 

@@ -62,7 +62,7 @@
   <div class="relative">
     {#if selectedObject}
       <!-- Display selected object with clear button -->
-      <div class="w-full px-3 py-1.5 border border-mono-600 bg-mono-900 flex items-center justify-between">
+      <div class="w-full px-3 border border-mono-600 bg-mono-900 flex items-center justify-between h-[34px]">
         <div class="flex items-center space-x-2">
           <i class="fa-solid fa-cube text-mono-400 text-xs"></i>
           <span class="font-mono text-sm text-mono-300">{selectedObject.name}</span>
@@ -71,7 +71,7 @@
         <button
           type="button"
           onclick={handleClear}
-          class="text-red-400 hover:text-red-300 transition-colors"
+          class="text-red-400 hover:text-red-300 transition-colors text-sm"
           title="Clear selection"
         >
           <i class="fa-solid fa-xmark"></i>

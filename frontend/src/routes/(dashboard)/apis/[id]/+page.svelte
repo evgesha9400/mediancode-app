@@ -649,8 +649,8 @@
             endpointNamespaceId={apiState.apiNamespaceId}
             selectedObjectId={apiState.editedEndpoint.objectId}
             responseShape={apiState.editedEndpoint.responseShape}
-            responseShapeLocked={apiState.isDetailPath}
-            responseShapeLockedReason="Detail endpoints return a single object"
+            responseShapeLocked={apiState.responseShapeLocked}
+            responseShapeLockedReason={apiState.responseShapeLockedReason}
             validationErrors={apiState.validationErrors.filter(e => e.rule === 1)}
             onSelectObject={apiState.handleSelectObject}
             onSetResponseShape={apiState.handleSetResponseShape}
@@ -671,10 +671,8 @@
               <div class="px-3 py-1 bg-mono-950 rounded border border-mono-700">
                 <!-- Column headers -->
                 <div class="flex items-center gap-2 py-1 border-b border-mono-700 text-[10px] text-mono-500 uppercase tracking-wider">
-                  <div class="w-28 shrink-0">Name</div>
+                  <div class="w-32 shrink-0">Name</div>
                   <div class="flex-1">Field</div>
-                  <div class="w-20 shrink-0">Type</div>
-                  <div class="w-6 shrink-0"></div>
                 </div>
                 {#each apiState.editedEndpoint.pathParams as param (param.name)}
                   <ParameterEditor

@@ -156,7 +156,8 @@ export interface ApiDetailState {
 
 	// Response shape configuration
 	/** Whether the path ends with {param}, indicating a detail endpoint */
-	readonly isDetailPath: boolean;
+	readonly responseShapeLocked: boolean;
+	readonly responseShapeLockedReason: string;
 	handleSetResponseShape: (shape: ResponseShape) => void;
 	handleResetResponseDefaults: () => void;
 
@@ -671,6 +672,27 @@ export function createApiDetailState(config: ApiDetailStateConfig): ApiDetailSta
 		editedEndpoint ? DETAIL_PATH_RE.test(editedEndpoint.path) : false
 	);
 
+	// Derived: true when method is not GET (only GET supports list responses)
+	let isNonGetMethod = $derived(
+		editedEndpoint ? editedEndpoint.method !== 'GET' : false
+	);
+
+	// Derived: whether response shape toggle should be locked to "object"
+	let responseShapeLocked = $derived(isDetailPath || isNonGetMethod);
+
+	let responseShapeLockedReason = $derived.by(() => {
+		if (isDetailPath) return 'Detail endpoints always return a single object';
+		if (isNonGetMethod) return 'Only GET endpoints can return a list';
+		return '';
+	});
+
+	// Auto-set response shape to 'object' when method changes to non-GET
+	$effect(() => {
+		if (isNonGetMethod && editedEndpoint && editedEndpoint.responseShape !== 'object') {
+			editedEndpoint = { ...editedEndpoint, responseShape: 'object' };
+		}
+	});
+
 	// ============================================================================
 	// Endpoint Editing Operations
 	// ============================================================================
@@ -686,8 +708,21 @@ export function createApiDetailState(config: ApiDetailStateConfig): ApiDetailSta
 			return match ? { ...p, field: match.name } : p;
 		});
 
+		// Detail path: auto-link last path param to PK field if unlinked
+		const isDetail = DETAIL_PATH_RE.test(path);
+		if (isDetail && autoLinkedParams.length > 0) {
+			const lastIdx = autoLinkedParams.length - 1;
+			const lastParam = autoLinkedParams[lastIdx];
+			if (!lastParam.field) {
+				const pkField = targetFields.find(f => f.isPk);
+				if (pkField) {
+					autoLinkedParams[lastIdx] = { ...lastParam, field: pkField.name };
+				}
+			}
+		}
+
 		// Auto-set response shape: detail paths always return a single object
-		const autoResponseShape = DETAIL_PATH_RE.test(path) ? 'object' as const : editedEndpoint.responseShape;
+		const autoResponseShape = isDetail ? 'object' as const : editedEndpoint.responseShape;
 
 		editedEndpoint = { ...editedEndpoint, path, pathParams: autoLinkedParams, responseShape: autoResponseShape };
 
@@ -776,16 +811,30 @@ export function createApiDetailState(config: ApiDetailStateConfig): ApiDetailSta
 		const newTargetFields = objectId
 			? resolveTargetFields(objectId, allObjects, allFields)
 			: [];
-		const fieldNameSet = new Set(newTargetFields.map(f => f.name.toLowerCase()));
+
+		// Auto-link path params by case-insensitive name match; clear if no match
+		const autoLinkedParams = editedEndpoint.pathParams.map(p => {
+			const match = newTargetFields.find(f => f.name.toLowerCase() === p.name.toLowerCase());
+			return { ...p, field: match ? match.name : '' };
+		});
+
+		// Detail path: auto-link last path param to PK field if still unlinked
+		const isDetail = DETAIL_PATH_RE.test(editedEndpoint.path);
+		if (isDetail && autoLinkedParams.length > 0) {
+			const lastIdx = autoLinkedParams.length - 1;
+			const lastParam = autoLinkedParams[lastIdx];
+			if (!lastParam.field) {
+				const pkField = newTargetFields.find(f => f.isPk);
+				if (pkField) {
+					autoLinkedParams[lastIdx] = { ...lastParam, field: pkField.name };
+				}
+			}
+		}
 
 		editedEndpoint = {
 			...editedEndpoint,
 			objectId,
-			// Auto-link path params by case-insensitive name match; clear if no match
-			pathParams: editedEndpoint.pathParams.map(p => {
-				const match = newTargetFields.find(f => f.name.toLowerCase() === p.name.toLowerCase());
-				return { ...p, field: match ? match.name : '' };
-			}),
+			pathParams: autoLinkedParams,
 			// Clear query params and pagination when object changes
 			queryParams: [],
 			pagination: false
@@ -803,8 +852,8 @@ export function createApiDetailState(config: ApiDetailStateConfig): ApiDetailSta
 
 	function handleSetResponseShape(shape: ResponseShape): void {
 		if (!editedEndpoint) return;
-		// Detail paths are locked to 'object' — ignore attempts to change
-		if (isDetailPath) return;
+		// Locked to 'object' for detail paths and non-GET methods
+		if (responseShapeLocked) return;
 		editedEndpoint = { ...editedEndpoint, responseShape: shape };
 	}
 
@@ -906,7 +955,8 @@ export function createApiDetailState(config: ApiDetailStateConfig): ApiDetailSta
 		handleSelectQueryParamsObject,
 		handleSelectObject,
 		handleEnvelopeToggle,
-		get isDetailPath() { return isDetailPath; },
+		get responseShapeLocked() { return responseShapeLocked; },
+		get responseShapeLockedReason() { return responseShapeLockedReason; },
 		handleSetResponseShape,
 		handleResetResponseDefaults,
 

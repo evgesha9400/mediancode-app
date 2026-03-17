@@ -1033,7 +1033,7 @@ describe('apiDetailState - Detail Path Detection', () => {
     state.openEndpoint(state.endpoints[0]);
     flushSync();
 
-    expect(state.isDetailPath).toBe(true);
+    expect(state.responseShapeLocked).toBe(true);
   });
 
   it('should not detect detail path for list endpoints', () => {
@@ -1043,7 +1043,7 @@ describe('apiDetailState - Detail Path Detection', () => {
     state.openEndpoint(state.endpoints[0]);
     flushSync();
 
-    expect(state.isDetailPath).toBe(false);
+    expect(state.responseShapeLocked).toBe(false);
   });
 
   it('should block handleSetResponseShape when path is a detail path', () => {
@@ -1058,7 +1058,7 @@ describe('apiDetailState - Detail Path Detection', () => {
     state.openEndpoint(state.endpoints[0]);
     flushSync();
 
-    expect(state.isDetailPath).toBe(true);
+    expect(state.responseShapeLocked).toBe(true);
 
     state.handleSetResponseShape('list');
     flushSync();
@@ -1071,7 +1071,7 @@ describe('apiDetailState - Detail Path Detection', () => {
     ({ state, cleanup } = createTestState());
     flushSync();
 
-    expect(state.isDetailPath).toBe(false);
+    expect(state.responseShapeLocked).toBe(false);
   });
 });
 
