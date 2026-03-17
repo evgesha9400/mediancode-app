@@ -61,7 +61,7 @@
         value={param.name}
         oninput={handleNameInput}
         placeholder="param_name"
-        class="w-full px-2 py-1 text-xs font-mono border border-mono-600 bg-mono-900 text-mono-100 focus:ring-2 focus:ring-green-400 focus:border-transparent"
+        class="w-full px-3 py-1.5 text-sm font-mono border border-mono-600 bg-mono-900 text-mono-100 focus:ring-2 focus:ring-green-400 focus:border-transparent"
       />
     </div>
 
@@ -81,7 +81,7 @@
             }
           }
         }}
-        class="w-full px-2 py-1 text-xs border border-mono-600 bg-mono-900 text-mono-100 focus:ring-2 focus:ring-green-400 focus:border-transparent"
+        class="w-full px-3 py-1.5 text-sm border border-mono-600 bg-mono-900 text-mono-100 focus:ring-2 focus:ring-green-400 focus:border-transparent"
       >
         <option value="">Select field...</option>
         {#each targetFields as f (f.name)}
@@ -95,7 +95,7 @@
       <select
         value={param.operator}
         onchange={(e) => onUpdate({ operator: (e.target as HTMLSelectElement).value as FilterOperator })}
-        class="w-full px-2 py-1 text-xs border border-mono-600 bg-mono-900 text-mono-100 focus:ring-2 focus:ring-green-400 focus:border-transparent"
+        class="w-full px-3 py-1.5 text-sm border border-mono-600 bg-mono-900 text-mono-100 focus:ring-2 focus:ring-green-400 focus:border-transparent"
       >
         {#each availableOperators as op (op)}
           <option value={op}>{op}</option>
@@ -106,7 +106,7 @@
     <!-- Derived type (read-only) -->
     {#if derivedType}
       <div class="w-20 shrink-0 flex items-center">
-        <span class="text-xs text-mono-400 bg-mono-800 px-1.5 py-1 rounded truncate" title={derivedType}>
+        <span class="text-xs text-mono-400 bg-mono-800 px-1.5 py-0.5 rounded truncate" title={derivedType}>
           {derivedType}
         </span>
       </div>

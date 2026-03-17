@@ -83,20 +83,20 @@
         disabled={!responseShapeLocked}
         position="bottom"
       >
-        <div class="inline-flex rounded border border-mono-700 overflow-hidden">
+        <div class="inline-flex rounded overflow-hidden">
           {#each SHAPE_OPTIONS as option}
             <button
               type="button"
               disabled={responseShapeLocked}
               onclick={() => onSetResponseShape(option.value)}
-              class="px-3 py-1 text-xs font-medium whitespace-nowrap transition-colors
+              class="w-16 py-1.5 text-sm font-medium whitespace-nowrap transition-colors text-center
                 {responseShapeLocked
                   ? 'cursor-not-allowed opacity-50 ' + (responseShape === option.value
-                    ? 'bg-mono-700 text-mono-300'
-                    : 'bg-mono-800 text-mono-500')
+                    ? 'bg-mono-700 text-mono-300 border border-mono-600'
+                    : 'bg-mono-800 text-mono-500 border border-mono-700')
                   : responseShape === option.value
-                    ? 'bg-mono-700 text-mono-100'
-                    : 'bg-mono-800 text-mono-400 hover:bg-mono-750 hover:text-mono-300'}"
+                    ? 'bg-mono-700 text-mono-100 border border-mono-600'
+                    : 'bg-mono-800 text-mono-400 border border-mono-700 hover:bg-mono-750 hover:text-mono-300'}"
             >
               {option.label}
             </button>

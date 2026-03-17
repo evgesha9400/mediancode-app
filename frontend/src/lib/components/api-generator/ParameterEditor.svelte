@@ -53,7 +53,7 @@
   <div class="flex items-start gap-2 py-1.5">
     <!-- Param name (read-only, extracted from path) -->
     <div class="w-28 shrink-0">
-      <div class="w-full px-2 py-1 text-xs font-mono border border-mono-600 bg-mono-800 text-mono-300">
+      <div class="w-full px-3 py-1.5 text-sm font-mono border border-mono-600 bg-mono-800 text-mono-300">
         {paramName}
       </div>
     </div>
@@ -61,7 +61,7 @@
     {#if isLinked}
       <!-- Linked state: show field name, type, and unlink button -->
       <div class="flex-1 min-w-0">
-        <div class="w-full px-2 py-1 text-xs border border-mono-600 bg-mono-900 text-mono-100 flex items-center gap-1.5">
+        <div class="w-full px-3 py-1.5 text-sm border border-mono-600 bg-mono-900 text-mono-100 flex items-center gap-1.5">
           <i class="fa-solid fa-link text-green-400 text-[10px]"></i>
           <span class="font-mono">{fieldName}</span>
           {#if selectedField?.isPk}
@@ -71,7 +71,7 @@
       </div>
       <div class="w-20 shrink-0 flex items-center">
         {#if derivedType}
-          <span class="text-xs text-mono-400 bg-mono-800 px-1.5 py-1 rounded truncate" title={derivedType}>{derivedType}</span>
+          <span class="text-xs text-mono-400 bg-mono-800 px-1.5 py-0.5 rounded truncate" title={derivedType}>{derivedType}</span>
         {/if}
       </div>
       <button
@@ -93,7 +93,7 @@
             placeholder="Link to field..."
           />
         {:else}
-          <div class="w-full px-2 py-1 text-xs border border-mono-600 bg-mono-900 text-mono-400">
+          <div class="w-full px-3 py-1.5 text-sm border border-mono-600 bg-mono-900 text-mono-400">
             Select an object to link fields
           </div>
         {/if}

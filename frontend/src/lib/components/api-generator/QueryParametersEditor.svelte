@@ -108,23 +108,23 @@
             <!-- limit row -->
             <div class="flex items-start gap-2 py-1.5">
               <div class="w-28 shrink-0">
-                <div class="w-full px-2 py-1 text-xs font-mono border border-mono-700 bg-mono-800 text-mono-400 cursor-not-allowed">
+                <div class="w-full px-3 py-1.5 text-sm font-mono border border-mono-700 bg-mono-800 text-mono-400 cursor-not-allowed">
                   limit
                 </div>
               </div>
               <div class="flex-1 min-w-0">
-                <div class="w-full px-2 py-1 text-xs border border-mono-700 bg-mono-800 text-mono-400 cursor-not-allowed">
+                <div class="w-full px-3 py-1.5 text-sm border border-mono-700 bg-mono-800 text-mono-400 cursor-not-allowed">
                   <i class="fa-solid fa-lock text-[10px] mr-1"></i>
                   built-in
                 </div>
               </div>
               <div class="w-20 shrink-0">
-                <div class="w-full px-2 py-1 text-xs border border-mono-700 bg-mono-800 text-mono-400 cursor-not-allowed">
+                <div class="w-full px-3 py-1.5 text-sm border border-mono-700 bg-mono-800 text-mono-400 cursor-not-allowed">
                   ge/le
                 </div>
               </div>
               <div class="w-20 shrink-0 flex items-center">
-                <span class="text-xs text-mono-400 bg-mono-800 px-1.5 py-1 rounded truncate">int</span>
+                <span class="text-xs text-mono-400 bg-mono-800 px-1.5 py-0.5 rounded truncate">int</span>
               </div>
               <!-- Spacer for alignment (remove button on offset row) -->
               <div class="w-6 shrink-0"></div>
@@ -132,23 +132,23 @@
             <!-- offset row -->
             <div class="flex items-start gap-2 py-1.5">
               <div class="w-28 shrink-0">
-                <div class="w-full px-2 py-1 text-xs font-mono border border-mono-700 bg-mono-800 text-mono-400 cursor-not-allowed">
+                <div class="w-full px-3 py-1.5 text-sm font-mono border border-mono-700 bg-mono-800 text-mono-400 cursor-not-allowed">
                   offset
                 </div>
               </div>
               <div class="flex-1 min-w-0">
-                <div class="w-full px-2 py-1 text-xs border border-mono-700 bg-mono-800 text-mono-400 cursor-not-allowed">
+                <div class="w-full px-3 py-1.5 text-sm border border-mono-700 bg-mono-800 text-mono-400 cursor-not-allowed">
                   <i class="fa-solid fa-lock text-[10px] mr-1"></i>
                   built-in
                 </div>
               </div>
               <div class="w-20 shrink-0">
-                <div class="w-full px-2 py-1 text-xs border border-mono-700 bg-mono-800 text-mono-400 cursor-not-allowed">
+                <div class="w-full px-3 py-1.5 text-sm border border-mono-700 bg-mono-800 text-mono-400 cursor-not-allowed">
                   ge
                 </div>
               </div>
               <div class="w-20 shrink-0 flex items-center">
-                <span class="text-xs text-mono-400 bg-mono-800 px-1.5 py-1 rounded truncate">int</span>
+                <span class="text-xs text-mono-400 bg-mono-800 px-1.5 py-0.5 rounded truncate">int</span>
               </div>
               <!-- Remove pagination (removes both limit and offset) -->
               <button
