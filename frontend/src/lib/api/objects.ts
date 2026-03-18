@@ -5,7 +5,7 @@
  */
 
 import { apiGet, apiPost, apiPut, apiDelete } from './client';
-import type { ObjectDefinition, ObjectFieldReference, ObjectRelationship, InlineModelValidator } from '$lib/types';
+import type { ObjectDefinition, ObjectFieldReference, ObjectRelationship, InlineModelValidator, ServerDefault } from '$lib/types';
 import type { FieldAppearance, Cardinality } from '$lib/types';
 
 /**
@@ -16,6 +16,8 @@ interface ObjectFieldReferenceResponse {
 	optional: boolean;
 	isPk: boolean;
 	appears: string;
+	serverDefault: string | null;
+	defaultLiteral: string | null;
 }
 
 /**
@@ -63,7 +65,9 @@ function transformFieldReference(response: ObjectFieldReferenceResponse): Object
 		fieldId: response.fieldId,
 		optional: response.optional,
 		isPk: response.isPk ?? false,
-		appears: (response.appears as FieldAppearance) ?? 'both'
+		appears: (response.appears as FieldAppearance) ?? 'both',
+		serverDefault: (response.serverDefault as ServerDefault) ?? undefined,
+		defaultLiteral: response.defaultLiteral ?? undefined
 	};
 }
 
