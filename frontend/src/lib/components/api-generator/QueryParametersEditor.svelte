@@ -93,9 +93,9 @@
       <div class="px-3 py-1 bg-mono-950 rounded border border-mono-700 mb-2">
         <!-- Column headers -->
         <div class="flex items-center gap-2 py-1 border-b border-mono-700 text-[10px] text-mono-500 uppercase tracking-wider">
-          <div class="w-32 shrink-0">Name</div>
-          <div class="w-28 shrink-0">Operator</div>
-          <div class="flex-1">Field</div>
+          <div class="w-1/4 shrink-0">Name</div>
+          <div class="w-1/4 shrink-0">Operator</div>
+          <div class="w-1/2">Field</div>
         </div>
 
         <!-- Regular query param rows -->
@@ -114,17 +114,17 @@
         {#if pagination}
           <div class="border-t border-mono-700 bg-mono-900/50">
             <div class="flex items-center gap-2 py-1.5">
-              <div class="w-32 shrink-0">
+              <div class="w-1/4 shrink-0">
                 <div class="w-full px-3 text-sm font-mono border border-mono-700 bg-mono-800 text-mono-400 cursor-not-allowed flex items-center h-[34px]">
                   limit
                 </div>
               </div>
-              <div class="w-28 shrink-0">
+              <div class="w-1/4 shrink-0">
                 <div class="w-full px-3 text-sm border border-mono-700 bg-mono-800 text-mono-400 cursor-not-allowed flex items-center h-[34px]">
                   ge/le
                 </div>
               </div>
-              <div class="flex-1 min-w-0">
+              <div class="w-1/2 min-w-0">
                 <div class="w-full px-3 border border-mono-700 bg-mono-800 text-mono-400 cursor-not-allowed flex items-center h-[34px]">
                   <div class="flex items-center gap-1.5">
                     <span class="font-mono text-sm">limit</span>
@@ -135,17 +135,17 @@
               </div>
             </div>
             <div class="flex items-center gap-2 py-1.5">
-              <div class="w-32 shrink-0">
+              <div class="w-1/4 shrink-0">
                 <div class="w-full px-3 text-sm font-mono border border-mono-700 bg-mono-800 text-mono-400 cursor-not-allowed flex items-center h-[34px]">
                   offset
                 </div>
               </div>
-              <div class="w-28 shrink-0">
+              <div class="w-1/4 shrink-0">
                 <div class="w-full px-3 text-sm border border-mono-700 bg-mono-800 text-mono-400 cursor-not-allowed flex items-center h-[34px]">
                   ge
                 </div>
               </div>
-              <div class="flex-1 min-w-0">
+              <div class="w-1/2 min-w-0">
                 <div class="w-full px-3 border border-mono-700 bg-mono-800 text-mono-400 cursor-not-allowed flex items-center h-[34px]">
                   <div class="flex items-center gap-1.5">
                     <span class="font-mono text-sm">offset</span>

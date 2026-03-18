@@ -55,7 +55,7 @@
 <div class="border-b border-mono-700 last:border-b-0">
   <div class="flex items-center gap-2 py-1.5">
     <!-- Name input -->
-    <div class="w-32 shrink-0">
+    <div class="w-1/4 shrink-0">
       <input
         type="text"
         value={param.name}
@@ -66,7 +66,7 @@
     </div>
 
     <!-- Operator dropdown -->
-    <div class="w-28 shrink-0">
+    <div class="w-1/4 shrink-0">
       <select
         value={param.operator}
         onchange={(e) => onUpdate({ operator: (e.target as HTMLSelectElement).value as FilterOperator })}
@@ -79,7 +79,7 @@
     </div>
 
     <!-- Field display with type chip and delete inside (matches path param pattern) -->
-    <div class="flex-1 min-w-0">
+    <div class="w-1/2 min-w-0">
       <div class="w-full px-3 border border-mono-600 bg-mono-900 text-mono-100 flex items-center justify-between h-[34px]">
         <div class="flex items-center gap-1.5">
           {#if param.field}
