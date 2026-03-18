@@ -706,6 +706,7 @@
           <ResponsePreview
             selectedObjectId={apiState.editedEndpoint.objectId}
             responseShape={apiState.editedEndpoint.responseShape}
+            method={apiState.editedEndpoint.method}
           />
 
         </div>

@@ -1,9 +1,10 @@
 <script module lang="ts">
-  import type { ResponseShape } from '$lib/types';
+  import type { HttpMethod, ResponseShape } from '$lib/types';
 
   export interface ResponsePreviewProps {
     selectedObjectId?: string;
     responseShape: ResponseShape;
+    method: HttpMethod;
   }
 </script>
 
@@ -15,7 +16,13 @@
 
   interface Props extends ResponsePreviewProps {}
 
-  let { selectedObjectId, responseShape }: Props = $props();
+  let { selectedObjectId, responseShape, method }: Props = $props();
+
+  // Methods that include a request body (POST, PUT, PATCH)
+  const hasRequestBody = $derived(['POST', 'PUT', 'PATCH'].includes(method));
+
+  // DELETE returns 204 No Content — no response body
+  const hasResponseBody = $derived(method !== 'DELETE');
 
   // Build preview JSON using shared utilities (appears flag filters fields automatically)
   // Response preview always shows without envelope wrapping (envelope is always enabled on the endpoint)
@@ -28,6 +35,9 @@
   const selectedObject = $derived(
     selectedObjectId ? getObjectById(selectedObjectId) : undefined
   );
+
+  // Use two-column grid only when both request and response are shown
+  const showTwoColumns = $derived(hasRequestBody && hasResponseBody);
 </script>
 
 <div class="space-y-4">
@@ -82,29 +92,40 @@
   {/if}
 
   <!-- Request & Response JSON Previews -->
-  <div class="response-preview-grid">
-    <!-- Request column -->
-    <div class="space-y-2">
-      <h4 class="text-xs text-mono-400 flex items-center font-medium uppercase tracking-wider">
-        <i class="fa-solid fa-arrow-up mr-2"></i>
-        Request Body
-      </h4>
-      <div class="p-3 bg-mono-950 rounded border border-mono-700 text-white text-sm overflow-x-auto">
-        <pre>{requestPreviewJson}</pre>
-      </div>
-    </div>
+  {#if hasRequestBody || hasResponseBody}
+    <div class={showTwoColumns ? 'response-preview-grid' : ''}>
+      {#if hasRequestBody}
+        <!-- Request column -->
+        <div class="space-y-2">
+          <h4 class="text-xs text-mono-400 flex items-center font-medium uppercase tracking-wider">
+            <i class="fa-solid fa-arrow-up mr-2"></i>
+            Request Body
+          </h4>
+          <div class="p-3 bg-mono-950 rounded border border-mono-700 text-white text-sm overflow-x-auto">
+            <pre>{requestPreviewJson}</pre>
+          </div>
+        </div>
+      {/if}
 
-    <!-- Response column -->
-    <div class="space-y-2">
-      <h4 class="text-xs text-mono-400 flex items-center font-medium uppercase tracking-wider">
-        <i class="fa-solid fa-arrow-down mr-2"></i>
-        Response Body
-      </h4>
-      <div class="p-3 bg-mono-950 rounded border border-mono-700 text-white text-sm overflow-x-auto">
-        <pre>{responsePreviewJson}</pre>
-      </div>
+      {#if hasResponseBody}
+        <!-- Response column -->
+        <div class="space-y-2">
+          <h4 class="text-xs text-mono-400 flex items-center font-medium uppercase tracking-wider">
+            <i class="fa-solid fa-arrow-down mr-2"></i>
+            Response Body
+          </h4>
+          <div class="p-3 bg-mono-950 rounded border border-mono-700 text-white text-sm overflow-x-auto">
+            <pre>{responsePreviewJson}</pre>
+          </div>
+        </div>
+      {/if}
     </div>
-  </div>
+  {:else}
+    <!-- DELETE: no request or response body -->
+    <div class="p-3 bg-mono-950 rounded border border-mono-700">
+      <p class="text-sm text-mono-400">DELETE returns <code class="bg-mono-800 px-1 rounded">204 No Content</code> with no response body.</p>
+    </div>
+  {/if}
 </div>
 
 <style>

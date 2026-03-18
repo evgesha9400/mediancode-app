@@ -15,33 +15,50 @@ describe('ResponsePreview Component', () => {
 	describe('TypeScript Interface', () => {
 		it('ResponsePreviewProps interface accepts all required properties', () => {
 			const props: ResponsePreviewProps = {
-				responseShape: 'object'
+				responseShape: 'object',
+				method: 'GET'
 			};
 
 			expect(props.responseShape).toBe('object');
+			expect(props.method).toBe('GET');
 			expect(props.selectedObjectId).toBeUndefined();
 		});
 
 		it('ResponsePreviewProps accepts optional selectedObjectId', () => {
 			const props: ResponsePreviewProps = {
 				selectedObjectId: 'obj-1',
-				responseShape: 'list'
+				responseShape: 'list',
+				method: 'POST'
 			};
 
 			expect(props.selectedObjectId).toBe('obj-1');
 			expect(props.responseShape).toBe('list');
+			expect(props.method).toBe('POST');
 		});
 
 		it('ResponsePreviewProps supports both response shapes', () => {
 			const objectProps: ResponsePreviewProps = {
-				responseShape: 'object'
+				responseShape: 'object',
+				method: 'GET'
 			};
 			const listProps: ResponsePreviewProps = {
-				responseShape: 'list'
+				responseShape: 'list',
+				method: 'GET'
 			};
 
 			expect(objectProps.responseShape).toBe('object');
 			expect(listProps.responseShape).toBe('list');
+		});
+
+		it('ResponsePreviewProps supports all HTTP methods', () => {
+			const methods = ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'] as const;
+			for (const method of methods) {
+				const props: ResponsePreviewProps = {
+					responseShape: 'object',
+					method
+				};
+				expect(props.method).toBe(method);
+			}
 		});
 	});
 
@@ -53,7 +70,8 @@ describe('ResponsePreview Component', () => {
 
 		it('ResponsePreviewProps type exports correctly from barrel export', () => {
 			const props: ResponsePreviewProps = {
-				responseShape: 'object'
+				responseShape: 'object',
+				method: 'GET'
 			};
 
 			expect(props).toBeDefined();
