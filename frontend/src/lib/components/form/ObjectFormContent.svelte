@@ -512,6 +512,16 @@
                         oninput={(e) => setDefaultLiteral(item.fieldId, e.currentTarget.value)}
                       />
                     {/if}
+                    {#if visibleErrors[`field_${item.fieldId}_serverDefault`]}
+                      <span class="text-red-500 text-[10px]" title={visibleErrors[`field_${item.fieldId}_serverDefault`]}>
+                        <i class="fa-solid fa-circle-exclamation"></i>
+                      </span>
+                    {/if}
+                    {#if visibleErrors[`field_${item.fieldId}_defaultLiteral`]}
+                      <span class="text-red-500 text-[10px]" title={visibleErrors[`field_${item.fieldId}_defaultLiteral`]}>
+                        <i class="fa-solid fa-circle-exclamation"></i>
+                      </span>
+                    {/if}
                   </div>
                 {/if}
 

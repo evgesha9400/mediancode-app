@@ -24,6 +24,7 @@ import { composeState } from '$lib/utils/compose';
 import { isValidPascalCaseName } from '$lib/utils/validation';
 import { showToast } from './toasts';
 import { objectsStore } from './objects';
+import { getFieldById } from './fields';
 
 // ============================================================================
 // Configuration
@@ -178,6 +179,28 @@ export function createObjectsModel(config: ObjectsModelConfig): ObjectsModelStat
     } else if (!isValidPascalCaseName(item.name)) {
       errors.name = 'Must be PascalCase (e.g. UserEmail)';
     }
+
+    // Validate server defaults on response-only required non-PK fields.
+    // Note: The spec also requires config.database.enabled == true, but the
+    // frontend enforces this unconditionally because (a) the object editor
+    // doesn't know the generation config, and (b) it's harmless to require
+    // a server default even in non-database mode — the value is simply ignored.
+    for (const fieldRef of item.fields) {
+      if (fieldRef.appears === 'response' && !fieldRef.optional && !fieldRef.isPk) {
+        if (!fieldRef.serverDefault) {
+          const field = getFieldById(fieldRef.fieldId);
+          const fieldName = field?.name ?? fieldRef.fieldId;
+          errors[`field_${fieldRef.fieldId}_serverDefault`] =
+            `Field "${fieldName}" is response-only and requires a server default`;
+        } else if (fieldRef.serverDefault === 'literal' && !fieldRef.defaultLiteral) {
+          const field = getFieldById(fieldRef.fieldId);
+          const fieldName = field?.name ?? fieldRef.fieldId;
+          errors[`field_${fieldRef.fieldId}_defaultLiteral`] =
+            `Field "${fieldName}" has literal default but no value set`;
+        }
+      }
+    }
+
     return errors;
   }
 
