@@ -14,7 +14,7 @@
   import type { ObjectDefinition } from '$lib/stores/objects';
   import type { Field } from '$lib/stores/fields';
   import { getFieldById } from '$lib/stores/fields';
-  import type { ModelValidatorTemplate, InlineModelValidator, FieldAppearance, ObjectFieldReference, ObjectRelationship, Cardinality } from '$lib/types';
+  import type { ModelValidatorTemplate, InlineModelValidator, FieldAppearance, ObjectFieldReference, ObjectRelationship, Cardinality, ServerDefault } from '$lib/types';
   import {
     FormField,
     FormLabel,
@@ -68,7 +68,9 @@
       fieldId: item.fieldId,
       optional: item.optional,
       isPk: item.isPk,
-      appears: item.appears
+      appears: item.appears,
+      serverDefault: item.serverDefault,
+      defaultLiteral: item.defaultLiteral
     }));
   }
 
@@ -125,7 +127,14 @@
     const newFields = editedItem.fields.map(f => {
       if (f.fieldId === fieldId) {
         const newIsPk = !f.isPk;
-        return { ...f, isPk: newIsPk, optional: newIsPk ? false : f.optional, appears: newIsPk ? 'response' as const : f.appears };
+        return {
+          ...f,
+          isPk: newIsPk,
+          optional: newIsPk ? false : f.optional,
+          appears: newIsPk ? 'response' as const : f.appears,
+          serverDefault: newIsPk ? undefined : f.serverDefault,
+          defaultLiteral: newIsPk ? undefined : f.defaultLiteral
+        };
       }
       return { ...f, isPk: false };
     });
@@ -137,7 +146,87 @@
     if (!fieldRef || fieldRef.isPk) return;
     const newFields = editedItem.fields.map(f => {
       if (f.fieldId === fieldId) {
-        return { ...f, appears: value, optional: value === 'response' ? false : f.optional };
+        const updated = { ...f, appears: value, optional: value === 'response' ? false : f.optional };
+        // Auto-select server default when switching to response and there's only one option
+        if (value === 'response' && !updated.isPk && !updated.serverDefault) {
+          const options = getServerDefaultOptions(fieldId);
+          if (options.length === 1) {
+            updated.serverDefault = options[0].value;
+          }
+        }
+        // Clear server default when switching away from response
+        if (value !== 'response') {
+          updated.serverDefault = undefined;
+          updated.defaultLiteral = undefined;
+        }
+        return updated;
+      }
+      return f;
+    });
+    editedItem = { ...editedItem, fields: newFields };
+  }
+
+  // --- Server default helpers ---
+  const SERVER_DEFAULT_OPTIONS: Record<string, { value: ServerDefault; label: string }[]> = {
+    uuid: [{ value: 'uuid4', label: 'UUID v4' }],
+    'uuid.UUID': [{ value: 'uuid4', label: 'UUID v4' }],
+    datetime: [
+      { value: 'now', label: 'Now' },
+      { value: 'now_on_update', label: 'Now (+ on update)' }
+    ],
+    'datetime.datetime': [
+      { value: 'now', label: 'Now' },
+      { value: 'now_on_update', label: 'Now (+ on update)' }
+    ],
+    date: [
+      { value: 'now', label: 'Now' },
+      { value: 'now_on_update', label: 'Now (+ on update)' }
+    ],
+    'datetime.date': [
+      { value: 'now', label: 'Now' },
+      { value: 'now_on_update', label: 'Now (+ on update)' }
+    ],
+    int: [
+      { value: 'auto_increment', label: 'Auto increment' },
+      { value: 'literal', label: 'Literal value' }
+    ],
+    str: [{ value: 'literal', label: 'Literal value' }],
+    EmailStr: [{ value: 'literal', label: 'Literal value' }],
+    HttpUrl: [{ value: 'literal', label: 'Literal value' }],
+    float: [{ value: 'literal', label: 'Literal value' }],
+    decimal: [{ value: 'literal', label: 'Literal value' }],
+    'decimal.Decimal': [{ value: 'literal', label: 'Literal value' }],
+    bool: [{ value: 'literal', label: 'Literal value' }],
+  };
+
+  function getServerDefaultOptions(fieldId: string): { value: ServerDefault; label: string }[] {
+    const field = getFieldById(fieldId);
+    if (!field) return [];
+    return SERVER_DEFAULT_OPTIONS[field.type] ?? [];
+  }
+
+  function needsServerDefault(item: ObjectFieldReference): boolean {
+    return item.appears === 'response' && !item.isPk;
+  }
+
+  function setServerDefault(fieldId: string, value: ServerDefault | undefined) {
+    const newFields = editedItem.fields.map(f => {
+      if (f.fieldId === fieldId) {
+        return {
+          ...f,
+          serverDefault: value,
+          defaultLiteral: value === 'literal' ? (f.defaultLiteral ?? '') : undefined
+        };
+      }
+      return f;
+    });
+    editedItem = { ...editedItem, fields: newFields };
+  }
+
+  function setDefaultLiteral(fieldId: string, value: string) {
+    const newFields = editedItem.fields.map(f => {
+      if (f.fieldId === fieldId) {
+        return { ...f, defaultLiteral: value };
       }
       return f;
     });
@@ -399,6 +488,32 @@
                     title="Include in response only"
                   >Res</button>
                 </div>
+
+                <!-- Server Default (shown for response-only non-PK fields) -->
+                {#if needsServerDefault(item)}
+                  {@const options = getServerDefaultOptions(item.fieldId)}
+                  <div class="flex items-center gap-1.5">
+                    <select
+                      class="bg-mono-800 border border-mono-700 text-mono-300 text-xs rounded px-1.5 py-0.5 focus:ring-1 focus:ring-blue-500 focus:border-blue-500 {!item.serverDefault ? 'border-red-700 text-red-400' : ''}"
+                      value={item.serverDefault ?? ''}
+                      onchange={(e) => setServerDefault(item.fieldId, (e.currentTarget.value as ServerDefault) || undefined)}
+                    >
+                      <option value="">Default...</option>
+                      {#each options as opt}
+                        <option value={opt.value}>{opt.label}</option>
+                      {/each}
+                    </select>
+                    {#if item.serverDefault === 'literal'}
+                      <input
+                        type="text"
+                        class="bg-mono-800 border border-mono-700 text-mono-300 text-xs rounded px-1.5 py-0.5 w-20 focus:ring-1 focus:ring-blue-500 focus:border-blue-500 {!item.defaultLiteral ? 'border-red-700' : ''}"
+                        placeholder="value"
+                        value={item.defaultLiteral ?? ''}
+                        oninput={(e) => setDefaultLiteral(item.fieldId, e.currentTarget.value)}
+                      />
+                    {/if}
+                  </div>
+                {/if}
 
                 <!-- Optional Checkbox -->
                 <label class="flex items-center space-x-2 {item.isPk || item.appears === 'response' ? 'opacity-40 cursor-not-allowed' : 'cursor-pointer'}" title={item.isPk ? 'Primary key fields cannot be optional' : item.appears === 'response' ? 'Response-only fields are not optional' : ''}>
