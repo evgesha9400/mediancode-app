@@ -189,11 +189,15 @@ export interface ApiEndpoint {
 // Object Builder types
 export type FieldAppearance = 'both' | 'request' | 'response';
 
+export type ServerDefault = 'uuid4' | 'now' | 'now_on_update' | 'auto_increment' | 'literal';
+
 export interface ObjectFieldReference {
   fieldId: string;
   optional: boolean;
   isPk: boolean;
   appears: FieldAppearance;
+  serverDefault?: ServerDefault;
+  defaultLiteral?: string;
 }
 
 export type Cardinality = 'has_one' | 'has_many' | 'references' | 'many_to_many';
