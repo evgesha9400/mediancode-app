@@ -88,6 +88,19 @@ export function buildRequestBodyFromObjectId(objectId: string | undefined, objec
 			const field = getFieldById(fieldRef.fieldId);
 			if (field) obj[field.name] = getExampleValueForType(field.type);
 		});
+
+	// Add FK ID fields for `references` relationships (needed in create/update requests)
+	if (objectDef.relationships) {
+		objectDef.relationships
+			.filter(rel => rel.cardinality === 'references' && !rel.isInferred)
+			.forEach(rel => {
+				const fkName = rel.name + '_id';
+				if (!(fkName in obj)) {
+					obj[fkName] = getExampleValueForType(getTargetPkType(rel.targetObjectId));
+				}
+			});
+	}
+
 	return obj;
 }
 
