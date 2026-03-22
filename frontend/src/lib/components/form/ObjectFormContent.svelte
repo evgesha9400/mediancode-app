@@ -105,9 +105,11 @@
   }
 
   function toggleFieldNullable(fieldId: string) {
-    const newFields = editedItem.fields.map(f =>
-      f.fieldId === fieldId ? { ...f, nullable: !f.nullable } : f
-    );
+    const newFields = editedItem.fields.map(f => {
+      if (f.fieldId !== fieldId) return f;
+      if (f.isPk || f.default?.kind === 'generated') return f;
+      return { ...f, nullable: !f.nullable };
+    });
     editedItem = { ...editedItem, fields: newFields };
   }
 
@@ -248,7 +250,7 @@
         const existingLiteralValue = f.default?.kind === 'literal' ? f.default.value : '';
         return { ...f, default: { kind: 'literal' as const, value: existingLiteralValue } };
       }
-      return { ...f, default: { kind: 'generated' as const, strategy: value as FieldDefaultGenerated['strategy'] } };
+      return { ...f, default: { kind: 'generated' as const, strategy: value as FieldDefaultGenerated['strategy'] }, nullable: false };
     });
     editedItem = { ...editedItem, fields: newFields };
   }
@@ -542,8 +544,8 @@
                     </button>
                   {/if}
 
-                  <!-- Nullable Checkbox (shown for read_write and write_only fields) -->
-                  {#if item.exposure === 'read_write' || item.exposure === 'write_only'}
+                  <!-- Nullable Checkbox (hidden for PK fields and generated defaults — both imply NOT NULL) -->
+                  {#if (item.exposure === 'read_write' || item.exposure === 'write_only') && !item.isPk && item.default?.kind !== 'generated'}
                     <label class="flex items-center space-x-1.5 cursor-pointer" title="Allow null values">
                       <input
                         type="checkbox"
