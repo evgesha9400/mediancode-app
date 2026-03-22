@@ -8,6 +8,21 @@ import { getFieldById } from '$lib/stores/fields';
 import { getObjectById } from '$lib/stores/objects';
 
 /**
+ * Get the PK field type of a target object for FK type derivation.
+ * Falls back to 'uuid' if the target or its PK field cannot be found.
+ */
+function getTargetPkType(targetObjectId: string): string {
+	const targetObj = getObjectById(targetObjectId);
+	if (!targetObj) return 'uuid';
+
+	const pkRef = targetObj.fields.find(f => f.isPk);
+	if (!pkRef) return 'uuid';
+
+	const pkField = getFieldById(pkRef.fieldId);
+	return pkField?.type ?? 'uuid';
+}
+
+/**
  * Get an example value for a given field type
  *
  * @param type - The field type (e.g., 'str', 'int', 'float', 'bool', 'uuid', 'datetime', etc.)
@@ -92,6 +107,19 @@ export function buildResponseBodyFromObjectId(objectId: string | undefined, obje
 			const field = getFieldById(fieldRef.fieldId);
 			if (field) obj[field.name] = getExampleValueForType(field.type);
 		});
+
+	// Add FK ID fields for `references` relationships
+	if (objectDef.relationships) {
+		objectDef.relationships
+			.filter(rel => rel.cardinality === 'references' && !rel.isInferred)
+			.forEach(rel => {
+				const fkName = rel.name + '_id';
+				if (!(fkName in obj)) {
+					obj[fkName] = getExampleValueForType(getTargetPkType(rel.targetObjectId));
+				}
+			});
+	}
+
 	return obj;
 }
 
