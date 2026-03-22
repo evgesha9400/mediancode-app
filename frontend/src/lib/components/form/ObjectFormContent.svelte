@@ -166,10 +166,10 @@
         // Clear default when switching away from read_only
         default: value !== 'read_only' ? null : f.default,
       };
-      // Auto-select value source when switching to read_only and there's only one option
+      // Auto-select first value source when switching to read_only
       if (value === 'read_only' && !updated.isPk && !updated.default) {
         const options = getValueSourceOptions(fieldId);
-        if (options.length === 1) {
+        if (options.length > 0) {
           const opt = options[0];
           updated.default = opt.value === 'literal'
             ? { kind: 'literal', value: '' }
@@ -203,10 +203,7 @@
       { value: 'now', label: 'Now' },
       { value: 'now_on_update', label: 'Now (+ on update)' }
     ],
-    int: [
-      { value: 'auto_increment', label: 'Auto increment' },
-      { value: 'literal', label: 'Literal value' }
-    ],
+    int: [{ value: 'literal', label: 'Literal value' }],
     str: [{ value: 'literal', label: 'Literal value' }],
     EmailStr: [{ value: 'literal', label: 'Literal value' }],
     HttpUrl: [{ value: 'literal', label: 'Literal value' }],
@@ -216,10 +213,13 @@
     bool: [{ value: 'literal', label: 'Literal value' }],
   };
 
-  // Flat strategy → label map derived from VALUE_SOURCE_OPTIONS
-  const STRATEGY_LABELS: Record<string, string> = Object.fromEntries(
-    Object.values(VALUE_SOURCE_OPTIONS).flat().map(opt => [opt.value, opt.label])
-  );
+  // All strategy → label mappings (includes PK-only strategies not in VALUE_SOURCE_OPTIONS)
+  const STRATEGY_LABELS: Record<string, string> = {
+    auto_increment: 'Auto increment',
+    uuid4: 'UUID v4',
+    now: 'Now',
+    now_on_update: 'Now (+ on update)',
+  };
 
   function getValueSourceOptions(fieldId: string): ValueSourceOption[] {
     const field = getFieldById(fieldId);
@@ -497,11 +497,10 @@
                       />
                     {:else}
                       <select
-                        class="bg-mono-800 border border-mono-700 text-mono-300 text-xs rounded px-1.5 py-0.5 focus:ring-1 focus:ring-green-400 focus:border-transparent {!item.default ? 'border-red-700 text-red-400' : ''}"
+                        class="bg-mono-800 border border-mono-700 text-mono-300 text-xs rounded px-1.5 py-0.5 focus:ring-1 focus:ring-green-400 focus:border-transparent"
                         value={getValueSourceValue(item.default)}
                         onchange={(e) => setValueSource(item.fieldId, e.currentTarget.value)}
                       >
-                        <option value="">Value source...</option>
                         {#each options as opt}
                           <option value={opt.value}>{opt.label}</option>
                         {/each}
@@ -519,14 +518,17 @@
                   {/if}
 
                   <!-- Generation strategy badge (shown for PK fields) -->
-                  {#if item.isPk && item.default?.kind === 'generated'}
+                  {#if item.isPk}
+                    {@const strategyLabel = item.default?.kind === 'generated'
+                      ? (STRATEGY_LABELS[item.default.strategy] ?? item.default.strategy)
+                      : (field?.type === 'uuid' || field?.type === 'uuid.UUID' ? 'UUID v4' : 'Auto increment')}
                     <span class="text-xs text-mono-400 bg-mono-800 px-1.5 py-0.5 rounded">
-                      {STRATEGY_LABELS[item.default.strategy] ?? item.default.strategy}
+                      {strategyLabel}
                     </span>
                   {/if}
 
-                  <!-- PK Toggle (shown for read_only int/uuid fields) -->
-                  {#if item.exposure === 'read_only' && pkCompatible}
+                  <!-- PK Toggle (shown when field is already PK, or when eligible to become one) -->
+                  {#if item.isPk || (item.exposure === 'read_only' && pkCompatible)}
                     <button
                       type="button"
                       onclick={() => toggleFieldPk(item.fieldId)}
