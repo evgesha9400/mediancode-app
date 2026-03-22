@@ -1,0 +1,27 @@
+#!/usr/bin/env bash
+set -e
+
+echo "Running pre-commit checks..."
+
+echo ""
+echo "=== Type Check ==="
+bun run check
+
+echo ""
+echo "=== Dead Code Lint ==="
+bun run lint:dead
+
+echo ""
+echo "=== Consistency Lint ==="
+bun run lint:consistency
+
+echo ""
+echo "=== Fixture Validation ==="
+bun run test:fixtures:validate
+
+echo ""
+echo "=== Unit Tests ==="
+bun run test:unit
+
+echo ""
+echo "All pre-commit checks passed."
