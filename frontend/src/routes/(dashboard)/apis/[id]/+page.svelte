@@ -27,7 +27,9 @@
   import { fieldValidatorTemplatesStore } from '$lib/stores/fieldValidatorTemplates';
   import { modelValidatorTemplatesStore } from '$lib/stores/modelValidatorTemplates';
   import { objectsStore } from '$lib/stores/objects';
-  import { createObjectAction, createFieldAction } from '$lib/domain/mutations';
+  import { createObjectApi } from '$lib/api/objects';
+  import { createFieldApi } from '$lib/api/fields';
+  import { mapApiError } from '$lib/domain/errorMap';
   import { showToast } from '$lib/stores/toasts';
 
   // Get API ID from URL
@@ -139,7 +141,7 @@
 
     objectSaving = true;
     try {
-      const result = await createObjectAction({
+      const obj = await createObjectApi({
         namespaceId: editedNewObject.namespaceId,
         name: editedNewObject.name,
         description: editedNewObject.description,
@@ -153,21 +155,19 @@
           : undefined
       });
 
-      if (!result.success) {
-        showToast(result.error ?? 'Failed to create object', 'error');
-        return;
-      }
+      objectsStore.update(objects => [...objects, obj]);
 
       // Auto-select the new object in the appropriate selector
-      const newObjectId = result.data!.id;
       if (objectCreateTarget === 'query') {
-        apiState.handleSelectQueryParamsObject(newObjectId);
+        apiState.handleSelectQueryParamsObject(obj.id);
       } else {
-        apiState.handleSelectObject(newObjectId);
+        apiState.handleSelectObject(obj.id);
       }
 
       showToast(`Object "${editedNewObject.name}" created`, 'success');
       closeObjectCreate();
+    } catch (err) {
+      showToast(mapApiError(err, 'create object'), 'error');
     } finally {
       objectSaving = false;
     }
@@ -243,7 +243,7 @@
 
     fieldSaving = true;
     try {
-      const result = await createFieldAction({
+      const field = await createFieldApi({
         namespaceId: editedNewField.namespaceId,
         name: editedNewField.name,
         typeId,
@@ -256,21 +256,20 @@
           : undefined
       });
 
-      if (!result.success) {
-        showToast(result.error ?? 'Failed to create field', 'error');
-        return;
-      }
+      fieldsStore.update(fields => [...fields, field]);
 
       // Auto-add the new field to the object being created
       if (editedNewObject) {
         editedNewObject = {
           ...editedNewObject,
-          fields: [...editedNewObject.fields, { fieldId: result.data!.id, optional: false, isPk: false, appears: 'both' as const }]
+          fields: [...editedNewObject.fields, { fieldId: field.id, optional: false, isPk: false, appears: 'both' as const }]
         };
       }
 
       showToast(`Field "${editedNewField.name}" created`, 'success');
       closeFieldCreate();
+    } catch (err) {
+      showToast(mapApiError(err, 'create field'), 'error');
     } finally {
       fieldSaving = false;
     }

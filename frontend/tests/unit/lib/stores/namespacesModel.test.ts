@@ -27,23 +27,43 @@ vi.mock('$app/state', () => ({
   }
 }));
 
-vi.mock('$lib/domain/mutations', () => ({
-  createNamespaceAction: vi.fn(),
-  updateNamespaceAction: vi.fn(),
-  deleteNamespaceAction: vi.fn()
+// Mock API transport
+vi.mock('$lib/api/namespaces', () => ({
+  createNamespaceApi: vi.fn(),
+  updateNamespaceApi: vi.fn(),
+  deleteNamespaceApi: vi.fn()
 }));
 
+// Mock error mapping
+vi.mock('$lib/domain/errorMap', () => ({
+  mapApiError: vi.fn((_err: unknown, context: string) => `Failed to ${context}`)
+}));
+
+// Mock toast notifications
 vi.mock('$lib/stores/toasts', () => ({
   showToast: vi.fn()
 }));
+
+// Mock namespace store selectors (used by inlined handleDelete guard)
+vi.mock('$lib/stores/namespaces', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('$lib/stores/namespaces')>();
+  return {
+    ...actual,
+    getNamespaceById: vi.fn(),
+    getNamespaceEntityCount: vi.fn(() => 0),
+    getNamespaceEntityDetails: vi.fn(() => ({ total: 0, fields: 0, fieldConstraints: 0, objects: 0, endpoints: 0 }))
+  };
+});
 
 // ---------------------------------------------------------------------------
 // Imports (after mocks)
 // ---------------------------------------------------------------------------
 
 import { createNamespacesModel, type NamespacesModelConfig, type NamespacesModelState } from '$lib/stores/namespacesModel.svelte';
-import { createNamespaceAction, updateNamespaceAction, deleteNamespaceAction } from '$lib/domain/mutations';
+import { createNamespaceApi, updateNamespaceApi, deleteNamespaceApi } from '$lib/api/namespaces';
+import { mapApiError } from '$lib/domain/errorMap';
 import { showToast } from '$lib/stores/toasts';
+import { getNamespaceById, getNamespaceEntityCount } from '$lib/stores/namespaces';
 import { page } from '$app/state';
 import { goto } from '$app/navigation';
 import { effect_root } from 'svelte/internal/client';
@@ -257,17 +277,17 @@ describe('namespacesModel - Save (Update)', () => {
 
     await model.handleSave();
 
-    expect(updateNamespaceAction).not.toHaveBeenCalled();
+    expect(updateNamespaceApi).not.toHaveBeenCalled();
   });
 
-  it('should call updateNamespaceAction on successful save', async () => {
+  it('should call updateNamespaceApi on successful save', async () => {
     const items = [makeNamespace({ id: 'ns-1', name: 'test' })];
     ({ model, cleanup } = createTestModel({
       itemsStore: () => items
     }));
 
     const updated = makeNamespace({ id: 'ns-1', name: 'updated' });
-    (updateNamespaceAction as Mock).mockResolvedValue({ success: true, data: updated });
+    (updateNamespaceApi as Mock).mockResolvedValue(updated);
 
     model.selectItem(items[0]);
     flushSync();
@@ -276,7 +296,7 @@ describe('namespacesModel - Save (Update)', () => {
 
     await model.handleSave();
 
-    expect(updateNamespaceAction).toHaveBeenCalledWith('ns-1', expect.objectContaining({
+    expect(updateNamespaceApi).toHaveBeenCalledWith('ns-1', expect.objectContaining({
       name: 'updated'
     }));
     expect(showToast).toHaveBeenCalledWith(
@@ -292,7 +312,8 @@ describe('namespacesModel - Save (Update)', () => {
       itemsStore: () => items
     }));
 
-    (updateNamespaceAction as Mock).mockResolvedValue({ success: false, error: 'Server error' });
+    (updateNamespaceApi as Mock).mockRejectedValue(new Error('Server error'));
+    (mapApiError as Mock).mockReturnValue('Server error');
 
     model.selectItem(items[0]);
     flushSync();
@@ -310,10 +331,8 @@ describe('namespacesModel - Save (Update)', () => {
       itemsStore: () => items
     }));
 
-    (updateNamespaceAction as Mock).mockResolvedValue({
-      success: false,
-      error: 'Namespace name already exists'
-    });
+    (updateNamespaceApi as Mock).mockRejectedValue(new Error('conflict'));
+    (mapApiError as Mock).mockReturnValue('Namespace name already exists');
 
     model.selectItem(items[0]);
     flushSync();
@@ -335,7 +354,7 @@ describe('namespacesModel - Save (Update)', () => {
     }));
 
     const updated = makeNamespace({ id: 'ns-1', name: 'test', description: 'new desc' });
-    (updateNamespaceAction as Mock).mockResolvedValue({ success: true, data: updated });
+    (updateNamespaceApi as Mock).mockResolvedValue(updated);
 
     model.selectItem(items[0]);
     flushSync();
@@ -344,7 +363,7 @@ describe('namespacesModel - Save (Update)', () => {
 
     await model.handleSave();
 
-    expect(updateNamespaceAction).toHaveBeenCalledWith('ns-1', {
+    expect(updateNamespaceApi).toHaveBeenCalledWith('ns-1', {
       name: 'test',
       description: 'new desc'
     });
@@ -356,10 +375,9 @@ describe('namespacesModel - Save (Update)', () => {
       itemsStore: () => items
     }));
 
-    (updateNamespaceAction as Mock).mockResolvedValue({
-      success: true,
-      data: makeNamespace({ id: 'global-id', name: 'Global', isDefault: true, locked: true })
-    });
+    (updateNamespaceApi as Mock).mockResolvedValue(
+      makeNamespace({ id: 'global-id', name: 'Global', isDefault: true, locked: true })
+    );
 
     model.selectItem(items[0]);
     flushSync();
@@ -369,8 +387,8 @@ describe('namespacesModel - Save (Update)', () => {
 
     await model.handleSave();
 
-    expect(updateNamespaceAction).toHaveBeenCalledWith('global-id', { isDefault: true });
-    const payload = (updateNamespaceAction as Mock).mock.calls[0][1];
+    expect(updateNamespaceApi).toHaveBeenCalledWith('global-id', { isDefault: true });
+    const payload = (updateNamespaceApi as Mock).mock.calls[0][1];
     expect(payload).not.toHaveProperty('name');
     expect(payload).not.toHaveProperty('description');
   });
@@ -381,10 +399,9 @@ describe('namespacesModel - Save (Update)', () => {
       itemsStore: () => items
     }));
 
-    (updateNamespaceAction as Mock).mockResolvedValue({
-      success: true,
-      data: makeNamespace({ id: 'ns-1', name: 'My NS', description: 'Updated desc' })
-    });
+    (updateNamespaceApi as Mock).mockResolvedValue(
+      makeNamespace({ id: 'ns-1', name: 'My NS', description: 'Updated desc' })
+    );
 
     model.selectItem(items[0]);
     flushSync();
@@ -394,7 +411,7 @@ describe('namespacesModel - Save (Update)', () => {
 
     await model.handleSave();
 
-    const payload = (updateNamespaceAction as Mock).mock.calls[0][1];
+    const payload = (updateNamespaceApi as Mock).mock.calls[0][1];
     expect(payload).toHaveProperty('name', 'My NS');
     expect(payload).toHaveProperty('description', 'Updated desc');
   });
@@ -407,19 +424,21 @@ describe('namespacesModel - Delete', () => {
   beforeEach(() => vi.clearAllMocks());
   afterEach(() => cleanup?.());
 
-  it('should call deleteNamespaceAction on delete', async () => {
+  it('should call deleteNamespaceApi on delete', async () => {
     const items = [makeNamespace({ id: 'ns-1', name: 'test' })];
     ({ model, cleanup } = createTestModel({
       itemsStore: () => items
     }));
 
-    (deleteNamespaceAction as Mock).mockResolvedValue({ success: true });
+    (getNamespaceById as Mock).mockReturnValue(items[0]);
+    (getNamespaceEntityCount as Mock).mockReturnValue(0);
+    (deleteNamespaceApi as Mock).mockResolvedValue(undefined);
 
     model.selectItem(items[0]);
     flushSync();
     await model.handleDelete();
 
-    expect(deleteNamespaceAction).toHaveBeenCalledWith('ns-1');
+    expect(deleteNamespaceApi).toHaveBeenCalledWith('ns-1');
     expect(showToast).toHaveBeenCalledWith(
       expect.stringContaining('deleted successfully'),
       'success',
@@ -433,7 +452,10 @@ describe('namespacesModel - Delete', () => {
       itemsStore: () => items
     }));
 
-    (deleteNamespaceAction as Mock).mockResolvedValue({ success: false, error: 'Delete failed' });
+    (getNamespaceById as Mock).mockReturnValue(items[0]);
+    (getNamespaceEntityCount as Mock).mockReturnValue(0);
+    (deleteNamespaceApi as Mock).mockRejectedValue(new Error('Delete failed'));
+    (mapApiError as Mock).mockReturnValue('Delete failed');
 
     model.selectItem(items[0]);
     flushSync();
@@ -480,7 +502,7 @@ describe('namespacesModel - Create Payload', () => {
     ({ model, cleanup } = createTestModel());
 
     const created = makeNamespace({ id: 'ns-new', name: 'New NS', isDefault: true });
-    (createNamespaceAction as Mock).mockResolvedValue({ success: true, data: created });
+    (createNamespaceApi as Mock).mockResolvedValue(created);
 
     model.openCreate();
     flushSync();
@@ -491,7 +513,7 @@ describe('namespacesModel - Create Payload', () => {
 
     await model.handleCreate();
 
-    expect(createNamespaceAction).toHaveBeenCalledWith(
+    expect(createNamespaceApi).toHaveBeenCalledWith(
       expect.objectContaining({ name: 'New NS', isDefault: true })
     );
   });
@@ -500,7 +522,7 @@ describe('namespacesModel - Create Payload', () => {
     ({ model, cleanup } = createTestModel());
 
     const created = makeNamespace({ id: 'ns-new', name: 'New NS' });
-    (createNamespaceAction as Mock).mockResolvedValue({ success: true, data: created });
+    (createNamespaceApi as Mock).mockResolvedValue(created);
 
     model.openCreate();
     flushSync();
@@ -510,7 +532,7 @@ describe('namespacesModel - Create Payload', () => {
 
     await model.handleCreate();
 
-    const payload = (createNamespaceAction as Mock).mock.calls[0][0];
+    const payload = (createNamespaceApi as Mock).mock.calls[0][0];
     expect(payload).not.toHaveProperty('isDefault');
   });
 });

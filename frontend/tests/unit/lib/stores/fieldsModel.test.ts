@@ -27,11 +27,16 @@ vi.mock('$app/state', () => ({
   }
 }));
 
-// Mock mutation actions
-vi.mock('$lib/domain/mutations', () => ({
-  createFieldAction: vi.fn(),
-  updateFieldAction: vi.fn(),
-  deleteFieldAction: vi.fn()
+// Mock API transport
+vi.mock('$lib/api/fields', () => ({
+  createFieldApi: vi.fn(),
+  updateFieldApi: vi.fn(),
+  deleteFieldApi: vi.fn()
+}));
+
+// Mock error mapping
+vi.mock('$lib/domain/errorMap', () => ({
+  mapApiError: vi.fn((_err: unknown, context: string) => `Failed to ${context}`)
 }));
 
 // Mock toast notifications
@@ -44,7 +49,8 @@ vi.mock('$lib/utils/references', () => ({
   buildDeletionTooltip: vi.fn(
     (entityType: string, refType: string, refs: Array<{ name: string }>) =>
       `Cannot delete: Used in ${refs.length} ${refType}${refs.length > 1 ? 's' : ''}`
-  )
+  ),
+  checkFieldDeletion: vi.fn(() => ({ success: true }))
 }));
 
 // ---------------------------------------------------------------------------
@@ -52,7 +58,8 @@ vi.mock('$lib/utils/references', () => ({
 // ---------------------------------------------------------------------------
 
 import { createFieldsModel, type FieldsModelConfig, type FieldsModelState } from '$lib/stores/fieldsModel.svelte';
-import { createFieldAction, updateFieldAction, deleteFieldAction } from '$lib/domain/mutations';
+import { createFieldApi, updateFieldApi, deleteFieldApi } from '$lib/api/fields';
+import { mapApiError } from '$lib/domain/errorMap';
 import { showToast } from '$lib/stores/toasts';
 import { page } from '$app/state';
 import { goto } from '$app/navigation';
@@ -359,7 +366,7 @@ describe('fieldsModel - Save (Update)', () => {
 
     await model.handleSave();
 
-    expect(updateFieldAction).not.toHaveBeenCalled();
+    expect(updateFieldApi).not.toHaveBeenCalled();
   });
 
   it('should call updateFieldAction on successful save', async () => {
@@ -369,7 +376,7 @@ describe('fieldsModel - Save (Update)', () => {
     }));
 
     const updatedField = makeField({ id: 'f-1', name: 'email_updated' });
-    (updateFieldAction as Mock).mockResolvedValue({ success: true, data: updatedField });
+    (updateFieldApi as Mock).mockResolvedValue(updatedField);
 
     model.selectItem(items[0]);
     flushSync();
@@ -378,7 +385,7 @@ describe('fieldsModel - Save (Update)', () => {
 
     await model.handleSave();
 
-    expect(updateFieldAction).toHaveBeenCalledWith('f-1', expect.objectContaining({
+    expect(updateFieldApi).toHaveBeenCalledWith('f-1', expect.objectContaining({
       name: 'email_updated'
     }));
     expect(showToast).toHaveBeenCalledWith(
@@ -394,7 +401,8 @@ describe('fieldsModel - Save (Update)', () => {
       itemsStore: () => items
     }));
 
-    (updateFieldAction as Mock).mockResolvedValue({ success: false, error: 'Server error' });
+    (updateFieldApi as Mock).mockRejectedValue(new Error('Server error'));
+    (mapApiError as Mock).mockReturnValue('Server error');
 
     model.selectItem(items[0]);
     flushSync();
@@ -412,10 +420,8 @@ describe('fieldsModel - Save (Update)', () => {
       itemsStore: () => items
     }));
 
-    (updateFieldAction as Mock).mockResolvedValue({
-      success: false,
-      error: 'Field name already exists'
-    });
+    (updateFieldApi as Mock).mockRejectedValue(new Error('conflict'));
+    (mapApiError as Mock).mockReturnValue('Field name already exists');
 
     model.selectItem(items[0]);
     flushSync();
@@ -447,7 +453,7 @@ describe('fieldsModel - Save (Update)', () => {
       'error',
       5000
     );
-    expect(updateFieldAction).not.toHaveBeenCalled();
+    expect(updateFieldApi).not.toHaveBeenCalled();
   });
 });
 
@@ -463,7 +469,7 @@ describe('fieldsModel - Create', () => {
   it('should call createFieldAction with correct payload', async () => {
     ({ model, cleanup } = createTestModel());
     const newField = makeField({ id: 'f-new', name: 'new_field' });
-    (createFieldAction as Mock).mockResolvedValue({ success: true, data: newField });
+    (createFieldApi as Mock).mockResolvedValue(newField);
 
     model.openCreate();
     flushSync();
@@ -472,7 +478,7 @@ describe('fieldsModel - Create', () => {
 
     await model.handleCreate();
 
-    expect(createFieldAction).toHaveBeenCalledWith(expect.objectContaining({
+    expect(createFieldApi).toHaveBeenCalledWith(expect.objectContaining({
       namespaceId: 'ns-1',
       name: 'new_field',
       typeId: 'type-str'
@@ -493,12 +499,13 @@ describe('fieldsModel - Create', () => {
 
     await model.handleCreate();
 
-    expect(createFieldAction).not.toHaveBeenCalled();
+    expect(createFieldApi).not.toHaveBeenCalled();
   });
 
   it('should handle create failure', async () => {
     ({ model, cleanup } = createTestModel());
-    (createFieldAction as Mock).mockResolvedValue({ success: false, error: 'Create failed' });
+    (createFieldApi as Mock).mockRejectedValue(new Error('Create failed'));
+    (mapApiError as Mock).mockReturnValue('Create failed');
 
     model.openCreate();
     flushSync();
@@ -513,7 +520,7 @@ describe('fieldsModel - Create', () => {
   it('should map validators to template-based payload', async () => {
     ({ model, cleanup } = createTestModel());
     const newField = makeField({ id: 'f-new', name: 'new_field' });
-    (createFieldAction as Mock).mockResolvedValue({ success: true, data: newField });
+    (createFieldApi as Mock).mockResolvedValue(newField);
 
     model.openCreate();
     flushSync();
@@ -525,7 +532,7 @@ describe('fieldsModel - Create', () => {
 
     await model.handleCreate();
 
-    const payload = (createFieldAction as Mock).mock.calls[0][0];
+    const payload = (createFieldApi as Mock).mock.calls[0][0];
     expect(payload.validators).toEqual([
       { templateId: 'tmpl-1', parameters: { case: 'lowercase' } }
     ]);
@@ -547,13 +554,13 @@ describe('fieldsModel - Delete', () => {
       itemsStore: () => items
     }));
 
-    (deleteFieldAction as Mock).mockResolvedValue({ success: true });
+    (deleteFieldApi as Mock).mockResolvedValue(undefined);
 
     model.selectItem(items[0]);
     flushSync();
     await model.handleDelete();
 
-    expect(deleteFieldAction).toHaveBeenCalledWith('f-1');
+    expect(deleteFieldApi).toHaveBeenCalledWith('f-1');
     expect(showToast).toHaveBeenCalledWith(
       expect.stringContaining('deleted successfully'),
       'success',
@@ -567,7 +574,8 @@ describe('fieldsModel - Delete', () => {
       itemsStore: () => items
     }));
 
-    (deleteFieldAction as Mock).mockResolvedValue({ success: false, error: 'Delete failed' });
+    (deleteFieldApi as Mock).mockRejectedValue(new Error('Delete failed'));
+    (mapApiError as Mock).mockReturnValue('Delete failed');
 
     model.selectItem(items[0]);
     flushSync();

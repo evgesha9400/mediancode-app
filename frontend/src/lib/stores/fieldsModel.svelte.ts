@@ -10,13 +10,15 @@ import type { DrawerMode } from './listViewState.svelte';
 import type { MultiSortState } from '$lib/utils/sorting';
 import { createListViewState } from './listViewState.svelte';
 import {
-  createFieldAction,
-  updateFieldAction,
-  deleteFieldAction,
+  createFieldApi,
+  updateFieldApi,
+  deleteFieldApi,
   type CreateFieldRequest,
   type UpdateFieldRequest
-} from '$lib/domain/mutations';
-import { buildDeletionTooltip } from '$lib/utils/references';
+} from '$lib/api/fields';
+import { buildDeletionTooltip, checkFieldDeletion } from '$lib/utils/references';
+import { mapApiError } from '$lib/domain/errorMap';
+import { fieldsStore } from './fields';
 import { apisStore } from './apis';
 import { get } from 'svelte/store';
 import { composeState } from '$lib/utils/compose';
@@ -303,23 +305,29 @@ export function createFieldsModel(config: FieldsModelConfig): FieldsModelState {
       return;
     }
 
-    const result = await updateFieldAction(listState.editedItem.id, payloadResult.data);
+    const previousFields = get(fieldsStore);
+    fieldsStore.update(fields =>
+      fields.map(f => (f.id === listState.editedItem!.id ? { ...f, ...payloadResult.data } as Field : f))
+    );
 
-    if (!result.success) {
-      isSaving = false;
-      if (result.error?.includes('already exists')) {
-        serverErrors = { name: result.error };
+    try {
+      const field = await updateFieldApi(listState.editedItem.id, payloadResult.data);
+      fieldsStore.update(fields => fields.map(f => (f.id === field.id ? field : f)));
+      listState.selectedItem = field;
+      listState.originalItem = JSON.parse(JSON.stringify(field));
+      showToast(`Field "${entityName}" updated successfully`, 'success', 3000);
+      closeDrawer();
+    } catch (err) {
+      fieldsStore.set(previousFields);
+      const error = mapApiError(err, 'update field');
+      if (error.includes('already exists')) {
+        serverErrors = { name: error };
       } else {
-        showToast(result.error || 'Failed to update field', 'error', 5000);
+        showToast(error, 'error', 5000);
       }
-      return;
+    } finally {
+      isSaving = false;
     }
-
-    listState.selectedItem = result.data!;
-    listState.originalItem = JSON.parse(JSON.stringify(result.data!));
-    showToast(`Field "${entityName}" updated successfully`, 'success', 3000);
-    closeDrawer();
-    isSaving = false;
   }
 
   // --- Create (new entity) ---
@@ -338,21 +346,21 @@ export function createFieldsModel(config: FieldsModelConfig): FieldsModelState {
       return;
     }
 
-    const result = await createFieldAction(payloadResult.data);
-
-    if (!result.success) {
-      isSaving = false;
-      if (result.error?.includes('already exists')) {
-        serverErrors = { name: result.error };
+    try {
+      const field = await createFieldApi(payloadResult.data);
+      fieldsStore.update(fields => [...fields, field]);
+      showToast(`Field "${field.name}" created successfully`, 'success', 3000);
+      closeDrawer();
+    } catch (err) {
+      const error = mapApiError(err, 'create field');
+      if (error.includes('already exists')) {
+        serverErrors = { name: error };
       } else {
-        showToast(result.error || 'Failed to create field', 'error', 5000);
+        showToast(error, 'error', 5000);
       }
-      return;
+    } finally {
+      isSaving = false;
     }
-
-    showToast(`Field "${result.data!.name}" created successfully`, 'success', 3000);
-    closeDrawer();
-    isSaving = false;
   }
 
   // --- Delete ---
@@ -362,15 +370,26 @@ export function createFieldsModel(config: FieldsModelConfig): FieldsModelState {
     const entityName = listState.editedItem.name;
     isDeleting = true;
 
-    const result = await deleteFieldAction(listState.editedItem.id);
+    // Pre-flight deletion guard (defense-in-depth)
+    const field = get(fieldsStore).find(f => f.id === listState.editedItem!.id);
+    if (field) {
+      const check = checkFieldDeletion(field.name, field.usedInApis);
+      if (!check.success) {
+        isDeleting = false;
+        showToast(check.error || 'Cannot delete field', 'error', 5000);
+        return;
+      }
+    }
 
-    if (result.success) {
+    try {
+      await deleteFieldApi(listState.editedItem.id);
+      fieldsStore.update(fields => fields.filter(f => f.id !== listState.editedItem!.id));
       closeDrawer();
-      isDeleting = false;
       showToast(`Field "${entityName}" deleted successfully`, 'success', 3000);
-    } else {
+    } catch (err) {
+      showToast(mapApiError(err, 'delete field'), 'error', 5000);
+    } finally {
       isDeleting = false;
-      showToast(result.error || 'Failed to delete field', 'error', 5000);
     }
   }
 

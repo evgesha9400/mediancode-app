@@ -10,14 +10,16 @@ import type { DrawerMode } from './listViewState.svelte';
 import type { MultiSortState } from '$lib/utils/sorting';
 import { createListViewState } from './listViewState.svelte';
 import {
-  createObjectAction,
-  updateObjectAction,
-  deleteObjectAction,
+  createObjectApi,
+  updateObjectApi,
+  deleteObjectApi,
+  createRelationshipApi,
+  deleteRelationshipApi,
   type CreateObjectRequest,
   type UpdateObjectRequest
-} from '$lib/domain/mutations';
-import { createRelationshipApi, deleteRelationshipApi } from '$lib/api/objects';
-import { buildDeletionTooltip } from '$lib/utils/references';
+} from '$lib/api/objects';
+import { buildDeletionTooltip, checkObjectDeletion } from '$lib/utils/references';
+import { mapApiError } from '$lib/domain/errorMap';
 import { apisStore } from './apis';
 import { get } from 'svelte/store';
 import { composeState } from '$lib/utils/compose';
@@ -312,52 +314,58 @@ export function createObjectsModel(config: ObjectsModelConfig): ObjectsModelStat
       return;
     }
 
-    const result = await updateObjectAction(listState.editedItem.id, payloadResult.data);
+    const previousObjects = get(objectsStore);
+    objectsStore.update(objects =>
+      objects.map(o => (o.id === listState.editedItem!.id ? { ...o, ...payloadResult.data } as ObjectDefinition : o))
+    );
 
-    if (!result.success) {
-      isSaving = false;
-      if (result.error?.includes('already exists')) {
-        serverErrors = { name: result.error };
-      } else {
-        showToast(result.error || 'Failed to update object', 'error', 5000);
-      }
-      return;
-    }
-
-    // Diff relationships and persist changes via separate API calls
-    const originalRels = (listState.originalItem?.relationships || []).filter(r => !r.isInferred);
-    const editedRels = (listState.editedItem!.relationships || []).filter(r => !r.isInferred);
-    const originalRelIds = new Set(originalRels.map(r => r.id));
-    const editedRelIds = new Set(editedRels.map(r => r.id));
-
-    const addedRels = editedRels.filter(r => !originalRelIds.has(r.id));
-    const removedRels = originalRels.filter(r => !editedRelIds.has(r.id));
-
-    let latestObject = result.data!;
     try {
-      for (const rel of removedRels) {
-        await deleteRelationshipApi(latestObject.id, rel.id);
-      }
-      for (const rel of addedRels) {
-        latestObject = await createRelationshipApi(latestObject.id, {
-          targetObjectId: rel.targetObjectId,
-          name: rel.name,
-          cardinality: rel.cardinality
-        });
-      }
-      // Update store with final state including backend-computed inverses
-      if (addedRels.length > 0 || removedRels.length > 0) {
-        objectsStore.update(objects => objects.map(o => o.id === latestObject.id ? latestObject : o));
-      }
-    } catch (err) {
-      showToast('Object updated but some relationship changes failed to save', 'error', 5000);
-    }
+      const object = await updateObjectApi(listState.editedItem.id, payloadResult.data);
 
-    listState.selectedItem = latestObject;
-    listState.originalItem = JSON.parse(JSON.stringify(latestObject));
-    showToast(`Object "${entityName}" updated successfully`, 'success', 3000);
-    closeDrawer();
-    isSaving = false;
+      // Diff relationships and persist changes via separate API calls
+      const originalRels = (listState.originalItem?.relationships || []).filter(r => !r.isInferred);
+      const editedRels = (listState.editedItem!.relationships || []).filter(r => !r.isInferred);
+      const originalRelIds = new Set(originalRels.map(r => r.id));
+      const editedRelIds = new Set(editedRels.map(r => r.id));
+
+      const addedRels = editedRels.filter(r => !originalRelIds.has(r.id));
+      const removedRels = originalRels.filter(r => !editedRelIds.has(r.id));
+
+      let latestObject = object;
+      try {
+        for (const rel of removedRels) {
+          await deleteRelationshipApi(latestObject.id, rel.id);
+        }
+        for (const rel of addedRels) {
+          latestObject = await createRelationshipApi(latestObject.id, {
+            targetObjectId: rel.targetObjectId,
+            name: rel.name,
+            cardinality: rel.cardinality
+          });
+        }
+        // Update store with final state including backend-computed inverses
+        if (addedRels.length > 0 || removedRels.length > 0) {
+          objectsStore.update(objects => objects.map(o => o.id === latestObject.id ? latestObject : o));
+        }
+      } catch (err) {
+        showToast('Object updated but some relationship changes failed to save', 'error', 5000);
+      }
+
+      listState.selectedItem = latestObject;
+      listState.originalItem = JSON.parse(JSON.stringify(latestObject));
+      showToast(`Object "${entityName}" updated successfully`, 'success', 3000);
+      closeDrawer();
+    } catch (err) {
+      objectsStore.set(previousObjects);
+      const error = mapApiError(err, 'update object');
+      if (error.includes('already exists')) {
+        serverErrors = { name: error };
+      } else {
+        showToast(error, 'error', 5000);
+      }
+    } finally {
+      isSaving = false;
+    }
   }
 
   // --- Create (new entity) ---
@@ -376,39 +384,40 @@ export function createObjectsModel(config: ObjectsModelConfig): ObjectsModelStat
       return;
     }
 
-    const result = await createObjectAction(payloadResult.data);
+    try {
+      const object = await createObjectApi(payloadResult.data);
+      objectsStore.update(objects => [...objects, object]);
 
-    if (!result.success) {
-      isSaving = false;
-      if (result.error?.includes('already exists')) {
-        serverErrors = { name: result.error };
-      } else {
-        showToast(result.error || 'Failed to create object', 'error', 5000);
-      }
-      return;
-    }
-
-    // Persist relationships via separate API calls
-    const userRelationships = (listState.editedItem!.relationships || []).filter(r => !r.isInferred);
-    if (userRelationships.length > 0) {
-      try {
-        for (const rel of userRelationships) {
-          const created = await createRelationshipApi(result.data!.id, {
-            targetObjectId: rel.targetObjectId,
-            name: rel.name,
-            cardinality: rel.cardinality
-          });
-          // Update store with backend response (includes inverse relationships)
-          objectsStore.update(objects => objects.map(o => o.id === created.id ? created : o));
+      // Persist relationships via separate API calls
+      const userRelationships = (listState.editedItem!.relationships || []).filter(r => !r.isInferred);
+      if (userRelationships.length > 0) {
+        try {
+          for (const rel of userRelationships) {
+            const created = await createRelationshipApi(object.id, {
+              targetObjectId: rel.targetObjectId,
+              name: rel.name,
+              cardinality: rel.cardinality
+            });
+            // Update store with backend response (includes inverse relationships)
+            objectsStore.update(objects => objects.map(o => o.id === created.id ? created : o));
+          }
+        } catch (err) {
+          showToast('Object created but some relationships failed to save', 'error', 5000);
         }
-      } catch (err) {
-        showToast('Object created but some relationships failed to save', 'error', 5000);
       }
-    }
 
-    showToast(`Object "${result.data!.name}" created successfully`, 'success', 3000);
-    closeDrawer();
-    isSaving = false;
+      showToast(`Object "${object.name}" created successfully`, 'success', 3000);
+      closeDrawer();
+    } catch (err) {
+      const error = mapApiError(err, 'create object');
+      if (error.includes('already exists')) {
+        serverErrors = { name: error };
+      } else {
+        showToast(error, 'error', 5000);
+      }
+    } finally {
+      isSaving = false;
+    }
   }
 
   // --- Delete ---
@@ -418,15 +427,26 @@ export function createObjectsModel(config: ObjectsModelConfig): ObjectsModelStat
     const entityName = listState.editedItem.name;
     isDeleting = true;
 
-    const result = await deleteObjectAction(listState.editedItem.id);
+    // Pre-flight deletion guard (defense-in-depth)
+    const obj = get(objectsStore).find(o => o.id === listState.editedItem!.id);
+    if (obj) {
+      const check = checkObjectDeletion(obj.name, obj.usedInApis);
+      if (!check.success) {
+        isDeleting = false;
+        showToast(check.error || 'Cannot delete object', 'error', 5000);
+        return;
+      }
+    }
 
-    if (result.success) {
+    try {
+      await deleteObjectApi(listState.editedItem.id);
+      objectsStore.update(objects => objects.filter(o => o.id !== listState.editedItem!.id));
       closeDrawer();
-      isDeleting = false;
       showToast(`Object "${entityName}" deleted successfully`, 'success', 3000);
-    } else {
+    } catch (err) {
+      showToast(mapApiError(err, 'delete object'), 'error', 5000);
+    } finally {
       isDeleting = false;
-      showToast(result.error || 'Failed to delete object', 'error', 5000);
     }
   }
 

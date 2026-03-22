@@ -21,7 +21,8 @@
   import { typesStore, getTypeIdByName } from '$lib/stores/types';
   import { fieldConstraintsStore } from '$lib/stores/fieldConstraints';
   import { fieldValidatorTemplatesStore } from '$lib/stores/fieldValidatorTemplates';
-  import { createFieldAction } from '$lib/domain/mutations';
+  import { createFieldApi } from '$lib/api/fields';
+  import { mapApiError } from '$lib/domain/errorMap';
   import { showToast } from '$lib/stores/toasts';
   import { STORE_NAMES } from '$lib/stores/loader';
   import { page } from '$app/state';
@@ -121,7 +122,7 @@
 
     fieldSaving = true;
     try {
-      const result = await createFieldAction({
+      const field = await createFieldApi({
         namespaceId: editedNewField.namespaceId,
         name: editedNewField.name,
         typeId,
@@ -134,21 +135,20 @@
           : undefined
       });
 
-      if (!result.success) {
-        showToast(result.error ?? 'Failed to create field', 'error');
-        return;
-      }
+      fieldsStore.update(fields => [...fields, field]);
 
       // Auto-add the new field to the object being edited/created
       if (workflow.editedItem) {
         workflow.editedItem = {
           ...workflow.editedItem,
-          fields: [...workflow.editedItem.fields, { fieldId: result.data!.id, optional: false, isPk: false, appears: 'both' as const }]
+          fields: [...workflow.editedItem.fields, { fieldId: field.id, optional: false, isPk: false, appears: 'both' as const }]
         };
       }
 
       showToast(`Field "${editedNewField.name}" created`, 'success');
       closeFieldCreate();
+    } catch (err) {
+      showToast(mapApiError(err, 'create field'), 'error');
     } finally {
       fieldSaving = false;
     }

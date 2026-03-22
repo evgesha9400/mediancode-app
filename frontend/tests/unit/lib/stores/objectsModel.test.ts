@@ -26,21 +26,32 @@ vi.mock('$app/state', () => ({
   }
 }));
 
-vi.mock('$lib/domain/mutations', () => ({
-  createObjectAction: vi.fn(),
-  updateObjectAction: vi.fn(),
-  deleteObjectAction: vi.fn()
+// Mock API transport
+vi.mock('$lib/api/objects', () => ({
+  createObjectApi: vi.fn(),
+  updateObjectApi: vi.fn(),
+  deleteObjectApi: vi.fn(),
+  createRelationshipApi: vi.fn(),
+  deleteRelationshipApi: vi.fn()
 }));
 
+// Mock error mapping
+vi.mock('$lib/domain/errorMap', () => ({
+  mapApiError: vi.fn((_err: unknown, context: string) => `Failed to ${context}`)
+}));
+
+// Mock toast notifications
 vi.mock('$lib/stores/toasts', () => ({
   showToast: vi.fn()
 }));
 
+// Mock references utility
 vi.mock('$lib/utils/references', () => ({
   buildDeletionTooltip: vi.fn(
     (entityType: string, refType: string, refs: Array<{ name: string }>) =>
       `Cannot delete: Used in ${refs.length} ${refType}${refs.length > 1 ? 's' : ''}`
-  )
+  ),
+  checkObjectDeletion: vi.fn(() => ({ success: true }))
 }));
 
 // ---------------------------------------------------------------------------
@@ -48,7 +59,8 @@ vi.mock('$lib/utils/references', () => ({
 // ---------------------------------------------------------------------------
 
 import { createObjectsModel, type ObjectsModelConfig, type ObjectsModelState } from '$lib/stores/objectsModel.svelte';
-import { createObjectAction, updateObjectAction, deleteObjectAction } from '$lib/domain/mutations';
+import { createObjectApi, updateObjectApi, deleteObjectApi } from '$lib/api/objects';
+import { mapApiError } from '$lib/domain/errorMap';
 import { showToast } from '$lib/stores/toasts';
 import { page } from '$app/state';
 import { goto } from '$app/navigation';
@@ -302,17 +314,17 @@ describe('objectsModel - Save (Update)', () => {
 
     await model.handleSave();
 
-    expect(updateObjectAction).not.toHaveBeenCalled();
+    expect(updateObjectApi).not.toHaveBeenCalled();
   });
 
-  it('should call updateObjectAction on successful save', async () => {
+  it('should call updateObjectApi on successful save', async () => {
     const items = [makeObject({ id: 'o-1', name: 'User' })];
     ({ model, cleanup } = createTestModel({
       itemsStore: () => items
     }));
 
     const updated = makeObject({ id: 'o-1', name: 'UserV2' });
-    (updateObjectAction as Mock).mockResolvedValue({ success: true, data: updated });
+    (updateObjectApi as Mock).mockResolvedValue(updated);
 
     model.selectItem(items[0]);
     flushSync();
@@ -321,7 +333,7 @@ describe('objectsModel - Save (Update)', () => {
 
     await model.handleSave();
 
-    expect(updateObjectAction).toHaveBeenCalledWith('o-1', expect.objectContaining({
+    expect(updateObjectApi).toHaveBeenCalledWith('o-1', expect.objectContaining({
       name: 'UserV2'
     }));
     expect(showToast).toHaveBeenCalledWith(
@@ -340,7 +352,7 @@ describe('objectsModel - Save (Update)', () => {
     }));
 
     const updated = makeObject({ id: 'o-1', name: 'User' });
-    (updateObjectAction as Mock).mockResolvedValue({ success: true, data: updated });
+    (updateObjectApi as Mock).mockResolvedValue(updated);
 
     model.selectItem(items[0]);
     flushSync();
@@ -348,7 +360,7 @@ describe('objectsModel - Save (Update)', () => {
     await model.handleSave();
 
     // Verify the payload does not contain derived properties
-    const payload = (updateObjectAction as Mock).mock.calls[0][1];
+    const payload = (updateObjectApi as Mock).mock.calls[0][1];
     expect(payload).not.toHaveProperty('fieldCount');
     expect(payload).not.toHaveProperty('usedInApisCount');
     expect(payload).not.toHaveProperty('namespaceName');
@@ -360,7 +372,8 @@ describe('objectsModel - Save (Update)', () => {
       itemsStore: () => items
     }));
 
-    (updateObjectAction as Mock).mockResolvedValue({ success: false, error: 'Server error' });
+    (updateObjectApi as Mock).mockRejectedValue(new Error('Server error'));
+    (mapApiError as Mock).mockReturnValue('Server error');
 
     model.selectItem(items[0]);
     flushSync();
@@ -378,10 +391,8 @@ describe('objectsModel - Save (Update)', () => {
       itemsStore: () => items
     }));
 
-    (updateObjectAction as Mock).mockResolvedValue({
-      success: false,
-      error: 'Object name already exists'
-    });
+    (updateObjectApi as Mock).mockRejectedValue(new Error('conflict'));
+    (mapApiError as Mock).mockReturnValue('Object name already exists');
 
     model.selectItem(items[0]);
     flushSync();
@@ -404,10 +415,10 @@ describe('objectsModel - Create', () => {
   beforeEach(() => vi.clearAllMocks());
   afterEach(() => cleanup?.());
 
-  it('should call createObjectAction with correct payload', async () => {
+  it('should call createObjectApi with correct payload', async () => {
     ({ model, cleanup } = createTestModel());
     const created = makeObject({ id: 'o-new', name: 'NewObj' });
-    (createObjectAction as Mock).mockResolvedValue({ success: true, data: created });
+    (createObjectApi as Mock).mockResolvedValue(created);
 
     model.openCreate();
     flushSync();
@@ -416,7 +427,7 @@ describe('objectsModel - Create', () => {
 
     await model.handleCreate();
 
-    expect(createObjectAction).toHaveBeenCalledWith(expect.objectContaining({
+    expect(createObjectApi).toHaveBeenCalledWith(expect.objectContaining({
       namespaceId: 'ns-1',
       name: 'NewObj'
     }));
@@ -435,13 +446,13 @@ describe('objectsModel - Create', () => {
 
     await model.handleCreate();
 
-    expect(createObjectAction).not.toHaveBeenCalled();
+    expect(createObjectApi).not.toHaveBeenCalled();
   });
 
   it('should map validators to template-based payload', async () => {
     ({ model, cleanup } = createTestModel());
     const created = makeObject({ id: 'o-new', name: 'NewObj' });
-    (createObjectAction as Mock).mockResolvedValue({ success: true, data: created });
+    (createObjectApi as Mock).mockResolvedValue(created);
 
     model.openCreate();
     flushSync();
@@ -453,7 +464,7 @@ describe('objectsModel - Create', () => {
 
     await model.handleCreate();
 
-    const payload = (createObjectAction as Mock).mock.calls[0][0];
+    const payload = (createObjectApi as Mock).mock.calls[0][0];
     expect(payload.validators).toEqual([
       { templateId: 'tmpl-pwd', parameters: undefined, fieldMappings: { password_field: 'password', confirm_field: 'confirm' } }
     ]);
@@ -461,7 +472,8 @@ describe('objectsModel - Create', () => {
 
   it('should handle create failure', async () => {
     ({ model, cleanup } = createTestModel());
-    (createObjectAction as Mock).mockResolvedValue({ success: false, error: 'Create failed' });
+    (createObjectApi as Mock).mockRejectedValue(new Error('Create failed'));
+    (mapApiError as Mock).mockReturnValue('Create failed');
 
     model.openCreate();
     flushSync();
@@ -481,19 +493,19 @@ describe('objectsModel - Delete', () => {
   beforeEach(() => vi.clearAllMocks());
   afterEach(() => cleanup?.());
 
-  it('should call deleteObjectAction on delete', async () => {
+  it('should call deleteObjectApi on delete', async () => {
     const items = [makeObject({ id: 'o-1', name: 'User' })];
     ({ model, cleanup } = createTestModel({
       itemsStore: () => items
     }));
 
-    (deleteObjectAction as Mock).mockResolvedValue({ success: true });
+    (deleteObjectApi as Mock).mockResolvedValue(undefined);
 
     model.selectItem(items[0]);
     flushSync();
     await model.handleDelete();
 
-    expect(deleteObjectAction).toHaveBeenCalledWith('o-1');
+    expect(deleteObjectApi).toHaveBeenCalledWith('o-1');
     expect(showToast).toHaveBeenCalledWith(
       expect.stringContaining('deleted successfully'),
       'success',
@@ -507,7 +519,8 @@ describe('objectsModel - Delete', () => {
       itemsStore: () => items
     }));
 
-    (deleteObjectAction as Mock).mockResolvedValue({ success: false, error: 'Delete failed' });
+    (deleteObjectApi as Mock).mockRejectedValue(new Error('Delete failed'));
+    (mapApiError as Mock).mockReturnValue('Delete failed');
 
     model.selectItem(items[0]);
     flushSync();

@@ -10,13 +10,21 @@ import type { DrawerMode } from './listViewState.svelte';
 import type { MultiSortState } from '$lib/utils/sorting';
 import { createListViewState } from './listViewState.svelte';
 import {
-  createNamespaceAction,
-  updateNamespaceAction,
-  deleteNamespaceAction,
+  createNamespaceApi,
+  updateNamespaceApi,
+  deleteNamespaceApi,
   type CreateNamespaceRequest,
   type UpdateNamespaceRequest
-} from '$lib/domain/mutations';
-import { namespacesStore, activeNamespaceId } from './namespaces';
+} from '$lib/api/namespaces';
+import { mapApiError } from '$lib/domain/errorMap';
+import {
+  namespacesStore,
+  activeNamespaceId,
+  getNamespaceById,
+  getNamespaceEntityCount,
+  getNamespaceEntityDetails as getNamespaceEntityDetailsFromStore,
+  GLOBAL_NAMESPACE_ID
+} from './namespaces';
 import { get } from 'svelte/store';
 import { composeState } from '$lib/utils/compose';
 import { showToast } from './toasts';
@@ -262,35 +270,41 @@ export function createNamespacesModel(config: NamespacesModelConfig): Namespaces
       return;
     }
 
-    const result = await updateNamespaceAction(listState.editedItem.id, payloadResult.data);
+    const previousNamespaces = get(namespacesStore);
+    namespacesStore.update(namespaces =>
+      namespaces.map(ns => (ns.id === listState.editedItem!.id ? { ...ns, ...payloadResult.data } : ns))
+    );
 
-    if (!result.success) {
-      isSaving = false;
-      if (result.error?.includes('already exists')) {
-        serverErrors = { name: result.error };
-      } else {
-        showToast(result.error || 'Failed to update namespace', 'error', 5000);
+    try {
+      const namespace = await updateNamespaceApi(listState.editedItem.id, payloadResult.data);
+      namespacesStore.update(namespaces => namespaces.map(ns => (ns.id === namespace.id ? namespace : ns)));
+
+      // If this namespace was set as default, propagate locally
+      if (namespace.isDefault) {
+        const currentNamespaces = get(namespacesStore);
+        namespacesStore.set(
+          currentNamespaces.map(ns =>
+            ns.id === namespace.id ? namespace : { ...ns, isDefault: false }
+          )
+        );
+        activeNamespaceId.set(namespace.id);
       }
-      return;
-    }
 
-    // If this namespace was set as default, clear isDefault on all others in local store
-    // and switch the active namespace so other pages reflect the change immediately
-    if (result.data!.isDefault) {
-      const currentNamespaces = get(namespacesStore);
-      namespacesStore.set(
-        currentNamespaces.map(ns =>
-          ns.id === result.data!.id ? result.data! : { ...ns, isDefault: false }
-        )
-      );
-      activeNamespaceId.set(result.data!.id);
+      listState.selectedItem = namespace;
+      listState.originalItem = JSON.parse(JSON.stringify(namespace));
+      showToast(`Namespace "${entityName}" updated successfully`, 'success', 3000);
+      closeDrawer();
+    } catch (err) {
+      namespacesStore.set(previousNamespaces);
+      const error = mapApiError(err, 'update namespace');
+      if (error.includes('already exists')) {
+        serverErrors = { name: error };
+      } else {
+        showToast(error, 'error', 5000);
+      }
+    } finally {
+      isSaving = false;
     }
-
-    listState.selectedItem = result.data!;
-    listState.originalItem = JSON.parse(JSON.stringify(result.data!));
-    showToast(`Namespace "${entityName}" updated successfully`, 'success', 3000);
-    closeDrawer();
-    isSaving = false;
   }
 
   // --- Create (new entity) ---
@@ -309,33 +323,32 @@ export function createNamespacesModel(config: NamespacesModelConfig): Namespaces
       return;
     }
 
-    const result = await createNamespaceAction(payloadResult.data);
+    try {
+      const namespace = await createNamespaceApi(payloadResult.data);
+      namespacesStore.update(namespaces => [...namespaces, namespace]);
 
-    if (!result.success) {
-      isSaving = false;
-      if (result.error?.includes('already exists')) {
-        serverErrors = { name: result.error };
-      } else {
-        showToast(result.error || 'Failed to create namespace', 'error', 5000);
+      if (namespace.isDefault) {
+        const currentNamespaces = get(namespacesStore);
+        namespacesStore.set(
+          currentNamespaces.map(ns =>
+            ns.id === namespace.id ? namespace : { ...ns, isDefault: false }
+          )
+        );
+        activeNamespaceId.set(namespace.id);
       }
-      return;
-    }
 
-    // If this namespace was created as default, clear isDefault on all others in local store
-    // and switch the active namespace so other pages reflect the change immediately
-    if (result.data!.isDefault) {
-      const currentNamespaces = get(namespacesStore);
-      namespacesStore.set(
-        currentNamespaces.map(ns =>
-          ns.id === result.data!.id ? result.data! : { ...ns, isDefault: false }
-        )
-      );
-      activeNamespaceId.set(result.data!.id);
+      showToast(`Namespace "${namespace.name}" created successfully`, 'success', 3000);
+      closeDrawer();
+    } catch (err) {
+      const error = mapApiError(err, 'create namespace');
+      if (error.includes('already exists')) {
+        serverErrors = { name: error };
+      } else {
+        showToast(error, 'error', 5000);
+      }
+    } finally {
+      isSaving = false;
     }
-
-    showToast(`Namespace "${result.data!.name}" created successfully`, 'success', 3000);
-    closeDrawer();
-    isSaving = false;
   }
 
   // --- Delete ---
@@ -345,15 +358,41 @@ export function createNamespacesModel(config: NamespacesModelConfig): Namespaces
     const entityName = listState.editedItem.name;
     isDeleting = true;
 
-    const result = await deleteNamespaceAction(listState.editedItem.id);
+    const namespace = getNamespaceById(listState.editedItem.id);
+    if (!namespace) {
+      isDeleting = false;
+      showToast(`Namespace with ID "${listState.editedItem.id}" not found.`, 'error', 5000);
+      return;
+    }
 
-    if (result.success) {
+    const entityCount = getNamespaceEntityCount(listState.editedItem.id);
+    if (entityCount > 0) {
+      const details = getNamespaceEntityDetailsFromStore(listState.editedItem.id);
+      const parts: string[] = [];
+      if (details.fields > 0) parts.push(`${details.fields} field${details.fields > 1 ? 's' : ''}`);
+      if (details.fieldConstraints > 0) parts.push(`${details.fieldConstraints} field constraint${details.fieldConstraints > 1 ? 's' : ''}`);
+      if (details.objects > 0) parts.push(`${details.objects} object${details.objects > 1 ? 's' : ''}`);
+      if (details.endpoints > 0) parts.push(`${details.endpoints} endpoint${details.endpoints > 1 ? 's' : ''}`);
+      if (details.apis > 0) parts.push(`${details.apis} API${details.apis > 1 ? 's' : ''}`);
+      isDeleting = false;
+      showToast(`Cannot delete namespace "${namespace.name}" because it contains ${parts.join(', ')}. Remove all entities before deleting.`, 'error', 5000);
+      return;
+    }
+
+    const wasActive = get(activeNamespaceId) === listState.editedItem.id;
+
+    try {
+      await deleteNamespaceApi(listState.editedItem.id);
+      namespacesStore.update(namespaces => namespaces.filter(ns => ns.id !== listState.editedItem!.id));
+      if (wasActive) {
+        activeNamespaceId.set(GLOBAL_NAMESPACE_ID);
+      }
       closeDrawer();
-      isDeleting = false;
       showToast(`Namespace "${entityName}" deleted successfully`, 'success', 3000);
-    } else {
+    } catch (err) {
+      showToast(mapApiError(err, 'delete namespace'), 'error', 5000);
+    } finally {
       isDeleting = false;
-      showToast(result.error || 'Failed to delete namespace', 'error', 5000);
     }
   }
 

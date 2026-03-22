@@ -10,12 +10,15 @@ import type { DrawerMode } from './listViewState.svelte';
 import type { MultiSortState } from '$lib/utils/sorting';
 import { createListViewState } from './listViewState.svelte';
 import {
-	createApiAction,
-	updateApiAction,
-	deleteApiAction,
+	createApiApi,
+	updateApiApi,
+	deleteApiApi,
 	type CreateApiRequest,
 	type UpdateApiRequest
-} from '$lib/domain/mutations';
+} from '$lib/api/apis';
+import { mapApiError } from '$lib/domain/errorMap';
+import { apisStore, endpointsStore } from './apis';
+import { get } from 'svelte/store';
 import { composeState } from '$lib/utils/compose';
 import { isValidPascalCaseName } from '$lib/utils/validation';
 import { showToast } from './toasts';
@@ -250,23 +253,29 @@ export function createApiModel(config: ApiModelConfig): ApiModelState {
 			return;
 		}
 
-		const result = await updateApiAction(listState.editedItem.id, payloadResult.data);
+		const previousApis = get(apisStore);
+		apisStore.update(apis =>
+			apis.map(a => (a.id === listState.editedItem!.id ? { ...a, ...payloadResult.data, updatedAt: new Date().toISOString() } as Api : a))
+		);
 
-		if (!result.success) {
-			isSaving = false;
-			if (result.error?.includes('already exists')) {
-				serverErrors = { title: result.error };
+		try {
+			const api = await updateApiApi(listState.editedItem.id, payloadResult.data);
+			apisStore.update(apis => apis.map(a => (a.id === api.id ? api : a)));
+			listState.selectedItem = api;
+			listState.originalItem = JSON.parse(JSON.stringify(api));
+			showToast(`API "${entityName}" updated successfully`, 'success', 3000);
+			closeDrawer();
+		} catch (err) {
+			apisStore.set(previousApis);
+			const error = mapApiError(err, 'update API');
+			if (error.includes('already exists')) {
+				serverErrors = { title: error };
 			} else {
-				showToast(result.error || 'Failed to update API', 'error', 5000);
+				showToast(error, 'error', 5000);
 			}
-			return;
+		} finally {
+			isSaving = false;
 		}
-
-		listState.selectedItem = result.data!;
-		listState.originalItem = JSON.parse(JSON.stringify(result.data!));
-		showToast(`API "${entityName}" updated successfully`, 'success', 3000);
-		closeDrawer();
-		isSaving = false;
 	}
 
 	// --- Create (new entity) ---
@@ -285,24 +294,22 @@ export function createApiModel(config: ApiModelConfig): ApiModelState {
 			return;
 		}
 
-		const result = await createApiAction(payloadResult.data);
-
-		if (!result.success) {
-			isSaving = false;
-			if (result.error?.includes('already exists')) {
-				serverErrors = { title: result.error };
+		try {
+			const api = await createApiApi(payloadResult.data);
+			apisStore.update(apis => [...apis, api]);
+			showToast(`API "${api.title}" created successfully`, 'success', 3000);
+			closeDrawer();
+			urlScope.goto(`/apis/${api.id}`);
+		} catch (err) {
+			const error = mapApiError(err, 'create API');
+			if (error.includes('already exists')) {
+				serverErrors = { title: error };
 			} else {
-				showToast(result.error || 'Failed to create API', 'error', 5000);
+				showToast(error, 'error', 5000);
 			}
-			return;
+		} finally {
+			isSaving = false;
 		}
-
-		showToast(`API "${result.data!.title}" created successfully`, 'success', 3000);
-		closeDrawer();
-		isSaving = false;
-
-		// Navigate to the new API's detail page
-		urlScope.goto(`/apis/${result.data!.id}`);
 	}
 
 	// --- Delete ---
@@ -312,15 +319,16 @@ export function createApiModel(config: ApiModelConfig): ApiModelState {
 		const entityName = listState.editedItem.title;
 		isDeleting = true;
 
-		const result = await deleteApiAction(listState.editedItem.id);
-
-		if (result.success) {
+		try {
+			await deleteApiApi(listState.editedItem.id);
+			apisStore.update(apis => apis.filter(a => a.id !== listState.editedItem!.id));
+			endpointsStore.update(endpoints => endpoints.filter(e => e.apiId !== listState.editedItem!.id));
 			closeDrawer();
-			isDeleting = false;
 			showToast(`API "${entityName}" deleted successfully`, 'success', 3000);
-		} else {
+		} catch (err) {
+			showToast(mapApiError(err, 'delete API'), 'error', 5000);
+		} finally {
 			isDeleting = false;
-			showToast(result.error || 'Failed to delete API', 'error', 5000);
 		}
 	}
 

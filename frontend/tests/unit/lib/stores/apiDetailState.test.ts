@@ -32,12 +32,19 @@ vi.mock('$lib/stores/toasts', () => ({
   showToast: vi.fn()
 }));
 
-vi.mock('$lib/domain/mutations', () => ({
-  updateApiAction: vi.fn(),
-  deleteApiAction: vi.fn(),
-  createEndpointAction: vi.fn(),
-  updateEndpointAction: vi.fn(),
-  deleteEndpointAction: vi.fn()
+vi.mock('$lib/api/apis', () => ({
+  updateApiApi: vi.fn(),
+  deleteApiApi: vi.fn()
+}));
+
+vi.mock('$lib/api/endpoints', () => ({
+  createEndpointApi: vi.fn(),
+  updateEndpointApi: vi.fn(),
+  deleteEndpointApi: vi.fn()
+}));
+
+vi.mock('$lib/domain/errorMap', () => ({
+  mapApiError: vi.fn((_err: unknown, context: string) => `Failed to ${context}`)
 }));
 
 vi.mock('$lib/domain/endpointReducer', () => ({
@@ -60,13 +67,9 @@ import {
   type TagSection
 } from '$lib/stores/apiDetailState.svelte';
 import { apisStore, endpointsStore, getEndpointCountByTagName } from '$lib/stores/apis';
-import {
-  updateApiAction,
-  deleteApiAction,
-  createEndpointAction,
-  updateEndpointAction,
-  deleteEndpointAction
-} from '$lib/domain/mutations';
+import { updateApiApi, deleteApiApi } from '$lib/api/apis';
+import { createEndpointApi, updateEndpointApi, deleteEndpointApi } from '$lib/api/endpoints';
+import { mapApiError } from '$lib/domain/errorMap';
 import { showToast } from '$lib/stores/toasts';
 import { effect_root } from 'svelte/internal/client';
 import { flushSync } from 'svelte';
@@ -353,8 +356,8 @@ describe('apiDetailState - Edit API Drawer', () => {
     expect(state.hasEditChanges).toBe(false);
   });
 
-  it('should call updateApiAction on edit save', async () => {
-    (updateApiAction as Mock).mockResolvedValue({ success: true });
+  it('should call updateApiApi on edit save', async () => {
+    (updateApiApi as Mock).mockResolvedValue(makeApi({ id: 'api-1', title: 'UpdatedTitle' }));
 
     ({ state, cleanup } = createTestState());
     flushSync();
@@ -367,7 +370,7 @@ describe('apiDetailState - Edit API Drawer', () => {
 
     await state.handleEditSave();
 
-    expect(updateApiAction).toHaveBeenCalledWith('api-1', expect.objectContaining({
+    expect(updateApiApi).toHaveBeenCalledWith('api-1', expect.objectContaining({
       title: 'UpdatedTitle'
     }));
     expect(showToast).toHaveBeenCalledWith(
@@ -377,7 +380,8 @@ describe('apiDetailState - Edit API Drawer', () => {
   });
 
   it('should show error toast on edit save failure', async () => {
-    (updateApiAction as Mock).mockResolvedValue({ success: false, error: 'Save failed' });
+    (updateApiApi as Mock).mockRejectedValue(new Error('Save failed'));
+    (mapApiError as Mock).mockReturnValue('Failed to save API');
 
     ({ state, cleanup } = createTestState());
     flushSync();
@@ -390,7 +394,7 @@ describe('apiDetailState - Edit API Drawer', () => {
 
     await state.handleEditSave();
 
-    expect(showToast).toHaveBeenCalledWith('Save failed', 'error');
+    expect(showToast).toHaveBeenCalledWith('Failed to save API', 'error');
   });
 });
 
@@ -458,7 +462,7 @@ describe('apiDetailState - Edit Form Validation', () => {
 
     await state.handleEditSave();
 
-    expect(updateApiAction).not.toHaveBeenCalled();
+    expect(updateApiApi).not.toHaveBeenCalled();
   });
 });
 
@@ -474,8 +478,8 @@ describe('apiDetailState - Delete API', () => {
   });
   afterEach(() => cleanup?.());
 
-  it('should call deleteApiAction and navigate back on success', async () => {
-    (deleteApiAction as Mock).mockResolvedValue({ success: true });
+  it('should call deleteApiApi and navigate back on success', async () => {
+    (deleteApiApi as Mock).mockResolvedValue(undefined);
 
     ({ state, cleanup } = createTestState({ onNavigateBack }));
     flushSync();
@@ -485,7 +489,7 @@ describe('apiDetailState - Delete API', () => {
 
     await state.handleDeleteApi();
 
-    expect(deleteApiAction).toHaveBeenCalledWith('api-1');
+    expect(deleteApiApi).toHaveBeenCalledWith('api-1');
     expect(onNavigateBack).toHaveBeenCalled();
     expect(showToast).toHaveBeenCalledWith(
       expect.stringContaining('deleted'),
@@ -494,7 +498,8 @@ describe('apiDetailState - Delete API', () => {
   });
 
   it('should show error toast on delete failure', async () => {
-    (deleteApiAction as Mock).mockResolvedValue({ success: false, error: 'Delete failed' });
+    (deleteApiApi as Mock).mockRejectedValue(new Error('Delete failed'));
+    (mapApiError as Mock).mockReturnValue('Failed to delete API');
 
     ({ state, cleanup } = createTestState({ onNavigateBack }));
     flushSync();
@@ -502,7 +507,7 @@ describe('apiDetailState - Delete API', () => {
     await state.handleDeleteApi();
 
     expect(onNavigateBack).not.toHaveBeenCalled();
-    expect(showToast).toHaveBeenCalledWith('Delete failed', 'error');
+    expect(showToast).toHaveBeenCalledWith('Failed to delete API', 'error');
   });
 
   it('should toggle edit delete confirmation', () => {
@@ -632,12 +637,12 @@ describe('apiDetailState - Endpoint CRUD', () => {
       method: 'GET',
       path: '/'
     }));
-    expect(createEndpointAction).not.toHaveBeenCalled();
+    expect(createEndpointApi).not.toHaveBeenCalled();
   });
 
-  it('should create endpoint via handleCreateEndpoint', async () => {
+  it('should create endpoint via createEndpointApi', async () => {
     const newEndpoint = makeEndpoint({ id: 'ep-new', apiId: 'api-1', path: '/items' });
-    (createEndpointAction as Mock).mockResolvedValue({ success: true, data: newEndpoint });
+    (createEndpointApi as Mock).mockResolvedValue(newEndpoint);
 
     ({ state, cleanup } = createTestState());
     flushSync();
@@ -649,7 +654,7 @@ describe('apiDetailState - Endpoint CRUD', () => {
 
     await state.handleCreateEndpoint();
 
-    expect(createEndpointAction).toHaveBeenCalledWith(expect.objectContaining({
+    expect(createEndpointApi).toHaveBeenCalledWith(expect.objectContaining({
       apiId: 'api-1',
       method: 'GET',
       path: '/items'
@@ -659,7 +664,8 @@ describe('apiDetailState - Endpoint CRUD', () => {
   });
 
   it('should show error toast when creating endpoint fails', async () => {
-    (createEndpointAction as Mock).mockResolvedValue({ success: false, error: 'Create failed' });
+    (createEndpointApi as Mock).mockRejectedValue(new Error('Create failed'));
+    (mapApiError as Mock).mockReturnValue('Failed to create endpoint');
 
     ({ state, cleanup } = createTestState());
     flushSync();
@@ -669,12 +675,12 @@ describe('apiDetailState - Endpoint CRUD', () => {
 
     await state.handleCreateEndpoint();
 
-    expect(showToast).toHaveBeenCalledWith('Create failed', 'error');
+    expect(showToast).toHaveBeenCalledWith('Failed to create endpoint', 'error');
   });
 
-  it('should save endpoint via updateEndpointAction', async () => {
+  it('should save endpoint via updateEndpointApi', async () => {
     const updatedEp = makeEndpoint({ id: 'ep-1', apiId: 'api-1', path: '/users/v2' });
-    (updateEndpointAction as Mock).mockResolvedValue({ success: true, data: updatedEp });
+    (updateEndpointApi as Mock).mockResolvedValue(updatedEp);
 
     ({ state, cleanup } = createTestState());
     flushSync();
@@ -686,14 +692,15 @@ describe('apiDetailState - Endpoint CRUD', () => {
 
     const result = await state.handleSaveEndpoint();
 
-    expect(updateEndpointAction).toHaveBeenCalledWith('ep-1', expect.objectContaining({
+    expect(updateEndpointApi).toHaveBeenCalledWith('ep-1', expect.objectContaining({
       path: '/users/v2'
     }));
     expect(result).toBe(true);
   });
 
   it('should return false when endpoint save fails', async () => {
-    (updateEndpointAction as Mock).mockResolvedValue({ success: false, error: 'Update failed' });
+    (updateEndpointApi as Mock).mockRejectedValue(new Error('Update failed'));
+    (mapApiError as Mock).mockReturnValue('Failed to save endpoint');
 
     ({ state, cleanup } = createTestState());
     flushSync();
@@ -704,11 +711,11 @@ describe('apiDetailState - Endpoint CRUD', () => {
     const result = await state.handleSaveEndpoint();
 
     expect(result).toBe(false);
-    expect(showToast).toHaveBeenCalledWith('Update failed', 'error');
+    expect(showToast).toHaveBeenCalledWith('Failed to save endpoint', 'error');
   });
 
-  it('should delete endpoint via deleteEndpointAction', async () => {
-    (deleteEndpointAction as Mock).mockResolvedValue({ success: true });
+  it('should delete endpoint via deleteEndpointApi', async () => {
+    (deleteEndpointApi as Mock).mockResolvedValue(undefined);
 
     ({ state, cleanup } = createTestState());
     flushSync();
@@ -718,23 +725,23 @@ describe('apiDetailState - Endpoint CRUD', () => {
 
     await state.handleDeleteEndpoint();
 
-    expect(deleteEndpointAction).toHaveBeenCalledWith('ep-1');
+    expect(deleteEndpointApi).toHaveBeenCalledWith('ep-1');
     expect(showToast).toHaveBeenCalledWith(
       expect.stringContaining('deleted'),
       'success'
     );
   });
 
-  it('should duplicate endpoint via createEndpointAction', async () => {
+  it('should duplicate endpoint via createEndpointApi', async () => {
     const duplicate = makeEndpoint({ id: 'ep-dup', apiId: 'api-1', path: '/users-copy' });
-    (createEndpointAction as Mock).mockResolvedValue({ success: true, data: duplicate });
+    (createEndpointApi as Mock).mockResolvedValue(duplicate);
 
     ({ state, cleanup } = createTestState());
     flushSync();
 
     await state.handleDuplicateEndpoint('ep-1');
 
-    expect(createEndpointAction).toHaveBeenCalledWith(expect.objectContaining({
+    expect(createEndpointApi).toHaveBeenCalledWith(expect.objectContaining({
       path: '/users-copy'
     }));
     expect(showToast).toHaveBeenCalledWith(
@@ -955,7 +962,7 @@ describe('apiDetailState - Pagination Toggle', () => {
 
   it('should include pagination in create payload', async () => {
     const newEndpoint = makeEndpoint({ id: 'ep-new', apiId: 'api-1', path: '/items', pagination: true });
-    (createEndpointAction as Mock).mockResolvedValue({ success: true, data: newEndpoint });
+    (createEndpointApi as Mock).mockResolvedValue(newEndpoint);
 
     ({ state, cleanup } = createTestState());
     flushSync();
@@ -967,14 +974,14 @@ describe('apiDetailState - Pagination Toggle', () => {
 
     await state.handleCreateEndpoint();
 
-    expect(createEndpointAction).toHaveBeenCalledWith(expect.objectContaining({
+    expect(createEndpointApi).toHaveBeenCalledWith(expect.objectContaining({
       pagination: true
     }));
   });
 
   it('should include pagination in update payload', async () => {
     const updatedEp = makeEndpoint({ id: 'ep-1', apiId: 'api-1', path: '/items', pagination: true });
-    (updateEndpointAction as Mock).mockResolvedValue({ success: true, data: updatedEp });
+    (updateEndpointApi as Mock).mockResolvedValue(updatedEp);
 
     ({ state, cleanup } = createTestState());
     flushSync();
@@ -987,7 +994,7 @@ describe('apiDetailState - Pagination Toggle', () => {
 
     await state.handleSaveEndpoint();
 
-    expect(updateEndpointAction).toHaveBeenCalledWith('ep-1', expect.objectContaining({
+    expect(updateEndpointApi).toHaveBeenCalledWith('ep-1', expect.objectContaining({
       pagination: true
     }));
   });

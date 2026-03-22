@@ -2,7 +2,7 @@
  * API Detail State Container
  *
  * Encapsulates UI state for the API detail page.
- * All mutations go through the canonical domain layer (save-per-action).
+ * Mutations call API services directly with optimistic store updates.
  *
  * Existing-API only: creation is handled on the list page via a drawer.
  * This factory manages:
@@ -11,7 +11,7 @@
  * - Tag section state (Swagger-style collapsible groups)
  */
 
-import { fromStore } from 'svelte/store';
+import { fromStore, get } from 'svelte/store';
 import type { Api, ApiEndpoint, PathParam, QueryParam, ResponseShape } from '$lib/types';
 import {
 	apisStore,
@@ -23,12 +23,18 @@ import { fieldsStore } from './fields';
 import { showToast } from './toasts';
 import { deepClone } from '$lib/utils/ids';
 import {
-	updateApiAction,
-	deleteApiAction,
-	createEndpointAction,
-	updateEndpointAction,
-	deleteEndpointAction
-} from '$lib/domain/mutations';
+	updateApiApi,
+	deleteApiApi,
+	type UpdateApiRequest
+} from '$lib/api/apis';
+import {
+	createEndpointApi,
+	updateEndpointApi,
+	deleteEndpointApi,
+	type CreateEndpointRequest,
+	type UpdateEndpointRequest
+} from '$lib/api/endpoints';
+import { mapApiError } from '$lib/domain/errorMap';
 import { reconcilePathParams, normalizeEndpoint } from '$lib/domain/endpointReducer';
 import {
 	validateEndpointParams,
@@ -317,24 +323,28 @@ export function createApiDetailState(config: ApiDetailStateConfig): ApiDetailSta
 		editFormTouched = true;
 		if (!editFormValid) return;
 
+		const payload: UpdateApiRequest = {
+			title: editForm.title,
+			version: editForm.version,
+			description: editForm.description,
+			serverUrl: editForm.serverUrl,
+			baseUrl: editForm.baseUrl
+		};
+
 		isSaving = true;
+		const previousApis = get(apisStore);
+		apisStore.update(apis =>
+			apis.map(a => (a.id === apiId ? { ...a, ...payload, updatedAt: new Date().toISOString() } : a))
+		);
+
 		try {
-			const result = await updateApiAction(apiId, {
-				title: editForm.title,
-				version: editForm.version,
-				description: editForm.description,
-				serverUrl: editForm.serverUrl,
-				baseUrl: editForm.baseUrl
-			});
-
-			if (!result.success) {
-				showToast(result.error ?? 'Failed to save API', 'error');
-				return;
-			}
-
+			await updateApiApi(apiId, payload);
 			originalEditFormSnapshot = JSON.stringify(editForm);
 			showToast(MESSAGES.API_SAVED, 'success');
 			closeEditDrawer();
+		} catch (err) {
+			apisStore.set(previousApis);
+			showToast(mapApiError(err, 'save API'), 'error');
 		} finally {
 			isSaving = false;
 		}
@@ -356,17 +366,17 @@ export function createApiDetailState(config: ApiDetailStateConfig): ApiDetailSta
 
 	async function handleDeleteApi(): Promise<void> {
 		isSaving = true;
-		try {
-			const apiTitle = storedApi?.title ?? 'this API';
-			const result = await deleteApiAction(apiId);
+		const apiTitle = storedApi?.title ?? 'this API';
 
-			if (result.success) {
-				showToast(`API "${apiTitle}" deleted successfully`, 'success');
-				closeEditDrawer();
-				onNavigateBack();
-			} else {
-				showToast(result.error ?? 'Failed to delete API', 'error');
-			}
+		try {
+			await deleteApiApi(apiId);
+			apisStore.update(apis => apis.filter(a => a.id !== apiId));
+			endpointsStore.update(eps => eps.filter(e => e.apiId !== apiId));
+			showToast(`API "${apiTitle}" deleted successfully`, 'success');
+			closeEditDrawer();
+			onNavigateBack();
+		} catch (err) {
+			showToast(mapApiError(err, 'delete API'), 'error');
 		} finally {
 			isSaving = false;
 		}
@@ -499,7 +509,7 @@ export function createApiDetailState(config: ApiDetailStateConfig): ApiDetailSta
 
 		isSaving = true;
 		try {
-			const result = await createEndpointAction({
+			const endpoint = await createEndpointApi({
 				apiId,
 				method: editedEndpoint.method,
 				path: editedEndpoint.path,
@@ -513,15 +523,12 @@ export function createApiDetailState(config: ApiDetailStateConfig): ApiDetailSta
 				responseShape: editedEndpoint.responseShape,
 				pagination: editedEndpoint.pagination ?? false
 			});
-
-			if (!result.success) {
-				showToast(result.error ?? 'Failed to create endpoint', 'error');
-				return;
-			}
-
+			endpointsStore.update(eps => [...eps, endpoint]);
 			showToast('Endpoint created successfully', 'success');
 			isCreating = false;
 			closeEndpointDrawer();
+		} catch (err) {
+			showToast(mapApiError(err, 'create endpoint'), 'error');
 		} finally {
 			isSaving = false;
 		}
@@ -541,15 +548,13 @@ export function createApiDetailState(config: ApiDetailStateConfig): ApiDetailSta
 
 		isSaving = true;
 		try {
-			const result = await deleteEndpointAction(editedEndpoint.id);
-
-			if (result.success) {
-				showToast(MESSAGES.ENDPOINT_DELETED, 'success');
-				showEndpointDeleteConfirm = false;
-				closeEndpointDrawer();
-			} else {
-				showToast(result.error ?? 'Failed to delete endpoint', 'error');
-			}
+			await deleteEndpointApi(editedEndpoint.id);
+			endpointsStore.update(eps => eps.filter(e => e.id !== editedEndpoint!.id));
+			showToast(MESSAGES.ENDPOINT_DELETED, 'success');
+			showEndpointDeleteConfirm = false;
+			closeEndpointDrawer();
+		} catch (err) {
+			showToast(mapApiError(err, 'delete endpoint'), 'error');
 		} finally {
 			isSaving = false;
 		}
@@ -568,7 +573,7 @@ export function createApiDetailState(config: ApiDetailStateConfig): ApiDetailSta
 
 		isSaving = true;
 		try {
-			const result = await createEndpointAction({
+			const endpoint = await createEndpointApi({
 				apiId: original.apiId,
 				method: original.method,
 				path: original.path + '-copy',
@@ -582,12 +587,10 @@ export function createApiDetailState(config: ApiDetailStateConfig): ApiDetailSta
 				responseShape: original.responseShape,
 				pagination: original.pagination ?? false
 			});
-
-			if (result.success) {
-				showToast(MESSAGES.ENDPOINT_DUPLICATED, 'success');
-			} else {
-				showToast(result.error ?? 'Failed to duplicate endpoint', 'error');
-			}
+			endpointsStore.update(eps => [...eps, endpoint]);
+			showToast(MESSAGES.ENDPOINT_DUPLICATED, 'success');
+		} catch (err) {
+			showToast(mapApiError(err, 'duplicate endpoint'), 'error');
 		} finally {
 			isSaving = false;
 		}
@@ -622,32 +625,39 @@ export function createApiDetailState(config: ApiDetailStateConfig): ApiDetailSta
 		if (!editedEndpoint || !selectedEndpoint) return false;
 		if (pathError) return false;
 
+		const payload: UpdateEndpointRequest = {
+			method: editedEndpoint.method,
+			path: editedEndpoint.path,
+			description: editedEndpoint.description,
+			tagName: editedEndpoint.tagName ?? null,
+			pathParams: editedEndpoint.pathParams,
+			queryParams: editedEndpoint.queryParams ?? [],
+			queryParamsObjectId: editedEndpoint.queryParamsObjectId ?? null,
+			objectId: editedEndpoint.objectId ?? null,
+			useEnvelope: editedEndpoint.useEnvelope,
+			responseShape: editedEndpoint.responseShape,
+			pagination: editedEndpoint.pagination ?? false
+		};
+
 		isSaving = true;
+		const previousEndpoints = get(endpointsStore);
+		const normalizedUpdates = { ...payload, tagName: payload.tagName === null ? undefined : payload.tagName };
+		endpointsStore.update(eps =>
+			eps.map(e => (e.id === editedEndpoint!.id ? { ...e, ...normalizedUpdates } as ApiEndpoint : e))
+		);
+
 		try {
-			const result = await updateEndpointAction(editedEndpoint.id, {
-				method: editedEndpoint.method,
-				path: editedEndpoint.path,
-				description: editedEndpoint.description,
-				tagName: editedEndpoint.tagName ?? null,
-				pathParams: editedEndpoint.pathParams,
-				queryParams: editedEndpoint.queryParams ?? [],
-				queryParamsObjectId: editedEndpoint.queryParamsObjectId ?? null,
-				objectId: editedEndpoint.objectId ?? null,
-				useEnvelope: editedEndpoint.useEnvelope,
-				responseShape: editedEndpoint.responseShape,
-				pagination: editedEndpoint.pagination ?? false
-			});
-
-			if (!result.success) {
-				showToast(result.error ?? 'Failed to save endpoint', 'error');
-				return false;
-			}
-
-			selectedEndpoint = result.data!;
-			editedEndpoint = deepClone(result.data!);
+			const endpoint = await updateEndpointApi(editedEndpoint.id, payload);
+			endpointsStore.update(eps => eps.map(e => (e.id === endpoint.id ? endpoint : e)));
+			selectedEndpoint = endpoint;
+			editedEndpoint = deepClone(endpoint);
 			showToast(MESSAGES.ENDPOINT_SAVED, 'success');
 			closeEndpointDrawer();
 			return true;
+		} catch (err) {
+			endpointsStore.set(previousEndpoints);
+			showToast(mapApiError(err, 'save endpoint'), 'error');
+			return false;
 		} finally {
 			isSaving = false;
 		}

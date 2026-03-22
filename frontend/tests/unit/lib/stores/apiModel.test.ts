@@ -27,11 +27,16 @@ vi.mock('$app/state', () => ({
   }
 }));
 
-// Mock mutation actions
-vi.mock('$lib/domain/mutations', () => ({
-  createApiAction: vi.fn(),
-  updateApiAction: vi.fn(),
-  deleteApiAction: vi.fn()
+// Mock API transport
+vi.mock('$lib/api/apis', () => ({
+  createApiApi: vi.fn(),
+  updateApiApi: vi.fn(),
+  deleteApiApi: vi.fn()
+}));
+
+// Mock error mapping
+vi.mock('$lib/domain/errorMap', () => ({
+  mapApiError: vi.fn((_err: unknown, context: string) => `Failed to ${context}`)
 }));
 
 // Mock toast notifications
@@ -44,7 +49,8 @@ vi.mock('$lib/stores/toasts', () => ({
 // ---------------------------------------------------------------------------
 
 import { createApiModel, type ApiModelConfig, type ApiModelState } from '$lib/stores/apiModel.svelte';
-import { createApiAction, updateApiAction, deleteApiAction } from '$lib/domain/mutations';
+import { createApiApi, updateApiApi, deleteApiApi } from '$lib/api/apis';
+import { mapApiError } from '$lib/domain/errorMap';
 import { showToast } from '$lib/stores/toasts';
 import { page } from '$app/state';
 import { goto } from '$app/navigation';
@@ -264,7 +270,7 @@ describe('apiModel - Save (Update)', () => {
     expect(model.editedItem).toBeNull();
     await model.handleSave();
 
-    expect(updateApiAction).not.toHaveBeenCalled();
+    expect(updateApiApi).not.toHaveBeenCalled();
   });
 });
 
@@ -277,10 +283,10 @@ describe('apiModel - Create', () => {
   });
   afterEach(() => cleanup?.());
 
-  it('should call createApiAction with correct payload', async () => {
+  it('should call createApiApi with correct payload', async () => {
     ({ model, cleanup } = createTestModel());
     const newApi = makeApi({ id: 'a-new', title: 'NewApi' });
-    (createApiAction as Mock).mockResolvedValue({ success: true, data: newApi });
+    (createApiApi as Mock).mockResolvedValue(newApi);
 
     model.openCreate();
     flushSync();
@@ -289,7 +295,7 @@ describe('apiModel - Create', () => {
 
     await model.handleCreate();
 
-    expect(createApiAction).toHaveBeenCalledWith(expect.objectContaining({
+    expect(createApiApi).toHaveBeenCalledWith(expect.objectContaining({
       namespaceId: 'ns-1',
       title: 'NewApi',
       version: '1.0.0',
@@ -305,7 +311,7 @@ describe('apiModel - Create', () => {
   it('should navigate to new API detail page after creation', async () => {
     ({ model, cleanup } = createTestModel());
     const newApi = makeApi({ id: 'a-new', title: 'NewApi' });
-    (createApiAction as Mock).mockResolvedValue({ success: true, data: newApi });
+    (createApiApi as Mock).mockResolvedValue(newApi);
 
     model.openCreate();
     flushSync();
@@ -326,12 +332,13 @@ describe('apiModel - Create', () => {
 
     await model.handleCreate();
 
-    expect(createApiAction).not.toHaveBeenCalled();
+    expect(createApiApi).not.toHaveBeenCalled();
   });
 
   it('should handle create failure', async () => {
     ({ model, cleanup } = createTestModel());
-    (createApiAction as Mock).mockResolvedValue({ success: false, error: 'Create failed' });
+    (createApiApi as Mock).mockRejectedValue(new Error('Create failed'));
+    (mapApiError as Mock).mockReturnValue('Create failed');
 
     model.openCreate();
     flushSync();
@@ -367,7 +374,7 @@ describe('apiModel - Delete', () => {
     expect(model.editedItem).toBeNull();
     await model.handleDelete();
 
-    expect(deleteApiAction).not.toHaveBeenCalled();
+    expect(deleteApiApi).not.toHaveBeenCalled();
   });
 });
 
