@@ -182,6 +182,17 @@ export function createObjectsModel(config: ObjectsModelConfig): ObjectsModelStat
       errors.name = 'Must be PascalCase (e.g. UserEmail)';
     }
 
+    // Validate PK field types — only int and uuid are supported.
+    for (const fieldRef of item.fields) {
+      if (fieldRef.isPk) {
+        const field = getFieldById(fieldRef.fieldId);
+        if (field && field.type !== 'int' && field.type !== 'uuid' && field.type !== 'uuid.UUID') {
+          errors[`field_${fieldRef.fieldId}_pk`] =
+            `Field "${field.name}" (${field.type}) cannot be a primary key — only int and uuid types are supported`;
+        }
+      }
+    }
+
     // Validate value source on read-only non-PK fields.
     // Read-only fields must specify how the database generates their value.
     for (const fieldRef of item.fields) {
