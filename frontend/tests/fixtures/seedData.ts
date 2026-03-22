@@ -390,12 +390,12 @@ export const initialObjects: ObjectDefinition[] = [
 		name: 'User',
 		description: 'User account information',
 		fields: [
-			{ fieldId: SEED_FIELD_IDS.user_id, optional: false, isPk: false, appears: 'both' as const },
-			{ fieldId: SEED_FIELD_IDS.username, optional: false, isPk: false, appears: 'both' as const },
-			{ fieldId: SEED_FIELD_IDS.email, optional: false, isPk: false, appears: 'both' as const },
-			{ fieldId: SEED_FIELD_IDS.password, optional: false, isPk: false, appears: 'both' as const },
-			{ fieldId: SEED_FIELD_IDS.created_at, optional: false, isPk: false, appears: 'both' as const },
-			{ fieldId: SEED_FIELD_IDS.updated_at, optional: true, isPk: false, appears: 'both' as const }
+			{ fieldId: SEED_FIELD_IDS.user_id, isPk: false, exposure: 'read_write' as const, nullable: false },
+			{ fieldId: SEED_FIELD_IDS.username, isPk: false, exposure: 'read_write' as const, nullable: false },
+			{ fieldId: SEED_FIELD_IDS.email, isPk: false, exposure: 'read_write' as const, nullable: false },
+			{ fieldId: SEED_FIELD_IDS.password, isPk: false, exposure: 'read_write' as const, nullable: false },
+			{ fieldId: SEED_FIELD_IDS.created_at, isPk: false, exposure: 'read_write' as const, nullable: false },
+			{ fieldId: SEED_FIELD_IDS.updated_at, isPk: false, exposure: 'read_write' as const, nullable: true }
 		],
 		relationships: [],
 		validators: [],
@@ -407,10 +407,10 @@ export const initialObjects: ObjectDefinition[] = [
 		name: 'Product',
 		description: 'Product catalog item',
 		fields: [
-			{ fieldId: SEED_FIELD_IDS.price, optional: false, isPk: false, appears: 'both' as const },
-			{ fieldId: SEED_FIELD_IDS.status, optional: false, isPk: false, appears: 'both' as const },
-			{ fieldId: SEED_FIELD_IDS.created_at, optional: false, isPk: false, appears: 'both' as const },
-			{ fieldId: SEED_FIELD_IDS.updated_at, optional: true, isPk: false, appears: 'both' as const }
+			{ fieldId: SEED_FIELD_IDS.price, isPk: false, exposure: 'read_write' as const, nullable: false },
+			{ fieldId: SEED_FIELD_IDS.status, isPk: false, exposure: 'read_write' as const, nullable: false },
+			{ fieldId: SEED_FIELD_IDS.created_at, isPk: false, exposure: 'read_write' as const, nullable: false },
+			{ fieldId: SEED_FIELD_IDS.updated_at, isPk: false, exposure: 'read_write' as const, nullable: true }
 		],
 		relationships: [],
 		validators: [],
@@ -422,11 +422,11 @@ export const initialObjects: ObjectDefinition[] = [
 		name: 'Order',
 		description: 'Customer order details',
 		fields: [
-			{ fieldId: SEED_FIELD_IDS.user_id, optional: false, isPk: false, appears: 'both' as const },
-			{ fieldId: SEED_FIELD_IDS.status, optional: false, isPk: false, appears: 'both' as const },
-			{ fieldId: SEED_FIELD_IDS.price, optional: false, isPk: false, appears: 'both' as const },
-			{ fieldId: SEED_FIELD_IDS.created_at, optional: false, isPk: false, appears: 'both' as const },
-			{ fieldId: SEED_FIELD_IDS.updated_at, optional: true, isPk: false, appears: 'both' as const }
+			{ fieldId: SEED_FIELD_IDS.user_id, isPk: false, exposure: 'read_write' as const, nullable: false },
+			{ fieldId: SEED_FIELD_IDS.status, isPk: false, exposure: 'read_write' as const, nullable: false },
+			{ fieldId: SEED_FIELD_IDS.price, isPk: false, exposure: 'read_write' as const, nullable: false },
+			{ fieldId: SEED_FIELD_IDS.created_at, isPk: false, exposure: 'read_write' as const, nullable: false },
+			{ fieldId: SEED_FIELD_IDS.updated_at, isPk: false, exposure: 'read_write' as const, nullable: true }
 		],
 		relationships: [],
 		validators: [],
@@ -438,9 +438,9 @@ export const initialObjects: ObjectDefinition[] = [
 		name: 'Customer',
 		description: 'Customer profile information',
 		fields: [
-			{ fieldId: SEED_FIELD_IDS.email, optional: false, isPk: false, appears: 'both' as const },
-			{ fieldId: SEED_FIELD_IDS.phone, optional: true, isPk: false, appears: 'both' as const },
-			{ fieldId: SEED_FIELD_IDS.created_at, optional: false, isPk: false, appears: 'both' as const },
+			{ fieldId: SEED_FIELD_IDS.email, isPk: false, exposure: 'read_write' as const, nullable: false },
+			{ fieldId: SEED_FIELD_IDS.phone, isPk: false, exposure: 'read_write' as const, nullable: true },
+			{ fieldId: SEED_FIELD_IDS.created_at, isPk: false, exposure: 'read_write' as const, nullable: false },
 		],
 		relationships: [],
 		validators: [],
@@ -452,9 +452,9 @@ export const initialObjects: ObjectDefinition[] = [
 		name: 'Payment',
 		description: 'Payment transaction record',
 		fields: [
-			{ fieldId: SEED_FIELD_IDS.price, optional: false, isPk: false, appears: 'both' as const },
-			{ fieldId: SEED_FIELD_IDS.status, optional: false, isPk: false, appears: 'both' as const },
-			{ fieldId: SEED_FIELD_IDS.created_at, optional: false, isPk: false, appears: 'both' as const },
+			{ fieldId: SEED_FIELD_IDS.price, isPk: false, exposure: 'read_write' as const, nullable: false },
+			{ fieldId: SEED_FIELD_IDS.status, isPk: false, exposure: 'read_write' as const, nullable: false },
+			{ fieldId: SEED_FIELD_IDS.created_at, isPk: false, exposure: 'read_write' as const, nullable: false },
 		],
 		relationships: [],
 		validators: [],
@@ -466,8 +466,8 @@ export const initialObjects: ObjectDefinition[] = [
 		name: 'Address',
 		description: 'Physical address information',
 		fields: [
-			{ fieldId: SEED_FIELD_IDS.website, optional: true, isPk: false, appears: 'both' as const },
-			{ fieldId: SEED_FIELD_IDS.phone, optional: true, isPk: false, appears: 'both' as const },
+			{ fieldId: SEED_FIELD_IDS.website, isPk: false, exposure: 'read_write' as const, nullable: true },
+			{ fieldId: SEED_FIELD_IDS.phone, isPk: false, exposure: 'read_write' as const, nullable: true },
 		],
 		relationships: [],
 		validators: [],
@@ -479,10 +479,10 @@ export const initialObjects: ObjectDefinition[] = [
 		name: 'Company',
 		description: 'Company profile',
 		fields: [
-			{ fieldId: SEED_FIELD_IDS.website, optional: false, isPk: false, appears: 'both' as const },
-			{ fieldId: SEED_FIELD_IDS.phone, optional: true, isPk: false, appears: 'both' as const },
-			{ fieldId: SEED_FIELD_IDS.email, optional: false, isPk: false, appears: 'both' as const },
-			{ fieldId: SEED_FIELD_IDS.created_at, optional: false, isPk: false, appears: 'both' as const },
+			{ fieldId: SEED_FIELD_IDS.website, isPk: false, exposure: 'read_write' as const, nullable: false },
+			{ fieldId: SEED_FIELD_IDS.phone, isPk: false, exposure: 'read_write' as const, nullable: true },
+			{ fieldId: SEED_FIELD_IDS.email, isPk: false, exposure: 'read_write' as const, nullable: false },
+			{ fieldId: SEED_FIELD_IDS.created_at, isPk: false, exposure: 'read_write' as const, nullable: false },
 		],
 		relationships: [],
 		validators: [],
@@ -494,10 +494,10 @@ export const initialObjects: ObjectDefinition[] = [
 		name: 'Invoice',
 		description: 'Billing invoice',
 		fields: [
-			{ fieldId: SEED_FIELD_IDS.price, optional: false, isPk: false, appears: 'both' as const },
-			{ fieldId: SEED_FIELD_IDS.status, optional: false, isPk: false, appears: 'both' as const },
-			{ fieldId: SEED_FIELD_IDS.created_at, optional: false, isPk: false, appears: 'both' as const },
-			{ fieldId: SEED_FIELD_IDS.updated_at, optional: true, isPk: false, appears: 'both' as const }
+			{ fieldId: SEED_FIELD_IDS.price, isPk: false, exposure: 'read_write' as const, nullable: false },
+			{ fieldId: SEED_FIELD_IDS.status, isPk: false, exposure: 'read_write' as const, nullable: false },
+			{ fieldId: SEED_FIELD_IDS.created_at, isPk: false, exposure: 'read_write' as const, nullable: false },
+			{ fieldId: SEED_FIELD_IDS.updated_at, isPk: false, exposure: 'read_write' as const, nullable: true }
 		],
 		relationships: [],
 		validators: [],
@@ -510,9 +510,9 @@ export const initialObjects: ObjectDefinition[] = [
 		name: 'ProductCatalogItem',
 		description: 'Product catalog item in user namespace',
 		fields: [
-			{ fieldId: SEED_FIELD_IDS.product_name, optional: false, isPk: false, appears: 'both' as const },
-			{ fieldId: SEED_FIELD_IDS.quantity, optional: false, isPk: false, appears: 'both' as const },
-			{ fieldId: SEED_FIELD_IDS.product_price, optional: false, isPk: false, appears: 'both' as const }
+			{ fieldId: SEED_FIELD_IDS.product_name, isPk: false, exposure: 'read_write' as const, nullable: false },
+			{ fieldId: SEED_FIELD_IDS.quantity, isPk: false, exposure: 'read_write' as const, nullable: false },
+			{ fieldId: SEED_FIELD_IDS.product_price, isPk: false, exposure: 'read_write' as const, nullable: false }
 		],
 		relationships: [],
 		validators: [],

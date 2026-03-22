@@ -70,8 +70,8 @@
             <div class="flex items-center justify-between text-xs">
               <span class="font-mono text-mono-300">{field.name}</span>
               <div class="flex items-center space-x-2">
-                {#if fieldRef.appears !== 'both'}
-                  <span class="text-mono-500 text-[10px] uppercase">{fieldRef.appears}</span>
+                {#if fieldRef.exposure !== 'read_write'}
+                  <span class="text-mono-500 text-[10px] uppercase">{fieldRef.exposure.replace('_', ' ')}</span>
                 {/if}
                 <span class="text-mono-400 bg-mono-800 px-1.5 py-0.5 rounded">{field.type}</span>
               </div>

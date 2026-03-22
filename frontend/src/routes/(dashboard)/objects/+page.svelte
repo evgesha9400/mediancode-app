@@ -141,7 +141,7 @@
       if (workflow.editedItem) {
         workflow.editedItem = {
           ...workflow.editedItem,
-          fields: [...workflow.editedItem.fields, { fieldId: field.id, optional: false, isPk: false, appears: 'both' as const }]
+          fields: [...workflow.editedItem.fields, { fieldId: field.id, isPk: false, exposure: 'read_write' as const, nullable: false }]
         };
       }
 

@@ -14,26 +14,26 @@ import type { ResponseShape, ObjectDefinition, Field } from '$lib/types';
 
 import { initialObjects, SEED_OBJECT_IDS } from '../../../fixtures/seedData';
 
-// Test object with mixed appears values
-const APPEARS_TEST_OBJECT_ID = 'test-appears-obj';
+// Test object with mixed exposure values
+const EXPOSURE_TEST_OBJECT_ID = 'test-exposure-obj';
 const testFieldId = (name: string) => `test-field-${name}`;
 
-const appearsTestFields: Field[] = [
+const exposureTestFields: Field[] = [
 	{ id: testFieldId('id'), namespaceId: 'ns-1', name: 'id', type: 'uuid', container: null, constraints: [], validators: [], usedInApis: [] },
 	{ id: testFieldId('name'), namespaceId: 'ns-1', name: 'name', type: 'str', container: null, constraints: [], validators: [], usedInApis: [] },
 	{ id: testFieldId('password'), namespaceId: 'ns-1', name: 'password', type: 'str', container: null, constraints: [], validators: [], usedInApis: [] },
 	{ id: testFieldId('created_at'), namespaceId: 'ns-1', name: 'created_at', type: 'datetime', container: null, constraints: [], validators: [], usedInApis: [] },
 ];
 
-const appearsTestObject: ObjectDefinition = {
-	id: APPEARS_TEST_OBJECT_ID,
+const exposureTestObject: ObjectDefinition = {
+	id: EXPOSURE_TEST_OBJECT_ID,
 	namespaceId: 'ns-1',
 	name: 'TestObj',
 	fields: [
-		{ fieldId: testFieldId('id'), optional: false, isPk: true, appears: 'response' },
-		{ fieldId: testFieldId('name'), optional: false, isPk: false, appears: 'both' },
-		{ fieldId: testFieldId('password'), optional: false, isPk: false, appears: 'request' },
-		{ fieldId: testFieldId('created_at'), optional: false, isPk: false, appears: 'response' },
+		{ fieldId: testFieldId('id'), isPk: true, exposure: 'read_only', nullable: false },
+		{ fieldId: testFieldId('name'), isPk: false, exposure: 'read_write', nullable: false },
+		{ fieldId: testFieldId('password'), isPk: false, exposure: 'write_only', nullable: false },
+		{ fieldId: testFieldId('created_at'), isPk: false, exposure: 'read_only', nullable: false },
 	],
 	relationships: [],
 	validators: [],
@@ -192,29 +192,29 @@ describe('examples - buildResponsePreviewFromObject', () => {
 	});
 });
 
-describe('examples - buildRequestBodyFromObjectId (appears flag)', () => {
+describe('examples - buildRequestBodyFromObjectId (exposure flag)', () => {
 	beforeEach(() => {
-		fieldsStore.set([...initialFields, ...appearsTestFields]);
-		objectsStore.set([...(initialObjects as any), appearsTestObject]);
+		fieldsStore.set([...initialFields, ...exposureTestFields]);
+		objectsStore.set([...(initialObjects as any), exposureTestObject]);
 	});
 
 	it('should exclude PK fields from request preview', () => {
-		const obj = buildRequestBodyFromObjectId(APPEARS_TEST_OBJECT_ID);
+		const obj = buildRequestBodyFromObjectId(EXPOSURE_TEST_OBJECT_ID);
 		expect(obj).not.toHaveProperty('id');
 	});
 
-	it('should exclude response-only fields from request preview', () => {
-		const obj = buildRequestBodyFromObjectId(APPEARS_TEST_OBJECT_ID);
+	it('should exclude read-only fields from request preview', () => {
+		const obj = buildRequestBodyFromObjectId(EXPOSURE_TEST_OBJECT_ID);
 		expect(obj).not.toHaveProperty('created_at');
 	});
 
-	it('should include request-only fields in request preview', () => {
-		const obj = buildRequestBodyFromObjectId(APPEARS_TEST_OBJECT_ID);
+	it('should include write-only fields in request preview', () => {
+		const obj = buildRequestBodyFromObjectId(EXPOSURE_TEST_OBJECT_ID);
 		expect(obj).toHaveProperty('password');
 	});
 
-	it('should include both fields in request preview', () => {
-		const obj = buildRequestBodyFromObjectId(APPEARS_TEST_OBJECT_ID);
+	it('should include read/write fields in request preview', () => {
+		const obj = buildRequestBodyFromObjectId(EXPOSURE_TEST_OBJECT_ID);
 		expect(obj).toHaveProperty('name');
 	});
 
@@ -223,25 +223,25 @@ describe('examples - buildRequestBodyFromObjectId (appears flag)', () => {
 	});
 });
 
-describe('examples - buildResponseBodyFromObjectId (appears flag)', () => {
+describe('examples - buildResponseBodyFromObjectId (exposure flag)', () => {
 	beforeEach(() => {
-		fieldsStore.set([...initialFields, ...appearsTestFields]);
-		objectsStore.set([...(initialObjects as any), appearsTestObject]);
+		fieldsStore.set([...initialFields, ...exposureTestFields]);
+		objectsStore.set([...(initialObjects as any), exposureTestObject]);
 	});
 
-	it('should exclude request-only fields from response preview', () => {
-		const obj = buildResponseBodyFromObjectId(APPEARS_TEST_OBJECT_ID);
+	it('should exclude write-only fields from response preview', () => {
+		const obj = buildResponseBodyFromObjectId(EXPOSURE_TEST_OBJECT_ID);
 		expect(obj).not.toHaveProperty('password');
 	});
 
-	it('should include response-only fields in response preview', () => {
-		const obj = buildResponseBodyFromObjectId(APPEARS_TEST_OBJECT_ID);
+	it('should include read-only fields in response preview', () => {
+		const obj = buildResponseBodyFromObjectId(EXPOSURE_TEST_OBJECT_ID);
 		expect(obj).toHaveProperty('id');
 		expect(obj).toHaveProperty('created_at');
 	});
 
-	it('should include both fields in response preview', () => {
-		const obj = buildResponseBodyFromObjectId(APPEARS_TEST_OBJECT_ID);
+	it('should include read/write fields in response preview', () => {
+		const obj = buildResponseBodyFromObjectId(EXPOSURE_TEST_OBJECT_ID);
 		expect(obj).toHaveProperty('name');
 	});
 

@@ -182,23 +182,20 @@ export function createObjectsModel(config: ObjectsModelConfig): ObjectsModelStat
       errors.name = 'Must be PascalCase (e.g. UserEmail)';
     }
 
-    // Validate server defaults on response-only required non-PK fields.
-    // Note: The spec also requires config.database.enabled == true, but the
-    // frontend enforces this unconditionally because (a) the object editor
-    // doesn't know the generation config, and (b) it's harmless to require
-    // a server default even in non-database mode — the value is simply ignored.
+    // Validate value source on read-only non-PK fields.
+    // Read-only fields must specify how the database generates their value.
     for (const fieldRef of item.fields) {
-      if (fieldRef.appears === 'response' && !fieldRef.optional && !fieldRef.isPk) {
-        if (!fieldRef.serverDefault) {
+      if (fieldRef.exposure === 'read_only' && !fieldRef.isPk) {
+        if (!fieldRef.default) {
           const field = getFieldById(fieldRef.fieldId);
           const fieldName = field?.name ?? fieldRef.fieldId;
-          errors[`field_${fieldRef.fieldId}_serverDefault`] =
-            `Field "${fieldName}" is response-only and requires a server default`;
-        } else if (fieldRef.serverDefault === 'literal' && !fieldRef.defaultLiteral) {
+          errors[`field_${fieldRef.fieldId}_default`] =
+            `Read-only field "${fieldName}" must have a value source (generated or literal default)`;
+        } else if (fieldRef.default.kind === 'literal' && !fieldRef.default.value) {
           const field = getFieldById(fieldRef.fieldId);
           const fieldName = field?.name ?? fieldRef.fieldId;
-          errors[`field_${fieldRef.fieldId}_defaultLiteral`] =
-            `Field "${fieldName}" has literal default but no value set`;
+          errors[`field_${fieldRef.fieldId}_defaultValue`] =
+            `Read-only field "${fieldName}" has literal default but no value set`;
         }
       }
     }

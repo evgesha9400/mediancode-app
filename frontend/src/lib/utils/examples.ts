@@ -58,8 +58,8 @@ export function buildObjectFromObjectId(objectId: string | undefined, objects?: 
 }
 
 /**
- * Build request body preview object, filtering by `appears` flag.
- * Excludes PK fields and response-only fields.
+ * Build request body preview object, filtering by `exposure` flag.
+ * Excludes PK fields and read-only fields.
  */
 export function buildRequestBodyFromObjectId(objectId: string | undefined, objects?: any[]): Record<string, any> {
 	if (!objectId) return {};
@@ -68,7 +68,7 @@ export function buildRequestBodyFromObjectId(objectId: string | undefined, objec
 
 	const obj: Record<string, any> = {};
 	objectDef.fields
-		.filter(fieldRef => !fieldRef.isPk && fieldRef.appears !== 'response')
+		.filter(fieldRef => !fieldRef.isPk && fieldRef.exposure !== 'read_only')
 		.forEach(fieldRef => {
 			const field = getFieldById(fieldRef.fieldId);
 			if (field) obj[field.name] = getExampleValueForType(field.type);
@@ -77,8 +77,8 @@ export function buildRequestBodyFromObjectId(objectId: string | undefined, objec
 }
 
 /**
- * Build response body preview object, filtering by `appears` flag.
- * Excludes request-only fields.
+ * Build response body preview object, filtering by `exposure` flag.
+ * Excludes write-only fields.
  */
 export function buildResponseBodyFromObjectId(objectId: string | undefined, objects?: any[]): Record<string, any> {
 	if (!objectId) return {};
@@ -87,7 +87,7 @@ export function buildResponseBodyFromObjectId(objectId: string | undefined, obje
 
 	const obj: Record<string, any> = {};
 	objectDef.fields
-		.filter(fieldRef => fieldRef.appears !== 'request')
+		.filter(fieldRef => fieldRef.exposure !== 'write_only')
 		.forEach(fieldRef => {
 			const field = getFieldById(fieldRef.fieldId);
 			if (field) obj[field.name] = getExampleValueForType(field.type);

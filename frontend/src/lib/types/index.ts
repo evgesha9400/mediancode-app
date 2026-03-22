@@ -187,17 +187,26 @@ export interface ApiEndpoint {
 }
 
 // Object Builder types
-export type FieldAppearance = 'both' | 'request' | 'response';
+export type FieldExposure = 'read_write' | 'write_only' | 'read_only';
 
-export type ServerDefault = 'uuid4' | 'now' | 'now_on_update' | 'auto_increment' | 'literal';
+export interface FieldDefaultLiteral {
+  kind: 'literal';
+  value: string;
+}
+
+export interface FieldDefaultGenerated {
+  kind: 'generated';
+  strategy: 'uuid4' | 'now' | 'now_on_update' | 'auto_increment';
+}
+
+export type FieldDefault = FieldDefaultLiteral | FieldDefaultGenerated;
 
 export interface ObjectFieldReference {
   fieldId: string;
-  optional: boolean;
   isPk: boolean;
-  appears: FieldAppearance;
-  serverDefault?: ServerDefault;
-  defaultLiteral?: string;
+  exposure: FieldExposure;
+  nullable: boolean;
+  default?: FieldDefault | null;
 }
 
 export type Cardinality = 'has_one' | 'has_many' | 'references' | 'many_to_many';

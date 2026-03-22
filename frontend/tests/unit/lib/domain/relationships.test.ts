@@ -15,7 +15,7 @@ function makeRelationship(overrides: Partial<ObjectRelationship> = {}): ObjectRe
 }
 
 function makeFieldRef(fieldId: string): ObjectFieldReference {
-	return { fieldId, optional: false, isPk: false, appears: 'both' };
+	return { fieldId, isPk: false, exposure: 'read_write', nullable: false };
 }
 
 const fieldLookup = (fieldId: string) => {
