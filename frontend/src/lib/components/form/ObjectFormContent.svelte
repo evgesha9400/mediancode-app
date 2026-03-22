@@ -216,6 +216,11 @@
     bool: [{ value: 'literal', label: 'Literal value' }],
   };
 
+  // Flat strategy → label map derived from VALUE_SOURCE_OPTIONS
+  const STRATEGY_LABELS: Record<string, string> = Object.fromEntries(
+    Object.values(VALUE_SOURCE_OPTIONS).flat().map(opt => [opt.value, opt.label])
+  );
+
   function getValueSourceOptions(fieldId: string): ValueSourceOption[] {
     const field = getFieldById(fieldId);
     if (!field) return [];
@@ -250,7 +255,8 @@
 
   function setDefaultLiteralValue(fieldId: string, value: string) {
     const newFields = editedItem.fields.map(f => {
-      if (f.fieldId === fieldId && f.default?.kind === 'literal') {
+      if (f.fieldId !== fieldId) return f;
+      if (f.default?.kind === 'literal' || !f.default) {
         return { ...f, default: { kind: 'literal' as const, value } };
       }
       return f;
@@ -480,25 +486,43 @@
                   <!-- Value Source (shown for read_only non-PK fields) -->
                   {#if needsValueSource(item)}
                     {@const options = getValueSourceOptions(item.fieldId)}
-                    <select
-                      class="bg-mono-800 border border-mono-700 text-mono-300 text-xs rounded px-1.5 py-0.5 focus:ring-1 focus:ring-green-400 focus:border-transparent {!item.default ? 'border-red-700 text-red-400' : ''}"
-                      value={getValueSourceValue(item.default)}
-                      onchange={(e) => setValueSource(item.fieldId, e.currentTarget.value)}
-                    >
-                      <option value="">Value source...</option>
-                      {#each options as opt}
-                        <option value={opt.value}>{opt.label}</option>
-                      {/each}
-                    </select>
-                    {#if item.default?.kind === 'literal'}
+                    {#if options.length === 1 && options[0].value === 'literal'}
+                      <!-- Single-option: skip the dropdown, show the input directly -->
                       <input
                         type="text"
-                        class="bg-mono-800 border border-mono-700 text-mono-300 text-xs rounded px-1.5 py-0.5 w-20 focus:ring-1 focus:ring-green-400 focus:border-transparent {!item.default.value ? 'border-red-700' : ''}"
-                        placeholder="value"
-                        value={item.default.value}
+                        class="bg-mono-800 border border-mono-700 text-mono-300 text-xs rounded px-1.5 py-0.5 w-20 focus:ring-1 focus:ring-green-400 focus:border-transparent {!(item.default?.kind === 'literal' && item.default.value) ? 'border-red-700' : ''}"
+                        placeholder="Default value"
+                        value={item.default?.kind === 'literal' ? item.default.value : ''}
                         oninput={(e) => setDefaultLiteralValue(item.fieldId, e.currentTarget.value)}
                       />
+                    {:else}
+                      <select
+                        class="bg-mono-800 border border-mono-700 text-mono-300 text-xs rounded px-1.5 py-0.5 focus:ring-1 focus:ring-green-400 focus:border-transparent {!item.default ? 'border-red-700 text-red-400' : ''}"
+                        value={getValueSourceValue(item.default)}
+                        onchange={(e) => setValueSource(item.fieldId, e.currentTarget.value)}
+                      >
+                        <option value="">Value source...</option>
+                        {#each options as opt}
+                          <option value={opt.value}>{opt.label}</option>
+                        {/each}
+                      </select>
+                      {#if item.default?.kind === 'literal'}
+                        <input
+                          type="text"
+                          class="bg-mono-800 border border-mono-700 text-mono-300 text-xs rounded px-1.5 py-0.5 w-20 focus:ring-1 focus:ring-green-400 focus:border-transparent {!item.default.value ? 'border-red-700' : ''}"
+                          placeholder="value"
+                          value={item.default.value}
+                          oninput={(e) => setDefaultLiteralValue(item.fieldId, e.currentTarget.value)}
+                        />
+                      {/if}
                     {/if}
+                  {/if}
+
+                  <!-- Generation strategy badge (shown for PK fields) -->
+                  {#if item.isPk && item.default?.kind === 'generated'}
+                    <span class="text-xs text-mono-400 bg-mono-800 px-1.5 py-0.5 rounded">
+                      {STRATEGY_LABELS[item.default.strategy] ?? item.default.strategy}
+                    </span>
                   {/if}
 
                   <!-- PK Toggle (shown for read_only int/uuid fields) -->
