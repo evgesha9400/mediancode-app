@@ -48,6 +48,12 @@
   // Derive selected field IDs for the FieldSelectorDropdown
   let selectedFieldIds = $derived(editedItem.fields.map(f => f.fieldId));
 
+  // Exclude FK fields from the dropdown — they are auto-managed by relationships
+  let fkFieldIds = $derived(
+    new Set($objectsStore.flatMap(o => o.fields.filter(f => f.role === 'fk').map(f => f.fieldId)))
+  );
+  let selectableFields = $derived(availableFields.filter(f => !fkFieldIds.has(f.id)));
+
   // --- Drag-and-drop field reordering ---
   type DndItem = ObjectFieldReference & { id: string };
 
@@ -330,7 +336,7 @@
     <div class="space-y-2">
       <!-- Field Selector Dropdown -->
       <FieldSelectorDropdown
-        {availableFields}
+        availableFields={selectableFields}
         {selectedFieldIds}
         onSelect={addField}
         onCreateNew={onCreateNewField}
@@ -352,37 +358,55 @@
           {#each dndItems as item (item.id)}
             {@const field = getFieldById(item.fieldId)}
             {@const availableRoles = field ? getAvailableRoles(field.type) : []}
+            {@const isFk = item.role === 'fk'}
             <div animate:flip={{ duration: 150 }}>
             {#if field}
               {@const inputCfg = defaultInputType(field.type)}
-              {@const modifierClass = roleHasModifiers(item.role) ? '' : 'invisible pointer-events-none'}
-              <div class="p-2 bg-mono-900 rounded border border-mono-700 space-y-1.5">
+              {@const modifierClass = roleHasModifiers(item.role) && !isFk ? '' : 'invisible pointer-events-none'}
+              <div class="p-2 bg-mono-900 rounded border {isFk ? 'border-mono-600' : 'border-mono-700'} space-y-1.5">
                 <div class="flex items-center space-x-2">
-                  <!-- Drag Handle -->
-                  <div use:dragHandle class="text-mono-600 hover:text-mono-400 cursor-grab">
-                    <i class="fa-solid fa-grip-vertical text-xs"></i>
-                  </div>
+                  <!-- Drag Handle / FK Icon -->
+                  {#if isFk}
+                    <div class="text-mono-500" title="Auto-managed foreign key">
+                      <i class="fa-solid fa-key text-xs"></i>
+                    </div>
+                  {:else}
+                    <div use:dragHandle class="text-mono-600 hover:text-mono-400 cursor-grab">
+                      <i class="fa-solid fa-grip-vertical text-xs"></i>
+                    </div>
+                  {/if}
 
                   <!-- Field Name and Type -->
-                  <span class="font-mono text-sm text-mono-300">{field.name}</span>
+                  <span class="font-mono text-sm {isFk ? 'text-mono-400' : 'text-mono-300'}">{field.name}</span>
                   <span class="text-xs text-mono-400 bg-mono-800 px-2 py-0.5 rounded">{field.type}</span>
 
                   <div class="flex-1"></div>
 
-                  <!-- Role Selector -->
-                  <select
-                    class="w-40 shrink-0 bg-mono-800 border border-mono-700 text-mono-300 text-xs rounded px-1.5 py-0.5 focus:ring-1 focus:ring-green-400 focus:border-transparent"
-                    value={item.role}
-                    onchange={(e) => setFieldRole(item.fieldId, e.currentTarget.value as FieldRole)}
-                    title={ROLE_TOOLTIPS[item.role]}
-                  >
-                    {#each availableRoles as role}
-                      <option value={role}>{ROLE_LABELS[role]}</option>
-                    {/each}
-                  </select>
+                  <!-- Role Selector / FK Badge -->
+                  {#if isFk}
+                    <span
+                      class="w-40 shrink-0 text-xs text-mono-400 bg-mono-800 border border-mono-600 rounded px-1.5 py-0.5 text-center"
+                      title={ROLE_TOOLTIPS.fk}
+                    >
+                      <i class="fa-solid fa-link text-mono-500 mr-1"></i>Foreign Key
+                    </span>
+                  {:else}
+                    <select
+                      class="w-40 shrink-0 bg-mono-800 border border-mono-700 text-mono-300 text-xs rounded px-1.5 py-0.5 focus:ring-1 focus:ring-green-400 focus:border-transparent"
+                      value={item.role}
+                      onchange={(e) => setFieldRole(item.fieldId, e.currentTarget.value as FieldRole)}
+                      title={ROLE_TOOLTIPS[item.role]}
+                    >
+                      {#each availableRoles as role}
+                        <option value={role}>{ROLE_LABELS[role]}</option>
+                      {/each}
+                    </select>
+                  {/if}
 
-                  <!-- Default Value Input — type-aware; always rendered for consistent row width; hidden for non-modifier roles -->
-                  {#if inputCfg.isBool}
+                  <!-- Default Value Input — hidden for FK fields (no defaults); type-aware for other roles -->
+                  {#if isFk}
+                    <div class="w-28 shrink-0"></div>
+                  {:else if inputCfg.isBool}
                     <select
                       class="bg-mono-800 border border-mono-700 text-mono-300 text-xs rounded px-1.5 py-0.5 w-28 shrink-0 focus:ring-1 focus:ring-green-400 focus:border-transparent {modifierClass}"
                       value={item.defaultValue ?? ''}
@@ -405,7 +429,7 @@
                     />
                   {/if}
 
-                  <!-- Optional Toggle — always rendered for consistent row width; hidden for non-modifier roles -->
+                  <!-- Optional Toggle — enabled for FK fields (nullable is user-controllable) -->
                   <button
                     type="button"
                     onclick={() => toggleFieldOptional(item.fieldId)}
@@ -416,15 +440,19 @@
                     optional
                   </button>
 
-                  <!-- Delete Button -->
-                  <button
-                    type="button"
-                    onclick={() => removeField(item.fieldId)}
-                    class="text-red-700 hover:text-red-600 transition-colors"
-                    title="Remove field"
-                  >
-                    <i class="fa-solid fa-xmark"></i>
-                  </button>
+                  <!-- Delete Button — hidden for FK fields (lifecycle managed by relationship) -->
+                  {#if isFk}
+                    <div class="w-[24px] shrink-0"></div>
+                  {:else}
+                    <button
+                      type="button"
+                      onclick={() => removeField(item.fieldId)}
+                      class="text-red-700 hover:text-red-600 transition-colors"
+                      title="Remove field"
+                    >
+                      <i class="fa-solid fa-xmark"></i>
+                    </button>
+                  {/if}
                 </div>
 
                 <!-- Inline validation errors -->

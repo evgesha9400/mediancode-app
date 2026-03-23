@@ -83,13 +83,15 @@ export function buildRequestBodyFromObjectId(objectId: string | undefined, objec
 
 	const obj: Record<string, any> = {};
 	objectDef.fields
-		.filter(fieldRef => fieldRef.role === 'writable' || fieldRef.role === 'write_only')
+		.filter(fieldRef => fieldRef.role === 'writable' || fieldRef.role === 'write_only' || fieldRef.role === 'fk')
 		.forEach(fieldRef => {
 			const field = getFieldById(fieldRef.fieldId);
 			if (field) obj[field.name] = getExampleValueForType(field.type);
 		});
 
-	// Add FK ID fields for `references` relationships (needed in create/update requests)
+	// TODO: Remove in Phase 2 when all data is migrated — FK fields now exist as real
+	// fields with role 'fk', so the dedup guard (fkName in obj) prevents double entries.
+	// This block handles legacy data where FK fields may not yet exist.
 	if (objectDef.relationships) {
 		objectDef.relationships
 			.filter(rel => rel.cardinality === 'references')
@@ -121,7 +123,9 @@ export function buildResponseBodyFromObjectId(objectId: string | undefined, obje
 			if (field) obj[field.name] = getExampleValueForType(field.type);
 		});
 
-	// Add FK ID fields for `references` relationships
+	// TODO: Remove in Phase 2 when all data is migrated — FK fields now exist as real
+	// fields with role 'fk', so the dedup guard (fkName in obj) prevents double entries.
+	// This block handles legacy data where FK fields may not yet exist.
 	if (objectDef.relationships) {
 		objectDef.relationships
 			.filter(rel => rel.cardinality === 'references')
