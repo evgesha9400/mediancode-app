@@ -92,7 +92,7 @@ export function buildRequestBodyFromObjectId(objectId: string | undefined, objec
 	// Add FK ID fields for `references` relationships (needed in create/update requests)
 	if (objectDef.relationships) {
 		objectDef.relationships
-			.filter(rel => rel.cardinality === 'references' && !rel.isInferred)
+			.filter(rel => rel.cardinality === 'references')
 			.forEach(rel => {
 				const fkName = rel.name + '_id';
 				if (!(fkName in obj)) {
@@ -124,7 +124,7 @@ export function buildResponseBodyFromObjectId(objectId: string | undefined, obje
 	// Add FK ID fields for `references` relationships
 	if (objectDef.relationships) {
 		objectDef.relationships
-			.filter(rel => rel.cardinality === 'references' && !rel.isInferred)
+			.filter(rel => rel.cardinality === 'references')
 			.forEach(rel => {
 				const fkName = rel.name + '_id';
 				if (!(fkName in obj)) {
