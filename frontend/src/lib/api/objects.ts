@@ -29,6 +29,7 @@ interface ObjectRelationshipResponse {
 	cardinality: string;
 	isInferred: boolean;
 	inverseId: string | null;
+	fkFieldId: string | null;
 }
 
 /**
@@ -78,7 +79,8 @@ function transformRelationship(response: ObjectRelationshipResponse): ObjectRela
 		name: response.name,
 		cardinality: response.cardinality as Cardinality,
 		isInferred: response.isInferred,
-		inverseId: response.inverseId ?? undefined
+		inverseId: response.inverseId ?? undefined,
+		fkFieldId: response.fkFieldId ?? undefined
 	};
 }
 
