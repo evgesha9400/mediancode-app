@@ -370,3 +370,10 @@ export interface ModelValidatorTemplate {
   fieldMappings: FieldMappingDefinition[];
   bodyTemplate: string;
 }
+
+/** Result of a graph mutation (relationship create/delete) with all side effects */
+export interface GraphMutationResult {
+  updatedObjects: ObjectDefinition[];
+  createdFields: Field[];
+  deletedFieldIds: string[];
+}
