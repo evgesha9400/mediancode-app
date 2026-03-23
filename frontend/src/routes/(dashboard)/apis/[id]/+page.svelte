@@ -886,10 +886,10 @@
         ? [{ id: 'endpoint', title: apiState.isCreating ? 'Create Endpoint' : 'Edit Endpoint', width: 1200, minWidth: 700, content: endpointFormContent, footer: endpointFormFooter }]
         : []),
       ...(objectCreateOpen
-        ? [{ id: 'object', title: 'Create Object', width: 720, minWidth: 500, content: objectFormContent, footer: objectFormFooter }]
+        ? [{ id: 'object', title: 'Create Object', width: 800, minWidth: 500, content: objectFormContent, footer: objectFormFooter }]
         : []),
       ...(fieldCreateOpen
-        ? [{ id: 'field', title: 'Create Field', width: 720, minWidth: 500, content: fieldFormContent, footer: fieldFormFooter }]
+        ? [{ id: 'field', title: 'Create Field', width: 800, minWidth: 500, content: fieldFormContent, footer: fieldFormFooter }]
         : [])
     ]}
     onPopPanel={() => {

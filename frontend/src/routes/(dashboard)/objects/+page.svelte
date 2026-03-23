@@ -331,7 +331,7 @@
         {
           id: 'object',
           title: workflow.mode === 'creating' ? 'Create Object' : 'Edit Object',
-          width: 720,
+          width: 800,
           minWidth: 500,
           content: objectFormContent,
           footer: objectFormFooter
@@ -340,7 +340,7 @@
           ? [{
               id: 'field',
               title: 'Create Field',
-              width: 720,
+              width: 800,
               minWidth: 500,
               content: fieldFormContent,
               footer: fieldFormFooter

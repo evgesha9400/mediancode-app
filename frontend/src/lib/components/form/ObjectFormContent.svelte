@@ -138,6 +138,20 @@
     editedItem = { ...editedItem, fields: newFields };
   }
 
+  /** Map a field type name to the appropriate HTML input type for the default value input. */
+  function defaultInputType(fieldType: string): { inputType: string; step?: string; isBool: boolean } {
+    switch (fieldType) {
+      case 'int':      return { inputType: 'number', step: '1', isBool: false };
+      case 'float':    return { inputType: 'number', step: 'any', isBool: false };
+      case 'bool':     return { inputType: 'text', isBool: true };
+      case 'datetime': return { inputType: 'datetime-local', isBool: false };
+      case 'date':     return { inputType: 'date', isBool: false };
+      case 'time':     return { inputType: 'time', isBool: false };
+      case 'EmailStr': return { inputType: 'email', isBool: false };
+      default:         return { inputType: 'text', isBool: false }; // str, uuid, etc.
+    }
+  }
+
   /** Set literal default value (empty string -> null) */
   function setFieldDefaultValue(fieldId: string, value: string) {
     const newFields = editedItem.fields.map(f => {
@@ -340,6 +354,8 @@
             {@const availableRoles = field ? getAvailableRoles(field.type) : []}
             <div animate:flip={{ duration: 150 }}>
             {#if field}
+              {@const inputCfg = defaultInputType(field.type)}
+              {@const modifierClass = roleHasModifiers(item.role) ? '' : 'invisible pointer-events-none'}
               <div class="p-2 bg-mono-900 rounded border border-mono-700 space-y-1.5">
                 <div class="flex items-center space-x-2">
                   <!-- Drag Handle -->
@@ -355,7 +371,7 @@
 
                   <!-- Role Selector -->
                   <select
-                    class="bg-mono-800 border border-mono-700 text-mono-300 text-xs rounded px-1.5 py-0.5 focus:ring-1 focus:ring-green-400 focus:border-transparent"
+                    class="w-40 shrink-0 bg-mono-800 border border-mono-700 text-mono-300 text-xs rounded px-1.5 py-0.5 focus:ring-1 focus:ring-green-400 focus:border-transparent"
                     value={item.role}
                     onchange={(e) => setFieldRole(item.fieldId, e.currentTarget.value as FieldRole)}
                     title={ROLE_TOOLTIPS[item.role]}
@@ -365,29 +381,40 @@
                     {/each}
                   </select>
 
-                  <!-- Nullable Checkbox (only for writable, write_only, read_only roles) -->
-                  {#if roleHasModifiers(item.role)}
-                    <label class="flex items-center space-x-1.5 cursor-pointer" title="Allow null values">
-                      <input
-                        type="checkbox"
-                        checked={item.nullable}
-                        onchange={() => toggleFieldNullable(item.fieldId)}
-                        class="h-3.5 w-3.5 border-mono-600 rounded text-green-400 focus:ring-2 focus:ring-green-400"
-                      />
-                      <span class="text-xs text-mono-400 whitespace-nowrap">Nullable</span>
-                    </label>
-                  {/if}
-
-                  <!-- Default Value Input (only for writable, write_only, read_only roles) -->
-                  {#if roleHasModifiers(item.role)}
+                  <!-- Default Value Input — type-aware; always rendered for consistent row width; hidden for non-modifier roles -->
+                  {#if inputCfg.isBool}
+                    <select
+                      class="bg-mono-800 border border-mono-700 text-mono-300 text-xs rounded px-1.5 py-0.5 w-28 shrink-0 focus:ring-1 focus:ring-green-400 focus:border-transparent {modifierClass}"
+                      value={item.defaultValue ?? ''}
+                      onchange={(e) => setFieldDefaultValue(item.fieldId, e.currentTarget.value)}
+                      disabled={!roleHasModifiers(item.role)}
+                    >
+                      <option value="">— none —</option>
+                      <option value="true">true</option>
+                      <option value="false">false</option>
+                    </select>
+                  {:else}
                     <input
-                      type="text"
-                      class="bg-mono-800 border border-mono-700 text-mono-300 text-xs rounded px-1.5 py-0.5 w-24 focus:ring-1 focus:ring-green-400 focus:border-transparent"
-                      placeholder="Default value (optional)"
+                      type={inputCfg.inputType}
+                      step={inputCfg.step}
+                      class="bg-mono-800 border border-mono-700 text-mono-300 text-xs rounded px-1.5 py-0.5 w-28 shrink-0 focus:ring-1 focus:ring-green-400 focus:border-transparent {modifierClass}"
+                      placeholder="Default value"
                       value={item.defaultValue ?? ''}
                       oninput={(e) => setFieldDefaultValue(item.fieldId, e.currentTarget.value)}
+                      disabled={!roleHasModifiers(item.role)}
                     />
                   {/if}
+
+                  <!-- Nullable Toggle — always rendered for consistent row width; hidden for non-modifier roles -->
+                  <button
+                    type="button"
+                    onclick={() => toggleFieldNullable(item.fieldId)}
+                    disabled={!roleHasModifiers(item.role)}
+                    title="Allow null values"
+                    class="shrink-0 text-xs px-2 py-0.5 rounded border transition-colors {roleHasModifiers(item.role) ? (item.nullable ? 'border-green-500 text-green-400 bg-green-400/10' : 'border-mono-600 text-mono-500 hover:border-mono-500 hover:text-mono-400') : 'invisible pointer-events-none border-mono-600 text-mono-500'}"
+                  >
+                    nullable
+                  </button>
 
                   <!-- Delete Button -->
                   <button
