@@ -182,31 +182,28 @@ export function createObjectsModel(config: ObjectsModelConfig): ObjectsModelStat
       errors.name = 'Must be PascalCase (e.g. UserEmail)';
     }
 
-    // Validate PK field types — only int and uuid are supported.
+    // Validate role–type compatibility per field
     for (const fieldRef of item.fields) {
-      if (fieldRef.isPk) {
-        const field = getFieldById(fieldRef.fieldId);
-        if (field && field.type !== 'int' && field.type !== 'uuid' && field.type !== 'uuid.UUID') {
-          errors[`field_${fieldRef.fieldId}_pk`] =
-            `Field "${field.name}" (${field.type}) cannot be a primary key — only int and uuid types are supported`;
-        }
-      }
-    }
+      const field = getFieldById(fieldRef.fieldId);
+      if (!field) continue;
 
-    // Validate value source on read-only non-PK fields.
-    // Read-only fields must specify how the database generates their value.
-    for (const fieldRef of item.fields) {
-      if (fieldRef.exposure === 'read_only' && !fieldRef.isPk) {
-        if (!fieldRef.default) {
-          const field = getFieldById(fieldRef.fieldId);
-          const fieldName = field?.name ?? fieldRef.fieldId;
-          errors[`field_${fieldRef.fieldId}_default`] =
-            `Read-only field "${fieldName}" must have a value source (generated or literal default)`;
-        } else if (fieldRef.default.kind === 'literal' && !fieldRef.default.value) {
-          const field = getFieldById(fieldRef.fieldId);
-          const fieldName = field?.name ?? fieldRef.fieldId;
-          errors[`field_${fieldRef.fieldId}_defaultValue`] =
-            `Read-only field "${fieldName}" has literal default but no value set`;
+      const fieldName = field.name;
+      const fieldType = field.type;
+
+      if (fieldRef.role === 'pk') {
+        if (fieldType !== 'int' && fieldType !== 'uuid' && fieldType !== 'uuid.UUID') {
+          errors[`field_${fieldRef.fieldId}_role`] =
+            `Field "${fieldName}" (${fieldType}) cannot be a primary key — only int and uuid types are supported`;
+        }
+      } else if (fieldRef.role === 'created_timestamp' || fieldRef.role === 'updated_timestamp') {
+        if (!['datetime', 'date', 'datetime.datetime', 'datetime.date'].includes(fieldType)) {
+          errors[`field_${fieldRef.fieldId}_role`] =
+            `Field "${fieldName}" (${fieldType}) cannot be a ${fieldRef.role === 'created_timestamp' ? 'created' : 'updated'} timestamp — only datetime and date types are supported`;
+        }
+      } else if (fieldRef.role === 'generated_uuid') {
+        if (fieldType !== 'uuid' && fieldType !== 'uuid.UUID') {
+          errors[`field_${fieldRef.fieldId}_role`] =
+            `Field "${fieldName}" (${fieldType}) cannot be a generated UUID — only uuid types are supported`;
         }
       }
     }

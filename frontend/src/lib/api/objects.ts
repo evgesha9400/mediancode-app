@@ -5,18 +5,17 @@
  */
 
 import { apiGet, apiPost, apiPut, apiDelete } from './client';
-import type { ObjectDefinition, ObjectFieldReference, ObjectRelationship, InlineModelValidator, FieldExposure, FieldDefault, FieldDefaultGenerated } from '$lib/types';
+import type { ObjectDefinition, ObjectFieldReference, ObjectRelationship, InlineModelValidator, FieldRole } from '$lib/types';
 import type { Cardinality } from '$lib/types';
 
 /**
- * Backend object field reference response
+ * Backend object field reference response (camelCase aliases from backend)
  */
 interface ObjectFieldReferenceResponse {
 	fieldId: string;
-	isPk: boolean;
-	exposure: string;
+	role: string;
 	nullable: boolean;
-	default: { kind: string; value?: string; strategy?: string } | null;
+	defaultValue?: string | null;
 }
 
 /**
@@ -60,20 +59,11 @@ interface ObjectResponse {
  * Transform backend field reference to frontend type
  */
 function transformFieldReference(response: ObjectFieldReferenceResponse): ObjectFieldReference {
-	let fieldDefault: FieldDefault | null = null;
-	if (response.default) {
-		if (response.default.kind === 'literal') {
-			fieldDefault = { kind: 'literal', value: response.default.value! };
-		} else if (response.default.kind === 'generated') {
-			fieldDefault = { kind: 'generated', strategy: response.default.strategy as FieldDefaultGenerated['strategy'] };
-		}
-	}
 	return {
 		fieldId: response.fieldId,
-		isPk: response.isPk ?? false,
-		exposure: (response.exposure as FieldExposure) ?? 'read_write',
+		role: (response.role as FieldRole) ?? 'writable',
 		nullable: response.nullable ?? false,
-		default: fieldDefault,
+		defaultValue: response.defaultValue ?? null,
 	};
 }
 

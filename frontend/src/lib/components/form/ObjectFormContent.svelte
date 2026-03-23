@@ -14,7 +14,8 @@
   import type { ObjectDefinition } from '$lib/stores/objects';
   import type { Field } from '$lib/stores/fields';
   import { getFieldById } from '$lib/stores/fields';
-  import type { ModelValidatorTemplate, InlineModelValidator, FieldExposure, FieldDefault, FieldDefaultGenerated, ObjectFieldReference, ObjectRelationship, Cardinality } from '$lib/types';
+  import type { ModelValidatorTemplate, InlineModelValidator, FieldRole, ObjectFieldReference, ObjectRelationship, Cardinality } from '$lib/types';
+  import { ROLE_LABELS, ROLE_TOOLTIPS, getAvailableRoles, roleHasModifiers } from '$lib/types';
   import {
     FormField,
     FormLabel,
@@ -33,8 +34,6 @@
   import { dragHandleZone, dragHandle } from 'svelte-dnd-action';
   import type { DndEvent } from 'svelte-dnd-action';
   import { flip } from 'svelte/animate';
-
-  const ALLOWED_PK_TYPES = new Set(['int', 'uuid']);
 
   let {
     editedItem = $bindable(),
@@ -66,10 +65,9 @@
   function toDomainFields(items: DndItem[]): ObjectFieldReference[] {
     return items.map(item => ({
       fieldId: item.fieldId,
-      isPk: item.isPk,
-      exposure: item.exposure,
+      role: item.role,
       nullable: item.nullable,
-      default: item.default,
+      defaultValue: item.defaultValue,
     }));
   }
 
@@ -93,7 +91,7 @@
   function addField(fieldId: string) {
     editedItem = {
       ...editedItem,
-      fields: [...editedItem.fields, { fieldId, isPk: false, exposure: 'read_write' as const, nullable: false }]
+      fields: [...editedItem.fields, { fieldId, role: 'writable' as const, nullable: false }]
     };
   }
 
@@ -104,164 +102,47 @@
     };
   }
 
+  /** Change a field's role — clear modifiers if switching to a non-modifier role */
+  function setFieldRole(fieldId: string, role: FieldRole) {
+    const newFields = editedItem.fields.map(f => {
+      if (f.fieldId !== fieldId) return f;
+      const base = { ...f, role };
+      if (!roleHasModifiers(role)) {
+        // Non-modifier roles: force nullable=false, clear defaultValue
+        return { ...base, nullable: false, defaultValue: null };
+      }
+      return base;
+    });
+    // Only one PK allowed — if setting to PK, clear PK on all other fields
+    if (role === 'pk') {
+      editedItem = {
+        ...editedItem,
+        fields: newFields.map(f =>
+          f.fieldId !== fieldId && f.role === 'pk'
+            ? { ...f, role: 'writable' as FieldRole, nullable: false }
+            : f
+        )
+      };
+    } else {
+      editedItem = { ...editedItem, fields: newFields };
+    }
+  }
+
+  /** Toggle nullable for a field (only for modifier roles) */
   function toggleFieldNullable(fieldId: string) {
     const newFields = editedItem.fields.map(f => {
       if (f.fieldId !== fieldId) return f;
-      if (f.isPk || f.default?.kind === 'generated') return f;
+      if (!roleHasModifiers(f.role)) return f;
       return { ...f, nullable: !f.nullable };
     });
     editedItem = { ...editedItem, fields: newFields };
   }
 
-  function toggleFieldPk(fieldId: string) {
-    const targetRef = editedItem.fields.find(f => f.fieldId === fieldId);
-    if (targetRef && !targetRef.isPk) {
-      const field = getFieldById(fieldId);
-      if (field && !ALLOWED_PK_TYPES.has(field.type)) {
-        showToast(
-          `Cannot set '${field.name}' as primary key — only int and uuid types are supported`,
-          'error'
-        );
-        return;
-      }
-    }
-    const newFields = editedItem.fields.map(f => {
-      if (f.fieldId === fieldId) {
-        const newIsPk = !f.isPk;
-        if (newIsPk) {
-          // Auto-select strategy based on field type
-          const field = getFieldById(fieldId);
-          const autoStrategy = field?.type === 'uuid' || field?.type === 'uuid.UUID'
-            ? 'uuid4' as const
-            : 'auto_increment' as const;
-          return {
-            ...f,
-            isPk: true,
-            exposure: 'read_only' as const,
-            nullable: false,
-            default: { kind: 'generated' as const, strategy: autoStrategy },
-          };
-        }
-        // Toggling PK off: clear auto-selected strategy
-        return {
-          ...f,
-          isPk: false,
-          default: null,
-        };
-      }
-      // Only one PK allowed — clear isPk on all other fields
-      return { ...f, isPk: false };
-    });
-    editedItem = { ...editedItem, fields: newFields };
-  }
-
-  function setFieldExposure(fieldId: string, value: FieldExposure) {
-    const fieldRef = editedItem.fields.find(f => f.fieldId === fieldId);
-    if (!fieldRef || fieldRef.isPk) return;
+  /** Set literal default value (empty string -> null) */
+  function setFieldDefaultValue(fieldId: string, value: string) {
     const newFields = editedItem.fields.map(f => {
       if (f.fieldId !== fieldId) return f;
-      const updated: ObjectFieldReference = {
-        ...f,
-        exposure: value,
-        isPk: value !== 'read_only' ? false : f.isPk,
-        nullable: value === 'read_only' ? false : f.nullable,
-        // Clear default when switching away from read_only
-        default: value !== 'read_only' ? null : f.default,
-      };
-      // Auto-select first value source when switching to read_only
-      if (value === 'read_only' && !updated.isPk && !updated.default) {
-        const options = getValueSourceOptions(fieldId);
-        if (options.length > 0) {
-          const opt = options[0];
-          updated.default = opt.value === 'literal'
-            ? { kind: 'literal', value: '' }
-            : { kind: 'generated', strategy: opt.value as FieldDefaultGenerated['strategy'] };
-        }
-      }
-      return updated;
-    });
-    editedItem = { ...editedItem, fields: newFields };
-  }
-
-  // --- Value source helpers (replaces server default helpers) ---
-  type ValueSourceOption = { value: string; label: string };
-
-  const VALUE_SOURCE_OPTIONS: Record<string, ValueSourceOption[]> = {
-    uuid: [{ value: 'uuid4', label: 'UUID v4' }],
-    'uuid.UUID': [{ value: 'uuid4', label: 'UUID v4' }],
-    datetime: [
-      { value: 'now', label: 'Now' },
-      { value: 'now_on_update', label: 'Now (+ on update)' }
-    ],
-    'datetime.datetime': [
-      { value: 'now', label: 'Now' },
-      { value: 'now_on_update', label: 'Now (+ on update)' }
-    ],
-    date: [
-      { value: 'now', label: 'Now' },
-      { value: 'now_on_update', label: 'Now (+ on update)' }
-    ],
-    'datetime.date': [
-      { value: 'now', label: 'Now' },
-      { value: 'now_on_update', label: 'Now (+ on update)' }
-    ],
-    int: [{ value: 'literal', label: 'Literal value' }],
-    str: [{ value: 'literal', label: 'Literal value' }],
-    EmailStr: [{ value: 'literal', label: 'Literal value' }],
-    HttpUrl: [{ value: 'literal', label: 'Literal value' }],
-    float: [{ value: 'literal', label: 'Literal value' }],
-    decimal: [{ value: 'literal', label: 'Literal value' }],
-    'decimal.Decimal': [{ value: 'literal', label: 'Literal value' }],
-    bool: [{ value: 'literal', label: 'Literal value' }],
-  };
-
-  // All strategy → label mappings (includes PK-only strategies not in VALUE_SOURCE_OPTIONS)
-  const STRATEGY_LABELS: Record<string, string> = {
-    auto_increment: 'Auto increment',
-    uuid4: 'UUID v4',
-    now: 'Now',
-    now_on_update: 'Now (+ on update)',
-  };
-
-  function getValueSourceOptions(fieldId: string): ValueSourceOption[] {
-    const field = getFieldById(fieldId);
-    if (!field) return [];
-    return VALUE_SOURCE_OPTIONS[field.type] ?? [];
-  }
-
-  function needsValueSource(item: ObjectFieldReference): boolean {
-    return item.exposure === 'read_only' && !item.isPk;
-  }
-
-  /** Get the current value source selection string from a FieldDefault */
-  function getValueSourceValue(fieldDefault: FieldDefault | null | undefined): string {
-    if (!fieldDefault) return '';
-    if (fieldDefault.kind === 'literal') return 'literal';
-    return fieldDefault.strategy;
-  }
-
-  function setValueSource(fieldId: string, value: string) {
-    const newFields = editedItem.fields.map(f => {
-      if (f.fieldId !== fieldId) return f;
-      if (!value) {
-        return { ...f, default: null };
-      }
-      if (value === 'literal') {
-        const existingLiteralValue = f.default?.kind === 'literal' ? f.default.value : '';
-        return { ...f, default: { kind: 'literal' as const, value: existingLiteralValue } };
-      }
-      return { ...f, default: { kind: 'generated' as const, strategy: value as FieldDefaultGenerated['strategy'] }, nullable: false };
-    });
-    editedItem = { ...editedItem, fields: newFields };
-  }
-
-  function setDefaultLiteralValue(fieldId: string, value: string) {
-    const newFields = editedItem.fields.map(f => {
-      if (f.fieldId !== fieldId) return f;
-      if (f.default?.kind === 'literal' || !f.default) {
-        return { ...f, default: { kind: 'literal' as const, value } };
-      }
-      return f;
+      return { ...f, defaultValue: value.trim() || null };
     });
     editedItem = { ...editedItem, fields: newFields };
   }
@@ -456,7 +337,7 @@
         >
           {#each dndItems as item (item.id)}
             {@const field = getFieldById(item.fieldId)}
-            {@const pkCompatible = field ? ALLOWED_PK_TYPES.has(field.type) : false}
+            {@const availableRoles = field ? getAvailableRoles(field.type) : []}
             <div animate:flip={{ duration: 150 }}>
             {#if field}
               <div class="p-2 bg-mono-900 rounded border border-mono-700 space-y-1.5">
@@ -472,80 +353,20 @@
 
                   <div class="flex-1"></div>
 
-                  <!-- Exposure Dropdown -->
+                  <!-- Role Selector -->
                   <select
                     class="bg-mono-800 border border-mono-700 text-mono-300 text-xs rounded px-1.5 py-0.5 focus:ring-1 focus:ring-green-400 focus:border-transparent"
-                    value={item.exposure}
-                    disabled={item.isPk}
-                    onchange={(e) => setFieldExposure(item.fieldId, e.currentTarget.value as FieldExposure)}
-                    title={item.isPk ? 'Primary key is always read-only' : 'Set field exposure'}
+                    value={item.role}
+                    onchange={(e) => setFieldRole(item.fieldId, e.currentTarget.value as FieldRole)}
+                    title={ROLE_TOOLTIPS[item.role]}
                   >
-                    <option value="read_write">Read/write</option>
-                    <option value="write_only">Write-only</option>
-                    <option value="read_only">Read-only</option>
+                    {#each availableRoles as role}
+                      <option value={role}>{ROLE_LABELS[role]}</option>
+                    {/each}
                   </select>
 
-                  <!-- Value Source (shown for read_only non-PK fields) -->
-                  {#if needsValueSource(item)}
-                    {@const options = getValueSourceOptions(item.fieldId)}
-                    {#if options.length === 1 && options[0].value === 'literal'}
-                      <!-- Single-option: skip the dropdown, show the input directly -->
-                      <input
-                        type="text"
-                        class="bg-mono-800 border border-mono-700 text-mono-300 text-xs rounded px-1.5 py-0.5 w-20 focus:ring-1 focus:ring-green-400 focus:border-transparent {!(item.default?.kind === 'literal' && item.default.value) ? 'border-red-700' : ''}"
-                        placeholder="Default value"
-                        value={item.default?.kind === 'literal' ? item.default.value : ''}
-                        oninput={(e) => setDefaultLiteralValue(item.fieldId, e.currentTarget.value)}
-                      />
-                    {:else}
-                      <select
-                        class="bg-mono-800 border border-mono-700 text-mono-300 text-xs rounded px-1.5 py-0.5 focus:ring-1 focus:ring-green-400 focus:border-transparent"
-                        value={getValueSourceValue(item.default)}
-                        onchange={(e) => setValueSource(item.fieldId, e.currentTarget.value)}
-                      >
-                        {#each options as opt}
-                          <option value={opt.value}>{opt.label}</option>
-                        {/each}
-                      </select>
-                      {#if item.default?.kind === 'literal'}
-                        <input
-                          type="text"
-                          class="bg-mono-800 border border-mono-700 text-mono-300 text-xs rounded px-1.5 py-0.5 w-20 focus:ring-1 focus:ring-green-400 focus:border-transparent {!item.default.value ? 'border-red-700' : ''}"
-                          placeholder="value"
-                          value={item.default.value}
-                          oninput={(e) => setDefaultLiteralValue(item.fieldId, e.currentTarget.value)}
-                        />
-                      {/if}
-                    {/if}
-                  {/if}
-
-                  <!-- Generation strategy badge (shown for PK fields) -->
-                  {#if item.isPk}
-                    {@const strategyLabel = item.default?.kind === 'generated'
-                      ? (STRATEGY_LABELS[item.default.strategy] ?? item.default.strategy)
-                      : (field?.type === 'uuid' || field?.type === 'uuid.UUID' ? 'UUID v4' : 'Auto increment')}
-                    <span class="text-xs text-mono-400 bg-mono-800 px-1.5 py-0.5 rounded">
-                      {strategyLabel}
-                    </span>
-                  {/if}
-
-                  <!-- PK Toggle (shown when field is already PK, or when eligible to become one) -->
-                  {#if item.isPk || (item.exposure === 'read_only' && pkCompatible)}
-                    <button
-                      type="button"
-                      onclick={() => toggleFieldPk(item.fieldId)}
-                      class="flex items-center space-x-1 px-2 py-0.5 text-xs font-medium border transition-colors {item.isPk
-                        ? 'bg-green-900/30 text-green-400 border-green-700'
-                        : 'bg-mono-800 text-mono-500 border-mono-700 hover:text-mono-300 hover:border-mono-600'}"
-                      title={item.isPk ? 'Remove primary key' : 'Set as primary key'}
-                    >
-                      <i class="fa-solid fa-key text-[10px]"></i>
-                      <span>PK</span>
-                    </button>
-                  {/if}
-
-                  <!-- Nullable Checkbox (hidden for PK fields and generated defaults — both imply NOT NULL) -->
-                  {#if (item.exposure === 'read_write' || item.exposure === 'write_only') && !item.isPk && item.default?.kind !== 'generated'}
+                  <!-- Nullable Checkbox (only for writable, write_only, read_only roles) -->
+                  {#if roleHasModifiers(item.role)}
                     <label class="flex items-center space-x-1.5 cursor-pointer" title="Allow null values">
                       <input
                         type="checkbox"
@@ -555,6 +376,17 @@
                       />
                       <span class="text-xs text-mono-400 whitespace-nowrap">Nullable</span>
                     </label>
+                  {/if}
+
+                  <!-- Default Value Input (only for writable, write_only, read_only roles) -->
+                  {#if roleHasModifiers(item.role)}
+                    <input
+                      type="text"
+                      class="bg-mono-800 border border-mono-700 text-mono-300 text-xs rounded px-1.5 py-0.5 w-24 focus:ring-1 focus:ring-green-400 focus:border-transparent"
+                      placeholder="Default value (optional)"
+                      value={item.defaultValue ?? ''}
+                      oninput={(e) => setFieldDefaultValue(item.fieldId, e.currentTarget.value)}
+                    />
                   {/if}
 
                   <!-- Delete Button -->
@@ -569,11 +401,8 @@
                 </div>
 
                 <!-- Inline validation errors -->
-                {#if visibleErrors[`field_${item.fieldId}_default`]}
-                  <p class="text-xs text-red-400 ml-6">{visibleErrors[`field_${item.fieldId}_default`]}</p>
-                {/if}
-                {#if visibleErrors[`field_${item.fieldId}_defaultValue`]}
-                  <p class="text-xs text-red-400 ml-6">{visibleErrors[`field_${item.fieldId}_defaultValue`]}</p>
+                {#if visibleErrors[`field_${item.fieldId}_role`]}
+                  <p class="text-xs text-red-400 ml-6">{visibleErrors[`field_${item.fieldId}_role`]}</p>
                 {/if}
               </div>
             {:else}

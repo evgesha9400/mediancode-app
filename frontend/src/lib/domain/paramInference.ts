@@ -245,7 +245,7 @@ export function resolveTargetFields(
 		result.push({
 			name: field.name,
 			type: field.type,
-			isPk: ref.isPk
+			isPk: ref.role === 'pk'
 		});
 	}
 	return result;

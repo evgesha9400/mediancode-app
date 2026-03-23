@@ -14,26 +14,26 @@ import type { ResponseShape, ObjectDefinition, Field } from '$lib/types';
 
 import { initialObjects, SEED_OBJECT_IDS } from '../../../fixtures/seedData';
 
-// Test object with mixed exposure values
-const EXPOSURE_TEST_OBJECT_ID = 'test-exposure-obj';
+// Test object with mixed role values
+const ROLE_TEST_OBJECT_ID = 'test-role-obj';
 const testFieldId = (name: string) => `test-field-${name}`;
 
-const exposureTestFields: Field[] = [
+const roleTestFields: Field[] = [
 	{ id: testFieldId('id'), namespaceId: 'ns-1', name: 'id', type: 'uuid', container: null, constraints: [], validators: [], usedInApis: [] },
 	{ id: testFieldId('name'), namespaceId: 'ns-1', name: 'name', type: 'str', container: null, constraints: [], validators: [], usedInApis: [] },
 	{ id: testFieldId('password'), namespaceId: 'ns-1', name: 'password', type: 'str', container: null, constraints: [], validators: [], usedInApis: [] },
 	{ id: testFieldId('created_at'), namespaceId: 'ns-1', name: 'created_at', type: 'datetime', container: null, constraints: [], validators: [], usedInApis: [] },
 ];
 
-const exposureTestObject: ObjectDefinition = {
-	id: EXPOSURE_TEST_OBJECT_ID,
+const roleTestObject: ObjectDefinition = {
+	id: ROLE_TEST_OBJECT_ID,
 	namespaceId: 'ns-1',
 	name: 'TestObj',
 	fields: [
-		{ fieldId: testFieldId('id'), isPk: true, exposure: 'read_only', nullable: false },
-		{ fieldId: testFieldId('name'), isPk: false, exposure: 'read_write', nullable: false },
-		{ fieldId: testFieldId('password'), isPk: false, exposure: 'write_only', nullable: false },
-		{ fieldId: testFieldId('created_at'), isPk: false, exposure: 'read_only', nullable: false },
+		{ fieldId: testFieldId('id'), role: 'pk', nullable: false },
+		{ fieldId: testFieldId('name'), role: 'writable', nullable: false },
+		{ fieldId: testFieldId('password'), role: 'write_only', nullable: false },
+		{ fieldId: testFieldId('created_at'), role: 'read_only', nullable: false },
 	],
 	relationships: [],
 	validators: [],
@@ -192,29 +192,29 @@ describe('examples - buildResponsePreviewFromObject', () => {
 	});
 });
 
-describe('examples - buildRequestBodyFromObjectId (exposure flag)', () => {
+describe('examples - buildRequestBodyFromObjectId (role filtering)', () => {
 	beforeEach(() => {
-		fieldsStore.set([...initialFields, ...exposureTestFields]);
-		objectsStore.set([...(initialObjects as any), exposureTestObject]);
+		fieldsStore.set([...initialFields, ...roleTestFields]);
+		objectsStore.set([...(initialObjects as any), roleTestObject]);
 	});
 
 	it('should exclude PK fields from request preview', () => {
-		const obj = buildRequestBodyFromObjectId(EXPOSURE_TEST_OBJECT_ID);
+		const obj = buildRequestBodyFromObjectId(ROLE_TEST_OBJECT_ID);
 		expect(obj).not.toHaveProperty('id');
 	});
 
 	it('should exclude read-only fields from request preview', () => {
-		const obj = buildRequestBodyFromObjectId(EXPOSURE_TEST_OBJECT_ID);
+		const obj = buildRequestBodyFromObjectId(ROLE_TEST_OBJECT_ID);
 		expect(obj).not.toHaveProperty('created_at');
 	});
 
 	it('should include write-only fields in request preview', () => {
-		const obj = buildRequestBodyFromObjectId(EXPOSURE_TEST_OBJECT_ID);
+		const obj = buildRequestBodyFromObjectId(ROLE_TEST_OBJECT_ID);
 		expect(obj).toHaveProperty('password');
 	});
 
-	it('should include read/write fields in request preview', () => {
-		const obj = buildRequestBodyFromObjectId(EXPOSURE_TEST_OBJECT_ID);
+	it('should include writable fields in request preview', () => {
+		const obj = buildRequestBodyFromObjectId(ROLE_TEST_OBJECT_ID);
 		expect(obj).toHaveProperty('name');
 	});
 
@@ -223,25 +223,29 @@ describe('examples - buildRequestBodyFromObjectId (exposure flag)', () => {
 	});
 });
 
-describe('examples - buildResponseBodyFromObjectId (exposure flag)', () => {
+describe('examples - buildResponseBodyFromObjectId (role filtering)', () => {
 	beforeEach(() => {
-		fieldsStore.set([...initialFields, ...exposureTestFields]);
-		objectsStore.set([...(initialObjects as any), exposureTestObject]);
+		fieldsStore.set([...initialFields, ...roleTestFields]);
+		objectsStore.set([...(initialObjects as any), roleTestObject]);
 	});
 
 	it('should exclude write-only fields from response preview', () => {
-		const obj = buildResponseBodyFromObjectId(EXPOSURE_TEST_OBJECT_ID);
+		const obj = buildResponseBodyFromObjectId(ROLE_TEST_OBJECT_ID);
 		expect(obj).not.toHaveProperty('password');
 	});
 
 	it('should include read-only fields in response preview', () => {
-		const obj = buildResponseBodyFromObjectId(EXPOSURE_TEST_OBJECT_ID);
-		expect(obj).toHaveProperty('id');
+		const obj = buildResponseBodyFromObjectId(ROLE_TEST_OBJECT_ID);
 		expect(obj).toHaveProperty('created_at');
 	});
 
-	it('should include read/write fields in response preview', () => {
-		const obj = buildResponseBodyFromObjectId(EXPOSURE_TEST_OBJECT_ID);
+	it('should include PK fields in response preview', () => {
+		const obj = buildResponseBodyFromObjectId(ROLE_TEST_OBJECT_ID);
+		expect(obj).toHaveProperty('id');
+	});
+
+	it('should include writable fields in response preview', () => {
+		const obj = buildResponseBodyFromObjectId(ROLE_TEST_OBJECT_ID);
 		expect(obj).toHaveProperty('name');
 	});
 

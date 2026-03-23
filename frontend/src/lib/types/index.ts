@@ -187,26 +187,67 @@ export interface ApiEndpoint {
 }
 
 // Object Builder types
-export type FieldExposure = 'read_write' | 'write_only' | 'read_only';
 
-export interface FieldDefaultLiteral {
-  kind: 'literal';
-  value: string;
+export type FieldRole =
+  | 'pk'                  // Primary key — type-constrained to int or uuid
+  | 'writable'            // Standard read/write field
+  | 'write_only'          // Input-only, never returned (e.g. passwords)
+  | 'read_only'           // Response-only, set by app logic
+  | 'created_timestamp'   // Auto-set to NOW on insert — type-constrained to datetime/date
+  | 'updated_timestamp'   // Auto-refreshed to NOW on update — type-constrained to datetime/date
+  | 'generated_uuid';     // Auto-generated UUID (non-PK) — type-constrained to uuid
+
+export const FIELD_ROLES: FieldRole[] = [
+  'pk', 'writable', 'write_only', 'read_only',
+  'created_timestamp', 'updated_timestamp', 'generated_uuid'
+];
+
+export const ROLE_LABELS: Record<FieldRole, string> = {
+  pk: 'Primary Key',
+  writable: 'Writable',
+  write_only: 'Write-only',
+  read_only: 'Read-only',
+  created_timestamp: 'Created Timestamp',
+  updated_timestamp: 'Updated Timestamp',
+  generated_uuid: 'Generated UUID',
+};
+
+export const ROLE_TOOLTIPS: Record<FieldRole, string> = {
+  pk: 'System-generated unique identifier for this record.',
+  writable: 'Standard field — clients send it and receive it back.',
+  write_only: 'Input-only field never returned in responses (e.g. password).',
+  read_only: 'Response-only field set by application logic.',
+  created_timestamp: 'Timestamp set automatically when the record is first created.',
+  updated_timestamp: 'Timestamp refreshed automatically every time the record changes.',
+  generated_uuid: 'A unique UUID generated automatically by the server (non-PK).',
+};
+
+export const ROLE_TYPE_CONSTRAINTS: Partial<Record<FieldRole, string[]>> = {
+  pk: ['int', 'uuid', 'uuid.UUID'],
+  created_timestamp: ['datetime', 'date', 'datetime.datetime', 'datetime.date'],
+  updated_timestamp: ['datetime', 'date', 'datetime.datetime', 'datetime.date'],
+  generated_uuid: ['uuid', 'uuid.UUID'],
+};
+
+/** Returns the valid roles for a given field type */
+export function getAvailableRoles(fieldType: string): FieldRole[] {
+  return FIELD_ROLES.filter(role => {
+    const constraint = ROLE_TYPE_CONSTRAINTS[role];
+    if (!constraint) return true;
+    return constraint.includes(fieldType);
+  });
 }
 
-export interface FieldDefaultGenerated {
-  kind: 'generated';
-  strategy: 'uuid4' | 'now' | 'now_on_update' | 'auto_increment';
+/** Whether the role allows nullable and defaultValue modifiers */
+export function roleHasModifiers(role: FieldRole): boolean {
+  return role === 'writable' || role === 'write_only' || role === 'read_only';
 }
-
-export type FieldDefault = FieldDefaultLiteral | FieldDefaultGenerated;
 
 export interface ObjectFieldReference {
   fieldId: string;
-  isPk: boolean;
-  exposure: FieldExposure;
+  role: FieldRole;
   nullable: boolean;
-  default?: FieldDefault | null;
+  defaultValue?: string | null;
 }
 
 export type Cardinality = 'has_one' | 'has_many' | 'references' | 'many_to_many';
