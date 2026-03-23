@@ -262,7 +262,7 @@
       if (editedNewObject) {
         editedNewObject = {
           ...editedNewObject,
-          fields: [...editedNewObject.fields, { fieldId: field.id, role: 'writable' as const, nullable: false }]
+          fields: [...editedNewObject.fields, { fieldId: field.id, role: 'writable' as const, optional: false }]
         };
       }
 

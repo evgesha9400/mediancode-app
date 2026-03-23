@@ -238,7 +238,7 @@ export function getAvailableRoles(fieldType: string): FieldRole[] {
   });
 }
 
-/** Whether the role allows nullable and defaultValue modifiers */
+/** Whether the role allows optional and defaultValue modifiers */
 export function roleHasModifiers(role: FieldRole): boolean {
   return role === 'writable' || role === 'write_only' || role === 'read_only';
 }
@@ -246,7 +246,7 @@ export function roleHasModifiers(role: FieldRole): boolean {
 export interface ObjectFieldReference {
   fieldId: string;
   role: FieldRole;
-  nullable: boolean;
+  optional: boolean;
   defaultValue?: string | null;
 }
 

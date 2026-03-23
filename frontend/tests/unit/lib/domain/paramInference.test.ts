@@ -317,9 +317,9 @@ describe('resolveTargetFields', () => {
   const objects: ObjectDefinition[] = [
     {
       id: 'obj-1', namespaceId: 'ns', name: 'Product', fields: [
-        { fieldId: 'f-1', role: 'pk', nullable: false },
-        { fieldId: 'f-2', role: 'writable', nullable: false },
-        { fieldId: 'f-3', role: 'writable', nullable: true }
+        { fieldId: 'f-1', role: 'pk', optional: false },
+        { fieldId: 'f-2', role: 'writable', optional: false },
+        { fieldId: 'f-3', role: 'writable', optional: true }
       ],
       relationships: [], validators: [], usedInApis: []
     }
@@ -343,8 +343,8 @@ describe('resolveTargetFields', () => {
     const sparseObjects: ObjectDefinition[] = [
       {
         id: 'obj-2', namespaceId: 'ns', name: 'Sparse', fields: [
-          { fieldId: 'f-1', role: 'pk', nullable: false },
-          { fieldId: 'f-missing', role: 'writable', nullable: false }
+          { fieldId: 'f-1', role: 'pk', optional: false },
+          { fieldId: 'f-missing', role: 'writable', optional: false }
         ],
         relationships: [], validators: [], usedInApis: []
       }

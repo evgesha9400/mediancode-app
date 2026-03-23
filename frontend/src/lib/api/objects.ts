@@ -14,7 +14,7 @@ import type { Cardinality } from '$lib/types';
 interface ObjectFieldReferenceResponse {
 	fieldId: string;
 	role: string;
-	nullable: boolean;
+	optional: boolean;
 	defaultValue?: string | null;
 }
 
@@ -62,7 +62,7 @@ function transformFieldReference(response: ObjectFieldReferenceResponse): Object
 	return {
 		fieldId: response.fieldId,
 		role: (response.role as FieldRole) ?? 'writable',
-		nullable: response.nullable ?? false,
+		optional: response.optional ?? false,
 		defaultValue: response.defaultValue ?? null,
 	};
 }

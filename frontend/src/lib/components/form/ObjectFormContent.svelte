@@ -66,7 +66,7 @@
     return items.map(item => ({
       fieldId: item.fieldId,
       role: item.role,
-      nullable: item.nullable,
+      optional: item.optional,
       defaultValue: item.defaultValue,
     }));
   }
@@ -91,7 +91,7 @@
   function addField(fieldId: string) {
     editedItem = {
       ...editedItem,
-      fields: [...editedItem.fields, { fieldId, role: 'writable' as const, nullable: false }]
+      fields: [...editedItem.fields, { fieldId, role: 'writable' as const, optional: false }]
     };
   }
 
@@ -108,8 +108,8 @@
       if (f.fieldId !== fieldId) return f;
       const base = { ...f, role };
       if (!roleHasModifiers(role)) {
-        // Non-modifier roles: force nullable=false, clear defaultValue
-        return { ...base, nullable: false, defaultValue: null };
+        // Non-modifier roles: force optional=false, clear defaultValue
+        return { ...base, optional: false, defaultValue: null };
       }
       return base;
     });
@@ -119,7 +119,7 @@
         ...editedItem,
         fields: newFields.map(f =>
           f.fieldId !== fieldId && f.role === 'pk'
-            ? { ...f, role: 'writable' as FieldRole, nullable: false }
+            ? { ...f, role: 'writable' as FieldRole, optional: false }
             : f
         )
       };
@@ -128,12 +128,12 @@
     }
   }
 
-  /** Toggle nullable for a field (only for modifier roles) */
-  function toggleFieldNullable(fieldId: string) {
+  /** Toggle optional for a field (only for modifier roles) */
+  function toggleFieldOptional(fieldId: string) {
     const newFields = editedItem.fields.map(f => {
       if (f.fieldId !== fieldId) return f;
       if (!roleHasModifiers(f.role)) return f;
-      return { ...f, nullable: !f.nullable };
+      return { ...f, optional: !f.optional };
     });
     editedItem = { ...editedItem, fields: newFields };
   }
@@ -405,15 +405,15 @@
                     />
                   {/if}
 
-                  <!-- Nullable Toggle — always rendered for consistent row width; hidden for non-modifier roles -->
+                  <!-- Optional Toggle — always rendered for consistent row width; hidden for non-modifier roles -->
                   <button
                     type="button"
-                    onclick={() => toggleFieldNullable(item.fieldId)}
+                    onclick={() => toggleFieldOptional(item.fieldId)}
                     disabled={!roleHasModifiers(item.role)}
                     title="Allow null values"
-                    class="shrink-0 text-xs px-2 py-0.5 rounded border transition-colors {roleHasModifiers(item.role) ? (item.nullable ? 'border-green-500 text-green-400 bg-green-400/10' : 'border-mono-600 text-mono-500 hover:border-mono-500 hover:text-mono-400') : 'invisible pointer-events-none border-mono-600 text-mono-500'}"
+                    class="shrink-0 text-xs px-2 py-0.5 rounded border transition-colors {roleHasModifiers(item.role) ? (item.optional ? 'border-green-500 text-green-400 bg-green-400/10' : 'border-mono-600 text-mono-500 hover:border-mono-500 hover:text-mono-400') : 'invisible pointer-events-none border-mono-600 text-mono-500'}"
                   >
-                    nullable
+                    optional
                   </button>
 
                   <!-- Delete Button -->

@@ -390,12 +390,12 @@ export const initialObjects: ObjectDefinition[] = [
 		name: 'User',
 		description: 'User account information',
 		fields: [
-			{ fieldId: SEED_FIELD_IDS.user_id, role: 'writable' as const, nullable: false },
-			{ fieldId: SEED_FIELD_IDS.username, role: 'writable' as const, nullable: false },
-			{ fieldId: SEED_FIELD_IDS.email, role: 'writable' as const, nullable: false },
-			{ fieldId: SEED_FIELD_IDS.password, role: 'writable' as const, nullable: false },
-			{ fieldId: SEED_FIELD_IDS.created_at, role: 'writable' as const, nullable: false },
-			{ fieldId: SEED_FIELD_IDS.updated_at, role: 'writable' as const, nullable: true }
+			{ fieldId: SEED_FIELD_IDS.user_id, role: 'writable' as const, optional: false },
+			{ fieldId: SEED_FIELD_IDS.username, role: 'writable' as const, optional: false },
+			{ fieldId: SEED_FIELD_IDS.email, role: 'writable' as const, optional: false },
+			{ fieldId: SEED_FIELD_IDS.password, role: 'writable' as const, optional: false },
+			{ fieldId: SEED_FIELD_IDS.created_at, role: 'writable' as const, optional: false },
+			{ fieldId: SEED_FIELD_IDS.updated_at, role: 'writable' as const, optional: true }
 		],
 		relationships: [],
 		validators: [],
@@ -407,10 +407,10 @@ export const initialObjects: ObjectDefinition[] = [
 		name: 'Product',
 		description: 'Product catalog item',
 		fields: [
-			{ fieldId: SEED_FIELD_IDS.price, role: 'writable' as const, nullable: false },
-			{ fieldId: SEED_FIELD_IDS.status, role: 'writable' as const, nullable: false },
-			{ fieldId: SEED_FIELD_IDS.created_at, role: 'writable' as const, nullable: false },
-			{ fieldId: SEED_FIELD_IDS.updated_at, role: 'writable' as const, nullable: true }
+			{ fieldId: SEED_FIELD_IDS.price, role: 'writable' as const, optional: false },
+			{ fieldId: SEED_FIELD_IDS.status, role: 'writable' as const, optional: false },
+			{ fieldId: SEED_FIELD_IDS.created_at, role: 'writable' as const, optional: false },
+			{ fieldId: SEED_FIELD_IDS.updated_at, role: 'writable' as const, optional: true }
 		],
 		relationships: [],
 		validators: [],
@@ -422,11 +422,11 @@ export const initialObjects: ObjectDefinition[] = [
 		name: 'Order',
 		description: 'Customer order details',
 		fields: [
-			{ fieldId: SEED_FIELD_IDS.user_id, role: 'writable' as const, nullable: false },
-			{ fieldId: SEED_FIELD_IDS.status, role: 'writable' as const, nullable: false },
-			{ fieldId: SEED_FIELD_IDS.price, role: 'writable' as const, nullable: false },
-			{ fieldId: SEED_FIELD_IDS.created_at, role: 'writable' as const, nullable: false },
-			{ fieldId: SEED_FIELD_IDS.updated_at, role: 'writable' as const, nullable: true }
+			{ fieldId: SEED_FIELD_IDS.user_id, role: 'writable' as const, optional: false },
+			{ fieldId: SEED_FIELD_IDS.status, role: 'writable' as const, optional: false },
+			{ fieldId: SEED_FIELD_IDS.price, role: 'writable' as const, optional: false },
+			{ fieldId: SEED_FIELD_IDS.created_at, role: 'writable' as const, optional: false },
+			{ fieldId: SEED_FIELD_IDS.updated_at, role: 'writable' as const, optional: true }
 		],
 		relationships: [],
 		validators: [],
@@ -438,9 +438,9 @@ export const initialObjects: ObjectDefinition[] = [
 		name: 'Customer',
 		description: 'Customer profile information',
 		fields: [
-			{ fieldId: SEED_FIELD_IDS.email, role: 'writable' as const, nullable: false },
-			{ fieldId: SEED_FIELD_IDS.phone, role: 'writable' as const, nullable: true },
-			{ fieldId: SEED_FIELD_IDS.created_at, role: 'writable' as const, nullable: false },
+			{ fieldId: SEED_FIELD_IDS.email, role: 'writable' as const, optional: false },
+			{ fieldId: SEED_FIELD_IDS.phone, role: 'writable' as const, optional: true },
+			{ fieldId: SEED_FIELD_IDS.created_at, role: 'writable' as const, optional: false },
 		],
 		relationships: [],
 		validators: [],
@@ -452,9 +452,9 @@ export const initialObjects: ObjectDefinition[] = [
 		name: 'Payment',
 		description: 'Payment transaction record',
 		fields: [
-			{ fieldId: SEED_FIELD_IDS.price, role: 'writable' as const, nullable: false },
-			{ fieldId: SEED_FIELD_IDS.status, role: 'writable' as const, nullable: false },
-			{ fieldId: SEED_FIELD_IDS.created_at, role: 'writable' as const, nullable: false },
+			{ fieldId: SEED_FIELD_IDS.price, role: 'writable' as const, optional: false },
+			{ fieldId: SEED_FIELD_IDS.status, role: 'writable' as const, optional: false },
+			{ fieldId: SEED_FIELD_IDS.created_at, role: 'writable' as const, optional: false },
 		],
 		relationships: [],
 		validators: [],
@@ -466,8 +466,8 @@ export const initialObjects: ObjectDefinition[] = [
 		name: 'Address',
 		description: 'Physical address information',
 		fields: [
-			{ fieldId: SEED_FIELD_IDS.website, role: 'writable' as const, nullable: true },
-			{ fieldId: SEED_FIELD_IDS.phone, role: 'writable' as const, nullable: true },
+			{ fieldId: SEED_FIELD_IDS.website, role: 'writable' as const, optional: true },
+			{ fieldId: SEED_FIELD_IDS.phone, role: 'writable' as const, optional: true },
 		],
 		relationships: [],
 		validators: [],
@@ -479,10 +479,10 @@ export const initialObjects: ObjectDefinition[] = [
 		name: 'Company',
 		description: 'Company profile',
 		fields: [
-			{ fieldId: SEED_FIELD_IDS.website, role: 'writable' as const, nullable: false },
-			{ fieldId: SEED_FIELD_IDS.phone, role: 'writable' as const, nullable: true },
-			{ fieldId: SEED_FIELD_IDS.email, role: 'writable' as const, nullable: false },
-			{ fieldId: SEED_FIELD_IDS.created_at, role: 'writable' as const, nullable: false },
+			{ fieldId: SEED_FIELD_IDS.website, role: 'writable' as const, optional: false },
+			{ fieldId: SEED_FIELD_IDS.phone, role: 'writable' as const, optional: true },
+			{ fieldId: SEED_FIELD_IDS.email, role: 'writable' as const, optional: false },
+			{ fieldId: SEED_FIELD_IDS.created_at, role: 'writable' as const, optional: false },
 		],
 		relationships: [],
 		validators: [],
@@ -494,10 +494,10 @@ export const initialObjects: ObjectDefinition[] = [
 		name: 'Invoice',
 		description: 'Billing invoice',
 		fields: [
-			{ fieldId: SEED_FIELD_IDS.price, role: 'writable' as const, nullable: false },
-			{ fieldId: SEED_FIELD_IDS.status, role: 'writable' as const, nullable: false },
-			{ fieldId: SEED_FIELD_IDS.created_at, role: 'writable' as const, nullable: false },
-			{ fieldId: SEED_FIELD_IDS.updated_at, role: 'writable' as const, nullable: true }
+			{ fieldId: SEED_FIELD_IDS.price, role: 'writable' as const, optional: false },
+			{ fieldId: SEED_FIELD_IDS.status, role: 'writable' as const, optional: false },
+			{ fieldId: SEED_FIELD_IDS.created_at, role: 'writable' as const, optional: false },
+			{ fieldId: SEED_FIELD_IDS.updated_at, role: 'writable' as const, optional: true }
 		],
 		relationships: [],
 		validators: [],
@@ -510,9 +510,9 @@ export const initialObjects: ObjectDefinition[] = [
 		name: 'ProductCatalogItem',
 		description: 'Product catalog item in user namespace',
 		fields: [
-			{ fieldId: SEED_FIELD_IDS.product_name, role: 'writable' as const, nullable: false },
-			{ fieldId: SEED_FIELD_IDS.quantity, role: 'writable' as const, nullable: false },
-			{ fieldId: SEED_FIELD_IDS.product_price, role: 'writable' as const, nullable: false }
+			{ fieldId: SEED_FIELD_IDS.product_name, role: 'writable' as const, optional: false },
+			{ fieldId: SEED_FIELD_IDS.quantity, role: 'writable' as const, optional: false },
+			{ fieldId: SEED_FIELD_IDS.product_price, role: 'writable' as const, optional: false }
 		],
 		relationships: [],
 		validators: [],

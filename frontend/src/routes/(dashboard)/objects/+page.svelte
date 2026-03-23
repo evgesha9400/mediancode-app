@@ -141,7 +141,7 @@
       if (workflow.editedItem) {
         workflow.editedItem = {
           ...workflow.editedItem,
-          fields: [...workflow.editedItem.fields, { fieldId: field.id, role: 'writable' as const, nullable: false }]
+          fields: [...workflow.editedItem.fields, { fieldId: field.id, role: 'writable' as const, optional: false }]
         };
       }
 
