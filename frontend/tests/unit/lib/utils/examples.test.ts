@@ -23,6 +23,7 @@ const roleTestFields: Field[] = [
 	{ id: testFieldId('name'), namespaceId: 'ns-1', name: 'name', type: 'str', container: null, constraints: [], validators: [], usedInApis: [] },
 	{ id: testFieldId('password'), namespaceId: 'ns-1', name: 'password', type: 'str', container: null, constraints: [], validators: [], usedInApis: [] },
 	{ id: testFieldId('created_at'), namespaceId: 'ns-1', name: 'created_at', type: 'datetime', container: null, constraints: [], validators: [], usedInApis: [] },
+	{ id: testFieldId('customer_id'), namespaceId: 'ns-1', name: 'customer_id', type: 'uuid', container: null, constraints: [], validators: [], usedInApis: [] },
 ];
 
 const roleTestObject: ObjectDefinition = {
@@ -34,6 +35,22 @@ const roleTestObject: ObjectDefinition = {
 		{ fieldId: testFieldId('name'), role: 'writable', optional: false },
 		{ fieldId: testFieldId('password'), role: 'write_only', optional: false },
 		{ fieldId: testFieldId('created_at'), role: 'read_only', optional: false },
+	],
+	relationships: [],
+	validators: [],
+	usedInApis: []
+};
+
+// Object with FK field for testing fk role in previews
+const FK_TEST_OBJECT_ID = 'test-fk-obj';
+const fkTestObject: ObjectDefinition = {
+	id: FK_TEST_OBJECT_ID,
+	namespaceId: 'ns-1',
+	name: 'FkTestObj',
+	fields: [
+		{ fieldId: testFieldId('id'), role: 'pk', optional: false },
+		{ fieldId: testFieldId('name'), role: 'writable', optional: false },
+		{ fieldId: testFieldId('customer_id'), role: 'fk', optional: false },
 	],
 	relationships: [],
 	validators: [],
@@ -251,5 +268,32 @@ describe('examples - buildResponseBodyFromObjectId (role filtering)', () => {
 
 	it('should return empty object for undefined objectId', () => {
 		expect(buildResponseBodyFromObjectId(undefined)).toEqual({});
+	});
+});
+
+describe('examples - FK role in previews', () => {
+	beforeEach(() => {
+		fieldsStore.set([...initialFields, ...roleTestFields]);
+		objectsStore.set([...(initialObjects as any), roleTestObject, fkTestObject]);
+	});
+
+	it('should include fk fields in request preview', () => {
+		const obj = buildRequestBodyFromObjectId(FK_TEST_OBJECT_ID);
+		expect(obj).toHaveProperty('customer_id');
+	});
+
+	it('should include fk fields in response preview', () => {
+		const obj = buildResponseBodyFromObjectId(FK_TEST_OBJECT_ID);
+		expect(obj).toHaveProperty('customer_id');
+	});
+
+	it('should not include pk fields in request preview', () => {
+		const obj = buildRequestBodyFromObjectId(FK_TEST_OBJECT_ID);
+		expect(obj).not.toHaveProperty('id');
+	});
+
+	it('should use correct example value type for fk field', () => {
+		const obj = buildRequestBodyFromObjectId(FK_TEST_OBJECT_ID);
+		expect(obj.customer_id).toBe('00000000-0000-0000-0000-000000000000');
 	});
 });

@@ -127,4 +127,53 @@ describe('Objects API Service', () => {
       expect(apiDelete).toHaveBeenCalledWith('/objects/o-1');
     });
   });
+
+  describe('transformRelationship (fkFieldId)', () => {
+    it('should map fkFieldId from API response', async () => {
+      const responseWithFk = {
+        ...MOCK_OBJECT_RESPONSE,
+        relationships: [
+          {
+            id: 'rel-1',
+            sourceObjectId: 'o-1',
+            targetObjectId: 'o-2',
+            name: 'customer',
+            cardinality: 'references',
+            isInferred: false,
+            inverseId: 'rel-2',
+            fkFieldId: 'fk-field-1'
+          }
+        ]
+      };
+      (apiGet as any).mockResolvedValue([responseWithFk]);
+
+      const result = await listObjects();
+
+      expect(result[0].relationships).toHaveLength(1);
+      expect(result[0].relationships[0].fkFieldId).toBe('fk-field-1');
+    });
+
+    it('should transform null fkFieldId to undefined', async () => {
+      const responseWithNullFk = {
+        ...MOCK_OBJECT_RESPONSE,
+        relationships: [
+          {
+            id: 'rel-1',
+            sourceObjectId: 'o-1',
+            targetObjectId: 'o-2',
+            name: 'customer',
+            cardinality: 'references',
+            isInferred: false,
+            inverseId: null,
+            fkFieldId: null
+          }
+        ]
+      };
+      (apiGet as any).mockResolvedValue([responseWithNullFk]);
+
+      const result = await listObjects();
+
+      expect(result[0].relationships[0].fkFieldId).toBeUndefined();
+    });
+  });
 });
