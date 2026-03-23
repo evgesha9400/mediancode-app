@@ -23,7 +23,7 @@ interface FieldConstraintValueResponse {
  * Called at runtime when transforming field responses.
  * Maps type UUIDs to type name strings (primitive or constrained).
  */
-function buildTypeIdToNameMap(): Record<string, string> {
+export function buildTypeIdToNameMap(): Record<string, string> {
 	const types = get(typesBaseStore);
 	return Object.fromEntries(
 		types.map(t => [t.id, t.name])
@@ -42,7 +42,7 @@ interface FieldValidatorResponse {
 /**
  * Backend API response for Field entity
  */
-interface FieldResponse {
+export interface FieldResponse {
 	id: string;
 	namespaceId: string;
 	name: string;
@@ -81,7 +81,7 @@ function transformFieldValidator(response: FieldValidatorResponse): InlineFieldV
  * Transform backend response to frontend Field type.
  * Resolves typeId (UUID) to a type name string using the types store.
  */
-function transformField(response: FieldResponse, typeMap: Record<string, string>): Field {
+export function transformField(response: FieldResponse, typeMap: Record<string, string>): Field {
 	const typeName = typeMap[response.typeId];
 	if (!typeName) {
 		console.warn(`Unknown type_id "${response.typeId}" for field "${response.name}", defaulting to "str"`);

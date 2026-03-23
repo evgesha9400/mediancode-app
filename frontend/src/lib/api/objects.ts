@@ -5,8 +5,9 @@
  */
 
 import { apiGet, apiPost, apiPut, apiDelete } from './client';
-import type { ObjectDefinition, ObjectFieldReference, ObjectRelationship, InlineModelValidator, FieldRole } from '$lib/types';
+import type { ObjectDefinition, ObjectFieldReference, ObjectRelationship, InlineModelValidator, FieldRole, GraphMutationResult } from '$lib/types';
 import type { Cardinality } from '$lib/types';
+import { transformField, buildTypeIdToNameMap, type FieldResponse } from './fields';
 
 /**
  * Backend object field reference response (camelCase aliases from backend)
@@ -93,6 +94,27 @@ function transformModelValidator(response: ModelValidatorResponse): InlineModelV
 		templateId: response.templateId,
 		parameters: response.parameters,
 		fieldMappings: response.fieldMappings
+	};
+}
+
+/**
+ * Backend API response for graph mutation (relationship create/delete)
+ */
+interface GraphMutationResponse {
+	updatedObjects: ObjectResponse[];
+	createdFields: FieldResponse[];
+	deletedFieldIds: string[];
+}
+
+/**
+ * Transform backend graph mutation response to frontend GraphMutationResult
+ */
+function transformGraphMutation(response: GraphMutationResponse): GraphMutationResult {
+	const typeMap = buildTypeIdToNameMap();
+	return {
+		updatedObjects: (response.updatedObjects ?? []).map(transformObject),
+		createdFields: (response.createdFields ?? []).map(f => transformField(f, typeMap)),
+		deletedFieldIds: response.deletedFieldIds ?? []
 	};
 }
 
@@ -202,9 +224,9 @@ export async function deleteObjectApi(id: string): Promise<void> {
 export async function createRelationshipApi(
 	objectId: string,
 	data: { targetObjectId: string; name: string; cardinality: string }
-): Promise<ObjectDefinition> {
-	const response = await apiPost<ObjectResponse>(`/objects/${objectId}/relationships`, data);
-	return transformObject(response);
+): Promise<GraphMutationResult> {
+	const response = await apiPost<GraphMutationResponse>(`/objects/${objectId}/relationships`, data);
+	return transformGraphMutation(response);
 }
 
 /**
@@ -213,6 +235,7 @@ export async function createRelationshipApi(
 export async function deleteRelationshipApi(
 	objectId: string,
 	relationshipId: string
-): Promise<void> {
-	await apiDelete<void>(`/objects/${objectId}/relationships/${relationshipId}`);
+): Promise<GraphMutationResult> {
+	const response = await apiDelete<GraphMutationResponse>(`/objects/${objectId}/relationships/${relationshipId}`);
+	return transformGraphMutation(response);
 }

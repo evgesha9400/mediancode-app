@@ -7,6 +7,20 @@ vi.mock('$lib/api/client', () => ({
   apiDelete: vi.fn()
 }));
 
+// Mock types store for buildTypeIdToNameMap (used by transformField via fields.ts)
+vi.mock('$lib/stores/types', () => ({
+  typesBaseStore: {
+    subscribe: vi.fn((fn: any) => {
+      fn([
+        { id: 'type-str', name: 'str' },
+        { id: 'type-int', name: 'int' },
+        { id: 'type-uuid', name: 'uuid' }
+      ]);
+      return () => {};
+    })
+  }
+}));
+
 import {
   listObjects,
   getObject,

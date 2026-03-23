@@ -27,6 +27,7 @@ import { isValidPascalCaseName } from '$lib/utils/validation';
 import { showToast } from './toasts';
 import { objectsStore } from './objects';
 import { getFieldById } from './fields';
+import { applyGraphMutation } from './reconciler';
 
 // ============================================================================
 // Configuration
@@ -339,18 +340,20 @@ export function createObjectsModel(config: ObjectsModelConfig): ObjectsModelStat
       let latestObject = object;
       try {
         for (const rel of removedRels) {
-          await deleteRelationshipApi(latestObject.id, rel.id);
+          const result = await deleteRelationshipApi(latestObject.id, rel.id);
+          applyGraphMutation(result);
+          const updated = result.updatedObjects.find(o => o.id === latestObject.id);
+          if (updated) latestObject = updated;
         }
         for (const rel of addedRels) {
-          latestObject = await createRelationshipApi(latestObject.id, {
+          const result = await createRelationshipApi(latestObject.id, {
             targetObjectId: rel.targetObjectId,
             name: rel.name,
             cardinality: rel.cardinality
           });
-        }
-        // Update store with final state including backend-computed inverses
-        if (addedRels.length > 0 || removedRels.length > 0) {
-          objectsStore.update(objects => objects.map(o => o.id === latestObject.id ? latestObject : o));
+          applyGraphMutation(result);
+          const updated = result.updatedObjects.find(o => o.id === latestObject.id);
+          if (updated) latestObject = updated;
         }
       } catch (err) {
         showToast('Object updated but some relationship changes failed to save', 'error', 5000);
@@ -398,13 +401,12 @@ export function createObjectsModel(config: ObjectsModelConfig): ObjectsModelStat
       if (userRelationships.length > 0) {
         try {
           for (const rel of userRelationships) {
-            const created = await createRelationshipApi(object.id, {
+            const result = await createRelationshipApi(object.id, {
               targetObjectId: rel.targetObjectId,
               name: rel.name,
               cardinality: rel.cardinality
             });
-            // Update store with backend response (includes inverse relationships)
-            objectsStore.update(objects => objects.map(o => o.id === created.id ? created : o));
+            applyGraphMutation(result);
           }
         } catch (err) {
           showToast('Object created but some relationships failed to save', 'error', 5000);
