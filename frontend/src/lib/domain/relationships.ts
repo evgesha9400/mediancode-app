@@ -7,9 +7,9 @@ export interface FkHint {
 
 /**
  * Determines the FK hint to display for a relationship row.
- * Returns null when no hint should be shown (non-references cardinality, inferred, or no target).
+ * Returns null when no hint should be shown (non-"belongs to" cardinality, inferred, or no target).
  *
- * Only user-defined `references` relationships need the hint because the FK field
+ * Only user-defined "belongs to" (`references`) relationships need the hint because the FK field
  * lives on the current object. Inferred relationships are the inverse side —
  * the FK lives on the *other* object, so the hint would be misleading.
  */

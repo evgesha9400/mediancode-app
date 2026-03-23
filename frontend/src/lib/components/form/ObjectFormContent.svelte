@@ -165,7 +165,7 @@
   const CARDINALITY_OPTIONS: { value: Cardinality; label: string }[] = [
     { value: 'has_one', label: 'has one' },
     { value: 'has_many', label: 'has many' },
-    { value: 'references', label: 'references' },
+    { value: 'references', label: 'belongs to' },
     { value: 'many_to_many', label: 'many ↔ many' }
   ];
 
@@ -542,7 +542,7 @@
                 → {targetObj?.name ?? 'Unknown'}
               </span>
 
-              <!-- FK Hint for references (only user-defined; inferred rels have FK on the other side) -->
+              <!-- FK Hint for belongs to (only user-defined; inferred rels have FK on the other side) -->
               {#if fkHint}
                 <span class="text-xs {fkHint.hasFk ? 'text-green-400' : 'text-yellow-400'}">
                   {fkHint.hasFk ? `via ${fkHint.fkName} ✓` : `missing ${fkHint.fkName} ✗`}
