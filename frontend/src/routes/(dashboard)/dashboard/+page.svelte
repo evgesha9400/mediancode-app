@@ -87,7 +87,9 @@
 
       <!-- Entity Stats -->
       <section>
-        <h2 class="text-xs uppercase tracking-wider text-mono-500 mb-3 font-medium">Components</h2>
+        <div class="flex items-center mb-3 h-[24px]">
+          <h2 class="text-xs uppercase tracking-wider text-mono-500 font-medium">Components</h2>
+        </div>
         <div class="grid grid-cols-2 gap-3">
           <StatCard title="Types" value={totalTypes} icon="fa-shapes" error={hasError(STORE_NAMES.TYPES)} onRetry={handleRetry} />
           <StatCard title="Constraints" value={totalFieldConstraints} icon="fa-shield-halved" error={hasError(STORE_NAMES.FIELD_CONSTRAINTS)} onRetry={handleRetry} />
@@ -98,15 +100,19 @@
 
       <!-- Account -->
       <section>
-        <h2 class="text-xs uppercase tracking-wider text-mono-500 mb-3 font-medium">Account</h2>
+        <div class="flex items-center mb-3 h-[24px]">
+          <h2 class="text-xs uppercase tracking-wider text-mono-500 font-medium">Account</h2>
+        </div>
         <StatCard title="Generations" value="∞" icon="fa-bolt" trend="Unlimited during beta" />
       </section>
     </div>
 
     <!-- Right column: API Readiness -->
     <div class="lg:col-span-2">
-      <section>
-        <h2 class="text-xs uppercase tracking-wider text-mono-500 mb-3 font-medium">Your APIs</h2>
+      <section class="flex flex-col">
+        <div class="flex items-center mb-3 h-[24px]">
+          <h2 class="text-xs uppercase tracking-wider text-mono-500 font-medium">Your APIs</h2>
+        </div>
         {#if apiReadiness.length > 0}
           <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
             {#each apiReadiness as item}

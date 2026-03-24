@@ -44,7 +44,7 @@
 
 {#if !dismissed}
   <section class="flex flex-col" data-testid="project-checklist-wrapper">
-    <div class="flex items-center justify-between mb-3">
+    <div class="flex items-center justify-between mb-3 h-[24px]">
       <h2 class="text-xs uppercase tracking-wider text-mono-500 font-medium">Project Setup</h2>
       <div class="flex items-center space-x-3">
         <span class="text-xs text-mono-400">{completedCount}/{steps.length} completed</span>
