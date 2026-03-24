@@ -172,14 +172,20 @@ export function apiDelete<T>(endpoint: string, options?: Omit<ApiRequestOptions,
 	return apiClient<T>(endpoint, { ...options, method: 'DELETE' });
 }
 
+export interface BlobResponse {
+	blob: Blob;
+	filename: string | null;
+}
+
 /**
- * POST request that returns a Blob (for binary responses like zip files)
+ * POST request that returns a Blob with the server-provided filename
+ * (for binary responses like zip files)
  *
  * @param endpoint - API endpoint path
  * @param body - Optional JSON body to send with the request
  * @param options - Additional request options
  */
-export async function apiPostBlob(endpoint: string, body?: unknown, options?: Omit<ApiRequestOptions, 'method' | 'body'>): Promise<Blob> {
+export async function apiPostBlob(endpoint: string, body?: unknown, options?: Omit<ApiRequestOptions, 'method' | 'body'>): Promise<BlobResponse> {
 	const { skipAuth = false, ...fetchOptions } = options || {};
 
 	const headers: HeadersInit = {
@@ -219,5 +225,11 @@ export async function apiPostBlob(endpoint: string, body?: unknown, options?: Om
 		throw new ApiError(response, detail);
 	}
 
-	return response.blob();
+	const disposition = response.headers.get('Content-Disposition');
+	const filenameMatch = disposition?.match(/filename="(.+?)"/);
+
+	return {
+		blob: await response.blob(),
+		filename: filenameMatch?.[1] ?? null
+	};
 }

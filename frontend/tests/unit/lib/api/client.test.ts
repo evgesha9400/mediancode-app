@@ -252,22 +252,39 @@ describe('API Client - apiPostBlob', () => {
     (getActiveOrganizationId as any).mockReturnValue(null);
   });
 
-  it('should return a Blob for successful response', async () => {
+  it('should return a BlobResponse with filename from Content-Disposition', async () => {
     const zipContent = new Uint8Array([80, 75, 3, 4]); // PK zip magic bytes
     server.use(
       http.post(`${API_BASE}/generate`, () => {
         return new HttpResponse(zipContent, {
-          headers: { 'Content-Type': 'application/zip' }
+          headers: {
+            'Content-Type': 'application/zip',
+            'Content-Disposition': 'attachment; filename="my-api.zip"'
+          }
         });
       })
     );
 
     const result = await apiPostBlob('/generate');
 
-    expect(result).toBeDefined();
-    expect(typeof result.arrayBuffer).toBe('function');
-    const arrayBuffer = await result.arrayBuffer();
+    expect(result.filename).toBe('my-api.zip');
+    const arrayBuffer = await result.blob.arrayBuffer();
     expect(new Uint8Array(arrayBuffer)).toEqual(zipContent);
+  });
+
+  it('should return null filename when Content-Disposition is absent', async () => {
+    server.use(
+      http.post(`${API_BASE}/no-disposition`, () => {
+        return new HttpResponse(new Uint8Array([1]), {
+          headers: { 'Content-Type': 'application/octet-stream' }
+        });
+      })
+    );
+
+    const result = await apiPostBlob('/no-disposition');
+
+    expect(result.filename).toBeNull();
+    expect(result.blob).toBeDefined();
   });
 
   it('should include auth and org headers', async () => {

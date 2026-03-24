@@ -4,7 +4,7 @@
  * CRUD methods for API operations.
  */
 
-import { apiGet, apiPost, apiPut, apiDelete, apiPostBlob } from './client';
+import { apiGet, apiPost, apiPut, apiDelete, apiPostBlob, type BlobResponse } from './client';
 import type { Api } from '$lib/types';
 
 /**
@@ -136,6 +136,6 @@ export interface GenerateOptions {
  * @param apiId - API ID to generate code for
  * @param options - Optional generation options (backend applies defaults for omitted values)
  */
-export async function generateApi(apiId: string, options?: GenerateOptions): Promise<Blob> {
+export async function generateApi(apiId: string, options?: GenerateOptions): Promise<BlobResponse> {
 	return apiPostBlob(`/apis/${apiId}/generate`, options);
 }

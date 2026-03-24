@@ -26,7 +26,7 @@
     error = null;
 
     try {
-      const blob = await generateApi(apiId, {
+      const { blob, filename } = await generateApi(apiId, {
         healthcheck,
         responsePlaceholders,
         databaseEnabled
@@ -36,7 +36,7 @@
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `${apiTitle}.zip`;
+      a.download = filename ?? `${apiTitle}.zip`;
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
