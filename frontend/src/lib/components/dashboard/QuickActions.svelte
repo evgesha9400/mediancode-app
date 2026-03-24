@@ -14,12 +14,6 @@
   let { hasFields, hasObjects, hasApis }: Props = $props();
 
   let isEmpty = $derived(!hasFields && !hasObjects && !hasApis);
-
-  const actions = [
-    { label: 'Create Field', icon: 'fa-vector-square', href: '/fields' },
-    { label: 'Create Object', icon: 'fa-cubes', href: '/objects' },
-    { label: 'Create API', icon: 'fa-code', href: '/apis' },
-  ];
 </script>
 
 {#if isEmpty}
@@ -42,17 +36,5 @@
         </button>
       </div>
     </div>
-  </div>
-{:else}
-  <div class="flex flex-wrap gap-3" data-testid="dashboard-quick-actions">
-    {#each actions as action}
-      <button
-        onclick={() => goto(action.href)}
-        class="flex items-center space-x-2 px-4 py-2.5 bg-transparent border border-mono-600 text-sm font-medium text-mono-300 hover:bg-mono-800 hover:border-mono-400 transition-colors cursor-pointer"
-      >
-        <i class="fa-solid {action.icon} text-mono-400"></i>
-        <span>{action.label}</span>
-      </button>
-    {/each}
   </div>
 {/if}
