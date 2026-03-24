@@ -106,6 +106,7 @@
     <!-- Right column: API Readiness -->
     <div class="lg:col-span-2">
       <section>
+        <h2 class="text-xs uppercase tracking-wider text-mono-500 mb-3 font-medium">Your APIs</h2>
         {#if apiReadiness.length > 0}
           <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
             {#each apiReadiness as item}

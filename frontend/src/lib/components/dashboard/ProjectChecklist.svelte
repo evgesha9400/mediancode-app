@@ -43,33 +43,34 @@
 </script>
 
 {#if !dismissed}
-  <div class="bg-mono-900 border-2 border-mono-700 p-5" data-testid="project-checklist">
-    <div class="flex items-center justify-between mb-4">
-      <div class="flex items-center space-x-2">
-        <h3 class="text-sm font-semibold text-mono-100">Project Setup</h3>
-        <span class="text-xs text-mono-400">{completedCount}/{steps.length}</span>
+  <section class="flex flex-col" data-testid="project-checklist-wrapper">
+    <div class="flex items-center justify-between mb-3">
+      <h2 class="text-xs uppercase tracking-wider text-mono-500 font-medium">Project Setup</h2>
+      <div class="flex items-center space-x-3">
+        <span class="text-xs text-mono-400">{completedCount}/{steps.length} completed</span>
+        <button
+          onclick={dismiss}
+          class="text-mono-400 hover:text-mono-300 transition-colors cursor-pointer"
+          aria-label="Dismiss checklist"
+          data-testid="checklist-dismiss-btn"
+        >
+          <i class="fa-solid fa-xmark text-sm"></i>
+        </button>
       </div>
-      <button
-        onclick={dismiss}
-        class="text-mono-400 hover:text-mono-300 transition-colors cursor-pointer"
-        aria-label="Dismiss checklist"
-        data-testid="checklist-dismiss-btn"
-      >
-        <i class="fa-solid fa-xmark text-sm"></i>
-      </button>
     </div>
+    
+    <div class="bg-mono-900 border-2 border-mono-700 p-5" data-testid="project-checklist">
+      <!-- Progress bar -->
+      <div class="w-full bg-mono-800 rounded-full h-1.5 mb-4">
+        <div
+          class="bg-green-400 h-1.5 rounded-full transition-all duration-300"
+          style="width: {(completedCount / steps.length) * 100}%"
+          data-testid="checklist-progress"
+        ></div>
+      </div>
 
-    <!-- Progress bar -->
-    <div class="w-full bg-mono-800 rounded-full h-1.5 mb-4">
-      <div
-        class="bg-green-400 h-1.5 rounded-full transition-all duration-300"
-        style="width: {(completedCount / steps.length) * 100}%"
-        data-testid="checklist-progress"
-      ></div>
-    </div>
-
-    <ul class="space-y-3">
-      {#each steps as step, i}
+      <ul class="space-y-3">
+        {#each steps as step, i}
         <li class="flex items-start space-x-3">
           <div class="mt-0.5 w-5 h-5 rounded-full flex items-center justify-center shrink-0 {step.completed ? 'bg-green-400' : 'border-2 border-mono-600'}">
             {#if step.completed}
@@ -95,4 +96,5 @@
       {/each}
     </ul>
   </div>
+  </section>
 {/if}
