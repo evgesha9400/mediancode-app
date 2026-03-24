@@ -104,7 +104,7 @@
             <input type="checkbox" bind:checked={databaseEnabled}
               class="w-4 h-4 text-green-400 border-mono-600 rounded focus:ring-2 focus:ring-green-400 bg-mono-900" />
             <span class="text-xs text-mono-300">Database support</span>
-            <span class="text-xs text-mono-400">SQLAlchemy, Alembic, Docker Compose</span>
+            <span class="text-xs text-mono-400">PostgreSQL, SQLAlchemy, Alembic, Docker Compose</span>
           </label>
         </div>
       </div>
