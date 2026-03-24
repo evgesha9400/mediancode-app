@@ -362,37 +362,40 @@
             <div animate:flip={{ duration: 150 }}>
             {#if field}
               {@const inputCfg = defaultInputType(field.type)}
-              {@const modifierClass = roleHasModifiers(item.role) && !isFk ? '' : 'invisible pointer-events-none'}
+              {@const modifierClass = roleHasModifiers(item.role) ? '' : 'invisible pointer-events-none'}
               <div class="p-2 bg-mono-900 rounded border {isFk ? 'border-mono-600' : 'border-mono-700'} space-y-1.5">
-                <div class="flex items-center space-x-2">
+                <!-- Fixed grid so role / default / optional columns line up across rows (flex-1 was shifting FK vs writable) -->
+                <div
+                  class="grid grid-cols-[auto_minmax(0,1fr)_10rem_7rem_4.5rem_1.75rem] gap-x-2 items-center"
+                >
                   <!-- Drag Handle / FK Icon -->
                   {#if isFk}
-                    <div class="text-mono-500" title="Auto-managed foreign key">
+                    <div class="text-mono-500 justify-self-start" title="Auto-managed foreign key">
                       <i class="fa-solid fa-key text-xs"></i>
                     </div>
                   {:else}
-                    <div use:dragHandle class="text-mono-600 hover:text-mono-400 cursor-grab">
+                    <div use:dragHandle class="text-mono-600 hover:text-mono-400 cursor-grab justify-self-start">
                       <i class="fa-solid fa-grip-vertical text-xs"></i>
                     </div>
                   {/if}
 
                   <!-- Field Name and Type -->
-                  <span class="font-mono text-sm {isFk ? 'text-mono-400' : 'text-mono-300'}">{field.name}</span>
-                  <span class="text-xs text-mono-400 bg-mono-800 px-2 py-0.5 rounded">{field.type}</span>
-
-                  <div class="flex-1"></div>
+                  <div class="flex items-center gap-2 min-w-0">
+                    <span class="font-mono text-sm truncate {isFk ? 'text-mono-400' : 'text-mono-300'}">{field.name}</span>
+                    <span class="text-xs text-mono-400 bg-mono-800 px-2 py-0.5 rounded shrink-0">{field.type}</span>
+                  </div>
 
                   <!-- Role Selector / FK Badge -->
                   {#if isFk}
                     <span
-                      class="w-40 shrink-0 text-xs text-mono-400 bg-mono-800 border border-mono-600 rounded px-1.5 py-0.5 text-center"
+                      class="w-full text-xs text-mono-400 bg-mono-800 border border-mono-600 rounded px-1.5 py-0.5 text-center inline-flex items-center justify-center gap-0.5 min-h-[1.5rem]"
                       title={ROLE_TOOLTIPS.fk}
                     >
-                      <i class="fa-solid fa-link text-mono-500 mr-1"></i>Foreign Key
+                      <i class="fa-solid fa-link text-mono-500 shrink-0"></i>Foreign Key
                     </span>
                   {:else}
                     <select
-                      class="w-40 shrink-0 bg-mono-800 border border-mono-700 text-mono-300 text-xs rounded px-1.5 py-0.5 focus:ring-1 focus:ring-green-400 focus:border-transparent"
+                      class="w-full min-h-[1.5rem] bg-mono-800 border border-mono-700 text-mono-300 text-xs rounded px-1.5 py-0.5 focus:ring-1 focus:ring-green-400 focus:border-transparent"
                       value={item.role}
                       onchange={(e) => setFieldRole(item.fieldId, e.currentTarget.value as FieldRole)}
                       title={ROLE_TOOLTIPS[item.role]}
@@ -405,10 +408,10 @@
 
                   <!-- Default Value Input — hidden for FK fields (no defaults); type-aware for other roles -->
                   {#if isFk}
-                    <div class="w-28 shrink-0"></div>
+                    <div class="w-full" aria-hidden="true"></div>
                   {:else if inputCfg.isBool}
                     <select
-                      class="bg-mono-800 border border-mono-700 text-mono-300 text-xs rounded px-1.5 py-0.5 w-28 shrink-0 focus:ring-1 focus:ring-green-400 focus:border-transparent {modifierClass}"
+                      class="bg-mono-800 border border-mono-700 text-mono-300 text-xs rounded px-1.5 py-0.5 w-full min-h-[1.5rem] focus:ring-1 focus:ring-green-400 focus:border-transparent {modifierClass}"
                       value={item.defaultValue ?? ''}
                       onchange={(e) => setFieldDefaultValue(item.fieldId, e.currentTarget.value)}
                       disabled={!roleHasModifiers(item.role)}
@@ -421,7 +424,7 @@
                     <input
                       type={inputCfg.inputType}
                       step={inputCfg.step}
-                      class="bg-mono-800 border border-mono-700 text-mono-300 text-xs rounded px-1.5 py-0.5 w-28 shrink-0 focus:ring-1 focus:ring-green-400 focus:border-transparent {modifierClass}"
+                      class="bg-mono-800 border border-mono-700 text-mono-300 text-xs rounded px-1.5 py-0.5 w-full min-h-[1.5rem] focus:ring-1 focus:ring-green-400 focus:border-transparent {modifierClass}"
                       placeholder="Default value"
                       value={item.defaultValue ?? ''}
                       oninput={(e) => setFieldDefaultValue(item.fieldId, e.currentTarget.value)}
@@ -429,25 +432,25 @@
                     />
                   {/if}
 
-                  <!-- Optional Toggle — enabled for FK fields (nullable is user-controllable) -->
+                  <!-- Optional Toggle (not for FK — relationship-driven) -->
                   <button
                     type="button"
                     onclick={() => toggleFieldOptional(item.fieldId)}
                     disabled={!roleHasModifiers(item.role)}
                     title="Allow null values"
-                    class="shrink-0 text-xs px-2 py-0.5 rounded border transition-colors {roleHasModifiers(item.role) ? (item.optional ? 'border-green-500 text-green-400 bg-green-400/10' : 'border-mono-600 text-mono-500 hover:border-mono-500 hover:text-mono-400') : 'invisible pointer-events-none border-mono-600 text-mono-500'}"
+                    class="justify-self-start text-xs px-2 py-0.5 rounded border transition-colors {roleHasModifiers(item.role) ? (item.optional ? 'border-green-500 text-green-400 bg-green-400/10' : 'border-mono-600 text-mono-500 hover:border-mono-500 hover:text-mono-400') : 'invisible pointer-events-none border-mono-600 text-mono-500'}"
                   >
                     optional
                   </button>
 
                   <!-- Delete Button — hidden for FK fields (lifecycle managed by relationship) -->
                   {#if isFk}
-                    <div class="w-[24px] shrink-0"></div>
+                    <div class="w-full min-w-[1.25rem]" aria-hidden="true"></div>
                   {:else}
                     <button
                       type="button"
                       onclick={() => removeField(item.fieldId)}
-                      class="text-red-700 hover:text-red-600 transition-colors"
+                      class="text-red-700 hover:text-red-600 transition-colors justify-self-end"
                       title="Remove field"
                     >
                       <i class="fa-solid fa-xmark"></i>

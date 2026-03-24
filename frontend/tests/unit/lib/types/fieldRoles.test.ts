@@ -32,8 +32,8 @@ describe('FieldRole type system', () => {
 	});
 
 	describe('roleHasModifiers', () => {
-		it('should return true for fk role', () => {
-			expect(roleHasModifiers('fk')).toBe(true);
+		it('should return false for fk role', () => {
+			expect(roleHasModifiers('fk')).toBe(false);
 		});
 
 		it('should return true for writable role', () => {

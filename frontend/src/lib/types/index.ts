@@ -243,9 +243,9 @@ export function getAvailableRoles(fieldType: string): FieldRole[] {
   });
 }
 
-/** Whether the role allows optional and defaultValue modifiers */
+/** Whether the role allows optional and defaultValue modifiers (FK excluded — relationship-managed) */
 export function roleHasModifiers(role: FieldRole): boolean {
-  return role === 'writable' || role === 'write_only' || role === 'read_only' || role === 'fk';
+  return role === 'writable' || role === 'write_only' || role === 'read_only';
 }
 
 export interface ObjectFieldReference {
