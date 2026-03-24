@@ -318,9 +318,9 @@ export class ObjectsPage {
 	 * Get number of fields in the object
 	 */
 	async getFieldCount(): Promise<number> {
-		// Use more specific locator to match only the outer field row container
-		// (not the nested label which also has .flex.items-center.space-x-2)
-		const fieldRows = this.page.locator('.flex.items-center.space-x-2.p-2.bg-mono-900.rounded.border');
+		// Target the outer field row container which has space-y-1.5
+		// (unique to field rows — relationship/validator rows don't have it)
+		const fieldRows = this.page.locator('.p-2.bg-mono-900.rounded.border.space-y-1\\.5');
 		return await fieldRows.count();
 	}
 
@@ -328,11 +328,12 @@ export class ObjectsPage {
 	 * Get ordered list of field names in the drawer
 	 */
 	async getFieldNames(): Promise<string[]> {
-		const fieldRows = this.page.locator('.flex.items-center.space-x-2.p-2.bg-mono-900.rounded.border');
+		const fieldRows = this.page.locator('.p-2.bg-mono-900.rounded.border.space-y-1\\.5');
 		const count = await fieldRows.count();
 		const names: string[] = [];
 		for (let i = 0; i < count; i++) {
-			const nameSpan = fieldRows.nth(i).locator('.font-mono.text-sm.text-mono-300');
+			// Use .font-mono.text-sm without color class to match both regular and FK fields
+			const nameSpan = fieldRows.nth(i).locator('.font-mono.text-sm');
 			const text = await nameSpan.textContent();
 			if (text) names.push(text.trim());
 		}
