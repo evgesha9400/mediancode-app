@@ -66,7 +66,7 @@
         <div class="flex items-center space-x-2">
           <i class="fa-solid fa-cube text-mono-400 text-xs"></i>
           <span class="font-mono text-sm text-mono-300">{selectedObject.name}</span>
-          <span class="text-xs text-mono-400">({selectedObject.fields.length} fields)</span>
+          <span class="text-xs text-mono-400">({selectedObject.members.length} members)</span>
         </div>
         <button
           type="button"
@@ -106,7 +106,7 @@
                   <i class="fa-solid fa-cube text-mono-400 text-xs"></i>
                   <span class="font-mono text-sm text-mono-300">{object.name}</span>
                   <span class="text-xs text-mono-400 bg-mono-800 px-2 py-0.5 rounded">
-                    {object.fields.length} fields
+                    {object.members.length} members
                   </span>
                 </div>
                 {#if object.description}

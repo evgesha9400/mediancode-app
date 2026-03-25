@@ -3,7 +3,7 @@
  * Used by the ResponsePreview component for request/response previews
  */
 
-import type { ResponseShape } from '$lib/types';
+import type { ResponseShape, ScalarMember } from '$lib/types';
 import { getFieldById } from '$lib/stores/fields';
 import { getObjectById } from '$lib/stores/objects';
 
@@ -15,10 +15,12 @@ function getTargetPkType(targetObjectId: string): string {
 	const targetObj = getObjectById(targetObjectId);
 	if (!targetObj) return 'uuid';
 
-	const pkRef = targetObj.fields.find(f => f.role === 'pk');
-	if (!pkRef) return 'uuid';
+	const pkMember = targetObj.members.find(
+		m => m.memberType === 'scalar' && m.role === 'pk'
+	) as ScalarMember | undefined;
+	if (!pkMember) return 'uuid';
 
-	const pkField = getFieldById(pkRef.fieldId);
+	const pkField = getFieldById(pkMember.fieldId);
 	return pkField?.type ?? 'uuid';
 }
 
@@ -62,12 +64,12 @@ export function buildObjectFromObjectId(objectId: string | undefined, objects?: 
 
 	const obj: Record<string, any> = {};
 
-	objectDef.fields.forEach(fieldRef => {
-		const field = getFieldById(fieldRef.fieldId);
-		if (field) {
-			obj[field.name] = getExampleValueForType(field.type);
-		}
-	});
+	objectDef.members
+		.filter(m => m.memberType === 'scalar')
+		.forEach(member => {
+			const field = getFieldById((member as ScalarMember).fieldId);
+			if (field) obj[member.name] = getExampleValueForType(field.type);
+		});
 
 	return obj;
 }
@@ -75,6 +77,7 @@ export function buildObjectFromObjectId(objectId: string | undefined, objects?: 
 /**
  * Build request body preview object, filtering by role.
  * Excludes PK, read-only, and auto-generated fields.
+ * Includes FK columns implied by derived relationships.
  */
 export function buildRequestBodyFromObjectId(objectId: string | undefined, objects?: any[]): Record<string, any> {
 	if (!objectId) return {};
@@ -82,25 +85,19 @@ export function buildRequestBodyFromObjectId(objectId: string | undefined, objec
 	if (!objectDef) return {};
 
 	const obj: Record<string, any> = {};
-	objectDef.fields
-		.filter(fieldRef => fieldRef.role === 'writable' || fieldRef.role === 'write_only' || fieldRef.role === 'fk')
-		.forEach(fieldRef => {
-			const field = getFieldById(fieldRef.fieldId);
-			if (field) obj[field.name] = getExampleValueForType(field.type);
+	objectDef.members
+		.filter(m => m.memberType === 'scalar')
+		.filter(m => (m as ScalarMember).role === 'writable' || (m as ScalarMember).role === 'write_only')
+		.forEach(member => {
+			const field = getFieldById((member as ScalarMember).fieldId);
+			if (field) obj[member.name] = getExampleValueForType(field.type);
 		});
 
-	// TODO: Remove in Phase 2 when all data is migrated — FK fields now exist as real
-	// fields with role 'fk', so the dedup guard (fkName in obj) prevents double entries.
-	// This block handles legacy data where FK fields may not yet exist.
-	if (objectDef.relationships) {
-		objectDef.relationships
-			.filter(rel => rel.cardinality === 'references')
-			.forEach(rel => {
-				const fkName = rel.name + '_id';
-				if (!(fkName in obj)) {
-					obj[fkName] = getExampleValueForType(getTargetPkType(rel.targetObjectId));
-				}
-			});
+	// Add FK columns implied by derived relationships
+	for (const dr of objectDef.derivedRelationships) {
+		if (dr.impliesFk && !(dr.impliesFk in obj)) {
+			obj[dr.impliesFk] = getExampleValueForType(getTargetPkType(dr.sourceObjectId));
+		}
 	}
 
 	return obj;
@@ -109,6 +106,7 @@ export function buildRequestBodyFromObjectId(objectId: string | undefined, objec
 /**
  * Build response body preview object, filtering by role.
  * Excludes write-only fields (everything else appears in responses).
+ * Includes FK columns implied by derived relationships.
  */
 export function buildResponseBodyFromObjectId(objectId: string | undefined, objects?: any[]): Record<string, any> {
 	if (!objectId) return {};
@@ -116,25 +114,19 @@ export function buildResponseBodyFromObjectId(objectId: string | undefined, obje
 	if (!objectDef) return {};
 
 	const obj: Record<string, any> = {};
-	objectDef.fields
-		.filter(fieldRef => fieldRef.role !== 'write_only')
-		.forEach(fieldRef => {
-			const field = getFieldById(fieldRef.fieldId);
-			if (field) obj[field.name] = getExampleValueForType(field.type);
+	objectDef.members
+		.filter(m => m.memberType === 'scalar')
+		.filter(m => (m as ScalarMember).role !== 'write_only')
+		.forEach(member => {
+			const field = getFieldById((member as ScalarMember).fieldId);
+			if (field) obj[member.name] = getExampleValueForType(field.type);
 		});
 
-	// TODO: Remove in Phase 2 when all data is migrated — FK fields now exist as real
-	// fields with role 'fk', so the dedup guard (fkName in obj) prevents double entries.
-	// This block handles legacy data where FK fields may not yet exist.
-	if (objectDef.relationships) {
-		objectDef.relationships
-			.filter(rel => rel.cardinality === 'references')
-			.forEach(rel => {
-				const fkName = rel.name + '_id';
-				if (!(fkName in obj)) {
-					obj[fkName] = getExampleValueForType(getTargetPkType(rel.targetObjectId));
-				}
-			});
+	// Add FK columns implied by derived relationships
+	for (const dr of objectDef.derivedRelationships) {
+		if (dr.impliesFk && !(dr.impliesFk in obj)) {
+			obj[dr.impliesFk] = getExampleValueForType(getTargetPkType(dr.sourceObjectId));
+		}
 	}
 
 	return obj;

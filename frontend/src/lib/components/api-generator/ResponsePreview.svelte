@@ -9,6 +9,7 @@
 </script>
 
 <script lang="ts">
+  import type { ScalarMember } from '$lib/types';
   import { objectsStore } from '$lib/stores/objects';
   import { getFieldById } from '$lib/stores/fields';
   import { getObjectById } from '$lib/stores/objects';
@@ -54,24 +55,25 @@
           <i class="fa-solid fa-cube text-mono-400 text-sm"></i>
           <span class="font-mono text-sm text-mono-300">{selectedObject.name}</span>
         </div>
-        <span class="text-xs text-mono-400">{selectedObject.fields.length} fields</span>
+        <span class="text-xs text-mono-400">{selectedObject.members.length} members</span>
       </div>
 
       {#if selectedObject.description}
         <p class="text-xs text-mono-400 mb-2">{selectedObject.description}</p>
       {/if}
 
-      <!-- Field List -->
+      <!-- Field List (scalar members only) -->
       <div class="space-y-1 mt-2">
         <p class="text-xs text-mono-400 font-medium">Fields:</p>
-        {#each selectedObject.fields as fieldRef (fieldRef.fieldId)}
-          {@const field = getFieldById(fieldRef.fieldId)}
+        {#each selectedObject.members.filter(m => m.memberType === 'scalar') as member (member.fieldId)}
+          {@const scalarMember = member as ScalarMember}
+          {@const field = getFieldById(scalarMember.fieldId)}
           {#if field}
             <div class="flex items-center justify-between text-xs">
-              <span class="font-mono text-mono-300">{field.name}</span>
+              <span class="font-mono text-mono-300">{scalarMember.name}</span>
               <div class="flex items-center space-x-2">
-                {#if fieldRef.role !== 'writable'}
-                  <span class="text-mono-500 text-[10px] uppercase">{fieldRef.role.replace(/_/g, ' ')}</span>
+                {#if scalarMember.role !== 'writable'}
+                  <span class="text-mono-500 text-[10px] uppercase">{scalarMember.role.replace(/_/g, ' ')}</span>
                 {/if}
                 <span class="text-mono-400 bg-mono-800 px-1.5 py-0.5 rounded">{field.type}</span>
               </div>
@@ -79,7 +81,7 @@
           {:else}
             <div class="flex items-center gap-2 text-xs text-red-400">
               <i class="fa-solid fa-triangle-exclamation"></i>
-              <span>Field not found ({fieldRef.fieldId})</span>
+              <span>Field not found ({scalarMember.fieldId})</span>
             </div>
           {/if}
         {/each}

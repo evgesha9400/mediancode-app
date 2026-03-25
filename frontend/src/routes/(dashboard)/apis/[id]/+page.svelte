@@ -55,8 +55,9 @@
     if (!objectId) return [];
     const obj = $objectsStore.find(o => o.id === objectId);
     if (!obj) return [];
-    return obj.fields
-      .map(ref => $fieldsStore.find(f => f.id === ref.fieldId))
+    return obj.members
+      .filter(m => m.memberType === 'scalar')
+      .map(m => $fieldsStore.find(f => f.id === m.fieldId))
       .filter((f): f is Field => f !== undefined);
   });
 
@@ -121,8 +122,8 @@
       namespaceId: apiState.apiNamespaceId,
       name: '',
       description: '',
-      fields: [],
-      relationships: [],
+      members: [],
+      derivedRelationships: [],
       validators: [],
       usedInApis: []
     };
@@ -145,7 +146,7 @@
         namespaceId: editedNewObject.namespaceId,
         name: editedNewObject.name,
         description: editedNewObject.description,
-        fields: editedNewObject.fields,
+        members: editedNewObject.members.map(({ id, ...rest }) => rest),
         validators: editedNewObject.validators.length > 0
           ? editedNewObject.validators.map(v => ({
               templateId: v.templateId,
@@ -262,7 +263,7 @@
       if (editedNewObject) {
         editedNewObject = {
           ...editedNewObject,
-          fields: [...editedNewObject.fields, { fieldId: field.id, role: 'writable' as const, optional: false }]
+          members: [...editedNewObject.members, { memberType: 'scalar' as const, name: field.name, fieldId: field.id, role: 'writable' as const, isNullable: false }]
         };
       }
 

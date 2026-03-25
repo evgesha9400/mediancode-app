@@ -239,13 +239,14 @@ export function resolveTargetFields(
 	if (!obj) return [];
 
 	const result: TargetField[] = [];
-	for (const ref of obj.fields) {
-		const field = fields.find(f => f.id === ref.fieldId);
+	for (const member of obj.members) {
+		if (member.memberType !== 'scalar') continue;
+		const field = fields.find(f => f.id === member.fieldId);
 		if (!field) continue;
 		result.push({
-			name: field.name,
+			name: member.name,
 			type: field.type,
-			isPk: ref.role === 'pk'
+			isPk: member.role === 'pk'
 		});
 	}
 	return result;

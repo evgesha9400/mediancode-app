@@ -30,7 +30,7 @@
 
   // Extended object type with computed properties for sorting
   type ObjectWithCounts = ObjectDefinition & {
-    fieldCount: number;
+    memberCount: number;
     usedInApisCount: number;
     namespaceName: string;
   };
@@ -141,7 +141,7 @@
       if (workflow.editedItem) {
         workflow.editedItem = {
           ...workflow.editedItem,
-          fields: [...workflow.editedItem.fields, { fieldId: field.id, role: 'writable' as const, optional: false }]
+          members: [...workflow.editedItem.members, { memberType: 'scalar' as const, name: field.name, fieldId: field.id, role: 'writable' as const, isNullable: false }]
         };
       }
 
@@ -194,8 +194,8 @@
           onSort={workflow.handleSort}
         />
         <SortableColumn
-          column="fields"
-          label="Fields"
+          column="members"
+          label="Members"
           {sorts}
           onSort={workflow.handleSort}
         />
@@ -228,8 +228,8 @@
           </td>
           <td class="px-6 py-4 whitespace-nowrap">
             <div class="flex items-center space-x-2">
-              <Pill>{object.fields.length}</Pill>
-              <span class="text-sm text-mono-400">fields</span>
+              <Pill>{object.members.length}</Pill>
+              <span class="text-sm text-mono-400">members</span>
             </div>
           </td>
           <td class="px-6 py-4 whitespace-nowrap">
