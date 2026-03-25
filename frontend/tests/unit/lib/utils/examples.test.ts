@@ -23,36 +23,46 @@ const roleTestFields: Field[] = [
 	{ id: testFieldId('name'), namespaceId: 'ns-1', name: 'name', type: 'str', container: null, constraints: [], validators: [], usedInApis: [] },
 	{ id: testFieldId('password'), namespaceId: 'ns-1', name: 'password', type: 'str', container: null, constraints: [], validators: [], usedInApis: [] },
 	{ id: testFieldId('created_at'), namespaceId: 'ns-1', name: 'created_at', type: 'datetime', container: null, constraints: [], validators: [], usedInApis: [] },
-	{ id: testFieldId('customer_id'), namespaceId: 'ns-1', name: 'customer_id', type: 'uuid', container: null, constraints: [], validators: [], usedInApis: [] },
 ];
 
 const roleTestObject: ObjectDefinition = {
 	id: ROLE_TEST_OBJECT_ID,
 	namespaceId: 'ns-1',
 	name: 'TestObj',
-	fields: [
-		{ fieldId: testFieldId('id'), role: 'pk', optional: false },
-		{ fieldId: testFieldId('name'), role: 'writable', optional: false },
-		{ fieldId: testFieldId('password'), role: 'write_only', optional: false },
-		{ fieldId: testFieldId('created_at'), role: 'read_only', optional: false },
+	members: [
+		{ memberType: 'scalar', name: 'id', fieldId: testFieldId('id'), role: 'pk', isNullable: false },
+		{ memberType: 'scalar', name: 'name', fieldId: testFieldId('name'), role: 'writable', isNullable: false },
+		{ memberType: 'scalar', name: 'password', fieldId: testFieldId('password'), role: 'write_only', isNullable: false },
+		{ memberType: 'scalar', name: 'created_at', fieldId: testFieldId('created_at'), role: 'read_only', isNullable: false },
 	],
-	relationships: [],
+	derivedRelationships: [],
 	validators: [],
 	usedInApis: []
 };
 
-// Object with FK field for testing fk role in previews
-const FK_TEST_OBJECT_ID = 'test-fk-obj';
-const fkTestObject: ObjectDefinition = {
-	id: FK_TEST_OBJECT_ID,
+// Object with a relationship member (should not produce direct fields)
+const REL_TEST_OBJECT_ID = 'test-rel-obj';
+const relTestObject: ObjectDefinition = {
+	id: REL_TEST_OBJECT_ID,
 	namespaceId: 'ns-1',
-	name: 'FkTestObj',
-	fields: [
-		{ fieldId: testFieldId('id'), role: 'pk', optional: false },
-		{ fieldId: testFieldId('name'), role: 'writable', optional: false },
-		{ fieldId: testFieldId('customer_id'), role: 'fk', optional: false },
+	name: 'RelTestObj',
+	members: [
+		{ memberType: 'scalar', name: 'id', fieldId: testFieldId('id'), role: 'pk', isNullable: false },
+		{ memberType: 'scalar', name: 'name', fieldId: testFieldId('name'), role: 'writable', isNullable: false },
+		{ memberType: 'relationship', name: 'orders', targetObjectId: 'some-obj', kind: 'one_to_many', inverseName: 'parent', required: true },
 	],
-	relationships: [],
+	derivedRelationships: [
+		{
+			name: 'customer',
+			sourceObjectId: 'customer-obj-id',
+			sourceObject: 'Customer',
+			sourceField: 'orders',
+			kind: 'one_to_many',
+			side: 'many',
+			impliesFk: 'customer_id',
+			required: true
+		}
+	],
 	validators: [],
 	usedInApis: []
 };
@@ -271,29 +281,27 @@ describe('examples - buildResponseBodyFromObjectId (role filtering)', () => {
 	});
 });
 
-describe('examples - FK role in previews', () => {
+describe('examples - relationship members and derived relationships in previews', () => {
 	beforeEach(() => {
 		fieldsStore.set([...initialFields, ...roleTestFields]);
-		objectsStore.set([...(initialObjects as any), roleTestObject, fkTestObject]);
+		objectsStore.set([...(initialObjects as any), roleTestObject, relTestObject]);
 	});
 
-	it('should include fk fields in request preview', () => {
-		const obj = buildRequestBodyFromObjectId(FK_TEST_OBJECT_ID);
+	it('should not produce direct fields from relationship members', () => {
+		const obj = buildRequestBodyFromObjectId(REL_TEST_OBJECT_ID);
+		// 'orders' is a relationship member -- it should not appear as a field
+		expect(obj).not.toHaveProperty('orders');
+		// scalar members should still appear
+		expect(obj).toHaveProperty('name');
+	});
+
+	it('should produce FK columns from derivedRelationships with impliesFk', () => {
+		const obj = buildRequestBodyFromObjectId(REL_TEST_OBJECT_ID);
 		expect(obj).toHaveProperty('customer_id');
 	});
 
-	it('should include fk fields in response preview', () => {
-		const obj = buildResponseBodyFromObjectId(FK_TEST_OBJECT_ID);
+	it('should produce FK columns in response preview from derivedRelationships', () => {
+		const obj = buildResponseBodyFromObjectId(REL_TEST_OBJECT_ID);
 		expect(obj).toHaveProperty('customer_id');
-	});
-
-	it('should not include pk fields in request preview', () => {
-		const obj = buildRequestBodyFromObjectId(FK_TEST_OBJECT_ID);
-		expect(obj).not.toHaveProperty('id');
-	});
-
-	it('should use correct example value type for fk field', () => {
-		const obj = buildRequestBodyFromObjectId(FK_TEST_OBJECT_ID);
-		expect(obj.customer_id).toBe('00000000-0000-0000-0000-000000000000');
 	});
 });

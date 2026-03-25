@@ -7,20 +7,6 @@ vi.mock('$lib/api/client', () => ({
   apiDelete: vi.fn()
 }));
 
-// Mock types store for buildTypeIdToNameMap (used by transformField via fields.ts)
-vi.mock('$lib/stores/types', () => ({
-  typesBaseStore: {
-    subscribe: vi.fn((fn: any) => {
-      fn([
-        { id: 'type-str', name: 'str' },
-        { id: 'type-int', name: 'int' },
-        { id: 'type-uuid', name: 'uuid' }
-      ]);
-      return () => {};
-    })
-  }
-}));
-
 import {
   listObjects,
   getObject,
@@ -35,11 +21,11 @@ const MOCK_OBJECT_RESPONSE = {
   namespaceId: 'ns-1',
   name: 'User',
   description: 'User model',
-  fields: [
-    { fieldId: 'f-1', role: 'writable', optional: false, defaultValue: null },
-    { fieldId: 'f-2', role: 'writable', optional: true, defaultValue: null }
+  members: [
+    { memberType: 'scalar', id: 'm-1', name: 'email', fieldId: 'f-1', role: 'writable', isNullable: false, defaultValue: null },
+    { memberType: 'scalar', id: 'm-2', name: 'username', fieldId: 'f-2', role: 'writable', isNullable: true, defaultValue: null }
   ],
-  relationships: [],
+  derivedRelationships: [],
   validators: [],
   usedInApis: ['api-1']
 };
@@ -58,7 +44,7 @@ describe('Objects API Service', () => {
       expect(apiGet).toHaveBeenCalledWith('/objects');
       expect(result).toHaveLength(1);
       expect(result[0].name).toBe('User');
-      expect(result[0].fields).toHaveLength(2);
+      expect(result[0].members).toHaveLength(2);
     });
 
     it('should transform model validators with template data', async () => {
@@ -113,7 +99,7 @@ describe('Objects API Service', () => {
       const result = await createObjectApi({
         namespaceId: 'ns-1',
         name: 'User',
-        fields: [{ fieldId: 'f-1', role: 'writable' as const, optional: false }]
+        members: [{ memberType: 'scalar' as const, name: 'email', fieldId: 'f-1', role: 'writable' as const, isNullable: false }]
       });
 
       expect(apiPost).toHaveBeenCalledWith('/objects', expect.any(Object));
@@ -142,52 +128,138 @@ describe('Objects API Service', () => {
     });
   });
 
-  describe('transformRelationship (fkFieldId)', () => {
-    it('should map fkFieldId from API response', async () => {
-      const responseWithFk = {
-        ...MOCK_OBJECT_RESPONSE,
-        relationships: [
-          {
-            id: 'rel-1',
-            sourceObjectId: 'o-1',
-            targetObjectId: 'o-2',
-            name: 'customer',
-            cardinality: 'references',
-            isInferred: false,
-            inverseId: 'rel-2',
-            fkFieldId: 'fk-field-1'
-          }
-        ]
-      };
-      (apiGet as any).mockResolvedValue([responseWithFk]);
+  describe('transformMember', () => {
+    it('should transform scalar members correctly', async () => {
+      (apiGet as any).mockResolvedValue([MOCK_OBJECT_RESPONSE]);
 
       const result = await listObjects();
+      const member = result[0].members[0];
 
-      expect(result[0].relationships).toHaveLength(1);
-      expect(result[0].relationships[0].fkFieldId).toBe('fk-field-1');
+      expect(member.memberType).toBe('scalar');
+      if (member.memberType === 'scalar') {
+        expect(member.id).toBe('m-1');
+        expect(member.name).toBe('email');
+        expect(member.fieldId).toBe('f-1');
+        expect(member.role).toBe('writable');
+        expect(member.isNullable).toBe(false);
+      }
     });
 
-    it('should transform null fkFieldId to undefined', async () => {
-      const responseWithNullFk = {
+    it('should transform relationship members correctly', async () => {
+      const responseWithRel = {
         ...MOCK_OBJECT_RESPONSE,
-        relationships: [
+        members: [
+          ...MOCK_OBJECT_RESPONSE.members,
           {
-            id: 'rel-1',
-            sourceObjectId: 'o-1',
+            memberType: 'relationship',
+            id: 'm-3',
+            name: 'orders',
             targetObjectId: 'o-2',
-            name: 'customer',
-            cardinality: 'references',
-            isInferred: false,
-            inverseId: null,
-            fkFieldId: null
+            kind: 'one_to_many',
+            inverseName: 'user',
+            required: true
           }
         ]
       };
-      (apiGet as any).mockResolvedValue([responseWithNullFk]);
+      (apiGet as any).mockResolvedValue([responseWithRel]);
 
       const result = await listObjects();
+      const relMember = result[0].members[2];
 
-      expect(result[0].relationships[0].fkFieldId).toBeUndefined();
+      expect(relMember.memberType).toBe('relationship');
+      if (relMember.memberType === 'relationship') {
+        expect(relMember.id).toBe('m-3');
+        expect(relMember.name).toBe('orders');
+        expect(relMember.targetObjectId).toBe('o-2');
+        expect(relMember.kind).toBe('one_to_many');
+        expect(relMember.inverseName).toBe('user');
+        expect(relMember.required).toBe(true);
+      }
+    });
+  });
+
+  describe('transformDerivedRelationship', () => {
+    it('should transform one_to_many derived relationship', async () => {
+      const responseWithDerived = {
+        ...MOCK_OBJECT_RESPONSE,
+        derivedRelationships: [
+          {
+            name: 'customer',
+            sourceObjectId: 'o-3',
+            sourceObject: 'Customer',
+            sourceField: 'orders',
+            kind: 'one_to_many',
+            side: 'many',
+            impliesFk: 'customer_id',
+            required: true
+          }
+        ]
+      };
+      (apiGet as any).mockResolvedValue([responseWithDerived]);
+
+      const result = await listObjects();
+      const dr = result[0].derivedRelationships[0];
+
+      expect(dr.name).toBe('customer');
+      expect(dr.sourceObjectId).toBe('o-3');
+      expect(dr.sourceObject).toBe('Customer');
+      expect(dr.kind).toBe('one_to_many');
+      expect(dr.side).toBe('many');
+      expect(dr.impliesFk).toBe('customer_id');
+    });
+
+    it('should transform many_to_many derived relationship with junction table', async () => {
+      const responseWithM2M = {
+        ...MOCK_OBJECT_RESPONSE,
+        derivedRelationships: [
+          {
+            name: 'posts',
+            sourceObjectId: 'o-4',
+            sourceObject: 'Post',
+            sourceField: 'tags',
+            kind: 'many_to_many',
+            side: 'many',
+            impliesFk: null,
+            junctionTable: 'posts_tags',
+            required: false
+          }
+        ]
+      };
+      (apiGet as any).mockResolvedValue([responseWithM2M]);
+
+      const result = await listObjects();
+      const dr = result[0].derivedRelationships[0];
+
+      expect(dr.kind).toBe('many_to_many');
+      expect(dr.impliesFk).toBeNull();
+      expect(dr.junctionTable).toBe('posts_tags');
+      expect(dr.required).toBe(false);
+    });
+
+    it('should transform one_to_one derived relationship', async () => {
+      const responseWithO2O = {
+        ...MOCK_OBJECT_RESPONSE,
+        derivedRelationships: [
+          {
+            name: 'user',
+            sourceObjectId: 'o-5',
+            sourceObject: 'User',
+            sourceField: 'profile',
+            kind: 'one_to_one',
+            side: 'target',
+            impliesFk: 'user_id',
+            required: true
+          }
+        ]
+      };
+      (apiGet as any).mockResolvedValue([responseWithO2O]);
+
+      const result = await listObjects();
+      const dr = result[0].derivedRelationships[0];
+
+      expect(dr.kind).toBe('one_to_one');
+      expect(dr.side).toBe('target');
+      expect(dr.impliesFk).toBe('user_id');
     });
   });
 });

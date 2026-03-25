@@ -316,16 +316,17 @@ describe('resolveTargetFields', () => {
 
   const objects: ObjectDefinition[] = [
     {
-      id: 'obj-1', namespaceId: 'ns', name: 'Product', fields: [
-        { fieldId: 'f-1', role: 'pk', optional: false },
-        { fieldId: 'f-2', role: 'writable', optional: false },
-        { fieldId: 'f-3', role: 'writable', optional: true }
+      id: 'obj-1', namespaceId: 'ns', name: 'Product',
+      members: [
+        { memberType: 'scalar', name: 'id', fieldId: 'f-1', role: 'pk', isNullable: false },
+        { memberType: 'scalar', name: 'price', fieldId: 'f-2', role: 'writable', isNullable: false },
+        { memberType: 'scalar', name: 'name', fieldId: 'f-3', role: 'writable', isNullable: true }
       ],
-      relationships: [], validators: [], usedInApis: []
+      derivedRelationships: [], validators: [], usedInApis: []
     }
   ];
 
-  it('resolves fields from target object', () => {
+  it('resolves fields from target object using member.name', () => {
     const result = resolveTargetFields('obj-1', objects, fields);
     expect(result).toEqual([
       { name: 'id', type: 'uuid', isPk: true },
@@ -342,14 +343,30 @@ describe('resolveTargetFields', () => {
   it('skips fields that cannot be resolved', () => {
     const sparseObjects: ObjectDefinition[] = [
       {
-        id: 'obj-2', namespaceId: 'ns', name: 'Sparse', fields: [
-          { fieldId: 'f-1', role: 'pk', optional: false },
-          { fieldId: 'f-missing', role: 'writable', optional: false }
+        id: 'obj-2', namespaceId: 'ns', name: 'Sparse',
+        members: [
+          { memberType: 'scalar', name: 'id', fieldId: 'f-1', role: 'pk', isNullable: false },
+          { memberType: 'scalar', name: 'missing_field', fieldId: 'f-missing', role: 'writable', isNullable: false }
         ],
-        relationships: [], validators: [], usedInApis: []
+        derivedRelationships: [], validators: [], usedInApis: []
       }
     ];
     const result = resolveTargetFields('obj-2', sparseObjects, fields);
+    expect(result).toEqual([{ name: 'id', type: 'uuid', isPk: true }]);
+  });
+
+  it('skips relationship members (only resolves scalar members)', () => {
+    const mixedObjects: ObjectDefinition[] = [
+      {
+        id: 'obj-3', namespaceId: 'ns', name: 'Mixed',
+        members: [
+          { memberType: 'scalar', name: 'id', fieldId: 'f-1', role: 'pk', isNullable: false },
+          { memberType: 'relationship', name: 'orders', targetObjectId: 'o-2', kind: 'one_to_many', inverseName: 'product', required: true }
+        ],
+        derivedRelationships: [], validators: [], usedInApis: []
+      }
+    ];
+    const result = resolveTargetFields('obj-3', mixedObjects, fields);
     expect(result).toEqual([{ name: 'id', type: 'uuid', isPk: true }]);
   });
 });

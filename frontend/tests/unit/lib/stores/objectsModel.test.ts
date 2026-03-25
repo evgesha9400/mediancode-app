@@ -30,9 +30,7 @@ vi.mock('$app/state', () => ({
 vi.mock('$lib/api/objects', () => ({
   createObjectApi: vi.fn(),
   updateObjectApi: vi.fn(),
-  deleteObjectApi: vi.fn(),
-  createRelationshipApi: vi.fn(),
-  deleteRelationshipApi: vi.fn()
+  deleteObjectApi: vi.fn()
 }));
 
 // Mock error mapping
@@ -75,8 +73,8 @@ function makeObject(overrides: Partial<ObjectDefinition> & { id: string; name: s
   return {
     namespaceId: 'ns-1',
     description: '',
-    fields: [],
-    relationships: [],
+    members: [],
+    derivedRelationships: [],
     validators: [],
     usedInApis: [],
     ...overrides
@@ -233,7 +231,8 @@ describe('objectsModel - Draft Creation', () => {
     expect(model.editedItem!.namespaceId).toBe('custom-ns');
     expect(model.editedItem!.name).toBe('');
     expect(model.editedItem!.description).toBe('');
-    expect(model.editedItem!.fields).toEqual([]);
+    expect(model.editedItem!.members).toEqual([]);
+    expect(model.editedItem!.derivedRelationships).toEqual([]);
     expect(model.editedItem!.usedInApis).toEqual([]);
   });
 
@@ -344,9 +343,9 @@ describe('objectsModel - Save (Update)', () => {
   });
 
   it('should strip derived properties from update payload', async () => {
-    // Objects get fieldCount, usedInApisCount, namespaceName added by deriveExtra.
+    // Objects get memberCount, usedInApisCount, namespaceName added by deriveExtra.
     // The toUpdatePayload function must strip these before sending.
-    const items = [makeObject({ id: 'o-1', name: 'User', fields: ['f-1', 'f-2'] as any })];
+    const items = [makeObject({ id: 'o-1', name: 'User', members: [{ memberType: 'scalar' as const, name: 'f1', fieldId: 'f-1', role: 'writable' as const, isNullable: false }, { memberType: 'scalar' as const, name: 'f2', fieldId: 'f-2', role: 'writable' as const, isNullable: false }] })];
     ({ model, cleanup } = createTestModel({
       itemsStore: () => items
     }));
@@ -361,7 +360,7 @@ describe('objectsModel - Save (Update)', () => {
 
     // Verify the payload does not contain derived properties
     const payload = (updateObjectApi as Mock).mock.calls[0][1];
-    expect(payload).not.toHaveProperty('fieldCount');
+    expect(payload).not.toHaveProperty('memberCount');
     expect(payload).not.toHaveProperty('usedInApisCount');
     expect(payload).not.toHaveProperty('namespaceName');
   });

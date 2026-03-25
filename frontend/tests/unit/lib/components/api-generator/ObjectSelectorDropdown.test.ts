@@ -31,8 +31,8 @@ describe('ObjectSelectorDropdown Component', () => {
 						namespaceId: 'ns-1',
 						name: 'UserResponse',
 						description: 'User response object',
-						fields: [{ fieldId: 'field-1', role: 'writable' as const, optional: false }],
-						relationships: [],
+						members: [{ memberType: 'scalar' as const, name: 'field1', fieldId: 'field-1', role: 'writable' as const, isNullable: false }],
+						derivedRelationships: [],
 						validators: [],
 						usedInApis: ['api-1']
 					}

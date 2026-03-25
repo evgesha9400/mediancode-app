@@ -389,15 +389,15 @@ export const initialObjects: ObjectDefinition[] = [
 		namespaceId: GLOBAL_NAMESPACE_ID,
 		name: 'User',
 		description: 'User account information',
-		fields: [
-			{ fieldId: SEED_FIELD_IDS.user_id, role: 'writable' as const, optional: false },
-			{ fieldId: SEED_FIELD_IDS.username, role: 'writable' as const, optional: false },
-			{ fieldId: SEED_FIELD_IDS.email, role: 'writable' as const, optional: false },
-			{ fieldId: SEED_FIELD_IDS.password, role: 'writable' as const, optional: false },
-			{ fieldId: SEED_FIELD_IDS.created_at, role: 'writable' as const, optional: false },
-			{ fieldId: SEED_FIELD_IDS.updated_at, role: 'writable' as const, optional: true }
+		members: [
+			{ memberType: 'scalar' as const, name: 'user_id', fieldId: SEED_FIELD_IDS.user_id, role: 'writable' as const, isNullable: false },
+			{ memberType: 'scalar' as const, name: 'username', fieldId: SEED_FIELD_IDS.username, role: 'writable' as const, isNullable: false },
+			{ memberType: 'scalar' as const, name: 'email', fieldId: SEED_FIELD_IDS.email, role: 'writable' as const, isNullable: false },
+			{ memberType: 'scalar' as const, name: 'password', fieldId: SEED_FIELD_IDS.password, role: 'writable' as const, isNullable: false },
+			{ memberType: 'scalar' as const, name: 'created_at', fieldId: SEED_FIELD_IDS.created_at, role: 'writable' as const, isNullable: false },
+			{ memberType: 'scalar' as const, name: 'updated_at', fieldId: SEED_FIELD_IDS.updated_at, role: 'writable' as const, isNullable: true }
 		],
-		relationships: [],
+		derivedRelationships: [],
 		validators: [],
 		usedInApis: [SEED_API_IDS.api_1]
 	},
@@ -406,13 +406,13 @@ export const initialObjects: ObjectDefinition[] = [
 		namespaceId: GLOBAL_NAMESPACE_ID,
 		name: 'Product',
 		description: 'Product catalog item',
-		fields: [
-			{ fieldId: SEED_FIELD_IDS.price, role: 'writable' as const, optional: false },
-			{ fieldId: SEED_FIELD_IDS.status, role: 'writable' as const, optional: false },
-			{ fieldId: SEED_FIELD_IDS.created_at, role: 'writable' as const, optional: false },
-			{ fieldId: SEED_FIELD_IDS.updated_at, role: 'writable' as const, optional: true }
+		members: [
+			{ memberType: 'scalar' as const, name: 'price', fieldId: SEED_FIELD_IDS.price, role: 'writable' as const, isNullable: false },
+			{ memberType: 'scalar' as const, name: 'status', fieldId: SEED_FIELD_IDS.status, role: 'writable' as const, isNullable: false },
+			{ memberType: 'scalar' as const, name: 'created_at', fieldId: SEED_FIELD_IDS.created_at, role: 'writable' as const, isNullable: false },
+			{ memberType: 'scalar' as const, name: 'updated_at', fieldId: SEED_FIELD_IDS.updated_at, role: 'writable' as const, isNullable: true }
 		],
-		relationships: [],
+		derivedRelationships: [],
 		validators: [],
 		usedInApis: []
 	},
@@ -421,14 +421,14 @@ export const initialObjects: ObjectDefinition[] = [
 		namespaceId: GLOBAL_NAMESPACE_ID,
 		name: 'Order',
 		description: 'Customer order details',
-		fields: [
-			{ fieldId: SEED_FIELD_IDS.user_id, role: 'writable' as const, optional: false },
-			{ fieldId: SEED_FIELD_IDS.status, role: 'writable' as const, optional: false },
-			{ fieldId: SEED_FIELD_IDS.price, role: 'writable' as const, optional: false },
-			{ fieldId: SEED_FIELD_IDS.created_at, role: 'writable' as const, optional: false },
-			{ fieldId: SEED_FIELD_IDS.updated_at, role: 'writable' as const, optional: true }
+		members: [
+			{ memberType: 'scalar' as const, name: 'user_id', fieldId: SEED_FIELD_IDS.user_id, role: 'writable' as const, isNullable: false },
+			{ memberType: 'scalar' as const, name: 'status', fieldId: SEED_FIELD_IDS.status, role: 'writable' as const, isNullable: false },
+			{ memberType: 'scalar' as const, name: 'price', fieldId: SEED_FIELD_IDS.price, role: 'writable' as const, isNullable: false },
+			{ memberType: 'scalar' as const, name: 'created_at', fieldId: SEED_FIELD_IDS.created_at, role: 'writable' as const, isNullable: false },
+			{ memberType: 'scalar' as const, name: 'updated_at', fieldId: SEED_FIELD_IDS.updated_at, role: 'writable' as const, isNullable: true }
 		],
-		relationships: [],
+		derivedRelationships: [],
 		validators: [],
 		usedInApis: [SEED_API_IDS.api_2]
 	},
@@ -437,12 +437,12 @@ export const initialObjects: ObjectDefinition[] = [
 		namespaceId: GLOBAL_NAMESPACE_ID,
 		name: 'Customer',
 		description: 'Customer profile information',
-		fields: [
-			{ fieldId: SEED_FIELD_IDS.email, role: 'writable' as const, optional: false },
-			{ fieldId: SEED_FIELD_IDS.phone, role: 'writable' as const, optional: true },
-			{ fieldId: SEED_FIELD_IDS.created_at, role: 'writable' as const, optional: false },
+		members: [
+			{ memberType: 'scalar' as const, name: 'email', fieldId: SEED_FIELD_IDS.email, role: 'writable' as const, isNullable: false },
+			{ memberType: 'scalar' as const, name: 'phone', fieldId: SEED_FIELD_IDS.phone, role: 'writable' as const, isNullable: true },
+			{ memberType: 'scalar' as const, name: 'created_at', fieldId: SEED_FIELD_IDS.created_at, role: 'writable' as const, isNullable: false },
 		],
-		relationships: [],
+		derivedRelationships: [],
 		validators: [],
 		usedInApis: []
 	},
@@ -451,12 +451,12 @@ export const initialObjects: ObjectDefinition[] = [
 		namespaceId: GLOBAL_NAMESPACE_ID,
 		name: 'Payment',
 		description: 'Payment transaction record',
-		fields: [
-			{ fieldId: SEED_FIELD_IDS.price, role: 'writable' as const, optional: false },
-			{ fieldId: SEED_FIELD_IDS.status, role: 'writable' as const, optional: false },
-			{ fieldId: SEED_FIELD_IDS.created_at, role: 'writable' as const, optional: false },
+		members: [
+			{ memberType: 'scalar' as const, name: 'price', fieldId: SEED_FIELD_IDS.price, role: 'writable' as const, isNullable: false },
+			{ memberType: 'scalar' as const, name: 'status', fieldId: SEED_FIELD_IDS.status, role: 'writable' as const, isNullable: false },
+			{ memberType: 'scalar' as const, name: 'created_at', fieldId: SEED_FIELD_IDS.created_at, role: 'writable' as const, isNullable: false },
 		],
-		relationships: [],
+		derivedRelationships: [],
 		validators: [],
 		usedInApis: [SEED_API_IDS.api_3]
 	},
@@ -465,11 +465,11 @@ export const initialObjects: ObjectDefinition[] = [
 		namespaceId: GLOBAL_NAMESPACE_ID,
 		name: 'Address',
 		description: 'Physical address information',
-		fields: [
-			{ fieldId: SEED_FIELD_IDS.website, role: 'writable' as const, optional: true },
-			{ fieldId: SEED_FIELD_IDS.phone, role: 'writable' as const, optional: true },
+		members: [
+			{ memberType: 'scalar' as const, name: 'website', fieldId: SEED_FIELD_IDS.website, role: 'writable' as const, isNullable: true },
+			{ memberType: 'scalar' as const, name: 'phone', fieldId: SEED_FIELD_IDS.phone, role: 'writable' as const, isNullable: true },
 		],
-		relationships: [],
+		derivedRelationships: [],
 		validators: [],
 		usedInApis: []
 	},
@@ -478,13 +478,13 @@ export const initialObjects: ObjectDefinition[] = [
 		namespaceId: GLOBAL_NAMESPACE_ID,
 		name: 'Company',
 		description: 'Company profile',
-		fields: [
-			{ fieldId: SEED_FIELD_IDS.website, role: 'writable' as const, optional: false },
-			{ fieldId: SEED_FIELD_IDS.phone, role: 'writable' as const, optional: true },
-			{ fieldId: SEED_FIELD_IDS.email, role: 'writable' as const, optional: false },
-			{ fieldId: SEED_FIELD_IDS.created_at, role: 'writable' as const, optional: false },
+		members: [
+			{ memberType: 'scalar' as const, name: 'website', fieldId: SEED_FIELD_IDS.website, role: 'writable' as const, isNullable: false },
+			{ memberType: 'scalar' as const, name: 'phone', fieldId: SEED_FIELD_IDS.phone, role: 'writable' as const, isNullable: true },
+			{ memberType: 'scalar' as const, name: 'email', fieldId: SEED_FIELD_IDS.email, role: 'writable' as const, isNullable: false },
+			{ memberType: 'scalar' as const, name: 'created_at', fieldId: SEED_FIELD_IDS.created_at, role: 'writable' as const, isNullable: false },
 		],
-		relationships: [],
+		derivedRelationships: [],
 		validators: [],
 		usedInApis: []
 	},
@@ -493,13 +493,13 @@ export const initialObjects: ObjectDefinition[] = [
 		namespaceId: GLOBAL_NAMESPACE_ID,
 		name: 'Invoice',
 		description: 'Billing invoice',
-		fields: [
-			{ fieldId: SEED_FIELD_IDS.price, role: 'writable' as const, optional: false },
-			{ fieldId: SEED_FIELD_IDS.status, role: 'writable' as const, optional: false },
-			{ fieldId: SEED_FIELD_IDS.created_at, role: 'writable' as const, optional: false },
-			{ fieldId: SEED_FIELD_IDS.updated_at, role: 'writable' as const, optional: true }
+		members: [
+			{ memberType: 'scalar' as const, name: 'price', fieldId: SEED_FIELD_IDS.price, role: 'writable' as const, isNullable: false },
+			{ memberType: 'scalar' as const, name: 'status', fieldId: SEED_FIELD_IDS.status, role: 'writable' as const, isNullable: false },
+			{ memberType: 'scalar' as const, name: 'created_at', fieldId: SEED_FIELD_IDS.created_at, role: 'writable' as const, isNullable: false },
+			{ memberType: 'scalar' as const, name: 'updated_at', fieldId: SEED_FIELD_IDS.updated_at, role: 'writable' as const, isNullable: true }
 		],
-		relationships: [],
+		derivedRelationships: [],
 		validators: [],
 		usedInApis: []
 	},
@@ -509,12 +509,12 @@ export const initialObjects: ObjectDefinition[] = [
 		namespaceId: USER_NAMESPACE_ID,
 		name: 'ProductCatalogItem',
 		description: 'Product catalog item in user namespace',
-		fields: [
-			{ fieldId: SEED_FIELD_IDS.product_name, role: 'writable' as const, optional: false },
-			{ fieldId: SEED_FIELD_IDS.quantity, role: 'writable' as const, optional: false },
-			{ fieldId: SEED_FIELD_IDS.product_price, role: 'writable' as const, optional: false }
+		members: [
+			{ memberType: 'scalar' as const, name: 'product_name', fieldId: SEED_FIELD_IDS.product_name, role: 'writable' as const, isNullable: false },
+			{ memberType: 'scalar' as const, name: 'quantity', fieldId: SEED_FIELD_IDS.quantity, role: 'writable' as const, isNullable: false },
+			{ memberType: 'scalar' as const, name: 'product_price', fieldId: SEED_FIELD_IDS.product_price, role: 'writable' as const, isNullable: false }
 		],
-		relationships: [],
+		derivedRelationships: [],
 		validators: [],
 		usedInApis: []
 	}
@@ -549,7 +549,8 @@ export function cloneFieldConstraintBases(fieldConstraints: FieldConstraintBase[
 export function cloneObjects(objects: ObjectDefinition[] = initialObjects): ObjectDefinition[] {
 	return objects.map(obj => ({
 		...obj,
-		fields: obj.fields.map(f => ({ ...f })),
+		members: obj.members.map(m => ({ ...m })),
+		derivedRelationships: obj.derivedRelationships.map(dr => ({ ...dr })),
 		validators: obj.validators.map(v => ({ ...v })),
 		usedInApis: [...obj.usedInApis]
 	}));

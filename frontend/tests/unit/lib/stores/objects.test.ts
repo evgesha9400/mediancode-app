@@ -16,8 +16,8 @@ function makeObject(overrides: Partial<ObjectDefinition> & { id: string; name: s
 	return {
 		namespaceId: GLOBAL_NAMESPACE_ID,
 		description: '',
-		fields: [],
-		relationships: [],
+		members: [],
+		derivedRelationships: [],
 		validators: [],
 		usedInApis: [],
 		...overrides

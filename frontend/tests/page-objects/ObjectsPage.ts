@@ -78,7 +78,7 @@ export class ObjectsPage {
 		// Sortable columns - scoped to table
 		this.nameColumnHeader = this.table.locator('thead th').filter({ hasText: 'Object Name' });
 		this.namespaceColumnHeader = this.table.locator('thead th').filter({ hasText: 'Namespace' });
-		this.fieldsColumnHeader = this.table.locator('thead th').filter({ hasText: /^Fields$/i });
+		this.fieldsColumnHeader = this.table.locator('thead th').filter({ hasText: /^Members$/i });
 		this.usedInApisColumnHeader = this.table.locator('thead th').filter({ hasText: 'Used In APIs' });
 
 		// Drawer
@@ -301,7 +301,7 @@ export class ObjectsPage {
 	 */
 	async removeField(fieldName: string) {
 		const fieldRow = this.page.locator('.flex.items-center.space-x-2').filter({ hasText: fieldName });
-		const removeButton = fieldRow.locator('button[title="Remove field"]');
+		const removeButton = fieldRow.locator('button[title="Remove member"]');
 		await removeButton.click();
 	}
 
@@ -315,26 +315,25 @@ export class ObjectsPage {
 	}
 
 	/**
-	 * Get number of fields in the object
+	 * Get number of members (scalar + relationship) in the object
 	 */
 	async getFieldCount(): Promise<number> {
-		// Target the outer field row container which has space-y-1.5
-		// (unique to field rows — relationship/validator rows don't have it)
-		const fieldRows = this.page.locator('.p-2.bg-mono-900.rounded.border.space-y-1\\.5');
-		return await fieldRows.count();
+		// Target the outer member row container which has space-y-1.5
+		const memberRows = this.page.locator('.p-2.bg-mono-900.rounded.border.space-y-1\\.5');
+		return await memberRows.count();
 	}
 
 	/**
-	 * Get ordered list of field names in the drawer
+	 * Get ordered list of member names in the drawer
 	 */
 	async getFieldNames(): Promise<string[]> {
-		const fieldRows = this.page.locator('.p-2.bg-mono-900.rounded.border.space-y-1\\.5');
-		const count = await fieldRows.count();
+		const memberRows = this.page.locator('.p-2.bg-mono-900.rounded.border.space-y-1\\.5');
+		const count = await memberRows.count();
 		const names: string[] = [];
 		for (let i = 0; i < count; i++) {
-			// Use .font-mono.text-sm without color class to match both regular and FK fields
-			const nameSpan = fieldRows.nth(i).locator('.font-mono.text-sm');
-			const text = await nameSpan.textContent();
+			// Use .font-mono.text-sm to match member name inputs/spans
+			const nameInput = memberRows.nth(i).locator('.font-mono.text-sm');
+			const text = await nameInput.inputValue().catch(() => nameInput.textContent());
 			if (text) names.push(text.trim());
 		}
 		return names;

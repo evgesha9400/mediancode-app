@@ -10,14 +10,6 @@ import {
 
 describe('FieldRole type system', () => {
 	describe('getAvailableRoles', () => {
-		it('should never return fk for any field type', () => {
-			const typesToTest = ['str', 'int', 'float', 'bool', 'uuid', 'datetime', 'date', 'time'];
-			for (const type of typesToTest) {
-				const roles = getAvailableRoles(type);
-				expect(roles).not.toContain('fk');
-			}
-		});
-
 		it('should return pk for int type', () => {
 			expect(getAvailableRoles('int')).toContain('pk');
 		});
@@ -32,10 +24,6 @@ describe('FieldRole type system', () => {
 	});
 
 	describe('roleHasModifiers', () => {
-		it('should return false for fk role', () => {
-			expect(roleHasModifiers('fk')).toBe(false);
-		});
-
 		it('should return true for writable role', () => {
 			expect(roleHasModifiers('writable')).toBe(true);
 		});
@@ -58,30 +46,48 @@ describe('FieldRole type system', () => {
 	});
 
 	describe('FIELD_ROLES constant', () => {
-		it('should include fk in the roles array', () => {
-			expect(FIELD_ROLES).toContain('fk');
+		it('should NOT contain fk', () => {
+			expect(FIELD_ROLES).not.toContain('fk');
+		});
+
+		it('should contain all valid roles', () => {
+			expect(FIELD_ROLES).toContain('pk');
+			expect(FIELD_ROLES).toContain('writable');
+			expect(FIELD_ROLES).toContain('write_only');
+			expect(FIELD_ROLES).toContain('read_only');
+			expect(FIELD_ROLES).toContain('created_timestamp');
+			expect(FIELD_ROLES).toContain('updated_timestamp');
+			expect(FIELD_ROLES).toContain('generated_uuid');
 		});
 	});
 
 	describe('ROLE_LABELS', () => {
-		it('should have a label for fk', () => {
-			expect(ROLE_LABELS.fk).toBe('Foreign Key');
+		it('should have a label for pk', () => {
+			expect(ROLE_LABELS.pk).toBe('Primary Key');
+		});
+
+		it('should have a label for writable', () => {
+			expect(ROLE_LABELS.writable).toBe('Writable');
 		});
 	});
 
 	describe('ROLE_TOOLTIPS', () => {
-		it('should have a tooltip for fk', () => {
-			expect(ROLE_TOOLTIPS.fk).toBeDefined();
-			expect(ROLE_TOOLTIPS.fk.length).toBeGreaterThan(0);
+		it('should have a tooltip for pk', () => {
+			expect(ROLE_TOOLTIPS.pk).toBeDefined();
+			expect(ROLE_TOOLTIPS.pk.length).toBeGreaterThan(0);
 		});
 	});
 
 	describe('ROLE_TYPE_CONSTRAINTS', () => {
-		it('should constrain fk to int and uuid types', () => {
-			const constraints = ROLE_TYPE_CONSTRAINTS.fk;
+		it('should constrain pk to int and uuid types', () => {
+			const constraints = ROLE_TYPE_CONSTRAINTS.pk;
 			expect(constraints).toBeDefined();
 			expect(constraints).toContain('int');
 			expect(constraints).toContain('uuid');
+		});
+
+		it('should not have fk constraint', () => {
+			expect(ROLE_TYPE_CONSTRAINTS).not.toHaveProperty('fk');
 		});
 	});
 });

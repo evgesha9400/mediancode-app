@@ -10,10 +10,11 @@ describe('ObjectFormContent Component', () => {
 					name: 'User',
 					namespaceId: 'ns-1',
 					description: '',
-					fields: [],
+					members: [],
+					derivedRelationships: [],
 					validators: [],
 					usedInApis: []
-				} as any,
+				},
 				mode: 'creating',
 				namespaceName: 'default',
 				availableFields: [],
