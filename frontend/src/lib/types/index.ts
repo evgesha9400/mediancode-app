@@ -190,7 +190,6 @@ export interface ApiEndpoint {
 
 export type FieldRole =
   | 'pk'                  // Primary key — type-constrained to int or uuid
-  | 'fk'                  // Foreign key — auto-managed reference to another object (name/type locked)
   | 'writable'            // Standard read/write field
   | 'write_only'          // Input-only, never returned (e.g. passwords)
   | 'read_only'           // Response-only, set by app logic
@@ -199,13 +198,12 @@ export type FieldRole =
   | 'generated_uuid';     // Auto-generated UUID (non-PK) — type-constrained to uuid
 
 export const FIELD_ROLES: FieldRole[] = [
-  'pk', 'fk', 'writable', 'write_only', 'read_only',
+  'pk', 'writable', 'write_only', 'read_only',
   'created_timestamp', 'updated_timestamp', 'generated_uuid'
 ];
 
 export const ROLE_LABELS: Record<FieldRole, string> = {
   pk: 'Primary Key',
-  fk: 'Foreign Key',
   writable: 'Writable',
   write_only: 'Write-only',
   read_only: 'Read-only',
@@ -216,7 +214,6 @@ export const ROLE_LABELS: Record<FieldRole, string> = {
 
 export const ROLE_TOOLTIPS: Record<FieldRole, string> = {
   pk: 'System-generated unique identifier for this record.',
-  fk: 'Auto-managed reference to another object. Name and type are locked.',
   writable: 'Standard field — clients send it and receive it back.',
   write_only: 'Input-only field never returned in responses (e.g. password).',
   read_only: 'Response-only field set by application logic.',
@@ -227,7 +224,6 @@ export const ROLE_TOOLTIPS: Record<FieldRole, string> = {
 
 export const ROLE_TYPE_CONSTRAINTS: Partial<Record<FieldRole, string[]>> = {
   pk: ['int', 'uuid', 'uuid.UUID'],
-  fk: ['int', 'uuid', 'uuid.UUID'],
   created_timestamp: ['datetime', 'date', 'datetime.datetime', 'datetime.date'],
   updated_timestamp: ['datetime', 'date', 'datetime.datetime', 'datetime.date'],
   generated_uuid: ['uuid', 'uuid.UUID'],
@@ -236,45 +232,60 @@ export const ROLE_TYPE_CONSTRAINTS: Partial<Record<FieldRole, string[]>> = {
 /** Returns the valid roles for a given field type */
 export function getAvailableRoles(fieldType: string): FieldRole[] {
   return FIELD_ROLES.filter(role => {
-    if (role === 'fk') return false;  // auto-assigned only, not user-selectable
     const constraint = ROLE_TYPE_CONSTRAINTS[role];
     if (!constraint) return true;
     return constraint.includes(fieldType);
   });
 }
 
-/** Whether the role allows optional and defaultValue modifiers (FK excluded — relationship-managed) */
+/** Whether the role allows optional and defaultValue modifiers */
 export function roleHasModifiers(role: FieldRole): boolean {
   return role === 'writable' || role === 'write_only' || role === 'read_only';
 }
 
-export interface ObjectFieldReference {
+export type RelationshipKind = 'one_to_one' | 'one_to_many' | 'many_to_many';
+
+export type ScalarMember = {
+  memberType: 'scalar';
+  id?: string;
+  name: string;
   fieldId: string;
   role: FieldRole;
-  optional: boolean;
+  isNullable: boolean;
   defaultValue?: string | null;
-}
+};
 
-export type Cardinality = 'has_one' | 'has_many' | 'references' | 'many_to_many';
-
-export interface ObjectRelationship {
-  id: string;
-  sourceObjectId: string;
-  targetObjectId: string;
+export type RelationshipMember = {
+  memberType: 'relationship';
+  id?: string;
   name: string;
-  cardinality: Cardinality;
-  isInferred: boolean;
-  inverseId?: string;
-  fkFieldId?: string;
-}
+  targetObjectId: string;
+  kind: RelationshipKind;
+  inverseName: string;
+  required: boolean;
+};
+
+export type ObjectMember = ScalarMember | RelationshipMember;
+
+export type DerivedRelationship = {
+  name: string;
+  sourceObjectId: string;
+  sourceObject: string;
+  sourceField: string;
+  kind: RelationshipKind;
+  side: 'one' | 'many' | 'target';
+  impliesFk: string | null;
+  junctionTable?: string;
+  required: boolean;
+};
 
 export interface ObjectDefinition {
   id: string;
   namespaceId: string;
   name: string;
   description?: string;
-  fields: ObjectFieldReference[];
-  relationships: ObjectRelationship[];
+  members: ObjectMember[];
+  derivedRelationships: DerivedRelationship[];
   validators: InlineModelValidator[];
   usedInApis: string[];
 }
@@ -371,9 +382,3 @@ export interface ModelValidatorTemplate {
   bodyTemplate: string;
 }
 
-/** Result of a graph mutation (relationship create/delete) with all side effects */
-export interface GraphMutationResult {
-  updatedObjects: ObjectDefinition[];
-  createdFields: Field[];
-  deletedFieldIds: string[];
-}

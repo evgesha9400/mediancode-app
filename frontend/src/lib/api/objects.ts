@@ -5,32 +5,44 @@
  */
 
 import { apiGet, apiPost, apiPut, apiDelete } from './client';
-import type { ObjectDefinition, ObjectFieldReference, ObjectRelationship, InlineModelValidator, FieldRole, GraphMutationResult } from '$lib/types';
-import type { Cardinality } from '$lib/types';
-import { transformField, buildTypeIdToNameMap, type FieldResponse } from './fields';
+import type { ObjectDefinition, ObjectMember, DerivedRelationship, InlineModelValidator, FieldRole, RelationshipKind } from '$lib/types';
 
-/**
- * Backend object field reference response (camelCase aliases from backend)
- */
-interface ObjectFieldReferenceResponse {
+// ============================================================================
+// Response Types
+// ============================================================================
+
+interface ScalarMemberResponse {
+	memberType: 'scalar';
+	id: string;
+	name: string;
 	fieldId: string;
 	role: string;
-	optional: boolean;
+	isNullable: boolean;
 	defaultValue?: string | null;
 }
 
-/**
- * Backend API response for object relationship
- */
-interface ObjectRelationshipResponse {
+interface RelationshipMemberResponse {
+	memberType: 'relationship';
 	id: string;
-	sourceObjectId: string;
-	targetObjectId: string;
 	name: string;
-	cardinality: string;
-	isInferred: boolean;
-	inverseId: string | null;
-	fkFieldId: string | null;
+	targetObjectId: string;
+	kind: string;
+	inverseName: string;
+	required: boolean;
+}
+
+type MemberResponse = ScalarMemberResponse | RelationshipMemberResponse;
+
+interface DerivedRelationshipResponse {
+	name: string;
+	sourceObjectId: string;
+	sourceObject: string;
+	sourceField: string;
+	kind: string;
+	side: string;
+	impliesFk: string | null;
+	junctionTable?: string;
+	required: boolean;
 }
 
 /**
@@ -51,37 +63,56 @@ interface ObjectResponse {
 	namespaceId: string;
 	name: string;
 	description: string | null;
-	fields: ObjectFieldReferenceResponse[];
-	relationships: ObjectRelationshipResponse[];
+	members: MemberResponse[];
+	derivedRelationships: DerivedRelationshipResponse[];
 	validators: ModelValidatorResponse[];
 	usedInApis: string[];
 }
 
+// ============================================================================
+// Transformers
+// ============================================================================
+
 /**
- * Transform backend field reference to frontend type
+ * Transform backend member response to frontend ObjectMember type
  */
-function transformFieldReference(response: ObjectFieldReferenceResponse): ObjectFieldReference {
+function transformMember(response: MemberResponse): ObjectMember {
+	if (response.memberType === 'scalar') {
+		return {
+			memberType: 'scalar',
+			id: response.id,
+			name: response.name,
+			fieldId: response.fieldId,
+			role: response.role as FieldRole,
+			isNullable: response.isNullable ?? false,
+			defaultValue: response.defaultValue ?? null,
+		};
+	}
 	return {
-		fieldId: response.fieldId,
-		role: (response.role as FieldRole) ?? 'writable',
-		optional: response.optional ?? false,
-		defaultValue: response.defaultValue ?? null,
+		memberType: 'relationship',
+		id: response.id,
+		name: response.name,
+		targetObjectId: response.targetObjectId,
+		kind: response.kind as RelationshipKind,
+		inverseName: response.inverseName,
+		required: response.required,
 	};
 }
 
 /**
- * Transform backend relationship response to frontend type
+ * Transform backend derived relationship response to frontend type
  */
-function transformRelationship(response: ObjectRelationshipResponse): ObjectRelationship {
+function transformDerivedRelationship(response: DerivedRelationshipResponse): DerivedRelationship {
 	return {
-		id: response.id,
-		sourceObjectId: response.sourceObjectId,
-		targetObjectId: response.targetObjectId,
 		name: response.name,
-		cardinality: response.cardinality as Cardinality,
-		isInferred: response.isInferred,
-		inverseId: response.inverseId ?? undefined,
-		fkFieldId: response.fkFieldId ?? undefined
+		sourceObjectId: response.sourceObjectId,
+		sourceObject: response.sourceObject,
+		sourceField: response.sourceField,
+		kind: response.kind as RelationshipKind,
+		side: response.side as 'one' | 'many' | 'target',
+		impliesFk: response.impliesFk,
+		junctionTable: response.junctionTable,
+		required: response.required,
 	};
 }
 
@@ -98,27 +129,6 @@ function transformModelValidator(response: ModelValidatorResponse): InlineModelV
 }
 
 /**
- * Backend API response for graph mutation (relationship create/delete)
- */
-interface GraphMutationResponse {
-	updatedObjects: ObjectResponse[];
-	createdFields: FieldResponse[];
-	deletedFieldIds: string[];
-}
-
-/**
- * Transform backend graph mutation response to frontend GraphMutationResult
- */
-function transformGraphMutation(response: GraphMutationResponse): GraphMutationResult {
-	const typeMap = buildTypeIdToNameMap();
-	return {
-		updatedObjects: (response.updatedObjects ?? []).map(transformObject),
-		createdFields: (response.createdFields ?? []).map(f => transformField(f, typeMap)),
-		deletedFieldIds: response.deletedFieldIds ?? []
-	};
-}
-
-/**
  * Transform backend response to frontend ObjectDefinition type
  */
 function transformObject(response: ObjectResponse): ObjectDefinition {
@@ -127,12 +137,16 @@ function transformObject(response: ObjectResponse): ObjectDefinition {
 		namespaceId: response.namespaceId,
 		name: response.name,
 		description: response.description ?? undefined,
-		fields: response.fields.map(transformFieldReference),
-		relationships: (response.relationships ?? []).map(transformRelationship),
+		members: response.members.map(transformMember),
+		derivedRelationships: (response.derivedRelationships ?? []).map(transformDerivedRelationship),
 		validators: (response.validators ?? []).map(transformModelValidator),
 		usedInApis: response.usedInApis
 	};
 }
+
+// ============================================================================
+// Query Methods
+// ============================================================================
 
 /**
  * List all objects, optionally filtered by namespace
@@ -164,7 +178,7 @@ export interface CreateObjectRequest {
 	namespaceId: string;
 	name: string;
 	description?: string;
-	fields: ObjectFieldReference[];
+	members: Omit<ObjectMember, 'id'>[];
 	validators?: { templateId: string; parameters?: Record<string, string>; fieldMappings: Record<string, string> }[];
 }
 
@@ -174,7 +188,7 @@ export interface CreateObjectRequest {
 export interface UpdateObjectRequest {
 	name?: string;
 	description?: string;
-	fields?: ObjectFieldReference[];
+	members?: ObjectMember[];
 	validators?: { templateId: string; parameters?: Record<string, string>; fieldMappings: Record<string, string> }[];
 }
 
@@ -212,30 +226,4 @@ export async function updateObjectApi(id: string, data: UpdateObjectRequest): Pr
  */
 export async function deleteObjectApi(id: string): Promise<void> {
 	await apiDelete<void>(`/objects/${id}`);
-}
-
-// ============================================================================
-// Relationship Methods
-// ============================================================================
-
-/**
- * Create a relationship on an object (auto-creates bidirectional inverse on backend)
- */
-export async function createRelationshipApi(
-	objectId: string,
-	data: { targetObjectId: string; name: string; cardinality: string }
-): Promise<GraphMutationResult> {
-	const response = await apiPost<GraphMutationResponse>(`/objects/${objectId}/relationships`, data);
-	return transformGraphMutation(response);
-}
-
-/**
- * Delete a relationship (auto-deletes bidirectional inverse on backend)
- */
-export async function deleteRelationshipApi(
-	objectId: string,
-	relationshipId: string
-): Promise<GraphMutationResult> {
-	const response = await apiDelete<GraphMutationResponse>(`/objects/${objectId}/relationships/${relationshipId}`);
-	return transformGraphMutation(response);
 }
