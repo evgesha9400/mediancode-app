@@ -13,8 +13,6 @@ import {
   createObjectApi,
   updateObjectApi,
   deleteObjectApi,
-  createRelationshipApi,
-  deleteRelationshipApi,
   type CreateObjectRequest,
   type UpdateObjectRequest
 } from '$lib/api/objects';
@@ -27,7 +25,6 @@ import { isValidPascalCaseName } from '$lib/utils/validation';
 import { showToast } from './toasts';
 import { objectsStore } from './objects';
 import { getFieldById } from './fields';
-import { applyGraphMutation } from './reconciler';
 
 // ============================================================================
 // Configuration
@@ -100,7 +97,7 @@ type ObjectFilterState = Record<string, never>;
 
 // Extended object type with computed properties for sorting
 type ObjectWithCounts = ObjectDefinition & {
-  fieldCount: number;
+  memberCount: number;
   usedInApisCount: number;
   namespaceName: string;
 };
@@ -124,16 +121,16 @@ export function createObjectsModel(config: ObjectsModelConfig): ObjectsModelStat
     itemsStore,
     searchFn,
     filterSections,
-    numericColumns: new Set(['fieldCount', 'usedInApisCount']),
+    numericColumns: new Set(['memberCount', 'usedInApisCount']),
     urlScope,
     highlightParamKey: 'highlight',
     getItemId: (obj) => obj.id,
     deriveExtra: (obj) => ({
-      fieldCount: obj.fields.length,
+      memberCount: obj.members.length,
       usedInApisCount: obj.usedInApis.length,
       namespaceName: getNamespaceName(obj.namespaceId)
     }),
-    sortColumnMap: { 'fields': 'fieldCount', 'usedInApis': 'usedInApisCount', 'namespace': 'namespaceName' },
+    sortColumnMap: { 'members': 'memberCount', 'usedInApis': 'usedInApisCount', 'namespace': 'namespaceName' },
     drawerConfig: {
       trackEdits: true,
       allowDelete: true,
@@ -183,27 +180,28 @@ export function createObjectsModel(config: ObjectsModelConfig): ObjectsModelStat
       errors.name = 'Must be PascalCase (e.g. UserEmail)';
     }
 
-    // Validate role–type compatibility per field
-    for (const fieldRef of item.fields) {
-      const field = getFieldById(fieldRef.fieldId);
+    // Validate role-type compatibility per scalar member
+    for (const member of item.members) {
+      if (member.memberType !== 'scalar') continue;
+      const field = getFieldById(member.fieldId);
       if (!field) continue;
 
       const fieldName = field.name;
       const fieldType = field.type;
 
-      if (fieldRef.role === 'pk') {
+      if (member.role === 'pk') {
         if (fieldType !== 'int' && fieldType !== 'uuid' && fieldType !== 'uuid.UUID') {
-          errors[`field_${fieldRef.fieldId}_role`] =
+          errors[`field_${member.fieldId}_role`] =
             `Field "${fieldName}" (${fieldType}) cannot be a primary key — only int and uuid types are supported`;
         }
-      } else if (fieldRef.role === 'created_timestamp' || fieldRef.role === 'updated_timestamp') {
+      } else if (member.role === 'created_timestamp' || member.role === 'updated_timestamp') {
         if (!['datetime', 'date', 'datetime.datetime', 'datetime.date'].includes(fieldType)) {
-          errors[`field_${fieldRef.fieldId}_role`] =
-            `Field "${fieldName}" (${fieldType}) cannot be a ${fieldRef.role === 'created_timestamp' ? 'created' : 'updated'} timestamp — only datetime and date types are supported`;
+          errors[`field_${member.fieldId}_role`] =
+            `Field "${fieldName}" (${fieldType}) cannot be a ${member.role === 'created_timestamp' ? 'created' : 'updated'} timestamp — only datetime and date types are supported`;
         }
-      } else if (fieldRef.role === 'generated_uuid') {
+      } else if (member.role === 'generated_uuid') {
         if (fieldType !== 'uuid' && fieldType !== 'uuid.UUID') {
-          errors[`field_${fieldRef.fieldId}_role`] =
+          errors[`field_${member.fieldId}_role`] =
             `Field "${fieldName}" (${fieldType}) cannot be a generated UUID — only uuid types are supported`;
         }
       }
@@ -218,8 +216,8 @@ export function createObjectsModel(config: ObjectsModelConfig): ObjectsModelStat
       namespaceId: getActiveNamespaceId(),
       name: '',
       description: '',
-      fields: [],
-      relationships: [],
+      members: [],
+      derivedRelationships: [],
       validators: [],
       usedInApis: []
     };
@@ -232,7 +230,7 @@ export function createObjectsModel(config: ObjectsModelConfig): ObjectsModelStat
         namespaceId: item.namespaceId,
         name: item.name,
         description: item.description,
-        fields: item.fields,
+        members: item.members.map(({ id, ...rest }) => rest),
         validators: item.validators.length > 0
           ? item.validators.map(v => ({
               templateId: v.templateId,
@@ -246,13 +244,13 @@ export function createObjectsModel(config: ObjectsModelConfig): ObjectsModelStat
 
   function toUpdatePayload(item: ObjectDefinition): { ok: true; data: UpdateObjectRequest } | { ok: false; error: string } {
     // Strip derived properties before saving
-    const { fieldCount, usedInApisCount, namespaceName, ...clean } = item as ObjectWithCounts;
+    const { memberCount, usedInApisCount, namespaceName, ...clean } = item as ObjectWithCounts;
     return {
       ok: true,
       data: {
         name: clean.name,
         description: clean.description,
-        fields: clean.fields,
+        members: clean.members,
         validators: clean.validators.map(v => ({
           templateId: v.templateId,
           parameters: v.parameters ?? undefined,
@@ -328,39 +326,8 @@ export function createObjectsModel(config: ObjectsModelConfig): ObjectsModelStat
     try {
       const object = await updateObjectApi(listState.editedItem.id, payloadResult.data);
 
-      // Diff relationships and persist changes via separate API calls
-      const originalRels = (listState.originalItem?.relationships || []).filter(r => !r.isInferred);
-      const editedRels = (listState.editedItem!.relationships || []).filter(r => !r.isInferred);
-      const originalRelIds = new Set(originalRels.map(r => r.id));
-      const editedRelIds = new Set(editedRels.map(r => r.id));
-
-      const addedRels = editedRels.filter(r => !originalRelIds.has(r.id));
-      const removedRels = originalRels.filter(r => !editedRelIds.has(r.id));
-
-      let latestObject = object;
-      try {
-        for (const rel of removedRels) {
-          const result = await deleteRelationshipApi(latestObject.id, rel.id);
-          applyGraphMutation(result);
-          const updated = result.updatedObjects.find(o => o.id === latestObject.id);
-          if (updated) latestObject = updated;
-        }
-        for (const rel of addedRels) {
-          const result = await createRelationshipApi(latestObject.id, {
-            targetObjectId: rel.targetObjectId,
-            name: rel.name,
-            cardinality: rel.cardinality
-          });
-          applyGraphMutation(result);
-          const updated = result.updatedObjects.find(o => o.id === latestObject.id);
-          if (updated) latestObject = updated;
-        }
-      } catch (err) {
-        showToast('Object updated but some relationship changes failed to save', 'error', 5000);
-      }
-
-      listState.selectedItem = latestObject;
-      listState.originalItem = JSON.parse(JSON.stringify(latestObject));
+      listState.selectedItem = object;
+      listState.originalItem = JSON.parse(JSON.stringify(object));
       showToast(`Object "${entityName}" updated successfully`, 'success', 3000);
       closeDrawer();
     } catch (err) {
@@ -395,23 +362,6 @@ export function createObjectsModel(config: ObjectsModelConfig): ObjectsModelStat
     try {
       const object = await createObjectApi(payloadResult.data);
       objectsStore.update(objects => [...objects, object]);
-
-      // Persist relationships via separate API calls
-      const userRelationships = (listState.editedItem!.relationships || []).filter(r => !r.isInferred);
-      if (userRelationships.length > 0) {
-        try {
-          for (const rel of userRelationships) {
-            const result = await createRelationshipApi(object.id, {
-              targetObjectId: rel.targetObjectId,
-              name: rel.name,
-              cardinality: rel.cardinality
-            });
-            applyGraphMutation(result);
-          }
-        } catch (err) {
-          showToast('Object created but some relationships failed to save', 'error', 5000);
-        }
-      }
 
       showToast(`Object "${object.name}" created successfully`, 'success', 3000);
       closeDrawer();

@@ -1,6 +1,6 @@
 <script module lang="ts">
   export interface ObjectFormContentProps {
-    editedItem: import('$lib/stores/objects').ObjectDefinition;
+    editedItem: import('$lib/types').ObjectDefinition;
     mode: 'creating' | 'editing';
     namespaceName: string;
     availableFields: import('$lib/stores/fields').Field[];
@@ -11,10 +11,10 @@
 </script>
 
 <script lang="ts">
-  import type { ObjectDefinition } from '$lib/stores/objects';
+  import type { ObjectDefinition, ObjectMember, ScalarMember, RelationshipMember, RelationshipKind } from '$lib/types';
   import type { Field } from '$lib/stores/fields';
+  import type { ModelValidatorTemplate, InlineModelValidator, FieldRole } from '$lib/types';
   import { getFieldById } from '$lib/stores/fields';
-  import type { ModelValidatorTemplate, InlineModelValidator, FieldRole, ObjectFieldReference, ObjectRelationship, Cardinality } from '$lib/types';
   import { ROLE_LABELS, ROLE_TOOLTIPS, getAvailableRoles, roleHasModifiers } from '$lib/types';
   import {
     FormField,
@@ -26,10 +26,8 @@
   } from '$lib/components';
   import { getModelValidatorTemplateById } from '$lib/stores/modelValidatorTemplates';
   import { objectsStore, getObjectById } from '$lib/stores/objects';
-  import { getFkHint } from '$lib/domain/relationships';
   import { apisStore } from '$lib/stores/apis';
   import { showToast } from '$lib/stores/toasts';
-  import { generateId } from '$lib/utils/ids';
   import { goto } from '$app/navigation';
   import { dragHandleZone, dragHandle } from 'svelte-dnd-action';
   import type { DndEvent } from 'svelte-dnd-action';
@@ -45,36 +43,49 @@
     onCreateNewField
   }: ObjectFormContentProps = $props();
 
-  // Derive selected field IDs for the FieldSelectorDropdown
-  let selectedFieldIds = $derived(editedItem.fields.map(f => f.fieldId));
+  // --- Relationship kind options ---
+  const KIND_OPTIONS: { value: RelationshipKind; label: string }[] = [
+    { value: 'one_to_one', label: 'has one' },
+    { value: 'one_to_many', label: 'has many' },
+    { value: 'many_to_many', label: 'many to many' }
+  ];
 
-  // Exclude FK fields from the dropdown — they are auto-managed by relationships
-  let fkFieldIds = $derived(
-    new Set($objectsStore.flatMap(o => o.fields.filter(f => f.role === 'fk').map(f => f.fieldId)))
+  // --- Derive selected field IDs for the FieldSelectorDropdown ---
+  let selectedFieldIds = $derived(
+    editedItem.members
+      .filter((m): m is ScalarMember => m.memberType === 'scalar')
+      .map(m => m.fieldId)
   );
-  let selectableFields = $derived(availableFields.filter(f => !fkFieldIds.has(f.id)));
 
-  // --- Drag-and-drop field reordering ---
-  type DndItem = ObjectFieldReference & { id: string };
+  // --- Drag-and-drop member reordering ---
+  type DndItem = ObjectMember & { id: string };
 
-  // Mutable state for dndzone — synced from editedItem.fields
+  // Snapshot of original members for distinguishing backend-assigned IDs from temp IDs
+  let originalMembers: ObjectMember[] = [...editedItem.members];
+
+  // Mutable state for dndzone — synced from editedItem.members
   let dndItems: DndItem[] = $state(
-    editedItem.fields.map(f => ({ ...f, id: f.fieldId }))
+    editedItem.members.map(m => ({
+      ...m,
+      id: m.id ?? crypto.randomUUID()
+    }))
   );
 
-  // Re-sync when editedItem.fields changes externally (undo, field add/remove)
+  // Re-sync when editedItem.members changes externally (undo, member add/remove)
   $effect(() => {
-    dndItems = editedItem.fields.map(f => ({ ...f, id: f.fieldId }));
+    dndItems = editedItem.members.map(m => ({
+      ...m,
+      id: m.id ?? crypto.randomUUID()
+    }));
+    originalMembers = [...editedItem.members];
   });
 
-  // Map library items back to clean ObjectFieldReference[] (strip `id` and any library-injected properties)
-  function toDomainFields(items: DndItem[]): ObjectFieldReference[] {
-    return items.map(item => ({
-      fieldId: item.fieldId,
-      role: item.role,
-      optional: item.optional,
-      defaultValue: item.defaultValue,
-    }));
+  // Convert DnD items back to API-ready members (strip temp IDs from new members)
+  function toApiMembers(items: DndItem[]): ObjectMember[] {
+    return items.map(({ id, ...member }) => {
+      const isBackendAssigned = originalMembers.some(m => m.id === id);
+      return isBackendAssigned ? { ...member, id } : member;
+    }) as ObjectMember[];
   }
 
   function handleDndConsider(e: CustomEvent<DndEvent<DndItem>>) {
@@ -83,65 +94,75 @@
 
   function handleDndFinalize(e: CustomEvent<DndEvent<DndItem>>) {
     dndItems = e.detail.items;
-    editedItem = { ...editedItem, fields: toDomainFields(e.detail.items) };
+    editedItem = { ...editedItem, members: toApiMembers(e.detail.items) };
   }
 
-  // Resolve object's fields to full Field objects for template role dropdowns
+  // Resolve object's scalar members to full Field objects for template role dropdowns
   let objectFieldDefinitions = $derived.by((): Field[] => {
-    return editedItem.fields
+    return editedItem.members
+      .filter((m): m is ScalarMember => m.memberType === 'scalar')
       .map(ref => getFieldById(ref.fieldId))
       .filter((f): f is Field => f !== undefined);
   });
 
-  // --- Field helpers ---
-  function addField(fieldId: string) {
+  // --- Scalar member helpers ---
+  function addScalarMember(fieldId: string) {
+    const field = getFieldById(fieldId);
+    if (!field) return;
+    const newMember: ScalarMember = {
+      memberType: 'scalar',
+      id: crypto.randomUUID(),
+      name: field.name,
+      fieldId,
+      role: 'writable',
+      isNullable: false
+    };
     editedItem = {
       ...editedItem,
-      fields: [...editedItem.fields, { fieldId, role: 'writable' as const, optional: false }]
+      members: [...editedItem.members, newMember]
     };
   }
 
-  function removeField(fieldId: string) {
+  function removeMember(id: string) {
     editedItem = {
       ...editedItem,
-      fields: editedItem.fields.filter(f => f.fieldId !== fieldId)
+      members: editedItem.members.filter(m => m.id !== id)
     };
   }
 
-  /** Change a field's role — clear modifiers if switching to a non-modifier role */
-  function setFieldRole(fieldId: string, role: FieldRole) {
-    const newFields = editedItem.fields.map(f => {
-      if (f.fieldId !== fieldId) return f;
-      const base = { ...f, role };
+  /** Change a scalar member's role — clear modifiers if switching to a non-modifier role */
+  function setMemberRole(memberId: string, role: FieldRole) {
+    const newMembers = editedItem.members.map(m => {
+      if (m.id !== memberId || m.memberType !== 'scalar') return m;
+      const base = { ...m, role };
       if (!roleHasModifiers(role)) {
-        // Non-modifier roles: force optional=false, clear defaultValue
-        return { ...base, optional: false, defaultValue: null };
+        return { ...base, isNullable: false, defaultValue: null };
       }
       return base;
     });
-    // Only one PK allowed — if setting to PK, clear PK on all other fields
+    // Only one PK allowed — if setting to PK, clear PK on all other scalar members
     if (role === 'pk') {
       editedItem = {
         ...editedItem,
-        fields: newFields.map(f =>
-          f.fieldId !== fieldId && f.role === 'pk'
-            ? { ...f, role: 'writable' as FieldRole, optional: false }
-            : f
+        members: newMembers.map(m =>
+          m.id !== memberId && m.memberType === 'scalar' && m.role === 'pk'
+            ? { ...m, role: 'writable' as FieldRole, isNullable: false }
+            : m
         )
       };
     } else {
-      editedItem = { ...editedItem, fields: newFields };
+      editedItem = { ...editedItem, members: newMembers };
     }
   }
 
-  /** Toggle optional for a field (only for modifier roles) */
-  function toggleFieldOptional(fieldId: string) {
-    const newFields = editedItem.fields.map(f => {
-      if (f.fieldId !== fieldId) return f;
-      if (!roleHasModifiers(f.role)) return f;
-      return { ...f, optional: !f.optional };
+  /** Toggle nullable for a scalar member (only for modifier roles) */
+  function toggleMemberNullable(memberId: string) {
+    const newMembers = editedItem.members.map(m => {
+      if (m.id !== memberId || m.memberType !== 'scalar') return m;
+      if (!roleHasModifiers(m.role)) return m;
+      return { ...m, isNullable: !m.isNullable };
     });
-    editedItem = { ...editedItem, fields: newFields };
+    editedItem = { ...editedItem, members: newMembers };
   }
 
   /** Map a field type name to the appropriate HTML input type for the default value input. */
@@ -154,41 +175,36 @@
       case 'date':     return { inputType: 'date', isBool: false };
       case 'time':     return { inputType: 'time', isBool: false };
       case 'EmailStr': return { inputType: 'email', isBool: false };
-      default:         return { inputType: 'text', isBool: false }; // str, uuid, etc.
+      default:         return { inputType: 'text', isBool: false };
     }
   }
 
   /** Set literal default value (empty string -> null) */
-  function setFieldDefaultValue(fieldId: string, value: string) {
-    const newFields = editedItem.fields.map(f => {
-      if (f.fieldId !== fieldId) return f;
-      return { ...f, defaultValue: value.trim() || null };
+  function setMemberDefaultValue(memberId: string, value: string) {
+    const newMembers = editedItem.members.map(m => {
+      if (m.id !== memberId || m.memberType !== 'scalar') return m;
+      return { ...m, defaultValue: value.trim() || null };
     });
-    editedItem = { ...editedItem, fields: newFields };
+    editedItem = { ...editedItem, members: newMembers };
   }
 
-  // --- Relationship helpers ---
-  const CARDINALITY_OPTIONS: { value: Cardinality; label: string }[] = [
-    { value: 'has_one', label: 'has one' },
-    { value: 'has_many', label: 'has many' },
-    { value: 'references', label: 'belongs to' },
-    { value: 'many_to_many', label: 'many ↔ many' }
-  ];
+  /** Update a scalar member's name */
+  function setMemberName(memberId: string, name: string) {
+    const newMembers = editedItem.members.map(m => {
+      if (m.id !== memberId) return m;
+      return { ...m, name };
+    });
+    editedItem = { ...editedItem, members: newMembers };
+  }
 
-  // IDs of objects already targeted by a relationship (user-defined or inferred)
-  let relatedObjectIds = $derived(
-    new Set((editedItem.relationships || []).map(r => r.targetObjectId))
-  );
+  // --- Relationship member helpers ---
 
-  // Objects available as relationship targets (exclude self + already related)
-  let availableTargetObjects = $derived(
-    $objectsStore.filter(o => o.id !== editedItem.id && !relatedObjectIds.has(o.id))
-  );
+  // All objects available as targets (including self per D6, no duplicate exclusion per D7)
+  let availableTargetObjects = $derived($objectsStore);
 
   let relationshipSearchQuery = $state('');
   let relationshipDropdownOpen = $state(false);
 
-  // Filter available targets by search query
   let filteredTargetObjects = $derived.by(() => {
     const q = relationshipSearchQuery.toLowerCase().trim();
     if (!q) return availableTargetObjects;
@@ -205,56 +221,59 @@
     }, 150);
   }
 
-  function addRelationship(targetObjectId: string) {
+  function addRelationshipMember(targetObjectId: string) {
     const targetObj = getObjectById(targetObjectId);
     if (!targetObj) return;
     const defaultName = targetObj.name.toLowerCase() + 's';
-    const newRel: ObjectRelationship = {
-      id: generateId('rel'),
-      sourceObjectId: editedItem.id,
-      targetObjectId,
+    const defaultInverseName = editedItem.name ? editedItem.name.toLowerCase() : 'source';
+    const newMember: RelationshipMember = {
+      memberType: 'relationship',
+      id: crypto.randomUUID(),
       name: defaultName,
-      cardinality: 'has_many',
-      isInferred: false
+      targetObjectId,
+      kind: 'one_to_many',
+      inverseName: defaultInverseName,
+      required: true
     };
     editedItem = {
       ...editedItem,
-      relationships: [...(editedItem.relationships || []), newRel]
+      members: [...editedItem.members, newMember]
     };
     relationshipSearchQuery = '';
     relationshipDropdownOpen = false;
   }
 
-  function removeRelationship(relId: string) {
+  function updateRelationshipField(memberId: string, updates: Partial<RelationshipMember>) {
     editedItem = {
       ...editedItem,
-      relationships: (editedItem.relationships || []).filter(r => r.id !== relId)
-    };
-  }
-
-  function updateRelationshipName(relId: string, name: string) {
-    editedItem = {
-      ...editedItem,
-      relationships: (editedItem.relationships || []).map(r =>
-        r.id === relId ? { ...r, name } : r
-      )
-    };
-  }
-
-  function updateRelationshipCardinality(relId: string, cardinality: Cardinality) {
-    editedItem = {
-      ...editedItem,
-      relationships: (editedItem.relationships || []).map(r => {
-        if (r.id !== relId) return r;
-        const targetObj = getObjectById(r.targetObjectId);
-        const autoName = targetObj
-          ? (cardinality === 'has_many' || cardinality === 'many_to_many'
-            ? targetObj.name.toLowerCase() + 's'
-            : targetObj.name.toLowerCase())
-          : r.name;
-        return { ...r, cardinality, name: autoName };
+      members: editedItem.members.map(m => {
+        if (m.id !== memberId || m.memberType !== 'relationship') return m;
+        const updated = { ...m, ...updates };
+        // D2: many_to_many forces required=false
+        if (updated.kind === 'many_to_many') {
+          updated.required = false;
+        }
+        return updated;
       })
     };
+  }
+
+  function updateRelationshipKind(memberId: string, kind: RelationshipKind) {
+    const member = editedItem.members.find(m => m.id === memberId);
+    if (!member || member.memberType !== 'relationship') return;
+    const targetObj = getObjectById(member.targetObjectId);
+    // Auto-update name based on kind (D20)
+    const autoName = targetObj
+      ? (kind === 'one_to_many' || kind === 'many_to_many'
+        ? targetObj.name.toLowerCase() + 's'
+        : targetObj.name.toLowerCase())
+      : member.name;
+    updateRelationshipField(memberId, { kind, name: autoName });
+  }
+
+  // --- Navigate to source object from derived relationship ---
+  function navigateToObject(objectId: string) {
+    goto(`/objects?highlight=${objectId}`);
   }
 
   // --- Validator template UI state (local to this component) ---
@@ -329,170 +348,21 @@
     ></textarea>
   </div>
 
-  <!-- Fields -->
+  <!-- Members (unified: scalars + relationships) -->
   <div>
-    <h3 class="text-sm text-mono-300 mb-2 font-medium">Fields ({editedItem.fields.length})</h3>
+    <h3 class="text-sm text-mono-300 mb-2 font-medium">Members ({editedItem.members.length})</h3>
 
     <div class="space-y-2">
-      <!-- Field Selector Dropdown -->
+      <!-- Scalar Member: Field Selector Dropdown -->
       <FieldSelectorDropdown
-        availableFields={selectableFields}
+        availableFields={availableFields}
         {selectedFieldIds}
-        onSelect={addField}
+        onSelect={addScalarMember}
         onCreateNew={onCreateNewField}
         placeholder="Add field to object..."
       />
 
-      <!-- Selected Fields -->
-      {#if editedItem.fields.length === 0}
-        <div class="p-3 bg-mono-800 rounded border border-mono-700">
-          <p class="text-xs text-mono-400">No fields selected</p>
-        </div>
-      {:else}
-        <div
-          use:dragHandleZone={{ items: dndItems, flipDurationMs: 150, type: 'fields' }}
-          onconsider={handleDndConsider}
-          onfinalize={handleDndFinalize}
-          class="p-2 bg-mono-800 rounded border border-mono-700 space-y-2"
-        >
-          {#each dndItems as item (item.id)}
-            {@const field = getFieldById(item.fieldId)}
-            {@const availableRoles = field ? getAvailableRoles(field.type) : []}
-            {@const isFk = item.role === 'fk'}
-            <div animate:flip={{ duration: 150 }}>
-            {#if field}
-              {@const inputCfg = defaultInputType(field.type)}
-              {@const modifierClass = roleHasModifiers(item.role) ? '' : 'invisible pointer-events-none'}
-              <div class="p-2 bg-mono-900 rounded border {isFk ? 'border-mono-600' : 'border-mono-700'} space-y-1.5">
-                <!-- Fixed grid so role / default / optional columns line up across rows (flex-1 was shifting FK vs writable) -->
-                <div
-                  class="grid grid-cols-[auto_minmax(0,1fr)_10rem_7rem_4.5rem_1.75rem] gap-x-2 items-center"
-                >
-                  <!-- Drag Handle / FK Icon -->
-                  {#if isFk}
-                    <div class="text-mono-500 justify-self-start" title="Auto-managed foreign key">
-                      <i class="fa-solid fa-key text-xs"></i>
-                    </div>
-                  {:else}
-                    <div use:dragHandle class="text-mono-600 hover:text-mono-400 cursor-grab justify-self-start">
-                      <i class="fa-solid fa-grip-vertical text-xs"></i>
-                    </div>
-                  {/if}
-
-                  <!-- Field Name and Type -->
-                  <div class="flex items-center gap-2 min-w-0">
-                    <span class="font-mono text-sm truncate {isFk ? 'text-mono-400' : 'text-mono-300'}">{field.name}</span>
-                    <span class="text-xs text-mono-400 bg-mono-800 px-2 py-0.5 rounded shrink-0">{field.type}</span>
-                  </div>
-
-                  <!-- Role Selector / FK Badge -->
-                  {#if isFk}
-                    <span
-                      class="w-full text-xs text-mono-400 bg-mono-800 border border-mono-600 rounded px-1.5 py-0.5 text-center inline-flex items-center justify-center gap-0.5 min-h-[1.5rem]"
-                      title={ROLE_TOOLTIPS.fk}
-                    >
-                      <i class="fa-solid fa-link text-mono-500 shrink-0"></i>Foreign Key
-                    </span>
-                  {:else}
-                    <select
-                      class="w-full min-h-[1.5rem] bg-mono-800 border border-mono-700 text-mono-300 text-xs rounded px-1.5 py-0.5 focus:ring-1 focus:ring-green-400 focus:border-transparent"
-                      value={item.role}
-                      onchange={(e) => setFieldRole(item.fieldId, e.currentTarget.value as FieldRole)}
-                      title={ROLE_TOOLTIPS[item.role]}
-                    >
-                      {#each availableRoles as role}
-                        <option value={role}>{ROLE_LABELS[role]}</option>
-                      {/each}
-                    </select>
-                  {/if}
-
-                  <!-- Default Value Input — hidden for FK fields (no defaults); type-aware for other roles -->
-                  {#if isFk}
-                    <div class="w-full" aria-hidden="true"></div>
-                  {:else if inputCfg.isBool}
-                    <select
-                      class="bg-mono-800 border border-mono-700 text-mono-300 text-xs rounded px-1.5 py-0.5 w-full min-h-[1.5rem] focus:ring-1 focus:ring-green-400 focus:border-transparent {modifierClass}"
-                      value={item.defaultValue ?? ''}
-                      onchange={(e) => setFieldDefaultValue(item.fieldId, e.currentTarget.value)}
-                      disabled={!roleHasModifiers(item.role)}
-                    >
-                      <option value="">— none —</option>
-                      <option value="true">true</option>
-                      <option value="false">false</option>
-                    </select>
-                  {:else}
-                    <input
-                      type={inputCfg.inputType}
-                      step={inputCfg.step}
-                      class="bg-mono-800 border border-mono-700 text-mono-300 text-xs rounded px-1.5 py-0.5 w-full min-h-[1.5rem] focus:ring-1 focus:ring-green-400 focus:border-transparent {modifierClass}"
-                      placeholder="Default value"
-                      value={item.defaultValue ?? ''}
-                      oninput={(e) => setFieldDefaultValue(item.fieldId, e.currentTarget.value)}
-                      disabled={!roleHasModifiers(item.role)}
-                    />
-                  {/if}
-
-                  <!-- Optional Toggle (not for FK — relationship-driven) -->
-                  <button
-                    type="button"
-                    onclick={() => toggleFieldOptional(item.fieldId)}
-                    disabled={!roleHasModifiers(item.role)}
-                    title="Allow null values"
-                    class="justify-self-start text-xs px-2 py-0.5 rounded border transition-colors {roleHasModifiers(item.role) ? (item.optional ? 'border-green-500 text-green-400 bg-green-400/10' : 'border-mono-600 text-mono-500 hover:border-mono-500 hover:text-mono-400') : 'invisible pointer-events-none border-mono-600 text-mono-500'}"
-                  >
-                    optional
-                  </button>
-
-                  <!-- Delete Button — hidden for FK fields (lifecycle managed by relationship) -->
-                  {#if isFk}
-                    <div class="w-full min-w-[1.25rem]" aria-hidden="true"></div>
-                  {:else}
-                    <button
-                      type="button"
-                      onclick={() => removeField(item.fieldId)}
-                      class="text-red-700 hover:text-red-600 transition-colors justify-self-end"
-                      title="Remove field"
-                    >
-                      <i class="fa-solid fa-xmark"></i>
-                    </button>
-                  {/if}
-                </div>
-
-                <!-- Inline validation errors -->
-                {#if visibleErrors[`field_${item.fieldId}_role`]}
-                  <p class="text-xs text-red-400 ml-6">{visibleErrors[`field_${item.fieldId}_role`]}</p>
-                {/if}
-              </div>
-            {:else}
-              <!-- Missing field fallback -->
-              <div class="flex items-center gap-2 py-1.5">
-                <i class="fa-solid fa-triangle-exclamation text-red-500 text-sm"></i>
-                <span class="flex-1 text-sm text-red-700">
-                  Field not found <span class="font-mono text-xs text-red-500">({item.fieldId})</span>
-                </span>
-                <button
-                  type="button"
-                  onclick={() => removeField(item.fieldId)}
-                  class="p-1 text-red-700 hover:text-red-600 hover:bg-red-100 rounded transition-colors"
-                  title="Remove missing field reference"
-                >
-                  <i class="fa-solid fa-xmark"></i>
-                </button>
-              </div>
-            {/if}
-            </div>
-          {/each}
-        </div>
-      {/if}
-    </div>
-  </div>
-
-  <!-- Relationships -->
-  <div>
-    <h3 class="text-sm text-mono-300 mb-2 font-medium">Relationships ({(editedItem.relationships || []).length})</h3>
-
-    <div class="space-y-2">
-      <!-- Add Relationship Search Dropdown -->
+      <!-- Relationship Member: Target Object Search Dropdown -->
       <div class="relative">
         <div class="relative">
           <input
@@ -503,7 +373,7 @@
             placeholder="Add relationship to object..."
             class="w-full px-3 py-1.5 border border-mono-600 bg-mono-900 text-mono-100 focus:ring-2 focus:ring-green-400 focus:border-transparent text-sm pr-8"
           />
-          <i class="fa-solid fa-search absolute right-3 top-1/2 -translate-y-1/2 text-mono-400 text-xs pointer-events-none"></i>
+          <i class="fa-solid fa-link absolute right-3 top-1/2 -translate-y-1/2 text-mono-400 text-xs pointer-events-none"></i>
         </div>
 
         {#if relationshipDropdownOpen}
@@ -512,7 +382,7 @@
               {#each filteredTargetObjects as obj (obj.id)}
                 <button
                   type="button"
-                  onclick={() => addRelationship(obj.id)}
+                  onclick={() => addRelationshipMember(obj.id)}
                   class="w-full px-3 py-2 text-left hover:bg-mono-800 border-b border-mono-700 last:border-b-0 transition-colors"
                 >
                   <div class="flex items-center space-x-2">
@@ -534,76 +404,237 @@
         {/if}
       </div>
 
-      <!-- Relationship Rows -->
-      {#if (editedItem.relationships || []).length > 0}
-        <div class="p-2 bg-mono-800 rounded border border-mono-700 space-y-2">
-          {#each editedItem.relationships || [] as rel}
-            {@const targetObj = getObjectById(rel.targetObjectId)}
-            {@const fkHint = getFkHint(rel, editedItem.fields, getFieldById, !!targetObj)}
-            <div class="flex items-center space-x-2 p-2 bg-mono-900 rounded {rel.isInferred ? 'border border-dashed border-mono-600 opacity-60' : 'border border-mono-700'}">
-              <!-- Name Input -->
-              {#if rel.isInferred}
-                <span class="font-mono text-sm text-mono-400 w-32 truncate" title={rel.name}>{rel.name}</span>
-              {:else}
-                <input
-                  type="text"
-                  value={rel.name}
-                  oninput={(e) => updateRelationshipName(rel.id, (e.target as HTMLInputElement).value)}
-                  class="font-mono text-sm text-mono-300 bg-mono-800 border border-mono-700 px-2 py-0.5 rounded w-32 focus:ring-1 focus:ring-green-400 focus:border-transparent"
-                />
+      <!-- DnD Member List -->
+      {#if editedItem.members.length === 0}
+        <div class="p-3 bg-mono-800 rounded border border-mono-700">
+          <p class="text-xs text-mono-400">No members added</p>
+        </div>
+      {:else}
+        <div
+          use:dragHandleZone={{ items: dndItems, flipDurationMs: 150, type: 'members' }}
+          onconsider={handleDndConsider}
+          onfinalize={handleDndFinalize}
+          class="p-2 bg-mono-800 rounded border border-mono-700 space-y-2"
+        >
+          {#each dndItems as item (item.id)}
+            <div animate:flip={{ duration: 150 }}>
+              {#if item.memberType === 'scalar'}
+                <!-- Scalar Member Row -->
+                {@const field = getFieldById(item.fieldId)}
+                {@const availableRoles = field ? getAvailableRoles(field.type) : []}
+                {#if field}
+                  {@const inputCfg = defaultInputType(field.type)}
+                  {@const modifierClass = roleHasModifiers(item.role) ? '' : 'invisible pointer-events-none'}
+                  <div class="p-2 bg-mono-900 rounded border border-mono-700 space-y-1.5">
+                    <div
+                      class="grid grid-cols-[auto_minmax(0,1fr)_10rem_7rem_4.5rem_1.75rem] gap-x-2 items-center"
+                    >
+                      <!-- Drag Handle -->
+                      <div use:dragHandle class="text-mono-600 hover:text-mono-400 cursor-grab justify-self-start">
+                        <i class="fa-solid fa-grip-vertical text-xs"></i>
+                      </div>
+
+                      <!-- Field Name and Type -->
+                      <div class="flex items-center gap-2 min-w-0">
+                        <input
+                          type="text"
+                          value={item.name}
+                          oninput={(e) => setMemberName(item.id, (e.target as HTMLInputElement).value)}
+                          class="font-mono text-sm text-mono-300 bg-mono-800 border border-mono-700 px-2 py-0.5 rounded w-28 focus:ring-1 focus:ring-green-400 focus:border-transparent"
+                          title="Member name (column name in generated code)"
+                        />
+                        <span class="text-xs text-mono-400 bg-mono-800 px-2 py-0.5 rounded shrink-0">{field.type}</span>
+                        <span class="text-xs text-mono-500 truncate" title="Field: {field.name}">{field.name}</span>
+                      </div>
+
+                      <!-- Role Selector -->
+                      <select
+                        class="w-full min-h-[1.5rem] bg-mono-800 border border-mono-700 text-mono-300 text-xs rounded px-1.5 py-0.5 focus:ring-1 focus:ring-green-400 focus:border-transparent"
+                        value={item.role}
+                        onchange={(e) => setMemberRole(item.id, e.currentTarget.value as FieldRole)}
+                        title={ROLE_TOOLTIPS[item.role]}
+                      >
+                        {#each availableRoles as role}
+                          <option value={role}>{ROLE_LABELS[role]}</option>
+                        {/each}
+                      </select>
+
+                      <!-- Default Value Input -->
+                      {#if inputCfg.isBool}
+                        <select
+                          class="bg-mono-800 border border-mono-700 text-mono-300 text-xs rounded px-1.5 py-0.5 w-full min-h-[1.5rem] focus:ring-1 focus:ring-green-400 focus:border-transparent {modifierClass}"
+                          value={item.defaultValue ?? ''}
+                          onchange={(e) => setMemberDefaultValue(item.id, e.currentTarget.value)}
+                          disabled={!roleHasModifiers(item.role)}
+                        >
+                          <option value="">-- none --</option>
+                          <option value="true">true</option>
+                          <option value="false">false</option>
+                        </select>
+                      {:else}
+                        <input
+                          type={inputCfg.inputType}
+                          step={inputCfg.step}
+                          class="bg-mono-800 border border-mono-700 text-mono-300 text-xs rounded px-1.5 py-0.5 w-full min-h-[1.5rem] focus:ring-1 focus:ring-green-400 focus:border-transparent {modifierClass}"
+                          placeholder="Default value"
+                          value={item.defaultValue ?? ''}
+                          oninput={(e) => setMemberDefaultValue(item.id, e.currentTarget.value)}
+                          disabled={!roleHasModifiers(item.role)}
+                        />
+                      {/if}
+
+                      <!-- Nullable Toggle -->
+                      <button
+                        type="button"
+                        onclick={() => toggleMemberNullable(item.id)}
+                        disabled={!roleHasModifiers(item.role)}
+                        title="Allow null values"
+                        class="justify-self-start text-xs px-2 py-0.5 rounded border transition-colors {roleHasModifiers(item.role) ? (item.isNullable ? 'border-green-500 text-green-400 bg-green-400/10' : 'border-mono-600 text-mono-500 hover:border-mono-500 hover:text-mono-400') : 'invisible pointer-events-none border-mono-600 text-mono-500'}"
+                      >
+                        nullable
+                      </button>
+
+                      <!-- Remove Button -->
+                      <button
+                        type="button"
+                        onclick={() => removeMember(item.id)}
+                        class="text-red-700 hover:text-red-600 transition-colors justify-self-end"
+                        title="Remove member"
+                      >
+                        <i class="fa-solid fa-xmark"></i>
+                      </button>
+                    </div>
+
+                    <!-- Inline validation errors -->
+                    {#if visibleErrors[`field_${item.fieldId}_role`]}
+                      <p class="text-xs text-red-400 ml-6">{visibleErrors[`field_${item.fieldId}_role`]}</p>
+                    {/if}
+                  </div>
+                {:else}
+                  <!-- Missing field fallback -->
+                  <div class="flex items-center gap-2 py-1.5">
+                    <i class="fa-solid fa-triangle-exclamation text-red-500 text-sm"></i>
+                    <span class="flex-1 text-sm text-red-700">
+                      Field not found <span class="font-mono text-xs text-red-500">({item.fieldId})</span>
+                    </span>
+                    <button
+                      type="button"
+                      onclick={() => removeMember(item.id)}
+                      class="p-1 text-red-700 hover:text-red-600 hover:bg-red-100 rounded transition-colors"
+                      title="Remove missing field reference"
+                    >
+                      <i class="fa-solid fa-xmark"></i>
+                    </button>
+                  </div>
+                {/if}
+
+              {:else if item.memberType === 'relationship'}
+                <!-- Relationship Member Row -->
+                {@const targetObj = getObjectById(item.targetObjectId)}
+                <div class="p-2 bg-mono-900 rounded border border-mono-700 space-y-1.5">
+                  <div class="flex items-center space-x-2">
+                    <!-- Drag Handle -->
+                    <div use:dragHandle class="text-mono-600 hover:text-mono-400 cursor-grab shrink-0">
+                      <i class="fa-solid fa-grip-vertical text-xs"></i>
+                    </div>
+
+                    <!-- Relationship Name Input -->
+                    <input
+                      type="text"
+                      value={item.name}
+                      oninput={(e) => updateRelationshipField(item.id, { name: (e.target as HTMLInputElement).value })}
+                      class="font-mono text-sm text-mono-300 bg-mono-800 border border-mono-700 px-2 py-0.5 rounded w-28 focus:ring-1 focus:ring-green-400 focus:border-transparent"
+                      title="Relationship field name"
+                    />
+
+                    <!-- Kind Dropdown -->
+                    <select
+                      value={item.kind}
+                      onchange={(e) => updateRelationshipKind(item.id, (e.target as HTMLSelectElement).value as RelationshipKind)}
+                      class="text-xs text-mono-300 bg-mono-800 border border-mono-700 px-2 py-0.5 rounded focus:ring-1 focus:ring-green-400"
+                    >
+                      {#each KIND_OPTIONS as opt}
+                        <option value={opt.value}>{opt.label}</option>
+                      {/each}
+                    </select>
+
+                    <!-- Target Object Badge -->
+                    <span class="text-xs font-medium px-2 py-0.5 rounded bg-blue-500/20 text-blue-400">
+                      {targetObj?.name ?? 'Unknown'}
+                    </span>
+
+                    <!-- Inverse Name Input -->
+                    <input
+                      type="text"
+                      value={item.inverseName}
+                      oninput={(e) => updateRelationshipField(item.id, { inverseName: (e.target as HTMLInputElement).value })}
+                      class="font-mono text-xs text-mono-300 bg-mono-800 border border-mono-700 px-2 py-0.5 rounded w-24 focus:ring-1 focus:ring-green-400 focus:border-transparent"
+                      placeholder="inverse name"
+                      title="Inverse relationship name on the target object"
+                    />
+
+                    <!-- Required Toggle (hidden for many_to_many per D2) -->
+                    {#if item.kind !== 'many_to_many'}
+                      <button
+                        type="button"
+                        onclick={() => updateRelationshipField(item.id, { required: !item.required })}
+                        title="Whether the FK column is NOT NULL"
+                        class="text-xs px-2 py-0.5 rounded border transition-colors shrink-0 {item.required ? 'border-green-500 text-green-400 bg-green-400/10' : 'border-mono-600 text-mono-500 hover:border-mono-500 hover:text-mono-400'}"
+                      >
+                        required
+                      </button>
+                    {/if}
+
+                    <div class="flex-1"></div>
+
+                    <!-- Remove Button -->
+                    <button
+                      type="button"
+                      onclick={() => removeMember(item.id)}
+                      class="text-red-700 hover:text-red-600 transition-colors shrink-0"
+                      title="Remove relationship"
+                    >
+                      <i class="fa-solid fa-xmark"></i>
+                    </button>
+                  </div>
+                </div>
               {/if}
-
-              <!-- Cardinality Select -->
-              {#if rel.isInferred}
-                <span class="text-xs text-mono-400 bg-mono-800 px-2 py-0.5 rounded">{CARDINALITY_OPTIONS.find(o => o.value === rel.cardinality)?.label ?? rel.cardinality}</span>
-              {:else}
-                <select
-                  value={rel.cardinality}
-                  onchange={(e) => updateRelationshipCardinality(rel.id, (e.target as HTMLSelectElement).value as Cardinality)}
-                  class="text-xs text-mono-300 bg-mono-800 border border-mono-700 px-2 py-0.5 rounded focus:ring-1 focus:ring-green-400"
-                >
-                  {#each CARDINALITY_OPTIONS as opt}
-                    <option value={opt.value}>{opt.label}</option>
-                  {/each}
-                </select>
-              {/if}
-
-              <!-- Target Object Badge -->
-              <span class="text-xs font-medium px-2 py-0.5 rounded {rel.isInferred ? 'bg-mono-700 text-mono-400' : 'bg-blue-500/20 text-blue-400'}">
-                → {targetObj?.name ?? 'Unknown'}
-              </span>
-
-              <!-- FK Hint for belongs to (only user-defined; inferred rels have FK on the other side) -->
-              {#if fkHint}
-                <span class="text-xs {fkHint.hasFk ? 'text-green-400' : 'text-yellow-400'}">
-                  {fkHint.hasFk ? `via ${fkHint.fkName} ✓` : `missing ${fkHint.fkName} ✗`}
-                </span>
-              {/if}
-
-              <div class="flex-1"></div>
-
-              <!-- Inferred Badge -->
-              {#if rel.isInferred}
-                <span class="text-xs text-mono-500 bg-mono-700 px-2 py-0.5 rounded">
-                  auto · on {targetObj?.name ?? '?'}
-                </span>
-              {/if}
-
-              <!-- Remove Button -->
-              <button
-                type="button"
-                onclick={() => removeRelationship(rel.id)}
-                class="text-red-700 hover:text-red-600 transition-colors shrink-0"
-                title={rel.isInferred ? 'Remove inferred relationship (removes both sides)' : 'Remove relationship'}
-              >
-                <i class="fa-solid fa-xmark"></i>
-              </button>
             </div>
           {/each}
         </div>
       {/if}
     </div>
   </div>
+
+  <!-- Derived Relationships (read-only, incoming from other objects) -->
+  {#if editedItem.derivedRelationships.length > 0}
+    <div>
+      <h3 class="text-sm text-mono-300 mb-2 font-medium">
+        Incoming Relationships ({editedItem.derivedRelationships.length})
+      </h3>
+      <div class="space-y-1">
+        {#each editedItem.derivedRelationships as dr}
+          <div class="flex items-center space-x-2 px-2 py-1.5 bg-mono-800 rounded border border-dashed border-mono-600">
+            <button
+              type="button"
+              onclick={() => navigateToObject(dr.sourceObjectId)}
+              class="text-xs text-blue-400 hover:underline"
+            >
+              {dr.sourceObject}.{dr.sourceField}
+            </button>
+            <span class="text-xs text-mono-400 bg-mono-700 px-2 py-0.5 rounded">
+              {dr.kind.replace(/_/g, ' ')}
+            </span>
+            {#if dr.impliesFk}
+              <span class="text-xs text-mono-500">implies {dr.impliesFk}</span>
+            {:else if dr.junctionTable}
+              <span class="text-xs text-mono-500">via {dr.junctionTable}</span>
+            {/if}
+          </div>
+        {/each}
+      </div>
+    </div>
+  {/if}
 
   <!-- Validators -->
   <div>
