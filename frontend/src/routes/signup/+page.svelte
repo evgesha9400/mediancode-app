@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { clerkState, getClerk } from '$lib/clerk';
+	import { clerkState, getClerk, clerkAppearance } from '$lib/clerk';
 	import { goto } from '$app/navigation';
 	import { Logo } from '$lib/components';
 
@@ -16,25 +16,12 @@
 					fallbackRedirectUrl: '/dashboard',
 					signInUrl: '/signin',
 					appearance: {
-						variables: {
-							colorBackground: '#171717',
-							colorInputBackground: '#171717',
-							colorText: '#f5f5f5',
-							colorTextSecondary: '#a3a3a3',
-							colorPrimary: '#4ade80',
-							colorInputText: '#f5f5f5',
-							borderRadius: '0',
-							colorNeutral: '#a3a3a3',
-						},
+						...clerkAppearance,
 						elements: {
+							...clerkAppearance.elements,
 							rootBox: 'mx-auto',
-							card: 'shadow-none bg-mono-900 border-2 border-mono-700',
 							headerTitle: 'hidden',
 							logoBox: 'hidden',
-							formButtonPrimary: 'bg-green-400 text-mono-950 hover:bg-green-300 font-bold tracking-wide',
-							formFieldInput: 'bg-mono-900 border-mono-600 text-mono-100',
-							footerActionLink: 'text-green-400 hover:text-green-300',
-							socialButtonsIconButton__github: '[&>img]:invert',
 						}
 					}
 				});

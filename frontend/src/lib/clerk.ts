@@ -14,17 +14,17 @@ export interface ClerkState {
  */
 export const clerkAppearance = {
   variables: {
-    colorBackground: '#171717',      // mono-900
-    colorInputBackground: '#171717', // mono-900
-    colorText: '#f5f5f5',            // mono-100
-    colorTextSecondary: '#a3a3a3',   // mono-400
-    colorPrimary: '#4ade80',         // green-400
-    colorInputText: '#f5f5f5',       // mono-100
-    borderRadius: '0',               // sharp corners
-    colorNeutral: '#a3a3a3',         // mono-400
-    colorDanger: '#dc2626',          // red-600
-    colorSuccess: '#16a34a',         // green-600
-    colorWarning: '#d97706',         // amber-600
+    colorBackground: '#1d1d1f',      // mono-900 soft
+    colorInputBackground: '#1d1d1f', // mono-900 soft
+    colorText: '#f0f0f5',            // mono-100 soft
+    colorTextSecondary: '#a0a0a8',   // mono-400 soft
+    colorPrimary: '#52e28c',         // green-400 soft
+    colorInputText: '#f0f0f5',       // mono-100 soft
+    borderRadius: '0',
+    colorNeutral: '#a0a0a8',         // mono-400 soft
+    colorDanger: '#dc2626',          // red-600 (unchanged)
+    colorSuccess: '#2ea860',         // green-600 soft
+    colorWarning: '#e4a83a',         // amber-400 soft
   },
   elements: {
     card: 'shadow-none bg-mono-900 border-2 border-mono-700',
