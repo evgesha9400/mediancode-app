@@ -1,5 +1,52 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
 
+html[data-theme="soft"] {
+  /* Neutrals */
+  --color-mono-950: 16 16 18;
+  --color-mono-900: 29 29 31;
+  --color-mono-800: 43 43 46;
+  --color-mono-700: 68 68 73;
+  --color-mono-600: 85 85 91;
+  --color-mono-500: 116 116 123;
+  --color-mono-400: 160 160 168;
+  --color-mono-300: 207 207 214;
+  --color-mono-200: 224 224 230;
+  --color-mono-100: 240 240 245;
+  --color-mono-50: 246 246 250;
+
+  /* Success / Primary accent (green) */
+  --color-green-50: 240 253 246;
+  --color-green-100: 214 245 228;
+  --color-green-200: 170 235 200;
+  --color-green-300: 140 240 180;
+  --color-green-400: 82 226 140;
+  --color-green-600: 46 168 96;
+
+  /* Error / Destructive (red) — unchanged values */
+  --color-red-50: 254 242 242;
+  --color-red-100: 254 226 226;
+  --color-red-200: 254 202 202;
+  --color-red-600: 220 38 38;
+  --color-red-700: 185 28 28;
+  --color-red-800: 153 27 27;
+
+  /* Warning (amber) */
+  --color-amber-50: 253 246 232;
+  --color-amber-100: 250 232 194;
+  --color-amber-200: 245 212 142;
+  --color-amber-400: 228 168 58;
+  --color-amber-600: 196 138 26;
+  --color-amber-800: 138 92 16;
+
+  /* Info (blue) */
+  --color-blue-50: 240 244 252;
+  --color-blue-100: 218 227 247;
+  --color-blue-200: 180 199 240;
+  --color-blue-400: 91 139 224;
+  --color-blue-600: 61 102 184;
+  --color-blue-800: 43 74 138;
+}
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
