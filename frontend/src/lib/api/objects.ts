@@ -5,7 +5,7 @@
  */
 
 import { apiGet, apiPost, apiPut, apiDelete } from './client';
-import type { ObjectDefinition, ObjectMember, DerivedRelationship, InlineModelValidator, FieldRole, RelationshipKind } from '$lib/types';
+import type { ObjectDefinition, ObjectMember, ScalarMember, RelationshipMember, DerivedRelationship, InlineModelValidator, FieldRole, RelationshipKind } from '$lib/types';
 
 // ============================================================================
 // Response Types
@@ -178,7 +178,7 @@ export interface CreateObjectRequest {
 	namespaceId: string;
 	name: string;
 	description?: string;
-	members: Omit<ObjectMember, 'id'>[];
+	members: (Omit<ScalarMember, 'id'> | Omit<RelationshipMember, 'id'>)[];
 	validators?: { templateId: string; parameters?: Record<string, string>; fieldMappings: Record<string, string> }[];
 }
 
