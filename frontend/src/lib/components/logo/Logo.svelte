@@ -120,7 +120,7 @@
 		const pixelSize = sizeMap[size];
 		// Light variant (for light backgrounds): dark edges
 		// Dark variant (for dark backgrounds): light edges
-		const edgeColor = variant === 'light' ? 0x333333 : 0xe5e5e5;
+		const edgeColor = variant === 'light' ? 0x2b2b2e : 0xe0e0e6;
 		const cylinderRadius = 0.03;
 
 		// Scene setup

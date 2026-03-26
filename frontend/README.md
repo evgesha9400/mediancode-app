@@ -254,16 +254,17 @@ The application uses a monochrome color palette:
 
 **Colors:**
 ```
-mono-50:  #fafafa (lightest)
-mono-100: #f5f5f5
-mono-200: #e5e5e5
-mono-300: #d4d4d4
-mono-400: #a3a3a3
-mono-500: #737373
-mono-600: #525252
-mono-700: #404040
-mono-800: #262626
-mono-900: #171717 (darkest)
+mono-50:  #f6f6fa (lightest)
+mono-100: #f0f0f5
+mono-200: #e0e0e6
+mono-300: #cfcfd6
+mono-400: #a0a0a8
+mono-500: #74747b
+mono-600: #55555b
+mono-700: #444449
+mono-800: #2b2b2e
+mono-900: #1d1d1f
+mono-950: #101012 (darkest)
 ```
 
 **Typography:**
