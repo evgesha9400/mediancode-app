@@ -15,9 +15,6 @@
   let error = $state<string | null>(null);
 
   // Generation options (initialized to backend defaults)
-  let healthcheckEnabled = $state(true);
-  let healthcheckPath = $state('/health');
-  let healthcheck = $derived<string | null>(healthcheckEnabled ? healthcheckPath : null);
   let responsePlaceholders = $state(true);
   let databaseEnabled = $state(false);
 
@@ -31,7 +28,6 @@
 
     try {
       const { blob, filename } = await generateApi(apiId, {
-        healthcheck,
         responsePlaceholders,
         databaseEnabled,
         cdkEnabled,
@@ -76,25 +72,6 @@
       </div>
 
       <div class="space-y-3">
-        <!-- Healthcheck endpoint -->
-        <div>
-          <label class="flex items-center space-x-2 cursor-pointer">
-            <input type="checkbox" bind:checked={healthcheckEnabled}
-              class="w-4 h-4 text-green-400 border-mono-600 rounded focus:ring-2 focus:ring-green-400 bg-mono-900" />
-            <span class="text-xs text-mono-300">Healthcheck endpoint</span>
-          </label>
-          {#if healthcheckEnabled}
-            <div class="mt-1.5 ml-6">
-              <input
-                type="text"
-                bind:value={healthcheckPath}
-                placeholder="/health"
-                class="w-full px-3 py-1.5 text-sm border border-mono-600 bg-mono-900 text-mono-100 focus:ring-2 focus:ring-green-400 focus:outline-none"
-              />
-            </div>
-          {/if}
-        </div>
-
         <!-- Response placeholders -->
         <div>
           <label class="flex items-center space-x-2 cursor-pointer">
