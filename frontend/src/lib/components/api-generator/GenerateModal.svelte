@@ -21,6 +21,10 @@
   let responsePlaceholders = $state(true);
   let databaseEnabled = $state(false);
 
+  // CDK options
+  let cdkEnabled = $state(false);
+  let cdkCompute = $state<'lambda' | 'ecs'>('lambda');
+
   async function handleGenerate() {
     generating = true;
     error = null;
@@ -29,7 +33,9 @@
       const { blob, filename } = await generateApi(apiId, {
         healthcheck,
         responsePlaceholders,
-        databaseEnabled
+        databaseEnabled,
+        cdkEnabled,
+        cdkCompute
       });
 
       // Trigger browser download
@@ -106,6 +112,34 @@
             <span class="text-xs text-mono-300">Database support</span>
             <span class="text-xs text-mono-400">PostgreSQL, SQLAlchemy, Alembic, Docker Compose</span>
           </label>
+        </div>
+
+        <!-- CDK infrastructure -->
+        <div>
+          <label class="flex items-center space-x-2 cursor-pointer">
+            <input type="checkbox" bind:checked={cdkEnabled}
+              class="w-4 h-4 text-green-400 border-mono-600 rounded focus:ring-2 focus:ring-green-400 bg-mono-900" />
+            <span class="text-xs text-mono-300">CDK infrastructure</span>
+            <span class="text-xs text-mono-400">AWS CDK stack files</span>
+          </label>
+
+          {#if cdkEnabled}
+            <div class="mt-2 ml-6">
+              <p class="text-xs text-mono-400 mb-1">Compute</p>
+              <div class="flex space-x-3">
+                <label class="flex items-center space-x-1.5 cursor-pointer">
+                  <input type="radio" bind:group={cdkCompute} value="lambda"
+                    class="w-3.5 h-3.5 text-green-400 border-mono-600 bg-mono-900 focus:ring-green-400" />
+                  <span class="text-xs text-mono-300">Lambda</span>
+                </label>
+                <label class="flex items-center space-x-1.5 cursor-pointer">
+                  <input type="radio" bind:group={cdkCompute} value="ecs"
+                    class="w-3.5 h-3.5 text-green-400 border-mono-600 bg-mono-900 focus:ring-green-400" />
+                  <span class="text-xs text-mono-300">ECS Fargate</span>
+                </label>
+              </div>
+            </div>
+          {/if}
         </div>
       </div>
     </div>
