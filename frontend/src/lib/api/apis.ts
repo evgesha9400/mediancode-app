@@ -128,6 +128,8 @@ export interface GenerateOptions {
 	healthcheck?: string | null;
 	responsePlaceholders?: boolean;
 	databaseEnabled?: boolean;
+	cdkEnabled?: boolean;
+	cdkCompute?: 'lambda' | 'ecs';
 }
 
 /**
