@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { clerkState } from '$lib/clerk';
-	import { PreRenderedLogo } from '$lib/components/logo';
+	import { Logo } from '$lib/components/logo';
 	import {
 		marketingBetaDot,
 		marketingBetaPill,
@@ -41,7 +41,7 @@
 	<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
 		<div class="flex items-center justify-between h-16">
 			<a href="/" onclick={scrollToTop} class="flex items-center space-x-3 cursor-pointer hover:opacity-80 transition-opacity">
-				<PreRenderedLogo size="md" variant="dark" />
+				<Logo size="md" />
 				<span class="text-lg font-inter font-semibold text-mono-100 tracking-tight">Median Code</span>
 			</a>
 			<button onclick={toggleMobileMenu} aria-label="Toggle mobile menu" class="md:hidden w-10 h-10 flex items-center justify-center">
@@ -104,11 +104,32 @@
 	</div>
 </header>
 
-<!-- Hero -->
-<section id="hero" class="bg-mono-950 py-20 sm:py-28 lg:py-32 relative overflow-hidden">
-	<!-- Ambient Glow Background -->
-	<div class="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[500px] opacity-[0.15] bg-green-400 blur-[120px] rounded-full pointer-events-none"></div>
+<!-- One continuous canvas: base + sprinkled green glows (sections stay transparent) -->
+<div class="relative bg-mono-950 text-white overflow-x-hidden">
+	<div
+		class="pointer-events-none absolute inset-0 z-0 overflow-hidden"
+		aria-hidden="true"
+	>
+		<div
+			class="absolute top-[6%] left-1/2 h-[min(32rem,55vw)] w-[min(52rem,95vw)] -translate-x-1/2 rounded-full bg-green-400 opacity-[0.14] blur-[120px]"
+		></div>
+		<div
+			class="absolute top-[32%] -right-[8%] h-[22rem] w-[28rem] rounded-full bg-green-400 opacity-[0.09] blur-[100px]"
+		></div>
+		<div
+			class="absolute top-[52%] -left-[12%] h-[18rem] w-[26rem] rounded-full bg-green-400 opacity-[0.1] blur-[90px]"
+		></div>
+		<!-- Philosophy: off-center so it does not stack with the centered glow behind the closing CTA -->
+		<div
+			class="absolute top-[62%] -left-[22%] h-[19rem] w-[26rem] rounded-full bg-green-400 opacity-[0.07] blur-[95px]"
+		></div>
+		<div
+			class="absolute bottom-[8%] left-1/2 h-[16rem] w-[min(40rem,90vw)] -translate-x-1/2 rounded-full bg-green-400 opacity-[0.11] blur-[100px]"
+		></div>
+	</div>
 
+<!-- Hero -->
+<section id="hero" class="relative z-10 py-20 sm:py-28 lg:py-32 overflow-hidden">
 	<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
 		<div class="space-y-10">
 			<!-- Status indicator -->
@@ -204,7 +225,7 @@
 </section>
 
 <!-- Features -->
-<section id="features" class="bg-mono-900/50 backdrop-blur-sm py-20 sm:py-24 lg:py-32 relative">
+<section id="features" class="relative z-10 py-20 sm:py-24 lg:py-32">
 	<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
 		<!-- Section header -->
 		<div class="mb-16 text-center sm:text-left">
@@ -270,7 +291,7 @@
 </section>
 
 <!-- How It Works -->
-<section id="how-it-works" class="bg-mono-950 py-20 sm:py-24 lg:py-32">
+<section id="how-it-works" class="relative z-10 py-20 sm:py-24 lg:py-32">
 	<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
 		<!-- Section header -->
 		<div class="mb-20 text-center sm:text-left">
@@ -321,7 +342,7 @@
 </section>
 
 <!-- Philosophy -->
-<section id="philosophy" class="bg-mono-900/50 backdrop-blur-sm/50 py-20 sm:py-24 lg:py-32">
+<section id="philosophy" class="relative z-10 py-20 sm:py-24 lg:py-32">
 	<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
 		<div class="grid lg:grid-cols-2 gap-16 items-center">
 			<!-- Left: Copy -->
@@ -359,8 +380,15 @@
 				</div>
 			</div>
 
-			<!-- Right: What you get table (Softened) -->
-			<div class="bg-mono-950/60 backdrop-blur-md border border-mono-800/80 rounded-3xl overflow-hidden shadow-2xl">
+			<!-- Right: What you get table (same green→blue wash as hero terminal) -->
+			<div class="relative">
+				<div
+					class="pointer-events-none absolute -inset-1 rounded-3xl bg-gradient-to-r from-green-400/20 to-blue-500/20 opacity-50 blur-xl"
+					aria-hidden="true"
+				></div>
+				<div
+					class="relative overflow-hidden rounded-3xl border border-mono-800/80 bg-mono-950/60 shadow-2xl ring-1 ring-white/5 backdrop-blur-md"
+				>
 				<div class="px-6 py-5 border-b border-white/5 bg-white/[0.02]">
 					<p class="text-sm font-inter font-semibold text-white">Output Manifest</p>
 				</div>
@@ -394,14 +422,14 @@
 						<span class="text-xs bg-mono-800 text-mono-300 px-2 py-1 rounded-md font-medium">You write this</span>
 					</div>
 				</div>
+				</div>
 			</div>
 		</div>
 	</div>
 </section>
 
 <!-- Final CTA -->
-<section id="final-cta" class="bg-mono-950 py-24 sm:py-32 relative overflow-hidden border-t border-mono-800/50">
-	<div class="absolute bottom-0 left-1/2 -translate-x-1/2 w-[600px] h-[300px] opacity-10 bg-green-400 blur-[100px] rounded-full pointer-events-none"></div>
+<section id="final-cta" class="relative z-10 overflow-hidden py-24 sm:py-32">
 	<div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center relative z-10">
 		<h2 class="text-4xl sm:text-5xl lg:text-6xl font-bold text-white tracking-tight leading-tight mb-6 font-inter">
 			Start Building Your API
@@ -432,11 +460,11 @@
 </section>
 
 <!-- Footer -->
-<footer id="footer" class="bg-mono-950 border-t border-mono-800/50 py-12 relative z-10">
+<footer id="footer" class="relative z-10 border-t border-mono-800/40 py-12">
 	<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
 		<div class="flex flex-col sm:flex-row items-center justify-between space-y-4 sm:space-y-0">
 			<div class="flex items-center space-x-3 opacity-80 hover:opacity-100 transition-opacity">
-				<PreRenderedLogo size="md" variant="dark" />
+				<Logo size="md" />
 				<span class="text-lg font-inter font-semibold text-mono-200 tracking-tight">Median Code</span>
 			</div>
 			<div class="text-mono-500 text-sm font-inter">
@@ -445,6 +473,7 @@
 		</div>
 	</div>
 </footer>
+</div>
 
 <style>
 	/* Smooth scrolling for anchor links */

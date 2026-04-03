@@ -34,6 +34,6 @@
   let { spacing = 'space-y-2', children }: Props = $props();
 </script>
 
-<div class="p-6 border-t border-mono-800/80 bg-black/20 backdrop-blur-md {spacing}">
+<div class="p-6 border-t border-white/10 bg-mono-950/75 {spacing}">
   {@render children?.()}
 </div>

@@ -42,11 +42,7 @@
 </script>
 
 <script lang="ts">
-  import {
-    dashboardPageHeaderGradient,
-    dashboardPageHeaderShell,
-    dashboardPageHeaderTitleBand,
-  } from '$lib/ui/classes';
+  import { dashboardPageHeaderShell, dashboardPageHeaderTitleBand } from '$lib/ui/classes';
 
   interface Props extends PageHeaderProps {}
 
@@ -54,7 +50,6 @@
 </script>
 
 <div class={dashboardPageHeaderShell}>
-  <div class={dashboardPageHeaderGradient}></div>
   <div
     class="relative z-20 flex justify-between gap-3 {dashboardPageHeaderTitleBand} flex-nowrap"
   >

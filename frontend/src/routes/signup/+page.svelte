@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { clerkState, getClerk, clerkAppearance } from '$lib/clerk';
 	import { goto } from '$app/navigation';
-	import { PreRenderedLogo } from '$lib/components/logo';
+	import { Logo } from '$lib/components/logo';
 
 	let clerkMountDiv = $state<HTMLDivElement>();
 	let hasAttemptedMount = $state(false);
@@ -45,7 +45,7 @@
 		{#if !$clerkState.isLoaded}
 			<div class="text-center space-y-4">
 				<div class="flex items-center justify-center space-x-3 mb-8 opacity-80">
-					<PreRenderedLogo size="lg" variant="dark" />
+					<Logo size="lg" />
 					<h1 class="text-3xl font-inter font-bold text-mono-100 tracking-tight">Median Code</h1>
 				</div>
 				<div class="animate-spin rounded-full h-8 w-8 border-b-2 border-green-400 mx-auto opacity-80"></div>
@@ -54,7 +54,7 @@
 		{:else if $clerkState.isSignedIn}
 			<div class="text-center space-y-4">
 				<div class="flex items-center justify-center space-x-3 mb-8 opacity-80">
-					<PreRenderedLogo size="lg" variant="dark" />
+					<Logo size="lg" />
 					<h1 class="text-3xl font-inter font-bold text-mono-100 tracking-tight">Median Code</h1>
 				</div>
 				<div class="animate-spin rounded-full h-8 w-8 border-b-2 border-green-400 mx-auto opacity-80"></div>
@@ -64,7 +64,7 @@
 			<div class="w-full flex flex-col items-center">
 				<!-- Logo above Clerk form -->
 				<div class="flex items-center justify-center space-x-3 mb-8 opacity-90">
-					<PreRenderedLogo size="lg" variant="dark" />
+					<Logo size="lg" />
 					<h1 class="text-3xl font-inter font-bold text-mono-100 tracking-tight">Median Code</h1>
 				</div>
 				<div bind:this={clerkMountDiv} class="w-full flex justify-center"></div>

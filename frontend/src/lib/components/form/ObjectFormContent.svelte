@@ -31,6 +31,12 @@
   import { dragHandleZone, dragHandle } from 'svelte-dnd-action';
   import type { DndEvent } from 'svelte-dnd-action';
   import { flip } from 'svelte/animate';
+  import {
+    drawerLinkedEntityRow,
+    inputObjectMemberSearch,
+    surfaceInsideFrostedPanel,
+    textareaObjectForm,
+  } from '$lib/ui/classes';
 
   let {
     editedItem = $bindable(),
@@ -353,7 +359,7 @@
       id="object-description"
       bind:value={editedItem.description}
       rows="3"
-      class="w-full px-3 py-2 rounded-xl border border-mono-700/80 bg-mono-900/50 backdrop-blur-sm focus:ring-2 focus:ring-green-400/50 outline-none focus:outline-none transition-all"
+      class={textareaObjectForm}
     ></textarea>
   </div>
 
@@ -371,13 +377,13 @@
             onfocus={handleMemberFocus}
             onblur={handleMemberBlur}
             placeholder="Add field or relationship..."
-            class="w-full px-3 py-1.5 border border-mono-700/80 bg-mono-900/50 backdrop-blur-sm rounded-xl text-mono-100 focus:ring-2 focus:ring-green-400 focus:border-transparent outline-none transition-all text-sm pr-8"
+            class={inputObjectMemberSearch}
           />
           <i class="fa-solid fa-search absolute right-3 top-1/2 -translate-y-1/2 text-mono-400 text-xs pointer-events-none"></i>
         </div>
 
         {#if memberDropdownOpen}
-          <div class="absolute z-10 w-full mt-1 bg-mono-900/95 backdrop-blur-sm border border-mono-700/80 rounded-xl shadow-lg shadow-black/30 max-h-72 overflow-y-auto flex flex-col">
+          <div class="absolute z-10 w-full mt-1 bg-mono-950 border border-mono-700/80 rounded-xl shadow-lg shadow-black/30 max-h-72 overflow-y-auto flex flex-col">
 
             <!-- Fields Section -->
             <div class="px-3 pt-2 pb-1">
@@ -449,7 +455,7 @@
 
       <!-- DnD Member List -->
       {#if editedItem.members.length === 0}
-        <div class="p-3 bg-mono-900/50 backdrop-blur-sm rounded-xl border border-mono-700/80">
+        <div class="p-3 {surfaceInsideFrostedPanel}">
           <p class="text-xs text-mono-400">No members added</p>
         </div>
       {:else}
@@ -457,7 +463,7 @@
           use:dragHandleZone={{ items: dndItems, flipDurationMs: 150, type: 'members' }}
           onconsider={handleDndConsider}
           onfinalize={handleDndFinalize}
-          class="p-2 bg-mono-900/50 backdrop-blur-sm rounded-xl border border-mono-700/80 space-y-2"
+          class="p-2 {surfaceInsideFrostedPanel} space-y-2"
         >
           {#each dndItems as item (item.id)}
             <div animate:flip={{ duration: 150 }}>
@@ -468,7 +474,7 @@
                 {#if field}
                   {@const inputCfg = defaultInputType(field.type)}
                   {@const modifierClass = roleHasModifiers(item.role) ? '' : 'invisible pointer-events-none'}
-                  <div class="p-3 bg-mono-900/50 backdrop-blur-sm rounded-xl border border-mono-700/80 space-y-1.5">
+                  <div class="p-3 {surfaceInsideFrostedPanel} space-y-1.5">
                     <div
                       class="grid grid-cols-[auto_minmax(0,1fr)_10rem_7rem_4.5rem_1.75rem] gap-x-2 items-center"
                     >
@@ -574,7 +580,7 @@
               {:else if item.memberType === 'relationship'}
                 <!-- Relationship Member Row -->
                 {@const targetObj = getObjectById(item.targetObjectId)}
-                <div class="p-3 bg-mono-900/50 backdrop-blur-sm rounded-xl border border-mono-700/80 space-y-1.5">
+                <div class="p-3 {surfaceInsideFrostedPanel} space-y-1.5">
                   <div class="flex items-center space-x-2">
                     <!-- Drag Handle -->
                     <div use:dragHandle class="text-mono-600 hover:text-mono-400 cursor-grab shrink-0">
@@ -693,7 +699,7 @@
           <i class="fa-solid fa-plus mr-1"></i> Add Validator
         </button>
       {:else if selectedModelTemplate}
-        <div class="p-3 bg-mono-900/50 backdrop-blur-sm rounded-xl border border-mono-700/80">
+        <div class="p-3 {surfaceInsideFrostedPanel}">
           <TemplateForm
             kind="model"
             modelTemplate={selectedModelTemplate}
@@ -703,7 +709,7 @@
           />
         </div>
       {:else}
-        <div class="p-3 bg-mono-900/50 backdrop-blur-sm rounded-xl border border-mono-700/80">
+        <div class="p-3 {surfaceInsideFrostedPanel}">
           <TemplateGallery
             kind="model"
             modelTemplates={modelValidatorTemplates}
@@ -714,10 +720,10 @@
       {/if}
 
       {#if editedItem.validators.length > 0}
-        <div class="p-2 bg-mono-900/50 backdrop-blur-sm rounded-xl border border-mono-700/80 space-y-2">
+        <div class="p-2 {surfaceInsideFrostedPanel} space-y-2">
           {#each editedItem.validators as validator, index}
             {@const tmpl = getModelValidatorTemplateById(validator.templateId)}
-            <div class="flex items-center space-x-2 p-3 bg-mono-900/50 backdrop-blur-sm rounded-xl border border-mono-700/80">
+            <div class="flex items-center space-x-2 p-3 {surfaceInsideFrostedPanel}">
               <div class="flex items-center space-x-2 flex-1 min-w-0">
                 <span class="text-sm text-mono-300 truncate">{tmpl?.name ?? validator.templateId}</span>
                 <Pill class="shrink-0">{tmpl?.mode ?? 'after'}</Pill>
@@ -747,7 +753,7 @@
           <button
             type="button"
             onclick={() => goto(`/apis/${apiId}`)}
-            class="flex items-center space-x-2 w-full px-3 py-2 bg-mono-900/50 backdrop-blur-sm rounded-xl border border-mono-700/80 hover:border-mono-600 hover:bg-mono-700 transition-colors text-left"
+            class={drawerLinkedEntityRow}
           >
             <i class="fa-solid fa-code text-mono-400 text-xs"></i>
             <span class="text-sm text-mono-100">{api?.title ?? apiId}</span>

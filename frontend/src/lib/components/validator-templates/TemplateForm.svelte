@@ -19,6 +19,8 @@
 </script>
 
 <script lang="ts">
+  import { inputValidatorControl } from '$lib/ui/classes';
+
   interface Props extends TemplateFormProps {}
 
   let {
@@ -121,7 +123,7 @@
           <select
             id="param-{param.key}"
             bind:value={params[param.key]}
-            class="w-full px-3 py-1.5 border border-mono-600 text-sm focus:ring-2 focus:ring-green-400 focus:border-transparent bg-mono-900/50 backdrop-blur-sm text-mono-100"
+            class={inputValidatorControl}
           >
             <option value="">Select...</option>
             {#each param.options as opt}
@@ -135,7 +137,7 @@
             step={param.type === 'number' ? 'any' : undefined}
             bind:value={params[param.key]}
             placeholder={param.placeholder}
-            class="w-full px-3 py-1.5 border border-mono-600 text-sm focus:ring-2 focus:ring-green-400 focus:border-transparent bg-mono-900/50 backdrop-blur-sm text-mono-100"
+            class={inputValidatorControl}
           />
         {/if}
       </div>
@@ -153,7 +155,7 @@
         <select
           id="role-{fm.key}"
           bind:value={mappings[fm.key]}
-          class="w-full px-3 py-1.5 border border-mono-600 text-sm focus:ring-2 focus:ring-green-400 focus:border-transparent bg-mono-900/50 backdrop-blur-sm text-mono-100"
+          class={inputValidatorControl}
         >
           <option value="">Select a field...</option>
           {#each candidates as field}
@@ -175,7 +177,7 @@
           <select
             id="mparam-{param.key}"
             bind:value={params[param.key]}
-            class="w-full px-3 py-1.5 border border-mono-600 text-sm focus:ring-2 focus:ring-green-400 focus:border-transparent bg-mono-900/50 backdrop-blur-sm text-mono-100"
+            class={inputValidatorControl}
           >
             <option value="">Select...</option>
             {#each param.options as opt}
@@ -189,7 +191,7 @@
             step={param.type === 'number' ? 'any' : undefined}
             bind:value={params[param.key]}
             placeholder={param.placeholder}
-            class="w-full px-3 py-1.5 border border-mono-600 text-sm focus:ring-2 focus:ring-green-400 focus:border-transparent bg-mono-900/50 backdrop-blur-sm text-mono-100"
+            class={inputValidatorControl}
           />
         {/if}
       </div>

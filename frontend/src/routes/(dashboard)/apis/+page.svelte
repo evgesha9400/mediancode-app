@@ -21,6 +21,12 @@
     NamespaceSelector
   } from '$lib/components';
   import { STORE_NAMES } from '$lib/stores/loader';
+  import {
+    inputGlassDisabled,
+    tableListCell,
+    tableListRowHover,
+    tableListRowInteractive
+  } from '$lib/ui/classes';
   import { page } from '$app/state';
   import { goto } from '$app/navigation';
   import { createApiModel } from '$lib/stores/apiModel.svelte';
@@ -126,29 +132,26 @@
 
     {#snippet body()}
       {#each filteredApis as api}
-        <tr
-          onclick={() => handleOpenApi(api)}
-          class="cursor-pointer transition-colors hover:bg-mono-950"
-        >
-          <td class="px-6 py-4 whitespace-nowrap">
+        <tr onclick={() => handleOpenApi(api)} class="{tableListRowInteractive} {tableListRowHover}">
+          <td class="{tableListCell} whitespace-nowrap">
             <div class="text-sm text-mono-100 font-medium">{api.title || 'Untitled API'}</div>
             {#if api.description}
               <div class="text-xs text-mono-400 truncate max-w-xs">{api.description}</div>
             {/if}
           </td>
-          <td class="px-6 py-4 whitespace-nowrap">
+          <td class="{tableListCell} whitespace-nowrap">
             <Pill>{api.version}</Pill>
           </td>
-          <td class="px-6 py-4 whitespace-nowrap">
+          <td class="{tableListCell} whitespace-nowrap">
             <code class="text-sm text-mono-400 font-mono">{api.baseUrl}</code>
           </td>
-          <td class="px-6 py-4 whitespace-nowrap">
+          <td class="{tableListCell} whitespace-nowrap">
             <div class="flex items-center space-x-2">
               <Pill>{api.endpointCount}</Pill>
               <span class="text-sm text-mono-400">endpoints</span>
             </div>
           </td>
-          <td class="px-6 py-4 whitespace-nowrap">
+          <td class="{tableListCell} whitespace-nowrap">
             <span class="text-sm text-mono-400">{api.namespaceName}</span>
           </td>
         </tr>
@@ -175,7 +178,7 @@
           type="text"
           value={activeNamespaceName}
           disabled
-          class="w-full px-3 py-1.5 text-sm border border-mono-600 bg-mono-950 text-mono-400 cursor-not-allowed"
+          class={inputGlassDisabled}
         />
         <p class="text-xs text-mono-400 mt-1">Uses the currently active namespace</p>
       </div>
@@ -203,7 +206,7 @@
           bind:value={workflow.editedItem.description}
           rows="3"
           placeholder="Describe what this API does..."
-          class="w-full px-3 py-1.5 text-sm border border-mono-700/80 bg-mono-900/50 backdrop-blur-sm/50 focus:ring-2 focus:ring-green-400/50 outline-none focus:outline-none transition-all rounded-xl"
+          class="w-full px-3 py-1.5 text-sm border border-mono-700/80 bg-mono-900/80 text-white focus:ring-2 focus:ring-green-400/50 outline-none focus:outline-none transition-colors rounded-xl"
         ></textarea>
       </div>
 

@@ -47,24 +47,27 @@
 </script>
 
 <script lang="ts">
-  import { TABLE_ID, EMPTY_STATE_ID } from '$lib/utils/testIds';
+  import { tableListBodyDivide, tableListCardShell, tableListPageGutter } from '$lib/ui/classes';
+  import { TABLE_ID } from '$lib/utils/testIds';
 
   interface Props extends TableProps {}
 
   let { isEmpty = false, header, body, empty }: Props = $props();
 </script>
 
-<div class="flex-1 overflow-auto">
-  {#if !isEmpty}
-    <table data-testid={TABLE_ID} class="min-w-full bg-mono-900/50 backdrop-blur-sm/40">
-      <thead class="bg-mono-800/50 sticky top-0 backdrop-blur-sm shadow-sm ring-1 ring-white/5">
-        {@render header?.()}
-      </thead>
-      <tbody class="divide-y divide-mono-800/50">
-        {@render body?.()}
-      </tbody>
-    </table>
-  {:else}
-    {@render empty?.()}
-  {/if}
+<div class={tableListPageGutter}>
+  <div class={tableListCardShell}>
+    {#if !isEmpty}
+      <table data-testid={TABLE_ID} class="min-w-full bg-transparent">
+        <thead class="bg-mono-800/50 sticky top-0 backdrop-blur-sm shadow-sm ring-1 ring-white/5 z-10">
+          {@render header?.()}
+        </thead>
+        <tbody class={tableListBodyDivide}>
+          {@render body?.()}
+        </tbody>
+      </table>
+    {:else}
+      {@render empty?.()}
+    {/if}
+  </div>
 </div>

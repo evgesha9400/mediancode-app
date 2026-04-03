@@ -7,7 +7,11 @@
   import { clerkState } from '$lib/clerk';
   import { loadStoresFromApi, storeLoadingState } from '$lib/stores/loader';
   import { sidebarState } from '$lib/stores/sidebar.svelte';
-  import { dashboardLoadingLabel, dashboardLoadingRoot } from '$lib/ui/classes';
+  import {
+    dashboardLoadingLabel,
+    dashboardLoadingRoot,
+    dashboardMainColumnCanvas,
+  } from '$lib/ui/classes';
 
   let { children } = $props();
 
@@ -42,10 +46,10 @@
     </div>
   </div>
 {:else}
-  <div class="flex h-screen bg-mono-950">
+  <div class="flex h-screen {dashboardMainColumnCanvas}">
     <Sidebar activeRoute={currentPath} />
 
-    <div class="flex-1 flex flex-col overflow-hidden">
+    <div class="flex-1 flex flex-col overflow-hidden min-w-0">
       {#if $storeLoadingState.isLoading}
         <div class="flex-1 flex items-center justify-center">
           <div class="text-center">

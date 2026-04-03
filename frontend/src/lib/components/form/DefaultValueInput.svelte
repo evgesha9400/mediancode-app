@@ -8,6 +8,7 @@
 </script>
 
 <script lang="ts">
+  import { defaultValueComboShell } from '$lib/ui/classes';
   import { Pill } from '../pill';
 
   type InputKind = 'text' | 'integer' | 'float' | 'bool';
@@ -64,9 +65,7 @@
 </script>
 
 <div class="relative">
-  <div
-    class="flex items-center w-full rounded-xl border border-mono-700/80 bg-mono-900/50 backdrop-blur-sm focus-within:ring-2 focus-within:ring-green-400/50 focus-within:outline-none transition-all overflow-hidden"
-  >
+  <div class={defaultValueComboShell}>
     {#if isPreset}
       <!-- Preset selected: show as a pill with clear button -->
       <div class="flex-1 flex items-center px-3 py-1.5 gap-2">
@@ -108,7 +107,7 @@
 
   <!-- Dropdown options -->
   {#if dropdownOpen}
-    <div class="absolute z-10 w-full mt-1 bg-mono-900/95 backdrop-blur-sm border border-mono-700/80 rounded-xl shadow-lg shadow-black/30">
+    <div class="absolute z-10 w-full mt-1 bg-mono-950 border border-mono-700/80 rounded-xl shadow-lg shadow-black/30">
       {#each presetOptions as option}
         <button
           type="button"

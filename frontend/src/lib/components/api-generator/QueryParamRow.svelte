@@ -15,6 +15,12 @@
 <script lang="ts">
   import { getCompatibleOperators, suggestFieldAndOperator } from '$lib/domain/paramInference';
   import { FILTER_OPERATORS } from '$lib/types';
+  import {
+    apiGeneratorRowInputMono,
+    apiGeneratorRowSelect,
+    listMetaBadge,
+    objectSelectorDisplayRow,
+  } from '$lib/ui/classes';
 
   interface Props extends QueryParamRowProps {}
 
@@ -61,7 +67,7 @@
         value={param.name}
         oninput={handleNameInput}
         placeholder="param_name"
-        class="w-full px-3 text-sm font-mono border border-mono-700/80 rounded-xl bg-mono-900/50 backdrop-blur-sm text-white focus:ring-2 focus:ring-green-400/50 outline-none focus:outline-none transition-all h-[34px]"
+        class={apiGeneratorRowInputMono}
       />
     </div>
 
@@ -70,7 +76,7 @@
       <select
         value={param.operator}
         onchange={(e) => onUpdate({ operator: (e.target as HTMLSelectElement).value as FilterOperator })}
-        class="w-full px-3 text-sm border border-mono-700/80 rounded-xl bg-mono-900/50 backdrop-blur-sm text-white focus:ring-2 focus:ring-green-400/50 outline-none focus:outline-none transition-all h-[34px]"
+        class={apiGeneratorRowSelect}
       >
         {#each availableOperators as op (op)}
           <option value={op}>{op}</option>
@@ -80,12 +86,12 @@
 
     <!-- Field display with type chip and delete inside (matches path param pattern) -->
     <div class="w-1/2 min-w-0">
-      <div class="w-full px-3 border border-mono-700/80 rounded-xl bg-mono-900/50 backdrop-blur-sm flex items-center justify-between h-[34px]">
+      <div class={objectSelectorDisplayRow}>
         <div class="flex items-center gap-1.5">
           {#if param.field}
             <span class="font-mono text-sm">{param.field}</span>
             {#if derivedType}
-              <span class="text-[11px] text-mono-400 bg-mono-800 px-1.5 rounded">{derivedType}</span>
+              <span class={listMetaBadge}>{derivedType}</span>
             {/if}
           {:else}
             <span class="text-sm text-mono-400">Select field...</span>

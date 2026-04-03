@@ -14,6 +14,7 @@
   import { getFieldById } from '$lib/stores/fields';
   import { getObjectById } from '$lib/stores/objects';
   import { buildRequestPreviewFromObject, buildResponsePreviewFromObject } from '$lib/utils/examples';
+  import { surfaceInsideFrostedPanel } from '$lib/ui/classes';
 
   interface Props extends ResponsePreviewProps {}
 
@@ -49,7 +50,7 @@
 
   <!-- Selected Object Field Summary -->
   {#if selectedObject}
-    <div class="p-3 bg-mono-900/50 backdrop-blur-sm rounded-xl border border-mono-700/80">
+    <div class="p-3 {surfaceInsideFrostedPanel}">
       <div class="flex items-center justify-between mb-2">
         <div class="flex items-center space-x-2">
           <i class="fa-solid fa-cube text-mono-400 text-sm"></i>
@@ -88,7 +89,7 @@
       </div>
     </div>
   {:else}
-    <div class="p-3 bg-mono-900/50 backdrop-blur-sm rounded-xl border border-mono-700/80">
+    <div class="p-3 {surfaceInsideFrostedPanel}">
       <p class="text-xs text-mono-400">No object selected — select an object above to see previews</p>
     </div>
   {/if}
@@ -103,7 +104,7 @@
             <i class="fa-solid fa-arrow-up mr-2"></i>
             Request Body
           </h4>
-          <div class="p-3 bg-mono-900/50 backdrop-blur-sm rounded-xl border border-mono-700/80 text-white text-sm overflow-x-auto">
+          <div class="p-3 {surfaceInsideFrostedPanel} text-white text-sm overflow-x-auto">
             <pre>{requestPreviewJson}</pre>
           </div>
         </div>
@@ -116,7 +117,7 @@
             <i class="fa-solid fa-arrow-down mr-2"></i>
             Response Body
           </h4>
-          <div class="p-3 bg-mono-900/50 backdrop-blur-sm rounded-xl border border-mono-700/80 text-white text-sm overflow-x-auto">
+          <div class="p-3 {surfaceInsideFrostedPanel} text-white text-sm overflow-x-auto">
             <pre>{responsePreviewJson}</pre>
           </div>
         </div>
@@ -124,7 +125,7 @@
     </div>
   {:else}
     <!-- DELETE: no request or response body -->
-    <div class="p-3 bg-mono-900/50 backdrop-blur-sm rounded-xl border border-mono-700/80">
+    <div class="p-3 {surfaceInsideFrostedPanel}">
       <p class="text-sm text-mono-400">DELETE returns <code class="bg-mono-800 px-1 rounded-lg">204 No Content</code> with no response body.</p>
     </div>
   {/if}

@@ -18,12 +18,13 @@
 
 	interface Props extends LogoProps {}
 
-	let { size = 'md', variant = 'light', showText = false, paused = false, class: className = '' }: Props = $props();
+	let { size = 'md', variant = 'dark', showText = false, paused = false, class: className = '' }: Props =
+		$props();
 
 	const isAutomatedEnvironment = browser && typeof navigator !== 'undefined' && navigator.webdriver === true;
 
 	let canvasEl = $state<HTMLCanvasElement>();
-	let renderer: LogoCanvasRenderer | null = null;
+	let renderer = $state<LogoCanvasRenderer | null>(null);
 
 	onMount(() => {
 		if (!canvasEl) return;
@@ -31,12 +32,13 @@
 		const shouldAnimate = !paused && !isAutomatedEnvironment;
 		const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-		renderer = createLogoCanvasRenderer({
+		const instance = createLogoCanvasRenderer({
 			canvas: canvasEl,
 			size,
 			variant,
 			animated: shouldAnimate && !prefersReducedMotion
 		});
+		renderer = instance;
 
 		let observer: IntersectionObserver | null = null;
 
@@ -45,9 +47,9 @@
 				(entries) => {
 					for (const entry of entries) {
 						if (entry.isIntersecting) {
-							renderer?.start();
+							instance.start();
 						} else {
-							renderer?.stop();
+							instance.stop();
 						}
 					}
 				},
@@ -58,9 +60,19 @@
 
 		return () => {
 			observer?.disconnect();
-			renderer?.destroy();
+			instance.destroy();
 			renderer = null;
 		};
+	});
+
+	$effect(() => {
+		const r = renderer;
+		const v = variant;
+		const s = size;
+		if (r) {
+			r.setVariant(v);
+			r.resize(s);
+		}
 	});
 </script>
 

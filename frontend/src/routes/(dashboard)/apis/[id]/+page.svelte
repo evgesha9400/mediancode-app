@@ -34,9 +34,29 @@
   import { mapApiError } from '$lib/domain/errorMap';
   import { showToast } from '$lib/stores/toasts';
   import {
-    dashboardPageHeaderGradient,
     dashboardPageHeaderShell,
     dashboardPageHeaderTitleBand,
+    drawerFooterBtnBlock,
+    drawerFooterBtnDangerCancel,
+    drawerFooterBtnDangerCancelBusy,
+    drawerFooterBtnDangerConfirm,
+    drawerFooterBtnDangerConfirmBusy,
+    drawerFooterBtnDestructive,
+    drawerFooterBtnPrimaryDisabled,
+    drawerFooterBtnPrimaryEnabled,
+    drawerFooterBtnSecondary,
+    drawerFooterBtnSecondaryMuted,
+    drawerFooterDangerCallout,
+    dropdownCreateRow,
+    dropdownListScroll,
+    dropdownPanel,
+    dropdownRow,
+    inputGlass,
+    inputGlassAuto,
+    inputGlassDisabled,
+    inputGlassSearch,
+    surfaceInsideFrostedPanel,
+    textareaInsideFrostedPanel
   } from '$lib/ui/classes';
 
   // Get API ID from URL
@@ -306,7 +326,6 @@
   <MainColumnFrame bodyClass="">
     {#snippet header()}
       <div class={dashboardPageHeaderShell}>
-        <div class={dashboardPageHeaderGradient}></div>
         <div
           class="relative z-20 flex justify-between gap-3 {dashboardPageHeaderTitleBand} flex-nowrap"
         >
@@ -455,7 +474,7 @@
           type="text"
           value={namespaceName}
           disabled
-          class="w-full px-3 py-1.5 text-sm border border-mono-600 bg-mono-950 text-mono-400 cursor-not-allowed"
+          class={inputGlassDisabled}
         />
         <p class="text-xs text-mono-400 mt-1">Namespace cannot be changed after creation</p>
       </div>
@@ -485,7 +504,7 @@
           bind:value={apiState.editForm.description}
           rows="3"
           placeholder="Describe what this API does..."
-          class="w-full px-3 py-1.5 text-sm border border-mono-700/80 bg-mono-900/50 backdrop-blur-sm/50 focus:ring-2 focus:ring-green-400/50 outline-none focus:outline-none transition-all rounded-xl"
+          class={textareaInsideFrostedPanel}
         ></textarea>
       </div>
 
@@ -513,7 +532,9 @@
         type="button"
         onclick={apiState.handleEditSave}
         disabled={!apiState.hasEditChanges || apiState.isSaving}
-        class="w-full px-4 py-2 transition-colors font-medium {apiState.hasEditChanges && !apiState.isSaving ? 'bg-green-400 text-mono-950 hover:bg-green-300 font-bold tracking-wide cursor-pointer' : 'bg-mono-800 text-mono-500 cursor-not-allowed rounded-xl'}"
+        class="{drawerFooterBtnBlock} {apiState.hasEditChanges && !apiState.isSaving
+          ? drawerFooterBtnPrimaryEnabled
+          : drawerFooterBtnPrimaryDisabled}"
       >
         {#if apiState.isSaving}
           <i class="fa-solid fa-spinner fa-spin mr-2"></i>
@@ -526,27 +547,29 @@
         type="button"
         onclick={apiState.handleEditUndo}
         disabled={!apiState.hasEditChanges}
-        class="w-full px-4 py-2 border transition-colors font-medium {apiState.hasEditChanges ? 'border-mono-600 text-mono-300 hover:bg-mono-950 cursor-pointer' : 'border-mono-700 text-mono-400 cursor-not-allowed bg-mono-950'}"
+        class="{drawerFooterBtnBlock} {apiState.hasEditChanges
+          ? drawerFooterBtnSecondary
+          : drawerFooterBtnSecondaryMuted}"
       >
         Undo
       </button>
       <button
         type="button"
         onclick={apiState.handleEditDeleteClick}
-        class="w-full px-4 py-2 bg-mono-800 text-red-400 hover:bg-red-400/10 cursor-pointer transition-colors font-medium flex items-center justify-center space-x-2"
+        class="{drawerFooterBtnBlock} flex items-center justify-center gap-2 font-medium {drawerFooterBtnDestructive}"
       >
         <i class="fa-solid fa-xmark"></i>
         <span>Delete API</span>
       </button>
     {:else}
-      <div class="bg-red-400/10 border border-red-400/30 p-3">
+      <div class={drawerFooterDangerCallout}>
         <p class="text-sm text-red-400 mb-2">Delete this API and all its endpoints?</p>
         <div class="flex space-x-2">
           <button
             type="button"
             onclick={apiState.handleDeleteApi}
             disabled={apiState.isSaving}
-            class="flex-1 px-3 py-1.5 text-sm font-medium transition-colors {apiState.isSaving ? 'bg-red-400 text-white cursor-not-allowed' : 'bg-red-600 text-white hover:bg-red-700 cursor-pointer'}"
+            class={apiState.isSaving ? drawerFooterBtnDangerConfirmBusy : drawerFooterBtnDangerConfirm}
           >
             {#if apiState.isSaving}
               <i class="fa-solid fa-spinner fa-spin mr-1"></i>
@@ -559,7 +582,7 @@
             type="button"
             onclick={apiState.cancelEditDelete}
             disabled={apiState.isSaving}
-            class="flex-1 px-3 py-1.5 border border-mono-600 text-mono-300 hover:bg-mono-950 text-sm font-medium"
+            class={apiState.isSaving ? drawerFooterBtnDangerCancelBusy : drawerFooterBtnDangerCancel}
           >
             Cancel
           </button>
@@ -591,7 +614,7 @@
                     }
                   }}
                   placeholder="Type or select tag..."
-                  class="w-full px-3 py-1.5 border border-mono-700/80 bg-mono-900/50 backdrop-blur-sm/50 focus:ring-2 focus:ring-green-400/50 outline-none focus:outline-none transition-all rounded-xl text-sm pr-8"
+                  class={inputGlassSearch}
                 />
                 {#if apiState.tagInputValue}
                   <button
@@ -607,29 +630,31 @@
                 {/if}
               </div>
               {#if apiState.tagDropdownOpen}
-                <div class="absolute z-10 w-full mt-1 bg-mono-900/50 backdrop-blur-sm border border-mono-600 shadow-lg shadow-black/30 max-h-48 overflow-auto">
-                  {#if apiState.tagInputValue.trim() && !exactTagMatch}
-                    <button
-                      type="button"
-                      onclick={handleTagInputCommit}
-                      class="w-full px-3 py-2 text-left text-sm hover:bg-mono-950 flex items-center space-x-2 text-mono-300 border-b border-mono-700"
-                    >
-                      <i class="fa-solid fa-plus text-xs"></i>
-                      <span>Use "<strong>{apiState.tagInputValue.trim()}</strong>"</span>
-                    </button>
-                  {/if}
-                  {#each filteredTags as tag (tag)}
-                    <button
-                      type="button"
-                      onclick={() => apiState.handleTagSelect(tag)}
-                      class="w-full px-3 py-2 text-left text-sm text-mono-300 hover:bg-mono-950 {apiState.editedEndpoint?.tagName === tag ? 'bg-mono-800' : ''}"
-                    >
-                      {tag}
-                    </button>
-                  {/each}
-                  {#if filteredTags.length === 0 && !apiState.tagInputValue.trim()}
-                    <div class="px-3 py-2 text-sm text-mono-400">No tags yet</div>
-                  {/if}
+                <div class={dropdownPanel}>
+                  <div class="{dropdownListScroll} max-h-48">
+                    {#if apiState.tagInputValue.trim() && !exactTagMatch}
+                      <button
+                        type="button"
+                        onclick={handleTagInputCommit}
+                        class="{dropdownCreateRow} border-b border-mono-700 rounded-none text-mono-300"
+                      >
+                        <i class="fa-solid fa-plus text-xs"></i>
+                        <span>Use "<strong>{apiState.tagInputValue.trim()}</strong>"</span>
+                      </button>
+                    {/if}
+                    {#each filteredTags as tag (tag)}
+                      <button
+                        type="button"
+                        onclick={() => apiState.handleTagSelect(tag)}
+                        class="{dropdownRow} text-sm text-mono-300 {apiState.editedEndpoint?.tagName === tag ? 'bg-mono-800' : ''}"
+                      >
+                        {tag}
+                      </button>
+                    {/each}
+                    {#if filteredTags.length === 0 && !apiState.tagInputValue.trim()}
+                      <div class="px-3 py-2 text-sm text-mono-400">No tags yet</div>
+                    {/if}
+                  </div>
                 </div>
               {/if}
             </div>
@@ -642,7 +667,7 @@
                 type="text"
                 bind:value={apiState.editedEndpoint.description}
                 placeholder="Add a description for this endpoint..."
-                class="w-full px-3 py-1.5 border border-mono-700/80 bg-mono-900/50 backdrop-blur-sm/50 focus:ring-2 focus:ring-green-400/50 outline-none focus:outline-none transition-all rounded-xl text-sm"
+                class={inputGlass}
               />
             </div>
           </div>
@@ -656,13 +681,13 @@
             <div class="endpoint-method-path">
               <select
                 bind:value={apiState.editedEndpoint.method}
-                class="px-3 py-1.5 border border-mono-700/80 bg-mono-900/50 backdrop-blur-sm/50 focus:ring-2 focus:ring-green-400/50 outline-none focus:outline-none transition-all rounded-xl text-sm"
+                class={inputGlassAuto}
               >
                 {#each HTTP_METHODS as method}
                   <option value={method}>{method}</option>
                 {/each}
               </select>
-              <div class="endpoint-path-input flex items-center rounded-xl overflow-hidden border border-mono-700/80 bg-mono-900/50 backdrop-blur-sm focus-within:ring-2 focus-within:ring-green-400/50 focus-within:outline-none transition-all">
+              <div class="endpoint-path-input flex items-center rounded-xl overflow-hidden border border-mono-700/80 bg-mono-900/80 focus-within:ring-2 focus-within:ring-green-400/50 focus-within:outline-none transition-colors">
                 <span class="px-3 py-1.5 text-sm font-mono text-mono-400 bg-mono-900/80 border-r border-mono-700/80">/</span>
                 <input
                   type="text"
@@ -698,11 +723,11 @@
               Path Parameters
             </h3>
             {#if apiState.editedEndpoint.pathParams.length === 0}
-              <div class="px-3 py-2 bg-mono-900/50 backdrop-blur-sm rounded-xl border border-mono-700/80">
+              <div class="px-3 py-2 {surfaceInsideFrostedPanel}">
                 <p class="text-xs text-mono-400">No path parameters. Add parameters to your URL path using <code class="bg-mono-800 px-1 rounded-lg">{`{param_name}`}</code></p>
               </div>
             {:else}
-              <div class="px-3 py-1 bg-mono-900/50 backdrop-blur-sm rounded-xl border border-mono-700/80">
+              <div class="px-3 py-1 {surfaceInsideFrostedPanel}">
                 <!-- Column headers -->
                 <div class="flex items-center gap-2 py-1 border-b border-mono-700 text-[10px] text-mono-500 uppercase tracking-wider">
                   <div class="w-32 shrink-0">Name</div>
@@ -923,7 +948,7 @@
   }
   @container (min-width: 700px) {
     .endpoint-tag-description {
-      grid-template-columns: repeat(2, 1fr);
+      grid-template-columns: 1fr 3fr;
     }
   }
   .endpoint-method-path {

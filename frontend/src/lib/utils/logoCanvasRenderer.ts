@@ -157,6 +157,18 @@ function resolvePixelSize(size: LogoSize | number): number {
 	return typeof size === 'number' ? size : LOGO_SIZE_MAP[size];
 }
 
+/**
+ * Single origin in time for all logo canvases so navigations that remount `Logo`
+ * stay in phase. Lazy-set on first use in a browser; SSR/CIs without real time stay at 0.
+ */
+let logoAnimationEpochMs: number | null = null;
+
+function sharedLogoElapsedSeconds(): number {
+	if (typeof performance === 'undefined' || !Number.isFinite(performance.now())) return 0;
+	if (logoAnimationEpochMs === null) logoAnimationEpochMs = performance.now();
+	return (performance.now() - logoAnimationEpochMs) / 1000;
+}
+
 export function createLogoCanvasRenderer(options: LogoCanvasRendererOptions): LogoCanvasRenderer {
 	const {
 		canvas,
@@ -177,7 +189,6 @@ export function createLogoCanvasRenderer(options: LogoCanvasRendererOptions): Lo
 	let currentVariant = options.variant;
 	let running = false;
 	let animFrameId: number | null = null;
-	let startTime = 0;
 
 	// alpha: true — transparent backing; display-p3 — wider gamut when the UA supports it.
 	const ctx =
@@ -306,15 +317,14 @@ export function createLogoCanvasRenderer(options: LogoCanvasRendererOptions): Lo
 		}
 	}
 
-	function animate(now: number): void {
+	function animate(): void {
 		if (!running) return;
-		if (startTime === 0) startTime = now;
-		drawFrame((now - startTime) / 1000);
+		drawFrame(sharedLogoElapsedSeconds());
 		animFrameId = requestAnimationFrame(animate);
 	}
 
 	configureCanvas();
-	drawFrame(0);
+	drawFrame(sharedLogoElapsedSeconds());
 
 	const renderer: LogoCanvasRenderer = {
 		get isRunning() {
@@ -324,7 +334,6 @@ export function createLogoCanvasRenderer(options: LogoCanvasRendererOptions): Lo
 		start() {
 			if (running) return;
 			running = true;
-			startTime = 0;
 			animFrameId = requestAnimationFrame(animate);
 		},
 
@@ -343,12 +352,12 @@ export function createLogoCanvasRenderer(options: LogoCanvasRendererOptions): Lo
 		resize(size: LogoSize | number) {
 			currentSize = size;
 			configureCanvas();
-			if (!running) drawFrame(0);
+			if (!running) drawFrame(sharedLogoElapsedSeconds());
 		},
 
 		setVariant(variant: LogoVariant) {
 			currentVariant = variant;
-			if (!running) drawFrame(0);
+			if (!running) drawFrame(sharedLogoElapsedSeconds());
 		},
 
 		destroy() {

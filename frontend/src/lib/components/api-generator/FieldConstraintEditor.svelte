@@ -24,6 +24,7 @@
 
 <script lang="ts">
   import { FieldConstraintSelectorDropdown } from '$lib/components/api-generator';
+  import { inputGlassDense, surfaceInsideFrostedPanel } from '$lib/ui/classes';
 
   interface Props extends FieldConstraintEditorProps {}
 
@@ -51,15 +52,15 @@
     />
 
     {#if constraints.length === 0}
-      <div class="p-3 bg-mono-900/50 backdrop-blur-sm rounded-xl border border-mono-700/80">
+      <div class="p-3 {surfaceInsideFrostedPanel}">
         <p class="text-xs text-mono-400">No field constraints selected</p>
       </div>
     {:else}
-      <div class="p-2 bg-mono-900/50 backdrop-blur-sm rounded-xl border border-mono-700/80 space-y-2">
+      <div class="p-2 {surfaceInsideFrostedPanel} space-y-2">
         {#each constraints as constraintValue, index}
           {@const constraintMeta = allConstraintMeta.find(v => v.name === constraintValue.name)}
           {#if constraintMeta}
-            <div class="flex items-center space-x-2 p-3 bg-mono-900/50 backdrop-blur-sm rounded-xl border border-mono-700/80">
+            <div class="flex items-center space-x-2 p-3 {surfaceInsideFrostedPanel}">
               <div class="flex items-center space-x-2 shrink-0">
                 <span class="font-mono text-sm text-mono-300">{constraintMeta.name}</span>
                 <span class="text-xs text-mono-400 bg-mono-800 px-2 py-0.5 rounded-lg">{constraintMeta.parameterTypes.join(', ')}</span>
@@ -71,7 +72,7 @@
                 value={constraintValue.value ?? ''}
                 oninput={(e) => onParamChange(index, e.currentTarget.value, constraintMeta.parameterTypes)}
                 placeholder={constraintMeta.parameterTypes.includes('str') ? 'e.g. ^[a-z]+$' : 'Value'}
-                class="flex-1 min-w-0 px-2 py-1 rounded-xl border border-mono-700/80 text-sm bg-mono-900/50 backdrop-blur-sm focus:ring-2 focus:ring-green-400/50 outline-none focus:outline-none transition-all"
+                class={inputGlassDense}
               />
 
               <button

@@ -68,7 +68,7 @@
 </script>
 
 <script lang="ts">
-  import { mainColumnChromePaddingX } from '$lib/ui/classes';
+  import { dashboardSearchToolbarShell, mainColumnChromePaddingX, searchBarInput } from '$lib/ui/classes';
   import { SEARCH_INPUT_ID, FILTER_TOGGLE_ID } from '$lib/utils/testIds';
 
   interface Props extends SearchBarProps {}
@@ -87,9 +87,7 @@
   let pluralLabel = $derived(resultsCount !== 1 ? `${resultLabel}s` : resultLabel);
 </script>
 
-<div
-  class="bg-mono-950/40 backdrop-blur-md border-b border-mono-800/60 py-4 {mainColumnChromePaddingX} relative z-50"
->
+<div class="{dashboardSearchToolbarShell} {mainColumnChromePaddingX}">
   <div class="flex items-center justify-between">
     <div class="flex items-center space-x-4 flex-1">
       <div class="relative flex-1 max-w-md">
@@ -98,7 +96,7 @@
           {placeholder}
           bind:value={searchQuery}
           data-testid={SEARCH_INPUT_ID}
-          class="w-full pl-10 pr-4 py-2 text-sm font-inter border border-mono-700/80 rounded-xl bg-mono-900/50 backdrop-blur-sm/50 text-mono-100 focus:ring-2 focus:ring-green-400 focus:outline-none focus:border-transparent placeholder:text-mono-500 shadow-inner"
+          class={searchBarInput}
         />
         <i class="fa-solid fa-search absolute left-3.5 top-1/2 transform -translate-y-1/2 text-mono-400 text-sm"></i>
       </div>

@@ -19,6 +19,12 @@
     FieldFormContent
   } from '$lib/components';
   import type { FilterConfig } from '$lib/types';
+  import {
+    tableListCell,
+    tableListRowHover,
+    tableListRowInteractive,
+    tableListRowSelected
+  } from '$lib/ui/classes';
   import { fieldValidatorTemplatesStore } from '$lib/stores/fieldValidatorTemplates';
   import { STORE_NAMES } from '$lib/stores/loader';
   import { page } from '$app/state';
@@ -173,18 +179,20 @@
       {#each filteredFields as field}
         <tr
           onclick={() => workflow.selectItem(field)}
-          class="cursor-pointer transition-colors {workflow.isSelected(field) ? 'bg-mono-800' : 'hover:bg-mono-950'}"
+          class="{tableListRowInteractive} {workflow.isSelected(field)
+            ? tableListRowSelected
+            : tableListRowHover}"
         >
-          <td class="px-6 py-4 whitespace-nowrap">
+          <td class="{tableListCell} whitespace-nowrap">
             <div class="text-sm text-mono-100 font-medium">{field.name}</div>
           </td>
-          <td class="px-6 py-4 whitespace-nowrap">
+          <td class="{tableListCell} whitespace-nowrap">
             <Pill>{field.container ? `${field.container}[${field.type}]` : field.type}</Pill>
           </td>
-          <td class="px-6 py-4 whitespace-nowrap">
+          <td class="{tableListCell} whitespace-nowrap">
             <span class="text-sm text-mono-400">{field.namespaceName}</span>
           </td>
-          <td class="px-6 py-4 text-sm text-mono-400">
+          <td class="{tableListCell} text-sm text-mono-400">
             {#if field.constraints.length > 0}
               <div class="flex flex-wrap gap-1">
                 {#each field.constraints as constraintValue}
@@ -195,10 +203,10 @@
               <span>-</span>
             {/if}
           </td>
-          <td class="px-6 py-4 whitespace-nowrap text-sm text-mono-400">
+          <td class="{tableListCell} whitespace-nowrap text-sm text-mono-400">
             {field.defaultValue !== undefined && field.defaultValue !== '' ? field.defaultValue : '-'}
           </td>
-          <td class="px-6 py-4 whitespace-nowrap">
+          <td class="{tableListCell} whitespace-nowrap">
             <div class="flex items-center space-x-2">
               <Pill>{field.usedInApis.length}</Pill>
               <span class="text-sm text-mono-400">APIs</span>

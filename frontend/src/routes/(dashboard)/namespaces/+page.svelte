@@ -20,6 +20,14 @@
     TableEmptyState
   } from '$lib/components';
   import type { FilterConfig, Namespace } from '$lib/types';
+  import {
+    surfaceInsideFrostedPanel,
+    tableListCell,
+    tableListRowHover,
+    tableListRowInteractive,
+    tableListRowSelected,
+    textareaInsideFrostedPanel
+  } from '$lib/ui/classes';
   import { STORE_NAMES } from '$lib/stores/loader';
   import { page } from '$app/state';
   import { goto } from '$app/navigation';
@@ -132,9 +140,11 @@
       {#each filteredNamespaces as namespace}
         <tr
           onclick={() => workflow.selectItem(namespace)}
-          class="cursor-pointer transition-colors {workflow.isSelected(namespace) ? 'bg-mono-800' : 'hover:bg-mono-950'}"
+          class="{tableListRowInteractive} {workflow.isSelected(namespace)
+            ? tableListRowSelected
+            : tableListRowHover}"
         >
-          <td class="px-6 py-4 whitespace-nowrap">
+          <td class="{tableListCell} whitespace-nowrap">
             <div class="flex items-center space-x-2">
               <span class="text-sm text-mono-100 font-medium">{namespace.name}</span>
               {#if namespace.name?.toLowerCase() === 'global'}
@@ -145,10 +155,10 @@
               {/if}
             </div>
           </td>
-          <td class="px-6 py-4 text-sm text-mono-400">
+          <td class="{tableListCell} text-sm text-mono-400">
             {namespace.description || '-'}
           </td>
-          <td class="px-6 py-4 whitespace-nowrap">
+          <td class="{tableListCell} whitespace-nowrap">
             <div class="flex items-center space-x-2">
               <Pill>{namespace.entityCount}</Pill>
               <span class="text-sm text-mono-400">total</span>
@@ -172,7 +182,7 @@
   {#if workflow.editedItem}
     <div class="space-y-4">
       {#if isReadOnly}
-        <div class="flex items-center space-x-2 px-3 py-2 bg-mono-900/50 backdrop-blur-sm border border-mono-700/80 rounded-xl mb-6">
+        <div class="flex items-center space-x-2 px-3 py-2 {surfaceInsideFrostedPanel} mb-6">
           <i class="fa-solid fa-lock text-mono-400 text-sm"></i>
           <span class="text-sm text-mono-400">System namespace — read-only</span>
         </div>
@@ -196,7 +206,9 @@
           disabled={isReadOnly}
           rows="3"
           placeholder={isCreating ? 'Optional description...' : ''}
-          class="w-full px-3 py-1.5 text-sm border border-mono-700/80 bg-mono-900/50 backdrop-blur-sm/50 focus:ring-2 focus:ring-green-400/50 outline-none focus:outline-none transition-all rounded-xl {isReadOnly ? 'bg-mono-800 cursor-not-allowed' : ''}"
+          class="{isReadOnly
+            ? 'w-full px-3 py-1.5 text-sm border border-mono-700/80 rounded-xl bg-mono-800 text-mono-400 cursor-not-allowed outline-none'
+            : textareaInsideFrostedPanel}"
         ></textarea>
       </div>
 
@@ -219,7 +231,7 @@
         {@const details = getNamespaceEntityDetails(workflow.editedItem.id)}
         <div>
           <h3 class="text-sm text-mono-300 mb-2 font-medium">Contents</h3>
-          <div class="bg-mono-950 p-3 space-y-2">
+          <div class="space-y-2">
             <div class="flex justify-between text-sm">
               <span class="text-mono-400">Fields</span>
               <span class="text-mono-100 font-medium">{details.fields}</span>

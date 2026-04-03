@@ -14,6 +14,13 @@
     DrawerStack
   } from '$lib/components';
   import type { FilterConfig } from '$lib/types';
+  import {
+    surfaceInsideFrostedPanel,
+    tableListCell,
+    tableListRowHover,
+    tableListRowInteractive,
+    tableListRowSelected
+  } from '$lib/ui/classes';
   import { STORE_NAMES } from '$lib/stores/loader';
   import { page } from '$app/state';
   import { goto } from '$app/navigation';
@@ -151,29 +158,29 @@
     {#each filteredFieldConstraints as fc}
       <tr
         onclick={() => state.selectItem(fc)}
-        class="cursor-pointer transition-colors {isSelected(fc) ? 'bg-mono-800' : 'hover:bg-mono-950'}"
+        class="{tableListRowInteractive} {isSelected(fc) ? tableListRowSelected : tableListRowHover}"
       >
-        <td class="px-6 py-4 whitespace-nowrap text-sm text-mono-100 font-medium">
+        <td class="{tableListCell} whitespace-nowrap text-sm text-mono-100 font-medium">
           {fc.name}
         </td>
-        <td class="px-6 py-4">
+        <td class="{tableListCell}">
           <div class="flex flex-wrap gap-1">
             {#each fc.parameterTypes as ptype}
               <Pill>{ptype}</Pill>
             {/each}
           </div>
         </td>
-        <td class="px-6 py-4">
+        <td class="{tableListCell}">
           <div class="flex flex-wrap gap-1">
             {#each fc.compatibleTypes as ctype}
               <Pill>{ctype}</Pill>
             {/each}
           </div>
         </td>
-        <td class="px-6 py-4 text-sm text-mono-400 max-w-xs truncate">
+        <td class="{tableListCell} text-sm text-mono-400 max-w-xs truncate">
           {fc.description.split('.')[0]}.
         </td>
-        <td class="px-6 py-4 whitespace-nowrap text-sm">
+        <td class="{tableListCell} whitespace-nowrap text-sm">
           {#if fc.docsUrl}
             <a
               href={fc.docsUrl}
@@ -189,7 +196,7 @@
             <span class="text-mono-600">-</span>
           {/if}
         </td>
-        <td class="px-6 py-4 whitespace-nowrap">
+        <td class="{tableListCell} whitespace-nowrap">
           <div class="flex items-center space-x-2">
             <Pill>{fc.usedInFields}</Pill>
             <span class="text-sm text-mono-400">fields</span>
@@ -209,7 +216,7 @@
   {#if selectedFieldConstraint}
     <div class="space-y-6">
       {#if isSystemItem}
-        <div class="flex items-center space-x-2 px-3 py-2 bg-mono-900/50 backdrop-blur-sm border border-mono-700/80 rounded-xl mb-6">
+        <div class="flex items-center space-x-2 px-3 py-2 {surfaceInsideFrostedPanel} mb-6">
           <i class="fa-solid fa-lock text-mono-400 text-sm"></i>
           <span class="text-sm text-mono-400">System field constraint — read-only</span>
         </div>

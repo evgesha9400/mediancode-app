@@ -60,7 +60,7 @@ describe('Logo Component', () => {
 		it('LogoProps accepts all properties together', () => {
 			const props: LogoProps = {
 				size: 'lg',
-				variant: 'dark',
+				variant: 'light',
 				showText: true,
 				paused: false,
 				class: 'my-logo'
@@ -68,7 +68,13 @@ describe('Logo Component', () => {
 
 			expect(props).toBeDefined();
 			expect(props.size).toBe('lg');
-			expect(props.variant).toBe('dark');
+			expect(props.variant).toBe('light');
+		});
+
+		it('LogoProps allows omitting variant for dark default surfaces', () => {
+			const props: LogoProps = { size: 'md' };
+
+			expect(props.variant).toBeUndefined();
 		});
 	});
 

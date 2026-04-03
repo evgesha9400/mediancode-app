@@ -26,6 +26,12 @@
   import { mapApiError } from '$lib/domain/errorMap';
   import { showToast } from '$lib/stores/toasts';
   import { STORE_NAMES } from '$lib/stores/loader';
+  import {
+    tableListCell,
+    tableListRowHover,
+    tableListRowInteractive,
+    tableListRowSelected
+  } from '$lib/ui/classes';
   import { page } from '$app/state';
   import { goto } from '$app/navigation';
 
@@ -222,27 +228,29 @@
       {#each filteredObjects as object}
         <tr
           onclick={() => workflow.selectItem(object)}
-          class="cursor-pointer transition-colors {workflow.isSelected(object) ? 'bg-mono-800' : 'hover:bg-mono-950'}"
+          class="{tableListRowInteractive} {workflow.isSelected(object)
+            ? tableListRowSelected
+            : tableListRowHover}"
         >
-          <td class="px-6 py-4 whitespace-nowrap">
+          <td class="{tableListCell} whitespace-nowrap">
             <div class="text-sm text-mono-100 font-medium">{object.name}</div>
           </td>
-          <td class="px-6 py-4 whitespace-nowrap">
+          <td class="{tableListCell} whitespace-nowrap">
             <span class="text-sm text-mono-400">{object.namespaceName}</span>
           </td>
-          <td class="px-6 py-4 whitespace-nowrap">
+          <td class="{tableListCell} whitespace-nowrap">
             <div class="flex items-center space-x-2">
               <Pill>{object.members.length}</Pill>
               <span class="text-sm text-mono-400">members</span>
             </div>
           </td>
-          <td class="px-6 py-4 whitespace-nowrap">
+          <td class="{tableListCell} whitespace-nowrap">
             <div class="flex items-center space-x-2">
               <Pill>{object.usedInApis.length}</Pill>
               <span class="text-sm text-mono-400">APIs</span>
             </div>
           </td>
-          <td class="px-6 py-4 text-sm text-mono-400">
+          <td class="{tableListCell} text-sm text-mono-400">
             {object.description || '-'}
           </td>
         </tr>

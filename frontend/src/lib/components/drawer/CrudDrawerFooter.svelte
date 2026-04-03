@@ -37,10 +37,17 @@
   import { Tooltip } from '$lib/components/tooltip';
   import {
     drawerFooterBtnBlock,
+    drawerFooterBtnDangerCancel,
+    drawerFooterBtnDangerCancelBusy,
+    drawerFooterBtnDangerConfirm,
+    drawerFooterBtnDangerConfirmBusy,
+    drawerFooterBtnDestructive,
+    drawerFooterBtnDestructiveDisabled,
     drawerFooterBtnPrimaryDisabled,
     drawerFooterBtnPrimaryEnabled,
     drawerFooterBtnSecondary,
     drawerFooterBtnSecondaryMuted,
+    drawerFooterDangerCallout,
   } from '$lib/ui/classes';
 
   interface Props extends CrudDrawerFooterProps {}
@@ -118,21 +125,23 @@
         type="button"
         onclick={onDeleteRequest}
         disabled={!canDelete}
-        class="w-full px-4 py-2 rounded-xl border flex items-center justify-center transition-colors font-medium text-sm font-inter tracking-wide {!canDelete ? 'bg-mono-700 border-mono-700 text-mono-400 cursor-not-allowed' : 'bg-red-400/10 border-transparent text-red-400 hover:bg-red-400/20 cursor-pointer'}"
+        class="{drawerFooterBtnBlock} flex items-center justify-center gap-2 font-medium {!canDelete
+          ? drawerFooterBtnDestructiveDisabled
+          : drawerFooterBtnDestructive}"
       >
         <i class="fa-solid fa-xmark mr-2"></i>
         <span>Delete</span>
       </button>
     </Tooltip>
   {:else}
-    <div class="bg-red-400/10 border border-red-400/30 p-3">
+    <div class={drawerFooterDangerCallout}>
       <p class="text-sm text-red-400 mb-2">Are you sure?</p>
       <div class="flex space-x-2">
         <button
           type="button"
           onclick={onDeleteConfirm}
           disabled={isDeleting}
-          class="flex-1 px-3 py-1.5 rounded-xl border text-sm font-medium font-inter tracking-wide transition-colors {isDeleting ? 'bg-red-400 border-transparent text-white cursor-not-allowed' : 'bg-red-600 border-transparent text-white hover:bg-red-700 cursor-pointer'}"
+          class={isDeleting ? drawerFooterBtnDangerConfirmBusy : drawerFooterBtnDangerConfirm}
         >
           {#if isDeleting}
             <i class="fa-solid fa-spinner fa-spin mr-1"></i>
@@ -145,7 +154,7 @@
           type="button"
           onclick={onDeleteCancel}
           disabled={isDeleting}
-          class="flex-1 px-3 py-1.5 rounded-xl border text-sm font-medium font-inter tracking-wide transition-colors {isDeleting ? 'border-mono-700 text-mono-400 cursor-not-allowed bg-mono-800' : 'border-mono-600 text-mono-300 hover:bg-mono-800 cursor-pointer'}"
+          class={isDeleting ? drawerFooterBtnDangerCancelBusy : drawerFooterBtnDangerCancel}
         >
           Cancel
         </button>

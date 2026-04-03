@@ -21,6 +21,12 @@
 <script lang="ts">
   import { objectsStore } from '$lib/stores/objects';
   import { Tooltip } from '$lib/components/tooltip';
+  import {
+    segmentPillBase,
+    segmentPillSelected,
+    segmentPillUnselected,
+    segmentPillUnselectedLocked,
+  } from '$lib/ui/classes';
   import ObjectSelectorDropdown from './ObjectSelectorDropdown.svelte';
 
   const SHAPE_OPTIONS: { value: ResponseShape; label: string }[] = [
@@ -89,14 +95,12 @@
               type="button"
               disabled={responseShapeLocked}
               onclick={() => onSetResponseShape(option.value)}
-              class="px-5 py-1.5 text-sm font-medium whitespace-nowrap transition-colors text-center first:rounded-l-xl last:rounded-r-xl
-                {responseShapeLocked
-                  ? 'cursor-not-allowed opacity-50 ' + (responseShape === option.value
-                    ? 'bg-mono-900/50 backdrop-blur-sm text-green-400 border border-green-400/50'
-                    : 'bg-mono-900/50 backdrop-blur-sm text-mono-500 border border-mono-700')
-                  : responseShape === option.value
-                    ? 'bg-mono-900/50 backdrop-blur-sm text-green-400 border border-green-400/50'
-                    : 'bg-mono-900/50 backdrop-blur-sm text-mono-400 border border-mono-700 hover:border-mono-500 hover:text-mono-300'}"
+              class="{segmentPillBase} {responseShapeLocked
+                ? 'cursor-not-allowed opacity-50 ' +
+                  (responseShape === option.value ? segmentPillSelected : segmentPillUnselectedLocked)
+                : responseShape === option.value
+                  ? segmentPillSelected
+                  : segmentPillUnselected}"
             >
               {option.label}
             </button>

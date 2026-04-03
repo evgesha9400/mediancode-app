@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { onMount } from 'svelte';
+  import { modalPanelGlassSurface } from '$lib/ui/classes';
 
   export interface ModalProps {
     open: boolean;
@@ -48,9 +48,9 @@
     bind:this={dialogEl}
     onkeydown={handleKeydown}
     onclick={handleBackdropClick}
-    class="backdrop:bg-black/50 bg-transparent p-0 m-0 fixed inset-0 flex items-center justify-center w-full h-full"
+    class="backdrop:bg-mono-950/45 backdrop:backdrop-blur-[1.5px] bg-transparent p-0 m-0 fixed inset-0 flex items-center justify-center w-full h-full"
   >
-    <div class="bg-mono-900/50 backdrop-blur-sm/60 backdrop-blur-xl border border-mono-800/80 rounded-3xl shadow-2xl {maxWidth} w-full mx-4">
+    <div class="{modalPanelGlassSurface} rounded-3xl {maxWidth} w-full mx-4">
       {@render children()}
     </div>
   </dialog>

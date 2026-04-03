@@ -7,16 +7,14 @@
 <script lang="ts">
   import type { NavItem } from '$lib/types';
   import { beforeNavigate, afterNavigate } from '$app/navigation';
-  import { PreRenderedLogo } from '$lib/components/logo';
+  import { Logo } from '$lib/components/logo';
   import { Tooltip } from '$lib/components/tooltip';
   import { ClerkSidebarUser } from '$lib/components/clerk';
   import { sidebarState } from '$lib/stores/sidebar.svelte';
   import {
-    sidebarDividerToken,
     sidebarNavItemActive,
     sidebarNavItemBase,
     sidebarNavItemInactive,
-    sidebarSectionBorderBottom,
     sidebarSectionDividerHorizontal,
     sidebarShell,
   } from '$lib/ui/classes';
@@ -69,19 +67,19 @@
   aria-label="Main navigation"
   data-testid="dashboard-sidebar"
 >
-  <div class="{sidebarSectionBorderBottom} {collapsed ? 'p-3' : 'p-4'}">
+  <div class="{collapsed ? 'p-3 pb-2' : 'px-4 pt-4 pb-2'}">
     <a
       href="/"
       class="flex items-center hover:opacity-80 transition-opacity cursor-pointer {collapsed ? 'justify-center' : 'space-x-3'}"
     >
-      <PreRenderedLogo size="md" variant="dark" />
+      <Logo size="md" />
       {#if !collapsed}
         <span class="text-lg font-inter font-bold text-mono-100 tracking-tight whitespace-nowrap">Median Code</span>
       {/if}
     </a>
   </div>
 
-  <div class="flex-1 overflow-y-auto {collapsed ? 'p-2' : 'p-4'}">
+  <div class="flex-1 overflow-y-auto min-h-0 {collapsed ? 'p-2 pt-0' : 'px-4 pt-2 pb-2'}">
     <ul class="space-y-1 {collapsed ? 'mb-2' : 'mb-6'}">
       <li>
         <Tooltip text={dashboardItem.label} position="right" disabled={!collapsed}>
@@ -149,7 +147,7 @@
 
   <!-- User Section with Clerk UserButton -->
   <div
-    class="border-t {sidebarDividerToken} {collapsed ? 'p-2 flex justify-center' : 'p-4'}"
+    class="{collapsed ? 'px-2 pt-2 pb-2 flex justify-center' : 'px-4 pt-2 pb-4'}"
     data-testid="sidebar-user-section"
   >
     <ClerkSidebarUser {collapsed} />

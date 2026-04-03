@@ -10,6 +10,7 @@
 </script>
 
 <script lang="ts">
+  import { tableListCell } from '$lib/ui/classes';
   import { getMultiSortIcon, getSortPriority, getMultiSortAriaLabel } from '$lib/utils/sorting';
 
   interface Props extends SortableColumnProps {}
@@ -25,7 +26,10 @@
   let ariaLabel = $derived(getMultiSortAriaLabel(column, label, sorts));
 </script>
 
-<th scope="col" class="px-6 py-4 text-left text-xs uppercase font-inter text-mono-400 tracking-wider font-bold">
+<th
+  scope="col"
+  class="{tableListCell} text-left text-xs uppercase font-inter text-mono-400 tracking-wider font-bold"
+>
   <button
     type="button"
     onclick={handleClick}

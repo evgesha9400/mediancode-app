@@ -14,6 +14,13 @@
     TableEmptyState
   } from '$lib/components';
   import type { FilterConfig } from '$lib/types';
+  import {
+    surfaceInsideFrostedPanel,
+    tableListCell,
+    tableListRowHover,
+    tableListRowInteractive,
+    tableListRowSelected
+  } from '$lib/ui/classes';
   import { STORE_NAMES } from '$lib/stores/loader';
   import { page } from '$app/state';
   import { goto } from '$app/navigation';
@@ -113,18 +120,20 @@
       {#each filteredTypes as type}
         <tr
           onclick={() => state.selectItem(type)}
-          class="cursor-pointer transition-colors {state.selectedItem?.name === type.name ? 'bg-mono-800' : 'hover:bg-mono-950'}"
+          class="{tableListRowInteractive} {state.selectedItem?.name === type.name
+            ? tableListRowSelected
+            : tableListRowHover}"
         >
-          <td class="px-6 py-4 whitespace-nowrap text-sm text-mono-100 font-medium">
+          <td class="{tableListCell} whitespace-nowrap text-sm text-mono-100 font-medium">
             {type.name}
           </td>
-          <td class="px-6 py-4 whitespace-nowrap">
+          <td class="{tableListCell} whitespace-nowrap">
             <Pill>{type.pythonType}</Pill>
           </td>
-          <td class="px-6 py-4 text-sm text-mono-400">
+          <td class="{tableListCell} text-sm text-mono-400">
             {type.description}
           </td>
-          <td class="px-6 py-4 whitespace-nowrap">
+          <td class="{tableListCell} whitespace-nowrap">
             <div class="flex items-center space-x-2">
               <Pill>{type.usedInFields}</Pill>
               <span class="text-sm text-mono-400">fields</span>
@@ -144,7 +153,7 @@
   {#if state.selectedItem}
     <div class="space-y-6">
       {#if isSystemEntity(state.selectedItem)}
-        <div class="flex items-center space-x-2 px-3 py-2 bg-mono-900/50 backdrop-blur-sm border border-mono-700/80 rounded-xl mb-4">
+        <div class="flex items-center space-x-2 px-3 py-2 {surfaceInsideFrostedPanel} mb-4">
           <i class="fa-solid fa-lock text-mono-400 text-sm"></i>
           <span class="text-sm text-mono-400">System type — read-only</span>
         </div>

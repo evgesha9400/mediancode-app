@@ -13,6 +13,7 @@
 </script>
 
 <script lang="ts">
+  import { apiGeneratorHintCell, objectSelectorDisplayRow } from '$lib/ui/classes';
   import FieldSelectorDropdown from './FieldSelectorDropdown.svelte';
 
   interface Props extends ParameterEditorProps {}
@@ -61,7 +62,7 @@
     {#if isLinked}
       <!-- Linked state: field name + type chip inline (matches object field display) -->
       <div class="flex-1 min-w-0">
-        <div class="w-full px-3 border border-mono-700/80 rounded-xl bg-mono-900/50 backdrop-blur-sm flex items-center justify-between h-[34px]">
+        <div class={objectSelectorDisplayRow}>
           <div class="flex items-center gap-1.5">
             <i class="fa-solid fa-link text-green-400 text-[10px]"></i>
             <span class="font-mono text-sm">{fieldName}</span>
@@ -93,7 +94,7 @@
             placeholder="Link to field..."
           />
         {:else}
-          <div class="w-full px-3 py-1.5 text-sm border border-mono-700/80 rounded-xl bg-mono-900/50 backdrop-blur-sm text-mono-400">
+          <div class={apiGeneratorHintCell}>
             Select an object to link fields
           </div>
         {/if}
