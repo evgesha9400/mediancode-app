@@ -41,7 +41,6 @@
     "@testing-library/svelte": "^5.2.0",
     "@testing-library/user-event": "^14.5.0",
     "@types/node": "^24.10.1",
-    "@types/three": "^0.182.0",
     "@vitest/coverage-v8": "^4.0.0",
     "autoprefixer": "^10.4.22",
     "dotenv": "^17.2.3",
@@ -67,8 +66,7 @@
   "license": "ISC",
   "dependencies": {
     "@clerk/clerk-js": "^5.108.0",
-    "svelte-dnd-action": "^0.9.69",
-    "three": "^0.182.0"
+    "svelte-dnd-action": "^0.9.69"
   },
   "overrides": {
     "cookie": "^0.7.2"

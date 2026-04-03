@@ -37,7 +37,7 @@ median-code/
 │       │   ├── api-generator/       # API generator components
 │       │   ├── drawer/              # Drawer components
 │       │   ├── layout/              # Layout components
-│       │   ├── logo/                # 3D Logo component
+│       │   ├── logo/                # Canvas 2D animated logo
 │       │   ├── namespace/           # Namespace selector
 │       │   ├── search/              # Search and filter components
 │       │   ├── table/               # Table components
@@ -78,7 +78,7 @@ median-code/
 - **Language**: TypeScript
 - **Styling**: Tailwind CSS (monochrome design system)
 - **Icons**: Font Awesome 6.4.0 (locally hosted)
-- **3D Graphics**: Three.js (logo animation)
+- **Logo**: Canvas 2D wireframe animation (`logoCanvasRenderer.ts`)
 - **Authentication**: Clerk
 - **Deployment**: Vercel
 - **Forms**: Formspree
@@ -306,7 +306,7 @@ The dashboard uses Clerk for authentication with support for:
 ### Dashboard
 - **Clerk Authentication**: Secure user authentication
 - **Mobile Device Detection**: Automatically redirects mobile users
-- **Persistent Sidebar**: Navigation with 3D animated logo
+- **Persistent Sidebar**: Navigation with animated logo
 - **Types Management**: Create and manage data types
 - **Validators Management**: Define validation rules
 - **Fields Management**: Create reusable field definitions
