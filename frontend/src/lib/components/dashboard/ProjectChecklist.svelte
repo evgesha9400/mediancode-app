@@ -10,6 +10,11 @@
 <script lang="ts">
   import { goto } from '$app/navigation';
   import { browser } from '$app/environment';
+  import {
+    cardGlassBorderDefault,
+    cardGlassSurface,
+    marketingProgressBarGlow,
+  } from '$lib/ui/classes';
 
   interface Props extends ProjectChecklistProps {}
 
@@ -45,12 +50,12 @@
 {#if !dismissed}
   <section class="flex flex-col" data-testid="project-checklist-wrapper">
     <div class="flex items-center justify-between mb-3 h-[24px]">
-      <h2 class="text-xs uppercase tracking-wider text-mono-500 font-medium">Project Setup</h2>
+      <h2 class="text-xs uppercase font-inter tracking-wider text-mono-500 font-bold">Project Setup</h2>
       <div class="flex items-center space-x-3">
-        <span class="text-xs text-mono-400">{completedCount}/{steps.length} completed</span>
+        <span class="text-xs font-inter font-medium text-mono-400">{completedCount}/{steps.length} completed</span>
         <button
           onclick={dismiss}
-          class="text-mono-400 hover:text-mono-300 transition-colors cursor-pointer"
+          class="text-mono-500 hover:text-mono-300 transition-colors cursor-pointer w-6 h-6 flex items-center justify-center rounded-full hover:bg-white/5"
           aria-label="Dismiss checklist"
           data-testid="checklist-dismiss-btn"
         >
@@ -59,38 +64,36 @@
       </div>
     </div>
     
-    <div class="bg-mono-900 border-2 border-mono-700 p-5" data-testid="project-checklist">
+    <div class="{cardGlassSurface} {cardGlassBorderDefault} p-6" data-testid="project-checklist">
       <!-- Progress bar -->
-      <div class="w-full bg-mono-800 rounded-full h-1.5 mb-4">
+      <div class="w-full bg-mono-800/50 rounded-full h-2 mb-5 overflow-hidden">
         <div
-          class="bg-green-400 h-1.5 rounded-full transition-all duration-300"
+          class="bg-green-400 h-full rounded-full transition-all duration-500 ease-out {marketingProgressBarGlow}"
           style="width: {(completedCount / steps.length) * 100}%"
           data-testid="checklist-progress"
         ></div>
       </div>
 
-      <ul class="space-y-3">
+      <ul class="space-y-4">
         {#each steps as step, i}
-        <li class="flex items-start space-x-3">
-          <div class="mt-0.5 w-5 h-5 rounded-full flex items-center justify-center shrink-0 {step.completed ? 'bg-green-400' : 'border-2 border-mono-600'}">
-            {#if step.completed}
-              <i class="fa-solid fa-check text-white text-xs"></i>
-            {/if}
+        <li class="flex items-start space-x-3.5">
+          <div class="mt-0.5 w-5 h-5 rounded-full flex items-center justify-center shrink-0 transition-colors {step.completed ? 'bg-green-400/20 text-green-400' : 'border border-mono-600/50 text-transparent'}">
+            <i class="fa-solid fa-check text-[10px]"></i>
           </div>
           <div class="flex-1 min-w-0">
             <div class="flex items-center justify-between">
-              <span class="text-sm {step.completed ? 'text-mono-400 line-through' : 'text-mono-100 font-medium'}">{step.label}</span>
+              <span class="text-sm font-inter {step.completed ? 'text-mono-500 line-through' : 'text-mono-100 font-semibold'}">{step.label}</span>
               {#if !step.completed}
                 <button
                   onclick={() => goto(step.href)}
-                  class="text-xs text-mono-400 hover:text-mono-100 transition-colors cursor-pointer"
+                  class="text-[11px] font-inter font-medium px-2 py-1 rounded bg-white/5 border border-white/5 text-mono-300 hover:text-white hover:bg-white/10 transition-colors cursor-pointer"
                   data-testid="checklist-step-{i}-btn"
                 >
                   Start
                 </button>
               {/if}
             </div>
-            <p class="text-xs text-mono-400 mt-0.5">{step.description}</p>
+            <p class="text-xs font-inter text-mono-400 mt-1 leading-relaxed">{step.description}</p>
           </div>
         </li>
       {/each}

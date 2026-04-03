@@ -1,31 +1,27 @@
 <script lang="ts">
   import { ClerkUserProfile } from '$lib/components/clerk';
+  import { MainColumnFrame, PageHeader } from '$lib/components';
 </script>
 
-<!-- Header -->
-<div class="bg-mono-950 border-b-2 border-mono-700 py-4 px-6">
-  <div class="flex items-center justify-between">
-    <div>
-      <h1 class="text-2xl text-mono-100 font-semibold">Settings</h1>
-      <p class="text-sm text-mono-400 mt-1">Manage your account and profile settings</p>
-    </div>
-    <a
-      href="/settings/organization"
-      class="inline-flex items-center space-x-2 px-4 py-2 bg-green-400 text-mono-950 font-bold tracking-wide hover:bg-green-300 transition-colors text-sm"
-    >
-      <i class="fa-solid fa-building"></i>
-      <span>Organization Settings</span>
-    </a>
-  </div>
-</div>
+<MainColumnFrame bodyClass="p-6">
+  {#snippet header()}
+    <PageHeader title="Settings" description="Manage your account and profile settings">
+      {#snippet actions()}
+        <a
+          href="/settings/organization"
+          class="inline-flex items-center space-x-2 px-4 py-2 bg-green-400 text-mono-950 font-inter font-semibold rounded-xl text-sm tracking-wide shadow-sm hover:bg-green-300 transition-colors"
+        >
+          <i class="fa-solid fa-building"></i>
+          <span>Organization Settings</span>
+        </a>
+      {/snippet}
+    </PageHeader>
+  {/snippet}
 
-<!-- Main Settings Content -->
-<div class="flex-1 overflow-auto p-6">
-  <!-- User Profile Section -->
   <section>
     <h2 class="text-xs uppercase tracking-wider text-mono-500 mb-3 font-medium">Account</h2>
-    <div class="bg-mono-900 border-2 border-mono-700 overflow-hidden">
+    <div class="bg-mono-900/50 backdrop-blur-sm border-2 border-mono-700 overflow-hidden">
       <ClerkUserProfile />
     </div>
   </section>
-</div>
+</MainColumnFrame>

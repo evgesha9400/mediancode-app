@@ -5,6 +5,7 @@
   import { activeNamespaceId, namespacesStore } from '$lib/stores/namespaces';
   import { createFieldsModel } from '$lib/stores/fieldsModel.svelte';
   import {
+    MainColumnFrame,
     PageHeader,
     SearchBar,
     FilterPanel,
@@ -89,39 +90,42 @@
   }
 </script>
 
-<PageHeader title="Fields">
-    {#snippet actions()}
-      <NamespaceSelector />
-      <button
-        type="button"
-        onclick={workflow.openCreate}
-        class="px-4 py-2 bg-green-400 text-mono-950 font-bold tracking-wide flex items-center space-x-2 hover:bg-green-300 cursor-pointer transition-colors"
-      >
-        <i class="fa-solid fa-plus"></i>
-        <span>Add Field</span>
-      </button>
-    {/snippet}
-  </PageHeader>
+<MainColumnFrame bodyClass="">
+  {#snippet header()}
+    <PageHeader title="Fields">
+      {#snippet actions()}
+        <NamespaceSelector />
+        <button
+          type="button"
+          onclick={workflow.openCreate}
+          class="px-4 py-2 bg-green-400 text-mono-950 font-inter font-semibold rounded-xl text-sm tracking-wide shadow-sm flex items-center space-x-2 hover:bg-green-300 cursor-pointer transition-colors"
+        >
+          <i class="fa-solid fa-plus"></i>
+          <span>Add Field</span>
+        </button>
+      {/snippet}
+    </PageHeader>
 
-  <SearchBar
-    bind:searchQuery={workflow.query}
-    placeholder="Search fields..."
-    resultsCount={filteredFields.length}
-    resultLabel="field"
-    showFilter={true}
-    active={workflow.filtersOpen || activeFiltersCount > 0}
-    onFilterClick={workflow.toggleFilters}
-  >
-    {#snippet filterPanel()}
-      <FilterPanel
-        visible={workflow.filtersOpen}
-        config={fieldFilterConfig}
-        bind:state={workflow.filters}
-        onClose={() => workflow.filtersOpen = false}
-        onClear={workflow.resetFilters}
-      />
-    {/snippet}
-  </SearchBar>
+    <SearchBar
+      bind:searchQuery={workflow.query}
+      placeholder="Search fields..."
+      resultsCount={filteredFields.length}
+      resultLabel="field"
+      showFilter={true}
+      active={workflow.filtersOpen || activeFiltersCount > 0}
+      onFilterClick={workflow.toggleFilters}
+    >
+      {#snippet filterPanel()}
+        <FilterPanel
+          visible={workflow.filtersOpen}
+          config={fieldFilterConfig}
+          bind:state={workflow.filters}
+          onClose={() => workflow.filtersOpen = false}
+          onClear={workflow.resetFilters}
+        />
+      {/snippet}
+    </SearchBar>
+  {/snippet}
 
   <Table isEmpty={filteredFields.length === 0}>
     {#snippet header()}
@@ -208,6 +212,7 @@
       <TableEmptyState entityName="fields" storeKey={STORE_NAMES.FIELDS} />
     {/snippet}
   </Table>
+</MainColumnFrame>
 
 {#snippet fieldFormContentSnippet(_: { close: () => void })}
   {#if workflow.editedItem}
@@ -223,7 +228,7 @@
   {/if}
 {/snippet}
 
-{#snippet fieldFormFooter(_: { close: () => void })}
+{#snippet fieldFormFooter({ close }: { close: () => void })}
   {#if workflow.editedItem}
     <CrudDrawerFooter
       mode={workflow.mode === 'creating' ? 'creating' : 'editing'}
@@ -240,6 +245,7 @@
       onDeleteRequest={() => workflow.showDeleteConfirm = true}
       onDeleteConfirm={workflow.handleDelete}
       onDeleteCancel={() => workflow.showDeleteConfirm = false}
+      onCancel={close}
     />
   {/if}
 {/snippet}

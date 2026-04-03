@@ -65,7 +65,7 @@
 
 <div class="relative">
   <div
-    class="flex items-center w-full border border-mono-600 bg-mono-900 focus-within:ring-2 focus-within:ring-green-400 focus-within:border-transparent overflow-hidden"
+    class="flex items-center w-full rounded-xl border border-mono-700/80 bg-mono-900/50 backdrop-blur-sm focus-within:ring-2 focus-within:ring-green-400/50 focus-within:outline-none transition-all overflow-hidden"
   >
     {#if isPreset}
       <!-- Preset selected: show as a pill with clear button -->
@@ -108,7 +108,7 @@
 
   <!-- Dropdown options -->
   {#if dropdownOpen}
-    <div class="absolute z-10 w-full mt-1 bg-mono-900 border border-mono-600 shadow-lg shadow-black/30">
+    <div class="absolute z-10 w-full mt-1 bg-mono-900/95 backdrop-blur-sm border border-mono-700/80 rounded-xl shadow-lg shadow-black/30">
       {#each presetOptions as option}
         <button
           type="button"

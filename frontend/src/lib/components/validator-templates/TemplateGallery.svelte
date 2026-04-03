@@ -68,7 +68,7 @@
     type="text"
     bind:value={search}
     placeholder="Search templates..."
-    class="w-full px-3 py-2 border border-mono-600 text-sm bg-mono-900 text-mono-100 focus:ring-2 focus:ring-green-400 focus:border-transparent"
+    class="w-full px-3 py-2 border border-mono-600 rounded-xl text-sm bg-mono-900/50 backdrop-blur-sm text-mono-100 focus:ring-2 focus:ring-green-400 focus:border-transparent"
   />
 
   <!-- Template cards -->
@@ -78,7 +78,7 @@
         <button
           type="button"
           onclick={() => onSelectField?.(template)}
-          class="w-full text-left p-3 bg-mono-900 rounded border border-mono-700 hover:border-mono-400 hover:bg-mono-800 transition-colors cursor-pointer"
+          class="w-full text-left p-3 bg-mono-900/50 backdrop-blur-sm rounded-xl border border-mono-700/80 hover:border-mono-400 hover:bg-mono-800 transition-colors cursor-pointer"
         >
           <div class="flex items-center justify-between">
             <span class="text-sm text-mono-100 font-medium">{template.name}</span>
@@ -99,7 +99,7 @@
         <button
           type="button"
           onclick={() => onSelectModel?.(template)}
-          class="w-full text-left p-3 bg-mono-900 rounded border border-mono-700 hover:border-mono-400 hover:bg-mono-800 transition-colors cursor-pointer"
+          class="w-full text-left p-3 bg-mono-900/50 backdrop-blur-sm rounded-xl border border-mono-700/80 hover:border-mono-400 hover:bg-mono-800 transition-colors cursor-pointer"
         >
           <div class="flex items-center justify-between">
             <span class="text-sm text-mono-100 font-medium">{template.name}</span>

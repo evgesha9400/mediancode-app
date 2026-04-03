@@ -7,10 +7,19 @@
 <script lang="ts">
   import type { NavItem } from '$lib/types';
   import { beforeNavigate, afterNavigate } from '$app/navigation';
-  import { Logo } from '$lib/components/logo';
+  import { PreRenderedLogo } from '$lib/components/logo';
   import { Tooltip } from '$lib/components/tooltip';
   import { ClerkSidebarUser } from '$lib/components/clerk';
   import { sidebarState } from '$lib/stores/sidebar.svelte';
+  import {
+    sidebarDividerToken,
+    sidebarNavItemActive,
+    sidebarNavItemBase,
+    sidebarNavItemInactive,
+    sidebarSectionBorderBottom,
+    sidebarSectionDividerHorizontal,
+    sidebarShell,
+  } from '$lib/ui/classes';
 
   interface Props extends SidebarProps {}
 
@@ -55,19 +64,19 @@
 </script>
 
 <nav
-  class="bg-mono-900 text-white flex flex-col shrink-0 transition-[width] duration-[400ms] overflow-hidden"
+  class="{sidebarShell}"
   style="width: {sidebarState.width}px;"
   aria-label="Main navigation"
   data-testid="dashboard-sidebar"
 >
-  <div class="border-b border-mono-800 {collapsed ? 'p-3' : 'p-4'}">
+  <div class="{sidebarSectionBorderBottom} {collapsed ? 'p-3' : 'p-4'}">
     <a
       href="/"
       class="flex items-center hover:opacity-80 transition-opacity cursor-pointer {collapsed ? 'justify-center' : 'space-x-3'}"
     >
-      <Logo size="md" variant="dark" />
+      <PreRenderedLogo size="md" variant="dark" />
       {#if !collapsed}
-        <span class="text-lg font-mono font-semibold text-mono-100 tracking-tight whitespace-nowrap">Median Code</span>
+        <span class="text-lg font-inter font-bold text-mono-100 tracking-tight whitespace-nowrap">Median Code</span>
       {/if}
     </a>
   </div>
@@ -78,11 +87,11 @@
         <Tooltip text={dashboardItem.label} position="right" disabled={!collapsed}>
           <a
             href={dashboardItem.href}
-            class="cursor-pointer {isActive(dashboardItem.href) ? 'bg-green-400/10 text-green-400 border-l-2 border-green-400' : 'hover:bg-mono-800 hover:text-green-400'} {collapsed ? 'flex justify-center py-2' : 'flex items-center space-x-2 px-2 py-1.5'}"
+            class="{sidebarNavItemBase} {isActive(dashboardItem.href) ? sidebarNavItemActive : sidebarNavItemInactive} {collapsed ? 'flex justify-center py-2.5' : 'flex items-center space-x-3 px-3 py-2'}"
           >
             <i class="fa-solid {dashboardItem.icon} {collapsed ? 'text-base' : 'w-5'}"></i>
             {#if !collapsed}
-              <span>{dashboardItem.label}</span>
+              <span class="font-medium">{dashboardItem.label}</span>
             {/if}
           </a>
         </Tooltip>
@@ -91,9 +100,9 @@
 
     <!-- Catalog -->
     {#if !collapsed}
-      <h2 class="text-xs uppercase tracking-wider text-mono-500 mb-3 font-bold">Catalog</h2>
+      <h2 class="text-xs uppercase tracking-wider text-mono-500 mb-3 font-bold ml-1">Catalog</h2>
     {:else}
-      <div class="border-t border-mono-700 my-2"></div>
+      <div class="{sidebarSectionDividerHorizontal}"></div>
     {/if}
     <ul class="space-y-1 {collapsed ? 'mb-2' : 'mb-6'}">
       {#each catalogItems as item}
@@ -101,11 +110,11 @@
           <Tooltip text={item.label} position="right" disabled={!collapsed}>
             <a
               href={item.href}
-              class="cursor-pointer {isActive(item.href) ? 'bg-green-400/10 text-green-400 border-l-2 border-green-400' : 'hover:bg-mono-800 hover:text-green-400'} {collapsed ? 'flex justify-center py-2' : 'flex items-center space-x-2 px-2 py-1.5'}"
+              class="{sidebarNavItemBase} {isActive(item.href) ? sidebarNavItemActive : sidebarNavItemInactive} {collapsed ? 'flex justify-center py-2.5' : 'flex items-center space-x-3 px-3 py-2'}"
             >
               <i class="fa-solid {item.icon} {collapsed ? 'text-base' : 'w-5'}"></i>
               {#if !collapsed}
-                <span>{item.label}</span>
+                <span class="font-medium">{item.label}</span>
               {/if}
             </a>
           </Tooltip>
@@ -115,9 +124,9 @@
 
     <!-- Components -->
     {#if !collapsed}
-      <h2 class="text-xs uppercase tracking-wider text-mono-500 mb-3 font-bold">Components</h2>
+      <h2 class="text-xs uppercase tracking-wider text-mono-500 mb-3 font-bold ml-1">Components</h2>
     {:else}
-      <div class="border-t border-mono-700 my-2"></div>
+      <div class="{sidebarSectionDividerHorizontal}"></div>
     {/if}
     <ul class="space-y-1">
       {#each componentItems as item}
@@ -125,11 +134,11 @@
           <Tooltip text={item.label} position="right" disabled={!collapsed}>
             <a
               href={item.href}
-              class="cursor-pointer {isActive(item.href) ? 'bg-green-400/10 text-green-400 border-l-2 border-green-400' : 'hover:bg-mono-800 hover:text-green-400'} {collapsed ? 'flex justify-center py-2' : 'flex items-center space-x-2 px-2 py-1.5'}"
+              class="{sidebarNavItemBase} {isActive(item.href) ? sidebarNavItemActive : sidebarNavItemInactive} {collapsed ? 'flex justify-center py-2.5' : 'flex items-center space-x-3 px-3 py-2'}"
             >
               <i class="fa-solid {item.icon} {collapsed ? 'text-base' : 'w-5'}"></i>
               {#if !collapsed}
-                <span>{item.label}</span>
+                <span class="font-medium">{item.label}</span>
               {/if}
             </a>
           </Tooltip>
@@ -140,7 +149,7 @@
 
   <!-- User Section with Clerk UserButton -->
   <div
-    class="border-t border-mono-800 {collapsed ? 'p-2 flex justify-center' : 'p-4'}"
+    class="border-t {sidebarDividerToken} {collapsed ? 'p-2 flex justify-center' : 'p-4'}"
     data-testid="sidebar-user-section"
   >
     <ClerkSidebarUser {collapsed} />

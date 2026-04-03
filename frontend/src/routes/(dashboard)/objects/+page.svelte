@@ -4,6 +4,7 @@
   import { activeNamespaceId, namespacesStore } from '$lib/stores/namespaces';
   import { createObjectsModel } from '$lib/stores/objectsModel.svelte';
   import {
+    MainColumnFrame,
     PageHeader,
     SearchBar,
     Table,
@@ -155,28 +156,31 @@
   }
 </script>
 
-<PageHeader title="Objects">
-    {#snippet actions()}
-      <NamespaceSelector />
-      <button
-        type="button"
-        onclick={workflow.openCreate}
-        class="px-4 py-2 bg-green-400 text-mono-950 font-bold tracking-wide flex items-center space-x-2 hover:bg-green-300 cursor-pointer transition-colors"
-      >
-        <i class="fa-solid fa-plus"></i>
-        <span>Create Object</span>
-      </button>
-    {/snippet}
-  </PageHeader>
+<MainColumnFrame bodyClass="">
+  {#snippet header()}
+    <PageHeader title="Objects">
+      {#snippet actions()}
+        <NamespaceSelector />
+        <button
+          type="button"
+          onclick={workflow.openCreate}
+          class="px-4 py-2 bg-green-400 text-mono-950 font-inter font-semibold rounded-xl text-sm tracking-wide shadow-sm flex items-center space-x-2 hover:bg-green-300 cursor-pointer transition-colors"
+        >
+          <i class="fa-solid fa-plus"></i>
+          <span>Create Object</span>
+        </button>
+      {/snippet}
+    </PageHeader>
 
-  <SearchBar
-    bind:searchQuery={workflow.query}
-    placeholder="Search objects..."
-    resultsCount={filteredObjects.length}
-    resultLabel="object"
-    showFilter={false}
-    active={false}
-  />
+    <SearchBar
+      bind:searchQuery={workflow.query}
+      placeholder="Search objects..."
+      resultsCount={filteredObjects.length}
+      resultLabel="object"
+      showFilter={false}
+      active={false}
+    />
+  {/snippet}
 
   <Table isEmpty={filteredObjects.length === 0}>
     {#snippet header()}
@@ -249,6 +253,7 @@
       <TableEmptyState entityName="objects" storeKey={STORE_NAMES.OBJECTS} />
     {/snippet}
   </Table>
+</MainColumnFrame>
 
 {#snippet objectFormContent(_: { close: () => void })}
   {#if workflow.editedItem}
@@ -264,7 +269,7 @@
   {/if}
 {/snippet}
 
-{#snippet objectFormFooter(_: { close: () => void })}
+{#snippet objectFormFooter({ close }: { close: () => void })}
   {#if workflow.editedItem}
     <CrudDrawerFooter
       mode={workflow.mode === 'creating' ? 'creating' : 'editing'}
@@ -281,6 +286,7 @@
       onDeleteRequest={() => workflow.showDeleteConfirm = true}
       onDeleteConfirm={workflow.handleDelete}
       onDeleteCancel={() => workflow.showDeleteConfirm = false}
+      onCancel={close}
     />
   {/if}
 {/snippet}
@@ -299,30 +305,14 @@
   {/if}
 {/snippet}
 
-{#snippet fieldFormFooter(_: { close: () => void })}
-  <div class="flex space-x-2">
-    <button
-      type="button"
-      onclick={handleCreateField}
-      disabled={fieldSaving}
-      class="flex-1 px-4 py-2 transition-colors font-medium flex items-center justify-center space-x-2 {!fieldSaving ? 'bg-green-400 text-mono-950 hover:bg-green-300 font-bold tracking-wide cursor-pointer' : 'bg-mono-700 text-mono-500 cursor-not-allowed'}"
-    >
-      {#if fieldSaving}
-        <i class="fa-solid fa-spinner fa-spin"></i>
-        <span>Creating...</span>
-      {:else}
-        <span>Create Field</span>
-      {/if}
-    </button>
-    <button
-      type="button"
-      onclick={closeFieldCreate}
-      disabled={fieldSaving}
-      class="flex-1 px-4 py-2 border border-mono-600 text-mono-300 hover:bg-mono-950 cursor-pointer transition-colors font-medium"
-    >
-      Cancel
-    </button>
-  </div>
+{#snippet fieldFormFooter({ close }: { close: () => void })}
+  <CrudDrawerFooter
+    mode="creating"
+    isSaving={fieldSaving}
+    isFormValid={fieldFormValid}
+    onCreate={handleCreateField}
+    onCancel={close}
+  />
 {/snippet}
 
 <DrawerStack

@@ -70,7 +70,7 @@
   class="
     {style.bgColor}
     {style.borderColor}
-    border shadow-lg p-4
+    border rounded-xl shadow-lg p-4
     flex items-center space-x-3
     min-w-[300px] max-w-md
     transition-all duration-300 ease-in-out

@@ -19,7 +19,6 @@
   import {
     FormField,
     FormLabel,
-    FieldSelectorDropdown,
     TemplateGallery,
     TemplateForm,
     Pill
@@ -50,7 +49,7 @@
     { value: 'many_to_many', label: 'many to many' }
   ];
 
-  // --- Derive selected field IDs for the FieldSelectorDropdown ---
+  // --- Derive selected field IDs (to exclude already-added fields from unified dropdown) ---
   let selectedFieldIds = $derived(
     editedItem.members
       .filter((m): m is ScalarMember => m.memberType === 'scalar')
@@ -199,26 +198,36 @@
 
   // --- Relationship member helpers ---
 
-  // All objects available as targets (including self per D6, no duplicate exclusion per D7)
   let availableTargetObjects = $derived($objectsStore);
 
-  let relationshipSearchQuery = $state('');
-  let relationshipDropdownOpen = $state(false);
+  // --- Unified member search ---
+  let memberSearchQuery = $state('');
+  let memberDropdownOpen = $state(false);
+
+  let filteredFieldsForAdd = $derived.by(() => {
+    const q = memberSearchQuery.toLowerCase().trim();
+    return availableFields
+      .filter(field => !selectedFieldIds.includes(field.id))
+      .filter(field =>
+        !q ||
+        field.name.toLowerCase().includes(q) ||
+        field.type.toLowerCase().includes(q) ||
+        (field.description?.toLowerCase().includes(q) ?? false)
+      );
+  });
 
   let filteredTargetObjects = $derived.by(() => {
-    const q = relationshipSearchQuery.toLowerCase().trim();
+    const q = memberSearchQuery.toLowerCase().trim();
     if (!q) return availableTargetObjects;
     return availableTargetObjects.filter(o => o.name.toLowerCase().includes(q));
   });
 
-  function handleRelationshipFocus(): void {
-    relationshipDropdownOpen = true;
+  function handleMemberFocus(): void {
+    memberDropdownOpen = true;
   }
 
-  function handleRelationshipBlur(): void {
-    setTimeout(() => {
-      relationshipDropdownOpen = false;
-    }, 150);
+  function handleMemberBlur(): void {
+    setTimeout(() => { memberDropdownOpen = false; }, 150);
   }
 
   function addRelationshipMember(targetObjectId: string) {
@@ -239,8 +248,8 @@
       ...editedItem,
       members: [...editedItem.members, newMember]
     };
-    relationshipSearchQuery = '';
-    relationshipDropdownOpen = false;
+    memberSearchQuery = '';
+    memberDropdownOpen = false;
   }
 
   function updateRelationshipField(memberId: string, updates: Partial<RelationshipMember>) {
@@ -321,7 +330,7 @@
       type="text"
       value={namespaceName}
       disabled
-      class="w-full px-3 py-2 border border-mono-700 bg-mono-800 text-mono-400 cursor-not-allowed"
+      class="w-full px-3 py-2 rounded-xl border border-mono-700 bg-mono-800 text-mono-400 cursor-not-allowed"
     />
     <p class="mt-1 text-xs text-mono-400">
       Namespace is determined by the selector above
@@ -344,7 +353,7 @@
       id="object-description"
       bind:value={editedItem.description}
       rows="3"
-      class="w-full px-3 py-2 border border-mono-600 bg-mono-900 text-mono-100 focus:ring-2 focus:ring-green-400 focus:border-transparent"
+      class="w-full px-3 py-2 rounded-xl border border-mono-700/80 bg-mono-900/50 backdrop-blur-sm focus:ring-2 focus:ring-green-400/50 outline-none focus:outline-none transition-all"
     ></textarea>
   </div>
 
@@ -353,37 +362,74 @@
     <h3 class="text-sm text-mono-300 mb-2 font-medium">Members ({editedItem.members.length})</h3>
 
     <div class="space-y-2">
-      <!-- Scalar Member: Field Selector Dropdown -->
-      <FieldSelectorDropdown
-        availableFields={availableFields}
-        {selectedFieldIds}
-        onSelect={addScalarMember}
-        onCreateNew={onCreateNewField}
-        placeholder="Add field to object..."
-      />
-
-      <!-- Relationship Member: Target Object Search Dropdown -->
+      <!-- Unified Member Add Dropdown: Fields + Relationships -->
       <div class="relative">
         <div class="relative">
           <input
             type="text"
-            bind:value={relationshipSearchQuery}
-            onfocus={handleRelationshipFocus}
-            onblur={handleRelationshipBlur}
-            placeholder="Add relationship to object..."
-            class="w-full px-3 py-1.5 border border-mono-600 bg-mono-900 text-mono-100 focus:ring-2 focus:ring-green-400 focus:border-transparent text-sm pr-8"
+            bind:value={memberSearchQuery}
+            onfocus={handleMemberFocus}
+            onblur={handleMemberBlur}
+            placeholder="Add field or relationship..."
+            class="w-full px-3 py-1.5 border border-mono-700/80 bg-mono-900/50 backdrop-blur-sm rounded-xl text-mono-100 focus:ring-2 focus:ring-green-400 focus:border-transparent outline-none transition-all text-sm pr-8"
           />
-          <i class="fa-solid fa-link absolute right-3 top-1/2 -translate-y-1/2 text-mono-400 text-xs pointer-events-none"></i>
+          <i class="fa-solid fa-search absolute right-3 top-1/2 -translate-y-1/2 text-mono-400 text-xs pointer-events-none"></i>
         </div>
 
-        {#if relationshipDropdownOpen}
-          <div class="absolute z-10 w-full mt-1 bg-mono-900 border border-mono-700 shadow-lg shadow-black/30 max-h-60 overflow-auto">
+        {#if memberDropdownOpen}
+          <div class="absolute z-10 w-full mt-1 bg-mono-900/95 backdrop-blur-sm border border-mono-700/80 rounded-xl shadow-lg shadow-black/30 max-h-72 overflow-y-auto flex flex-col">
+
+            <!-- Fields Section -->
+            <div class="px-3 pt-2 pb-1">
+              <span class="text-[10px] uppercase tracking-widest text-mono-500 font-medium">Fields</span>
+            </div>
+            {#if filteredFieldsForAdd.length > 0}
+              {#each filteredFieldsForAdd as field (field.id)}
+                <button
+                  type="button"
+                  onmousedown={(e) => { e.preventDefault(); addScalarMember(field.id); memberSearchQuery = ''; memberDropdownOpen = false; }}
+                  class="w-full px-3 py-2 text-left hover:bg-mono-800 border-b border-mono-700/50 last:border-b-0 transition-colors"
+                >
+                  <div class="flex items-center space-x-2">
+                    <i class="fa-solid fa-vector-square text-mono-400 text-xs"></i>
+                    <span class="font-mono text-sm text-mono-300">{field.name}</span>
+                    <span class="text-xs text-mono-400 bg-mono-800 px-2 py-0.5 rounded-lg">{field.type}</span>
+                  </div>
+                  {#if field.description}
+                    <p class="text-xs text-mono-500 mt-0.5">{field.description}</p>
+                  {/if}
+                </button>
+              {/each}
+            {:else}
+              <div class="px-3 py-1.5 text-xs text-mono-500 italic">
+                {memberSearchQuery.trim() ? `No fields matching "${memberSearchQuery}"` : 'No fields available'}
+              </div>
+            {/if}
+
+            <!-- Create new field footer -->
+            {#if onCreateNewField}
+              <div class="border-t border-mono-700 p-2">
+                <button
+                  type="button"
+                  class="w-full text-left px-3 py-1.5 text-sm text-mono-400 hover:bg-mono-800 hover:text-mono-100 rounded-lg cursor-pointer flex items-center space-x-2"
+                  onmousedown={(e) => { e.preventDefault(); onCreateNewField?.(); }}
+                >
+                  <i class="fa-solid fa-plus text-xs"></i>
+                  <span>Create new field</span>
+                </button>
+              </div>
+            {/if}
+
+            <!-- Relationships Section -->
+            <div class="px-3 pt-2 pb-1 border-t border-mono-700">
+              <span class="text-[10px] uppercase tracking-widest text-mono-500 font-medium">Relationships</span>
+            </div>
             {#if filteredTargetObjects.length > 0}
               {#each filteredTargetObjects as obj (obj.id)}
                 <button
                   type="button"
-                  onclick={() => addRelationshipMember(obj.id)}
-                  class="w-full px-3 py-2 text-left hover:bg-mono-800 border-b border-mono-700 last:border-b-0 transition-colors"
+                  onmousedown={(e) => { e.preventDefault(); addRelationshipMember(obj.id); }}
+                  class="w-full px-3 py-2 text-left hover:bg-mono-800 border-b border-mono-700/50 last:border-b-0 transition-colors"
                 >
                   <div class="flex items-center space-x-2">
                     <i class="fa-solid fa-cube text-mono-400 text-xs"></i>
@@ -391,22 +437,19 @@
                   </div>
                 </button>
               {/each}
-            {:else if relationshipSearchQuery.trim()}
-              <div class="px-3 py-2 text-sm text-mono-400">
-                No objects found matching "{relationshipSearchQuery}"
-              </div>
             {:else}
-              <div class="px-3 py-2 text-sm text-mono-400">
-                No objects available. Create other objects first to add relationships.
+              <div class="px-3 py-1.5 text-xs text-mono-500 italic">
+                {memberSearchQuery.trim() ? `No objects matching "${memberSearchQuery}"` : 'No other objects available'}
               </div>
             {/if}
+
           </div>
         {/if}
       </div>
 
       <!-- DnD Member List -->
       {#if editedItem.members.length === 0}
-        <div class="p-3 bg-mono-800 rounded border border-mono-700">
+        <div class="p-3 bg-mono-900/50 backdrop-blur-sm rounded-xl border border-mono-700/80">
           <p class="text-xs text-mono-400">No members added</p>
         </div>
       {:else}
@@ -414,7 +457,7 @@
           use:dragHandleZone={{ items: dndItems, flipDurationMs: 150, type: 'members' }}
           onconsider={handleDndConsider}
           onfinalize={handleDndFinalize}
-          class="p-2 bg-mono-800 rounded border border-mono-700 space-y-2"
+          class="p-2 bg-mono-900/50 backdrop-blur-sm rounded-xl border border-mono-700/80 space-y-2"
         >
           {#each dndItems as item (item.id)}
             <div animate:flip={{ duration: 150 }}>
@@ -425,7 +468,7 @@
                 {#if field}
                   {@const inputCfg = defaultInputType(field.type)}
                   {@const modifierClass = roleHasModifiers(item.role) ? '' : 'invisible pointer-events-none'}
-                  <div class="p-2 bg-mono-900 rounded border border-mono-700 space-y-1.5">
+                  <div class="p-3 bg-mono-900/50 backdrop-blur-sm rounded-xl border border-mono-700/80 space-y-1.5">
                     <div
                       class="grid grid-cols-[auto_minmax(0,1fr)_10rem_7rem_4.5rem_1.75rem] gap-x-2 items-center"
                     >
@@ -440,16 +483,16 @@
                           type="text"
                           value={item.name}
                           oninput={(e) => setMemberName(item.id, (e.target as HTMLInputElement).value)}
-                          class="font-mono text-sm text-mono-300 bg-mono-800 border border-mono-700 px-2 py-0.5 rounded w-28 focus:ring-1 focus:ring-green-400 focus:border-transparent"
+                          class="font-mono text-sm text-mono-300 bg-mono-800 border border-mono-700 px-2 py-0.5 rounded-lg w-28 focus:ring-1 focus:ring-green-400 focus:border-transparent"
                           title="Member name (column name in generated code)"
                         />
-                        <span class="text-xs text-mono-400 bg-mono-800 px-2 py-0.5 rounded shrink-0">{field.type}</span>
+                        <span class="text-xs text-mono-400 bg-mono-800 px-2 py-0.5 rounded-lg shrink-0">{field.type}</span>
                         <span class="text-xs text-mono-500 truncate" title="Field: {field.name}">{field.name}</span>
                       </div>
 
                       <!-- Role Selector -->
                       <select
-                        class="w-full min-h-[1.5rem] bg-mono-800 border border-mono-700 text-mono-300 text-xs rounded px-1.5 py-0.5 focus:ring-1 focus:ring-green-400 focus:border-transparent"
+                        class="w-full min-h-[1.5rem] bg-mono-800 border border-mono-700 text-mono-300 text-xs rounded-lg px-1.5 py-0.5 focus:ring-1 focus:ring-green-400 focus:border-transparent"
                         value={item.role}
                         onchange={(e) => setMemberRole(item.id, e.currentTarget.value as FieldRole)}
                         title={ROLE_TOOLTIPS[item.role]}
@@ -462,7 +505,7 @@
                       <!-- Default Value Input -->
                       {#if inputCfg.isBool}
                         <select
-                          class="bg-mono-800 border border-mono-700 text-mono-300 text-xs rounded px-1.5 py-0.5 w-full min-h-[1.5rem] focus:ring-1 focus:ring-green-400 focus:border-transparent {modifierClass}"
+                          class="bg-mono-800 border border-mono-700 text-mono-300 text-xs rounded-lg px-1.5 py-0.5 w-full min-h-[1.5rem] focus:ring-1 focus:ring-green-400 focus:border-transparent {modifierClass}"
                           value={item.defaultValue ?? ''}
                           onchange={(e) => setMemberDefaultValue(item.id, e.currentTarget.value)}
                           disabled={!roleHasModifiers(item.role)}
@@ -475,7 +518,7 @@
                         <input
                           type={inputCfg.inputType}
                           step={inputCfg.step}
-                          class="bg-mono-800 border border-mono-700 text-mono-300 text-xs rounded px-1.5 py-0.5 w-full min-h-[1.5rem] focus:ring-1 focus:ring-green-400 focus:border-transparent {modifierClass}"
+                          class="bg-mono-800 border border-mono-700 text-mono-300 text-xs rounded-lg px-1.5 py-0.5 w-full min-h-[1.5rem] focus:ring-1 focus:ring-green-400 focus:border-transparent {modifierClass}"
                           placeholder="Default value"
                           value={item.defaultValue ?? ''}
                           oninput={(e) => setMemberDefaultValue(item.id, e.currentTarget.value)}
@@ -489,7 +532,7 @@
                         onclick={() => toggleMemberNullable(item.id)}
                         disabled={!roleHasModifiers(item.role)}
                         title="Allow null values"
-                        class="justify-self-start text-xs px-2 py-0.5 rounded border transition-colors {roleHasModifiers(item.role) ? (item.isNullable ? 'border-green-500 text-green-400 bg-green-400/10' : 'border-mono-600 text-mono-500 hover:border-mono-500 hover:text-mono-400') : 'invisible pointer-events-none border-mono-600 text-mono-500'}"
+                        class="justify-self-start text-xs px-2 py-0.5 rounded-lg border transition-colors {roleHasModifiers(item.role) ? (item.isNullable ? 'border-green-500 text-green-400 bg-green-400/10' : 'border-mono-600 text-mono-500 hover:border-mono-500 hover:text-mono-400') : 'invisible pointer-events-none border-mono-600 text-mono-500'}"
                       >
                         nullable
                       </button>
@@ -520,7 +563,7 @@
                     <button
                       type="button"
                       onclick={() => removeMember(item.id)}
-                      class="p-1 text-red-700 hover:text-red-600 hover:bg-red-100 rounded transition-colors"
+                      class="p-1 text-red-700 hover:text-red-600 hover:bg-red-100 rounded-lg transition-colors"
                       title="Remove missing field reference"
                     >
                       <i class="fa-solid fa-xmark"></i>
@@ -531,7 +574,7 @@
               {:else if item.memberType === 'relationship'}
                 <!-- Relationship Member Row -->
                 {@const targetObj = getObjectById(item.targetObjectId)}
-                <div class="p-2 bg-mono-900 rounded border border-mono-700 space-y-1.5">
+                <div class="p-3 bg-mono-900/50 backdrop-blur-sm rounded-xl border border-mono-700/80 space-y-1.5">
                   <div class="flex items-center space-x-2">
                     <!-- Drag Handle -->
                     <div use:dragHandle class="text-mono-600 hover:text-mono-400 cursor-grab shrink-0">
@@ -543,7 +586,7 @@
                       type="text"
                       value={item.name}
                       oninput={(e) => updateRelationshipField(item.id, { name: (e.target as HTMLInputElement).value })}
-                      class="font-mono text-sm text-mono-300 bg-mono-800 border border-mono-700 px-2 py-0.5 rounded w-28 focus:ring-1 focus:ring-green-400 focus:border-transparent"
+                      class="font-mono text-sm text-mono-300 bg-mono-800 border border-mono-700 px-2 py-0.5 rounded-lg w-28 focus:ring-1 focus:ring-green-400 focus:border-transparent"
                       title="Relationship field name"
                     />
 
@@ -551,7 +594,7 @@
                     <select
                       value={item.kind}
                       onchange={(e) => updateRelationshipKind(item.id, (e.target as HTMLSelectElement).value as RelationshipKind)}
-                      class="text-xs text-mono-300 bg-mono-800 border border-mono-700 px-2 py-0.5 rounded focus:ring-1 focus:ring-green-400"
+                      class="text-xs text-mono-300 bg-mono-800 border border-mono-700 px-2 py-0.5 rounded-lg focus:ring-1 focus:ring-green-400"
                     >
                       {#each KIND_OPTIONS as opt}
                         <option value={opt.value}>{opt.label}</option>
@@ -559,7 +602,7 @@
                     </select>
 
                     <!-- Target Object Badge -->
-                    <span class="text-xs font-medium px-2 py-0.5 rounded bg-blue-500/20 text-blue-400">
+                    <span class="text-xs font-medium px-2 py-0.5 rounded-lg bg-blue-500/20 text-blue-400">
                       {targetObj?.name ?? 'Unknown'}
                     </span>
 
@@ -568,7 +611,7 @@
                       type="text"
                       value={item.inverseName}
                       oninput={(e) => updateRelationshipField(item.id, { inverseName: (e.target as HTMLInputElement).value })}
-                      class="font-mono text-xs text-mono-300 bg-mono-800 border border-mono-700 px-2 py-0.5 rounded w-24 focus:ring-1 focus:ring-green-400 focus:border-transparent"
+                      class="font-mono text-xs text-mono-300 bg-mono-800 border border-mono-700 px-2 py-0.5 rounded-lg w-24 focus:ring-1 focus:ring-green-400 focus:border-transparent"
                       placeholder="inverse name"
                       title="Inverse relationship name on the target object"
                     />
@@ -579,7 +622,7 @@
                         type="button"
                         onclick={() => updateRelationshipField(item.id, { required: !item.required })}
                         title="Whether the FK column is NOT NULL"
-                        class="text-xs px-2 py-0.5 rounded border transition-colors shrink-0 {item.required ? 'border-green-500 text-green-400 bg-green-400/10' : 'border-mono-600 text-mono-500 hover:border-mono-500 hover:text-mono-400'}"
+                        class="text-xs px-2 py-0.5 rounded-lg border transition-colors shrink-0 {item.required ? 'border-green-500 text-green-400 bg-green-400/10' : 'border-mono-600 text-mono-500 hover:border-mono-500 hover:text-mono-400'}"
                       >
                         required
                       </button>
@@ -614,7 +657,7 @@
       </h3>
       <div class="space-y-1">
         {#each editedItem.derivedRelationships as dr}
-          <div class="flex items-center space-x-2 px-2 py-1.5 bg-mono-800 rounded border border-dashed border-mono-600">
+          <div class="flex items-center space-x-2 px-2 py-1.5 bg-mono-800 rounded-lg border border-dashed border-mono-600">
             <button
               type="button"
               onclick={() => navigateToObject(dr.sourceObjectId)}
@@ -645,12 +688,12 @@
         <button
           type="button"
           onclick={openValidatorGallery}
-          class="w-full px-3 py-2 border border-dashed border-mono-600 text-sm text-mono-400 hover:border-mono-500 hover:text-mono-300 transition-colors cursor-pointer"
+          class="w-full px-3 py-2 rounded-xl border border-dashed border-mono-600 text-sm text-mono-400 hover:border-mono-500 hover:bg-mono-800 hover:text-mono-300 transition-colors cursor-pointer"
         >
           <i class="fa-solid fa-plus mr-1"></i> Add Validator
         </button>
       {:else if selectedModelTemplate}
-        <div class="p-3 bg-mono-800 rounded border border-mono-700">
+        <div class="p-3 bg-mono-900/50 backdrop-blur-sm rounded-xl border border-mono-700/80">
           <TemplateForm
             kind="model"
             modelTemplate={selectedModelTemplate}
@@ -660,7 +703,7 @@
           />
         </div>
       {:else}
-        <div class="p-3 bg-mono-800 rounded border border-mono-700">
+        <div class="p-3 bg-mono-900/50 backdrop-blur-sm rounded-xl border border-mono-700/80">
           <TemplateGallery
             kind="model"
             modelTemplates={modelValidatorTemplates}
@@ -671,10 +714,10 @@
       {/if}
 
       {#if editedItem.validators.length > 0}
-        <div class="p-2 bg-mono-800 rounded border border-mono-700 space-y-2">
+        <div class="p-2 bg-mono-900/50 backdrop-blur-sm rounded-xl border border-mono-700/80 space-y-2">
           {#each editedItem.validators as validator, index}
             {@const tmpl = getModelValidatorTemplateById(validator.templateId)}
-            <div class="flex items-center space-x-2 p-2 bg-mono-900 rounded border border-mono-700">
+            <div class="flex items-center space-x-2 p-3 bg-mono-900/50 backdrop-blur-sm rounded-xl border border-mono-700/80">
               <div class="flex items-center space-x-2 flex-1 min-w-0">
                 <span class="text-sm text-mono-300 truncate">{tmpl?.name ?? validator.templateId}</span>
                 <Pill class="shrink-0">{tmpl?.mode ?? 'after'}</Pill>
@@ -704,7 +747,7 @@
           <button
             type="button"
             onclick={() => goto(`/apis/${apiId}`)}
-            class="flex items-center space-x-2 w-full px-3 py-2 bg-mono-800 rounded border border-mono-700 hover:border-mono-600 hover:bg-mono-700 transition-colors text-left"
+            class="flex items-center space-x-2 w-full px-3 py-2 bg-mono-900/50 backdrop-blur-sm rounded-xl border border-mono-700/80 hover:border-mono-600 hover:bg-mono-700 transition-colors text-left"
           >
             <i class="fa-solid fa-code text-mono-400 text-xs"></i>
             <span class="text-sm text-mono-100">{api?.title ?? apiId}</span>

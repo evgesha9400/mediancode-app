@@ -76,7 +76,7 @@
         <div>
           <label class="flex items-center space-x-2 cursor-pointer">
             <input type="checkbox" bind:checked={responsePlaceholders}
-              class="w-4 h-4 text-green-400 border-mono-600 rounded focus:ring-2 focus:ring-green-400 bg-mono-900" />
+              class="w-4 h-4 text-green-400 border-mono-600 rounded focus:ring-2 focus:ring-green-400 bg-mono-900/50 backdrop-blur-sm" />
             <span class="text-xs text-mono-300">Generate response placeholders</span>
           </label>
         </div>
@@ -85,7 +85,7 @@
         <div>
           <label class="flex items-center space-x-2 cursor-pointer">
             <input type="checkbox" bind:checked={databaseEnabled}
-              class="w-4 h-4 text-green-400 border-mono-600 rounded focus:ring-2 focus:ring-green-400 bg-mono-900" />
+              class="w-4 h-4 text-green-400 border-mono-600 rounded focus:ring-2 focus:ring-green-400 bg-mono-900/50 backdrop-blur-sm" />
             <span class="text-xs text-mono-300">Database support</span>
             <span class="text-xs text-mono-400">PostgreSQL, SQLAlchemy, Alembic, Docker Compose</span>
           </label>
@@ -95,7 +95,7 @@
         <div>
           <label class="flex items-center space-x-2 cursor-pointer">
             <input type="checkbox" bind:checked={cdkEnabled}
-              class="w-4 h-4 text-green-400 border-mono-600 rounded focus:ring-2 focus:ring-green-400 bg-mono-900" />
+              class="w-4 h-4 text-green-400 border-mono-600 rounded focus:ring-2 focus:ring-green-400 bg-mono-900/50 backdrop-blur-sm" />
             <span class="text-xs text-mono-300">CDK infrastructure</span>
             <span class="text-xs text-mono-400">AWS CDK stack files</span>
           </label>
@@ -106,12 +106,12 @@
               <div class="flex space-x-3">
                 <label class="flex items-center space-x-1.5 cursor-pointer">
                   <input type="radio" bind:group={cdkCompute} value="lambda"
-                    class="w-3.5 h-3.5 text-green-400 border-mono-600 bg-mono-900 focus:ring-green-400" />
+                    class="w-3.5 h-3.5 text-green-400 border-mono-600 bg-mono-900/50 backdrop-blur-sm focus:ring-green-400" />
                   <span class="text-xs text-mono-300">Lambda</span>
                 </label>
                 <label class="flex items-center space-x-1.5 cursor-pointer">
                   <input type="radio" bind:group={cdkCompute} value="ecs"
-                    class="w-3.5 h-3.5 text-green-400 border-mono-600 bg-mono-900 focus:ring-green-400" />
+                    class="w-3.5 h-3.5 text-green-400 border-mono-600 bg-mono-900/50 backdrop-blur-sm focus:ring-green-400" />
                   <span class="text-xs text-mono-300">ECS Fargate</span>
                 </label>
               </div>

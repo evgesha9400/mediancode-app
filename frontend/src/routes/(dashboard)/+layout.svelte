@@ -7,6 +7,7 @@
   import { clerkState } from '$lib/clerk';
   import { loadStoresFromApi, storeLoadingState } from '$lib/stores/loader';
   import { sidebarState } from '$lib/stores/sidebar.svelte';
+  import { dashboardLoadingLabel, dashboardLoadingRoot } from '$lib/ui/classes';
 
   let { children } = $props();
 
@@ -34,10 +35,10 @@
 </script>
 
 {#if !$clerkState.isLoaded || !$clerkState.isSignedIn}
-  <div class="flex h-screen items-center justify-center bg-mono-950">
+  <div class={dashboardLoadingRoot}>
     <div class="text-center">
-      <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-green-400 mx-auto"></div>
-      <p class="mt-4 text-mono-400">Loading...</p>
+      <div class="animate-spin rounded-full h-8 w-8 border-2 border-transparent border-t-green-400 mx-auto opacity-80"></div>
+      <p class={dashboardLoadingLabel}>Loading...</p>
     </div>
   </div>
 {:else}
@@ -48,8 +49,8 @@
       {#if $storeLoadingState.isLoading}
         <div class="flex-1 flex items-center justify-center">
           <div class="text-center">
-            <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-green-400 mx-auto"></div>
-            <p class="mt-4 text-mono-400">Loading data...</p>
+            <div class="animate-spin rounded-full h-8 w-8 border-2 border-transparent border-t-green-400 mx-auto opacity-80"></div>
+            <p class={dashboardLoadingLabel}>Loading data...</p>
           </div>
         </div>
       {:else}

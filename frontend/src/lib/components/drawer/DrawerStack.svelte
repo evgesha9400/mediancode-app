@@ -18,9 +18,21 @@
 </script>
 
 <script lang="ts">
-  import { slide, fade } from 'svelte/transition';
+  import { slide, fade, fly } from 'svelte/transition';
+  import { cubicInOut } from 'svelte/easing';
   import { DrawerHeader, DrawerContent, DrawerFooter } from '$lib/components/drawer';
   import { sidebarState } from '$lib/stores/sidebar.svelte';
+  import {
+    drawerPanelFlexible,
+    drawerPanelStacked,
+    drawerScrim,
+    drawerStackDimmer,
+  } from '$lib/ui/classes';
+
+  // ─── Animation config ────────────────────────────────────────────────────────
+  const DRAWER_DURATION = 350; // ms — shared by backdrop, outer fly, inner slide
+  const DRAWER_EASING = cubicInOut; // symmetric so open === close feel
+  // ─────────────────────────────────────────────────────────────────────────────
 
   let { panels, onPopPanel }: DrawerStackProps = $props();
 
@@ -62,25 +74,24 @@
 {#if panels.length > 0}
   <!-- svelte-ignore a11y_no_static_element_interactions -->
   <div
-    class="fixed top-0 right-0 h-screen z-[60] bg-black/40"
+    class={drawerScrim}
     style="width: calc(100vw - {sidebarState.width}px);"
     onclick={onPopPanel}
     onkeydown={(e) => { if (e.key === 'Escape') onPopPanel(); }}
-    transition:fade={{ duration: 400 }}
+    transition:fade={{ duration: DRAWER_DURATION, easing: DRAWER_EASING }}
   ></div>
 
   <div
-    class="fixed right-0 top-0 h-screen z-[70] flex justify-end"
+    class="fixed right-0 top-0 h-screen z-[70] flex justify-end pointer-events-none"
     style="width: calc(100vw - {sidebarState.width}px);"
-    transition:slide={{ duration: 400, axis: 'x' }}
+    transition:fly={{ duration: DRAWER_DURATION, x: '100%', opacity: 1, easing: DRAWER_EASING }}
   >
     {#each visiblePanels as panel, i (panel.id)}
       {#if i === 0}
         <!-- Leftmost visible panel: flexible width, shrinks to fit -->
         <div
-          class="h-full flex flex-col bg-mono-900 overflow-hidden relative"
+          class={drawerPanelFlexible}
           class:border-r={i < visiblePanels.length - 1}
-          class:border-mono-700={i < visiblePanels.length - 1}
           style="flex: 1 1 0; max-width: {panel.width}px;{visiblePanels.length > 1 && panel.minWidth ? ` min-width: ${panel.minWidth}px;` : ''}"
         >
           <DrawerHeader title={panel.title} onClose={onPopPanel} />
@@ -93,17 +104,15 @@
             </DrawerFooter>
           {/if}
           {#if i < visiblePanels.length - 1}
-            <div class="absolute inset-0 bg-mono-900/60 z-10"></div>
+            <div class={drawerStackDimmer}></div>
           {/if}
         </div>
       {:else}
         <!-- Stacked panel: fixed width, slides in from right pushing base panel left -->
         <div
-          class="flex-shrink-0 h-full flex flex-col bg-mono-900 overflow-hidden relative {i === visiblePanels.length - 1 ? 'shadow-xl shadow-black/30' : ''}"
-          class:border-r={i < visiblePanels.length - 1}
-          class:border-mono-700={i < visiblePanels.length - 1}
+          class={drawerPanelStacked}
           style="width: {panel.width}px;"
-          transition:slide|global={{ duration: 400, axis: 'x' }}
+          transition:slide|global={{ duration: DRAWER_DURATION, axis: 'x', easing: DRAWER_EASING }}
         >
           <DrawerHeader title={panel.title} onClose={onPopPanel} />
           <DrawerContent>
@@ -115,7 +124,7 @@
             </DrawerFooter>
           {/if}
           {#if i < visiblePanels.length - 1}
-            <div class="absolute inset-0 bg-mono-900/60 z-10"></div>
+            <div class={drawerStackDimmer}></div>
           {/if}
         </div>
       {/if}

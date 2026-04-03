@@ -149,7 +149,7 @@
       type="text"
       value={namespaceName}
       disabled
-      class="w-full px-3 py-1.5 text-sm border border-mono-600 bg-mono-800 text-mono-400 cursor-not-allowed"
+      class="w-full px-3 py-1.5 rounded-xl text-sm border border-mono-700 bg-mono-800 text-mono-400 cursor-not-allowed"
     />
     <p class="text-xs text-mono-400 mt-1">Namespace cannot be changed after creation</p>
   </div>
@@ -167,18 +167,18 @@
   <div class="flex gap-4">
     <div class="shrink-0">
       <FormLabel label="Container" />
-      <div class="flex space-x-2">
+      <div class="flex">
         <button
           type="button"
           onclick={() => handleContainerChangeInternal(null)}
-          class="px-3 py-1.5 text-sm border transition-colors {editedItem.container === null ? 'bg-green-400 text-mono-950 font-bold border-green-400' : 'bg-mono-900 text-mono-400 border-mono-600 hover:border-mono-500'}"
+          class="px-3 py-1.5 text-sm border transition-colors first:rounded-l-xl last:rounded-r-xl {editedItem.container === null ? 'bg-green-400 text-mono-950 font-bold border-green-400' : 'bg-mono-900/50 backdrop-blur-sm text-mono-400 border-mono-600 hover:border-mono-500'}"
         >
           None
         </button>
         <button
           type="button"
           onclick={() => handleContainerChangeInternal(CONTAINER_VALUES[0])}
-          class="px-3 py-1.5 text-sm border transition-colors {editedItem.container === CONTAINER_VALUES[0] ? 'bg-green-400 text-mono-950 font-bold border-green-400' : 'bg-mono-900 text-mono-400 border-mono-600 hover:border-mono-500'}"
+          class="px-3 py-1.5 text-sm border transition-colors border-l-0 first:rounded-l-xl last:rounded-r-xl {editedItem.container === CONTAINER_VALUES[0] ? 'bg-green-400 text-mono-950 font-bold border-green-400' : 'bg-mono-900/50 backdrop-blur-sm text-mono-400 border-mono-600 hover:border-mono-500'}"
         >
           List
         </button>
@@ -207,7 +207,7 @@
       id="fields-description"
       bind:value={editedItem.description}
       rows="3"
-      class="w-full px-3 py-1.5 text-sm border border-mono-600 bg-mono-900 text-mono-100 focus:ring-2 focus:ring-green-400 focus:border-transparent"
+      class="w-full px-3 py-1.5 rounded-xl text-sm border border-mono-700/80 bg-mono-900/50 backdrop-blur-sm focus:ring-2 focus:ring-green-400/50 outline-none focus:outline-none transition-all"
     ></textarea>
   </div>
 
@@ -225,6 +225,18 @@
     {/if}
   </div>
 
+  <!-- Constraints -->
+  <FieldConstraintEditor
+    constraints={editedItem.constraints}
+    availableConstraints={availableFieldConstraints}
+    allConstraintMeta={fieldConstraintDefinitions}
+    selectedNames={selectedFieldConstraintNames}
+    onAdd={addFieldConstraint}
+    onRemove={removeFieldConstraint}
+    onParamChange={updateConstraintParam}
+    error={visibleErrors.constraints}
+  />
+
   <!-- Validators -->
   <div>
     <h3 class="text-sm text-mono-300 mb-2 font-medium">Validators ({editedItem.validators.length})</h3>
@@ -234,12 +246,12 @@
         <button
           type="button"
           onclick={openValidatorGallery}
-          class="w-full px-3 py-2 border border-dashed border-mono-600 text-sm text-mono-400 hover:border-mono-500 hover:text-mono-300 transition-colors cursor-pointer"
+          class="w-full px-3 py-2 rounded-xl border border-dashed border-mono-600 text-sm text-mono-400 hover:border-mono-500 hover:bg-mono-800 hover:text-mono-300 transition-colors cursor-pointer"
         >
           <i class="fa-solid fa-plus mr-1"></i> Add Validator
         </button>
       {:else if selectedFieldTemplate}
-        <div class="p-3 bg-mono-800 rounded border border-mono-700">
+        <div class="p-3 bg-mono-900/50 backdrop-blur-sm rounded-xl border border-mono-700/80">
           <TemplateForm
             kind="field"
             fieldTemplate={selectedFieldTemplate}
@@ -248,7 +260,7 @@
           />
         </div>
       {:else}
-        <div class="p-3 bg-mono-800 rounded border border-mono-700">
+        <div class="p-3 bg-mono-900/50 backdrop-blur-sm rounded-xl border border-mono-700/80">
           <TemplateGallery
             kind="field"
             fieldTemplates={compatibleTemplates}
@@ -259,10 +271,10 @@
       {/if}
 
       {#if editedItem.validators.length > 0}
-        <div class="p-2 bg-mono-800 rounded border border-mono-700 space-y-2">
+        <div class="p-2 bg-mono-900/50 backdrop-blur-sm rounded-xl border border-mono-700/80 space-y-2">
           {#each editedItem.validators as validator, index}
             {@const tmpl = getFieldValidatorTemplateById(validator.templateId)}
-            <div class="flex items-center space-x-2 p-2 bg-mono-900 rounded border border-mono-700">
+            <div class="flex items-center space-x-2 p-3 bg-mono-900/50 backdrop-blur-sm rounded-xl border border-mono-700/80">
               <div class="flex items-center space-x-2 flex-1 min-w-0">
                 <span class="text-sm text-mono-300 truncate">{tmpl?.name ?? validator.templateId}</span>
                 <Pill class="shrink-0">{tmpl?.mode ?? 'after'}</Pill>
@@ -282,18 +294,6 @@
     </div>
   </div>
 
-  <!-- Constraints -->
-  <FieldConstraintEditor
-    constraints={editedItem.constraints}
-    availableConstraints={availableFieldConstraints}
-    allConstraintMeta={fieldConstraintDefinitions}
-    selectedNames={selectedFieldConstraintNames}
-    onAdd={addFieldConstraint}
-    onRemove={removeFieldConstraint}
-    onParamChange={updateConstraintParam}
-    error={visibleErrors.constraints}
-  />
-
   <!-- Used In APIs (only when editing) -->
   {#if mode === 'editing'}
     <div>
@@ -304,7 +304,7 @@
           <button
             type="button"
             onclick={() => goto(`/apis/${apiId}`)}
-            class="flex items-center space-x-2 w-full px-3 py-2 bg-mono-800 rounded border border-mono-700 hover:border-mono-600 hover:bg-mono-700 transition-colors text-left"
+            class="flex items-center space-x-2 w-full px-3 py-2 bg-mono-900/50 backdrop-blur-sm rounded-xl border border-mono-700/80 hover:border-mono-600 hover:bg-mono-700 transition-colors text-left"
           >
             <i class="fa-solid fa-code text-mono-400 text-xs"></i>
             <span class="text-sm text-mono-100">{api?.title ?? apiId}</span>

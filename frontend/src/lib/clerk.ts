@@ -1,6 +1,32 @@
 import { writable, type Writable } from 'svelte/store';
 import { env } from '$env/dynamic/public';
 import { initOrgState, refreshOrgState } from '$lib/stores/organization';
+import {
+  clerkAccordionTrigger,
+  clerkAvatarBox,
+  clerkBadge,
+  clerkBreadcrumbs,
+  clerkBreadcrumbsDivider,
+  clerkBreadcrumbsItem,
+  clerkCard,
+  clerkFooterActionLink,
+  clerkFormButtonPrimary,
+  clerkFormFieldInput,
+  clerkFormFieldLabel,
+  clerkHeaderSubtitle,
+  clerkHeaderTitle,
+  clerkModalBackdrop,
+  clerkModalClose,
+  clerkNavbar,
+  clerkNavbarButton,
+  clerkPageScrollBox,
+  clerkProfilePrimaryButton,
+  clerkProfileSectionBorder,
+  clerkProfileSectionContent,
+  clerkProfileSectionDanger,
+  clerkProfileSectionTitle,
+  clerkSocialGithub,
+} from '$lib/ui/classes';
 
 export interface ClerkState {
   isLoaded: boolean;
@@ -20,42 +46,42 @@ export const clerkAppearance = {
     colorTextSecondary: '#a0a0a8',   // mono-400 soft
     colorPrimary: '#52e28c',         // green-400 soft
     colorInputText: '#f0f0f5',       // mono-100 soft
-    borderRadius: '0',
+    borderRadius: '16px',
     colorNeutral: '#a0a0a8',         // mono-400 soft
     colorDanger: '#dc2626',          // red-600 (unchanged)
     colorSuccess: '#2ea860',         // green-600 soft
     colorWarning: '#e4a83a',         // amber-400 soft
   },
   elements: {
-    card: 'shadow-none bg-mono-900 border-2 border-mono-700',
-    formButtonPrimary: 'bg-green-400 text-mono-950 hover:bg-green-300 font-bold tracking-wide',
-    formFieldInput: 'bg-mono-900 border-mono-600 text-mono-100',
-    avatarBox: 'border-2 border-mono-700',
-    footerActionLink: 'text-green-400 hover:text-green-300',
-    socialButtonsIconButton__github: '[&>img]:invert',
+    card: clerkCard,
+    formButtonPrimary: clerkFormButtonPrimary,
+    formFieldInput: clerkFormFieldInput,
+    avatarBox: clerkAvatarBox,
+    footerActionLink: clerkFooterActionLink,
+    socialButtonsIconButton__github: clerkSocialGithub,
     // UserProfile modal dark theme overrides
-    navbar: 'bg-mono-900 border-r border-mono-700',
-    navbarButton: 'text-mono-300 hover:text-mono-100 hover:bg-mono-800 data-[active=true]:bg-mono-800 data-[active=true]:text-mono-100',
-    pageScrollBox: 'bg-mono-900',
-    page: 'bg-mono-900',
-    profilePage: 'bg-mono-900',
-    profileSection__profile: 'border-b border-mono-700',
-    profileSection__emailAddresses: 'border-b border-mono-700',
-    profileSection__connectedAccounts: 'border-b border-mono-700',
-    profileSection__danger: 'border-b border-mono-700',
-    profileSectionTitleText: 'text-mono-100',
-    profileSectionContent: 'text-mono-300',
-    profileSectionPrimaryButton: 'text-green-400 hover:text-green-300',
-    badge: 'bg-mono-800 text-mono-300 border border-mono-600',
-    modalCloseButton: 'text-mono-400 hover:text-mono-100',
-    modalBackdrop: 'bg-black/60',
-    headerTitle: 'text-mono-100',
-    headerSubtitle: 'text-mono-400',
-    formFieldLabel: 'text-mono-300',
-    accordionTriggerButton: 'text-mono-300 hover:text-mono-100',
-    breadcrumbs: 'text-mono-400',
-    breadcrumbsItem: 'text-mono-400',
-    breadcrumbsItemDivider: 'text-mono-600',
+    navbar: clerkNavbar,
+    navbarButton: clerkNavbarButton,
+    pageScrollBox: clerkPageScrollBox,
+    page: 'bg-transparent',
+    profilePage: 'bg-transparent',
+    profileSection__profile: clerkProfileSectionBorder,
+    profileSection__emailAddresses: clerkProfileSectionBorder,
+    profileSection__connectedAccounts: clerkProfileSectionBorder,
+    profileSection__danger: clerkProfileSectionDanger,
+    profileSectionTitleText: clerkProfileSectionTitle,
+    profileSectionContent: clerkProfileSectionContent,
+    profileSectionPrimaryButton: clerkProfilePrimaryButton,
+    badge: clerkBadge,
+    modalCloseButton: clerkModalClose,
+    modalBackdrop: clerkModalBackdrop,
+    headerTitle: clerkHeaderTitle,
+    headerSubtitle: clerkHeaderSubtitle,
+    formFieldLabel: clerkFormFieldLabel,
+    accordionTriggerButton: clerkAccordionTrigger,
+    breadcrumbs: clerkBreadcrumbs,
+    breadcrumbsItem: clerkBreadcrumbsItem,
+    breadcrumbsItemDivider: clerkBreadcrumbsDivider,
   }
 };
 

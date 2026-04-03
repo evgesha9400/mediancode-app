@@ -65,7 +65,7 @@
   <button
     type="button"
     onclick={toggleDropdown}
-    class="flex items-center space-x-2 px-3 py-1.5 border border-mono-600 bg-mono-900 hover:bg-mono-800 transition-colors text-sm"
+    class="flex items-center space-x-3 px-4 py-2 border border-mono-700/80 bg-mono-900/50 backdrop-blur-sm/50 hover:bg-mono-800 transition-colors text-sm rounded-xl font-inter shadow-inner"
     aria-haspopup="listbox"
     aria-expanded={isOpen}
   >
@@ -80,18 +80,18 @@
 
   {#if isOpen}
     <div
-      class="absolute top-full right-0 mt-1 w-56 bg-mono-900 shadow-xl shadow-black/30 border border-mono-700 z-50 overflow-hidden"
+      class="absolute top-full right-0 mt-2 min-w-[200px] w-max max-w-sm bg-mono-900/95 backdrop-blur-xl shadow-2xl border border-mono-800/80 rounded-2xl z-[100] overflow-hidden"
       role="listbox"
     >
-      <div class="p-2 border-b border-mono-700 bg-mono-800">
-        <span class="text-xs font-medium text-mono-400 uppercase tracking-wider">Namespace</span>
+      <div class="p-3 border-b border-mono-800/80 bg-mono-800/40">
+        <span class="text-xs font-semibold text-mono-400 uppercase tracking-wider font-inter">Namespace</span>
       </div>
-      <div class="py-1 max-h-60 overflow-y-auto">
+      <div class="py-2 max-h-60 overflow-y-auto w-full">
         {#each $namespacesStore as namespace}
           <button
             type="button"
             onclick={() => selectNamespace(namespace)}
-            class="w-full px-3 py-2 flex items-center space-x-2 hover:bg-mono-800 transition-colors text-left"
+            class="w-full px-4 py-2.5 flex items-center space-x-3 hover:bg-mono-800 transition-colors text-left font-inter"
             class:bg-mono-800={$activeNamespaceId === namespace.id}
             role="option"
             aria-selected={$activeNamespaceId === namespace.id}

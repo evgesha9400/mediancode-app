@@ -2,6 +2,7 @@
   import { typesStore, searchTypes, type FieldType } from '$lib/stores/types';
   import { isSystemEntity } from '$lib/utils/namespace';
   import {
+    MainColumnFrame,
     PageHeader,
     SearchBar,
     FilterPanel,
@@ -54,27 +55,29 @@
   let activeFiltersCount = $derived(state.activeFiltersCount);
 </script>
 
-<PageHeader title="Types" />
-
-  <SearchBar
-    bind:searchQuery={state.query}
-    placeholder="Search types..."
-    resultsCount={filteredTypes.length}
-    resultLabel="type"
-    showFilter={true}
-    active={state.filtersOpen || activeFiltersCount > 0}
-    onFilterClick={state.toggleFilters}
-  >
-    {#snippet filterPanel()}
-      <FilterPanel
-        visible={state.filtersOpen}
-        config={filterConfig}
-        bind:state={state.filters}
-        onClose={() => state.filtersOpen = false}
-        onClear={state.resetFilters}
-      />
-    {/snippet}
-  </SearchBar>
+<MainColumnFrame bodyClass="">
+  {#snippet header()}
+    <PageHeader title="Types" />
+    <SearchBar
+      bind:searchQuery={state.query}
+      placeholder="Search types..."
+      resultsCount={filteredTypes.length}
+      resultLabel="type"
+      showFilter={true}
+      active={state.filtersOpen || activeFiltersCount > 0}
+      onFilterClick={state.toggleFilters}
+    >
+      {#snippet filterPanel()}
+        <FilterPanel
+          visible={state.filtersOpen}
+          config={filterConfig}
+          bind:state={state.filters}
+          onClose={() => state.filtersOpen = false}
+          onClear={state.resetFilters}
+        />
+      {/snippet}
+    </SearchBar>
+  {/snippet}
 
   <Table isEmpty={filteredTypes.length === 0}>
     {#snippet header()}
@@ -135,12 +138,13 @@
       <TableEmptyState entityName="types" storeKey={STORE_NAMES.TYPES} />
     {/snippet}
   </Table>
+</MainColumnFrame>
 
 {#snippet typeDetailContent(_: { close: () => void })}
   {#if state.selectedItem}
     <div class="space-y-6">
       {#if isSystemEntity(state.selectedItem)}
-        <div class="flex items-center space-x-2 px-3 py-2 bg-mono-950 border border-mono-700">
+        <div class="flex items-center space-x-2 px-3 py-2 bg-mono-900/50 backdrop-blur-sm border border-mono-700/80 rounded-xl mb-4">
           <i class="fa-solid fa-lock text-mono-400 text-sm"></i>
           <span class="text-sm text-mono-400">System type — read-only</span>
         </div>

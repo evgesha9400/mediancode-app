@@ -25,8 +25,8 @@
 </script>
 
 <div>
-	<label for={computedId} class="block text-sm text-mono-300 mb-1 font-medium">
-		{label} {#if required}<span class="text-red-500">*</span>{/if}
+	<label for={computedId} class="block text-sm font-inter text-mono-300 mb-1.5 font-medium">
+		{label} {#if required}<span class="text-red-500 ml-0.5">*</span>{/if}
 	</label>
 	<input
 		id={computedId}
@@ -34,7 +34,7 @@
 		bind:value
 		{placeholder}
 		{disabled}
-		class="w-full px-3 py-1.5 text-sm border border-mono-600 bg-mono-900 text-mono-100 focus:ring-2 focus:ring-green-400 focus:border-transparent {error ? 'border-red-500' : ''} {disabled ? 'bg-mono-800 cursor-not-allowed' : ''}"
+		class="w-full px-4 py-2 text-sm font-inter border rounded-xl shadow-inner focus:ring-2 focus:ring-green-400/50 outline-none focus:outline-none focus:border-transparent transition-all {error ? 'border-red-500/50 bg-red-950/10' : 'border-mono-700/80 bg-mono-900/50 backdrop-blur-sm/50'} {disabled ? 'bg-mono-800/40 cursor-not-allowed opacity-75' : 'text-white'}"
 	/>
 	{#if error}
 		<p class="text-xs text-red-500 mt-1">{error}</p>

@@ -7,6 +7,7 @@
   } from '$lib/stores/apis';
   import { activeNamespaceId, namespacesStore } from '$lib/stores/namespaces';
   import {
+    MainColumnFrame,
     PageHeader,
     SearchBar,
     Table,
@@ -61,28 +62,31 @@
   );
 </script>
 
-<PageHeader title="APIs">
-    {#snippet actions()}
-      <NamespaceSelector />
-      <button
-        type="button"
-        onclick={workflow.openCreate}
-        class="px-4 py-2 bg-green-400 text-mono-950 font-bold tracking-wide flex items-center space-x-2 hover:bg-green-300 cursor-pointer transition-colors"
-      >
-        <i class="fa-solid fa-plus"></i>
-        <span>New API</span>
-      </button>
-    {/snippet}
-  </PageHeader>
+<MainColumnFrame bodyClass="">
+  {#snippet header()}
+    <PageHeader title="APIs">
+      {#snippet actions()}
+        <NamespaceSelector />
+        <button
+          type="button"
+          onclick={workflow.openCreate}
+          class="px-4 py-2 bg-green-400 text-mono-950 font-inter font-semibold rounded-xl text-sm tracking-wide shadow-sm flex items-center space-x-2 hover:bg-green-300 cursor-pointer transition-colors"
+        >
+          <i class="fa-solid fa-plus"></i>
+          <span>New API</span>
+        </button>
+      {/snippet}
+    </PageHeader>
 
-  <SearchBar
-    bind:searchQuery={workflow.query}
-    placeholder="Search APIs..."
-    resultsCount={filteredApis.length}
-    resultLabel="API"
-    showFilter={false}
-    active={false}
-  />
+    <SearchBar
+      bind:searchQuery={workflow.query}
+      placeholder="Search APIs..."
+      resultsCount={filteredApis.length}
+      resultLabel="API"
+      showFilter={false}
+      active={false}
+    />
+  {/snippet}
 
   <Table isEmpty={filteredApis.length === 0}>
     {#snippet header()}
@@ -159,6 +163,7 @@
       />
     {/snippet}
   </Table>
+</MainColumnFrame>
 
 {#snippet createApiContent(_: { close: () => void })}
   {#if workflow.editedItem}
@@ -198,7 +203,7 @@
           bind:value={workflow.editedItem.description}
           rows="3"
           placeholder="Describe what this API does..."
-          class="w-full px-3 py-1.5 text-sm border border-mono-600 focus:ring-2 focus:ring-green-400 focus:border-transparent"
+          class="w-full px-3 py-1.5 text-sm border border-mono-700/80 bg-mono-900/50 backdrop-blur-sm/50 focus:ring-2 focus:ring-green-400/50 outline-none focus:outline-none transition-all rounded-xl"
         ></textarea>
       </div>
 

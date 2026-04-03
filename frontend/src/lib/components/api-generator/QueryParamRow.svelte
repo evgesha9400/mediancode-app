@@ -61,7 +61,7 @@
         value={param.name}
         oninput={handleNameInput}
         placeholder="param_name"
-        class="w-full px-3 text-sm font-mono border border-mono-600 bg-mono-900 text-mono-100 focus:ring-2 focus:ring-green-400 focus:border-transparent h-[34px]"
+        class="w-full px-3 text-sm font-mono border border-mono-700/80 rounded-xl bg-mono-900/50 backdrop-blur-sm text-white focus:ring-2 focus:ring-green-400/50 outline-none focus:outline-none transition-all h-[34px]"
       />
     </div>
 
@@ -70,7 +70,7 @@
       <select
         value={param.operator}
         onchange={(e) => onUpdate({ operator: (e.target as HTMLSelectElement).value as FilterOperator })}
-        class="w-full px-3 text-sm border border-mono-600 bg-mono-900 text-mono-100 focus:ring-2 focus:ring-green-400 focus:border-transparent h-[34px]"
+        class="w-full px-3 text-sm border border-mono-700/80 rounded-xl bg-mono-900/50 backdrop-blur-sm text-white focus:ring-2 focus:ring-green-400/50 outline-none focus:outline-none transition-all h-[34px]"
       >
         {#each availableOperators as op (op)}
           <option value={op}>{op}</option>
@@ -80,7 +80,7 @@
 
     <!-- Field display with type chip and delete inside (matches path param pattern) -->
     <div class="w-1/2 min-w-0">
-      <div class="w-full px-3 border border-mono-600 bg-mono-900 text-mono-100 flex items-center justify-between h-[34px]">
+      <div class="w-full px-3 border border-mono-700/80 rounded-xl bg-mono-900/50 backdrop-blur-sm flex items-center justify-between h-[34px]">
         <div class="flex items-center gap-1.5">
           {#if param.field}
             <span class="font-mono text-sm">{param.field}</span>

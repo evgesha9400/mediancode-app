@@ -49,7 +49,7 @@
 
   <!-- Selected Object Field Summary -->
   {#if selectedObject}
-    <div class="p-3 bg-mono-800 rounded border border-mono-700">
+    <div class="p-3 bg-mono-900/50 backdrop-blur-sm rounded-xl border border-mono-700/80">
       <div class="flex items-center justify-between mb-2">
         <div class="flex items-center space-x-2">
           <i class="fa-solid fa-cube text-mono-400 text-sm"></i>
@@ -75,7 +75,7 @@
                 {#if scalarMember.role !== 'writable'}
                   <span class="text-mono-500 text-[10px] uppercase">{scalarMember.role.replace(/_/g, ' ')}</span>
                 {/if}
-                <span class="text-mono-400 bg-mono-800 px-1.5 py-0.5 rounded">{field.type}</span>
+                <span class="text-mono-400 bg-mono-800 px-1.5 py-0.5 rounded-lg">{field.type}</span>
               </div>
             </div>
           {:else}
@@ -88,7 +88,7 @@
       </div>
     </div>
   {:else}
-    <div class="p-3 bg-mono-800 rounded border border-mono-700">
+    <div class="p-3 bg-mono-900/50 backdrop-blur-sm rounded-xl border border-mono-700/80">
       <p class="text-xs text-mono-400">No object selected — select an object above to see previews</p>
     </div>
   {/if}
@@ -103,7 +103,7 @@
             <i class="fa-solid fa-arrow-up mr-2"></i>
             Request Body
           </h4>
-          <div class="p-3 bg-mono-950 rounded border border-mono-700 text-white text-sm overflow-x-auto">
+          <div class="p-3 bg-mono-900/50 backdrop-blur-sm rounded-xl border border-mono-700/80 text-white text-sm overflow-x-auto">
             <pre>{requestPreviewJson}</pre>
           </div>
         </div>
@@ -116,7 +116,7 @@
             <i class="fa-solid fa-arrow-down mr-2"></i>
             Response Body
           </h4>
-          <div class="p-3 bg-mono-950 rounded border border-mono-700 text-white text-sm overflow-x-auto">
+          <div class="p-3 bg-mono-900/50 backdrop-blur-sm rounded-xl border border-mono-700/80 text-white text-sm overflow-x-auto">
             <pre>{responsePreviewJson}</pre>
           </div>
         </div>
@@ -124,8 +124,8 @@
     </div>
   {:else}
     <!-- DELETE: no request or response body -->
-    <div class="p-3 bg-mono-950 rounded border border-mono-700">
-      <p class="text-sm text-mono-400">DELETE returns <code class="bg-mono-800 px-1 rounded">204 No Content</code> with no response body.</p>
+    <div class="p-3 bg-mono-900/50 backdrop-blur-sm rounded-xl border border-mono-700/80">
+      <p class="text-sm text-mono-400">DELETE returns <code class="bg-mono-800 px-1 rounded-lg">204 No Content</code> with no response body.</p>
     </div>
   {/if}
 </div>

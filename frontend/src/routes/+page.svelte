@@ -1,6 +1,22 @@
 <script lang="ts">
 	import { clerkState } from '$lib/clerk';
-	import { Logo } from '$lib/components';
+	import { PreRenderedLogo } from '$lib/components/logo';
+	import {
+		marketingBetaDot,
+		marketingBetaPill,
+		marketingCtaOutline,
+		marketingCtaPrimary,
+		marketingFeatureIcon,
+		marketingFooterCta,
+		marketingFooterCtaSecondary,
+		marketingHeader,
+		marketingHeroCta,
+		marketingHeroCtaSecondary,
+		marketingMobileMenu,
+		marketingNavLink,
+		marketingNavLinkMobile,
+		marketingStepBadge,
+	} from '$lib/ui/classes';
 
 	let mobileMenuOpen = $state(false);
 
@@ -21,33 +37,33 @@
 </script>
 
 <!-- Header -->
-<header id="header" class="bg-mono-950 border-b-2 border-mono-700 sticky top-0 z-50">
+<header id="header" class={marketingHeader}>
 	<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
 		<div class="flex items-center justify-between h-16">
 			<a href="/" onclick={scrollToTop} class="flex items-center space-x-3 cursor-pointer hover:opacity-80 transition-opacity">
-				<Logo size="md" variant="dark" />
-				<span class="text-lg font-mono font-semibold text-mono-100 tracking-tight">Median Code</span>
+				<PreRenderedLogo size="md" variant="dark" />
+				<span class="text-lg font-inter font-semibold text-mono-100 tracking-tight">Median Code</span>
 			</a>
 			<button onclick={toggleMobileMenu} aria-label="Toggle mobile menu" class="md:hidden w-10 h-10 flex items-center justify-center">
 				<i class="fa-solid {mobileMenuOpen ? 'fa-times' : 'fa-bars'} text-white text-xl"></i>
 			</button>
 			<nav class="hidden md:flex items-center space-x-8">
-				<a href="#features" class="text-mono-400 hover:text-white font-mono font-medium text-xs uppercase tracking-widest transition-colors">Features</a>
-				<a href="#how-it-works" class="text-mono-400 hover:text-white font-mono font-medium text-xs uppercase tracking-widest transition-colors">How It Works</a>
-				<a href="#philosophy" class="text-mono-400 hover:text-white font-mono font-medium text-xs uppercase tracking-widest transition-colors">Philosophy</a>
+				<a href="#features" class={marketingNavLink}>Features</a>
+				<a href="#how-it-works" class={marketingNavLink}>How It Works</a>
+				<a href="#philosophy" class={marketingNavLink}>Philosophy</a>
 
 				{#if $clerkState.isLoaded}
-					<div class="h-5 w-px bg-mono-700"></div>
+					<div class="h-5 w-px bg-mono-800"></div>
 
 					{#if $clerkState.isSignedIn}
-						<a href="/dashboard" class="px-6 py-2 text-green-400 font-mono font-bold text-xs uppercase tracking-widest border-2 border-green-400 hover:bg-green-400 hover:text-mono-950 transition-colors">
+						<a href="/dashboard" class={marketingCtaOutline}>
 							Dashboard
 						</a>
 					{:else}
-						<a href="/signin" class="text-mono-400 hover:text-white font-mono font-medium text-xs uppercase tracking-widest transition-colors">
+						<a href="/signin" class={marketingNavLink}>
 							Sign In
 						</a>
-						<a href="/signup" class="px-6 py-2 bg-green-400 text-mono-950 font-mono font-bold text-xs uppercase tracking-widest border-2 border-green-400 hover:bg-green-300 hover:border-green-300 transition-colors">
+						<a href="/signup" class={marketingCtaPrimary}>
 							Start Building
 						</a>
 					{/if}
@@ -55,32 +71,32 @@
 			</nav>
 		</div>
 	</div>
-	<!-- Mobile menu (terminal style) -->
-	<div class="md:hidden border-t-2 border-mono-700" class:hidden={!mobileMenuOpen}>
-		<div class="px-4 py-4 space-y-1 bg-mono-950">
-			<a href="#features" onclick={closeMobileMenu} class="block text-mono-400 hover:text-mono-100 font-mono text-sm py-2 transition-colors">
-				<span class="text-green-400 mr-2">></span>features
+	<!-- Mobile menu (softened) -->
+	<div class={marketingMobileMenu} class:hidden={!mobileMenuOpen}>
+		<div class="px-4 py-4 space-y-1">
+			<a href="#features" onclick={closeMobileMenu} class={marketingNavLinkMobile}>
+				Features
 			</a>
-			<a href="#how-it-works" onclick={closeMobileMenu} class="block text-mono-400 hover:text-mono-100 font-mono text-sm py-2 transition-colors">
-				<span class="text-green-400 mr-2">></span>how-it-works
+			<a href="#how-it-works" onclick={closeMobileMenu} class={marketingNavLinkMobile}>
+				How It Works
 			</a>
-			<a href="#philosophy" onclick={closeMobileMenu} class="block text-mono-400 hover:text-mono-100 font-mono text-sm py-2 transition-colors">
-				<span class="text-green-400 mr-2">></span>philosophy
+			<a href="#philosophy" onclick={closeMobileMenu} class={marketingNavLinkMobile}>
+				Philosophy
 			</a>
 			{#if $clerkState.isLoaded && !$clerkState.isSignedIn}
-				<div class="border-t-2 border-mono-800 pt-3 mt-3 space-y-1">
-					<a href="/signin" onclick={closeMobileMenu} class="block text-mono-400 hover:text-mono-100 font-mono text-sm py-2 transition-colors">
-						<span class="text-mono-600">$</span>&nbsp;sign-in
+				<div class="border-t border-mono-800/60 pt-3 mt-3 space-y-1">
+					<a href="/signin" onclick={closeMobileMenu} class={marketingNavLinkMobile}>
+						Sign In
 					</a>
-					<a href="/signup" onclick={closeMobileMenu} class="block text-green-400 hover:text-green-300 font-mono text-sm py-2 transition-colors">
-						<span class="text-green-400">$</span>&nbsp;start-building
+					<a href="/signup" onclick={closeMobileMenu} class="{marketingCtaPrimary} w-full justify-center sm:w-auto">
+						Start Building
 					</a>
 				</div>
 			{/if}
 			{#if $clerkState.isLoaded && $clerkState.isSignedIn}
-				<div class="border-t-2 border-mono-800 pt-3 mt-3">
-					<a href="/dashboard" onclick={closeMobileMenu} class="block text-green-400 hover:text-green-300 font-mono text-sm py-2 transition-colors">
-						<span class="text-green-400">$</span>&nbsp;go-to-dashboard
+				<div class="border-t border-mono-800/60 pt-3 mt-3">
+					<a href="/dashboard" onclick={closeMobileMenu} class="{marketingCtaOutline} w-full justify-center sm:w-auto">
+						Go to Dashboard
 					</a>
 				</div>
 			{/if}
@@ -89,88 +105,98 @@
 </header>
 
 <!-- Hero -->
-<section id="hero" class="bg-mono-950 py-20 sm:py-28 lg:py-32">
-	<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+<section id="hero" class="bg-mono-950 py-20 sm:py-28 lg:py-32 relative overflow-hidden">
+	<!-- Ambient Glow Background -->
+	<div class="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[500px] opacity-[0.15] bg-green-400 blur-[120px] rounded-full pointer-events-none"></div>
+
+	<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
 		<div class="space-y-10">
 			<!-- Status indicator -->
-			<div class="flex items-center space-x-2">
-				<span class="w-2 h-2 bg-green-400 rounded-full animate-pulse"></span>
-				<span class="text-sm font-mono font-bold text-green-400 uppercase tracking-widest">beta</span>
+			<div class={marketingBetaPill}>
+				<span class={marketingBetaDot}></span>
+				<span class="text-xs font-inter font-semibold text-green-400 uppercase tracking-widest">beta</span>
 			</div>
 
-			<!-- Single-line terminal headline -->
-			<h1 class="text-3xl sm:text-4xl lg:text-[2.75rem] xl:text-5xl font-bold text-white leading-tight tracking-tighter font-mono">
-				<span class="text-green-400">$</span>&nbsp;The Shortest Path to a <span class="text-mono-500">Production API</span><span class="cursor-blink text-green-400">_</span>
+			<!-- Softened headline -->
+			<h1 class="text-4xl sm:text-5xl lg:text-7xl font-bold text-white leading-[1.1] tracking-tighter font-inter">
+				The Shortest Path to a <br class="hidden sm:block" /><span class="text-mono-300">Production API</span>
 			</h1>
 
-			<p class="text-base sm:text-lg text-mono-400 leading-relaxed max-w-2xl font-mono">
-				Define your data models. Get a complete FastAPI application with PostgreSQL, SQLAlchemy, Pydantic schemas, and AWS CDK infrastructure. Instantly.
+			<p class="text-lg sm:text-xl text-mono-400 leading-relaxed max-w-2xl font-inter">
+				Define your data models. Get a complete FastAPI application with PostgreSQL, SQLAlchemy, Pydantic schemas, and AWS CDK infrastructure. <span class="text-mono-200">Instantly.</span>
 			</p>
 
 			<!-- CTA buttons -->
-			<div class="flex flex-col sm:flex-row gap-4">
+			<div class="flex flex-col sm:flex-row gap-4 pt-2">
 				{#if $clerkState.isLoaded && $clerkState.isSignedIn}
-					<a href="/dashboard" class="inline-flex items-center justify-center px-10 py-4 text-green-400 font-mono font-bold text-sm tracking-wide border-2 border-green-400 hover:bg-green-400 hover:text-mono-950 transition-colors">
-						go-to-dashboard
-						<i class="fa-solid fa-arrow-right ml-3 text-xs"></i>
+					<a href="/dashboard" class={marketingHeroCta}>
+						Go to Dashboard
+						<i class="fa-solid fa-arrow-right ml-2 text-sm"></i>
 					</a>
 				{:else}
-					<a href="/signup" class="inline-flex items-center justify-center px-10 py-4 bg-green-400 text-mono-950 font-mono font-bold text-sm tracking-wide border-2 border-green-400 hover:bg-green-300 hover:border-green-300 transition-colors">
-						get-started --free
-						<i class="fa-solid fa-arrow-right ml-3 text-xs"></i>
+					<a href="/signup" class={marketingHeroCta}>
+						Get Started for Free
+						<i class="fa-solid fa-arrow-right ml-2 text-sm"></i>
 					</a>
-					<a href="#how-it-works" class="inline-flex items-center justify-center px-10 py-4 bg-transparent text-mono-300 font-mono font-bold text-sm tracking-wide border-2 border-mono-500 hover:border-green-400 hover:text-green-400 transition-colors">
-						see-how-it-works
+					<a href="#how-it-works" class={marketingHeroCtaSecondary}>
+						See How It Works
 					</a>
 				{/if}
 			</div>
 
 			<!-- Trust badges -->
-			<div class="flex flex-wrap gap-x-8 gap-y-3 text-sm font-mono text-mono-300 tracking-wide">
-				<div class="flex items-center space-x-2.5">
-					<i class="fa-solid fa-check text-green-400 text-xs font-bold"></i>
+			<div class="flex flex-wrap gap-x-8 gap-y-4 text-sm font-inter text-mono-400 font-medium pt-4">
+				<div class="flex items-center space-x-2">
+					<div class="flex items-center justify-center w-5 h-5 rounded-full bg-green-400/10 text-green-400"><i class="fa-solid fa-check text-[10px]"></i></div>
 					<span>Deterministic output</span>
 				</div>
-				<div class="flex items-center space-x-2.5">
-					<i class="fa-solid fa-check text-green-400 text-xs font-bold"></i>
+				<div class="flex items-center space-x-2">
+					<div class="flex items-center justify-center w-5 h-5 rounded-full bg-green-400/10 text-green-400"><i class="fa-solid fa-check text-[10px]"></i></div>
 					<span>Instant generation</span>
 				</div>
-				<div class="flex items-center space-x-2.5">
-					<i class="fa-solid fa-check text-green-400 text-xs font-bold"></i>
+				<div class="flex items-center space-x-2">
+					<div class="flex items-center justify-center w-5 h-5 rounded-full bg-green-400/10 text-green-400"><i class="fa-solid fa-check text-[10px]"></i></div>
 					<span>Human-readable code</span>
 				</div>
-				<div class="flex items-center space-x-2.5">
-					<i class="fa-solid fa-check text-green-400 text-xs font-bold"></i>
+				<div class="flex items-center space-x-2">
+					<div class="flex items-center justify-center w-5 h-5 rounded-full bg-green-400/10 text-green-400"><i class="fa-solid fa-check text-[10px]"></i></div>
 					<span>Ready to deploy</span>
 				</div>
 			</div>
 		</div>
 
-		<!-- Terminal generation log (wide, below hero content) -->
-		<div class="hidden lg:block mt-16">
-			<div class="border-2 border-mono-700 bg-mono-900 max-w-4xl">
+		<!-- Terminal generation log (mac style) -->
+		<div class="hidden lg:block mt-20 relative max-w-4xl mx-auto">
+			<!-- Subtle glow behind terminal -->
+			<div class="absolute -inset-1 bg-gradient-to-r from-green-400/20 to-blue-500/20 blur-xl opacity-50 rounded-3xl"></div>
+			
+			<div class="relative bg-mono-950/80 backdrop-blur-xl border border-mono-800/80 rounded-2xl shadow-2xl overflow-hidden ring-1 ring-white/5">
 				<!-- Terminal chrome -->
-				<div class="flex items-center justify-between px-6 py-3.5 border-b-2 border-mono-700">
+				<div class="flex items-center justify-between px-4 py-3 bg-white/[0.02] border-b border-white/5">
 					<div class="flex items-center space-x-2">
-						<div class="w-3 h-3 bg-red-500 rounded-full opacity-70"></div>
-						<div class="w-3 h-3 bg-yellow-500 rounded-full opacity-70"></div>
-						<div class="w-3 h-3 bg-green-500 rounded-full opacity-70"></div>
+						<div class="w-3 h-3 bg-red-500/80 rounded-full"></div>
+						<div class="w-3 h-3 bg-yellow-500/80 rounded-full"></div>
+						<div class="w-3 h-3 bg-green-500/80 rounded-full"></div>
 					</div>
-					<span class="text-mono-500 text-xs font-mono font-bold tracking-wider">terminal</span>
+					<div class="flex items-center space-x-2 bg-black/20 px-3 py-1 rounded-md text-mono-400 text-[10px] font-mono tracking-wider">
+						<i class="fa-brands fa-apple opacity-50"></i>
+						<span>median-cli</span>
+					</div>
+					<div class="w-12"></div> <!-- Spacer for centering -->
 				</div>
 				<!-- Generation log content -->
-				<div class="p-6 font-mono text-sm leading-loose">
-					<div class="terminal-line" style="--line-index: 0"><span class="text-green-400">$</span> <span class="text-mono-100">median generate --api "My API"</span></div>
-					<div class="terminal-line" style="--line-index: 1"><span class="text-green-400">[OK]</span> <span class="text-mono-400">Parsed 2 objects, 8 fields, 4 endpoints</span></div>
-					<div class="terminal-line" style="--line-index: 2"><span class="text-green-400">[OK]</span> <span class="text-mono-400">Generated</span> <span class="text-mono-300">models/user.py</span> <span class="text-mono-500">(63 lines)</span></div>
-					<div class="terminal-line" style="--line-index: 3"><span class="text-green-400">[OK]</span> <span class="text-mono-400">Generated</span> <span class="text-mono-300">models/order.py</span> <span class="text-mono-500">(56 lines)</span></div>
-					<div class="terminal-line" style="--line-index: 4"><span class="text-green-400">[OK]</span> <span class="text-mono-400">Generated</span> <span class="text-mono-300">schemas/user.py</span> <span class="text-mono-500">(49 lines)</span></div>
-					<div class="terminal-line" style="--line-index: 5"><span class="text-green-400">[OK]</span> <span class="text-mono-400">Generated</span> <span class="text-mono-300">schemas/order.py</span> <span class="text-mono-500">(44 lines)</span></div>
-					<div class="terminal-line" style="--line-index: 6"><span class="text-green-400">[OK]</span> <span class="text-mono-400">Generated</span> <span class="text-mono-300">routes/users.py</span> <span class="text-mono-500">(112 lines)</span></div>
-					<div class="terminal-line" style="--line-index: 7"><span class="text-green-400">[OK]</span> <span class="text-mono-400">Generated</span> <span class="text-mono-300">routes/orders.py</span> <span class="text-mono-500">(97 lines)</span></div>
-					<div class="terminal-line" style="--line-index: 8"><span class="text-green-400">[OK]</span> <span class="text-mono-400">Generated</span> <span class="text-mono-300">alembic/versions/001_initial.py</span> <span class="text-mono-500">(48 lines)</span></div>
-					<div class="terminal-line" style="--line-index: 9"><span class="text-green-400">[OK]</span> <span class="text-mono-400">Generated</span> <span class="text-mono-300">infra/cdk_stack.py</span> <span class="text-mono-500">(86 lines)</span></div>
-					<div class="terminal-line mt-1" style="--line-index: 10"><span class="text-mono-100 font-bold">Done.</span> <span class="text-mono-300">12 files, 654 lines.</span> <span class="text-green-400">Ready to deploy.</span></div>
+				<div class="p-6 font-mono text-sm leading-relaxed text-mono-300">
+					<div class="terminal-line" style="--line-index: 0"><span class="text-green-400 opacity-80">➜</span> <span class="text-blue-400">~/project</span> <span class="text-white">median generate --api "My API"</span></div>
+					<div class="terminal-line" style="--line-index: 1"><span class="text-green-400">✓</span> <span class="text-mono-400">Parsed 2 objects, 8 fields, 4 endpoints</span></div>
+					<div class="terminal-line" style="--line-index: 2"><span class="text-green-400">✓</span> <span class="text-mono-400">Generated</span> <span class="text-mono-300">models/user.py</span> <span class="text-mono-500">(63 lines)</span></div>
+					<div class="terminal-line" style="--line-index: 3"><span class="text-green-400">✓</span> <span class="text-mono-400">Generated</span> <span class="text-mono-300">models/order.py</span> <span class="text-mono-500">(56 lines)</span></div>
+					<div class="terminal-line" style="--line-index: 4"><span class="text-green-400">✓</span> <span class="text-mono-400">Generated</span> <span class="text-mono-300">schemas/user.py</span> <span class="text-mono-500">(49 lines)</span></div>
+					<div class="terminal-line" style="--line-index: 5"><span class="text-green-400">✓</span> <span class="text-mono-400">Generated</span> <span class="text-mono-300">schemas/order.py</span> <span class="text-mono-500">(44 lines)</span></div>
+					<div class="terminal-line" style="--line-index: 6"><span class="text-green-400">✓</span> <span class="text-mono-400">Generated</span> <span class="text-mono-300">routes/users.py</span> <span class="text-mono-500">(112 lines)</span></div>
+					<div class="terminal-line" style="--line-index: 7"><span class="text-green-400">✓</span> <span class="text-mono-400">Generated</span> <span class="text-mono-300">routes/orders.py</span> <span class="text-mono-500">(97 lines)</span></div>
+					<div class="terminal-line" style="--line-index: 8"><span class="text-green-400">✓</span> <span class="text-mono-400">Generated</span> <span class="text-mono-300">alembic/versions/001_initial.py</span> <span class="text-mono-500">(48 lines)</span></div>
+					<div class="terminal-line" style="--line-index: 9"><span class="text-green-400">✓</span> <span class="text-mono-400">Generated</span> <span class="text-mono-300">infra/cdk_stack.py</span> <span class="text-mono-500">(86 lines)</span></div>
+					<div class="terminal-line mt-3" style="--line-index: 10"><span class="text-green-400 font-bold">✨ Done.</span> <span class="text-mono-300">12 files, 654 lines. Ready to deploy.</span></div>
 				</div>
 			</div>
 		</div>
@@ -178,69 +204,66 @@
 </section>
 
 <!-- Features -->
-<section id="features" class="bg-mono-900 py-20 sm:py-24 lg:py-32">
-	<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+<section id="features" class="bg-mono-900/50 backdrop-blur-sm py-20 sm:py-24 lg:py-32 relative">
+	<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
 		<!-- Section header -->
-		<div class="mb-16">
-			<p class="text-xs font-mono font-bold text-green-400 tracking-wider mb-4">
-				<span class="text-green-400">$</span>&nbsp;ls ./features
-			</p>
-			<h2 class="text-4xl sm:text-5xl lg:text-6xl font-black text-white tracking-tighter leading-[0.95] font-mono">
-				Everything Your<br>API Needs
+		<div class="mb-16 text-center sm:text-left">
+			<h2 class="text-3xl sm:text-4xl lg:text-5xl font-bold text-white tracking-tight leading-tight font-inter">
+				Everything Your API Needs
 			</h2>
-			<p class="text-base text-mono-400 mt-6 max-w-xl font-mono">
-				A complete, deployable FastAPI application, not fragments you have to stitch together.
+			<p class="text-base text-mono-400 mt-4 max-w-xl font-inter">
+				A complete, deployable FastAPI application. Not fragments you have to stitch together.
 			</p>
 		</div>
 
-		<!-- Feature grid (B's 3-column with thick borders, A's terminal style) -->
-		<div class="grid sm:grid-cols-2 lg:grid-cols-3 border-2 border-mono-700">
-			<div class="p-8 border-b-2 border-r-0 sm:border-r-2 border-mono-700">
-				<div class="w-10 h-10 border-2 border-green-400 flex items-center justify-center mb-6">
-					<i class="fa-solid fa-bolt text-green-400 text-sm"></i>
+		<!-- Feature grid (Soft cards) -->
+		<div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+			<div class="p-8 bg-mono-950/40 border border-mono-800/80 rounded-2xl hover:bg-mono-950/60 hover:border-mono-700/80 transition-all hover:-translate-y-1 shadow-lg">
+				<div class={marketingFeatureIcon}>
+					<i class="fa-solid fa-bolt text-lg"></i>
 				</div>
-				<h3 class="text-lg font-bold text-white mb-3 uppercase tracking-wide font-mono">FastAPI Endpoints</h3>
-				<p class="text-sm text-mono-400 leading-relaxed font-mono">Complete CRUD routes with proper request/response models, error handling, and auto-generated OpenAPI documentation.</p>
+				<h3 class="text-lg font-semibold text-white mb-3 tracking-wide font-inter">FastAPI Endpoints</h3>
+				<p class="text-sm text-mono-400 leading-relaxed font-inter">Complete CRUD routes with proper request/response models, error handling, and auto-generated OpenAPI documentation.</p>
 			</div>
 
-			<div class="p-8 border-b-2 border-r-0 lg:border-r-2 border-mono-700">
-				<div class="w-10 h-10 border-2 border-green-400 flex items-center justify-center mb-6">
-					<i class="fa-solid fa-database text-green-400 text-sm"></i>
+			<div class="p-8 bg-mono-950/40 border border-mono-800/80 rounded-2xl hover:bg-mono-950/60 hover:border-mono-700/80 transition-all hover:-translate-y-1 shadow-lg">
+				<div class={marketingFeatureIcon}>
+					<i class="fa-solid fa-database text-lg"></i>
 				</div>
-				<h3 class="text-lg font-bold text-white mb-3 uppercase tracking-wide font-mono">SQLAlchemy Models</h3>
-				<p class="text-sm text-mono-400 leading-relaxed font-mono">Database models with proper column types, relationships, foreign keys, and constraints, ready for PostgreSQL.</p>
+				<h3 class="text-lg font-semibold text-white mb-3 tracking-wide font-inter">SQLAlchemy Models</h3>
+				<p class="text-sm text-mono-400 leading-relaxed font-inter">Database models with proper column types, relationships, foreign keys, and constraints, ready for PostgreSQL.</p>
 			</div>
 
-			<div class="p-8 border-b-2 border-r-0 sm:border-r-2 lg:border-r-0 border-mono-700">
-				<div class="w-10 h-10 border-2 border-green-400 flex items-center justify-center mb-6">
-					<i class="fa-solid fa-shield-halved text-green-400 text-sm"></i>
+			<div class="p-8 bg-mono-950/40 border border-mono-800/80 rounded-2xl hover:bg-mono-950/60 hover:border-mono-700/80 transition-all hover:-translate-y-1 shadow-lg">
+				<div class={marketingFeatureIcon}>
+					<i class="fa-solid fa-shield-halved text-lg"></i>
 				</div>
-				<h3 class="text-lg font-bold text-white mb-3 uppercase tracking-wide font-mono">Pydantic Schemas</h3>
-				<p class="text-sm text-mono-400 leading-relaxed font-mono">Request and response schemas with field constraints, type validation, and serialization configured out of the box.</p>
+				<h3 class="text-lg font-semibold text-white mb-3 tracking-wide font-inter">Pydantic Schemas</h3>
+				<p class="text-sm text-mono-400 leading-relaxed font-inter">Request and response schemas with field constraints, type validation, and serialization configured out of the box.</p>
 			</div>
 
-			<div class="p-8 border-b-2 sm:border-b-0 lg:border-b-0 border-r-0 lg:border-r-2 border-mono-700">
-				<div class="w-10 h-10 border-2 border-green-400 flex items-center justify-center mb-6">
-					<i class="fa-solid fa-cloud text-green-400 text-sm"></i>
+			<div class="p-8 bg-mono-950/40 border border-mono-800/80 rounded-2xl hover:bg-mono-950/60 hover:border-mono-700/80 transition-all hover:-translate-y-1 shadow-lg">
+				<div class={marketingFeatureIcon}>
+					<i class="fa-solid fa-cloud text-lg"></i>
 				</div>
-				<h3 class="text-lg font-bold text-white mb-3 uppercase tracking-wide font-mono">AWS CDK Infrastructure</h3>
-				<p class="text-sm text-mono-400 leading-relaxed font-mono">Optional deployment code for AWS including Lambda, API Gateway, RDS, and all the glue. Run <code class="text-mono-200 bg-mono-800 px-1.5 py-0.5 font-mono">cdk deploy</code> and go live.</p>
+				<h3 class="text-lg font-semibold text-white mb-3 tracking-wide font-inter">AWS CDK Infrastructure</h3>
+				<p class="text-sm text-mono-400 leading-relaxed font-inter">Optional deployment code for AWS including Lambda, API Gateway, RDS. Run <code class="text-mono-300 bg-white/5 px-1.5 py-0.5 rounded font-mono text-xs">cdk deploy</code> and go live.</p>
 			</div>
 
-			<div class="p-8 border-b-2 sm:border-b-0 border-r-0 sm:border-r-2 border-mono-700">
-				<div class="w-10 h-10 border-2 border-green-400 flex items-center justify-center mb-6">
-					<i class="fa-solid fa-layer-group text-green-400 text-sm"></i>
+			<div class="p-8 bg-mono-950/40 border border-mono-800/80 rounded-2xl hover:bg-mono-950/60 hover:border-mono-700/80 transition-all hover:-translate-y-1 shadow-lg">
+				<div class={marketingFeatureIcon}>
+					<i class="fa-solid fa-layer-group text-lg"></i>
 				</div>
-				<h3 class="text-lg font-bold text-white mb-3 uppercase tracking-wide font-mono">Alembic Migrations</h3>
-				<p class="text-sm text-mono-400 leading-relaxed font-mono">Database migration scripts generated automatically. Schema evolution handled from day one, not retrofitted later.</p>
+				<h3 class="text-lg font-semibold text-white mb-3 tracking-wide font-inter">Alembic Migrations</h3>
+				<p class="text-sm text-mono-400 leading-relaxed font-inter">Database migration scripts generated automatically. Schema evolution handled from day one, not retrofitted later.</p>
 			</div>
 
-			<div class="p-8">
-				<div class="w-10 h-10 border-2 border-green-400 flex items-center justify-center mb-6">
-					<i class="fa-solid fa-check-double text-green-400 text-sm"></i>
+			<div class="p-8 bg-mono-950/40 border border-mono-800/80 rounded-2xl hover:bg-mono-950/60 hover:border-mono-700/80 transition-all hover:-translate-y-1 shadow-lg">
+				<div class={marketingFeatureIcon}>
+					<i class="fa-solid fa-check-double text-lg"></i>
 				</div>
-				<h3 class="text-lg font-bold text-white mb-3 uppercase tracking-wide font-mono">Validator Templates</h3>
-				<p class="text-sm text-mono-400 leading-relaxed font-mono">Common field and model validators from a curated gallery including email normalization, date ranges, confirmation matching, and more.</p>
+				<h3 class="text-lg font-semibold text-white mb-3 tracking-wide font-inter">Validator Templates</h3>
+				<p class="text-sm text-mono-400 leading-relaxed font-inter">Common field and model validators from a curated gallery including email normalization, date ranges, and more.</p>
 			</div>
 		</div>
 	</div>
@@ -250,50 +273,47 @@
 <section id="how-it-works" class="bg-mono-950 py-20 sm:py-24 lg:py-32">
 	<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
 		<!-- Section header -->
-		<div class="mb-20">
-			<p class="text-xs font-mono font-bold text-green-400 tracking-wider mb-4">
-				<span class="text-green-400">$</span>&nbsp;cat ./workflow
-			</p>
-			<h2 class="text-4xl sm:text-5xl lg:text-6xl font-black text-white tracking-tighter leading-[0.95] font-mono">
-				Three Steps.<br>Working API.
+		<div class="mb-20 text-center sm:text-left">
+			<h2 class="text-3xl sm:text-4xl lg:text-5xl font-bold text-white tracking-tight leading-tight font-inter">
+				Three Steps. Working API.
 			</h2>
-			<p class="text-base text-mono-400 mt-6 max-w-xl font-mono">
+			<p class="text-base text-mono-400 mt-4 max-w-xl font-inter">
 				No boilerplate. No configuration puzzles. Define what you need and get production code.
 			</p>
 		</div>
 
-		<!-- Steps with massive numbers and terminal commands -->
-		<div class="grid lg:grid-cols-3 gap-0">
+		<!-- Steps with soft numbers -->
+		<div class="grid lg:grid-cols-3 gap-12 lg:gap-8">
 			<!-- Step 1 -->
-			<div class="relative pb-16 lg:pb-0 lg:pr-12">
-				<div class="text-[8rem] sm:text-[10rem] font-black text-mono-800 leading-none select-none -mb-12 sm:-mb-16 font-mono">01</div>
-				<div class="relative z-10 border-l-4 border-green-400 pl-6">
-					<p class="font-mono text-base font-bold text-mono-100 tracking-wide mb-3">
-						<span class="text-green-400">$</span>&nbsp;define-models
+			<div class="relative bg-mono-900/50 backdrop-blur-sm/20 p-8 border border-mono-800/50 rounded-3xl pb-10">
+				<div class="text-6xl font-black text-white/5 leading-none select-none absolute top-4 right-6 font-inter">01</div>
+				<div class="relative z-10 mt-4">
+					<p class="font-inter text-lg font-semibold text-white tracking-wide mb-3 flex items-center">
+						<span class={marketingStepBadge}>1</span> Define Models
 					</p>
-					<p class="text-sm text-mono-400 leading-relaxed font-mono">Use the visual interface to declare your data objects, field types, relationships, and constraints. No YAML, no JSON. Just forms and dropdowns.</p>
+					<p class="text-sm text-mono-400 leading-relaxed font-inter">Use the visual interface to declare your data objects, field types, relationships, and constraints. No YAML, no JSON. Just forms and dropdowns.</p>
 				</div>
 			</div>
 
 			<!-- Step 2 -->
-			<div class="relative pb-16 lg:pb-0 lg:pr-12">
-				<div class="text-[8rem] sm:text-[10rem] font-black text-mono-800 leading-none select-none -mb-12 sm:-mb-16 font-mono">02</div>
-				<div class="relative z-10 border-l-4 border-green-400 pl-6">
-					<p class="font-mono text-base font-bold text-mono-100 tracking-wide mb-3">
-						<span class="text-green-400">$</span>&nbsp;generate
+			<div class="relative bg-mono-900/50 backdrop-blur-sm/20 p-8 border border-mono-800/50 rounded-3xl pb-10">
+				<div class="text-6xl font-black text-white/5 leading-none select-none absolute top-4 right-6 font-inter">02</div>
+				<div class="relative z-10 mt-4">
+					<p class="font-inter text-lg font-semibold text-white tracking-wide mb-3 flex items-center">
+						<span class={marketingStepBadge}>2</span> Generate
 					</p>
-					<p class="text-sm text-mono-400 leading-relaxed font-mono">One click. Median Code produces a complete FastAPI project with endpoints, models, schemas, migrations, and infrastructure. Same input, same output, every time.</p>
+					<p class="text-sm text-mono-400 leading-relaxed font-inter">One click. Median Code produces a complete FastAPI project with endpoints, models, schemas, migrations, and infrastructure. Same input, same output, every time.</p>
 				</div>
 			</div>
 
 			<!-- Step 3 -->
-			<div class="relative">
-				<div class="text-[8rem] sm:text-[10rem] font-black text-mono-800 leading-none select-none -mb-12 sm:-mb-16 font-mono">03</div>
-				<div class="relative z-10 border-l-4 border-green-400 pl-6">
-					<p class="font-mono text-base font-bold text-mono-100 tracking-wide mb-3">
-						<span class="text-green-400">$</span>&nbsp;deploy
+			<div class="relative bg-mono-900/50 backdrop-blur-sm/20 p-8 border border-mono-800/50 rounded-3xl pb-10">
+				<div class="text-6xl font-black text-white/5 leading-none select-none absolute top-4 right-6 font-inter">03</div>
+				<div class="relative z-10 mt-4">
+					<p class="font-inter text-lg font-semibold text-white tracking-wide mb-3 flex items-center">
+						<span class={marketingStepBadge}>3</span> Deploy
 					</p>
-					<p class="text-sm text-mono-400 leading-relaxed font-mono">Download the full project, add your business logic, and deploy. Use the included CDK stack or your own infrastructure. It's your code. Own it.</p>
+					<p class="text-sm text-mono-400 leading-relaxed font-inter">Download the full project, add your business logic, and deploy. Use the included CDK stack or your own infrastructure. It's your code. Own it.</p>
 				</div>
 			</div>
 		</div>
@@ -301,89 +321,77 @@
 </section>
 
 <!-- Philosophy -->
-<section id="philosophy" class="bg-mono-900 py-20 sm:py-24 lg:py-32">
+<section id="philosophy" class="bg-mono-900/50 backdrop-blur-sm/50 py-20 sm:py-24 lg:py-32">
 	<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-		<div class="grid lg:grid-cols-2 gap-16 items-start">
+		<div class="grid lg:grid-cols-2 gap-16 items-center">
 			<!-- Left: Copy -->
 			<div>
-				<p class="text-xs font-mono font-bold text-green-400 tracking-wider mb-6">
-					<span class="text-green-400">$</span>&nbsp;cat ./philosophy
-				</p>
-				<h2 class="text-3xl sm:text-4xl lg:text-5xl font-black text-white tracking-tighter leading-[1] mb-8 font-mono">
+				<h2 class="text-3xl sm:text-4xl lg:text-5xl font-bold text-white tracking-tight leading-[1.1] mb-6 font-inter">
 					Not the simplest API.<br>
 					Not the most custom.<br>
-					<span class="text-mono-500">The median.</span>
+					<span class="text-mono-400">The median.</span>
 				</h2>
-				<p class="text-base text-mono-400 leading-relaxed mb-10 font-mono">
+				<p class="text-base text-mono-400 leading-relaxed mb-10 font-inter">
 					We target the statistical center of what developers build. 90% of the code you'd write for any new API is the same structural work like models, schemas, routes, and config. Median Code generates all of it so you can focus on the 10% that makes your project unique.
 				</p>
-				<div class="space-y-0">
-					<div class="flex items-start space-x-4 py-5 border-t-2 border-mono-700">
-						<span class="text-green-400 font-mono text-sm mt-0.5 flex-shrink-0 font-bold">></span>
+				<div class="space-y-6">
+					<div class="flex items-start space-x-4">
+						<div class="w-8 h-8 rounded-full bg-green-400/10 text-green-400 flex items-center justify-center flex-shrink-0 mt-0.5"><i class="fa-solid fa-cube text-xs"></i></div>
 						<div>
-							<span class="text-white font-mono font-bold uppercase tracking-wide text-sm">Structural, not behavioral</span>
-							<span class="text-mono-500 text-sm font-mono block mt-1">We generate table definitions and endpoint scaffolding. Business logic is yours to write.</span>
+							<span class="text-white font-inter font-semibold tracking-wide text-sm">Structural, not behavioral</span>
+							<span class="text-mono-400 text-sm font-inter block mt-1 leading-relaxed">We generate table definitions and endpoint scaffolding. Business logic is yours to write.</span>
 						</div>
 					</div>
-					<div class="flex items-start space-x-4 py-5 border-t-2 border-mono-700">
-						<span class="text-green-400 font-mono text-sm mt-0.5 flex-shrink-0 font-bold">></span>
+					<div class="flex items-start space-x-4">
+						<div class="w-8 h-8 rounded-full bg-green-400/10 text-green-400 flex items-center justify-center flex-shrink-0 mt-0.5"><i class="fa-solid fa-code-branch text-xs"></i></div>
 						<div>
-							<span class="text-white font-mono font-bold uppercase tracking-wide text-sm">Deterministic, always</span>
-							<span class="text-mono-500 text-sm font-mono block mt-1">Same inputs produce identical output. No AI guessing, no ambiguity, no surprises.</span>
+							<span class="text-white font-inter font-semibold tracking-wide text-sm">Deterministic, always</span>
+							<span class="text-mono-400 text-sm font-inter block mt-1 leading-relaxed">Same inputs produce identical output. No AI guessing, no ambiguity, no surprises.</span>
 						</div>
 					</div>
-					<div class="flex items-start space-x-4 py-5 border-t-2 border-mono-700">
-						<span class="text-green-400 font-mono text-sm mt-0.5 flex-shrink-0 font-bold">></span>
+					<div class="flex items-start space-x-4">
+						<div class="w-8 h-8 rounded-full bg-green-400/10 text-green-400 flex items-center justify-center flex-shrink-0 mt-0.5"><i class="fa-solid fa-unlock-keyhole text-xs"></i></div>
 						<div>
-							<span class="text-white font-mono font-bold uppercase tracking-wide text-sm">A starting point, not a cage</span>
-							<span class="text-mono-500 text-sm font-mono block mt-1">Download the full project, add your business logic, and deploy. It's your code to own and extend.</span>
-						</div>
-					</div>
-					<div class="flex items-start space-x-4 py-5 border-t-2 border-b-2 border-mono-700">
-						<span class="text-green-400 font-mono text-sm mt-0.5 flex-shrink-0 font-bold">></span>
-						<div>
-							<span class="text-white font-mono font-bold uppercase tracking-wide text-sm">Readable, not generated-looking</span>
-							<span class="text-mono-500 text-sm font-mono block mt-1">Clean naming, proper structure, no auto-gen noise. Code that reads like a senior dev wrote it by hand.</span>
+							<span class="text-white font-inter font-semibold tracking-wide text-sm">A starting point, not a cage</span>
+							<span class="text-mono-400 text-sm font-inter block mt-1 leading-relaxed">Download the full project, add your business logic, and deploy. It's your code to own and extend.</span>
 						</div>
 					</div>
 				</div>
 			</div>
 
-			<!-- Right: What you get table -->
-			<div class="border-2 border-mono-700">
-				<div class="px-6 py-4 border-b-2 border-mono-700 bg-mono-800">
-					<p class="text-xs font-mono font-bold text-green-400 tracking-wider">
-						<span class="text-green-400">$</span>&nbsp;cat ./output-manifest
-					</p>
+			<!-- Right: What you get table (Softened) -->
+			<div class="bg-mono-950/60 backdrop-blur-md border border-mono-800/80 rounded-3xl overflow-hidden shadow-2xl">
+				<div class="px-6 py-5 border-b border-white/5 bg-white/[0.02]">
+					<p class="text-sm font-inter font-semibold text-white">Output Manifest</p>
 				</div>
-				<div>
-					<div class="flex items-center justify-between px-6 py-4 border-b-2 border-mono-700">
-						<span class="text-mono-200 text-sm font-mono font-bold">FastAPI Application</span>
-						<span class="text-sm text-green-400 font-mono font-bold">[GEN]</span>
+				<div class="p-2 space-y-1">
+					<div class="flex items-center justify-between px-4 py-3 hover:bg-white/[0.03] rounded-xl transition-colors">
+						<span class="text-mono-300 text-sm font-inter font-medium">FastAPI Application</span>
+						<span class="text-xs bg-green-400/10 text-green-400 px-2 py-1 rounded-md font-medium">Included</span>
 					</div>
-					<div class="flex items-center justify-between px-6 py-4 border-b-2 border-mono-700">
-						<span class="text-mono-200 text-sm font-mono font-bold">SQLAlchemy Models</span>
-						<span class="text-sm text-green-400 font-mono font-bold">[GEN]</span>
+					<div class="flex items-center justify-between px-4 py-3 hover:bg-white/[0.03] rounded-xl transition-colors">
+						<span class="text-mono-300 text-sm font-inter font-medium">SQLAlchemy Models</span>
+						<span class="text-xs bg-green-400/10 text-green-400 px-2 py-1 rounded-md font-medium">Included</span>
 					</div>
-					<div class="flex items-center justify-between px-6 py-4 border-b-2 border-mono-700">
-						<span class="text-mono-200 text-sm font-mono font-bold">Pydantic Schemas</span>
-						<span class="text-sm text-green-400 font-mono font-bold">[GEN]</span>
+					<div class="flex items-center justify-between px-4 py-3 hover:bg-white/[0.03] rounded-xl transition-colors">
+						<span class="text-mono-300 text-sm font-inter font-medium">Pydantic Schemas</span>
+						<span class="text-xs bg-green-400/10 text-green-400 px-2 py-1 rounded-md font-medium">Included</span>
 					</div>
-					<div class="flex items-center justify-between px-6 py-4 border-b-2 border-mono-700">
-						<span class="text-mono-200 text-sm font-mono font-bold">Alembic Migrations</span>
-						<span class="text-sm text-green-400 font-mono font-bold">[GEN]</span>
+					<div class="flex items-center justify-between px-4 py-3 hover:bg-white/[0.03] rounded-xl transition-colors">
+						<span class="text-mono-300 text-sm font-inter font-medium">Alembic Migrations</span>
+						<span class="text-xs bg-green-400/10 text-green-400 px-2 py-1 rounded-md font-medium">Included</span>
 					</div>
-					<div class="flex items-center justify-between px-6 py-4 border-b-2 border-mono-700">
-						<span class="text-mono-200 text-sm font-mono font-bold">AWS CDK Stack</span>
-						<span class="text-sm text-green-400 font-mono font-bold">[GEN]</span>
+					<div class="flex items-center justify-between px-4 py-3 hover:bg-white/[0.03] rounded-xl transition-colors">
+						<span class="text-mono-300 text-sm font-inter font-medium">AWS CDK Stack</span>
+						<span class="text-xs bg-green-400/10 text-green-400 px-2 py-1 rounded-md font-medium">Included</span>
 					</div>
-					<div class="flex items-center justify-between px-6 py-4 border-b-2 border-mono-700">
-						<span class="text-mono-200 text-sm font-mono font-bold">API Documentation</span>
-						<span class="text-sm text-green-400 font-mono font-bold">[GEN]</span>
+					<div class="flex items-center justify-between px-4 py-3 hover:bg-white/[0.03] rounded-xl transition-colors">
+						<span class="text-mono-300 text-sm font-inter font-medium">API Documentation</span>
+						<span class="text-xs bg-green-400/10 text-green-400 px-2 py-1 rounded-md font-medium">Included</span>
 					</div>
-					<div class="flex items-center justify-between px-6 py-4 bg-mono-800">
-						<span class="text-mono-200 text-sm font-mono font-bold">Your Business Logic</span>
-						<span class="text-sm text-mono-200 font-mono font-bold">[TODO]</span>
+					<div class="flex items-center justify-between px-4 py-3 mt-2 bg-white/[0.02] border border-white/5 rounded-xl">
+						<span class="text-white text-sm font-inter font-semibold">Your Business Logic</span>
+						<span class="text-xs bg-mono-800 text-mono-300 px-2 py-1 rounded-md font-medium">You write this</span>
 					</div>
 				</div>
 			</div>
@@ -392,48 +400,46 @@
 </section>
 
 <!-- Final CTA -->
-<section id="final-cta" class="bg-mono-950 py-24 sm:py-32 lg:py-40 border-t-2 border-mono-700">
-	<div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
-		<p class="text-xs font-mono font-bold text-green-400 tracking-wider mb-6">
-			<span class="text-green-400">$</span>&nbsp;ready
-		</p>
-		<h2 class="text-4xl sm:text-5xl lg:text-7xl font-black text-white tracking-tighter leading-[0.95] mb-6 font-mono">
-			Start Building<br>Your API
+<section id="final-cta" class="bg-mono-950 py-24 sm:py-32 relative overflow-hidden border-t border-mono-800/50">
+	<div class="absolute bottom-0 left-1/2 -translate-x-1/2 w-[600px] h-[300px] opacity-10 bg-green-400 blur-[100px] rounded-full pointer-events-none"></div>
+	<div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center relative z-10">
+		<h2 class="text-4xl sm:text-5xl lg:text-6xl font-bold text-white tracking-tight leading-tight mb-6 font-inter">
+			Start Building Your API
 		</h2>
-		<p class="text-base sm:text-lg text-mono-400 mb-10 max-w-xl font-mono">
+		<p class="text-base sm:text-lg text-mono-400 mb-10 max-w-xl mx-auto font-inter">
 			Define your models, generate production-ready code, and deploy. It takes minutes, not days.
 		</p>
 
-		<div class="flex flex-col sm:flex-row items-start gap-4">
+		<div class="flex flex-col sm:flex-row items-center justify-center gap-4">
 			{#if $clerkState.isLoaded && $clerkState.isSignedIn}
-				<a href="/dashboard" class="inline-flex items-center justify-center px-12 py-5 text-green-400 font-mono font-bold text-sm tracking-wide border-2 border-green-400 hover:bg-green-400 hover:text-mono-950 transition-colors">
-					go-to-dashboard
-					<i class="fa-solid fa-arrow-right ml-3 text-xs"></i>
+				<a href="/dashboard" class={marketingFooterCta}>
+					Go to Dashboard
+					<i class="fa-solid fa-arrow-right ml-2 text-sm"></i>
 				</a>
 			{:else}
-				<a href="/signup" class="inline-flex items-center justify-center px-12 py-5 bg-green-400 text-mono-950 font-mono font-bold text-sm tracking-wide border-2 border-green-400 hover:bg-green-300 hover:border-green-300 transition-colors">
-					get-started --free
-					<i class="fa-solid fa-arrow-right ml-3 text-xs"></i>
+				<a href="/signup" class={marketingFooterCta}>
+					Get Started for Free
+					<i class="fa-solid fa-arrow-right ml-2 text-sm"></i>
 				</a>
-				<a href="/signin" class="inline-flex items-center justify-center px-12 py-5 text-mono-400 hover:text-white font-mono font-bold text-sm tracking-wide transition-colors">
-					Already have an account? sign-in
+				<a href="/signin" class={marketingFooterCtaSecondary}>
+					Already have an account? Sign in
 				</a>
 			{/if}
 		</div>
 
-		<p class="text-xs font-mono text-mono-600 mt-8 tracking-wide">Free during beta. No credit card required.</p>
+		<p class="text-xs font-inter text-mono-500 mt-8 tracking-wide uppercase font-semibold">Free during beta. No credit card required.</p>
 	</div>
 </section>
 
 <!-- Footer -->
-<footer id="footer" class="bg-mono-950 border-t-2 border-mono-700 py-10">
+<footer id="footer" class="bg-mono-950 border-t border-mono-800/50 py-12 relative z-10">
 	<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-		<div class="flex flex-col sm:flex-row items-start sm:items-center justify-between space-y-4 sm:space-y-0">
-			<div class="flex items-center space-x-3">
-				<Logo size="md" variant="dark" />
-				<span class="text-lg font-mono font-semibold text-mono-100 tracking-tight">Median Code</span>
+		<div class="flex flex-col sm:flex-row items-center justify-between space-y-4 sm:space-y-0">
+			<div class="flex items-center space-x-3 opacity-80 hover:opacity-100 transition-opacity">
+				<PreRenderedLogo size="md" variant="dark" />
+				<span class="text-lg font-inter font-semibold text-mono-200 tracking-tight">Median Code</span>
 			</div>
-			<div class="text-mono-500 text-xs font-mono uppercase tracking-widest">
+			<div class="text-mono-500 text-sm font-inter">
 				&copy; {new Date().getFullYear()} Median Code. Deterministic API generation.
 			</div>
 		</div>
@@ -446,19 +452,7 @@
 		scroll-behavior: smooth;
 	}
 
-	/* Blinking cursor animation */
-	.cursor-blink {
-		animation: blink 1s step-end infinite;
-	}
 
-	@keyframes blink {
-		0%, 100% {
-			opacity: 1;
-		}
-		50% {
-			opacity: 0;
-		}
-	}
 
 	/* Terminal line staggered appearance animation */
 	.terminal-line {

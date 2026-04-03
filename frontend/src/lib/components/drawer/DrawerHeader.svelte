@@ -30,9 +30,9 @@
   let { title, onClose }: Props = $props();
 </script>
 
-<div class="p-6 border-b border-mono-700">
+<div class="p-6 border-b border-mono-800/80 bg-white/5">
   <div class="flex justify-between items-center">
-    <h2 class="text-lg text-mono-100 font-semibold">{title}</h2>
+    <h2 class="text-xl text-white font-inter font-bold tracking-tight">{title}</h2>
     <button
       onclick={onClose}
       class="text-mono-400 hover:text-mono-200 transition-colors"

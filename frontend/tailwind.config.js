@@ -43,7 +43,17 @@ export default {
         'blue-400': 'rgb(var(--color-blue-400) / <alpha-value>)',
         'blue-600': 'rgb(var(--color-blue-600) / <alpha-value>)',
         'blue-800': 'rgb(var(--color-blue-800) / <alpha-value>)',
-      }
+      },
+      boxShadow: {
+        'glow-green': '0 0 15px rgba(82, 226, 140, 0.2)',
+        'glow-green-lg': '0 0 20px rgba(82, 226, 140, 0.2)',
+        'glow-green-xl': '0 0 30px rgba(82, 226, 140, 0.4)',
+        'glow-green-sm': '0 0 10px rgba(82, 226, 140, 0.1)',
+        'glow-green-icon': '0 0 15px rgba(82, 226, 140, 0.1)',
+        'glow-green-dot': '0 0 5px rgba(82, 226, 140, 0.8)',
+        'glow-green-bar': '0 0 10px rgba(82, 226, 140, 0.4)',
+        'drawer-deep': '0 0 50px rgba(0, 0, 0, 0.5)',
+      },
     }
   },
   plugins: []

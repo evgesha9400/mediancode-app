@@ -56,11 +56,11 @@
 
 <div class="flex-1 overflow-auto">
   {#if !isEmpty}
-    <table data-testid={TABLE_ID} class="min-w-full bg-mono-900">
-      <thead class="bg-mono-800 sticky top-0">
+    <table data-testid={TABLE_ID} class="min-w-full bg-mono-900/50 backdrop-blur-sm/40">
+      <thead class="bg-mono-800/50 sticky top-0 backdrop-blur-sm shadow-sm ring-1 ring-white/5">
         {@render header?.()}
       </thead>
-      <tbody class="divide-y divide-mono-700">
+      <tbody class="divide-y divide-mono-800/50">
         {@render body?.()}
       </tbody>
     </table>

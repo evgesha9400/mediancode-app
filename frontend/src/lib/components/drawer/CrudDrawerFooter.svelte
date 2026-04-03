@@ -28,11 +28,20 @@
     onDeleteConfirm?: () => void;
     /** Called when delete confirmation is cancelled */
     onDeleteCancel?: () => void;
+    /** Called when drawer cancellation is requested */
+    onCancel?: () => void;
   }
 </script>
 
 <script lang="ts">
   import { Tooltip } from '$lib/components/tooltip';
+  import {
+    drawerFooterBtnBlock,
+    drawerFooterBtnPrimaryDisabled,
+    drawerFooterBtnPrimaryEnabled,
+    drawerFooterBtnSecondary,
+    drawerFooterBtnSecondaryMuted,
+  } from '$lib/ui/classes';
 
   interface Props extends CrudDrawerFooterProps {}
 
@@ -50,7 +59,8 @@
     onUndo,
     onDeleteRequest,
     onDeleteConfirm,
-    onDeleteCancel
+    onDeleteCancel,
+    onCancel
   }: Props = $props();
 </script>
 
@@ -60,7 +70,7 @@
     type="button"
     onclick={onCreate}
     disabled={!canCreate}
-    class="w-full px-4 py-2 transition-colors font-medium {canCreate ? 'bg-green-400 text-mono-950 font-bold tracking-wide hover:bg-green-300 cursor-pointer' : 'bg-mono-700 text-mono-500 cursor-not-allowed'}"
+    class="{drawerFooterBtnBlock} {canCreate ? drawerFooterBtnPrimaryEnabled : drawerFooterBtnPrimaryDisabled}"
   >
     {#if isSaving}
       <i class="fa-solid fa-spinner fa-spin mr-2"></i>
@@ -69,13 +79,23 @@
       Create
     {/if}
   </button>
+  {#if onCancel}
+    <button
+      type="button"
+      onclick={onCancel}
+      disabled={isSaving}
+      class="{drawerFooterBtnBlock} border border-mono-600 {drawerFooterBtnSecondary} text-sm {isSaving ? 'cursor-not-allowed opacity-50' : ''}"
+    >
+      Cancel
+    </button>
+  {/if}
 {:else}
   {@const canSave = hasChanges && !isSaving}
   <button
     type="button"
     onclick={onSave}
     disabled={!canSave}
-    class="w-full px-4 py-2 transition-colors font-medium {canSave ? 'bg-green-400 text-mono-950 font-bold tracking-wide hover:bg-green-300 cursor-pointer' : 'bg-mono-700 text-mono-500 cursor-not-allowed'}"
+    class="{drawerFooterBtnBlock} {canSave ? drawerFooterBtnPrimaryEnabled : drawerFooterBtnPrimaryDisabled}"
   >
     {#if isSaving}
       <i class="fa-solid fa-spinner fa-spin mr-2"></i>
@@ -88,7 +108,7 @@
     type="button"
     onclick={onUndo}
     disabled={!hasChanges || isSaving}
-    class="w-full px-4 py-2 border transition-colors font-medium {hasChanges && !isSaving ? 'border-mono-600 text-mono-300 hover:bg-mono-800 cursor-pointer' : 'border-mono-700 text-mono-400 cursor-not-allowed bg-mono-800'}"
+    class="{drawerFooterBtnBlock} {hasChanges && !isSaving ? drawerFooterBtnSecondary : drawerFooterBtnSecondaryMuted}"
   >
     Undo
   </button>
@@ -98,7 +118,7 @@
         type="button"
         onclick={onDeleteRequest}
         disabled={!canDelete}
-        class="w-full px-4 py-2 flex items-center justify-center transition-colors font-medium {!canDelete ? 'bg-mono-700 text-mono-400 cursor-not-allowed' : 'bg-red-400/10 text-red-400 hover:bg-red-400/20 cursor-pointer'}"
+        class="w-full px-4 py-2 rounded-xl border flex items-center justify-center transition-colors font-medium text-sm font-inter tracking-wide {!canDelete ? 'bg-mono-700 border-mono-700 text-mono-400 cursor-not-allowed' : 'bg-red-400/10 border-transparent text-red-400 hover:bg-red-400/20 cursor-pointer'}"
       >
         <i class="fa-solid fa-xmark mr-2"></i>
         <span>Delete</span>
@@ -112,7 +132,7 @@
           type="button"
           onclick={onDeleteConfirm}
           disabled={isDeleting}
-          class="flex-1 px-3 py-1.5 text-sm font-medium transition-colors {isDeleting ? 'bg-red-400 text-white cursor-not-allowed' : 'bg-red-600 text-white hover:bg-red-700 cursor-pointer'}"
+          class="flex-1 px-3 py-1.5 rounded-xl border text-sm font-medium font-inter tracking-wide transition-colors {isDeleting ? 'bg-red-400 border-transparent text-white cursor-not-allowed' : 'bg-red-600 border-transparent text-white hover:bg-red-700 cursor-pointer'}"
         >
           {#if isDeleting}
             <i class="fa-solid fa-spinner fa-spin mr-1"></i>
@@ -125,7 +145,7 @@
           type="button"
           onclick={onDeleteCancel}
           disabled={isDeleting}
-          class="flex-1 px-3 py-1.5 border text-sm font-medium transition-colors {isDeleting ? 'border-mono-700 text-mono-400 cursor-not-allowed bg-mono-800' : 'border-mono-600 text-mono-300 hover:bg-mono-800 cursor-pointer'}"
+          class="flex-1 px-3 py-1.5 rounded-xl border text-sm font-medium font-inter tracking-wide transition-colors {isDeleting ? 'border-mono-700 text-mono-400 cursor-not-allowed bg-mono-800' : 'border-mono-600 text-mono-300 hover:bg-mono-800 cursor-pointer'}"
         >
           Cancel
         </button>

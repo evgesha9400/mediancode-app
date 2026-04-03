@@ -6,6 +6,7 @@
   } from '$lib/stores/namespaces';
   import { createNamespacesModel } from '$lib/stores/namespacesModel.svelte';
   import {
+    MainColumnFrame,
     PageHeader,
     SearchBar,
     FilterPanel,
@@ -67,38 +68,41 @@
   );
 </script>
 
-<PageHeader title="Namespaces">
-    {#snippet actions()}
-      <button
-        type="button"
-        onclick={workflow.openCreate}
-        class="px-4 py-2 bg-green-400 text-mono-950 font-bold tracking-wide flex items-center space-x-2 hover:bg-green-300 cursor-pointer transition-colors"
-      >
-        <i class="fa-solid fa-plus"></i>
-        <span>Add Namespace</span>
-      </button>
-    {/snippet}
-  </PageHeader>
+<MainColumnFrame bodyClass="">
+  {#snippet header()}
+    <PageHeader title="Namespaces">
+      {#snippet actions()}
+        <button
+          type="button"
+          onclick={workflow.openCreate}
+          class="px-4 py-2 bg-green-400 text-mono-950 font-inter font-semibold rounded-xl text-sm tracking-wide shadow-sm flex items-center space-x-2 hover:bg-green-300 cursor-pointer transition-colors"
+        >
+          <i class="fa-solid fa-plus"></i>
+          <span>Add Namespace</span>
+        </button>
+      {/snippet}
+    </PageHeader>
 
-  <SearchBar
-    bind:searchQuery={workflow.query}
-    placeholder="Search namespaces..."
-    resultsCount={filteredNamespaces.length}
-    resultLabel="namespace"
-    showFilter={true}
-    active={workflow.filtersOpen || activeFiltersCount > 0}
-    onFilterClick={workflow.toggleFilters}
-  >
-    {#snippet filterPanel()}
-      <FilterPanel
-        visible={workflow.filtersOpen}
-        config={namespaceFilterConfig}
-        bind:state={workflow.filters}
-        onClose={() => workflow.filtersOpen = false}
-        onClear={workflow.resetFilters}
-      />
-    {/snippet}
-  </SearchBar>
+    <SearchBar
+      bind:searchQuery={workflow.query}
+      placeholder="Search namespaces..."
+      resultsCount={filteredNamespaces.length}
+      resultLabel="namespace"
+      showFilter={true}
+      active={workflow.filtersOpen || activeFiltersCount > 0}
+      onFilterClick={workflow.toggleFilters}
+    >
+      {#snippet filterPanel()}
+        <FilterPanel
+          visible={workflow.filtersOpen}
+          config={namespaceFilterConfig}
+          bind:state={workflow.filters}
+          onClose={() => workflow.filtersOpen = false}
+          onClear={workflow.resetFilters}
+        />
+      {/snippet}
+    </SearchBar>
+  {/snippet}
 
   <Table isEmpty={filteredNamespaces.length === 0}>
     {#snippet header()}
@@ -162,12 +166,13 @@
       />
     {/snippet}
   </Table>
+</MainColumnFrame>
 
 {#snippet namespaceFormContent(_: { close: () => void })}
   {#if workflow.editedItem}
     <div class="space-y-4">
       {#if isReadOnly}
-        <div class="flex items-center space-x-2 px-3 py-2 bg-mono-950 border border-mono-700">
+        <div class="flex items-center space-x-2 px-3 py-2 bg-mono-900/50 backdrop-blur-sm border border-mono-700/80 rounded-xl mb-6">
           <i class="fa-solid fa-lock text-mono-400 text-sm"></i>
           <span class="text-sm text-mono-400">System namespace — read-only</span>
         </div>
@@ -191,7 +196,7 @@
           disabled={isReadOnly}
           rows="3"
           placeholder={isCreating ? 'Optional description...' : ''}
-          class="w-full px-3 py-1.5 text-sm border border-mono-600 focus:ring-2 focus:ring-green-400 focus:border-transparent {isReadOnly ? 'bg-mono-800 cursor-not-allowed' : ''}"
+          class="w-full px-3 py-1.5 text-sm border border-mono-700/80 bg-mono-900/50 backdrop-blur-sm/50 focus:ring-2 focus:ring-green-400/50 outline-none focus:outline-none transition-all rounded-xl {isReadOnly ? 'bg-mono-800 cursor-not-allowed' : ''}"
         ></textarea>
       </div>
 
@@ -262,7 +267,7 @@
   {/if}
 {/snippet}
 
-{#snippet namespaceFormFooter(_: { close: () => void })}
+{#snippet namespaceFormFooter({ close }: { close: () => void })}
   {#if isCreating}
     <CrudDrawerFooter
       mode="creating"
@@ -271,6 +276,7 @@
       hasChanges={false}
       canDelete={false}
       onCreate={workflow.handleCreate}
+      onCancel={close}
     />
   {:else if workflow.editedItem && !isReadOnly}
     <CrudDrawerFooter
@@ -293,7 +299,7 @@
         type="button"
         onclick={workflow.handleSave}
         disabled={workflow.isSaving}
-        class="w-full px-4 py-2 transition-colors font-medium {workflow.isSaving ? 'bg-mono-700 text-mono-500 cursor-not-allowed' : 'bg-green-400 text-mono-950 hover:bg-green-300 font-bold tracking-wide cursor-pointer'}"
+        class="w-full px-4 py-2 rounded-xl text-sm font-inter tracking-wide transition-colors font-medium {workflow.isSaving ? 'bg-mono-800 text-mono-500 cursor-not-allowed' : 'bg-green-400 border border-transparent text-mono-950 font-semibold hover:bg-green-300 shadow-sm cursor-pointer'}"
       >
         {#if workflow.isSaving}
           Saving...
@@ -305,7 +311,7 @@
     <button
       type="button"
       onclick={workflow.closeDrawer}
-      class="w-full px-4 py-2 border border-mono-600 text-mono-300 hover:bg-mono-950 transition-colors font-medium"
+      class="w-full px-4 py-2 rounded-xl border border-mono-600 text-mono-300 text-sm font-inter tracking-wide hover:bg-mono-800 transition-colors font-medium"
     >
       Close
     </button>

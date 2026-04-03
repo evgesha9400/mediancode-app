@@ -1,6 +1,7 @@
 <script lang="ts">
   import { modelValidatorTemplatesStore, searchModelValidatorTemplates } from '$lib/stores/modelValidatorTemplates';
   import {
+    MainColumnFrame,
     PageHeader,
     SearchBar,
     Table,
@@ -36,18 +37,21 @@
   let sorts = $derived(state.sorts);
 </script>
 
-<PageHeader title="Model Validators" />
+<MainColumnFrame bodyClass="">
+  {#snippet header()}
+    <PageHeader title="Model Validators" />
 
-<SearchBar
-  bind:searchQuery={state.query}
-  placeholder="Search model validator templates..."
-  resultsCount={filteredTemplates.length}
-  resultLabel="template"
-  showFilter={false}
-  active={false}
-/>
+    <SearchBar
+      bind:searchQuery={state.query}
+      placeholder="Search model validator templates..."
+      resultsCount={filteredTemplates.length}
+      resultLabel="template"
+      showFilter={false}
+      active={false}
+    />
+  {/snippet}
 
-<Table isEmpty={filteredTemplates.length === 0}>
+  <Table isEmpty={filteredTemplates.length === 0}>
   {#snippet header()}
     <tr>
       <SortableColumn
@@ -110,12 +114,13 @@
       noResultsMessage="No model validator templates available"
     />
   {/snippet}
-</Table>
+  </Table>
+</MainColumnFrame>
 
 {#snippet modelValidatorDetailContent(_: { close: () => void })}
   {#if state.selectedItem}
     <div class="space-y-6">
-      <div class="flex items-center space-x-2 px-3 py-2 bg-mono-950 border border-mono-700">
+      <div class="flex items-center space-x-2 px-3 py-2 bg-mono-900/50 backdrop-blur-sm border border-mono-700/80 rounded-xl mb-6">
         <i class="fa-solid fa-lock text-mono-400 text-sm"></i>
         <span class="text-sm text-mono-400">System model validator — read-only</span>
       </div>
@@ -133,7 +138,7 @@
       <DetailField label="Field Mappings">
         <div class="space-y-2">
           {#each state.selectedItem.fieldMappings as fm}
-            <div class="p-2 bg-mono-950 rounded border border-mono-700">
+            <div class="p-3 bg-mono-900/50 backdrop-blur-sm rounded-xl border border-mono-700/80">
               <div class="flex items-center space-x-2">
                 <span class="text-sm text-mono-300 font-medium">{fm.label}</span>
                 {#if fm.required}
@@ -156,7 +161,7 @@
         <DetailField label="Parameters">
           <div class="space-y-2">
             {#each state.selectedItem.parameters as param}
-              <div class="p-2 bg-mono-950 rounded border border-mono-700">
+              <div class="p-3 bg-mono-900/50 backdrop-blur-sm rounded-xl border border-mono-700/80">
                 <div class="flex items-center space-x-2">
                   <span class="text-sm text-mono-300 font-medium">{param.label}</span>
                   <Pill size="sm">{param.type}</Pill>

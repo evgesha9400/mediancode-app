@@ -11,6 +11,17 @@
 </script>
 
 <script lang="ts">
+  import {
+    dropdownCreateRow,
+    dropdownListScroll,
+    dropdownPanel,
+    dropdownRow,
+    inputGlass,
+    inputGlassSearchSuffix,
+    listMetaBadge,
+    objectSelectorDisplayRow,
+  } from '$lib/ui/classes';
+
   interface Props extends ObjectSelectorDropdownProps {}
 
   let { availableObjects, selectedObjectId, onSelect, placeholder = 'Select object...', onCreateNew }: Props = $props();
@@ -62,7 +73,7 @@
   <div class="relative">
     {#if selectedObject}
       <!-- Display selected object with clear button -->
-      <div class="w-full px-3 border border-mono-600 bg-mono-900 flex items-center justify-between h-[34px]">
+      <div class={objectSelectorDisplayRow}>
         <div class="flex items-center space-x-2">
           <i class="fa-solid fa-cube text-mono-400 text-xs"></i>
           <span class="font-mono text-sm text-mono-300">{selectedObject.name}</span>
@@ -85,51 +96,53 @@
         onfocus={handleFocus}
         onblur={handleBlur}
         placeholder={placeholder}
-        class="w-full px-3 py-1.5 border border-mono-600 bg-mono-900 text-mono-100 focus:ring-2 focus:ring-green-400 focus:border-transparent text-sm pr-8"
+        class="{inputGlass} {inputGlassSearchSuffix}"
       />
       <i class="fa-solid fa-search absolute right-3 top-1/2 -translate-y-1/2 text-mono-400 text-xs pointer-events-none"></i>
     {/if}
   </div>
 
   {#if dropdownOpen}
-    <div class="absolute z-10 w-full mt-1 bg-mono-900 border border-mono-700 shadow-lg shadow-black/30 max-h-60 overflow-auto">
-      {#if filteredObjects.length > 0}
-        {#each filteredObjects as object (object.id)}
-          <button
-            type="button"
-            onclick={() => handleSelect(object.id)}
-            class="w-full px-3 py-2 text-left hover:bg-mono-800 border-b border-mono-700 last:border-b-0 transition-colors"
-          >
-            <div class="flex items-start justify-between">
-              <div class="flex-1">
-                <div class="flex items-center space-x-2">
-                  <i class="fa-solid fa-cube text-mono-400 text-xs"></i>
-                  <span class="font-mono text-sm text-mono-300">{object.name}</span>
-                  <span class="text-xs text-mono-400 bg-mono-800 px-2 py-0.5 rounded">
-                    {object.members.length} members
-                  </span>
+    <div class={dropdownPanel}>
+      <div class={dropdownListScroll}>
+        {#if filteredObjects.length > 0}
+          {#each filteredObjects as object (object.id)}
+            <button
+              type="button"
+              onclick={() => handleSelect(object.id)}
+              class={dropdownRow}
+            >
+              <div class="flex items-start justify-between">
+                <div class="flex-1">
+                  <div class="flex items-center space-x-2">
+                    <i class="fa-solid fa-cube text-mono-400 text-xs"></i>
+                    <span class="font-mono text-sm text-mono-300">{object.name}</span>
+                    <span class={listMetaBadge}>
+                      {object.members.length} members
+                    </span>
+                  </div>
+                  {#if object.description}
+                    <p class="text-xs text-mono-400 mt-1">{object.description}</p>
+                  {/if}
                 </div>
-                {#if object.description}
-                  <p class="text-xs text-mono-400 mt-1">{object.description}</p>
-                {/if}
               </div>
-            </div>
-          </button>
-        {/each}
-      {:else if searchQuery.trim()}
-        <div class="px-3 py-2 text-sm text-mono-400">
-          No objects found matching "{searchQuery}"
-        </div>
-      {:else}
-        <div class="px-3 py-2 text-sm text-mono-400">
-          No objects available in this namespace. Create objects in the same namespace first.
-        </div>
-      {/if}
+            </button>
+          {/each}
+        {:else if searchQuery.trim()}
+          <div class="px-3 py-2 text-sm text-mono-400">
+            No objects found matching "{searchQuery}"
+          </div>
+        {:else}
+          <div class="px-3 py-2 text-sm text-mono-400">
+            No objects available in this namespace. Create objects in the same namespace first.
+          </div>
+        {/if}
+      </div>
       {#if onCreateNew}
         <div class="border-t border-mono-700 p-2">
           <button
             type="button"
-            class="w-full text-left px-3 py-2 text-sm text-mono-400 hover:bg-mono-800 hover:text-mono-100 rounded cursor-pointer flex items-center space-x-2"
+            class={dropdownCreateRow}
             onmousedown={(e) => { e.preventDefault(); onCreateNew?.(); }}
           >
             <i class="fa-solid fa-plus text-xs"></i>

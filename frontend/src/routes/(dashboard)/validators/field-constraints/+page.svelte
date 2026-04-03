@@ -2,6 +2,7 @@
   import { fieldConstraintsStore, searchFieldConstraints, type FieldConstraint } from '$lib/stores/fieldConstraints';
   import { isSystemEntity } from '$lib/utils/namespace';
   import {
+    MainColumnFrame,
     PageHeader,
     SearchBar,
     FilterPanel,
@@ -79,29 +80,32 @@
   let isSystemItem = $derived(selectedFieldConstraint ? isSystemEntity(selectedFieldConstraint) : false);
 </script>
 
-<PageHeader title="Field Constraints" />
+<MainColumnFrame bodyClass="">
+  {#snippet header()}
+    <PageHeader title="Field Constraints" />
 
-<SearchBar
-  bind:searchQuery={state.query}
-  placeholder="Search field constraints..."
-  resultsCount={filteredFieldConstraints.length}
-  resultLabel="field constraint"
-  showFilter={true}
-  active={state.filtersOpen || activeFiltersCount > 0}
-  onFilterClick={state.toggleFilters}
->
-  {#snippet filterPanel()}
-    <FilterPanel
-      visible={state.filtersOpen}
-      config={filterConfig}
-      bind:state={state.filters}
-      onClose={() => state.filtersOpen = false}
-      onClear={state.resetFilters}
-    />
+    <SearchBar
+      bind:searchQuery={state.query}
+      placeholder="Search field constraints..."
+      resultsCount={filteredFieldConstraints.length}
+      resultLabel="field constraint"
+      showFilter={true}
+      active={state.filtersOpen || activeFiltersCount > 0}
+      onFilterClick={state.toggleFilters}
+    >
+      {#snippet filterPanel()}
+        <FilterPanel
+          visible={state.filtersOpen}
+          config={filterConfig}
+          bind:state={state.filters}
+          onClose={() => state.filtersOpen = false}
+          onClear={state.resetFilters}
+        />
+      {/snippet}
+    </SearchBar>
   {/snippet}
-</SearchBar>
 
-<Table isEmpty={filteredFieldConstraints.length === 0}>
+  <Table isEmpty={filteredFieldConstraints.length === 0}>
   {#snippet header()}
     <tr>
       <SortableColumn
@@ -198,13 +202,14 @@
   {#snippet empty()}
     <TableEmptyState entityName="field constraints" storeKey={STORE_NAMES.FIELD_CONSTRAINTS} />
   {/snippet}
-</Table>
+  </Table>
+</MainColumnFrame>
 
 {#snippet constraintDetailContent(_: { close: () => void })}
   {#if selectedFieldConstraint}
     <div class="space-y-6">
       {#if isSystemItem}
-        <div class="flex items-center space-x-2 px-3 py-2 bg-mono-950 border border-mono-700">
+        <div class="flex items-center space-x-2 px-3 py-2 bg-mono-900/50 backdrop-blur-sm border border-mono-700/80 rounded-xl mb-6">
           <i class="fa-solid fa-lock text-mono-400 text-sm"></i>
           <span class="text-sm text-mono-400">System field constraint — read-only</span>
         </div>

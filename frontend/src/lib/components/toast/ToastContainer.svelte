@@ -13,7 +13,7 @@
   let toasts = $derived($toastsStore);
 </script>
 
-<div class="fixed top-16 right-6 z-[100] flex flex-col space-y-2 pointer-events-none">
+<div class="fixed bottom-6 left-1/2 -translate-x-1/2 z-[100] flex flex-col space-y-2 pointer-events-none">
   {#each toasts as toast (toast.id)}
     <div class="pointer-events-auto">
       <Toast {toast} />

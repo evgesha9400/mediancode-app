@@ -19,7 +19,7 @@
   };
 </script>
 
-<span class="{sizeClasses[size]} bg-mono-800 text-mono-300 {extraClass}">
+<span class="{sizeClasses[size]} rounded-full border border-mono-700/60 bg-mono-800/40 font-mono tracking-wide {extraClass}">
   {#if children}
     {@render children()}
   {/if}

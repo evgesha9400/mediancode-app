@@ -6,7 +6,7 @@
   import { apisStore, endpointsStore } from '$lib/stores/apis';
   import { clerkState } from '$lib/clerk';
   import { storeLoadingState, reloadStores, STORE_NAMES } from '$lib/stores/loader';
-  import { StatCard } from '$lib/components';
+  import { MainColumnFrame, PageHeader, StatCard } from '$lib/components';
   import { QuickActions, ProjectChecklist, ApiReadinessCard } from '$lib/components/dashboard';
   import { GenerateModal } from '$lib/components/api-generator';
 
@@ -65,16 +65,14 @@
   }
 </script>
 
-<!-- Header -->
-<div class="bg-mono-950 border-b-2 border-mono-700 py-4 px-6">
-  <div>
-    <h1 class="text-2xl text-mono-100 font-semibold">Dashboard</h1>
-    <p class="text-sm text-mono-400 mt-1">Welcome back, {userName}! Here's your overview</p>
-  </div>
-</div>
+<MainColumnFrame bodyClass="p-6 space-y-6">
+  {#snippet header()}
+    <PageHeader
+      title="Dashboard"
+      description={`Welcome back, ${userName}! Here's your overview`}
+    />
+  {/snippet}
 
-<!-- Main Dashboard Content -->
-<div class="flex-1 overflow-auto p-6 space-y-6">
   <!-- Quick Actions / Onboarding -->
   <section>
     <QuickActions {hasFields} {hasObjects} {hasApis} />
@@ -128,15 +126,15 @@
             {/each}
           </div>
         {:else}
-          <div class="bg-mono-900 border-2 border-mono-700 p-6 text-center">
-            <i class="fa-solid fa-code text-mono-600 text-2xl mb-2 block"></i>
-            <p class="text-sm text-mono-400">No APIs yet. Create your first API to get started.</p>
+          <div class="bg-mono-900/50 backdrop-blur-sm/30 border border-mono-800/80 rounded-2xl p-8 text-center shadow-lg">
+            <i class="fa-solid fa-code text-mono-600 text-3xl mb-3 block"></i>
+            <p class="text-sm text-mono-400 font-inter">No APIs yet. Create your first API to get started.</p>
           </div>
         {/if}
       </section>
     </div>
   </div>
-</div>
+</MainColumnFrame>
 
 <!-- Generate Modal -->
 <GenerateModal

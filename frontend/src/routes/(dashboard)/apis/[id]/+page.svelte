@@ -3,7 +3,9 @@
   import { goto } from '$app/navigation';
   import { untrack } from 'svelte';
   import {
+    MainColumnFrame,
     DrawerStack,
+    CrudDrawerFooter,
     Pill,
     FormField,
     FormLabel,
@@ -31,6 +33,11 @@
   import { createFieldApi } from '$lib/api/fields';
   import { mapApiError } from '$lib/domain/errorMap';
   import { showToast } from '$lib/stores/toasts';
+  import {
+    dashboardPageHeaderGradient,
+    dashboardPageHeaderShell,
+    dashboardPageHeaderTitleBand,
+  } from '$lib/ui/classes';
 
   // Get API ID from URL
   let apiId = $derived(page.params.id ?? '');
@@ -278,96 +285,123 @@
 </script>
 
 {#if !apiExists}
-  <div class="flex-1 flex items-center justify-center">
-    <div class="text-center">
-      <i class="fa-solid fa-circle-exclamation text-4xl text-mono-400 mb-4"></i>
-      <h2 class="text-xl text-mono-100 mb-2">API Not Found</h2>
-      <p class="text-mono-400 mb-4">The API you're looking for doesn't exist or has been deleted.</p>
-      <button
-        onclick={() => goto('/apis')}
-        class="px-4 py-2 bg-green-400 text-mono-950 font-bold tracking-wide hover:bg-green-300"
-      >
-        Back to APIs
-      </button>
-    </div>
-  </div>
-{:else}
-  <!-- Compact Header -->
-  <div class="bg-mono-950 border-b-2 border-mono-700 py-4 px-6">
-    <div class="flex justify-between items-center">
-      <!-- Left side -->
-      <div>
+  <MainColumnFrame bodyClass="p-6">
+    {#snippet header()}{/snippet}
+    <div class="flex min-h-[50vh] flex-col items-center justify-center">
+      <div class="text-center">
+        <i class="fa-solid fa-circle-exclamation text-4xl text-mono-400 mb-4"></i>
+        <h2 class="text-xl text-mono-100 mb-2">API Not Found</h2>
+        <p class="text-mono-400 mb-4">The API you're looking for doesn't exist or has been deleted.</p>
         <button
+          type="button"
           onclick={() => goto('/apis')}
-          class="text-sm text-mono-400 hover:text-mono-300 transition-colors flex items-center space-x-1 mb-2"
+          class="px-4 py-2 bg-green-400 text-mono-950 font-inter font-semibold rounded-xl text-sm tracking-wide shadow-sm hover:bg-green-300"
         >
-          <i class="fa-solid fa-arrow-left text-xs"></i>
-          <span>Back to APIs</span>
-        </button>
-
-        <div class="flex items-center space-x-3 mb-1">
-          <h1 class="text-xl font-semibold text-mono-100">{apiState.api?.title || 'Untitled API'}</h1>
-          <Pill>{apiState.api?.version ?? ''}</Pill>
-        </div>
-
-        {#if apiState.api?.description}
-          <p class="text-sm text-mono-400 mb-2">{apiState.api.description}</p>
-        {/if}
-
-        <div class="flex items-center space-x-4 text-xs text-mono-400">
-          {#if apiState.api?.serverUrl}
-            <div class="flex items-center space-x-1.5">
-              <i class="fa-solid fa-server"></i>
-              <code class="font-mono">{apiState.api.serverUrl}</code>
-            </div>
-          {/if}
-          {#if apiState.api?.baseUrl}
-            <div class="flex items-center space-x-1.5">
-              <i class="fa-solid fa-link"></i>
-              <code class="font-mono">{apiState.api.baseUrl}</code>
-            </div>
-          {/if}
-          {#if namespaceName}
-            <div class="flex items-center space-x-1.5">
-              <i class="fa-solid fa-layer-group"></i>
-              <span>{namespaceName}</span>
-            </div>
-          {/if}
-        </div>
-      </div>
-
-      <!-- Right side -->
-      <div class="flex items-center space-x-2">
-        <button
-          onclick={() => generateModalOpen = true}
-          class="px-4 py-2 bg-green-400 text-mono-950 font-bold tracking-wide flex items-center space-x-2 hover:bg-green-300 cursor-pointer transition-colors"
-        >
-          <i class="fa-solid fa-code"></i>
-          <span>Generate Code</span>
-        </button>
-        <button
-          onclick={apiState.handleAddEndpoint}
-          class="px-4 py-2 border border-mono-600 text-mono-300 flex items-center space-x-2 hover:bg-mono-950 cursor-pointer transition-colors"
-        >
-          <i class="fa-solid fa-plus"></i>
-          <span>Add Endpoint</span>
-        </button>
-        <button
-          onclick={apiState.openEditDrawer}
-          class="px-4 py-2 border border-mono-600 text-mono-300 flex items-center space-x-2 hover:bg-mono-950 cursor-pointer transition-colors"
-        >
-          <i class="fa-solid fa-pen-to-square"></i>
-          <span>Edit API</span>
+          Back to APIs
         </button>
       </div>
     </div>
-  </div>
+  </MainColumnFrame>
+{:else}
+  <MainColumnFrame bodyClass="">
+    {#snippet header()}
+      <div class={dashboardPageHeaderShell}>
+        <div class={dashboardPageHeaderGradient}></div>
+        <div
+          class="relative z-20 flex justify-between gap-3 {dashboardPageHeaderTitleBand} flex-nowrap"
+        >
+          <div class="flex items-center gap-2 sm:gap-3 min-w-0 flex-1 overflow-hidden">
+            <button
+              type="button"
+              onclick={() => goto('/apis')}
+              class="inline-flex items-center justify-center w-8 h-8 border border-mono-600/50 rounded-lg text-mono-400 hover:bg-mono-800/50 hover:text-white transition-colors shrink-0"
+              aria-label="Back to APIs list"
+            >
+              <i class="fa-solid fa-arrow-left text-sm"></i>
+            </button>
+            <h1
+              class="text-2xl text-white font-inter font-bold tracking-tight shadow-sm leading-tight truncate min-w-0"
+              title={apiState.api?.title || undefined}
+            >
+              {apiState.api?.title || 'Untitled API'}
+            </h1>
+            <Pill class="shrink-0">{apiState.api?.version ?? ''}</Pill>
 
-  <!-- Main Content -->
-  <div class="flex-1 overflow-auto">
+            {#if apiState.api?.description?.trim()}
+              <span class="text-mono-600 shrink-0 hidden md:inline" aria-hidden="true">·</span>
+              <span
+                class="hidden md:inline text-sm text-mono-400 truncate min-w-0 max-w-[min(28vw,14rem)] lg:max-w-md"
+                title={apiState.api.description}
+              >{apiState.api.description.trim()}</span>
+            {/if}
+
+            {#if namespaceName}
+              <span class="text-mono-600 shrink-0 hidden sm:inline" aria-hidden="true">·</span>
+              <span
+                class="hidden sm:inline-flex items-center gap-1 text-xs text-mono-400 shrink-0 max-w-[7rem] truncate"
+                title={namespaceName}
+              >
+                <i class="fa-solid fa-layer-group text-[10px] shrink-0"></i>
+                <span class="truncate">{namespaceName}</span>
+              </span>
+            {/if}
+
+            {#if apiState.api?.serverUrl}
+              <span class="text-mono-600 shrink-0 hidden lg:inline" aria-hidden="true">·</span>
+              <span
+                class="hidden lg:inline-flex items-center gap-1 text-xs text-mono-400 max-w-[8rem] min-w-0 truncate font-mono"
+                title={apiState.api.serverUrl}
+              >
+                <i class="fa-solid fa-server text-[10px] shrink-0"></i>
+                <span class="truncate">{apiState.api.serverUrl}</span>
+              </span>
+            {/if}
+
+            {#if apiState.api?.baseUrl}
+              <span class="text-mono-600 shrink-0 hidden lg:inline" aria-hidden="true">·</span>
+              <span
+                class="hidden lg:inline-flex items-center gap-1 text-xs text-mono-400 max-w-[6rem] min-w-0 truncate font-mono"
+                title={apiState.api.baseUrl}
+              >
+                <i class="fa-solid fa-link text-[10px] shrink-0"></i>
+                <span class="truncate">{apiState.api.baseUrl}</span>
+              </span>
+            {/if}
+          </div>
+
+          <div class="flex flex-wrap items-center justify-end gap-2 shrink-0">
+            <button
+              type="button"
+              onclick={() => generateModalOpen = true}
+              class="px-4 py-2 border border-transparent bg-green-400 text-mono-950 font-inter font-semibold rounded-xl text-sm tracking-wide shadow-sm flex items-center space-x-2 hover:bg-green-300 cursor-pointer transition-colors"
+            >
+              <i class="fa-solid fa-code"></i>
+              <span>Generate Code</span>
+            </button>
+            <button
+              type="button"
+              onclick={apiState.handleAddEndpoint}
+              class="px-4 py-2 border border-mono-700 rounded-xl font-inter font-medium text-sm tracking-wide text-mono-300 flex items-center space-x-2 hover:bg-mono-900 cursor-pointer transition-all shadow-sm"
+            >
+              <i class="fa-solid fa-plus"></i>
+              <span>Add Endpoint</span>
+            </button>
+            <button
+              type="button"
+              onclick={apiState.openEditDrawer}
+              class="px-4 py-2 border border-mono-700 rounded-xl font-inter font-medium text-sm tracking-wide text-mono-300 flex items-center space-x-2 hover:bg-mono-900 cursor-pointer transition-all shadow-sm"
+            >
+              <i class="fa-solid fa-pen-to-square"></i>
+              <span>Edit API</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    {/snippet}
+
     <div class="max-w-7xl mx-auto p-6">
       {#if apiState.endpoints.length === 0}
-        <div class="bg-mono-900 border-2 border-mono-700">
+        <div class="bg-mono-900/50 backdrop-blur-sm border-2 border-mono-700">
           <div class="text-center py-8 text-mono-400">
             <i class="fa-solid fa-route text-2xl mb-2 text-mono-600"></i>
             <p class="text-sm">No endpoints yet. Create your first API endpoint.</p>
@@ -375,7 +409,7 @@
         </div>
       {:else}
         <!-- Swagger-style flush tag sections -->
-        <div class="overflow-hidden border-2 border-mono-700">
+        <div class="overflow-hidden border border-mono-800/80 rounded-2xl shadow-sm">
           {#each apiState.allTagSections as section, i (section.tag)}
             {@const isExpanded = apiState.expandedTags.has(section.tag)}
             <div class="{i < apiState.allTagSections.length - 1 ? 'border-b border-mono-700' : ''}">
@@ -383,7 +417,7 @@
               <button
                 type="button"
                 onclick={() => apiState.toggleTagSection(section.tag)}
-                class="w-full flex items-center justify-between px-4 py-3 bg-mono-900 hover:bg-mono-950 transition-colors text-left"
+                class="w-full flex items-center justify-between px-4 py-3 bg-mono-900/50 backdrop-blur-sm hover:bg-mono-950 transition-colors text-left"
               >
                 <div class="flex items-center space-x-2">
                   <h2 class="text-base font-semibold text-mono-100">{section.tag}</h2>
@@ -393,7 +427,7 @@
               </button>
               <!-- Tag section body -->
               {#if isExpanded}
-                <div class="px-4 pb-3">
+                <div class="p-4">
                   <div class="space-y-2">
                     {#each section.endpoints as endpoint (endpoint.id)}
                       <EndpointItem
@@ -409,7 +443,7 @@
         </div>
       {/if}
     </div>
-  </div>
+</MainColumnFrame>
 
   {#snippet editApiFormContent(_: { close: () => void })}
     <div class="space-y-4">
@@ -451,7 +485,7 @@
           bind:value={apiState.editForm.description}
           rows="3"
           placeholder="Describe what this API does..."
-          class="w-full px-3 py-1.5 text-sm border border-mono-600 focus:ring-2 focus:ring-green-400 focus:border-transparent"
+          class="w-full px-3 py-1.5 text-sm border border-mono-700/80 bg-mono-900/50 backdrop-blur-sm/50 focus:ring-2 focus:ring-green-400/50 outline-none focus:outline-none transition-all rounded-xl"
         ></textarea>
       </div>
 
@@ -479,7 +513,7 @@
         type="button"
         onclick={apiState.handleEditSave}
         disabled={!apiState.hasEditChanges || apiState.isSaving}
-        class="w-full px-4 py-2 transition-colors font-medium {apiState.hasEditChanges && !apiState.isSaving ? 'bg-green-400 text-mono-950 hover:bg-green-300 font-bold tracking-wide cursor-pointer' : 'bg-mono-700 text-mono-500 cursor-not-allowed'}"
+        class="w-full px-4 py-2 transition-colors font-medium {apiState.hasEditChanges && !apiState.isSaving ? 'bg-green-400 text-mono-950 hover:bg-green-300 font-bold tracking-wide cursor-pointer' : 'bg-mono-800 text-mono-500 cursor-not-allowed rounded-xl'}"
       >
         {#if apiState.isSaving}
           <i class="fa-solid fa-spinner fa-spin mr-2"></i>
@@ -557,7 +591,7 @@
                     }
                   }}
                   placeholder="Type or select tag..."
-                  class="w-full px-3 py-1.5 border border-mono-600 focus:ring-2 focus:ring-green-400 focus:border-transparent text-sm pr-8"
+                  class="w-full px-3 py-1.5 border border-mono-700/80 bg-mono-900/50 backdrop-blur-sm/50 focus:ring-2 focus:ring-green-400/50 outline-none focus:outline-none transition-all rounded-xl text-sm pr-8"
                 />
                 {#if apiState.tagInputValue}
                   <button
@@ -573,7 +607,7 @@
                 {/if}
               </div>
               {#if apiState.tagDropdownOpen}
-                <div class="absolute z-10 w-full mt-1 bg-mono-900 border border-mono-600 shadow-lg shadow-black/30 max-h-48 overflow-auto">
+                <div class="absolute z-10 w-full mt-1 bg-mono-900/50 backdrop-blur-sm border border-mono-600 shadow-lg shadow-black/30 max-h-48 overflow-auto">
                   {#if apiState.tagInputValue.trim() && !exactTagMatch}
                     <button
                       type="button"
@@ -608,7 +642,7 @@
                 type="text"
                 bind:value={apiState.editedEndpoint.description}
                 placeholder="Add a description for this endpoint..."
-                class="w-full px-3 py-1.5 border border-mono-600 focus:ring-2 focus:ring-green-400 focus:border-transparent text-sm"
+                class="w-full px-3 py-1.5 border border-mono-700/80 bg-mono-900/50 backdrop-blur-sm/50 focus:ring-2 focus:ring-green-400/50 outline-none focus:outline-none transition-all rounded-xl text-sm"
               />
             </div>
           </div>
@@ -622,20 +656,20 @@
             <div class="endpoint-method-path">
               <select
                 bind:value={apiState.editedEndpoint.method}
-                class="px-3 py-1.5 border border-mono-600 focus:ring-2 focus:ring-green-400 focus:border-transparent text-sm"
+                class="px-3 py-1.5 border border-mono-700/80 bg-mono-900/50 backdrop-blur-sm/50 focus:ring-2 focus:ring-green-400/50 outline-none focus:outline-none transition-all rounded-xl text-sm"
               >
                 {#each HTTP_METHODS as method}
                   <option value={method}>{method}</option>
                 {/each}
               </select>
-              <div class="endpoint-path-input flex items-center border border-mono-600 focus-within:ring-2 focus-within:ring-green-400 focus-within:border-transparent">
-                <span class="px-3 py-1.5 text-sm font-mono text-mono-400 bg-mono-950 border-r border-mono-600">/</span>
+              <div class="endpoint-path-input flex items-center rounded-xl overflow-hidden border border-mono-700/80 bg-mono-900/50 backdrop-blur-sm focus-within:ring-2 focus-within:ring-green-400/50 focus-within:outline-none transition-all">
+                <span class="px-3 py-1.5 text-sm font-mono text-mono-400 bg-mono-900/80 border-r border-mono-700/80">/</span>
                 <input
                   type="text"
                   value={apiState.editedEndpoint.path.substring(1)}
                   oninput={(e) => apiState.handlePathChange('/' + e.currentTarget.value)}
                   placeholder="users/{`{user_id}`}"
-                  class="flex-1 px-3 py-1.5 text-sm font-mono border-0 focus:ring-0 focus:outline-none"
+                  class="flex-1 px-3 py-1.5 text-sm font-mono border-none focus:ring-0 outline-none focus:outline-none shadow-none"
                 />
               </div>
             </div>
@@ -664,11 +698,11 @@
               Path Parameters
             </h3>
             {#if apiState.editedEndpoint.pathParams.length === 0}
-              <div class="px-3 py-2 bg-mono-950 rounded border border-mono-700">
-                <p class="text-xs text-mono-400">No path parameters. Add parameters to your URL path using <code class="bg-mono-800 px-1 rounded">{`{param_name}`}</code></p>
+              <div class="px-3 py-2 bg-mono-900/50 backdrop-blur-sm rounded-xl border border-mono-700/80">
+                <p class="text-xs text-mono-400">No path parameters. Add parameters to your URL path using <code class="bg-mono-800 px-1 rounded-lg">{`{param_name}`}</code></p>
               </div>
             {:else}
-              <div class="px-3 py-1 bg-mono-950 rounded border border-mono-700">
+              <div class="px-3 py-1 bg-mono-900/50 backdrop-blur-sm rounded-xl border border-mono-700/80">
                 <!-- Column headers -->
                 <div class="flex items-center gap-2 py-1 border-b border-mono-700 text-[10px] text-mono-500 uppercase tracking-wider">
                   <div class="w-32 shrink-0">Name</div>
@@ -721,7 +755,7 @@
               type="button"
               onclick={apiState.handleCreateEndpoint}
               disabled={!apiState.hasEndpointChanges || apiState.isSaving}
-              class="flex-1 px-4 py-2 transition-colors font-medium flex items-center justify-center space-x-2 {apiState.hasEndpointChanges && !apiState.isSaving ? 'bg-green-400 text-mono-950 hover:bg-green-300 font-bold tracking-wide cursor-pointer' : 'bg-mono-700 text-mono-500 cursor-not-allowed'}"
+              class="flex-1 px-4 py-2 rounded-xl transition-colors font-medium flex items-center justify-center space-x-2 {apiState.hasEndpointChanges && !apiState.isSaving ? 'bg-green-400 text-mono-950 hover:bg-green-300 font-bold tracking-wide cursor-pointer' : 'bg-mono-800 text-mono-500 cursor-not-allowed'}"
             >
               {#if apiState.isSaving}
                 <i class="fa-solid fa-spinner fa-spin"></i>
@@ -734,7 +768,7 @@
               type="button"
               onclick={apiState.handleCancelCreate}
               disabled={apiState.isSaving}
-              class="flex-1 px-4 py-2 border border-mono-600 text-mono-300 hover:bg-mono-950 cursor-pointer transition-colors font-medium flex items-center justify-center space-x-2"
+              class="flex-1 px-4 py-2 rounded-xl border border-mono-600 text-mono-300 hover:bg-mono-950 cursor-pointer transition-colors font-medium flex items-center justify-center space-x-2"
             >
               <span>Cancel</span>
             </button>
@@ -745,7 +779,7 @@
               type="button"
               onclick={apiState.handleSaveEndpoint}
               disabled={!apiState.hasEndpointChanges}
-              class="flex-1 px-4 py-2 transition-colors font-medium flex items-center justify-center space-x-2 {apiState.hasEndpointChanges ? 'bg-green-400 text-mono-950 hover:bg-green-300 font-bold tracking-wide cursor-pointer' : 'bg-mono-700 text-mono-500 cursor-not-allowed'}"
+              class="flex-1 px-4 py-2 rounded-xl transition-colors font-medium flex items-center justify-center space-x-2 {apiState.hasEndpointChanges ? 'bg-green-400 text-mono-950 hover:bg-green-300 font-bold tracking-wide cursor-pointer' : 'bg-mono-800 text-mono-500 cursor-not-allowed'}"
             >
               <span>Save</span>
             </button>
@@ -753,21 +787,21 @@
               type="button"
               onclick={apiState.handleUndoEndpoint}
               disabled={!apiState.hasEndpointChanges}
-              class="flex-1 px-4 py-2 border transition-colors font-medium flex items-center justify-center space-x-2 {apiState.hasEndpointChanges ? 'border-mono-600 text-mono-300 hover:bg-mono-950 cursor-pointer' : 'border-mono-700 text-mono-400 cursor-not-allowed bg-mono-950'}"
+              class="flex-1 px-4 py-2 rounded-xl border transition-colors font-medium flex items-center justify-center space-x-2 {apiState.hasEndpointChanges ? 'border-mono-600 text-mono-300 hover:bg-mono-950 cursor-pointer' : 'border-mono-700 text-mono-400 cursor-not-allowed bg-mono-950'}"
             >
               <span>Undo</span>
             </button>
             <button
               type="button"
               onclick={() => apiState.handleDuplicateEndpoint(apiState.editedEndpoint!.id)}
-              class="flex-1 px-4 py-2 border border-mono-600 text-mono-300 hover:bg-mono-950 transition-colors font-medium flex items-center justify-center space-x-2"
+              class="flex-1 px-4 py-2 rounded-xl border border-mono-600 text-mono-300 hover:bg-mono-950 transition-colors font-medium flex items-center justify-center space-x-2"
             >
               <span>Duplicate</span>
             </button>
             <button
               type="button"
               onclick={apiState.handleDeleteEndpointClick}
-              class="flex-1 px-4 py-2 border border-mono-600 text-red-400 hover:bg-red-400/10 transition-colors font-medium flex items-center justify-center space-x-2"
+              class="flex-1 px-4 py-2 rounded-xl border border-mono-600 text-red-400 hover:bg-red-400/10 transition-colors font-medium flex items-center justify-center space-x-2"
             >
               <i class="fa-solid fa-xmark"></i>
               <span>Delete</span>
@@ -780,14 +814,14 @@
               <button
                 type="button"
                 onclick={apiState.handleDeleteEndpoint}
-                class="flex-1 px-3 py-1.5 bg-red-600 text-white hover:bg-red-700 text-sm font-medium"
+                class="flex-1 px-3 py-1.5 rounded-xl bg-red-600 text-white hover:bg-red-700 text-sm font-medium"
               >
                 Yes, Delete
               </button>
               <button
                 type="button"
                 onclick={apiState.cancelDeleteEndpoint}
-                class="flex-1 px-3 py-1.5 border border-mono-600 text-mono-300 hover:bg-mono-950 text-sm font-medium"
+                class="flex-1 px-3 py-1.5 rounded-xl border border-mono-600 text-mono-300 hover:bg-mono-950 text-sm font-medium"
               >
                 Cancel
               </button>
@@ -811,30 +845,14 @@
     {/if}
   {/snippet}
 
-  {#snippet objectFormFooter(_: { close: () => void })}
-    <div class="flex space-x-2">
-      <button
-        type="button"
-        onclick={handleCreateObject}
-        disabled={objectSaving}
-        class="flex-1 px-4 py-2 transition-colors font-medium flex items-center justify-center space-x-2 {!objectSaving ? 'bg-green-400 text-mono-950 hover:bg-green-300 font-bold tracking-wide cursor-pointer' : 'bg-mono-700 text-mono-500 cursor-not-allowed'}"
-      >
-        {#if objectSaving}
-          <i class="fa-solid fa-spinner fa-spin"></i>
-          <span>Creating...</span>
-        {:else}
-          <span>Create Object</span>
-        {/if}
-      </button>
-      <button
-        type="button"
-        onclick={closeObjectCreate}
-        disabled={objectSaving}
-        class="flex-1 px-4 py-2 border border-mono-600 text-mono-300 hover:bg-mono-950 cursor-pointer transition-colors font-medium"
-      >
-        Cancel
-      </button>
-    </div>
+  {#snippet objectFormFooter({ close }: { close: () => void })}
+    <CrudDrawerFooter
+      mode="creating"
+      isSaving={objectSaving}
+      isFormValid={objectFormValid}
+      onCreate={handleCreateObject}
+      onCancel={close}
+    />
   {/snippet}
 
   {#snippet fieldFormContent(_: { close: () => void })}
@@ -851,30 +869,14 @@
     {/if}
   {/snippet}
 
-  {#snippet fieldFormFooter(_: { close: () => void })}
-    <div class="flex space-x-2">
-      <button
-        type="button"
-        onclick={handleCreateField}
-        disabled={fieldSaving}
-        class="flex-1 px-4 py-2 transition-colors font-medium flex items-center justify-center space-x-2 {!fieldSaving ? 'bg-green-400 text-mono-950 hover:bg-green-300 font-bold tracking-wide cursor-pointer' : 'bg-mono-700 text-mono-500 cursor-not-allowed'}"
-      >
-        {#if fieldSaving}
-          <i class="fa-solid fa-spinner fa-spin"></i>
-          <span>Creating...</span>
-        {:else}
-          <span>Create Field</span>
-        {/if}
-      </button>
-      <button
-        type="button"
-        onclick={closeFieldCreate}
-        disabled={fieldSaving}
-        class="flex-1 px-4 py-2 border border-mono-600 text-mono-300 hover:bg-mono-950 cursor-pointer transition-colors font-medium"
-      >
-        Cancel
-      </button>
-    </div>
+  {#snippet fieldFormFooter({ close }: { close: () => void })}
+    <CrudDrawerFooter
+      mode="creating"
+      isSaving={fieldSaving}
+      isFormValid={fieldFormValid}
+      onCreate={handleCreateField}
+      onCancel={close}
+    />
   {/snippet}
 
   <!-- Unified DrawerStack: always mounted, panels array controls visibility -->

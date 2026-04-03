@@ -68,6 +68,7 @@
 </script>
 
 <script lang="ts">
+  import { mainColumnChromePaddingX } from '$lib/ui/classes';
   import { SEARCH_INPUT_ID, FILTER_TOGGLE_ID } from '$lib/utils/testIds';
 
   interface Props extends SearchBarProps {}
@@ -86,7 +87,9 @@
   let pluralLabel = $derived(resultsCount !== 1 ? `${resultLabel}s` : resultLabel);
 </script>
 
-<div class="bg-mono-950 border-b-2 border-mono-700 py-3 px-6">
+<div
+  class="bg-mono-950/40 backdrop-blur-md border-b border-mono-800/60 py-4 {mainColumnChromePaddingX} relative z-50"
+>
   <div class="flex items-center justify-between">
     <div class="flex items-center space-x-4 flex-1">
       <div class="relative flex-1 max-w-md">
@@ -95,18 +98,18 @@
           {placeholder}
           bind:value={searchQuery}
           data-testid={SEARCH_INPUT_ID}
-          class="w-full pl-10 pr-4 py-1.5 text-sm border border-mono-600 bg-mono-900 text-mono-100 focus:ring-2 focus:ring-green-400 focus:border-transparent"
+          class="w-full pl-10 pr-4 py-2 text-sm font-inter border border-mono-700/80 rounded-xl bg-mono-900/50 backdrop-blur-sm/50 text-mono-100 focus:ring-2 focus:ring-green-400 focus:outline-none focus:border-transparent placeholder:text-mono-500 shadow-inner"
         />
-        <i class="fa-solid fa-search absolute left-3 top-1/2 transform -translate-y-1/2 text-mono-400"></i>
+        <i class="fa-solid fa-search absolute left-3.5 top-1/2 transform -translate-y-1/2 text-mono-400 text-sm"></i>
       </div>
       <div class="relative">
         <button
           type="button"
           onclick={() => onFilterClick?.()}
           data-testid={FILTER_TOGGLE_ID}
-          class="flex items-center space-x-2 px-3 py-1.5 text-sm border transition-colors {showFilter ? (active ? 'bg-mono-800 border-green-400 text-mono-100' : 'bg-mono-900 border-mono-600 text-mono-300 hover:bg-mono-800') : 'hidden'}"
+          class="flex items-center space-x-2 px-4 py-2 text-sm font-inter rounded-xl transition-all shadow-sm {showFilter ? (active ? 'bg-mono-700/80 border border-transparent text-white' : 'bg-mono-800/40 border border-mono-700/80 text-mono-300 hover:bg-mono-800/80 hover:text-white') : 'hidden'}"
         >
-          <i class="fa-solid fa-filter {active ? 'text-green-400' : 'text-mono-400'}"></i>
+          <i class="fa-solid fa-filter text-xs {active ? 'text-green-400' : 'text-mono-400'}"></i>
           <span>Filter</span>
           {#if active}
             <span class="ml-1 w-2 h-2 bg-green-400 rounded-full"></span>
@@ -115,7 +118,7 @@
         {@render filterPanel?.()}
       </div>
     </div>
-    <div class="flex items-center text-sm text-mono-400">
+    <div class="flex items-center text-sm font-inter font-medium text-mono-400">
       <span>{resultsCount} {pluralLabel}</span>
     </div>
   </div>
