@@ -9,7 +9,7 @@ import {
 	searchObjects,
 	type ObjectDefinition
 } from '$lib/stores/objects';
-import { GLOBAL_NAMESPACE_ID } from '$lib/constants';
+import { GLOBAL_NAMESPACE_ID } from '$lib/utils/namespace';
 
 // Helper to create an object definition for seeding the store directly
 function makeObject(overrides: Partial<ObjectDefinition> & { id: string; name: string }): ObjectDefinition {

@@ -25,7 +25,7 @@ import { fieldConstraintsStore } from './fieldConstraints';
 import { typesBaseStore } from './types';
 import { fieldValidatorTemplatesStore } from './fieldValidatorTemplates';
 import { modelValidatorTemplatesStore } from './modelValidatorTemplates';
-import { GLOBAL_NAMESPACE_ID } from '$lib/constants';
+import { SYSTEM_NAMESPACE_ID } from '$lib/utils/namespace';
 
 /**
  * Store loading state
@@ -152,13 +152,13 @@ export async function loadStoresFromApi(): Promise<void> {
 	apisStore.set(apis);
 	endpointsStore.set(endpoints);
 
-	// Set active namespace: prefer user's default, fall back to global, then first
+	// Set active namespace: prefer user's default, fall back to system namespace id, then first
 	const defaultNamespace = namespaces.find(ns => ns.isDefault);
 	if (defaultNamespace) {
 		activeNamespaceId.set(defaultNamespace.id);
 	} else {
-		const globalNamespace = namespaces.find(ns => ns.id === GLOBAL_NAMESPACE_ID);
-		activeNamespaceId.set(globalNamespace?.id ?? namespaces[0]?.id ?? GLOBAL_NAMESPACE_ID);
+		const globalNamespace = namespaces.find(ns => ns.id === SYSTEM_NAMESPACE_ID);
+		activeNamespaceId.set(globalNamespace?.id ?? namespaces[0]?.id ?? SYSTEM_NAMESPACE_ID);
 	}
 
 	storeLoadingState.set({
@@ -197,7 +197,7 @@ export function resetStores(): void {
 	typesBaseStore.set([]);
 	fieldValidatorTemplatesStore.set([]);
 	modelValidatorTemplatesStore.set([]);
-	activeNamespaceId.set(GLOBAL_NAMESPACE_ID);
+	activeNamespaceId.set('');
 
 	console.log('[Store Loader] Stores reset to initial state');
 }

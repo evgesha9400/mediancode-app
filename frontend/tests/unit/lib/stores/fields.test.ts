@@ -9,7 +9,7 @@ import {
 	searchFields,
 	type Field
 } from '$lib/stores/fields';
-import { GLOBAL_NAMESPACE_ID } from '$lib/constants';
+import { GLOBAL_NAMESPACE_ID } from '$lib/utils/namespace';
 
 // Helper to create a field object for seeding the store directly
 function makeField(overrides: Partial<Field> & { id: string; name: string; type: Field['type'] }): Field {

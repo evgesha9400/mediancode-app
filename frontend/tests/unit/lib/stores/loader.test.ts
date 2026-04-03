@@ -74,10 +74,6 @@ vi.mock('$lib/stores/modelValidatorTemplates', () => {
   return { modelValidatorTemplatesStore: writable([]) };
 });
 
-vi.mock('$lib/constants', () => ({
-  GLOBAL_NAMESPACE_ID: 'global-ns'
-}));
-
 // ---------------------------------------------------------------------------
 // Imports (after mocks)
 // ---------------------------------------------------------------------------
@@ -366,12 +362,12 @@ describe('loader - resetStores', () => {
     expect(get(modelValidatorTemplatesStore)).toEqual([]);
   });
 
-  it('should reset activeNamespaceId to global namespace ID', () => {
+  it('should reset activeNamespaceId to empty', () => {
     activeNamespaceId.set('ns-custom');
 
     resetStores();
 
-    expect(get(activeNamespaceId)).toBe('global-ns');
+    expect(get(activeNamespaceId)).toBe('');
   });
 });
 

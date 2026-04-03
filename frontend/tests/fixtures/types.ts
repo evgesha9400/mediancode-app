@@ -1,9 +1,11 @@
 /**
  * Type Fixtures
- * 
+ *
  * Mock type definitions for testing type-related features.
  * Based on src/lib/stores/types.ts
  */
+
+import { GLOBAL_NAMESPACE_ID } from '../../src/lib/utils/namespace';
 
 export type PrimitiveTypeName = 'str' | 'int' | 'float' | 'bool' | 'datetime' | 'uuid';
 export type TypeName = PrimitiveTypeName;
@@ -21,8 +23,6 @@ export interface TypeBase {
 export interface FieldType extends TypeBase {
 	usedInFields: number;
 }
-
-const GLOBAL_NAMESPACE_ID = '00000000-0000-0000-0000-000000000001';
 
 export const mockPrimitiveTypes: TypeBase[] = [
 	{

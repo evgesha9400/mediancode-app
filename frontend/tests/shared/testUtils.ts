@@ -7,7 +7,7 @@
 import { waitFor } from '@testing-library/svelte';
 import userEvent from '@testing-library/user-event';
 import type { ApiEndpoint, Api } from '$lib/types';
-import { GLOBAL_NAMESPACE_ID } from '$lib/constants';
+import { GLOBAL_NAMESPACE_ID } from '$lib/utils/namespace';
 
 /**
  * Creates a mock API endpoint with all required fields and sensible defaults.

@@ -10,8 +10,8 @@ import {
 	getNamespaceEntityCount,
 	getNamespaceEntityDetails,
 	setActiveNamespace,
-	GLOBAL_NAMESPACE_ID
 } from '$lib/stores/namespaces';
+import { GLOBAL_NAMESPACE_ID } from '$lib/utils/namespace';
 import { initialNamespaces } from '../../../fixtures/seedData';
 import { fieldsStore } from '$lib/stores/fields';
 import { objectsStore } from '$lib/stores/objects';

@@ -9,6 +9,9 @@
 /** Fixed UUID assigned by the backend to the system namespace */
 export const SYSTEM_NAMESPACE_ID = '00000000-0000-0000-0000-000000000001';
 
+/** Alias used in tests/fixtures; same UUID as SYSTEM_NAMESPACE_ID. */
+export const GLOBAL_NAMESPACE_ID = SYSTEM_NAMESPACE_ID;
+
 /**
  * Returns true when the entity belongs to the system namespace.
  * System entities are built-in and cannot be edited or deleted by users.

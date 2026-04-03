@@ -12,7 +12,7 @@ import {
 	getEndpointCountByTagName,
 	getTotalEndpointCount
 } from '$lib/stores/apis';
-import { GLOBAL_NAMESPACE_ID } from '$lib/constants';
+import { GLOBAL_NAMESPACE_ID } from '$lib/utils/namespace';
 import { createMockEndpoint, createMockApi } from '../../../shared/testUtils';
 
 const TEST_API_ID = 'cccccccc-0000-0000-0000-000000000001';

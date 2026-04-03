@@ -17,13 +17,13 @@ import {
   type UpdateNamespaceRequest
 } from '$lib/api/namespaces';
 import { mapApiError } from '$lib/domain/errorMap';
+import { GLOBAL_NAMESPACE_ID } from '$lib/utils/namespace';
 import {
   namespacesStore,
   activeNamespaceId,
   getNamespaceById,
   getNamespaceEntityCount,
   getNamespaceEntityDetails as getNamespaceEntityDetailsFromStore,
-  GLOBAL_NAMESPACE_ID
 } from './namespaces';
 import { get } from 'svelte/store';
 import { composeState } from '$lib/utils/compose';

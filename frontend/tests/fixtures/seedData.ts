@@ -10,10 +10,9 @@
 
 import type { PrimitiveTypeName } from '../../src/lib/stores/types';
 import type { Field, FieldConstraintValue, FieldConstraintBase, ObjectDefinition, Namespace } from '../../src/lib/types';
-import { GLOBAL_NAMESPACE_ID } from '../../src/lib/constants';
+import { GLOBAL_NAMESPACE_ID } from '../../src/lib/utils/namespace';
 
-// Re-export for convenience
-export { GLOBAL_NAMESPACE_ID } from '../../src/lib/constants';
+export { GLOBAL_NAMESPACE_ID };
 
 // ============================================================================
 // Namespace Data
