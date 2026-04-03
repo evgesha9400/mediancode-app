@@ -48,18 +48,35 @@ export interface ApiRequestOptions extends Omit<RequestInit, 'body'> {
 	skipAuth?: boolean;
 }
 
+/** In-flight token fetch — deduplicates concurrent callers. */
+let activeTokenRequest: Promise<string | null> | null = null;
+
 /**
- * Get the current Clerk session token for API authentication
+ * Get a Clerk session token.
+ * Concurrent callers share one in-flight fetch; Clerk's own cache handles freshness
+ * and token rotation, so we don't maintain a separate local cache.
  */
-async function getAuthToken(): Promise<string | null> {
+async function getAuthToken(forceRefresh = false): Promise<string | null> {
+	if (activeTokenRequest) {
+		return activeTokenRequest;
+	}
+
+	activeTokenRequest = fetchAuthToken(forceRefresh);
+	try {
+		return await activeTokenRequest;
+	} finally {
+		activeTokenRequest = null;
+	}
+}
+
+async function fetchAuthToken(skipCache = false): Promise<string | null> {
 	const clerk = getClerk();
 	if (!clerk?.session) {
 		return null;
 	}
 
 	try {
-		const token = await clerk.session.getToken();
-		return token;
+		return await clerk.session.getToken(skipCache ? { skipCache: true } : undefined);
 	} catch (error) {
 		console.error('[API Client] Failed to get auth token:', error);
 		return null;
@@ -88,7 +105,8 @@ async function getAuthToken(): Promise<string | null> {
  */
 export async function apiClient<T>(
 	endpoint: string,
-	options: ApiRequestOptions = {}
+	options: ApiRequestOptions = {},
+	_retried = false
 ): Promise<T> {
 	const { body, skipAuth = false, ...fetchOptions } = options;
 
@@ -100,8 +118,9 @@ export async function apiClient<T>(
 	};
 
 	// Add authorization header if not skipped
+	// On retry (_retried), force-refresh bypasses both local + Clerk cache
 	if (!skipAuth) {
-		const token = await getAuthToken();
+		const token = await getAuthToken(_retried);
 		if (token) {
 			(headers as Record<string, string>)['Authorization'] = `Bearer ${token}`;
 		}
@@ -122,6 +141,15 @@ export async function apiClient<T>(
 		headers,
 		body: body ? JSON.stringify(body) : undefined
 	});
+
+	// On 401, force-refresh the token and retry once. Handles two cases:
+	// 1. Stale token (Clerk listener refreshed session mid-flight)
+	// 2. Clock skew — Clerk's iat is ahead of backend clock ("not yet valid")
+	//    The 1s delay lets the backend clock catch up to the JWT's iat.
+	if (response.status === 401 && !skipAuth && !_retried) {
+		await new Promise(r => setTimeout(r, 1000));
+		return apiClient<T>(endpoint, options, true);
+	}
 
 	// Handle non-2xx responses
 	if (!response.ok) {
@@ -185,7 +213,7 @@ export interface BlobResponse {
  * @param body - Optional JSON body to send with the request
  * @param options - Additional request options
  */
-export async function apiPostBlob(endpoint: string, body?: unknown, options?: Omit<ApiRequestOptions, 'method' | 'body'>): Promise<BlobResponse> {
+export async function apiPostBlob(endpoint: string, body?: unknown, options?: Omit<ApiRequestOptions, 'method' | 'body'>, _retried = false): Promise<BlobResponse> {
 	const { skipAuth = false, ...fetchOptions } = options || {};
 
 	const headers: HeadersInit = {
@@ -194,7 +222,7 @@ export async function apiPostBlob(endpoint: string, body?: unknown, options?: Om
 	};
 
 	if (!skipAuth) {
-		const token = await getAuthToken();
+		const token = await getAuthToken(_retried);
 		if (token) {
 			(headers as Record<string, string>)['Authorization'] = `Bearer ${token}`;
 		}
@@ -213,6 +241,11 @@ export async function apiPostBlob(endpoint: string, body?: unknown, options?: Om
 		headers,
 		body: body ? JSON.stringify(body) : undefined
 	});
+
+	if (response.status === 401 && !skipAuth && !_retried) {
+		await new Promise(r => setTimeout(r, 1000));
+		return apiPostBlob(endpoint, body, options, true);
+	}
 
 	if (!response.ok) {
 		let detail: string | undefined;
