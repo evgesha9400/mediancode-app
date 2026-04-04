@@ -142,17 +142,18 @@ export async function initializeClerk(publishableKey: string): Promise<any> {
     // Expose on window for @clerk/testing compatibility (ESM import doesn't set this)
     (window as any).Clerk = clerkInstance;
 
+    // Finish org/session-adjacent Clerk work before isLoaded — otherwise dashboard
+    // store loads race parallel getToken() with getOrganizationMemberships().
+    if (clerkInstance.user) {
+      await initOrgState(clerkInstance);
+    }
+
     // Update store with initial state
     clerkState.set({
       isLoaded: true,
       isSignedIn: !!clerkInstance.user,
       user: clerkInstance.user
     });
-
-    // Initialize organization state if user is signed in
-    if (clerkInstance.user) {
-      await initOrgState(clerkInstance);
-    }
 
     // Listen for auth changes
     clerkInstance.addListener(async (resources: any) => {

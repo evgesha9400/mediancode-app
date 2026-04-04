@@ -209,8 +209,9 @@ export const sidebarNavItemInactive = 'hover:bg-mono-800/50 hover:text-white bor
 /** Fills the flex slot next to the sidebar; enables scroll inside the body. */
 export const dashboardMainColumn = 'flex flex-col flex-1 min-h-0 w-full';
 
-/** Same horizontal green wash as the page header overlay (`from-green-400/5` → transparent). */
-export const dashboardGreenWashGradient = 'bg-gradient-to-r from-green-400/5 to-transparent';
+/** Same horizontal green wash as the page header overlay (slightly softer than full /5). */
+export const dashboardGreenWashGradient =
+  'bg-gradient-to-r from-green-400/[0.035] to-transparent';
 
 /**
  * Dashboard shell background: mono base plus left-edge green wash.

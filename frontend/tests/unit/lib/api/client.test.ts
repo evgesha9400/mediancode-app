@@ -168,14 +168,16 @@ describe('API Client - apiClient', () => {
       })
     );
 
+    const getToken = vi.fn().mockRejectedValue(new Error('Token expired'));
     (getClerk as any).mockReturnValue({
-      session: { getToken: vi.fn().mockRejectedValue(new Error('Token expired')) }
+      session: { getToken }
     });
     const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
 
     await apiClient('/auth-fail');
 
     expect(capturedAuthHeader).toBeNull();
+    expect(getToken).toHaveBeenCalledTimes(3);
     consoleSpy.mockRestore();
   });
 });

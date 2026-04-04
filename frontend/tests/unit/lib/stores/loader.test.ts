@@ -16,7 +16,6 @@ import { get } from 'svelte/store';
 // Mocks -- must be declared before imports that use them
 // ---------------------------------------------------------------------------
 
-// Mock all API client modules
 vi.mock('$lib/api/namespaces', () => ({ listNamespaces: vi.fn() }));
 vi.mock('$lib/api/apis', () => ({ listApis: vi.fn() }));
 vi.mock('$lib/api/fields', () => ({ listFields: vi.fn() }));
