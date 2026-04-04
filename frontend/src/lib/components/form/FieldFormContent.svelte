@@ -2,7 +2,6 @@
   export interface FieldFormContentProps {
     editedItem: import('$lib/stores/fields').Field;
     mode: 'creating' | 'editing';
-    namespaceName: string;
     selectableTypes: import('$lib/stores/types').FieldType[];
     fieldConstraintDefinitions: import('$lib/stores/fieldConstraints').FieldConstraint[];
     fieldValidatorTemplates: import('$lib/types').FieldValidatorTemplate[];
@@ -44,7 +43,6 @@
   let {
     editedItem = $bindable(),
     mode,
-    namespaceName,
     selectableTypes,
     fieldConstraintDefinitions,
     fieldValidatorTemplates,
@@ -150,19 +148,6 @@
 </script>
 
 <div class="space-y-4">
-  <!-- Namespace (Read-only) -->
-  <div>
-    <FormLabel label="Namespace" forId="fields-namespace" />
-    <input
-      id="fields-namespace"
-      type="text"
-      value={namespaceName}
-      disabled
-      class="w-full px-3 py-1.5 rounded-xl text-sm border border-mono-700 bg-mono-800 text-mono-400 cursor-not-allowed"
-    />
-    <p class="text-xs text-mono-400 mt-1">Namespace cannot be changed after creation</p>
-  </div>
-
   <!-- Field Name -->
   <FormField
     id="fields-name"

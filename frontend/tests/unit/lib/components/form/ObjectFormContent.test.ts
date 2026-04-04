@@ -16,20 +16,17 @@ describe('ObjectFormContent Component', () => {
 					usedInApis: []
 				},
 				mode: 'creating',
-				namespaceName: 'default',
 				availableFields: [],
 				modelValidatorTemplates: [],
 				visibleErrors: {}
 			};
 			expect(props.mode).toBe('creating');
-			expect(props.namespaceName).toBe('default');
 		});
 
 		it('ObjectFormContentProps accepts editing mode', () => {
 			const props: ObjectFormContentProps = {
 				editedItem: {} as any,
 				mode: 'editing',
-				namespaceName: 'default',
 				availableFields: [],
 				modelValidatorTemplates: [],
 				visibleErrors: {}
@@ -41,7 +38,6 @@ describe('ObjectFormContent Component', () => {
 			const props: ObjectFormContentProps = {
 				editedItem: {} as any,
 				mode: 'creating',
-				namespaceName: 'default',
 				availableFields: [],
 				modelValidatorTemplates: [],
 				visibleErrors: {},
@@ -54,7 +50,6 @@ describe('ObjectFormContent Component', () => {
 			const props: ObjectFormContentProps = {
 				editedItem: {} as any,
 				mode: 'creating',
-				namespaceName: 'default',
 				availableFields: [],
 				modelValidatorTemplates: [],
 				visibleErrors: {}

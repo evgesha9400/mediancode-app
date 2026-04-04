@@ -268,7 +268,6 @@
     <ObjectFormContent
       bind:editedItem={workflow.editedItem}
       mode={workflow.mode === 'creating' ? 'creating' : 'editing'}
-      namespaceName={objectNamespaceName}
       availableFields={namespacedFields}
       {modelValidatorTemplates}
       visibleErrors={workflow.visibleErrors}
@@ -304,7 +303,6 @@
     <FieldFormContent
       bind:editedItem={editedNewField}
       mode="creating"
-      namespaceName={objectNamespaceName}
       selectableTypes={$typesStore}
       fieldConstraintDefinitions={$fieldConstraintsStore}
       fieldValidatorTemplates={$fieldValidatorTemplatesStore}
@@ -329,6 +327,7 @@
         {
           id: 'object',
           title: workflow.mode === 'creating' ? 'Create Object' : 'Edit Object',
+          headerNamespace: objectNamespaceName,
           width: 800,
           minWidth: 500,
           content: objectFormContent,
@@ -338,6 +337,7 @@
           ? [{
               id: 'field',
               title: 'Create Field',
+              headerNamespace: objectNamespaceName,
               width: 800,
               minWidth: 500,
               content: fieldFormContent,

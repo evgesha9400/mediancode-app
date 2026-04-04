@@ -4,6 +4,8 @@
   export interface DrawerStackPanel {
     id: string;
     title: string;
+    /** Same namespace meta as API detail header (dot + icon + name). */
+    headerNamespace?: string;
     width: number;
     minWidth?: number;
     content: Snippet<[{ close: () => void }]>;
@@ -94,7 +96,11 @@
           class:border-r={i < visiblePanels.length - 1}
           style="flex: 1 1 0; max-width: {panel.width}px;{visiblePanels.length > 1 && panel.minWidth ? ` min-width: ${panel.minWidth}px;` : ''}"
         >
-          <DrawerHeader title={panel.title} onClose={onPopPanel} />
+          <DrawerHeader
+            title={panel.title}
+            headerNamespace={panel.headerNamespace}
+            onClose={onPopPanel}
+          />
           <DrawerContent>
             {@render panel.content({ close: onPopPanel })}
           </DrawerContent>
@@ -114,7 +120,11 @@
           style="width: {panel.width}px;"
           transition:slide|global={{ duration: DRAWER_DURATION, axis: 'x', easing: DRAWER_EASING }}
         >
-          <DrawerHeader title={panel.title} onClose={onPopPanel} />
+          <DrawerHeader
+            title={panel.title}
+            headerNamespace={panel.headerNamespace}
+            onClose={onPopPanel}
+          />
           <DrawerContent>
             {@render panel.content({ close: onPopPanel })}
           </DrawerContent>

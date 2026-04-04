@@ -12,7 +12,7 @@
  * | Dashboard & stat cards | `boxShadow.glow-*` | `cardGlassSurface`, `cardGlassBorder*` |
  * | Green accent icon tiles | `glow-green-icon`, `glow-green-sm` | `accentIconTile`, `marketingFeatureIcon` |
  * | Sidebar shell & nav items | — | `sidebarShell`, `sidebarNavItem*` |
- * | Dashboard column shell & page header chrome | — | `dashboardMainColumn`, `dashboardMainColumnCanvas`, `dashboardGreenWashGradient`, `dashboardPageHeaderShell`, `dashboardSearchToolbarShell`, `mainColumnChromePaddingX`, `dashboardPageHeaderTitleBand` |
+ * | Dashboard column shell & page header chrome | — | `dashboardMainColumn`, `dashboardMainColumnCanvas`, `dashboardGreenWashGradient`, `dashboardPageHeaderShell`, `dashboardSearchToolbarShell`, `mainColumnChromePaddingX`, `dashboardPageHeaderTitleBand`, `headerMetaSeparator`, `headerNamespaceCluster` |
  * | Dashboard entity list tables | — | `tableListPageGutter`, `tableListCardShell`, `tableListBodyDivide`, `tableListCell`, `tableListRowInteractive`, `tableListRowHover`, `tableListRowSelected` |
  * | Drawer & modal frosted shells | `drawer-deep` | `drawerPanelGlassSurface`, `modalPanelGlassSurface`, `drawerPanelFlexible`, `drawerPanelStacked`, `drawerScrim`, `drawerLinkedEntityRow`, … |
  * | Primary / secondary / destructive | `glow-green` | `drawerFooterBtnPrimary*`, `drawerFooterBtnDestructive*`, `drawerFooterDangerCallout`, `drawerFooterBtnDangerConfirm*`, `modalFooterBtn*`, `btnCtaGlow`, … |
@@ -237,6 +237,17 @@ export const dashboardSearchToolbarShell =
 
 /** Primary title line height band — matches `Logo` `md` (48px) with sidebar `items-center` row. */
 export const dashboardPageHeaderTitleBand = 'min-h-[48px] flex items-center';
+
+/**
+ * Middle dot before namespace meta — matches API detail title band (`hidden sm:inline` uses viewport breakpoint).
+ */
+export const headerMetaSeparator = 'text-mono-600 shrink-0 hidden sm:inline';
+
+/**
+ * Namespace cluster (layer icon + name) — API detail + drawer headers; `text-sm` for readability in drawers.
+ */
+export const headerNamespaceCluster =
+  'hidden sm:inline-flex items-center gap-1.5 text-sm text-mono-400 shrink-0 max-w-[10rem] truncate';
 
 // --- Dashboard entity list tables (Types, Fields, Objects, …) ---
 

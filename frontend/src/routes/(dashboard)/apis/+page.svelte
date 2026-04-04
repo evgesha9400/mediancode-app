@@ -21,12 +21,7 @@
     NamespaceSelector
   } from '$lib/components';
   import { STORE_NAMES } from '$lib/stores/loader';
-  import {
-    inputGlassDisabled,
-    tableListCell,
-    tableListRowHover,
-    tableListRowInteractive
-  } from '$lib/ui/classes';
+  import { tableListCell, tableListRowHover, tableListRowInteractive } from '$lib/ui/classes';
   import { page } from '$app/state';
   import { goto } from '$app/navigation';
   import { createApiModel } from '$lib/stores/apiModel.svelte';
@@ -171,18 +166,6 @@
 {#snippet createApiContent(_: { close: () => void })}
   {#if workflow.editedItem}
     <div class="space-y-4">
-      <div>
-        <FormLabel label="Namespace" forId="api-namespace" />
-        <input
-          id="api-namespace"
-          type="text"
-          value={activeNamespaceName}
-          disabled
-          class={inputGlassDisabled}
-        />
-        <p class="text-xs text-mono-400 mt-1">Uses the currently active namespace</p>
-      </div>
-
       <FormField
         id="api-title"
         label="API Title"
@@ -243,6 +226,7 @@
     ? [{
         id: 'create-api',
         title: 'Create API',
+        headerNamespace: activeNamespaceName,
         width: 520,
         minWidth: 380,
         content: createApiContent,

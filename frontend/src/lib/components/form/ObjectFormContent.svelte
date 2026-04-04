@@ -2,7 +2,6 @@
   export interface ObjectFormContentProps {
     editedItem: import('$lib/types').ObjectDefinition;
     mode: 'creating' | 'editing';
-    namespaceName: string;
     availableFields: import('$lib/stores/fields').Field[];
     modelValidatorTemplates: import('$lib/types').ModelValidatorTemplate[];
     visibleErrors: Record<string, string>;
@@ -41,7 +40,6 @@
   let {
     editedItem = $bindable(),
     mode,
-    namespaceName,
     availableFields,
     modelValidatorTemplates,
     visibleErrors,
@@ -328,21 +326,6 @@
 </script>
 
 <div class="space-y-4">
-  <!-- Namespace (Read-only) -->
-  <div>
-    <FormLabel label="Namespace" forId="object-namespace" />
-    <input
-      id="object-namespace"
-      type="text"
-      value={namespaceName}
-      disabled
-      class="w-full px-3 py-2 rounded-xl border border-mono-700 bg-mono-800 text-mono-400 cursor-not-allowed"
-    />
-    <p class="mt-1 text-xs text-mono-400">
-      Namespace is determined by the selector above
-    </p>
-  </div>
-
   <!-- Object Name -->
   <FormField
     id="object-name"
@@ -483,6 +466,20 @@
                         <i class="fa-solid fa-grip-vertical text-xs"></i>
                       </div>
 
+                      <!--
+                        TODO(mediancode): Review scalar member rename vs codegen — see api/services/generation.py
+                        same topic (InputField / query params from object use field.name, not member.name).
+                        - Object drawer: user can set ScalarMember.name per object; fieldId points at the Field row;
+                          create/update payloads include this name; backend stores it and requires unique names
+                          per object.
+                        - Backend zip generation: scalar model fields and query params derived from an object
+                          still use Field.name today, so renaming here often does not change generated FastAPI
+                          attribute / query names (relationship members do use member.name).
+                        - Frontend: e.g. resolveTargetFields (lib/domain/paramInference.ts) and examples.ts
+                          keys use member.name — diverges from codegen behavior above.
+                        - Decide later: drive codegen from member.name for scalars (and align query-param
+                          naming), or make Field.name the single source of truth and adjust UI copy / controls.
+                      -->
                       <!-- Field Name and Type -->
                       <div class="flex items-center gap-2 min-w-0">
                         <input

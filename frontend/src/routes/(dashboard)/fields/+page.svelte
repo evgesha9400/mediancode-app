@@ -79,6 +79,10 @@
     getNamespaceName: (nsId) => allNamespaces.find(ns => ns.id === nsId)?.name ?? ''
   });
 
+  let fieldDrawerNamespaceName = $derived(
+    allNamespaces.find(ns => ns.id === workflow.editedItem?.namespaceId)?.name ?? ''
+  );
+
   // Truly derived values (read-only computations)
   let filteredFields = $derived(workflow.results as FieldWithApiCount[]);
   let sorts = $derived(workflow.sorts);
@@ -227,7 +231,6 @@
     <FieldFormContent
       bind:editedItem={workflow.editedItem}
       mode={workflow.mode === 'creating' ? 'creating' : 'editing'}
-      namespaceName={allNamespaces.find(ns => ns.id === workflow.editedItem?.namespaceId)?.name ?? ''}
       {selectableTypes}
       fieldConstraintDefinitions={fieldConstraints}
       {fieldValidatorTemplates}
@@ -263,6 +266,7 @@
     ? [{
         id: 'field',
         title: workflow.mode === 'creating' ? 'Create Field' : 'Edit Field',
+        headerNamespace: fieldDrawerNamespaceName,
         width: 720,
         minWidth: 500,
         content: fieldFormContentSnippet,

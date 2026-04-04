@@ -51,9 +51,10 @@
     dropdownListScroll,
     dropdownPanel,
     dropdownRow,
+    headerMetaSeparator,
+    headerNamespaceCluster,
     inputGlass,
     inputGlassAuto,
-    inputGlassDisabled,
     inputGlassSearch,
     surfaceInsideFrostedPanel,
     textareaInsideFrostedPanel
@@ -355,12 +356,9 @@
             {/if}
 
             {#if namespaceName}
-              <span class="text-mono-600 shrink-0 hidden sm:inline" aria-hidden="true">·</span>
-              <span
-                class="hidden sm:inline-flex items-center gap-1 text-xs text-mono-400 shrink-0 max-w-[7rem] truncate"
-                title={namespaceName}
-              >
-                <i class="fa-solid fa-layer-group text-[10px] shrink-0"></i>
+              <span class={headerMetaSeparator} aria-hidden="true">·</span>
+              <span class={headerNamespaceCluster} title={namespaceName}>
+                <i class="fa-solid fa-layer-group text-xs shrink-0"></i>
                 <span class="truncate">{namespaceName}</span>
               </span>
             {/if}
@@ -466,19 +464,6 @@
 
   {#snippet editApiFormContent(_: { close: () => void })}
     <div class="space-y-4">
-      <!-- Namespace (Read-only) -->
-      <div>
-        <FormLabel label="Namespace" forId="edit-namespace" />
-        <input
-          id="edit-namespace"
-          type="text"
-          value={namespaceName}
-          disabled
-          class={inputGlassDisabled}
-        />
-        <p class="text-xs text-mono-400 mt-1">Namespace cannot be changed after creation</p>
-      </div>
-
       <!-- API Title -->
       <FormField
         id="edit-title"
@@ -861,7 +846,6 @@
       <ObjectFormContent
         bind:editedItem={editedNewObject}
         mode="creating"
-        {namespaceName}
         {availableFields}
         modelValidatorTemplates={$modelValidatorTemplatesStore}
         visibleErrors={objectVisibleErrors}
@@ -885,7 +869,6 @@
       <FieldFormContent
         bind:editedItem={editedNewField}
         mode="creating"
-        {namespaceName}
         selectableTypes={$typesStore}
         fieldConstraintDefinitions={$fieldConstraintsStore}
         fieldValidatorTemplates={$fieldValidatorTemplatesStore}
@@ -908,16 +891,16 @@
   <DrawerStack
     panels={[
       ...(apiState.editDrawerOpen
-        ? [{ id: 'edit-api', title: 'Edit API', width: 520, minWidth: 380, content: editApiFormContent, footer: editApiFormFooter }]
+        ? [{ id: 'edit-api', title: 'Edit API', headerNamespace: namespaceName, width: 520, minWidth: 380, content: editApiFormContent, footer: editApiFormFooter }]
         : []),
       ...(apiState.endpointDrawerOpen
-        ? [{ id: 'endpoint', title: apiState.isCreating ? 'Create Endpoint' : 'Edit Endpoint', width: 1200, minWidth: 700, content: endpointFormContent, footer: endpointFormFooter }]
+        ? [{ id: 'endpoint', title: apiState.isCreating ? 'Create Endpoint' : 'Edit Endpoint', headerNamespace: namespaceName, width: 1200, minWidth: 700, content: endpointFormContent, footer: endpointFormFooter }]
         : []),
       ...(objectCreateOpen
-        ? [{ id: 'object', title: 'Create Object', width: 800, minWidth: 500, content: objectFormContent, footer: objectFormFooter }]
+        ? [{ id: 'object', title: 'Create Object', headerNamespace: namespaceName, width: 800, minWidth: 500, content: objectFormContent, footer: objectFormFooter }]
         : []),
       ...(fieldCreateOpen
-        ? [{ id: 'field', title: 'Create Field', width: 800, minWidth: 500, content: fieldFormContent, footer: fieldFormFooter }]
+        ? [{ id: 'field', title: 'Create Field', headerNamespace: namespaceName, width: 800, minWidth: 500, content: fieldFormContent, footer: fieldFormFooter }]
         : [])
     ]}
     onPopPanel={() => {

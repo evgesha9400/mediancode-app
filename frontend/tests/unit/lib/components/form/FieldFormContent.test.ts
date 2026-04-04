@@ -19,21 +19,18 @@ describe('FieldFormContent Component', () => {
 					usedInObjects: []
 				} as any,
 				mode: 'creating',
-				namespaceName: 'default',
 				selectableTypes: [],
 				fieldConstraintDefinitions: [],
 				fieldValidatorTemplates: [],
 				visibleErrors: {}
 			};
 			expect(props.mode).toBe('creating');
-			expect(props.namespaceName).toBe('default');
 		});
 
 		it('FieldFormContentProps accepts editing mode', () => {
 			const props: FieldFormContentProps = {
 				editedItem: {} as any,
 				mode: 'editing',
-				namespaceName: 'default',
 				selectableTypes: [],
 				fieldConstraintDefinitions: [],
 				fieldValidatorTemplates: [],
@@ -46,7 +43,6 @@ describe('FieldFormContent Component', () => {
 			const props: FieldFormContentProps = {
 				editedItem: {} as any,
 				mode: 'creating',
-				namespaceName: 'default',
 				selectableTypes: [],
 				fieldConstraintDefinitions: [],
 				fieldValidatorTemplates: [],
@@ -62,7 +58,6 @@ describe('FieldFormContent Component', () => {
 			const props: FieldFormContentProps = {
 				editedItem: {} as any,
 				mode: 'creating',
-				namespaceName: 'default',
 				selectableTypes: [],
 				fieldConstraintDefinitions: [],
 				fieldValidatorTemplates: [],
