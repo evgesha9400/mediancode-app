@@ -393,7 +393,8 @@ export const drawerPanelFlexibleOuter =
   `h-[calc(100vh-32px)] m-4 flex min-h-0 flex-col ${drawerPanelGlassSurface} relative pointer-events-auto`;
 
 /** Scroll clip + column layout inside {@link drawerPanelFlexibleOuter} / {@link drawerPanelStackedOuter}. */
-export const drawerPanelFlexibleInner = 'drawer-transparent-context flex min-h-0 flex-1 flex-col overflow-hidden';
+export const drawerPanelFlexibleInner =
+  'drawer-transparent-context flex min-h-0 flex-1 flex-col overflow-hidden rounded-[inherit]';
 
 export const drawerPanelStackedOuter =
   `flex h-[calc(100vh-32px)] min-h-0 flex-shrink-0 flex-col ${drawerPanelGlassSurface} relative my-4 mr-4 pointer-events-auto`;
@@ -401,7 +402,8 @@ export const drawerPanelStackedOuter =
 export const drawerPanelStackedInner = drawerPanelFlexibleInner;
 
 /** Stacked-panel dimmer — visual values come from `.drawer-stack-dimmer` in `app.css`. */
-export const drawerStackDimmer = 'drawer-stack-dimmer absolute inset-0 z-10 pointer-events-none';
+export const drawerStackDimmer =
+  'drawer-stack-dimmer absolute inset-0 z-10 pointer-events-none rounded-[inherit]';
 
 /**
  * Centered modal panels — same frosted shell as `DrawerStack` so all overlay forms match.

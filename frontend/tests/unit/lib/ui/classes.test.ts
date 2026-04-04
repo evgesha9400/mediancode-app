@@ -38,6 +38,9 @@ import {
 	drawerFooterBtnDangerConfirmSegment,
 	drawerFooterDangerCallout,
 	drawerFooterBtnDangerConfirm,
+	drawerPanelFlexibleInner,
+	drawerPanelStackedInner,
+	drawerStackDimmer,
 	tableListAuxiliaryLabel,
 	tableListBodyCaption,
 	tableListBodyCell,
@@ -170,6 +173,18 @@ describe('lib/ui/classes', () => {
 		expect(drawerFooterSegmentDivider).toContain('sm:w-px');
 		expect(drawerFooterSegmentBtn).toContain('sm:flex-1');
 		expect(drawerFooterBtnSecondarySegment).not.toContain('border');
+	});
+
+	it('drawer inner clip inherits the outer panel radius', () => {
+		expect(drawerPanelFlexibleInner).toContain('rounded-[inherit]');
+		expect(drawerPanelStackedInner).toContain('rounded-[inherit]');
+		expect(drawerPanelFlexibleInner).toContain('overflow-hidden');
+	});
+
+	it('nested drawer dimmer inherits the outer panel radius', () => {
+		expect(drawerStackDimmer).toContain('rounded-[inherit]');
+		expect(drawerStackDimmer).toContain('absolute');
+		expect(drawerStackDimmer).toContain('inset-0');
 	});
 
 	it('dashboard titles use text-mono-100 like sidebar brand, not text-white', () => {
