@@ -192,12 +192,13 @@ export const accentIconTileError = 'rounded-xl bg-red-400/10 text-red-400 flex i
 // --- Sidebar ---
 
 export const sidebarShell =
-  'bg-mono-950/45 backdrop-blur-xl text-mono-300 font-inter border-r border-mono-800/60 flex flex-col shrink-0 transition-[width] duration-[400ms] overflow-hidden';
+  'text-mono-300 font-inter flex flex-col shrink-0 transition-[width] duration-[400ms] overflow-hidden';
 
 /** Horizontal rule between nav groups in collapsed (icon-only) mode */
 export const sidebarSectionDividerHorizontal = 'border-t border-mono-800/60 my-2';
 
-export const sidebarNavItemBase = 'cursor-pointer transition-all rounded-xl';
+export const sidebarNavItemBase =
+  'flex w-full min-h-11 items-center cursor-pointer transition-all rounded-l-none rounded-r-xl';
 
 export const sidebarNavItemActive = 'bg-mono-800/80 text-white shadow-sm border border-mono-700/50';
 
@@ -213,8 +214,7 @@ export const dashboardGreenWashGradient = 'bg-gradient-to-r from-green-400/5 to-
 
 /**
  * Dashboard shell background: mono base plus left-edge green wash.
- * Use on the full-viewport `(dashboard)` flex root so the wash sits under the sidebar too;
- * otherwise `backdrop-blur` on the nav has only uniform `mono-950` behind it and reads solid.
+ * Use on the full-viewport `(dashboard)` flex root so the wash sits behind the transparent sidebar too.
  */
 export const dashboardMainColumnCanvas = `bg-mono-950 ${dashboardGreenWashGradient}`;
 

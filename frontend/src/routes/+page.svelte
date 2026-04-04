@@ -128,8 +128,11 @@
 		></div>
 	</div>
 
-<!-- Hero -->
-<section id="hero" class="relative z-10 py-20 sm:py-28 lg:py-32 overflow-hidden">
+<!-- Hero: one viewport below sticky header (4rem); grows if content/taller viewports need it -->
+<section
+	id="hero"
+	class="relative z-10 flex min-h-[calc(100dvh-4rem)] flex-col justify-center py-12 sm:py-16 lg:py-20 overflow-hidden"
+>
 	<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
 		<div class="space-y-10">
 			<!-- Status indicator -->

@@ -36,13 +36,25 @@
      * Content to wrap with the tooltip
      */
     children?: Snippet;
+
+    /**
+     * Extra classes on the hover wrapper (e.g. `w-full` for block-level children)
+     * @default ''
+     */
+    wrapperClass?: string;
   }
 </script>
 
 <script lang="ts">
   interface Props extends TooltipProps {}
 
-  let { text = '', disabled = false, position = 'top', children }: Props = $props();
+  let {
+    text = '',
+    disabled = false,
+    position = 'top',
+    children,
+    wrapperClass = '',
+  }: Props = $props();
 
   let showTooltip = $state(false);
   let tooltipStyle = $state('');
@@ -85,7 +97,7 @@
 </script>
 
 <div
-  class="relative block"
+  class="relative block {wrapperClass}"
   bind:this={wrapperEl}
   onmouseenter={handleMouseEnter}
   onmouseleave={handleMouseLeave}

@@ -79,13 +79,14 @@
     </a>
   </div>
 
-  <div class="flex-1 overflow-y-auto min-h-0 {collapsed ? 'p-2 pt-0' : 'px-4 pt-2 pb-2'}">
+  <!-- No horizontal padding: nav rows bleed to sidebar edges; headings use px-4 to align with logo -->
+  <div class="flex-1 overflow-y-auto min-h-0 {collapsed ? 'pt-0 pb-2' : 'pt-2 pb-2'}">
     <ul class="space-y-1 {collapsed ? 'mb-2' : 'mb-6'}">
-      <li>
-        <Tooltip text={dashboardItem.label} position="right" disabled={!collapsed}>
+      <li class="w-full">
+        <Tooltip text={dashboardItem.label} position="right" disabled={!collapsed} wrapperClass="w-full">
           <a
             href={dashboardItem.href}
-            class="{sidebarNavItemBase} {isActive(dashboardItem.href) ? sidebarNavItemActive : sidebarNavItemInactive} {collapsed ? 'flex justify-center py-2.5' : 'flex items-center space-x-3 px-3 py-2'}"
+            class="{sidebarNavItemBase} {isActive(dashboardItem.href) ? sidebarNavItemActive : sidebarNavItemInactive} {collapsed ? 'justify-center' : 'gap-3 px-4'}"
           >
             <i class="fa-solid {dashboardItem.icon} {collapsed ? 'text-base' : 'w-5'}"></i>
             {#if !collapsed}
@@ -98,17 +99,17 @@
 
     <!-- Catalog -->
     {#if !collapsed}
-      <h2 class="text-xs uppercase tracking-wider text-mono-500 mb-3 font-bold ml-1">Catalog</h2>
+      <h2 class="text-xs uppercase tracking-wider text-mono-500 mb-3 font-bold px-4">Catalog</h2>
     {:else}
       <div class="{sidebarSectionDividerHorizontal}"></div>
     {/if}
     <ul class="space-y-1 {collapsed ? 'mb-2' : 'mb-6'}">
       {#each catalogItems as item}
-        <li>
-          <Tooltip text={item.label} position="right" disabled={!collapsed}>
+        <li class="w-full">
+          <Tooltip text={item.label} position="right" disabled={!collapsed} wrapperClass="w-full">
             <a
               href={item.href}
-              class="{sidebarNavItemBase} {isActive(item.href) ? sidebarNavItemActive : sidebarNavItemInactive} {collapsed ? 'flex justify-center py-2.5' : 'flex items-center space-x-3 px-3 py-2'}"
+              class="{sidebarNavItemBase} {isActive(item.href) ? sidebarNavItemActive : sidebarNavItemInactive} {collapsed ? 'justify-center' : 'gap-3 px-4'}"
             >
               <i class="fa-solid {item.icon} {collapsed ? 'text-base' : 'w-5'}"></i>
               {#if !collapsed}
@@ -122,17 +123,17 @@
 
     <!-- Components -->
     {#if !collapsed}
-      <h2 class="text-xs uppercase tracking-wider text-mono-500 mb-3 font-bold ml-1">Components</h2>
+      <h2 class="text-xs uppercase tracking-wider text-mono-500 mb-3 font-bold px-4">Components</h2>
     {:else}
       <div class="{sidebarSectionDividerHorizontal}"></div>
     {/if}
     <ul class="space-y-1">
       {#each componentItems as item}
-        <li>
-          <Tooltip text={item.label} position="right" disabled={!collapsed}>
+        <li class="w-full">
+          <Tooltip text={item.label} position="right" disabled={!collapsed} wrapperClass="w-full">
             <a
               href={item.href}
-              class="{sidebarNavItemBase} {isActive(item.href) ? sidebarNavItemActive : sidebarNavItemInactive} {collapsed ? 'flex justify-center py-2.5' : 'flex items-center space-x-3 px-3 py-2'}"
+              class="{sidebarNavItemBase} {isActive(item.href) ? sidebarNavItemActive : sidebarNavItemInactive} {collapsed ? 'justify-center' : 'gap-3 px-4'}"
             >
               <i class="fa-solid {item.icon} {collapsed ? 'text-base' : 'w-5'}"></i>
               {#if !collapsed}
