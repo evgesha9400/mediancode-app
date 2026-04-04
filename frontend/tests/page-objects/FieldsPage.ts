@@ -103,13 +103,13 @@ export class FieldsPage {
 		// Drawer form fields (using prefixed IDs to avoid conflicts)
 		this.fieldNameInput = page.locator('#fields-name');
 		this.typeSearchInput = page.getByPlaceholder('Search types...');
-		this.typeDropdownOptions = this.typeSearchInput.locator('..').locator('..').locator('.absolute.z-10 button');
+		this.typeDropdownOptions = this.typeSearchInput.locator('..').locator('..').locator('.absolute.z-30 button');
 		this.fieldDescriptionTextarea = page.locator('#fields-description');
 		this.fieldDefaultValueInput = page.locator('#fields-default-value');
 
 		// Drawer field constraints section - uses FieldConstraintSelectorDropdown component
 		this.constraintSelectorInput = page.getByPlaceholder('Add field constraint...');
-		this.constraintDropdownOptions = this.constraintSelectorInput.locator('..').locator('..').locator('.absolute.z-10 button');
+		this.constraintDropdownOptions = this.constraintSelectorInput.locator('..').locator('..').locator('.absolute.z-30 button');
 		// Individual field constraint rows - identified by having a "Remove field constraint" button
 		this.constraintRows = page.locator('.flex.items-center.space-x-2.p-2.bg-mono-900').filter({ has: page.getByRole('button', { name: 'Remove field constraint' }) });
 
