@@ -41,8 +41,6 @@ export interface ApiModelConfig {
 	};
 	/** Returns the active namespace ID */
 	getActiveNamespaceId: () => string;
-	/** Returns namespace name for an API */
-	getNamespaceName: (namespaceId: string) => string;
 	/** Returns endpoint count for an API */
 	getEndpointCount: (apiId: string) => number;
 }
@@ -105,7 +103,6 @@ export function createApiModel(config: ApiModelConfig): ApiModelState {
 		filterSections,
 		urlScope,
 		getActiveNamespaceId,
-		getNamespaceName,
 		getEndpointCount
 	} = config;
 
@@ -118,10 +115,9 @@ export function createApiModel(config: ApiModelConfig): ApiModelState {
 		urlScope,
 		getItemId: (api) => api.id,
 		deriveExtra: (api) => ({
-			endpointCount: getEndpointCount(api.id),
-			namespaceName: getNamespaceName(api.namespaceId)
+			endpointCount: getEndpointCount(api.id)
 		}),
-		sortColumnMap: { endpoints: 'endpointCount', namespace: 'namespaceName' },
+		sortColumnMap: { endpoints: 'endpointCount' },
 		drawerConfig: {
 			trackEdits: false,
 			allowDelete: false

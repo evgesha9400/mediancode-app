@@ -92,7 +92,6 @@ function createTestModel(overrides: Partial<ApiModelConfig> = {}): {
       filterSections: () => [],
       urlScope: { page: page as any, goto: goto as any },
       getActiveNamespaceId: () => 'ns-1',
-      getNamespaceName: () => 'Test Namespace',
       getEndpointCount: () => 0,
       ...overrides
     });

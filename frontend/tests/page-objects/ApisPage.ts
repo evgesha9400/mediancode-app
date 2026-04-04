@@ -35,7 +35,6 @@ export class ApisPage {
 	readonly versionColumnHeader: Locator;
 	readonly baseUrlColumnHeader: Locator;
 	readonly endpointsColumnHeader: Locator;
-	readonly namespaceColumnHeader: Locator;
 
 	// Create drawer
 	readonly createDrawer: Locator;
@@ -72,7 +71,6 @@ export class ApisPage {
 		this.versionColumnHeader = this.table.locator('thead th').filter({ hasText: 'Version' });
 		this.baseUrlColumnHeader = this.table.locator('thead th').filter({ hasText: 'Base URL' });
 		this.endpointsColumnHeader = this.table.locator('thead th').filter({ hasText: 'Endpoints' });
-		this.namespaceColumnHeader = this.table.locator('thead th').filter({ hasText: 'Namespace' });
 
 		// Create drawer
 		this.createDrawer = page
@@ -252,7 +250,7 @@ export class ApisPage {
 	 * Sort by column
 	 */
 	async sortByColumn(
-		column: 'name' | 'version' | 'baseUrl' | 'endpoints' | 'namespace',
+		column: 'name' | 'version' | 'baseUrl' | 'endpoints',
 		withShift = false
 	) {
 		const clickOptions = withShift
@@ -263,8 +261,7 @@ export class ApisPage {
 			name: () => this.table.locator('thead th button').filter({ hasText: 'Name' }),
 			version: () => this.table.locator('thead th button').filter({ hasText: 'Version' }),
 			baseUrl: () => this.table.locator('thead th button').filter({ hasText: 'Base URL' }),
-			endpoints: () => this.table.locator('thead th button').filter({ hasText: 'Endpoints' }),
-			namespace: () => this.table.locator('thead th button').filter({ hasText: 'Namespace' })
+			endpoints: () => this.table.locator('thead th button').filter({ hasText: 'Endpoints' })
 		};
 
 		await headerMap[column]().click(clickOptions);

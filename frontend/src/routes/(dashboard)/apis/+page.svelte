@@ -20,7 +20,6 @@
     Pill,
     NamespaceSelector,
     TableListNameCell,
-    TableListTextCell,
     TableListMetricCell
   } from '$lib/components';
   import { STORE_NAMES } from '$lib/stores/loader';
@@ -33,7 +32,6 @@
   // Extended API type with computed properties for sorting
   type ApiWithCounts = Api & {
     endpointCount: number;
-    namespaceName: string;
   };
 
   // Reactive store subscriptions for derived computations
@@ -50,7 +48,6 @@
     filterSections: () => [],
     urlScope: { page, goto },
     getActiveNamespaceId: () => $activeNamespaceId,
-    getNamespaceName: (nsId) => allNamespaces.find(ns => ns.id === nsId)?.name ?? '',
     getEndpointCount: (apiId) => allEndpoints.filter(e => e.apiId === apiId).length
   });
 
@@ -120,12 +117,6 @@
           {sorts}
           onSort={workflow.handleSort}
         />
-        <SortableColumn
-          column="namespace"
-          label="Namespace"
-          {sorts}
-          onSort={workflow.handleSort}
-        />
       </tr>
     {/snippet}
 
@@ -152,11 +143,6 @@
               <Pill>{api.endpointCount}</Pill>
             {/snippet}
           </TableListMetricCell>
-          <TableListTextCell col="namespace" nowrap>
-            {#snippet children()}
-              {api.namespaceName}
-            {/snippet}
-          </TableListTextCell>
         </tr>
       {/each}
     {/snippet}

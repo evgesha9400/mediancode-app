@@ -195,6 +195,12 @@
           onSort={workflow.handleSort}
         />
         <SortableColumn
+          column="description"
+          label="Description"
+          {sorts}
+          onSort={workflow.handleSort}
+        />
+        <SortableColumn
           column="members"
           label="Members"
           {sorts}
@@ -203,12 +209,6 @@
         <SortableColumn
           column="usedInApis"
           label="Used In APIs"
-          {sorts}
-          onSort={workflow.handleSort}
-        />
-        <SortableColumn
-          column="description"
-          label="Description"
           {sorts}
           onSort={workflow.handleSort}
         />
@@ -229,6 +229,11 @@
               {object.name}
             {/snippet}
           </TableListNameCell>
+          <TableListTextCell col="description">
+            {#snippet children()}
+              {object.description || '-'}
+            {/snippet}
+          </TableListTextCell>
           <TableListMetricCell col="members" label="members">
             {#snippet pill()}
               <Pill>{object.members.length}</Pill>
@@ -239,11 +244,6 @@
               <Pill>{object.usedInApis.length}</Pill>
             {/snippet}
           </TableListMetricCell>
-          <TableListTextCell col="description">
-            {#snippet children()}
-              {object.description || '-'}
-            {/snippet}
-          </TableListTextCell>
         </tr>
       {/each}
     {/snippet}
