@@ -131,10 +131,10 @@
 		></div>
 	</div>
 
-<!-- Hero: one viewport below sticky header (4rem); grows if content/taller viewports need it -->
+<!-- Hero: min height below sticky header (4rem). Tighter pt when content is taller than viewport, flex grow had no slack. -->
 <section
 	id="hero"
-	class="relative z-10 flex min-h-[calc(100dvh-4rem)] flex-col justify-center py-12 sm:py-16 lg:py-20 overflow-hidden"
+	class="relative z-10 flex min-h-[calc(100dvh-4rem)] flex-col justify-center overflow-hidden pt-8 sm:pt-10 lg:pt-12 pb-12 sm:pb-16 lg:pb-20"
 >
 	<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
 		<div class="space-y-10">
