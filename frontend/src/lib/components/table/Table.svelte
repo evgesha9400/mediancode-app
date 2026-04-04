@@ -56,8 +56,8 @@
 </script>
 
 <div class={tableListPageGutter}>
-  <div class={tableListCardShell}>
-    {#if !isEmpty}
+  {#if !isEmpty}
+    <div class={tableListCardShell}>
       <table data-testid={TABLE_ID} class="min-w-full bg-transparent">
         <thead class="bg-mono-800/50 sticky top-0 backdrop-blur-sm shadow-sm ring-1 ring-white/5 z-10">
           {@render header?.()}
@@ -66,8 +66,8 @@
           {@render body?.()}
         </tbody>
       </table>
-    {:else}
-      {@render empty?.()}
-    {/if}
-  </div>
+    </div>
+  {:else}
+    {@render empty?.()}
+  {/if}
 </div>
