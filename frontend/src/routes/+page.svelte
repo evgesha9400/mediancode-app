@@ -12,10 +12,13 @@
 		marketingHeader,
 		marketingHeroCta,
 		marketingHeroCtaSecondary,
+		marketingHowItWorksStepBody,
+		marketingHowItWorksStepColumn,
+		marketingHowItWorksStepTitle,
+		marketingHowItWorksWatermark,
 		marketingMobileMenu,
 		marketingNavLink,
 		marketingNavLinkMobile,
-		marketingStepBadge,
 	} from '$lib/ui/classes';
 
 	let mobileMenuOpen = $state(false);
@@ -297,47 +300,43 @@
 <section id="how-it-works" class="relative z-10 py-20 sm:py-24 lg:py-32">
 	<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
 		<!-- Section header -->
-		<div class="mb-20 text-center sm:text-left">
+		<div class="mb-16 text-center sm:mb-20 sm:text-left">
 			<h2 class="text-3xl sm:text-4xl lg:text-5xl font-bold text-white tracking-tight leading-tight font-inter">
 				Three Steps. Working API.
 			</h2>
-			<p class="text-base text-mono-400 mt-4 max-w-xl font-inter">
+			<p class="mt-4 max-w-xl font-inter text-base leading-relaxed text-mono-400">
 				No boilerplate. No configuration puzzles. Define what you need and get production code.
 			</p>
 		</div>
 
-		<!-- Steps with soft numbers -->
-		<div class="grid lg:grid-cols-3 gap-12 lg:gap-8">
-			<!-- Step 1 -->
-			<div class="relative bg-mono-900/50 backdrop-blur-sm/20 p-8 border border-mono-800/50 rounded-3xl pb-10">
-				<div class="text-6xl font-black text-white/5 leading-none select-none absolute top-4 right-6 font-inter">01</div>
-				<div class="relative z-10 mt-4">
-					<p class="font-inter text-lg font-semibold text-white tracking-wide mb-3 flex items-center">
-						<span class={marketingStepBadge}>1</span> Define Models
+		<div class="grid gap-12 lg:grid-cols-3 lg:gap-6">
+			<div class={marketingHowItWorksStepColumn}>
+				<span class={marketingHowItWorksWatermark} aria-hidden="true">01</span>
+				<div class={marketingHowItWorksStepBody}>
+					<h3 class={marketingHowItWorksStepTitle}>Define Models</h3>
+					<p class="text-sm font-inter leading-relaxed text-mono-400">
+						Use the visual interface to declare your data objects, field types, relationships, and constraints. No YAML, no JSON. Just forms and dropdowns.
 					</p>
-					<p class="text-sm text-mono-400 leading-relaxed font-inter">Use the visual interface to declare your data objects, field types, relationships, and constraints. No YAML, no JSON. Just forms and dropdowns.</p>
 				</div>
 			</div>
 
-			<!-- Step 2 -->
-			<div class="relative bg-mono-900/50 backdrop-blur-sm/20 p-8 border border-mono-800/50 rounded-3xl pb-10">
-				<div class="text-6xl font-black text-white/5 leading-none select-none absolute top-4 right-6 font-inter">02</div>
-				<div class="relative z-10 mt-4">
-					<p class="font-inter text-lg font-semibold text-white tracking-wide mb-3 flex items-center">
-						<span class={marketingStepBadge}>2</span> Generate
+			<div class={marketingHowItWorksStepColumn}>
+				<span class={marketingHowItWorksWatermark} aria-hidden="true">02</span>
+				<div class={marketingHowItWorksStepBody}>
+					<h3 class={marketingHowItWorksStepTitle}>Generate</h3>
+					<p class="text-sm font-inter leading-relaxed text-mono-400">
+						One click. Median Code produces a complete FastAPI project with endpoints, models, schemas, migrations, and infrastructure. Same input, same output, every time.
 					</p>
-					<p class="text-sm text-mono-400 leading-relaxed font-inter">One click. Median Code produces a complete FastAPI project with endpoints, models, schemas, migrations, and infrastructure. Same input, same output, every time.</p>
 				</div>
 			</div>
 
-			<!-- Step 3 -->
-			<div class="relative bg-mono-900/50 backdrop-blur-sm/20 p-8 border border-mono-800/50 rounded-3xl pb-10">
-				<div class="text-6xl font-black text-white/5 leading-none select-none absolute top-4 right-6 font-inter">03</div>
-				<div class="relative z-10 mt-4">
-					<p class="font-inter text-lg font-semibold text-white tracking-wide mb-3 flex items-center">
-						<span class={marketingStepBadge}>3</span> Deploy
+			<div class={marketingHowItWorksStepColumn}>
+				<span class={marketingHowItWorksWatermark} aria-hidden="true">03</span>
+				<div class={marketingHowItWorksStepBody}>
+					<h3 class={marketingHowItWorksStepTitle}>Deploy</h3>
+					<p class="text-sm font-inter leading-relaxed text-mono-400">
+						Download the full project, add your business logic, and deploy. Use the included CDK stack or your own infrastructure. It's your code. Own it.
 					</p>
-					<p class="text-sm text-mono-400 leading-relaxed font-inter">Download the full project, add your business logic, and deploy. Use the included CDK stack or your own infrastructure. It's your code. Own it.</p>
 				</div>
 			</div>
 		</div>

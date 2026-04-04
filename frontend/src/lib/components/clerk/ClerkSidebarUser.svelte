@@ -25,6 +25,7 @@
 <script lang="ts">
   import { onDestroy } from 'svelte';
   import { getClerk, clerkAppearance, clerkState } from '$lib/clerk';
+  import { clerkProfileModalInnerCard } from '$lib/ui/classes';
   import { Tooltip } from '$lib/components/tooltip';
 
   interface Props extends ClerkSidebarUserProps {}
@@ -81,7 +82,13 @@
         showName: false,
         appearance: getAppearance(),
         userProfileProps: {
-          appearance: clerkAppearance,
+          appearance: {
+            ...clerkAppearance,
+            elements: {
+              ...clerkAppearance.elements,
+              card: clerkProfileModalInnerCard,
+            },
+          },
         },
       });
       isMounted = true;

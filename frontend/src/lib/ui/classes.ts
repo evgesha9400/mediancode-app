@@ -16,8 +16,8 @@
  * | Dashboard entity list tables | — | `tableListPageGutter`, `tableListCardShell`, `tableListBodyDivide`, `tableListCell`, `tableListRowInteractive`, `tableListRowHover`, `tableListRowSelected` |
  * | Drawer & modal frosted shells | `drawer-deep` | `drawerPanelGlassSurface`, `modalPanelGlassSurface`, `drawerPanelFlexible`, `drawerPanelStacked`, `drawerScrim`, `drawerLinkedEntityRow`, … |
  * | Primary / secondary / destructive | `glow-green` | `drawerFooterBtnPrimary*`, `drawerFooterBtnDestructive*`, `drawerFooterDangerCallout`, `drawerFooterBtnDangerConfirm*`, `modalFooterBtn*`, `btnCtaGlow`, … |
- * | Marketing landing | `glow-*` | `marketingCtaPrimary` (nav), `marketingHeroCta` + `marketingHeroCtaSecondary`, `marketingFooterCta` + `marketingFooterCtaSecondary` |
- * | Clerk `appearance.elements` | `glow-green` | `clerkCard`, `clerkFormButtonPrimary`, … |
+ * | Marketing landing | `glow-*` | `marketingCtaPrimary` (nav), `marketingHeroCta` + `marketingHeroCtaSecondary`, `marketingFooterCta` + `marketingFooterCtaSecondary`, `marketingHowItWorks*` |
+ * | Clerk `appearance.elements` | `glow-green`, `drawer-deep` | `clerkCard`, `clerkModalContentShell`, `clerkFormButtonPrimary`, … |
  */
 
 // --- Form inputs (solid fills: avoid nested backdrop-filter inside frosted drawer/modal shells) ---
@@ -423,8 +423,25 @@ export const marketingFooterCtaSecondary = `${marketingLgCtaShell} border border
 export const marketingFeatureIcon =
   'w-12 h-12 bg-green-400/10 text-green-400 rounded-xl flex items-center justify-center mb-6 shadow-glow-green-icon';
 
-export const marketingStepBadge =
-  'w-8 h-8 rounded-full bg-green-400/10 text-green-400 flex items-center justify-center mr-3 text-sm shadow-glow-green-sm';
+/**
+ * Step column: index + rail row; index sits left of the copy (see {@link marketingHowItWorksWatermark}).
+ */
+export const marketingHowItWorksStepColumn =
+  'relative flex items-start gap-3 pb-2 sm:gap-5 overflow-visible';
+
+/**
+ * Ghost 01–03: Inter, left of the rail; larger than prior upper-right watermark, pairs with slightly dropped copy in {@link marketingHowItWorksStepBody}.
+ */
+export const marketingHowItWorksWatermark =
+  'pointer-events-none z-0 shrink-0 select-none whitespace-nowrap text-left font-inter font-black leading-none tracking-tighter text-mono-600/35 tabular-nums text-[clamp(5rem,11.25vw,8.875rem)]';
+
+/** Green rail + step copy (foreground); top padding lowers title/body vs the index cap height. */
+export const marketingHowItWorksStepBody =
+  'relative z-10 min-w-0 flex-1 border-l-2 border-green-400/70 pl-4 sm:pl-5 pt-2 sm:pt-2.5';
+
+/** Step title — same rhythm as feature cards. */
+export const marketingHowItWorksStepTitle =
+  'mb-3 font-inter text-lg font-semibold text-white tracking-wide';
 
 export const marketingProgressBarGlow = 'shadow-glow-green-bar';
 
@@ -465,7 +482,20 @@ export const clerkBadge = 'bg-mono-800/50 text-mono-300 border border-mono-700/6
 
 export const clerkModalClose = 'text-mono-400 hover:text-white transition-colors';
 
-export const clerkModalBackdrop = 'bg-black/60 backdrop-blur-sm';
+/** Match {@link drawerScrim} so Clerk modals read like `DrawerStack` overlays. */
+export const clerkModalBackdrop = 'bg-mono-950/45 backdrop-blur-[1.5px]';
+
+/**
+ * Outer dialog shell for Clerk modal flows — same frost as {@link drawerPanelGlassSurface}.
+ * Inner `card` is overridden to transparent where the profile opens in a modal (see `ClerkSidebarUser`).
+ */
+export const clerkModalContentShell = `${drawerPanelGlassSurface} rounded-3xl overflow-hidden`;
+
+/**
+ * Inner profile card when the shell is already frosted (`modalContent` + {@link clerkModalContentShell}).
+ * Keeps a single glass layer so the modal matches drawer panels.
+ */
+export const clerkProfileModalInnerCard = 'bg-transparent border-0 shadow-none ring-0';
 
 export const clerkHeaderTitle = 'text-mono-100 font-inter font-bold';
 
