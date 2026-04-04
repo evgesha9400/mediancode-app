@@ -3,6 +3,7 @@
   import { goto } from '$app/navigation';
   import { untrack } from 'svelte';
   import {
+    BackNavButton,
     MainColumnFrame,
     DrawerStack,
     CrudDrawerFooter,
@@ -37,6 +38,8 @@
   import {
     dashboardPageHeaderShell,
     dashboardPageHeaderTitleBand,
+    dashboardPageTitleTextDetail,
+    dashboardTextPrimary,
     drawerFooterBtnDestructive,
     drawerFooterBtnPrimaryDisabledSegment,
     drawerFooterBtnPrimaryEnabled,
@@ -309,7 +312,7 @@
     <div class="flex min-h-[50vh] flex-col items-center justify-center">
       <div class="text-center">
         <i class="fa-solid fa-circle-exclamation text-4xl text-mono-400 mb-4"></i>
-        <h2 class="text-xl text-mono-100 mb-2">API Not Found</h2>
+        <h2 class="text-xl mb-2 {dashboardTextPrimary}">API Not Found</h2>
         <p class="text-mono-400 mb-4">The API you're looking for doesn't exist or has been deleted.</p>
         <button
           type="button"
@@ -329,18 +332,11 @@
           class="relative z-20 flex justify-between gap-3 {dashboardPageHeaderTitleBand} flex-nowrap"
         >
           <div class="flex items-center gap-2 sm:gap-3 min-w-0 flex-1 overflow-hidden">
-            <button
-              type="button"
+            <BackNavButton
+              ariaLabel="Back to APIs list"
               onclick={() => goto('/apis')}
-              class="inline-flex items-center justify-center w-8 h-8 border border-mono-600/50 rounded-lg text-mono-400 hover:bg-mono-800/50 hover:text-white transition-colors shrink-0"
-              aria-label="Back to APIs list"
-            >
-              <i class="fa-solid fa-arrow-left text-sm"></i>
-            </button>
-            <h1
-              class="text-2xl text-white font-inter font-bold tracking-tight shadow-sm leading-tight truncate min-w-0"
-              title={apiState.api?.title || undefined}
-            >
+            />
+            <h1 class={dashboardPageTitleTextDetail} title={apiState.api?.title || undefined}>
               {apiState.api?.title || 'Untitled API'}
             </h1>
             <Pill class="shrink-0">{apiState.api?.version ?? ''}</Pill>
@@ -435,7 +431,7 @@
                 class="w-full flex items-center justify-between px-4 py-3 bg-mono-900/50 backdrop-blur-sm hover:bg-mono-950 transition-colors text-left"
               >
                 <div class="flex items-center space-x-2">
-                  <h2 class="text-base font-semibold text-mono-100">{section.tag}</h2>
+                  <h2 class="text-base font-semibold {dashboardTextPrimary}">{section.tag}</h2>
                   <span class="text-xs text-mono-400">{section.endpoints.length} endpoint{section.endpoints.length !== 1 ? 's' : ''}</span>
                 </div>
                 <i class="fa-solid fa-chevron-down text-mono-400 text-sm transition-transform {isExpanded ? 'rotate-0' : '-rotate-90'}"></i>

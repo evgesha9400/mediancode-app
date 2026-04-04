@@ -18,6 +18,11 @@
 <script module lang="ts">
   import type { Snippet } from 'svelte';
 
+  /** Optional back control; same contract as {@link BackNavButton}. */
+  export type PageHeaderBack =
+    | { href: string; ariaLabel: string }
+    | { ariaLabel: string; onclick: (e: MouseEvent) => void };
+
   export interface PageHeaderProps {
     /**
      * The title text to display in the header
@@ -30,7 +35,12 @@
     description?: string;
 
     /**
-     * Optional content before the title (e.g. back control)
+     * Optional back control before `prepend` (icon button).
+     */
+    back?: PageHeaderBack;
+
+    /**
+     * Optional content before the title (e.g. extra chrome)
      */
     prepend?: Snippet;
 
@@ -42,11 +52,16 @@
 </script>
 
 <script lang="ts">
-  import { dashboardPageHeaderShell, dashboardPageHeaderTitleBand } from '$lib/ui/classes';
+  import {
+    dashboardPageHeaderShell,
+    dashboardPageHeaderTitleBand,
+    dashboardPageTitleText
+  } from '$lib/ui/classes';
+  import BackNavButton from './BackNavButton.svelte';
 
   interface Props extends PageHeaderProps {}
 
-  let { title, description, prepend, actions }: Props = $props();
+  let { title, description, back, prepend, actions }: Props = $props();
 </script>
 
 <div class={dashboardPageHeaderShell}>
@@ -54,11 +69,15 @@
     class="relative z-20 flex justify-between gap-3 {dashboardPageHeaderTitleBand} flex-nowrap"
   >
     <div class="flex items-center gap-2 sm:gap-3 min-w-0 flex-1 overflow-hidden">
+      {#if back}
+        {#if 'href' in back}
+          <BackNavButton href={back.href} ariaLabel={back.ariaLabel} />
+        {:else}
+          <BackNavButton ariaLabel={back.ariaLabel} onclick={back.onclick} />
+        {/if}
+      {/if}
       {@render prepend?.()}
-      <h1
-        class="text-2xl text-white font-inter font-bold tracking-tight shadow-sm leading-tight truncate min-w-0 shrink"
-        title={title}
-      >
+      <h1 class={dashboardPageTitleText} title={title}>
         {title}
       </h1>
       {#if description?.trim()}

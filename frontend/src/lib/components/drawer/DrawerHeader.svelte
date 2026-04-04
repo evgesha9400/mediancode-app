@@ -37,7 +37,12 @@
 </script>
 
 <script lang="ts">
-  import { headerMetaSeparator, headerNamespaceCluster, headerSystemCluster } from '$lib/ui/classes';
+  import {
+    drawerHeaderTitleText,
+    headerMetaSeparator,
+    headerNamespaceCluster,
+    headerSystemCluster
+  } from '$lib/ui/classes';
 
   interface Props extends DrawerHeaderProps {}
 
@@ -52,10 +57,7 @@
     <div
       class="flex items-center justify-start gap-2 sm:gap-3 min-w-0 flex-1 overflow-hidden"
     >
-      <h2
-        class="text-xl text-white font-inter font-bold tracking-tight leading-tight truncate min-w-0 shrink"
-        title={title}
-      >
+      <h2 class={drawerHeaderTitleText} title={title}>
         {title}
       </h2>
       {#if trimmedNs}

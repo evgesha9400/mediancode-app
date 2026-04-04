@@ -10,12 +10,13 @@
   import {
     dashboardLoadingLabel,
     dashboardLoadingRoot,
-    dashboardMainColumnCanvas,
+    dashboardMainColumnCanvasForPath,
   } from '$lib/ui/classes';
 
   let { children } = $props();
 
   let currentPath = $derived(page.url.pathname);
+  let mainColumnCanvasClass = $derived(dashboardMainColumnCanvasForPath(currentPath));
 
   // Redirect unauthenticated users to sign-in with return URL
   $effect(() => {
@@ -46,7 +47,7 @@
     </div>
   </div>
 {:else}
-  <div class="flex h-screen {dashboardMainColumnCanvas}">
+  <div class="flex h-screen {mainColumnCanvasClass}">
     <Sidebar activeRoute={currentPath} />
 
     <div class="flex-1 flex flex-col overflow-hidden min-w-0">

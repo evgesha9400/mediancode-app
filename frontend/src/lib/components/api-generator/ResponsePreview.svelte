@@ -14,7 +14,7 @@
   import { getFieldById } from '$lib/stores/fields';
   import { getObjectById } from '$lib/stores/objects';
   import { buildRequestPreviewFromObject, buildResponsePreviewFromObject } from '$lib/utils/examples';
-  import { surfaceInsideFrostedPanel } from '$lib/ui/classes';
+  import { dashboardTextPrimary, surfaceInsideFrostedPanel } from '$lib/ui/classes';
 
   interface Props extends ResponsePreviewProps {}
 
@@ -104,7 +104,7 @@
             <i class="fa-solid fa-arrow-up mr-2"></i>
             Request Body
           </h4>
-          <div class="p-3 {surfaceInsideFrostedPanel} text-white text-sm overflow-x-auto">
+          <div class="p-3 {surfaceInsideFrostedPanel} {dashboardTextPrimary} text-sm overflow-x-auto">
             <pre>{requestPreviewJson}</pre>
           </div>
         </div>
@@ -117,7 +117,7 @@
             <i class="fa-solid fa-arrow-down mr-2"></i>
             Response Body
           </h4>
-          <div class="p-3 {surfaceInsideFrostedPanel} text-white text-sm overflow-x-auto">
+          <div class="p-3 {surfaceInsideFrostedPanel} {dashboardTextPrimary} text-sm overflow-x-auto">
             <pre>{responsePreviewJson}</pre>
           </div>
         </div>

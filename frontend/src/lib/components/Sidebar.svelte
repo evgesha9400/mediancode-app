@@ -12,6 +12,7 @@
   import { ClerkSidebarUser } from '$lib/components/clerk';
   import { sidebarState } from '$lib/stores/sidebar.svelte';
   import {
+    dashboardTextPrimary,
     sidebarNavItemActive,
     sidebarNavItemBase,
     sidebarNavItemInactive,
@@ -74,7 +75,7 @@
     >
       <Logo size="md" />
       {#if !collapsed}
-        <span class="text-lg font-inter font-bold text-mono-100 tracking-tight whitespace-nowrap">Median Code</span>
+        <span class="text-lg font-inter font-bold {dashboardTextPrimary} tracking-tight whitespace-nowrap">Median Code</span>
       {/if}
     </a>
   </div>

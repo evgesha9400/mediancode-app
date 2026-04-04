@@ -9,7 +9,7 @@
  */
 
 import { describe, it, expect } from 'vitest';
-import { PageHeader, type PageHeaderProps } from '$lib/components';
+import { PageHeader, type PageHeaderBack, type PageHeaderProps } from '$lib/components';
 
 describe('PageHeader Component', () => {
 	describe('TypeScript Interface', () => {
@@ -37,6 +37,16 @@ describe('PageHeader Component', () => {
 			};
 
 			expect(props.actions).toBeUndefined();
+		});
+
+		it('PageHeaderProps accepts optional back with href', () => {
+			const back: PageHeaderBack = { href: '/settings', ariaLabel: 'Back' };
+			const props: PageHeaderProps = {
+				title: 'Org',
+				back
+			};
+
+			expect(props.back).toEqual({ href: '/settings', ariaLabel: 'Back' });
 		});
 	});
 

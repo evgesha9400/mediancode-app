@@ -10,6 +10,9 @@
     Table,
     SortableColumn,
     Pill,
+    TableListNameCell,
+    TableListTextCell,
+    TableListMetricCell,
     TableEmptyState,
     DrawerStack,
     CrudDrawerFooter,
@@ -26,12 +29,8 @@
   import { mapApiError } from '$lib/domain/errorMap';
   import { showToast } from '$lib/stores/toasts';
   import { STORE_NAMES } from '$lib/stores/loader';
-  import {
-    tableListCell,
-    tableListRowHover,
-    tableListRowInteractive,
-    tableListRowSelected
-  } from '$lib/ui/classes';
+  import { tableListRowHover, tableListRowInteractive, tableListRowSelected } from '$lib/ui/classes';
+  import { getTableRowId } from '$lib/utils/testIds';
   import { page } from '$app/state';
   import { goto } from '$app/navigation';
 
@@ -39,7 +38,6 @@
   type ObjectWithCounts = ObjectDefinition & {
     memberCount: number;
     usedInApisCount: number;
-    namespaceName: string;
   };
 
   // Build filter config (empty initially)
@@ -57,8 +55,7 @@
     searchFn: searchObjects,
     filterSections: () => objectFilterConfig,
     urlScope: { page, goto },
-    getActiveNamespaceId: () => $activeNamespaceId,
-    getNamespaceName: (nsId) => allNamespaces.find(ns => ns.id === nsId)?.name ?? ''
+    getActiveNamespaceId: () => $activeNamespaceId
   });
 
   // Truly derived values (read-only computations)
@@ -198,12 +195,6 @@
           onSort={workflow.handleSort}
         />
         <SortableColumn
-          column="namespace"
-          label="Namespace"
-          {sorts}
-          onSort={workflow.handleSort}
-        />
-        <SortableColumn
           column="members"
           label="Members"
           {sorts}
@@ -227,32 +218,32 @@
     {#snippet body()}
       {#each filteredObjects as object}
         <tr
+          data-testid={getTableRowId(object.id)}
           onclick={() => workflow.selectItem(object)}
           class="{tableListRowInteractive} {workflow.isSelected(object)
             ? tableListRowSelected
             : tableListRowHover}"
         >
-          <td class="{tableListCell} whitespace-nowrap">
-            <div class="text-sm text-mono-100 font-medium">{object.name}</div>
-          </td>
-          <td class="{tableListCell} whitespace-nowrap">
-            <span class="text-sm text-mono-400">{object.namespaceName}</span>
-          </td>
-          <td class="{tableListCell} whitespace-nowrap">
-            <div class="flex items-center space-x-2">
+          <TableListNameCell col="name">
+            {#snippet children()}
+              {object.name}
+            {/snippet}
+          </TableListNameCell>
+          <TableListMetricCell col="members" label="members">
+            {#snippet pill()}
               <Pill>{object.members.length}</Pill>
-              <span class="text-sm text-mono-400">members</span>
-            </div>
-          </td>
-          <td class="{tableListCell} whitespace-nowrap">
-            <div class="flex items-center space-x-2">
+            {/snippet}
+          </TableListMetricCell>
+          <TableListMetricCell col="usedInApis" label="APIs">
+            {#snippet pill()}
               <Pill>{object.usedInApis.length}</Pill>
-              <span class="text-sm text-mono-400">APIs</span>
-            </div>
-          </td>
-          <td class="{tableListCell} text-sm text-mono-400">
-            {object.description || '-'}
-          </td>
+            {/snippet}
+          </TableListMetricCell>
+          <TableListTextCell col="description">
+            {#snippet children()}
+              {object.description || '-'}
+            {/snippet}
+          </TableListTextCell>
         </tr>
       {/each}
     {/snippet}

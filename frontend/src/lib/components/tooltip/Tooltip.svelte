@@ -46,6 +46,8 @@
 </script>
 
 <script lang="ts">
+  import { dashboardTextPrimary } from '$lib/ui/classes';
+
   interface Props extends TooltipProps {}
 
   let {
@@ -108,7 +110,7 @@
   {#if showTooltip && text}
     <div
       role="tooltip"
-      class="fixed z-[100] px-3 py-2 text-sm text-mono-100 bg-mono-800 shadow-lg whitespace-pre-line max-w-md min-w-max transition-opacity duration-200 pointer-events-none"
+      class="fixed z-[100] px-3 py-2 text-sm {dashboardTextPrimary} bg-mono-800 shadow-lg whitespace-pre-line max-w-md min-w-max transition-opacity duration-200 pointer-events-none"
       class:opacity-0={!showTooltip}
       class:opacity-100={showTooltip}
       style={tooltipStyle}

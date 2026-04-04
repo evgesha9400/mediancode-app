@@ -11,7 +11,9 @@ import {
   getFilterCheckboxId,
   getTableRowId,
   getSortColumnId,
-  getStatCardTestId
+  getStatCardTestId,
+  TABLE_COL_ATTR,
+  getTableRowCellSelector
 } from '$lib/utils/testIds';
 
 describe('testIds - Constants', () => {
@@ -50,6 +52,16 @@ describe('testIds - getTableRowId', () => {
 describe('testIds - getSortColumnId', () => {
   it('should generate correct format', () => {
     expect(getSortColumnId('name')).toBe('sort-name');
+  });
+});
+
+describe('testIds - table column attr', () => {
+  it('TABLE_COL_ATTR is stable', () => {
+    expect(TABLE_COL_ATTR).toBe('data-col');
+  });
+
+  it('getTableRowCellSelector encodes attribute and value', () => {
+    expect(getTableRowCellSelector('defaultValue')).toBe('td[data-col="defaultValue"]');
   });
 });
 

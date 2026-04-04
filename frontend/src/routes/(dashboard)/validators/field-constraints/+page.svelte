@@ -11,15 +11,21 @@
     Pill,
     DetailField,
     TableEmptyState,
-    DrawerStack
+    DrawerStack,
+    TableListNameCell,
+    TableListTextCell,
+    TableListMetricCell
   } from '$lib/components';
   import type { FilterConfig } from '$lib/types';
   import {
+    dashboardControlTextMutedHoverPrimary,
+    tableListBodyLink,
     tableListCell,
     tableListRowHover,
     tableListRowInteractive,
     tableListRowSelected
   } from '$lib/ui/classes';
+  import { getTableRowId, TABLE_COL_ATTR } from '$lib/utils/testIds';
   import { STORE_NAMES } from '$lib/stores/loader';
   import { page } from '$app/state';
   import { goto } from '$app/navigation';
@@ -156,37 +162,42 @@
   {#snippet body()}
     {#each filteredFieldConstraints as fc}
       <tr
+        data-testid={getTableRowId(fc.id)}
         onclick={() => state.selectItem(fc)}
         class="{tableListRowInteractive} {isSelected(fc) ? tableListRowSelected : tableListRowHover}"
       >
-        <td class="{tableListCell} whitespace-nowrap text-sm text-mono-100 font-medium">
-          {fc.name}
-        </td>
-        <td class="{tableListCell}">
+        <TableListNameCell col="name">
+          {#snippet children()}
+            {fc.name}
+          {/snippet}
+        </TableListNameCell>
+        <td class="{tableListCell}" {...{ [TABLE_COL_ATTR]: 'parameterTypes' }}>
           <div class="flex flex-wrap gap-1">
             {#each fc.parameterTypes as ptype}
               <Pill>{ptype}</Pill>
             {/each}
           </div>
         </td>
-        <td class="{tableListCell}">
+        <td class="{tableListCell}" {...{ [TABLE_COL_ATTR]: 'compatibleTypes' }}>
           <div class="flex flex-wrap gap-1">
             {#each fc.compatibleTypes as ctype}
               <Pill>{ctype}</Pill>
             {/each}
           </div>
         </td>
-        <td class="{tableListCell} text-sm text-mono-400 max-w-xs truncate">
-          {fc.description.split('.')[0]}.
-        </td>
-        <td class="{tableListCell} whitespace-nowrap text-sm">
+        <TableListTextCell col="description" class="max-w-xs truncate">
+          {#snippet children()}
+            {fc.description.split('.')[0]}.
+          {/snippet}
+        </TableListTextCell>
+        <td class="{tableListCell} whitespace-nowrap text-sm" {...{ [TABLE_COL_ATTR]: 'docsUrl' }}>
           {#if fc.docsUrl}
             <a
               href={fc.docsUrl}
               target="_blank"
               rel="noopener noreferrer"
               onclick={(e) => e.stopPropagation()}
-              class="text-mono-400 hover:text-mono-100 transition-colors"
+              class="{dashboardControlTextMutedHoverPrimary}"
               title="View documentation"
             >
               <i class="fa-solid fa-arrow-up-right-from-square"></i>
@@ -195,12 +206,11 @@
             <span class="text-mono-600">-</span>
           {/if}
         </td>
-        <td class="{tableListCell} whitespace-nowrap">
-          <div class="flex items-center space-x-2">
+        <TableListMetricCell col="usedInFields" label="fields">
+          {#snippet pill()}
             <Pill>{fc.usedInFields}</Pill>
-            <span class="text-sm text-mono-400">fields</span>
-          </div>
-        </td>
+          {/snippet}
+        </TableListMetricCell>
       </tr>
     {/each}
   {/snippet}
@@ -239,7 +249,7 @@
             href={selectedFieldConstraint.docsUrl}
             target="_blank"
             rel="noopener noreferrer"
-            class="text-sm text-mono-100 underline hover:text-mono-400 transition-colors"
+            class={tableListBodyLink}
           >
             View Docs <i class="fa-solid fa-arrow-up-right-from-square text-xs"></i>
           </a>

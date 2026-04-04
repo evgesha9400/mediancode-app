@@ -18,10 +18,14 @@
     FormField,
     FormLabel,
     Pill,
-    NamespaceSelector
+    NamespaceSelector,
+    TableListNameCell,
+    TableListTextCell,
+    TableListMetricCell
   } from '$lib/components';
   import { STORE_NAMES } from '$lib/stores/loader';
-  import { tableListCell, tableListRowHover, tableListRowInteractive } from '$lib/ui/classes';
+  import { dashboardTextPrimary, tableListCell, tableListRowHover, tableListRowInteractive } from '$lib/ui/classes';
+  import { getTableRowId, TABLE_COL_ATTR } from '$lib/utils/testIds';
   import { page } from '$app/state';
   import { goto } from '$app/navigation';
   import { createApiModel } from '$lib/stores/apiModel.svelte';
@@ -127,28 +131,32 @@
 
     {#snippet body()}
       {#each filteredApis as api}
-        <tr onclick={() => handleOpenApi(api)} class="{tableListRowInteractive} {tableListRowHover}">
-          <td class="{tableListCell} whitespace-nowrap">
-            <div class="text-sm text-mono-100 font-medium">{api.title || 'Untitled API'}</div>
-            {#if api.description}
-              <div class="text-xs text-mono-400 truncate max-w-xs">{api.description}</div>
-            {/if}
-          </td>
-          <td class="{tableListCell} whitespace-nowrap">
+        <tr
+          data-testid={getTableRowId(api.id)}
+          onclick={() => handleOpenApi(api)}
+          class="{tableListRowInteractive} {tableListRowHover}"
+        >
+          <TableListNameCell col="title" captionText={api.description ?? undefined}>
+            {#snippet children()}
+              {api.title || 'Untitled API'}
+            {/snippet}
+          </TableListNameCell>
+          <td class="{tableListCell} whitespace-nowrap" {...{ [TABLE_COL_ATTR]: 'version' }}>
             <Pill>{api.version}</Pill>
           </td>
-          <td class="{tableListCell} whitespace-nowrap">
-            <code class="text-sm text-mono-400 font-mono">{api.baseUrl}</code>
+          <td class="{tableListCell} whitespace-nowrap" {...{ [TABLE_COL_ATTR]: 'baseUrl' }}>
+            <code class="font-mono">{api.baseUrl}</code>
           </td>
-          <td class="{tableListCell} whitespace-nowrap">
-            <div class="flex items-center space-x-2">
+          <TableListMetricCell col="endpoints" label="endpoints">
+            {#snippet pill()}
               <Pill>{api.endpointCount}</Pill>
-              <span class="text-sm text-mono-400">endpoints</span>
-            </div>
-          </td>
-          <td class="{tableListCell} whitespace-nowrap">
-            <span class="text-sm text-mono-400">{api.namespaceName}</span>
-          </td>
+            {/snippet}
+          </TableListMetricCell>
+          <TableListTextCell col="namespace" nowrap>
+            {#snippet children()}
+              {api.namespaceName}
+            {/snippet}
+          </TableListTextCell>
         </tr>
       {/each}
     {/snippet}
@@ -189,7 +197,7 @@
           bind:value={workflow.editedItem.description}
           rows="3"
           placeholder="Describe what this API does..."
-          class="w-full px-3 py-1.5 text-sm border border-mono-700/80 bg-mono-900/80 text-white focus:ring-2 focus:ring-green-400/50 outline-none focus:outline-none transition-colors rounded-xl"
+          class="w-full px-3 py-1.5 text-sm border border-mono-700/80 bg-mono-900/80 {dashboardTextPrimary} focus:ring-2 focus:ring-green-400/50 outline-none focus:outline-none transition-colors rounded-xl"
         ></textarea>
       </div>
 

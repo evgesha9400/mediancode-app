@@ -6,6 +6,7 @@
  */
 
 import { type Page, type Locator, expect } from '@playwright/test';
+import { getTableRowCellSelector } from '$lib/utils/testIds';
 import { ACTION_DELAY_MS } from '../helpers/e2e-delays';
 
 export class ObjectsPage {
@@ -25,7 +26,6 @@ export class ObjectsPage {
 
 	// Sortable columns
 	readonly nameColumnHeader: Locator;
-	readonly namespaceColumnHeader: Locator;
 	readonly fieldsColumnHeader: Locator;
 	readonly usedInApisColumnHeader: Locator;
 
@@ -77,7 +77,6 @@ export class ObjectsPage {
 
 		// Sortable columns - scoped to table
 		this.nameColumnHeader = this.table.locator('thead th').filter({ hasText: 'Object Name' });
-		this.namespaceColumnHeader = this.table.locator('thead th').filter({ hasText: 'Namespace' });
 		this.fieldsColumnHeader = this.table.locator('thead th').filter({ hasText: /^Members$/i });
 		this.usedInApisColumnHeader = this.table.locator('thead th').filter({ hasText: 'Used In APIs' });
 
@@ -180,26 +179,11 @@ export class ObjectsPage {
 		const count = await this.tableRows.count();
 		for (let i = 0; i < count; i++) {
 			const row = this.tableRows.nth(i);
-			const nameCell = row.locator('td').first();
+			const nameCell = row.locator(getTableRowCellSelector('name'));
 			const name = await nameCell.textContent();
 			if (name) names.push(name.trim());
 		}
 		return names;
-	}
-
-	/**
-	 * Get all namespaces visible in the table
-	 */
-	async getVisibleNamespaces(): Promise<string[]> {
-		const namespaces: string[] = [];
-		const count = await this.tableRows.count();
-		for (let i = 0; i < count; i++) {
-			const row = this.tableRows.nth(i);
-			const namespaceCell = row.locator('td').nth(1);
-			const namespace = await namespaceCell.textContent();
-			if (namespace) namespaces.push(namespace.trim());
-		}
-		return namespaces;
 	}
 
 	/**
@@ -210,7 +194,7 @@ export class ObjectsPage {
 		const count = await this.tableRows.count();
 		for (let i = 0; i < count; i++) {
 			const row = this.tableRows.nth(i);
-			const countSpan = row.locator('td').nth(2).locator('span').first();
+			const countSpan = row.locator(getTableRowCellSelector('members')).locator('span').first();
 			const text = await countSpan.textContent();
 			counts.push(parseInt(text?.trim() ?? '0', 10));
 		}

@@ -68,7 +68,13 @@
 </script>
 
 <script lang="ts">
-  import { dashboardSearchToolbarShell, mainColumnChromePaddingX, searchBarInput } from '$lib/ui/classes';
+  import {
+    dashboardControlTextMutedHoverPrimary,
+    dashboardSearchToolbarShell,
+    dashboardTextPrimary,
+    mainColumnChromePaddingX,
+    searchBarInput
+  } from '$lib/ui/classes';
   import { SEARCH_INPUT_ID, FILTER_TOGGLE_ID } from '$lib/utils/testIds';
 
   interface Props extends SearchBarProps {}
@@ -105,7 +111,7 @@
           type="button"
           onclick={() => onFilterClick?.()}
           data-testid={FILTER_TOGGLE_ID}
-          class="flex items-center space-x-2 px-4 py-2 text-sm font-inter rounded-xl transition-all shadow-sm {showFilter ? (active ? 'bg-mono-700/80 border border-transparent text-white' : 'bg-mono-800/40 border border-mono-700/80 text-mono-300 hover:bg-mono-800/80 hover:text-white') : 'hidden'}"
+          class="flex items-center space-x-2 px-4 py-2 text-sm font-inter rounded-xl transition-all shadow-sm {showFilter ? (active ? `bg-mono-700/80 border border-transparent ${dashboardTextPrimary}` : `bg-mono-800/40 border border-mono-700/80 hover:bg-mono-800/80 ${dashboardControlTextMutedHoverPrimary}`) : 'hidden'}"
         >
           <i class="fa-solid fa-filter text-xs {active ? 'text-green-400' : 'text-mono-400'}"></i>
           <span>Filter</span>

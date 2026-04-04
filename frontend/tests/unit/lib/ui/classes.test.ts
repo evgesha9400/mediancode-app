@@ -10,6 +10,14 @@ import {
 	inputGlassAuto,
 	inputGlassDisabled,
 	dashboardMainColumn,
+	dashboardMainColumnCanvasForPath,
+	dashboardControlTextMutedHoverPrimary,
+	dashboardPageTitleText,
+	dashboardPageTitleTextDetail,
+	dashboardTextPrimary,
+	drawerHeaderTitleText,
+	backNavButton,
+	clerkNavbarButton,
 	dropdownPanel,
 	marketingHeroCta,
 	clerkCard,
@@ -30,10 +38,22 @@ import {
 	drawerFooterBtnDangerConfirmSegment,
 	drawerFooterDangerCallout,
 	drawerFooterBtnDangerConfirm,
+	tableListAuxiliaryLabel,
+	tableListBodyCaption,
+	tableListBodyCell,
 	tableListBodyDivide,
+	tableListBodyLink,
+	tableListBodyPrimary,
 	tableListCardShell,
 	tableListCell,
+	tableListCellPrimary,
+	tableListDetailTitle,
+	tableListHeaderSortable,
 	tableListPageGutter,
+	tableListPanelSectionTitle,
+	tableListPanelStatLabel,
+	tableListPanelStatTotal,
+	tableListThead,
 	queryParamReadonlyCell,
 	queryParamPaginationToggleBase,
 	searchBarInput,
@@ -52,6 +72,8 @@ describe('lib/ui/classes', () => {
 		expect(inputGlass).toContain('focus:ring-green-400');
 		expect(inputGlass).toContain('w-full');
 		expect(inputGlass).toContain('bg-mono-900/80');
+		expect(inputGlass).toContain('text-mono-100');
+		expect(inputGlass).not.toContain('text-white');
 	});
 
 	it('inputGlassAuto matches glass surface without full width', () => {
@@ -70,6 +92,29 @@ describe('lib/ui/classes', () => {
 	it('dashboardMainColumn encodes flex column shell', () => {
 		expect(dashboardMainColumn).toContain('flex-col');
 		expect(dashboardMainColumn).toContain('min-h-0');
+	});
+
+	it('dashboardMainColumnCanvasForPath uses default gradient for non-hub routes (e.g. Types, /dashboard)', () => {
+		for (const path of ['/types', '/dashboard']) {
+			const c = dashboardMainColumnCanvasForPath(path);
+			expect(c).toContain('bg-mono-950');
+			expect(c).toContain('bg-gradient-to-t');
+			expect(c).toContain('from-green-400/[0.07]');
+		}
+	});
+
+	it('dashboardMainColumnCanvasForPath uses top-right radial for component hub routes', () => {
+		for (const path of ['/fields', '/objects', '/namespaces', '/apis', '/apis/uuid-here']) {
+			const c = dashboardMainColumnCanvasForPath(path);
+			expect(c).toContain('radial-gradient');
+			expect(c).toContain('at_100%_0%');
+		}
+	});
+
+	it('dashboardMainColumnCanvasForPath matches settings subtree', () => {
+		expect(dashboardMainColumnCanvasForPath('/settings')).toContain('radial-gradient');
+		expect(dashboardMainColumnCanvasForPath('/settings/organization')).toContain('radial-gradient');
+		expect(dashboardMainColumnCanvasForPath('/settings/')).toContain('radial-gradient');
 	});
 
 	it('dropdownPanel encodes floating list container', () => {
@@ -130,15 +175,62 @@ describe('lib/ui/classes', () => {
 		expect(drawerFooterBtnSecondarySegment).not.toContain('border');
 	});
 
+	it('dashboard titles use text-mono-100 like sidebar brand, not text-white', () => {
+		expect(dashboardPageTitleText).toContain('text-mono-100');
+		expect(dashboardPageTitleText).toContain('shrink');
+		expect(dashboardPageTitleText).not.toContain('text-white');
+		expect(dashboardPageTitleTextDetail).toContain('text-mono-100');
+		expect(dashboardPageTitleTextDetail).toContain('shrink-0');
+		expect(drawerHeaderTitleText).toContain('text-mono-100');
+		expect(drawerHeaderTitleText).toContain('text-xl');
+	});
+
+	it('dashboard semantic text tokens and back nav shell stay on mono-100 chroma', () => {
+		expect(dashboardTextPrimary).toBe('text-mono-100');
+		expect(dashboardControlTextMutedHoverPrimary).toContain('text-mono-300');
+		expect(dashboardControlTextMutedHoverPrimary).toContain('hover:text-mono-100');
+		expect(dashboardControlTextMutedHoverPrimary).toContain('transition-colors');
+		expect(backNavButton).toContain('w-8');
+		expect(backNavButton).toContain('h-8');
+		expect(backNavButton).toContain('hover:text-mono-100');
+		expect(clerkNavbarButton).toContain('data-[active=true]:text-mono-100');
+	});
+
 	it('table list primitives align with dashboard chrome', () => {
 		expect(tableListPageGutter).toContain('px-4');
 		expect(tableListPageGutter).toContain('pb-4');
-		expect(tableListCardShell).toContain('rounded-2xl');
-		expect(tableListCardShell).toContain('border-mono-800/80');
+		expect(tableListCardShell).toContain('w-full');
+		expect(tableListCardShell).toContain('overflow-x-auto');
+		expect(tableListCardShell).not.toContain('bg-mono');
+		expect(tableListCardShell).not.toContain('backdrop-blur');
+		expect(tableListCardShell).not.toContain('border');
 		expect(tableListBodyDivide).toContain('divide-y');
 		expect(tableListBodyDivide).toContain('divide-mono-800/30');
+		expect(tableListThead).toContain('sticky');
+		expect(tableListThead).toContain('bg-transparent');
+		expect(tableListThead).not.toContain('bg-mono-800');
+		expect(tableListThead).not.toContain('backdrop-blur');
+		expect(tableListThead).toContain('border-mono-800/30');
 		expect(tableListCell).toContain('px-4');
 		expect(tableListCell).toContain('py-4');
+		expect(tableListHeaderSortable).toContain('text-mono-100');
+		expect(tableListHeaderSortable).toContain('uppercase');
+		expect(tableListBodyPrimary).toContain('text-mono-100');
+		expect(tableListBodyPrimary).toContain('font-medium');
+		expect(tableListBodyCell).toContain('text-mono-100');
+		expect(tableListBodyCell).not.toContain('font-medium');
+		expect(tableListBodyCaption).toContain('text-mono-400');
+		expect(tableListCellPrimary).toContain('px-4');
+		expect(tableListCellPrimary).toContain('whitespace-nowrap');
+		expect(tableListCellPrimary).toContain('text-mono-100');
+		expect(tableListBodyLink).toContain('underline');
+		expect(tableListBodyLink).toContain('hover:text-mono-300');
+		expect(tableListAuxiliaryLabel).toContain('text-mono-300');
+		expect(tableListAuxiliaryLabel).toContain('font-medium');
+		expect(tableListDetailTitle).toBe(tableListBodyPrimary);
+		expect(tableListPanelSectionTitle).toContain('mb-2');
+		expect(tableListPanelStatLabel).toContain('text-mono-300');
+		expect(tableListPanelStatTotal).toContain('font-bold');
 	});
 
 	it('query param pagination cells use glass row styling', () => {

@@ -16,14 +16,14 @@
 </script>
 
 <script lang="ts">
-  import { dashboardMainColumn } from '$lib/ui/classes';
+  import { dashboardMainColumn, dashboardTextPrimary } from '$lib/ui/classes';
 
   interface Props extends MainColumnFrameProps {}
 
   let { header, children, bodyClass = '' }: Props = $props();
 </script>
 
-<div class={dashboardMainColumn}>
+<div class="{dashboardMainColumn} {dashboardTextPrimary}">
   <div class="shrink-0 w-full">
     {@render header()}
   </div>

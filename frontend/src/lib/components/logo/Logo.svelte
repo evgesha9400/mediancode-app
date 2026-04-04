@@ -13,6 +13,7 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import { browser } from '$app/environment';
+	import { dashboardTextPrimary } from '$lib/ui/classes';
 	import { createLogoCanvasRenderer, LOGO_SIZE_MAP } from '$lib/utils/logoCanvasRenderer';
 	import type { LogoCanvasRenderer } from '$lib/utils/logoCanvasRenderer';
 
@@ -84,6 +85,6 @@
 		aria-hidden="true"
 	></canvas>
 	{#if showText}
-		<span class="font-bold {variant === 'light' ? 'text-mono-900' : 'text-white'}">Median Code</span>
+		<span class="font-bold {variant === 'light' ? 'text-mono-900' : dashboardTextPrimary}">Median Code</span>
 	{/if}
 </div>

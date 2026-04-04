@@ -10,8 +10,9 @@
 </script>
 
 <script lang="ts">
-  import { tableListCell } from '$lib/ui/classes';
+  import { dashboardTextPrimary, tableListCell, tableListHeaderSortable } from '$lib/ui/classes';
   import { getMultiSortIcon, getSortPriority, getMultiSortAriaLabel } from '$lib/utils/sorting';
+  import { getSortColumnId } from '$lib/utils/testIds';
 
   interface Props extends SortableColumnProps {}
 
@@ -28,19 +29,20 @@
 
 <th
   scope="col"
-  class="{tableListCell} text-left text-xs uppercase font-inter text-mono-400 tracking-wider font-bold"
+  data-testid={getSortColumnId(column)}
+  class="{tableListCell} text-left {tableListHeaderSortable}"
 >
   <button
     type="button"
     onclick={handleClick}
-    class="flex items-center space-x-1 hover:text-mono-200 transition-colors"
+    class="flex items-center space-x-1 hover:text-mono-50 transition-colors"
     aria-label={ariaLabel}
     title="Click to sort, Shift+Click to add to sort"
   >
     <span>{label}</span>
     <i class="fa-solid {icon}"></i>
     {#if priority !== null}
-      <span class="inline-flex items-center justify-center w-4 h-4 text-xs font-semibold rounded-full bg-mono-800 text-white">
+      <span class="inline-flex items-center justify-center w-4 h-4 text-xs font-semibold rounded-full bg-mono-800 {dashboardTextPrimary}">
         {priority}
       </span>
     {/if}

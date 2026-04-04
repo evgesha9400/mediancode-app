@@ -13,6 +13,8 @@
   import {
     cardGlassBorderDefault,
     cardGlassSurface,
+    dashboardControlTextMutedHoverPrimary,
+    dashboardTextPrimary,
     marketingProgressBarGlow,
   } from '$lib/ui/classes';
 
@@ -82,11 +84,11 @@
           </div>
           <div class="flex-1 min-w-0">
             <div class="flex items-center justify-between">
-              <span class="text-sm font-inter {step.completed ? 'text-mono-500 line-through' : 'text-mono-100 font-semibold'}">{step.label}</span>
+              <span class="text-sm font-inter {step.completed ? 'text-mono-500 line-through' : `${dashboardTextPrimary} font-semibold`}">{step.label}</span>
               {#if !step.completed}
                 <button
                   onclick={() => goto(step.href)}
-                  class="text-[11px] font-inter font-medium px-2 py-1 rounded bg-white/5 border border-white/5 text-mono-300 hover:text-white hover:bg-white/10 transition-colors cursor-pointer"
+                  class="text-[11px] font-inter font-medium px-2 py-1 rounded bg-white/5 border border-white/5 hover:bg-white/10 cursor-pointer {dashboardControlTextMutedHoverPrimary}"
                   data-testid="checklist-step-{i}-btn"
                 >
                   Start

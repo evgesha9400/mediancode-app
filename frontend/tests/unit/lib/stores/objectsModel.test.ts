@@ -97,7 +97,6 @@ function createTestModel(overrides: Partial<ObjectsModelConfig> = {}): {
       filterSections: () => [],
       urlScope: { page: page as any, goto: goto as any },
       getActiveNamespaceId: () => 'ns-1',
-      getNamespaceName: () => 'Test Namespace',
       ...overrides
     });
   });
@@ -343,7 +342,7 @@ describe('objectsModel - Save (Update)', () => {
   });
 
   it('should strip derived properties from update payload', async () => {
-    // Objects get memberCount, usedInApisCount, namespaceName added by deriveExtra.
+    // Objects get memberCount, usedInApisCount added by deriveExtra.
     // The toUpdatePayload function must strip these before sending.
     const items = [makeObject({ id: 'o-1', name: 'User', members: [{ memberType: 'scalar' as const, name: 'f1', fieldId: 'f-1', role: 'writable' as const, isNullable: false }, { memberType: 'scalar' as const, name: 'f2', fieldId: 'f-2', role: 'writable' as const, isNullable: false }] })];
     ({ model, cleanup } = createTestModel({

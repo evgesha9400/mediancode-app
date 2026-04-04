@@ -8,6 +8,7 @@
  */
 
 import { type Page, type Locator } from '@playwright/test';
+import { getTableRowCellSelector } from '$lib/utils/testIds';
 import { ACTION_DELAY_MS } from '../helpers/e2e-delays';
 
 export class FieldConstraintsPage {
@@ -275,7 +276,7 @@ export class FieldConstraintsPage {
 		const count = await this.tableRows.count();
 		for (let i = 0; i < count; i++) {
 			const row = this.tableRows.nth(i);
-			const nameCell = row.locator('td').first();
+			const nameCell = row.locator(getTableRowCellSelector('name'));
 			const name = await nameCell.textContent();
 			if (name) names.push(name.trim());
 		}
@@ -290,7 +291,7 @@ export class FieldConstraintsPage {
 		const count = await this.tableRows.count();
 		for (let i = 0; i < count; i++) {
 			const row = this.tableRows.nth(i);
-			const countCell = row.locator('td').nth(5).locator('span').first();
+			const countCell = row.locator(getTableRowCellSelector('usedInFields')).locator('span').first();
 			const text = await countCell.textContent();
 			counts.push(parseInt(text?.trim() ?? '0', 10));
 		}

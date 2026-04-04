@@ -47,7 +47,12 @@
 </script>
 
 <script lang="ts">
-  import { tableListBodyDivide, tableListCardShell, tableListPageGutter } from '$lib/ui/classes';
+  import {
+    tableListBodyDivide,
+    tableListCardShell,
+    tableListPageGutter,
+    tableListThead
+  } from '$lib/ui/classes';
   import { TABLE_ID } from '$lib/utils/testIds';
 
   interface Props extends TableProps {}
@@ -59,7 +64,7 @@
   {#if !isEmpty}
     <div class={tableListCardShell}>
       <table data-testid={TABLE_ID} class="min-w-full bg-transparent">
-        <thead class="bg-mono-800/50 sticky top-0 backdrop-blur-sm shadow-sm ring-1 ring-white/5 z-10">
+        <thead class={tableListThead}>
           {@render header?.()}
         </thead>
         <tbody class={tableListBodyDivide}>

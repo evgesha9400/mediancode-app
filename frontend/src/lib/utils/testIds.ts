@@ -18,9 +18,30 @@ export function getFilterCheckboxId(section: string, value: string): string {
 
 // Table
 export const TABLE_ID = 'data-table';
+
+/**
+ * HTML attribute on list `<td>` cells (via `TableList*Cell` components).
+ * Value must match the `SortableColumn` `column` key for that column (E2E + sort alignment).
+ */
+export const TABLE_COL_ATTR = 'data-col';
+
+/**
+ * Playwright/CSS selector for a cell in a row given a column key.
+ *
+ * @example
+ * row.locator(getTableRowCellSelector('defaultValue'))
+ */
+export function getTableRowCellSelector(column: string): string {
+	return `td[${TABLE_COL_ATTR}="${column}"]`;
+}
+
+/**
+ * Stable `data-testid` for a data row. Set on `<tr>` in entity list tables (not header).
+ */
 export function getTableRowId(id: string): string {
 	return `table-row-${id}`;
 }
+
 export function getSortColumnId(column: string): string {
 	return `sort-${column}`;
 }

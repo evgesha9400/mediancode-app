@@ -6,6 +6,7 @@
  */
 
 import { type Page, type Locator, expect } from '@playwright/test';
+import { getTableRowCellSelector } from '$lib/utils/testIds';
 import { ACTION_DELAY_MS } from '../helpers/e2e-delays';
 
 export class ApisPage {
@@ -137,8 +138,8 @@ export class ApisPage {
 		const count = await this.tableRows.count();
 		for (let i = 0; i < count; i++) {
 			const row = this.tableRows.nth(i);
-			const titleCell = row.locator('td').first();
-			const titleDiv = titleCell.locator('.text-mono-100.font-medium');
+			const titleCell = row.locator(getTableRowCellSelector('title'));
+			const titleDiv = titleCell.locator('div').first();
 			const title = await titleDiv.textContent();
 			if (title) titles.push(title.trim());
 		}
@@ -153,7 +154,7 @@ export class ApisPage {
 		const count = await this.tableRows.count();
 		for (let i = 0; i < count; i++) {
 			const row = this.tableRows.nth(i);
-			const versionSpan = row.locator('td').nth(1).locator('span');
+			const versionSpan = row.locator(getTableRowCellSelector('version')).locator('span');
 			const version = await versionSpan.textContent();
 			if (version) versions.push(version.trim());
 		}
@@ -168,7 +169,7 @@ export class ApisPage {
 		const count = await this.tableRows.count();
 		for (let i = 0; i < count; i++) {
 			const row = this.tableRows.nth(i);
-			const urlCode = row.locator('td').nth(2).locator('code');
+			const urlCode = row.locator(getTableRowCellSelector('baseUrl')).locator('code');
 			const url = await urlCode.textContent();
 			if (url) urls.push(url.trim());
 		}
@@ -183,7 +184,7 @@ export class ApisPage {
 		const count = await this.tableRows.count();
 		for (let i = 0; i < count; i++) {
 			const row = this.tableRows.nth(i);
-			const countSpan = row.locator('td').nth(3).locator('span').first();
+			const countSpan = row.locator(getTableRowCellSelector('endpoints')).locator('span').first();
 			const text = await countSpan.textContent();
 			counts.push(parseInt(text?.trim() ?? '0', 10));
 		}

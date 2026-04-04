@@ -47,8 +47,6 @@ export interface FieldsModelConfig {
   getDefaultType: () => string;
   /** Resolves a type name to its ID */
   getTypeIdByName: (name: string) => string | undefined;
-  /** Returns namespace name for a field */
-  getNamespaceName: (namespaceId: string) => string;
 }
 
 // ============================================================================
@@ -114,8 +112,7 @@ export function createFieldsModel(config: FieldsModelConfig): FieldsModelState {
     urlScope,
     getActiveNamespaceId,
     getDefaultType,
-    getTypeIdByName,
-    getNamespaceName
+    getTypeIdByName
   } = config;
 
   // --- Create list view state (shared utility) ---
@@ -128,10 +125,9 @@ export function createFieldsModel(config: FieldsModelConfig): FieldsModelState {
     highlightParamKey: 'highlight',
     getItemId: (field) => field.id,
     deriveExtra: (field) => ({
-      usedInApisCount: field.usedInApis.length,
-      namespaceName: getNamespaceName(field.namespaceId)
+      usedInApisCount: field.usedInApis.length
     }),
-    sortColumnMap: { 'usedInApis': 'usedInApisCount', 'namespace': 'namespaceName' },
+    sortColumnMap: { 'usedInApis': 'usedInApisCount' },
     drawerConfig: {
       trackEdits: true,
       allowDelete: true,

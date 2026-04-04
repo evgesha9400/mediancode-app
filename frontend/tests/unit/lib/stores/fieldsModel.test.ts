@@ -104,7 +104,6 @@ function createTestModel(overrides: Partial<FieldsModelConfig> = {}): {
       getActiveNamespaceId: () => 'ns-1',
       getDefaultType: () => 'str',
       getTypeIdByName: (name: string) => (name === 'str' ? 'type-str' : name === 'int' ? 'type-int' : undefined),
-      getNamespaceName: () => 'Test Namespace',
       ...overrides
     });
   });

@@ -13,6 +13,7 @@
  */
 
 import { type Page, type Locator, expect } from '@playwright/test';
+import { getTableRowCellSelector } from '$lib/utils/testIds';
 import { ACTION_DELAY_MS } from '../helpers/e2e-delays';
 
 export class FieldsPage {
@@ -463,7 +464,7 @@ export class FieldsPage {
 		const count = await this.tableRows.count();
 		for (let i = 0; i < count; i++) {
 			const row = this.tableRows.nth(i);
-			const nameCell = row.locator('td').first();
+			const nameCell = row.locator(getTableRowCellSelector('name'));
 			const name = await nameCell.textContent();
 			if (name) names.push(name.trim());
 		}
@@ -478,26 +479,11 @@ export class FieldsPage {
 		const count = await this.tableRows.count();
 		for (let i = 0; i < count; i++) {
 			const row = this.tableRows.nth(i);
-			const typeCell = row.locator('td').nth(1);
+			const typeCell = row.locator(getTableRowCellSelector('type'));
 			const type = await typeCell.textContent();
 			if (type) types.push(type.trim());
 		}
 		return types;
-	}
-
-	/**
-	 * Get all namespaces visible in the table
-	 */
-	async getVisibleNamespaces(): Promise<string[]> {
-		const namespaces: string[] = [];
-		const count = await this.tableRows.count();
-		for (let i = 0; i < count; i++) {
-			const row = this.tableRows.nth(i);
-			const namespaceCell = row.locator('td').nth(2);
-			const namespace = await namespaceCell.textContent();
-			if (namespace) namespaces.push(namespace.trim());
-		}
-		return namespaces;
 	}
 
 	/**
@@ -508,7 +494,7 @@ export class FieldsPage {
 		const count = await this.tableRows.count();
 		for (let i = 0; i < count; i++) {
 			const row = this.tableRows.nth(i);
-			const defaultValueCell = row.locator('td').nth(4);
+			const defaultValueCell = row.locator(getTableRowCellSelector('defaultValue'));
 			const value = await defaultValueCell.textContent();
 			if (value) defaultValues.push(value.trim());
 		}
@@ -523,7 +509,7 @@ export class FieldsPage {
 		const count = await this.tableRows.count();
 		for (let i = 0; i < count; i++) {
 			const row = this.tableRows.nth(i);
-			const countSpan = row.locator('td').nth(5).locator('span').first();
+			const countSpan = row.locator(getTableRowCellSelector('usedInApis')).locator('span').first();
 			const text = await countSpan.textContent();
 			counts.push(parseInt(text?.trim() ?? '0', 10));
 		}

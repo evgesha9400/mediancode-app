@@ -19,7 +19,12 @@
 
 <script lang="ts">
   import { Pill } from '../pill';
-  import { inputValidatorSearch, surfaceInsideFrostedPanel } from '$lib/ui/classes';
+  import {
+    inputValidatorSearch,
+    surfaceInsideFrostedPanel,
+    tableListAuxiliaryLabel,
+    tableListBodyPrimary
+  } from '$lib/ui/classes';
 
   interface Props extends TemplateGalleryProps {}
 
@@ -51,7 +56,7 @@
 
 <div class="space-y-3">
   <div class="flex items-center justify-between">
-    <h3 class="text-sm text-mono-300 font-medium">
+    <h3 class={tableListAuxiliaryLabel}>
       {kind === 'field' ? 'Field Validator Templates' : 'Model Validator Templates'}
     </h3>
     <button
@@ -82,7 +87,7 @@
           class="w-full text-left p-3 {surfaceInsideFrostedPanel} hover:border-mono-400 hover:bg-mono-800 transition-colors cursor-pointer"
         >
           <div class="flex items-center justify-between">
-            <span class="text-sm text-mono-100 font-medium">{template.name}</span>
+            <span class={tableListBodyPrimary}>{template.name}</span>
             <Pill>{template.mode}</Pill>
           </div>
           <p class="text-xs text-mono-400 mt-1">{template.description}</p>
@@ -103,7 +108,7 @@
           class="w-full text-left p-3 {surfaceInsideFrostedPanel} hover:border-mono-400 hover:bg-mono-800 transition-colors cursor-pointer"
         >
           <div class="flex items-center justify-between">
-            <span class="text-sm text-mono-100 font-medium">{template.name}</span>
+            <span class={tableListBodyPrimary}>{template.name}</span>
             <Pill>{template.mode}</Pill>
           </div>
           <p class="text-xs text-mono-400 mt-1">{template.description}</p>

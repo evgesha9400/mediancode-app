@@ -11,15 +11,14 @@
     DrawerStack,
     DetailField,
     Pill,
+    TableListNameCell,
+    TableListTextCell,
+    TableListMetricCell,
     TableEmptyState
   } from '$lib/components';
   import type { FilterConfig } from '$lib/types';
-  import {
-    tableListCell,
-    tableListRowHover,
-    tableListRowInteractive,
-    tableListRowSelected
-  } from '$lib/ui/classes';
+  import { tableListCell, tableListRowHover, tableListRowInteractive, tableListRowSelected } from '$lib/ui/classes';
+  import { getTableRowId, TABLE_COL_ATTR } from '$lib/utils/testIds';
   import { STORE_NAMES } from '$lib/stores/loader';
   import { page } from '$app/state';
   import { goto } from '$app/navigation';
@@ -121,26 +120,30 @@
     {#snippet body()}
       {#each filteredTypes as type}
         <tr
+          data-testid={getTableRowId(type.name)}
           onclick={() => state.selectItem(type)}
           class="{tableListRowInteractive} {state.selectedItem?.name === type.name
             ? tableListRowSelected
             : tableListRowHover}"
         >
-          <td class="{tableListCell} whitespace-nowrap text-sm text-mono-100 font-medium">
-            {type.name}
-          </td>
-          <td class="{tableListCell} whitespace-nowrap">
+          <TableListNameCell col="name">
+            {#snippet children()}
+              {type.name}
+            {/snippet}
+          </TableListNameCell>
+          <td class="{tableListCell} whitespace-nowrap" {...{ [TABLE_COL_ATTR]: 'pythonType' }}>
             <Pill>{type.pythonType}</Pill>
           </td>
-          <td class="{tableListCell} text-sm text-mono-400">
-            {type.description}
-          </td>
-          <td class="{tableListCell} whitespace-nowrap">
-            <div class="flex items-center space-x-2">
+          <TableListTextCell col="description">
+            {#snippet children()}
+              {type.description}
+            {/snippet}
+          </TableListTextCell>
+          <TableListMetricCell col="usedInFields" label="fields">
+            {#snippet pill()}
               <Pill>{type.usedInFields}</Pill>
-              <span class="text-sm text-mono-400">fields</span>
-            </div>
-          </td>
+            {/snippet}
+          </TableListMetricCell>
         </tr>
       {/each}
     {/snippet}

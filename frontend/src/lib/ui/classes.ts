@@ -12,18 +12,37 @@
  * | Dashboard & stat cards | `boxShadow.glow-*` | `cardGlassSurface`, `cardGlassBorder*` |
  * | Green accent icon tiles | `glow-green-icon`, `glow-green-sm` | `accentIconTile`, `marketingFeatureIcon` |
  * | Sidebar shell & nav items | — | `sidebarShell`, `sidebarNavItem*` |
- * | Dashboard column shell & page header chrome | — | `dashboardMainColumn`, `dashboardMainColumnCanvas`, `dashboardGreenWashGradient`, `dashboardPageHeaderShell`, `dashboardSearchToolbarShell`, `mainColumnChromePaddingX`, `dashboardPageHeaderTitleBand`, `headerMetaSeparator`, `headerNamespaceCluster` |
- * | Dashboard entity list tables | — | `tableListPageGutter`, `tableListCardShell`, `tableListBodyDivide`, `tableListCell`, `tableListRowInteractive`, `tableListRowHover`, `tableListRowSelected` |
+ * | Dashboard column shell & page header chrome | — | `dashboardMainColumn`, `dashboardMainColumnCanvas`, `dashboardMainColumnCanvasForPath`, `dashboardGreenWashGradient`, `dashboardGreenWashGradientTopRight`, `dashboardGreenWashGradientSettings`, `dashboardTextPrimary`, `dashboardControlTextMutedHoverPrimary`, `backNavButton`, `dashboardPageHeaderShell`, `dashboardSearchToolbarShell`, `mainColumnChromePaddingX`, `dashboardPageHeaderTitleBand`, `dashboardPageTitleText`, `dashboardPageTitleTextDetail`, `drawerHeaderTitleText`, `headerMetaSeparator`, `headerNamespaceCluster` |
+ * | Dashboard entity list tables | — | `tableListPageGutter`, `tableListCardShell`, `tableListBodyDivide`, `tableListCell`, `tableListCellPrimary`, `tableListHeaderSortable`, `tableListBodyPrimary`, `tableListBodyCell`, `tableListBodyCaption`, `tableListBodyLink`, `tableListAuxiliaryLabel`, `tableListDetailTitle`, `tableListPanelSectionTitle`, `tableListPanelStatLabel`, `tableListPanelStatTotal`, `tableListRowInteractive`, `tableListRowHover`, `tableListRowSelected` |
  * | Drawer & modal frosted shells | `drawer-deep` | `drawerPanelGlassSurface`, `modalPanelGlassSurface`, `drawerPanelFlexible`, `drawerPanelStacked`, `drawerFooterShellInset`, `drawerFooterShellEdge`, `drawerScrim`, `drawerLinkedEntityRow`, … |
  * | Primary / secondary / destructive | `glow-green` | `drawerFooterSegmentedPanel`, `drawerFooterSegmentBtn`, `drawerFooterDeleteConfirmBanner`, `drawerFooterBtnDangerConfirmSegment*`, `drawerFooterBtnPrimary*`, `drawerFooterBtnSecondarySegment*`, `drawerFooterBtnDestructive*`, `drawerFooterDangerCallout`, `drawerFooterBtnDangerConfirm*`, `modalFooterBtn*`, `btnCtaGlow`, … |
  * | Marketing landing | `glow-*` | `marketingCtaPrimary` (nav), `marketingHeroCta` + `marketingHeroCtaSecondary`, `marketingFooterCta` + `marketingFooterCtaSecondary`, `marketingHowItWorks*` |
  * | Clerk `appearance.elements` | `glow-green`, `drawer-deep` | `clerkCard`, `clerkModalContentShell`, `clerkUserButtonPopover*`, `clerkFormButtonPrimary`, … |
  */
 
+/** Primary foreground on dashboard dark / glass (`mono-100` chroma — use exports in components, not raw `text-white`). */
+const textPrimaryOnDark = 'text-mono-100';
+
+const hoverTextPrimaryOnDark = 'hover:text-mono-100';
+
+/** Import in Svelte for primary copy on dark surfaces (lists, labels, frosted panels). */
+export const dashboardTextPrimary = textPrimaryOnDark;
+
+/**
+ * Muted control label that brightens to {@link dashboardTextPrimary} on hover
+ * (filter toggles, checklist actions, inline text buttons).
+ */
+export const dashboardControlTextMutedHoverPrimary = `text-mono-300 ${hoverTextPrimaryOnDark} transition-colors`;
+
+/**
+ * Square icon control for “back” in page title rows ({@link BackNavButton}).
+ * Pair with `fa-arrow-left` at `text-sm` (see layout `BackNavButton.svelte`).
+ */
+export const backNavButton = `inline-flex items-center justify-center w-8 h-8 border border-mono-600/50 rounded-lg text-mono-400 hover:bg-mono-800/50 ${hoverTextPrimaryOnDark} transition-colors shrink-0`;
+
 // --- Form inputs (solid fills: avoid nested backdrop-filter inside frosted drawer/modal shells) ---
 
-const inputGlassCore =
-  'px-3 py-1.5 border border-mono-700/80 rounded-xl bg-mono-900/80 text-white focus:ring-2 focus:ring-green-400/50 outline-none focus:outline-none transition-colors text-sm';
+const inputGlassCore = `px-3 py-1.5 border border-mono-700/80 rounded-xl bg-mono-900/80 ${textPrimaryOnDark} focus:ring-2 focus:ring-green-400/50 outline-none focus:outline-none transition-colors text-sm`;
 
 /** Standard search/select text field (add `inputGlassSearchSuffix` when a search icon sits on the right). */
 export const inputGlass = `w-full ${inputGlassCore}`;
@@ -38,20 +57,17 @@ export const inputGlassSearch = `${inputGlass} ${inputGlassSearchSuffix}`;
 /**
  * Dashboard list search field (`SearchBar`): leading icon slot via `pl-10`, solid fill for frosted canvas.
  */
-export const searchBarInput =
-  'w-full pl-10 pr-4 py-2 text-sm font-inter border border-mono-700/80 rounded-xl bg-mono-900/80 text-mono-100 focus:ring-2 focus:ring-green-400 focus:outline-none focus:border-transparent placeholder:text-mono-500 shadow-inner transition-colors';
+export const searchBarInput = `w-full pl-10 pr-4 py-2 text-sm font-inter border border-mono-700/80 rounded-xl bg-mono-900/80 ${textPrimaryOnDark} focus:ring-2 focus:ring-green-400 focus:outline-none focus:border-transparent placeholder:text-mono-500 shadow-inner transition-colors`;
 
 /**
  * Compact text field embedded in flex rows (e.g. constraint value beside chips).
  */
-export const inputGlassDense =
-  'flex-1 min-w-0 px-2 py-1 rounded-xl border border-mono-700/80 text-sm bg-mono-900/80 text-white focus:ring-2 focus:ring-green-400/50 outline-none focus:outline-none transition-colors';
+export const inputGlassDense = `flex-1 min-w-0 px-2 py-1 rounded-xl border border-mono-700/80 text-sm bg-mono-900/80 ${textPrimaryOnDark} focus:ring-2 focus:ring-green-400/50 outline-none focus:outline-none transition-colors`;
 
 /**
  * Object drawer: description textarea uses slightly taller padding than {@link textareaInsideFrostedPanel}.
  */
-export const textareaObjectForm =
-  'w-full px-3 py-2 rounded-xl border border-mono-700/80 bg-mono-900/80 text-white focus:ring-2 focus:ring-green-400/50 outline-none focus:outline-none transition-colors';
+export const textareaObjectForm = `w-full px-3 py-2 rounded-xl border border-mono-700/80 bg-mono-900/80 ${textPrimaryOnDark} focus:ring-2 focus:ring-green-400/50 outline-none focus:outline-none transition-colors`;
 
 /**
  * `DefaultValueInput` outer shell (focus ring wraps control + preset pill).
@@ -62,17 +78,14 @@ export const defaultValueComboShell =
 /**
  * Validator template gallery / form: muted `border-mono-600` controls used inside frosted drawers.
  */
-export const inputValidatorControl =
-  'w-full px-3 py-1.5 border border-mono-600 text-sm focus:ring-2 focus:ring-green-400 focus:border-transparent bg-mono-900/80 text-mono-100 transition-colors';
+export const inputValidatorControl = `w-full px-3 py-1.5 border border-mono-600 text-sm focus:ring-2 focus:ring-green-400 focus:border-transparent bg-mono-900/80 ${textPrimaryOnDark} transition-colors`;
 
-export const inputValidatorSearch =
-  'w-full px-3 py-2 border border-mono-600 rounded-xl text-sm bg-mono-900/80 text-mono-100 focus:ring-2 focus:ring-green-400 focus:border-transparent transition-colors';
+export const inputValidatorSearch = `w-full px-3 py-2 border border-mono-600 rounded-xl text-sm bg-mono-900/80 ${textPrimaryOnDark} focus:ring-2 focus:ring-green-400 focus:border-transparent transition-colors`;
 
 /**
  * Member search inline on object form — green focus ring variant, `pr-8` for icon.
  */
-export const inputObjectMemberSearch =
-  'w-full px-3 py-1.5 border border-mono-700/80 bg-mono-900/80 rounded-xl text-mono-100 focus:ring-2 focus:ring-green-400 focus:border-transparent outline-none transition-colors text-sm pr-8';
+export const inputObjectMemberSearch = `w-full px-3 py-1.5 border border-mono-700/80 bg-mono-900/80 rounded-xl ${textPrimaryOnDark} focus:ring-2 focus:ring-green-400 focus:border-transparent outline-none transition-colors text-sm pr-8`;
 
 /**
  * Disabled read-only field — same shell and radius as {@link inputGlass}, muted text, no focus ring.
@@ -97,8 +110,7 @@ export const objectSelectorDisplayRow =
   'w-full px-3 border border-mono-700/80 rounded-xl bg-mono-900/80 shadow-inner flex items-center justify-between h-[34px]';
 
 /** Shared shell for API generator 34px-high inputs (query/path param editors). */
-const apiGeneratorRowControlCore =
-  'w-full px-3 text-sm border border-mono-700/80 rounded-xl bg-mono-900/80 text-white focus:ring-2 focus:ring-green-400/50 outline-none focus:outline-none transition-colors h-[34px]';
+const apiGeneratorRowControlCore = `w-full px-3 text-sm border border-mono-700/80 rounded-xl bg-mono-900/80 ${textPrimaryOnDark} focus:ring-2 focus:ring-green-400/50 outline-none focus:outline-none transition-colors h-[34px]`;
 
 export const apiGeneratorRowInputMono = `${apiGeneratorRowControlCore} font-mono`;
 
@@ -130,8 +142,7 @@ export const listMetaBadge = 'text-xs text-mono-400 bg-mono-800 px-2 py-0.5 roun
 export const inlineRemoveIconButton =
   'p-1 text-red-400 hover:text-red-300 hover:bg-red-400/10 rounded transition-colors shrink-0';
 
-export const dropdownCreateRow =
-  'w-full text-left px-3 py-2 text-sm text-mono-400 hover:bg-mono-800 hover:text-mono-100 rounded-lg cursor-pointer flex items-center space-x-2';
+export const dropdownCreateRow = `w-full text-left px-3 py-2 text-sm text-mono-400 hover:bg-mono-800 ${hoverTextPrimaryOnDark} rounded-lg cursor-pointer flex items-center space-x-2`;
 
 // --- API generator: query parameters (matches QueryParamRow glass cells) ---
 
@@ -144,8 +155,7 @@ export const queryParamPaginationDivider = 'border-t border-mono-700/80 pt-1.5';
 export const queryParamPaginationToggleBase =
   'text-xs px-2 py-1.5 rounded-xl border font-inter font-medium transition-colors flex items-center space-x-1';
 
-export const queryParamPaginationToggleOff =
-  'text-mono-400 border-mono-600/80 hover:text-mono-100 hover:border-mono-500 hover:bg-mono-800/40';
+export const queryParamPaginationToggleOff = `text-mono-400 border-mono-600/80 ${hoverTextPrimaryOnDark} hover:border-mono-500 hover:bg-mono-800/40`;
 
 export const queryParamPaginationToggleOn =
   'text-red-400 border-red-400/40 hover:bg-red-400/10';
@@ -207,22 +217,67 @@ export const sidebarSectionDividerHorizontal = 'border-t border-mono-800/60 my-2
 export const sidebarNavItemBase =
   'flex w-full min-h-11 items-center cursor-pointer transition-all rounded-l-none rounded-r-xl';
 
-export const sidebarNavItemActive = 'bg-mono-800/80 text-white shadow-sm border border-mono-700/50';
+export const sidebarNavItemActive = `bg-mono-800/80 ${textPrimaryOnDark} shadow-sm border border-mono-700/50`;
 
-export const sidebarNavItemInactive = 'hover:bg-mono-800/50 hover:text-white border border-transparent';
+export const sidebarNavItemInactive = `hover:bg-mono-800/50 ${hoverTextPrimaryOnDark} border border-transparent`;
 
 // --- Dashboard main column (sidebar right pane) ---
 
 /** Fills the flex slot next to the sidebar; enables scroll inside the body. */
 export const dashboardMainColumn = 'flex flex-col flex-1 min-h-0 w-full';
 
-/** Same horizontal green wash as the page header overlay (slightly softer than full /5). */
+/** Default (Types, validators, etc.): green lifts from bottom (`to-t`), fades to `mono-950` at top. */
 export const dashboardGreenWashGradient =
-  'bg-gradient-to-r from-green-400/[0.035] to-transparent';
+  'bg-gradient-to-t from-green-400/[0.07] via-green-400/[0.020] via-45% to-mono-950';
+
+/** Settings subtree: tight spotlight from bottom-left (different “location” from default bottom edge). */
+export const dashboardGreenWashGradientSettings =
+  'bg-[radial-gradient(ellipse_52%_44%_at_0%_100%,rgb(82_226_140/0.055)_0%,transparent_58%)]';
 
 /**
- * Dashboard shell background: mono base plus left-edge green wash.
- * Use on the full-viewport `(dashboard)` flex root so the wash sits behind the transparent sidebar too.
+ * Top-right radial spotlight — component hub routes only (Fields, Objects, APIs list & detail, Namespaces).
+ * Wider ellipse + later `transparent` stop spread the wash; corner peak alphas 0.075 / 0.026.
+ */
+export const dashboardGreenWashGradientTopRight =
+  'bg-[radial-gradient(ellipse_82%_68%_at_100%_0%,rgb(82_226_140/0.075)_0%,rgb(82_226_140/0.026)_50%,transparent_82%)]';
+
+type DashboardCanvasGradientRule = {
+  match: (pathname: string) => boolean;
+  gradient: string;
+};
+
+function isComponentHubCanvasPath(pathname: string): boolean {
+  return (
+    pathname === '/fields' ||
+    pathname === '/objects' ||
+    pathname === '/namespaces' ||
+    pathname === '/apis' ||
+    /^\/apis\/[^/]+$/.test(pathname)
+  );
+}
+
+/**
+ * First matching rule wins (keep more specific routes above broader prefixes).
+ * Adjust gradients or add `{ match, gradient }` entries to tune per area.
+ */
+const dashboardMainColumnCanvasGradientRules: DashboardCanvasGradientRule[] = [
+  { match: (p) => p.startsWith('/settings'), gradient: dashboardGreenWashGradientSettings },
+  { match: isComponentHubCanvasPath, gradient: dashboardGreenWashGradientTopRight },
+];
+
+/**
+ * Full dashboard viewport background for a route: `mono-950` plus route-specific green wash.
+ */
+export function dashboardMainColumnCanvasForPath(pathname: string): string {
+  const p = pathname.replace(/\/+$/, '') || '/';
+  const gradient =
+    dashboardMainColumnCanvasGradientRules.find((r) => r.match(p))?.gradient ?? dashboardGreenWashGradient;
+  return `bg-mono-950 ${gradient}`;
+}
+
+/**
+ * Static default canvas (= {@link dashboardMainColumnCanvasForPath} for routes that do not match a rule).
+ * `(dashboard)` layout should prefer {@link dashboardMainColumnCanvasForPath}.
  */
 export const dashboardMainColumnCanvas = `bg-mono-950 ${dashboardGreenWashGradient}`;
 
@@ -245,6 +300,24 @@ export const dashboardSearchToolbarShell =
 
 /** Primary title line height band — matches `Logo` `md` (48px) with sidebar `items-center` row. */
 export const dashboardPageHeaderTitleBand = 'min-h-[48px] flex items-center';
+
+/** Shared typography for {@link dashboardPageTitleText} / {@link dashboardPageTitleTextDetail} (no flex shrink). */
+const dashboardPageTitleTextCore = `text-2xl ${textPrimaryOnDark} font-inter font-bold tracking-tight leading-tight truncate min-w-0`;
+
+/**
+ * Main column page title (`PageHeader` h1): same chroma as sidebar brand / table primary text, not pure `text-white`.
+ */
+export const dashboardPageTitleText = `${dashboardPageTitleTextCore} shrink`;
+
+/**
+ * API detail header h1: `shrink-0` so pills/meta keep priority in the flex row; still truncates via `min-w-0` + max-width from flex.
+ */
+export const dashboardPageTitleTextDetail = `${dashboardPageTitleTextCore} shrink-0`;
+
+/**
+ * Drawer panel title (`DrawerHeader` h2): same chroma as page titles.
+ */
+export const drawerHeaderTitleText = `text-xl ${textPrimaryOnDark} font-inter font-bold tracking-tight leading-tight truncate min-w-0 shrink`;
 
 /**
  * Middle dot before namespace meta — matches API detail title band (`hidden sm:inline` uses viewport breakpoint).
@@ -270,16 +343,64 @@ export const headerSystemCluster = headerNamespaceCluster;
 export const tableListPageGutter = `${mainColumnChromePaddingX} pb-4 w-full min-h-0`;
 
 /**
- * Glass card around the list table. Deliberately omits `cardGlassSurface` hover so the sheet does not brighten as a whole.
+ * Layout wrapper for the list table: no fill or border — table chrome comes from {@link dashboardMainColumnCanvas} behind it.
  */
-export const tableListCardShell =
-  'bg-mono-900/50 backdrop-blur-sm/40 rounded-2xl shadow-sm border border-mono-800/80 w-full overflow-hidden';
+export const tableListCardShell = 'w-full min-w-0 overflow-x-auto';
 
 /** Low-contrast row rules between body rows (`<tbody>` with `divide-y`). */
 export const tableListBodyDivide = 'divide-y divide-mono-800/30';
 
+/**
+ * Sticky table header: transparent; only a row rule separates header from body.
+ */
+export const tableListThead = 'sticky top-0 z-10 bg-transparent border-b border-mono-800/30';
+
 /** Standard `<th>` / `<td>` padding — matches `mainColumnChromePaddingX` rhythm. */
 export const tableListCell = 'px-4 py-4';
+
+/**
+ * Sortable list column header (`SortableColumn`): uppercase label, same foreground as primary body cells.
+ */
+export const tableListHeaderSortable = `text-xs uppercase font-inter ${dashboardTextPrimary} tracking-wider font-bold`;
+
+/** Primary body cell (entity name / title). */
+export const tableListBodyPrimary = `text-sm ${dashboardTextPrimary} font-medium`;
+
+/**
+ * `<td>` whose entire cell is the primary entity label (Type name, Field constraint name).
+ * Prefer this over repeating `{@link tableListCell} whitespace-nowrap {@link tableListBodyPrimary}`.
+ */
+export const tableListCellPrimary = `${tableListCell} whitespace-nowrap ${tableListBodyPrimary}`;
+
+/** Standard body cell copy (namespace, counts, full-cell descriptions, monospace values). */
+export const tableListBodyCell = `text-sm ${dashboardTextPrimary}`;
+
+/**
+ * Secondary line under a title inside the same `<td>` (e.g. API subtitle) — stays softer than {@link tableListBodyPrimary}.
+ */
+export const tableListBodyCaption = 'text-xs text-mono-400';
+
+/** Underlined link inside list tables or list-drawer detail (documentation URLs). */
+export const tableListBodyLink = `text-sm ${dashboardTextPrimary} underline hover:text-mono-300 transition-colors`;
+
+/**
+ * Muted inline label in auxiliary rows (validator parameter / field-mapping titles).
+ */
+export const tableListAuxiliaryLabel = 'text-sm text-mono-300 font-medium';
+
+/** Primary name line in a drawer opened from a list row (`DetailField` value). Alias of {@link tableListBodyPrimary}. */
+export const tableListDetailTitle = tableListBodyPrimary;
+
+/**
+ * Section heading inside a list-row drawer (namespace info panels, etc.).
+ */
+export const tableListPanelSectionTitle = `${tableListAuxiliaryLabel} mb-2`;
+
+/** Left or inline label for summary stats (“Total”) under a list selection. */
+export const tableListPanelStatLabel = 'text-mono-300 font-medium';
+
+/** Emphasized total / rollup number in those stat blocks. */
+export const tableListPanelStatTotal = `${dashboardTextPrimary} font-bold`;
 
 export const tableListRowInteractive = 'cursor-pointer transition-colors';
 
@@ -452,8 +573,7 @@ export const marketingMobileMenu =
 
 export const marketingNavLink = 'text-mono-400 hover:text-white font-inter font-medium text-sm transition-colors';
 
-export const marketingNavLinkMobile =
-  'block text-mono-400 hover:text-mono-100 font-inter font-medium text-base py-3 transition-colors';
+export const marketingNavLinkMobile = `block text-mono-400 ${hoverTextPrimaryOnDark} font-inter font-medium text-base py-3 transition-colors`;
 
 /** Header / compact CTAs: same corner radius as in-page buttons (`rounded-xl`), denser padding for the top bar */
 const marketingNavCtaShell =
@@ -532,7 +652,7 @@ export const clerkUserButtonPopoverFooter = 'bg-mono-950/25 border-t border-whit
 export const clerkFormButtonPrimary =
   'bg-green-400 text-mono-950 hover:bg-green-300 font-inter font-semibold tracking-wide rounded-xl shadow-glow-green';
 
-export const clerkFormFieldInput = 'bg-mono-900/50 border border-mono-700/80 text-mono-100 rounded-xl';
+export const clerkFormFieldInput = `bg-mono-900/50 border border-mono-700/80 ${textPrimaryOnDark} rounded-xl`;
 
 export const clerkAvatarBox = 'border border-mono-800/80 rounded-full';
 
@@ -542,8 +662,7 @@ export const clerkSocialGithub = '[&>img]:invert';
 
 export const clerkNavbar = 'bg-mono-900/50 border-r border-mono-800/80';
 
-export const clerkNavbarButton =
-  'text-mono-300 hover:text-mono-100 hover:bg-mono-800/50 data-[active=true]:bg-mono-800/50 data-[active=true]:text-mono-100 rounded-lg transition-colors';
+export const clerkNavbarButton = `text-mono-300 ${hoverTextPrimaryOnDark} hover:bg-mono-800/50 data-[active=true]:bg-mono-800/50 data-[active=true]:${textPrimaryOnDark} rounded-lg transition-colors`;
 
 export const clerkPageScrollBox = 'bg-mono-950/40';
 
@@ -551,7 +670,7 @@ export const clerkProfileSectionBorder = 'border-b border-mono-800/80';
 
 export const clerkProfileSectionDanger = 'border-b border-red-500/30';
 
-export const clerkProfileSectionTitle = 'text-mono-100 font-inter font-semibold';
+export const clerkProfileSectionTitle = `${textPrimaryOnDark} font-inter font-semibold`;
 
 export const clerkProfileSectionContent = 'text-mono-300 font-inter';
 
@@ -559,7 +678,7 @@ export const clerkProfilePrimaryButton = 'text-green-400 hover:text-green-300';
 
 export const clerkBadge = 'bg-mono-800/50 text-mono-300 border border-mono-700/60 rounded-full';
 
-export const clerkModalClose = 'text-mono-400 hover:text-white transition-colors';
+export const clerkModalClose = `text-mono-400 ${hoverTextPrimaryOnDark} transition-colors`;
 
 /** Match {@link drawerScrim} so Clerk modals read like `DrawerStack` overlays. */
 export const clerkModalBackdrop = 'bg-mono-950/45 backdrop-blur-[1.5px]';
@@ -576,16 +695,16 @@ export const clerkModalContentShell = `${drawerPanelGlassSurface} rounded-3xl ov
  */
 export const clerkProfileModalInnerCard = 'bg-transparent border-0 shadow-none ring-0';
 
-export const clerkHeaderTitle = 'text-mono-100 font-inter font-bold';
+export const clerkHeaderTitle = `${textPrimaryOnDark} font-inter font-bold`;
 
 export const clerkHeaderSubtitle = 'text-mono-400 font-inter';
 
 export const clerkFormFieldLabel = 'text-mono-300 font-inter';
 
-export const clerkAccordionTrigger = 'text-mono-300 hover:text-mono-100';
+export const clerkAccordionTrigger = `text-mono-300 ${hoverTextPrimaryOnDark}`;
 
 export const clerkBreadcrumbs = 'text-mono-400 font-inter';
 
-export const clerkBreadcrumbsItem = 'text-mono-400 hover:text-mono-100 transition-colors';
+export const clerkBreadcrumbsItem = `text-mono-400 ${hoverTextPrimaryOnDark} transition-colors`;
 
 export const clerkBreadcrumbsDivider = 'text-mono-600';

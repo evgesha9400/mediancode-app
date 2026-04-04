@@ -9,16 +9,21 @@
     DrawerStack,
     DetailField,
     Pill,
+    TableListNameCell,
+    TableListTextCell,
     TableEmptyState
   } from '$lib/components';
   import type { FieldValidatorTemplate } from '$lib/types';
   import {
     surfaceInsideFrostedPanel,
+    tableListAuxiliaryLabel,
     tableListCell,
+    tableListDetailTitle,
     tableListRowHover,
     tableListRowInteractive,
     tableListRowSelected
   } from '$lib/ui/classes';
+  import { getTableRowId, TABLE_COL_ATTR } from '$lib/utils/testIds';
   import { STORE_NAMES } from '$lib/stores/loader';
   import { page } from '$app/state';
   import { goto } from '$app/navigation';
@@ -91,27 +96,32 @@
   {#snippet body()}
     {#each filteredTemplates as template}
       <tr
+        data-testid={getTableRowId(template.id)}
         onclick={() => state.selectItem(template)}
         class="{tableListRowInteractive} {state.selectedItem?.id === template.id
           ? tableListRowSelected
           : tableListRowHover}"
       >
-        <td class="{tableListCell} whitespace-nowrap">
-          <span class="text-sm text-mono-100 font-medium">{template.name}</span>
-        </td>
-        <td class="{tableListCell} whitespace-nowrap">
+        <TableListNameCell col="name">
+          {#snippet children()}
+            {template.name}
+          {/snippet}
+        </TableListNameCell>
+        <td class="{tableListCell} whitespace-nowrap" {...{ [TABLE_COL_ATTR]: 'mode' }}>
           <Pill>{template.mode}</Pill>
         </td>
-        <td class="{tableListCell}">
+        <td class="{tableListCell}" {...{ [TABLE_COL_ATTR]: 'compatibleTypes' }}>
           <div class="flex flex-wrap gap-1">
             {#each template.compatibleTypes as ctype}
               <Pill>{ctype}</Pill>
             {/each}
           </div>
         </td>
-        <td class="{tableListCell} text-sm text-mono-400 max-w-xs truncate">
-          {template.description}
-        </td>
+        <TableListTextCell col="description" class="max-w-xs truncate">
+          {#snippet children()}
+            {template.description}
+          {/snippet}
+        </TableListTextCell>
       </tr>
     {/each}
   {/snippet}
@@ -130,7 +140,7 @@
   {#if state.selectedItem}
     <div class="space-y-6">
       <DetailField label="Name">
-        <p class="text-mono-100 font-medium">{state.selectedItem.name}</p>
+        <p class={tableListDetailTitle}>{state.selectedItem.name}</p>
       </DetailField>
 
       <DetailField label="Description" value={state.selectedItem.description} />
@@ -153,7 +163,7 @@
             {#each state.selectedItem.parameters as param}
               <div class="p-3 {surfaceInsideFrostedPanel}">
                 <div class="flex items-center space-x-2">
-                  <span class="text-sm text-mono-300 font-medium">{param.label}</span>
+                  <span class={tableListAuxiliaryLabel}>{param.label}</span>
                   <Pill size="sm">{param.type}</Pill>
                   {#if param.required}
                     <span class="text-red-500 text-xs">required</span>

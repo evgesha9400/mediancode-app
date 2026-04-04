@@ -31,6 +31,7 @@
     clerkUserButtonPopoverCard,
     clerkUserButtonPopoverFooter,
     clerkUserButtonPopoverMain,
+    dashboardTextPrimary,
   } from '$lib/ui/classes';
   import { Tooltip } from '$lib/components/tooltip';
 
@@ -138,7 +139,7 @@
   {#if !collapsed}
     {#if $clerkState.isSignedIn && user}
       <div class="flex-1 min-w-0">
-        <p class="text-sm font-medium text-white truncate">{userName}</p>
+        <p class="text-sm font-medium {dashboardTextPrimary} truncate">{userName}</p>
         {#if userEmail}
           <p class="text-xs text-mono-400 truncate">{userEmail}</p>
         {/if}

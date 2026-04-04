@@ -17,17 +17,24 @@
     Pill,
     FormField,
     FormLabel,
+    TableListNameCell,
+    TableListTextCell,
+    TableListMetricCell,
     TableEmptyState
   } from '$lib/components';
   import type { FilterConfig, Namespace } from '$lib/types';
   import {
     surfaceInsideFrostedPanel,
-    tableListCell,
+    tableListBodyPrimary,
+    tableListPanelSectionTitle,
+    tableListPanelStatLabel,
+    tableListPanelStatTotal,
     tableListRowHover,
     tableListRowInteractive,
     tableListRowSelected,
     textareaInsideFrostedPanel
   } from '$lib/ui/classes';
+  import { getTableRowId } from '$lib/utils/testIds';
   import { STORE_NAMES } from '$lib/stores/loader';
   import { page } from '$app/state';
   import { goto } from '$app/navigation';
@@ -139,31 +146,35 @@
     {#snippet body()}
       {#each filteredNamespaces as namespace}
         <tr
+          data-testid={getTableRowId(namespace.id)}
           onclick={() => workflow.selectItem(namespace)}
           class="{tableListRowInteractive} {workflow.isSelected(namespace)
             ? tableListRowSelected
             : tableListRowHover}"
         >
-          <td class="{tableListCell} whitespace-nowrap">
-            <div class="flex items-center space-x-2">
-              <span class="text-sm text-mono-100 font-medium">{namespace.name}</span>
-              {#if namespace.name?.toLowerCase() === 'global'}
-                <i class="fa-solid fa-earth-americas text-mono-400 text-xs" title="Global"></i>
-              {/if}
-              {#if namespace.isDefault}
-                <Pill>Default</Pill>
-              {/if}
-            </div>
-          </td>
-          <td class="{tableListCell} text-sm text-mono-400">
-            {namespace.description || '-'}
-          </td>
-          <td class="{tableListCell} whitespace-nowrap">
-            <div class="flex items-center space-x-2">
+          <TableListNameCell col="name">
+            {#snippet children()}
+              <div class="flex items-center space-x-2">
+                <span>{namespace.name}</span>
+                {#if namespace.name?.toLowerCase() === 'global'}
+                  <i class="fa-solid fa-earth-americas text-mono-400 text-xs" title="Global"></i>
+                {/if}
+                {#if namespace.isDefault}
+                  <Pill>Default</Pill>
+                {/if}
+              </div>
+            {/snippet}
+          </TableListNameCell>
+          <TableListTextCell col="description">
+            {#snippet children()}
+              {namespace.description || '-'}
+            {/snippet}
+          </TableListTextCell>
+          <TableListMetricCell col="entityCount" label="total">
+            {#snippet pill()}
               <Pill>{namespace.entityCount}</Pill>
-              <span class="text-sm text-mono-400">total</span>
-            </div>
-          </td>
+            {/snippet}
+          </TableListMetricCell>
         </tr>
       {/each}
     {/snippet}
@@ -207,7 +218,7 @@
 
       {#if isCreating}
         <div>
-          <h3 class="text-sm text-mono-300 mb-2 font-medium">Default Namespace</h3>
+          <h3 class={tableListPanelSectionTitle}>Default Namespace</h3>
           <label class="flex items-center space-x-3 cursor-pointer">
             <input
               type="checkbox"
@@ -223,33 +234,33 @@
       {#if !isCreating}
         {@const details = getNamespaceEntityDetails(workflow.editedItem.id)}
         <div>
-          <h3 class="text-sm text-mono-300 mb-2 font-medium">Contents</h3>
+          <h3 class={tableListPanelSectionTitle}>Contents</h3>
           <div class="space-y-2">
             <div class="flex justify-between text-sm">
               <span class="text-mono-400">Fields</span>
-              <span class="text-mono-100 font-medium">{details.fields}</span>
+              <span class={tableListBodyPrimary}>{details.fields}</span>
             </div>
             <div class="flex justify-between text-sm">
               <span class="text-mono-400">Field Constraints</span>
-              <span class="text-mono-100 font-medium">{details.fieldConstraints}</span>
+              <span class={tableListBodyPrimary}>{details.fieldConstraints}</span>
             </div>
             <div class="flex justify-between text-sm">
               <span class="text-mono-400">Objects</span>
-              <span class="text-mono-100 font-medium">{details.objects}</span>
+              <span class={tableListBodyPrimary}>{details.objects}</span>
             </div>
             <div class="flex justify-between text-sm">
               <span class="text-mono-400">Endpoints</span>
-              <span class="text-mono-100 font-medium">{details.endpoints}</span>
+              <span class={tableListBodyPrimary}>{details.endpoints}</span>
             </div>
             <div class="flex justify-between text-sm border-t border-mono-700 pt-2 mt-2">
-              <span class="text-mono-300 font-medium">Total</span>
-              <span class="text-mono-100 font-bold">{details.total}</span>
+              <span class={tableListPanelStatLabel}>Total</span>
+              <span class={tableListPanelStatTotal}>{details.total}</span>
             </div>
           </div>
         </div>
 
         <div>
-          <h3 class="text-sm text-mono-300 mb-2 font-medium">Default Namespace</h3>
+          <h3 class={tableListPanelSectionTitle}>Default Namespace</h3>
           <label class="flex items-center space-x-3 cursor-pointer">
             <input
               type="checkbox"

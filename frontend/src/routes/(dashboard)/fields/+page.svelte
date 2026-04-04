@@ -12,6 +12,9 @@
     Table,
     SortableColumn,
     Pill,
+    TableListNameCell,
+    TableListTextCell,
+    TableListMetricCell,
     TableEmptyState,
     DrawerStack,
     CrudDrawerFooter,
@@ -19,19 +22,15 @@
     FieldFormContent
   } from '$lib/components';
   import type { FilterConfig } from '$lib/types';
-  import {
-    tableListCell,
-    tableListRowHover,
-    tableListRowInteractive,
-    tableListRowSelected
-  } from '$lib/ui/classes';
+  import { tableListCell, tableListRowHover, tableListRowInteractive, tableListRowSelected } from '$lib/ui/classes';
+  import { getTableRowId, TABLE_COL_ATTR } from '$lib/utils/testIds';
   import { fieldValidatorTemplatesStore } from '$lib/stores/fieldValidatorTemplates';
   import { STORE_NAMES } from '$lib/stores/loader';
   import { page } from '$app/state';
   import { goto } from '$app/navigation';
 
   // Extended field type with computed properties for sorting
-  type FieldWithApiCount = Field & { usedInApisCount: number; namespaceName: string };
+  type FieldWithApiCount = Field & { usedInApisCount: number };
 
   // Reactive store subscriptions for derived computations
   let allNamespaces = $derived($namespacesStore);
@@ -75,8 +74,7 @@
     urlScope: { page, goto },
     getActiveNamespaceId: () => $activeNamespaceId,
     getDefaultType: () => selectableTypes[0]?.name ?? 'str',
-    getTypeIdByName,
-    getNamespaceName: (nsId) => allNamespaces.find(ns => ns.id === nsId)?.name ?? ''
+    getTypeIdByName
   });
 
   let fieldDrawerNamespaceName = $derived(
@@ -153,12 +151,6 @@
           onSort={workflow.handleSort}
         />
         <SortableColumn
-          column="namespace"
-          label="Namespace"
-          {sorts}
-          onSort={workflow.handleSort}
-        />
-        <SortableColumn
           column="constraints"
           label="Field Constraints"
           {sorts}
@@ -182,40 +174,43 @@
     {#snippet body()}
       {#each filteredFields as field}
         <tr
+          data-testid={getTableRowId(field.id)}
           onclick={() => workflow.selectItem(field)}
           class="{tableListRowInteractive} {workflow.isSelected(field)
             ? tableListRowSelected
             : tableListRowHover}"
         >
-          <td class="{tableListCell} whitespace-nowrap">
-            <div class="text-sm text-mono-100 font-medium">{field.name}</div>
-          </td>
-          <td class="{tableListCell} whitespace-nowrap">
+          <TableListNameCell col="name">
+            {#snippet children()}
+              {field.name}
+            {/snippet}
+          </TableListNameCell>
+          <td class="{tableListCell} whitespace-nowrap" {...{ [TABLE_COL_ATTR]: 'type' }}>
             <Pill>{field.container ? `${field.container}[${field.type}]` : field.type}</Pill>
           </td>
-          <td class="{tableListCell} whitespace-nowrap">
-            <span class="text-sm text-mono-400">{field.namespaceName}</span>
-          </td>
-          <td class="{tableListCell} text-sm text-mono-400">
-            {#if field.constraints.length > 0}
-              <div class="flex flex-wrap gap-1">
-                {#each field.constraints as constraintValue}
-                  <Pill>{formatFieldConstraintPill(constraintValue)}</Pill>
-                {/each}
-              </div>
-            {:else}
-              <span>-</span>
-            {/if}
-          </td>
-          <td class="{tableListCell} whitespace-nowrap text-sm text-mono-400">
-            {field.defaultValue !== undefined && field.defaultValue !== '' ? field.defaultValue : '-'}
-          </td>
-          <td class="{tableListCell} whitespace-nowrap">
-            <div class="flex items-center space-x-2">
+          <TableListTextCell col="constraints">
+            {#snippet children()}
+              {#if field.constraints.length > 0}
+                <div class="flex flex-wrap gap-1">
+                  {#each field.constraints as constraintValue}
+                    <Pill>{formatFieldConstraintPill(constraintValue)}</Pill>
+                  {/each}
+                </div>
+              {:else}
+                <span>-</span>
+              {/if}
+            {/snippet}
+          </TableListTextCell>
+          <TableListTextCell col="defaultValue" nowrap>
+            {#snippet children()}
+              {field.defaultValue !== undefined && field.defaultValue !== '' ? field.defaultValue : '-'}
+            {/snippet}
+          </TableListTextCell>
+          <TableListMetricCell col="usedInApis" label="APIs">
+            {#snippet pill()}
               <Pill>{field.usedInApis.length}</Pill>
-              <span class="text-sm text-mono-400">APIs</span>
-            </div>
-          </td>
+            {/snippet}
+          </TableListMetricCell>
         </tr>
       {/each}
     {/snippet}

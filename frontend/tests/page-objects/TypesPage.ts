@@ -7,6 +7,7 @@
  */
 
 import { type Page, type Locator } from '@playwright/test';
+import { getTableRowCellSelector } from '$lib/utils/testIds';
 import { ACTION_DELAY_MS } from '../helpers/e2e-delays';
 
 export class TypesPage {
@@ -152,7 +153,7 @@ export class TypesPage {
 		const count = await this.tableRows.count();
 		for (let i = 0; i < count; i++) {
 			const row = this.tableRows.nth(i);
-			const nameCell = row.locator('td').first();
+			const nameCell = row.locator(getTableRowCellSelector('name'));
 			const name = await nameCell.textContent();
 			if (name) names.push(name.trim());
 		}
@@ -167,7 +168,7 @@ export class TypesPage {
 		const count = await this.tableRows.count();
 		for (let i = 0; i < count; i++) {
 			const row = this.tableRows.nth(i);
-			const typeCell = row.locator('td').nth(1);
+			const typeCell = row.locator(getTableRowCellSelector('pythonType'));
 			const text = await typeCell.textContent();
 			if (text) pythonTypes.push(text.trim());
 		}
@@ -182,7 +183,7 @@ export class TypesPage {
 		const count = await this.tableRows.count();
 		for (let i = 0; i < count; i++) {
 			const row = this.tableRows.nth(i);
-			const countSpan = row.locator('td').nth(3).locator('span').first();
+			const countSpan = row.locator(getTableRowCellSelector('usedInFields')).locator('span').first();
 			const text = await countSpan.textContent();
 			counts.push(parseInt(text?.trim() ?? '0', 10));
 		}
@@ -209,7 +210,7 @@ export class TypesPage {
 	 */
 	async getPythonType(rowIndex: number): Promise<string> {
 		const row = this.tableRows.nth(rowIndex);
-		const typeCell = row.locator('td').nth(1);
+		const typeCell = row.locator(getTableRowCellSelector('pythonType'));
 		const text = await typeCell.textContent();
 		return text?.trim() ?? '';
 	}
@@ -219,7 +220,7 @@ export class TypesPage {
 	 */
 	async getUsedInFieldsCount(rowIndex: number): Promise<number> {
 		const row = this.tableRows.nth(rowIndex);
-		const countSpan = row.locator('td').nth(3).locator('span').first();
+		const countSpan = row.locator(getTableRowCellSelector('usedInFields')).locator('span').first();
 		const text = await countSpan.textContent();
 		return parseInt(text?.trim() ?? '0', 10);
 	}

@@ -44,8 +44,6 @@ export interface ObjectsModelConfig {
   };
   /** Returns the active namespace ID */
   getActiveNamespaceId: () => string;
-  /** Returns namespace name for an object */
-  getNamespaceName: (namespaceId: string) => string;
 }
 
 // ============================================================================
@@ -99,7 +97,6 @@ type ObjectFilterState = Record<string, never>;
 type ObjectWithCounts = ObjectDefinition & {
   memberCount: number;
   usedInApisCount: number;
-  namespaceName: string;
 };
 
 // ============================================================================
@@ -112,8 +109,7 @@ export function createObjectsModel(config: ObjectsModelConfig): ObjectsModelStat
     searchFn,
     filterSections,
     urlScope,
-    getActiveNamespaceId,
-    getNamespaceName
+    getActiveNamespaceId
   } = config;
 
   // --- Create list view state (shared utility) ---
@@ -127,10 +123,9 @@ export function createObjectsModel(config: ObjectsModelConfig): ObjectsModelStat
     getItemId: (obj) => obj.id,
     deriveExtra: (obj) => ({
       memberCount: obj.members.length,
-      usedInApisCount: obj.usedInApis.length,
-      namespaceName: getNamespaceName(obj.namespaceId)
+      usedInApisCount: obj.usedInApis.length
     }),
-    sortColumnMap: { 'members': 'memberCount', 'usedInApis': 'usedInApisCount', 'namespace': 'namespaceName' },
+    sortColumnMap: { 'members': 'memberCount', 'usedInApis': 'usedInApisCount' },
     drawerConfig: {
       trackEdits: true,
       allowDelete: true,
@@ -244,7 +239,7 @@ export function createObjectsModel(config: ObjectsModelConfig): ObjectsModelStat
 
   function toUpdatePayload(item: ObjectDefinition): { ok: true; data: UpdateObjectRequest } | { ok: false; error: string } {
     // Strip derived properties before saving
-    const { memberCount, usedInApisCount, namespaceName, ...clean } = item as ObjectWithCounts;
+    const { memberCount, usedInApisCount, ...clean } = item as ObjectWithCounts;
     return {
       ok: true,
       data: {
