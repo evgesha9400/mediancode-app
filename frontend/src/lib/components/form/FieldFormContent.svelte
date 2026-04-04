@@ -32,6 +32,7 @@
   import { getFieldValidatorTemplateById } from '$lib/stores/fieldValidatorTemplates';
   import {
     drawerLinkedEntityRow,
+    inlineRemoveIconButton,
     segmentFieldActive,
     segmentFieldBase,
     segmentFieldBaseJoin,
@@ -276,8 +277,9 @@
               <button
                 type="button"
                 onclick={() => removeValidator(index)}
-                class="text-red-700 hover:text-red-600 transition-colors shrink-0"
+                class={inlineRemoveIconButton}
                 title="Remove validator"
+                aria-label="Remove validator"
               >
                 <i class="fa-solid fa-xmark"></i>
               </button>

@@ -6,6 +6,7 @@
     MainColumnFrame,
     DrawerStack,
     CrudDrawerFooter,
+    DrawerFooterDeleteConfirm,
     Pill,
     FormField,
     FormLabel,
@@ -36,17 +37,14 @@
   import {
     dashboardPageHeaderShell,
     dashboardPageHeaderTitleBand,
-    drawerFooterBtnBlock,
-    drawerFooterBtnDangerCancel,
-    drawerFooterBtnDangerCancelBusy,
-    drawerFooterBtnDangerConfirm,
-    drawerFooterBtnDangerConfirmBusy,
     drawerFooterBtnDestructive,
-    drawerFooterBtnPrimaryDisabled,
+    drawerFooterBtnPrimaryDisabledSegment,
     drawerFooterBtnPrimaryEnabled,
-    drawerFooterBtnSecondary,
-    drawerFooterBtnSecondaryMuted,
-    drawerFooterDangerCallout,
+    drawerFooterBtnSecondarySegment,
+    drawerFooterBtnSecondarySegmentMuted,
+    drawerFooterSegmentDivider,
+    drawerFooterSegmentedPanel,
+    drawerFooterSegmentBtn,
     dropdownCreateRow,
     dropdownListScroll,
     dropdownPanel,
@@ -513,66 +511,55 @@
 
   {#snippet editApiFormFooter(_: { close: () => void })}
     {#if !apiState.showEditDeleteConfirm}
-      <button
-        type="button"
-        onclick={apiState.handleEditSave}
-        disabled={!apiState.hasEditChanges || apiState.isSaving}
-        class="{drawerFooterBtnBlock} {apiState.hasEditChanges && !apiState.isSaving
-          ? drawerFooterBtnPrimaryEnabled
-          : drawerFooterBtnPrimaryDisabled}"
-      >
-        {#if apiState.isSaving}
-          <i class="fa-solid fa-spinner fa-spin mr-2"></i>
-          Saving...
-        {:else}
-          Save Changes
-        {/if}
-      </button>
-      <button
-        type="button"
-        onclick={apiState.handleEditUndo}
-        disabled={!apiState.hasEditChanges}
-        class="{drawerFooterBtnBlock} {apiState.hasEditChanges
-          ? drawerFooterBtnSecondary
-          : drawerFooterBtnSecondaryMuted}"
-      >
-        Undo
-      </button>
-      <button
-        type="button"
-        onclick={apiState.handleEditDeleteClick}
-        class="{drawerFooterBtnBlock} flex items-center justify-center gap-2 font-medium {drawerFooterBtnDestructive}"
-      >
-        <i class="fa-solid fa-xmark"></i>
-        <span>Delete API</span>
-      </button>
-    {:else}
-      <div class={drawerFooterDangerCallout}>
-        <p class="text-sm text-red-400 mb-2">Delete this API and all its endpoints?</p>
-        <div class="flex space-x-2">
-          <button
-            type="button"
-            onclick={apiState.handleDeleteApi}
-            disabled={apiState.isSaving}
-            class={apiState.isSaving ? drawerFooterBtnDangerConfirmBusy : drawerFooterBtnDangerConfirm}
-          >
-            {#if apiState.isSaving}
-              <i class="fa-solid fa-spinner fa-spin mr-1"></i>
-              Deleting...
-            {:else}
-              Yes, Delete
-            {/if}
-          </button>
-          <button
-            type="button"
-            onclick={apiState.cancelEditDelete}
-            disabled={apiState.isSaving}
-            class={apiState.isSaving ? drawerFooterBtnDangerCancelBusy : drawerFooterBtnDangerCancel}
-          >
-            Cancel
-          </button>
-        </div>
+      <div class={drawerFooterSegmentedPanel} role="group" aria-label="Edit API actions">
+        <button
+          type="button"
+          onclick={apiState.handleEditDeleteClick}
+          disabled={apiState.isSaving}
+          class="{drawerFooterSegmentBtn} font-medium {drawerFooterBtnDestructive} {apiState.isSaving ? 'cursor-not-allowed opacity-50' : ''}"
+        >
+          <span>Delete API</span>
+          <i class="fa-solid fa-trash-can" aria-hidden="true"></i>
+        </button>
+        <div class={drawerFooterSegmentDivider} aria-hidden="true"></div>
+        <button
+          type="button"
+          onclick={apiState.handleEditUndo}
+          disabled={!apiState.hasEditChanges || apiState.isSaving}
+          class="{drawerFooterSegmentBtn} {apiState.hasEditChanges && !apiState.isSaving
+            ? drawerFooterBtnSecondarySegment
+            : drawerFooterBtnSecondarySegmentMuted}"
+        >
+          <span>Undo</span>
+          <i class="fa-solid fa-arrow-rotate-left" aria-hidden="true"></i>
+        </button>
+        <div class={drawerFooterSegmentDivider} aria-hidden="true"></div>
+        <button
+          type="button"
+          onclick={apiState.handleEditSave}
+          disabled={!apiState.hasEditChanges || apiState.isSaving}
+          class="{drawerFooterSegmentBtn} {apiState.hasEditChanges && !apiState.isSaving
+            ? drawerFooterBtnPrimaryEnabled
+            : drawerFooterBtnPrimaryDisabledSegment}"
+        >
+          {#if apiState.isSaving}
+            <i class="fa-solid fa-spinner fa-spin" aria-hidden="true"></i>
+            <span>Saving...</span>
+          {:else}
+            <span>Save</span>
+            <i class="fa-solid fa-floppy-disk" aria-hidden="true"></i>
+          {/if}
+        </button>
       </div>
+    {:else}
+      <DrawerFooterDeleteConfirm
+        prompt="Delete this API and all its endpoints?"
+        promptId="edit-api-delete-confirm-prompt"
+        actionsAriaLabel="Confirm or cancel API delete"
+        busy={apiState.isSaving}
+        onCancel={apiState.cancelEditDelete}
+        onConfirm={apiState.handleDeleteApi}
+      />
     {/if}
   {/snippet}
 
@@ -760,83 +747,89 @@
   {#snippet endpointFormFooter(_: { close: () => void })}
     {#if apiState.editedEndpoint}
         {#if apiState.isCreating}
-          <div class="flex space-x-2">
-            <button
-              type="button"
-              onclick={apiState.handleCreateEndpoint}
-              disabled={!apiState.hasEndpointChanges || apiState.isSaving}
-              class="flex-1 px-4 py-2 rounded-xl transition-colors font-medium flex items-center justify-center space-x-2 {apiState.hasEndpointChanges && !apiState.isSaving ? 'bg-green-400 text-mono-950 hover:bg-green-300 font-bold tracking-wide cursor-pointer' : 'bg-mono-800 text-mono-500 cursor-not-allowed'}"
-            >
-              {#if apiState.isSaving}
-                <i class="fa-solid fa-spinner fa-spin"></i>
-                <span>Creating...</span>
-              {:else}
-                <span>Create Endpoint</span>
-              {/if}
-            </button>
+          <div class={drawerFooterSegmentedPanel} role="group" aria-label="Create endpoint actions">
             <button
               type="button"
               onclick={apiState.handleCancelCreate}
               disabled={apiState.isSaving}
-              class="flex-1 px-4 py-2 rounded-xl border border-mono-600 text-mono-300 hover:bg-mono-950 cursor-pointer transition-colors font-medium flex items-center justify-center space-x-2"
+              class="{drawerFooterSegmentBtn} {drawerFooterBtnSecondarySegment} {apiState.isSaving ? 'cursor-not-allowed opacity-50' : ''}"
             >
               <span>Cancel</span>
+              <i class="fa-solid fa-ban" aria-hidden="true"></i>
+            </button>
+            <div class={drawerFooterSegmentDivider} aria-hidden="true"></div>
+            <button
+              type="button"
+              onclick={apiState.handleCreateEndpoint}
+              disabled={!apiState.hasEndpointChanges || apiState.isSaving}
+              class="{drawerFooterSegmentBtn} {apiState.hasEndpointChanges && !apiState.isSaving
+                ? drawerFooterBtnPrimaryEnabled
+                : drawerFooterBtnPrimaryDisabledSegment}"
+            >
+              {#if apiState.isSaving}
+                <i class="fa-solid fa-spinner fa-spin" aria-hidden="true"></i>
+                <span>Creating...</span>
+              {:else}
+                <span>Create Endpoint</span>
+                <i class="fa-solid fa-plus" aria-hidden="true"></i>
+              {/if}
             </button>
           </div>
         {:else if !apiState.showEndpointDeleteConfirm}
-          <div class="flex space-x-2">
-            <button
-              type="button"
-              onclick={apiState.handleSaveEndpoint}
-              disabled={!apiState.hasEndpointChanges}
-              class="flex-1 px-4 py-2 rounded-xl transition-colors font-medium flex items-center justify-center space-x-2 {apiState.hasEndpointChanges ? 'bg-green-400 text-mono-950 hover:bg-green-300 font-bold tracking-wide cursor-pointer' : 'bg-mono-800 text-mono-500 cursor-not-allowed'}"
-            >
-              <span>Save</span>
-            </button>
-            <button
-              type="button"
-              onclick={apiState.handleUndoEndpoint}
-              disabled={!apiState.hasEndpointChanges}
-              class="flex-1 px-4 py-2 rounded-xl border transition-colors font-medium flex items-center justify-center space-x-2 {apiState.hasEndpointChanges ? 'border-mono-600 text-mono-300 hover:bg-mono-950 cursor-pointer' : 'border-mono-700 text-mono-400 cursor-not-allowed bg-mono-950'}"
-            >
-              <span>Undo</span>
-            </button>
-            <button
-              type="button"
-              onclick={() => apiState.handleDuplicateEndpoint(apiState.editedEndpoint!.id)}
-              class="flex-1 px-4 py-2 rounded-xl border border-mono-600 text-mono-300 hover:bg-mono-950 transition-colors font-medium flex items-center justify-center space-x-2"
-            >
-              <span>Duplicate</span>
-            </button>
+          <div class={drawerFooterSegmentedPanel} role="group" aria-label="Edit endpoint actions">
             <button
               type="button"
               onclick={apiState.handleDeleteEndpointClick}
-              class="flex-1 px-4 py-2 rounded-xl border border-mono-600 text-red-400 hover:bg-red-400/10 transition-colors font-medium flex items-center justify-center space-x-2"
+              disabled={apiState.isSaving}
+              class="{drawerFooterSegmentBtn} font-medium {drawerFooterBtnDestructive} {apiState.isSaving ? 'cursor-not-allowed opacity-50' : ''}"
             >
-              <i class="fa-solid fa-xmark"></i>
               <span>Delete</span>
+              <i class="fa-solid fa-trash-can" aria-hidden="true"></i>
+            </button>
+            <div class={drawerFooterSegmentDivider} aria-hidden="true"></div>
+            <button
+              type="button"
+              onclick={apiState.handleUndoEndpoint}
+              disabled={!apiState.hasEndpointChanges || apiState.isSaving}
+              class="{drawerFooterSegmentBtn} {apiState.hasEndpointChanges && !apiState.isSaving
+                ? drawerFooterBtnSecondarySegment
+                : drawerFooterBtnSecondarySegmentMuted}"
+            >
+              <span>Undo</span>
+              <i class="fa-solid fa-arrow-rotate-left" aria-hidden="true"></i>
+            </button>
+            <div class={drawerFooterSegmentDivider} aria-hidden="true"></div>
+            <button
+              type="button"
+              onclick={() => apiState.handleDuplicateEndpoint(apiState.editedEndpoint!.id)}
+              disabled={apiState.isSaving}
+              class="{drawerFooterSegmentBtn} {drawerFooterBtnSecondarySegment} {apiState.isSaving ? 'cursor-not-allowed opacity-50' : ''}"
+            >
+              <span>Duplicate</span>
+              <i class="fa-solid fa-copy" aria-hidden="true"></i>
+            </button>
+            <div class={drawerFooterSegmentDivider} aria-hidden="true"></div>
+            <button
+              type="button"
+              onclick={apiState.handleSaveEndpoint}
+              disabled={!apiState.hasEndpointChanges || apiState.isSaving}
+              class="{drawerFooterSegmentBtn} {apiState.hasEndpointChanges && !apiState.isSaving
+                ? drawerFooterBtnPrimaryEnabled
+                : drawerFooterBtnPrimaryDisabledSegment}"
+            >
+              <span>Save</span>
+              <i class="fa-solid fa-floppy-disk" aria-hidden="true"></i>
             </button>
           </div>
         {:else}
-          <div class="bg-red-400/10 border border-red-400/30 p-3">
-            <p class="text-sm text-red-400 mb-2">Are you sure?</p>
-            <div class="flex space-x-2">
-              <button
-                type="button"
-                onclick={apiState.handleDeleteEndpoint}
-                class="flex-1 px-3 py-1.5 rounded-xl bg-red-600 text-white hover:bg-red-700 text-sm font-medium"
-              >
-                Yes, Delete
-              </button>
-              <button
-                type="button"
-                onclick={apiState.cancelDeleteEndpoint}
-                class="flex-1 px-3 py-1.5 rounded-xl border border-mono-600 text-mono-300 hover:bg-mono-950 text-sm font-medium"
-              >
-                Cancel
-              </button>
-            </div>
-          </div>
+          <DrawerFooterDeleteConfirm
+            prompt="Are you sure?"
+            promptId="endpoint-delete-confirm-prompt"
+            actionsAriaLabel="Confirm or cancel endpoint delete"
+            busy={apiState.isSaving}
+            onCancel={apiState.cancelDeleteEndpoint}
+            onConfirm={apiState.handleDeleteEndpoint}
+          />
         {/if}
       {/if}
   {/snippet}

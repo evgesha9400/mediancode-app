@@ -35,19 +35,17 @@
 
 <script lang="ts">
   import { Tooltip } from '$lib/components/tooltip';
+  import DrawerFooterDeleteConfirm from './DrawerFooterDeleteConfirm.svelte';
   import {
-    drawerFooterBtnBlock,
-    drawerFooterBtnDangerCancel,
-    drawerFooterBtnDangerCancelBusy,
-    drawerFooterBtnDangerConfirm,
-    drawerFooterBtnDangerConfirmBusy,
     drawerFooterBtnDestructive,
-    drawerFooterBtnDestructiveDisabled,
-    drawerFooterBtnPrimaryDisabled,
+    drawerFooterBtnDestructiveDisabledSegment,
+    drawerFooterBtnPrimaryDisabledSegment,
     drawerFooterBtnPrimaryEnabled,
-    drawerFooterBtnSecondary,
-    drawerFooterBtnSecondaryMuted,
-    drawerFooterDangerCallout,
+    drawerFooterBtnSecondarySegment,
+    drawerFooterBtnSecondarySegmentMuted,
+    drawerFooterSegmentDivider,
+    drawerFooterSegmentedPanel,
+    drawerFooterSegmentBtn,
   } from '$lib/ui/classes';
 
   interface Props extends CrudDrawerFooterProps {}
@@ -73,92 +71,83 @@
 
 {#if mode === 'creating'}
   {@const canCreate = isFormValid && !isSaving}
-  <button
-    type="button"
-    onclick={onCreate}
-    disabled={!canCreate}
-    class="{drawerFooterBtnBlock} {canCreate ? drawerFooterBtnPrimaryEnabled : drawerFooterBtnPrimaryDisabled}"
-  >
-    {#if isSaving}
-      <i class="fa-solid fa-spinner fa-spin mr-2"></i>
-      Creating...
-    {:else}
-      Create
-    {/if}
-  </button>
-  {#if onCancel}
-    <button
-      type="button"
-      onclick={onCancel}
-      disabled={isSaving}
-      class="{drawerFooterBtnBlock} border border-mono-600 {drawerFooterBtnSecondary} text-sm {isSaving ? 'cursor-not-allowed opacity-50' : ''}"
-    >
-      Cancel
-    </button>
-  {/if}
-{:else}
-  {@const canSave = hasChanges && !isSaving}
-  <button
-    type="button"
-    onclick={onSave}
-    disabled={!canSave}
-    class="{drawerFooterBtnBlock} {canSave ? drawerFooterBtnPrimaryEnabled : drawerFooterBtnPrimaryDisabled}"
-  >
-    {#if isSaving}
-      <i class="fa-solid fa-spinner fa-spin mr-2"></i>
-      Saving...
-    {:else}
-      Save
-    {/if}
-  </button>
-  <button
-    type="button"
-    onclick={onUndo}
-    disabled={!hasChanges || isSaving}
-    class="{drawerFooterBtnBlock} {hasChanges && !isSaving ? drawerFooterBtnSecondary : drawerFooterBtnSecondaryMuted}"
-  >
-    Undo
-  </button>
-  {#if !showDeleteConfirm}
-    <Tooltip text={deleteTooltip} position="top">
+  <div class={drawerFooterSegmentedPanel} role="group" aria-label="Create actions">
+    {#if onCancel}
       <button
         type="button"
-        onclick={onDeleteRequest}
-        disabled={!canDelete}
-        class="{drawerFooterBtnBlock} flex items-center justify-center gap-2 font-medium {!canDelete
-          ? drawerFooterBtnDestructiveDisabled
-          : drawerFooterBtnDestructive}"
+        onclick={onCancel}
+        disabled={isSaving}
+        class="{drawerFooterSegmentBtn} {drawerFooterBtnSecondarySegment} {isSaving ? 'cursor-not-allowed opacity-50' : ''}"
       >
-        <i class="fa-solid fa-xmark mr-2"></i>
-        <span>Delete</span>
+        <span>Cancel</span>
+        <i class="fa-solid fa-ban" aria-hidden="true"></i>
       </button>
-    </Tooltip>
-  {:else}
-    <div class={drawerFooterDangerCallout}>
-      <p class="text-sm text-red-400 mb-2">Are you sure?</p>
-      <div class="flex space-x-2">
+      <div class={drawerFooterSegmentDivider} aria-hidden="true"></div>
+    {/if}
+    <button
+      type="button"
+      onclick={onCreate}
+      disabled={!canCreate}
+      class="{drawerFooterSegmentBtn} {canCreate ? drawerFooterBtnPrimaryEnabled : drawerFooterBtnPrimaryDisabledSegment}"
+    >
+      {#if isSaving}
+        <i class="fa-solid fa-spinner fa-spin" aria-hidden="true"></i>
+        <span>Creating...</span>
+      {:else}
+        <span>Create</span>
+        <i class="fa-solid fa-plus" aria-hidden="true"></i>
+      {/if}
+    </button>
+  </div>
+{:else}
+  {@const canSave = hasChanges && !isSaving}
+  {#if !showDeleteConfirm}
+    <div class={drawerFooterSegmentedPanel} role="group" aria-label="Edit actions">
+      <Tooltip text={deleteTooltip} position="top" wrapperClass="w-full sm:flex-1 sm:min-w-0 flex">
         <button
           type="button"
-          onclick={onDeleteConfirm}
-          disabled={isDeleting}
-          class={isDeleting ? drawerFooterBtnDangerConfirmBusy : drawerFooterBtnDangerConfirm}
+          onclick={onDeleteRequest}
+          disabled={!canDelete}
+          class="{drawerFooterSegmentBtn} font-medium {!canDelete ? drawerFooterBtnDestructiveDisabledSegment : drawerFooterBtnDestructive}"
         >
-          {#if isDeleting}
-            <i class="fa-solid fa-spinner fa-spin mr-1"></i>
-            Deleting...
-          {:else}
-            Yes, Delete
-          {/if}
+          <span>Delete</span>
+          <i class="fa-solid fa-trash-can" aria-hidden="true"></i>
         </button>
-        <button
-          type="button"
-          onclick={onDeleteCancel}
-          disabled={isDeleting}
-          class={isDeleting ? drawerFooterBtnDangerCancelBusy : drawerFooterBtnDangerCancel}
-        >
-          Cancel
-        </button>
-      </div>
+      </Tooltip>
+      <div class={drawerFooterSegmentDivider} aria-hidden="true"></div>
+      <button
+        type="button"
+        onclick={onUndo}
+        disabled={!hasChanges || isSaving}
+        class="{drawerFooterSegmentBtn} {hasChanges && !isSaving ? drawerFooterBtnSecondarySegment : drawerFooterBtnSecondarySegmentMuted}"
+      >
+        <span>Undo</span>
+        <i class="fa-solid fa-arrow-rotate-left" aria-hidden="true"></i>
+      </button>
+      <div class={drawerFooterSegmentDivider} aria-hidden="true"></div>
+      <button
+        type="button"
+        onclick={onSave}
+        disabled={!canSave}
+        class="{drawerFooterSegmentBtn} {canSave ? drawerFooterBtnPrimaryEnabled : drawerFooterBtnPrimaryDisabledSegment}"
+      >
+        {#if isSaving}
+          <i class="fa-solid fa-spinner fa-spin" aria-hidden="true"></i>
+          <span>Saving...</span>
+        {:else}
+          <span>Save</span>
+          <i class="fa-solid fa-floppy-disk" aria-hidden="true"></i>
+        {/if}
+      </button>
     </div>
+  {:else}
+    <DrawerFooterDeleteConfirm
+      prompt="Are you sure?"
+      promptId="crud-drawer-delete-confirm-prompt"
+      actionsAriaLabel="Confirm or cancel delete"
+      busy={isDeleting}
+      onCancel={() => onDeleteCancel?.()}
+      onConfirm={() => onDeleteConfirm?.()}
+    />
   {/if}
 {/if}

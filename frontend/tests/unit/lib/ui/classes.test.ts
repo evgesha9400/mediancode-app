@@ -13,10 +13,21 @@ import {
 	dropdownPanel,
 	marketingHeroCta,
 	clerkCard,
+	clerkUserButtonPopoverCard,
+	clerkUserButtonPopoverMain,
+	clerkUserButtonPopoverActions,
+	clerkUserButtonPopoverFooter,
 	modalFooterBtnPrimary,
 	modalFooterBtnSecondary,
 	modalInlineError,
 	drawerFooterBtnDestructive,
+	drawerFooterShellEdge,
+	drawerFooterSegmentedPanel,
+	drawerFooterSegmentDivider,
+	drawerFooterSegmentBtn,
+	drawerFooterBtnSecondarySegment,
+	drawerFooterDeleteConfirmBanner,
+	drawerFooterBtnDangerConfirmSegment,
 	drawerFooterDangerCallout,
 	drawerFooterBtnDangerConfirm,
 	tableListBodyDivide,
@@ -31,6 +42,7 @@ import {
 	segmentPillBase,
 	modalFormCheckbox,
 	drawerLinkedEntityRow,
+	inlineRemoveIconButton,
 } from '$lib/ui/classes';
 
 describe('lib/ui/classes', () => {
@@ -75,6 +87,20 @@ describe('lib/ui/classes', () => {
 		expect(clerkCard).toContain('backdrop-blur');
 	});
 
+	it('clerkUserButtonPopoverCard matches drawer glass', () => {
+		expect(clerkUserButtonPopoverCard).toContain('rounded-3xl');
+		expect(clerkUserButtonPopoverCard).toContain('backdrop-blur-2xl');
+		expect(clerkUserButtonPopoverCard).toContain('border-white/10');
+		expect(clerkUserButtonPopoverCard).toContain('shadow-drawer-deep');
+	});
+
+	it('clerk UserButton popover inner slots stay transparent over glass', () => {
+		expect(clerkUserButtonPopoverMain).toContain('bg-transparent');
+		expect(clerkUserButtonPopoverActions).toContain('bg-transparent');
+		expect(clerkUserButtonPopoverFooter).toContain('bg-mono-950/25');
+		expect(clerkUserButtonPopoverFooter).toContain('border-t');
+	});
+
 	it('modal footer buttons use rounded-xl', () => {
 		expect(modalFooterBtnSecondary).toContain('rounded-xl');
 		expect(modalFooterBtnPrimary).toContain('rounded-xl');
@@ -85,6 +111,23 @@ describe('lib/ui/classes', () => {
 		expect(drawerFooterBtnDestructive).toContain('text-red-400');
 		expect(drawerFooterDangerCallout).toContain('rounded-xl');
 		expect(drawerFooterBtnDangerConfirm).toContain('rounded-xl');
+	});
+
+	it('drawer delete confirm banner aligns with segmented footer chrome', () => {
+		expect(drawerFooterDeleteConfirmBanner).toContain('border-b');
+		expect(drawerFooterDeleteConfirmBanner).toContain('text-red-400');
+		expect(drawerFooterBtnDangerConfirmSegment).toContain('bg-red-600');
+	});
+
+	it('drawer segmented footer panel stacks on mobile and rows on sm+', () => {
+		expect(drawerFooterShellEdge).toContain('px-0');
+		expect(drawerFooterSegmentedPanel).toContain('flex-col');
+		expect(drawerFooterSegmentedPanel).toContain('sm:flex-row');
+		expect(drawerFooterSegmentedPanel).not.toContain('rounded-xl');
+		expect(drawerFooterSegmentDivider).toContain('h-px');
+		expect(drawerFooterSegmentDivider).toContain('sm:w-px');
+		expect(drawerFooterSegmentBtn).toContain('sm:flex-1');
+		expect(drawerFooterBtnSecondarySegment).not.toContain('border');
 	});
 
 	it('table list primitives align with dashboard chrome', () => {
@@ -116,5 +159,11 @@ describe('lib/ui/classes', () => {
 		expect(segmentPillBase).toContain('first:rounded-l-xl');
 		expect(modalFormCheckbox).toContain('border-mono-600');
 		expect(drawerLinkedEntityRow).toContain('hover:bg-mono-700');
+	});
+
+	it('inlineRemoveIconButton encodes row icon remove treatment', () => {
+		expect(inlineRemoveIconButton).toContain('text-red-400');
+		expect(inlineRemoveIconButton).toContain('hover:text-red-300');
+		expect(inlineRemoveIconButton).toContain('p-1');
 	});
 });

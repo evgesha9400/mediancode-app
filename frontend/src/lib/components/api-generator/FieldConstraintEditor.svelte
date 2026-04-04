@@ -24,7 +24,7 @@
 
 <script lang="ts">
   import { FieldConstraintSelectorDropdown } from '$lib/components/api-generator';
-  import { inputGlassDense, surfaceInsideFrostedPanel } from '$lib/ui/classes';
+  import { inlineRemoveIconButton, inputGlassDense, surfaceInsideFrostedPanel } from '$lib/ui/classes';
 
   interface Props extends FieldConstraintEditorProps {}
 
@@ -78,7 +78,7 @@
               <button
                 type="button"
                 onclick={() => onRemove(index)}
-                class="text-red-400 hover:text-red-300 transition-colors shrink-0"
+                class={inlineRemoveIconButton}
                 title="Remove field constraint"
                 aria-label="Remove field constraint"
               >
@@ -94,7 +94,7 @@
               <button
                 type="button"
                 onclick={() => onRemove(index)}
-                class="p-1 text-red-400 hover:text-red-300 hover:bg-red-400/10 rounded transition-colors"
+                class={inlineRemoveIconButton}
                 title="Remove missing field constraint reference"
                 aria-label="Remove field constraint"
               >

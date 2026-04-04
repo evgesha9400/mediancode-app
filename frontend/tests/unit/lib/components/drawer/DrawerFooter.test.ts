@@ -41,6 +41,14 @@ describe('DrawerFooter Component', () => {
 
 			expect(props.spacing).toBeUndefined();
 		});
+
+		it('DrawerFooterProps accepts optional padding inset or edge', () => {
+			const inset: DrawerFooterProps = { padding: 'inset' };
+			const edge: DrawerFooterProps = { padding: 'edge' };
+
+			expect(inset.padding).toBe('inset');
+			expect(edge.padding).toBe('edge');
+		});
 	});
 
 	describe('Component Structure Verification', () => {

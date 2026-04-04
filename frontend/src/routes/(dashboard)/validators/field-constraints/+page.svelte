@@ -15,7 +15,6 @@
   } from '$lib/components';
   import type { FilterConfig } from '$lib/types';
   import {
-    surfaceInsideFrostedPanel,
     tableListCell,
     tableListRowHover,
     tableListRowInteractive,
@@ -215,13 +214,6 @@
 {#snippet constraintDetailContent(_: { close: () => void })}
   {#if selectedFieldConstraint}
     <div class="space-y-6">
-      {#if isSystemItem}
-        <div class="flex items-center space-x-2 px-3 py-2 {surfaceInsideFrostedPanel} mb-6">
-          <i class="fa-solid fa-lock text-mono-400 text-sm"></i>
-          <span class="text-sm text-mono-400">System field constraint — read-only</span>
-        </div>
-      {/if}
-
       <DetailField label="Name" value={selectedFieldConstraint.name} />
       <DetailField label="Description" value={selectedFieldConstraint.description} />
 
@@ -260,7 +252,14 @@
 
 <DrawerStack
   panels={state.drawerOpen
-    ? [{ id: 'field-constraint', title: 'Field Constraint Details', width: 520, minWidth: 320, content: constraintDetailContent }]
+    ? [{
+        id: 'field-constraint',
+        title: 'Field Constraint Details',
+        headerSystem: isSystemItem,
+        width: 520,
+        minWidth: 320,
+        content: constraintDetailContent
+      }]
     : []}
   onPopPanel={state.closeDrawer}
 />

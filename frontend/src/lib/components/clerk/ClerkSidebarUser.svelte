@@ -25,7 +25,13 @@
 <script lang="ts">
   import { onDestroy } from 'svelte';
   import { getClerk, clerkAppearance, clerkState } from '$lib/clerk';
-  import { clerkProfileModalInnerCard } from '$lib/ui/classes';
+  import {
+    clerkProfileModalInnerCard,
+    clerkUserButtonPopoverActions,
+    clerkUserButtonPopoverCard,
+    clerkUserButtonPopoverFooter,
+    clerkUserButtonPopoverMain,
+  } from '$lib/ui/classes';
   import { Tooltip } from '$lib/components/tooltip';
 
   interface Props extends ClerkSidebarUserProps {}
@@ -45,12 +51,20 @@
   function getAppearance() {
     return {
       ...clerkAppearance,
+      variables: {
+        ...clerkAppearance.variables,
+        // Popover inner regions use this as a base fill; transparent avoids stacking an opaque layer on the glass card.
+        colorBackground: 'transparent',
+      },
       elements: {
         ...clerkAppearance.elements,
         // Hide the default trigger content, we'll show our own
         userButtonTrigger: 'p-0 focus:shadow-none',
         userButtonAvatarBox: 'w-10 h-10',
-        userButtonPopoverCard: 'bg-mono-900/50 backdrop-blur-sm border border-mono-700 shadow-xl shadow-black/30',
+        userButtonPopoverCard: clerkUserButtonPopoverCard,
+        userButtonPopoverMain: clerkUserButtonPopoverMain,
+        userButtonPopoverActions: clerkUserButtonPopoverActions,
+        userButtonPopoverFooter: clerkUserButtonPopoverFooter,
       }
     };
   }

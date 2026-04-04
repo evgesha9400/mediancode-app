@@ -6,6 +6,8 @@
     title: string;
     /** Same namespace meta as API detail header (dot + icon + name). */
     headerNamespace?: string;
+    /** Dot + lock + "System" after title for built-in / read-only entities. */
+    headerSystem?: boolean;
     width: number;
     minWidth?: number;
     content: Snippet<[{ close: () => void }]>;
@@ -98,6 +100,7 @@
         >
           <DrawerHeader
             title={panel.title}
+            headerSystem={panel.headerSystem}
             headerNamespace={panel.headerNamespace}
             onClose={onPopPanel}
           />
@@ -105,7 +108,7 @@
             {@render panel.content({ close: onPopPanel })}
           </DrawerContent>
           {#if panel.footer}
-            <DrawerFooter>
+            <DrawerFooter padding="edge">
               {@render panel.footer({ close: onPopPanel })}
             </DrawerFooter>
           {/if}
@@ -122,6 +125,7 @@
         >
           <DrawerHeader
             title={panel.title}
+            headerSystem={panel.headerSystem}
             headerNamespace={panel.headerNamespace}
             onClose={onPopPanel}
           />
@@ -129,7 +133,7 @@
             {@render panel.content({ close: onPopPanel })}
           </DrawerContent>
           {#if panel.footer}
-            <DrawerFooter>
+            <DrawerFooter padding="edge">
               {@render panel.footer({ close: onPopPanel })}
             </DrawerFooter>
           {/if}

@@ -14,10 +14,10 @@
  * | Sidebar shell & nav items | — | `sidebarShell`, `sidebarNavItem*` |
  * | Dashboard column shell & page header chrome | — | `dashboardMainColumn`, `dashboardMainColumnCanvas`, `dashboardGreenWashGradient`, `dashboardPageHeaderShell`, `dashboardSearchToolbarShell`, `mainColumnChromePaddingX`, `dashboardPageHeaderTitleBand`, `headerMetaSeparator`, `headerNamespaceCluster` |
  * | Dashboard entity list tables | — | `tableListPageGutter`, `tableListCardShell`, `tableListBodyDivide`, `tableListCell`, `tableListRowInteractive`, `tableListRowHover`, `tableListRowSelected` |
- * | Drawer & modal frosted shells | `drawer-deep` | `drawerPanelGlassSurface`, `modalPanelGlassSurface`, `drawerPanelFlexible`, `drawerPanelStacked`, `drawerScrim`, `drawerLinkedEntityRow`, … |
- * | Primary / secondary / destructive | `glow-green` | `drawerFooterBtnPrimary*`, `drawerFooterBtnDestructive*`, `drawerFooterDangerCallout`, `drawerFooterBtnDangerConfirm*`, `modalFooterBtn*`, `btnCtaGlow`, … |
+ * | Drawer & modal frosted shells | `drawer-deep` | `drawerPanelGlassSurface`, `modalPanelGlassSurface`, `drawerPanelFlexible`, `drawerPanelStacked`, `drawerFooterShellInset`, `drawerFooterShellEdge`, `drawerScrim`, `drawerLinkedEntityRow`, … |
+ * | Primary / secondary / destructive | `glow-green` | `drawerFooterSegmentedPanel`, `drawerFooterSegmentBtn`, `drawerFooterDeleteConfirmBanner`, `drawerFooterBtnDangerConfirmSegment*`, `drawerFooterBtnPrimary*`, `drawerFooterBtnSecondarySegment*`, `drawerFooterBtnDestructive*`, `drawerFooterDangerCallout`, `drawerFooterBtnDangerConfirm*`, `modalFooterBtn*`, `btnCtaGlow`, … |
  * | Marketing landing | `glow-*` | `marketingCtaPrimary` (nav), `marketingHeroCta` + `marketingHeroCtaSecondary`, `marketingFooterCta` + `marketingFooterCtaSecondary`, `marketingHowItWorks*` |
- * | Clerk `appearance.elements` | `glow-green`, `drawer-deep` | `clerkCard`, `clerkModalContentShell`, `clerkFormButtonPrimary`, … |
+ * | Clerk `appearance.elements` | `glow-green`, `drawer-deep` | `clerkCard`, `clerkModalContentShell`, `clerkUserButtonPopover*`, `clerkFormButtonPrimary`, … |
  */
 
 // --- Form inputs (solid fills: avoid nested backdrop-filter inside frosted drawer/modal shells) ---
@@ -122,6 +122,13 @@ export const dropdownRow =
   'w-full px-3 py-2 text-left hover:bg-mono-800 border-b border-mono-700 last:border-b-0 transition-colors';
 
 export const listMetaBadge = 'text-xs text-mono-400 bg-mono-800 px-2 py-0.5 rounded-lg';
+
+/**
+ * Icon-only row remove control (`fa-solid fa-xmark`). Use for delete/unlink in form and generator rows.
+ * Keeps destructive inline actions visually consistent (see CLAUDE.md form standards).
+ */
+export const inlineRemoveIconButton =
+  'p-1 text-red-400 hover:text-red-300 hover:bg-red-400/10 rounded transition-colors shrink-0';
 
 export const dropdownCreateRow =
   'w-full text-left px-3 py-2 text-sm text-mono-400 hover:bg-mono-800 hover:text-mono-100 rounded-lg cursor-pointer flex items-center space-x-2';
@@ -250,6 +257,11 @@ export const headerMetaSeparator = 'text-mono-600 shrink-0 hidden sm:inline';
 export const headerNamespaceCluster =
   'hidden sm:inline-flex items-center gap-1.5 text-sm text-mono-400 shrink-0 max-w-[10rem] truncate';
 
+/**
+ * System entity cluster (lock icon + label) — drawer headers for built-in / read-only entities; same layout rhythm as `headerNamespaceCluster`.
+ */
+export const headerSystemCluster = headerNamespaceCluster;
+
 // --- Dashboard entity list tables (Types, Fields, Objects, …) ---
 
 /**
@@ -304,8 +316,30 @@ export const modalPanelGlassSurface = drawerPanelGlassSurface;
 
 // --- Drawer footer & primary actions ---
 
+/** Default drawer footer shell (guttered). Pair with {@link drawerFooterShellEdge} via `DrawerFooter` `padding` prop. */
+export const drawerFooterShellInset = 'p-6 border-t border-white/10 bg-mono-950/75';
+
+/** Flush footer shell for full-width segmented actions (no horizontal inset). */
+export const drawerFooterShellEdge = 'border-t border-white/10 bg-mono-950/75 px-0 pt-0 pb-0';
+
 export const drawerFooterBtnBlock =
   'w-full px-4 py-2 rounded-xl text-sm border font-inter tracking-wide transition-colors';
+
+/**
+ * CRUD drawer segmented toolbar: edge-to-edge inside the footer, no outer box border (dividers only).
+ */
+export const drawerFooterSegmentedPanel =
+  'flex flex-col sm:flex-row overflow-hidden bg-mono-900/40';
+
+/** Separator between {@link drawerFooterSegmentBtn} cells (horizontal rule when stacked, vertical in row layout). */
+export const drawerFooterSegmentDivider =
+  'shrink-0 h-px sm:h-auto sm:self-stretch sm:w-px bg-mono-700/80';
+
+/**
+ * Segment control inside {@link drawerFooterSegmentedPanel}. Combine with {@link drawerFooterBtnPrimaryEnabled} and friends.
+ */
+export const drawerFooterSegmentBtn =
+  'inline-flex items-center justify-center gap-2 w-full sm:flex-1 min-w-0 px-3 py-3 text-sm font-inter tracking-wide transition-colors outline-none focus-visible:z-10 focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-green-400/40';
 
 export const drawerFooterBtnPrimaryEnabled =
   'bg-green-400 border-transparent text-mono-950 font-semibold shadow-sm hover:bg-green-300 cursor-pointer';
@@ -314,11 +348,23 @@ export const drawerFooterBtnPrimaryEnabled =
 export const drawerFooterBtnPrimaryDisabled =
   'font-medium bg-mono-800 border-mono-700 text-mono-400 cursor-not-allowed shadow-sm';
 
+/** Primary disabled segment inside {@link drawerFooterSegmentedPanel} (panel border only). */
+export const drawerFooterBtnPrimaryDisabledSegment =
+  'font-medium bg-mono-800 text-mono-400 cursor-not-allowed shadow-sm';
+
 export const drawerFooterBtnSecondary =
   'border border-mono-600 text-mono-300 transition-colors font-medium font-inter tracking-wide hover:bg-mono-800 cursor-pointer';
 
+/** Secondary segment inside {@link drawerFooterSegmentedPanel} (no per-cell border). */
+export const drawerFooterBtnSecondarySegment =
+  'text-mono-300 transition-colors font-medium font-inter tracking-wide hover:bg-mono-800/80 cursor-pointer';
+
 export const drawerFooterBtnSecondaryMuted =
   'border border-mono-700 text-mono-400 font-medium cursor-not-allowed bg-mono-800 shadow-sm';
+
+/** Muted secondary for segmented footer cells. */
+export const drawerFooterBtnSecondarySegmentMuted =
+  'text-mono-400 font-medium cursor-not-allowed bg-mono-800/80 shadow-sm';
 
 /** Full-width Delete control in drawer footers (paired with {@link drawerFooterBtnDestructiveDisabled}). */
 export const drawerFooterBtnDestructive =
@@ -326,6 +372,21 @@ export const drawerFooterBtnDestructive =
 
 export const drawerFooterBtnDestructiveDisabled =
   'bg-mono-700 border-mono-700 text-mono-400 cursor-not-allowed';
+
+/** Destructive segment disabled (no extra border; {@link drawerFooterSegmentDivider} separates cells). */
+export const drawerFooterBtnDestructiveDisabledSegment =
+  'bg-mono-800/90 text-mono-400 cursor-not-allowed';
+
+/** Full-width prompt above segmented delete confirmation (edge-aligned with drawer footer). */
+export const drawerFooterDeleteConfirmBanner =
+  'px-3 py-2.5 text-sm font-medium text-red-400 bg-red-400/10 border-b border-mono-700/80 font-inter tracking-wide';
+
+/** Destructive confirm segment in {@link drawerFooterSegmentedPanel} (e.g. Yes, delete). */
+export const drawerFooterBtnDangerConfirmSegment =
+  'bg-red-600 text-white font-semibold shadow-sm hover:bg-red-700 cursor-pointer border-transparent';
+
+export const drawerFooterBtnDangerConfirmSegmentBusy =
+  'bg-red-400 text-white font-medium cursor-not-allowed shadow-sm border-transparent';
 
 /** Wrapper div for inline delete confirmation (rounded to match glass chrome). */
 export const drawerFooterDangerCallout = 'bg-red-400/10 border border-red-400/30 p-3 rounded-xl';
@@ -449,6 +510,24 @@ export const marketingProgressBarGlow = 'shadow-glow-green-bar';
 
 export const clerkCard =
   'bg-mono-950/60 backdrop-blur-xl border border-mono-800/80 rounded-3xl shadow-2xl';
+
+/**
+ * UserButton account menu — same frost as {@link drawerPanelGlassSurface} / stacked drawers.
+ */
+export const clerkUserButtonPopoverCard = `${drawerPanelGlassSurface} rounded-3xl`;
+
+/**
+ * Inner Clerk slots default to `colorBackground`; keep them clear so the card glass reads like drawer chrome.
+ */
+export const clerkUserButtonPopoverMain = 'bg-transparent';
+
+/** Actions block (manage account / sign out) — no second opaque fill. */
+export const clerkUserButtonPopoverActions = 'bg-transparent';
+
+/**
+ * Footer (Secured by Clerk) — light tint only so the stripe pattern still reads over the shared frost.
+ */
+export const clerkUserButtonPopoverFooter = 'bg-mono-950/25 border-t border-white/10';
 
 export const clerkFormButtonPrimary =
   'bg-green-400 text-mono-950 hover:bg-green-300 font-inter font-semibold tracking-wide rounded-xl shadow-glow-green';

@@ -6,7 +6,7 @@
 
   @component
   @example
-  <DrawerFooter spacing="space-y-3">
+  <DrawerFooter padding="edge" spacing="space-y-3">
     <button>Save</button>
     <button>Cancel</button>
   </DrawerFooter>
@@ -14,12 +14,21 @@
 <script module lang="ts">
   import type { Snippet } from 'svelte';
 
+  import { drawerFooterShellInset, drawerFooterShellEdge } from '$lib/ui/classes';
+
   export interface DrawerFooterProps {
     /**
      * Tailwind spacing class for vertical spacing between footer elements
      * @default 'space-y-2'
      */
     spacing?: string;
+
+    /**
+     * `inset` keeps p-6 gutters (modals / custom layouts). `edge` is flush to the drawer
+     * panel for full-width toolbars (DrawerStack).
+     * @default 'inset'
+     */
+    padding?: 'inset' | 'edge';
 
     /**
      * Content to render inside the drawer footer
@@ -31,9 +40,11 @@
 <script lang="ts">
   interface Props extends DrawerFooterProps {}
 
-  let { spacing = 'space-y-2', children }: Props = $props();
+  let { spacing = 'space-y-2', padding = 'inset', children }: Props = $props();
+
+  let shellClass = $derived(padding === 'edge' ? drawerFooterShellEdge : drawerFooterShellInset);
 </script>
 
-<div class="p-6 border-t border-white/10 bg-mono-950/75 {spacing}">
+<div class="{shellClass} {spacing}">
   {@render children?.()}
 </div>

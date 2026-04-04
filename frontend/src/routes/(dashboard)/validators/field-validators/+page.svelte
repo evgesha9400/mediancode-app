@@ -129,11 +129,6 @@
 {#snippet validatorDetailContent(_: { close: () => void })}
   {#if state.selectedItem}
     <div class="space-y-6">
-      <div class="flex items-center space-x-2 px-3 py-2 {surfaceInsideFrostedPanel} mb-6">
-        <i class="fa-solid fa-lock text-mono-400 text-sm"></i>
-        <span class="text-sm text-mono-400">System field validator — read-only</span>
-      </div>
-
       <DetailField label="Name">
         <p class="text-mono-100 font-medium">{state.selectedItem.name}</p>
       </DetailField>
@@ -178,7 +173,14 @@
 
 <DrawerStack
   panels={state.drawerOpen
-    ? [{ id: 'field-validator', title: 'Field Validator Details', width: 520, minWidth: 320, content: validatorDetailContent }]
+    ? [{
+        id: 'field-validator',
+        title: 'Field Validator Details',
+        headerSystem: true,
+        width: 520,
+        minWidth: 320,
+        content: validatorDetailContent
+      }]
     : []}
   onPopPanel={state.closeDrawer}
 />

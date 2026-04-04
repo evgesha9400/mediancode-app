@@ -9,6 +9,7 @@
   ```svelte
   <DrawerHeader title="Edit Field" onClose={() => drawerOpen = false} />
   <DrawerHeader title="Create API" headerNamespace="My Space" onClose={() => {}} />
+  <DrawerHeader title="Type Details" headerSystem onClose={() => {}} />
   ```
 -->
 <script module lang="ts">
@@ -24,6 +25,11 @@
     headerNamespace?: string;
 
     /**
+     * When true, shows system-entity meta after the title (dot + lock icon + "System"), same layout as namespace meta.
+     */
+    headerSystem?: boolean;
+
+    /**
      * Callback function triggered when the close button is clicked
      */
     onClose: () => void;
@@ -31,11 +37,11 @@
 </script>
 
 <script lang="ts">
-  import { headerMetaSeparator, headerNamespaceCluster } from '$lib/ui/classes';
+  import { headerMetaSeparator, headerNamespaceCluster, headerSystemCluster } from '$lib/ui/classes';
 
   interface Props extends DrawerHeaderProps {}
 
-  let { title, headerNamespace = '', onClose }: Props = $props();
+  let { title, headerNamespace = '', headerSystem = false, onClose }: Props = $props();
 
   let trimmedNs = $derived(headerNamespace?.trim() ?? '');
 </script>
@@ -57,6 +63,13 @@
         <span class={headerNamespaceCluster} title={trimmedNs}>
           <i class="fa-solid fa-layer-group text-xs shrink-0"></i>
           <span class="truncate">{trimmedNs}</span>
+        </span>
+      {/if}
+      {#if headerSystem}
+        <span class={headerMetaSeparator} aria-hidden="true">·</span>
+        <span class={headerSystemCluster} title="System entity — read-only">
+          <i class="fa-solid fa-lock text-xs shrink-0"></i>
+          <span class="truncate">System</span>
         </span>
       {/if}
     </div>

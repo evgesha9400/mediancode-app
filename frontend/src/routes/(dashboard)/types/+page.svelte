@@ -15,7 +15,6 @@
   } from '$lib/components';
   import type { FilterConfig } from '$lib/types';
   import {
-    surfaceInsideFrostedPanel,
     tableListCell,
     tableListRowHover,
     tableListRowInteractive,
@@ -60,6 +59,9 @@
   let filteredTypes = $derived(state.results);
   let sorts = $derived(state.sorts);
   let activeFiltersCount = $derived(state.activeFiltersCount);
+  let typeDrawerHeaderSystem = $derived(
+    state.selectedItem ? isSystemEntity(state.selectedItem) : false
+  );
 </script>
 
 <MainColumnFrame bodyClass="">
@@ -152,12 +154,6 @@
 {#snippet typeDetailContent(_: { close: () => void })}
   {#if state.selectedItem}
     <div class="space-y-6">
-      {#if isSystemEntity(state.selectedItem)}
-        <div class="flex items-center space-x-2 px-3 py-2 {surfaceInsideFrostedPanel} mb-4">
-          <i class="fa-solid fa-lock text-mono-400 text-sm"></i>
-          <span class="text-sm text-mono-400">System type — read-only</span>
-        </div>
-      {/if}
       <DetailField label="Name" value={state.selectedItem.name} />
       <DetailField label="Python Type" value={state.selectedItem.pythonType} />
       <DetailField label="Description" value={state.selectedItem.description} />
@@ -167,7 +163,14 @@
 
 <DrawerStack
   panels={state.drawerOpen
-    ? [{ id: 'type', title: 'Type Details', width: 520, minWidth: 320, content: typeDetailContent }]
+    ? [{
+        id: 'type',
+        title: 'Type Details',
+        headerSystem: typeDrawerHeaderSystem,
+        width: 520,
+        minWidth: 320,
+        content: typeDetailContent
+      }]
     : []}
   onPopPanel={state.closeDrawer}
 />

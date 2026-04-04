@@ -50,5 +50,17 @@ describe('DrawerHeader Component', () => {
 
 			expect(props).toBeDefined();
 		});
+
+		it('DrawerHeaderProps allows optional headerNamespace and headerSystem', () => {
+			const props: DrawerHeaderProps = {
+				title: 'Edit',
+				headerNamespace: 'Acme',
+				headerSystem: true,
+				onClose: () => {}
+			};
+
+			expect(props.headerNamespace).toBe('Acme');
+			expect(props.headerSystem).toBe(true);
+		});
 	});
 });

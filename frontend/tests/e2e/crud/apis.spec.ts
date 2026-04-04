@@ -98,8 +98,8 @@ test('API lifecycle: create, search, edit, delete', async ({ page }) => {
 	const descInput = page.locator('#edit-description');
 	await descInput.fill(UPDATED_DESCRIPTION);
 
-	// Save changes
-	const saveButton = page.getByRole('button', { name: /Save Changes/i }).first();
+	// Save
+	const saveButton = editDrawer.getByRole('button', { name: /^Save$/ });
 	await saveButton.click();
 	await editDrawer.waitFor({ state: 'hidden', timeout: 10000 });
 
