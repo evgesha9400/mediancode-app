@@ -16,6 +16,7 @@
     sidebarNavItemActive,
     sidebarNavItemBase,
     sidebarNavItemInactive,
+    sidebarShellMotionLocked,
     sidebarSectionDividerHorizontal,
     sidebarShell,
   } from '$lib/ui/classes';
@@ -25,6 +26,7 @@
   let { activeRoute }: Props = $props();
 
   let collapsed = $derived(sidebarState.collapsed);
+  let sidebarShellClass = $derived(sidebarState.drawerMotionActive ? sidebarShellMotionLocked : sidebarShell);
 
   beforeNavigate(() => {
     if (collapsed) sidebarState.lockCollapsed();
@@ -63,8 +65,8 @@
 </script>
 
 <nav
-  class="{sidebarShell}"
-  style="width: {sidebarState.width}px;"
+  class={sidebarShellClass}
+  style="width: {sidebarState.renderedWidth}px;"
   aria-label="Main navigation"
   data-testid="dashboard-sidebar"
 >

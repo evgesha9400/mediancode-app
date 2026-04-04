@@ -40,7 +40,10 @@ import {
 	drawerFooterBtnDangerConfirm,
 	drawerPanelFlexibleInner,
 	drawerPanelStackedInner,
+	drawerStackRoot,
 	drawerStackDimmer,
+	sidebarShell,
+	sidebarShellMotionLocked,
 	tableListAuxiliaryLabel,
 	tableListBodyCaption,
 	tableListBodyCell,
@@ -187,6 +190,12 @@ describe('lib/ui/classes', () => {
 		expect(drawerStackDimmer).toContain('inset-0');
 	});
 
+	it('drawer stack root carries the shared motion hook', () => {
+		expect(drawerStackRoot).toContain('drawer-stack-root');
+		expect(drawerStackRoot).toContain('fixed');
+		expect(drawerStackRoot).toContain('pointer-events-none');
+	});
+
 	it('dashboard titles use text-mono-100 like sidebar brand, not text-white', () => {
 		expect(dashboardPageTitleText).toContain('text-mono-100');
 		expect(dashboardPageTitleText).toContain('shrink');
@@ -206,6 +215,13 @@ describe('lib/ui/classes', () => {
 		expect(backNavButton).toContain('h-8');
 		expect(backNavButton).toContain('hover:text-mono-100');
 		expect(clerkNavbarButton).toContain('data-[active=true]:text-mono-100');
+	});
+
+	it('sidebar shell can drop width transitions during drawer motion', () => {
+		expect(sidebarShell).toContain('transition-[width]');
+		expect(sidebarShell).toContain('duration-[400ms]');
+		expect(sidebarShellMotionLocked).not.toContain('transition-[width]');
+		expect(sidebarShellMotionLocked).toContain('overflow-hidden');
 	});
 
 	it('table list primitives align with dashboard chrome', () => {

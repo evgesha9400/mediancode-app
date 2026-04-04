@@ -208,8 +208,12 @@ export const accentIconTileError = 'rounded-xl bg-red-400/10 text-red-400 flex i
 
 // --- Sidebar ---
 
+const sidebarShellBase = 'text-mono-300 font-inter flex flex-col shrink-0 overflow-hidden';
+
 export const sidebarShell =
-  'text-mono-300 font-inter flex flex-col shrink-0 transition-[width] duration-[400ms] overflow-hidden';
+  `${sidebarShellBase} transition-[width] duration-[400ms]`;
+
+export const sidebarShellMotionLocked = sidebarShellBase;
 
 /** Horizontal rule between nav groups in collapsed (icon-only) mode */
 export const sidebarSectionDividerHorizontal = 'border-t border-mono-800/60 my-2';
@@ -231,7 +235,7 @@ export const dashboardMainColumn = 'flex flex-col flex-1 min-h-0 w-full';
  * left-to-right (same stops, `transparent` into `bg-mono-950`). First image in the list paints on top.
  */
 export const dashboardGreenWashGradient =
-  'bg-[radial-gradient(ellipse_82%_68%_at_100%_0%,rgb(82_226_140/0.075)_0%,rgb(82_226_140/0.026)_50%,transparent_82%),linear-gradient(to_top,rgb(74_222_128/0.07),rgb(74_222_128/0.02)_45%,transparent),linear-gradient(to_right,rgb(74_222_128/0.045),rgb(74_222_128/0.012)_45%,transparent)]';
+  'bg-[radial-gradient(ellipse_82%_68%_at_100%_0%,rgb(82_226_140/0.04)_0%,rgb(82_226_140/0.013)_50%,transparent_82%),linear-gradient(to_top,rgb(74_222_128/0.035),rgb(74_222_128/0.01)_45%,transparent),linear-gradient(to_right,rgb(74_222_128/0.022),rgb(74_222_128/0.006)_45%,transparent)]';
 
 /**
  * Full dashboard viewport background: `mono-950` plus combined wash (same for every route).
@@ -379,6 +383,10 @@ export const tableListRowSelected = 'bg-mono-800';
 /** Overlay behind drawers — visual values come from `.drawer-scrim` in `app.css`. */
 export const drawerScrim =
   'drawer-scrim fixed top-0 right-0 h-screen z-[60]';
+
+/** Root wrapper for the shared drawer overlay stack. */
+export const drawerStackRoot =
+  'drawer-stack-root fixed right-0 top-0 h-screen z-[70] flex justify-end pointer-events-none';
 
 /**
  * Shared frosted shell for drawer panels (see `.drawer-panel-glass-surface` in `app.css` for blur + fill).

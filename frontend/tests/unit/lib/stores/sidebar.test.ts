@@ -3,6 +3,10 @@ import { sidebarState } from '$lib/stores/sidebar.svelte';
 
 describe('sidebarState', () => {
 	beforeEach(() => {
+		window.innerWidth = 1400;
+		const cleanup = sidebarState.initViewportMonitoring();
+		cleanup();
+		sidebarState.endDrawerMotion();
 		sidebarState.setDrawerPanelWidth(0);
 		sidebarState.unlockCollapsed();
 	});
@@ -31,6 +35,14 @@ describe('sidebarState', () => {
 		it('has availableDrawerWidth getter', () => {
 			expect(typeof sidebarState.availableDrawerWidth).toBe('number');
 		});
+
+		it('has drawerMotionActive getter', () => {
+			expect(typeof sidebarState.drawerMotionActive).toBe('boolean');
+		});
+
+		it('has renderedWidth getter', () => {
+			expect(typeof sidebarState.renderedWidth).toBe('number');
+		});
 	});
 
 	describe('setDrawerPanelWidth', () => {
@@ -44,6 +56,24 @@ describe('sidebarState', () => {
 			sidebarState.setDrawerPanelWidth(500);
 			sidebarState.setDrawerPanelWidth(0);
 			expect(true).toBe(true);
+		});
+
+		it('keeps the rendered width stable during drawer motion while logical width updates', () => {
+			expect(sidebarState.width).toBe(256);
+			expect(sidebarState.renderedWidth).toBe(256);
+
+			sidebarState.startDrawerMotion();
+			sidebarState.setDrawerPanelWidth(1900);
+
+			expect(sidebarState.drawerMotionActive).toBe(true);
+			expect(sidebarState.width).toBe(64);
+			expect(sidebarState.availableDrawerWidth).toBeGreaterThan(0);
+			expect(sidebarState.renderedWidth).toBe(256);
+
+			sidebarState.endDrawerMotion();
+
+			expect(sidebarState.drawerMotionActive).toBe(false);
+			expect(sidebarState.renderedWidth).toBe(64);
 		});
 	});
 

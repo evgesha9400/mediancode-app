@@ -22,7 +22,9 @@
 </script>
 
 <script lang="ts">
-  import { slide, fade, fly } from 'svelte/transition';
+  import { onDestroy } from 'svelte';
+  import { flip } from 'svelte/animate';
+  import { fade, fly } from 'svelte/transition';
   import { cubicInOut } from 'svelte/easing';
   import { DrawerHeader, DrawerContent, DrawerFooter } from '$lib/components/drawer';
   import { sidebarState } from '$lib/stores/sidebar.svelte';
@@ -32,21 +34,69 @@
     drawerPanelStackedOuter,
     drawerPanelStackedInner,
     drawerScrim,
+    drawerStackRoot,
     drawerStackDimmer,
   } from '$lib/ui/classes';
 
   // ─── Animation config ────────────────────────────────────────────────────────
-  const DRAWER_DURATION = 350; // ms — shared by backdrop, outer fly, inner slide
+  const DRAWER_DURATION = 350; // ms — shared by backdrop, outer fly, nested panel motion
   const DRAWER_EASING = cubicInOut; // symmetric so open === close feel
   // ─────────────────────────────────────────────────────────────────────────────
 
   let { panels, onPopPanel }: DrawerStackProps = $props();
 
+  let previousPanelSignature = '';
+  let motionInitialized = false;
+  let motionTimeout: number | null = null;
+
+  function buildPanelSignature(items: DrawerStackPanel[]): string {
+    return items.map((panel) => `${panel.id}:${panel.width}:${panel.minWidth ?? ''}`).join('|');
+  }
+
+  function clearMotionTimeout(): void {
+    if (motionTimeout !== null) {
+      clearTimeout(motionTimeout);
+      motionTimeout = null;
+    }
+  }
+
+  function scheduleDrawerMotionEnd(): void {
+    clearMotionTimeout();
+    motionTimeout = window.setTimeout(() => {
+      sidebarState.endDrawerMotion();
+      motionTimeout = null;
+    }, DRAWER_DURATION);
+  }
+
+  // Freeze the sidebar's rendered width while the drawer stack changes shape.
+  $effect(() => {
+    const signature = buildPanelSignature(panels);
+
+    if (!motionInitialized) {
+      previousPanelSignature = signature;
+      motionInitialized = true;
+      return;
+    }
+
+    if (signature === previousPanelSignature) {
+      return;
+    }
+
+    previousPanelSignature = signature;
+    sidebarState.startDrawerMotion();
+    scheduleDrawerMotionEnd();
+  });
+
   // Tell sidebar how much width the drawer panels need
   $effect(() => {
     const total = panels.reduce((sum, p) => sum + p.width, 0);
     sidebarState.setDrawerPanelWidth(total);
-    return () => sidebarState.setDrawerPanelWidth(0);
+  });
+
+  onDestroy(() => {
+    clearMotionTimeout();
+    sidebarState.endDrawerMotion();
+    sidebarState.setDrawerPanelWidth(0);
   });
 
   // Compute first visible panel index using left-to-right shrink-then-hide.
@@ -82,72 +132,53 @@
   <div
     class={drawerScrim}
     style="width: calc(100vw - {sidebarState.width}px);"
+    data-drawer-motion={sidebarState.drawerMotionActive ? 'active' : undefined}
     onclick={onPopPanel}
     onkeydown={(e) => { if (e.key === 'Escape') onPopPanel(); }}
     transition:fade={{ duration: DRAWER_DURATION, easing: DRAWER_EASING }}
   ></div>
 
   <div
-    class="fixed right-0 top-0 h-screen z-[70] flex justify-end pointer-events-none"
+    class={drawerStackRoot}
     style="width: calc(100vw - {sidebarState.width}px);"
+    data-drawer-motion={sidebarState.drawerMotionActive ? 'active' : undefined}
     transition:fly={{ duration: DRAWER_DURATION, x: '100%', opacity: 1, easing: DRAWER_EASING }}
   >
     {#each visiblePanels as panel, i (panel.id)}
-      {#if i === 0}
-        <!-- Leftmost visible panel: flexible width, shrinks to fit -->
-        <div
-          class={drawerPanelFlexibleOuter}
-          class:border-r={i < visiblePanels.length - 1}
-          style="flex: 1 1 0; max-width: {panel.width}px;{visiblePanels.length > 1 && panel.minWidth ? ` min-width: ${panel.minWidth}px;` : ''}"
-        >
-          <div class={drawerPanelFlexibleInner}>
-            <DrawerHeader
-              title={panel.title}
-              headerSystem={panel.headerSystem}
-              headerNamespace={panel.headerNamespace}
-              onClose={onPopPanel}
-            />
-            <DrawerContent>
-              {@render panel.content({ close: onPopPanel })}
-            </DrawerContent>
-            {#if panel.footer}
-              <DrawerFooter padding="edge">
-                {@render panel.footer({ close: onPopPanel })}
-              </DrawerFooter>
-            {/if}
-          </div>
-          {#if i < visiblePanels.length - 1}
-            <div class={drawerStackDimmer}></div>
+      <div
+        class={i === 0 ? drawerPanelFlexibleOuter : drawerPanelStackedOuter}
+        class:border-r={i === 0 && i < visiblePanels.length - 1}
+        style={i === 0
+          ? `flex: 1 1 0; max-width: ${panel.width}px;${visiblePanels.length > 1 && panel.minWidth ? ` min-width: ${panel.minWidth}px;` : ''}`
+          : `width: ${panel.width}px;`}
+        animate:flip={{ duration: DRAWER_DURATION, easing: DRAWER_EASING }}
+        transition:fly|global={{
+          duration: i === 0 ? 0 : DRAWER_DURATION,
+          x: i === 0 ? 0 : panel.width,
+          opacity: i === 0 ? 0 : 1,
+          easing: DRAWER_EASING
+        }}
+      >
+        <div class={i === 0 ? drawerPanelFlexibleInner : drawerPanelStackedInner}>
+          <DrawerHeader
+            title={panel.title}
+            headerSystem={panel.headerSystem}
+            headerNamespace={panel.headerNamespace}
+            onClose={onPopPanel}
+          />
+          <DrawerContent>
+            {@render panel.content({ close: onPopPanel })}
+          </DrawerContent>
+          {#if panel.footer}
+            <DrawerFooter padding="edge">
+              {@render panel.footer({ close: onPopPanel })}
+            </DrawerFooter>
           {/if}
         </div>
-      {:else}
-        <!-- Stacked panel: fixed width, slides in from right pushing base panel left -->
-        <div
-          class={drawerPanelStackedOuter}
-          style="width: {panel.width}px;"
-          transition:slide|global={{ duration: DRAWER_DURATION, axis: 'x', easing: DRAWER_EASING }}
-        >
-          <div class={drawerPanelStackedInner}>
-            <DrawerHeader
-              title={panel.title}
-              headerSystem={panel.headerSystem}
-              headerNamespace={panel.headerNamespace}
-              onClose={onPopPanel}
-            />
-            <DrawerContent>
-              {@render panel.content({ close: onPopPanel })}
-            </DrawerContent>
-            {#if panel.footer}
-              <DrawerFooter padding="edge">
-                {@render panel.footer({ close: onPopPanel })}
-              </DrawerFooter>
-            {/if}
-          </div>
-          {#if i < visiblePanels.length - 1}
-            <div class={drawerStackDimmer}></div>
-          {/if}
-        </div>
-      {/if}
+        {#if i < visiblePanels.length - 1}
+          <div class={drawerStackDimmer}></div>
+        {/if}
+      </div>
     {/each}
   </div>
 {/if}

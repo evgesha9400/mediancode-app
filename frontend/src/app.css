@@ -99,6 +99,25 @@ html[data-theme="soft"] {
     backdrop-filter: var(--drawer-stack-dimmer-backdrop);
   }
 
+  .drawer-scrim[data-drawer-motion='active'] {
+    will-change: opacity;
+  }
+
+  .drawer-stack-root[data-drawer-motion='active'] {
+    will-change: transform;
+  }
+
+  .drawer-stack-root[data-drawer-motion='active'] .drawer-panel-glass-surface,
+  .drawer-stack-root[data-drawer-motion='active'] .drawer-stack-dimmer,
+  .drawer-stack-root[data-drawer-motion='active'] .drawer-footer-shell {
+    will-change: transform, opacity;
+  }
+
+  .drawer-stack-root[data-drawer-motion='active'] .drawer-panel-glass-surface,
+  .drawer-stack-root[data-drawer-motion='active'] .drawer-stack-dimmer {
+    contain: paint;
+  }
+
   .drawer-footer-shell {
     border-top: 1px solid var(--drawer-footer-border);
     background-color: var(--drawer-footer-bg);
