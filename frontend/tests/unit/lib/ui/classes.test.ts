@@ -94,27 +94,25 @@ describe('lib/ui/classes', () => {
 		expect(dashboardMainColumn).toContain('min-h-0');
 	});
 
-	it('dashboardMainColumnCanvasForPath uses default gradient for non-hub routes (e.g. Types, /dashboard)', () => {
-		for (const path of ['/types', '/dashboard']) {
+	it('dashboardMainColumnCanvasForPath combines vertical wash, horizontal wash, and top-right radial', () => {
+		for (const path of [
+			'/types',
+			'/dashboard',
+			'/fields',
+			'/objects',
+			'/namespaces',
+			'/apis',
+			'/apis/uuid-here',
+			'/settings',
+			'/settings/organization',
+		]) {
 			const c = dashboardMainColumnCanvasForPath(path);
 			expect(c).toContain('bg-mono-950');
-			expect(c).toContain('bg-gradient-to-t');
-			expect(c).toContain('from-green-400/[0.07]');
-		}
-	});
-
-	it('dashboardMainColumnCanvasForPath uses top-right radial for component hub routes', () => {
-		for (const path of ['/fields', '/objects', '/namespaces', '/apis', '/apis/uuid-here']) {
-			const c = dashboardMainColumnCanvasForPath(path);
+			expect(c).toContain('linear-gradient(to_top');
+			expect(c).toContain('linear-gradient(to_right');
 			expect(c).toContain('radial-gradient');
 			expect(c).toContain('at_100%_0%');
 		}
-	});
-
-	it('dashboardMainColumnCanvasForPath matches settings subtree', () => {
-		expect(dashboardMainColumnCanvasForPath('/settings')).toContain('radial-gradient');
-		expect(dashboardMainColumnCanvasForPath('/settings/organization')).toContain('radial-gradient');
-		expect(dashboardMainColumnCanvasForPath('/settings/')).toContain('radial-gradient');
 	});
 
 	it('dropdownPanel encodes floating list container', () => {
@@ -133,10 +131,7 @@ describe('lib/ui/classes', () => {
 	});
 
 	it('clerkUserButtonPopoverCard matches drawer glass', () => {
-		expect(clerkUserButtonPopoverCard).toContain('rounded-3xl');
-		expect(clerkUserButtonPopoverCard).toContain('backdrop-blur-2xl');
-		expect(clerkUserButtonPopoverCard).toContain('border-white/10');
-		expect(clerkUserButtonPopoverCard).toContain('shadow-drawer-deep');
+		expect(clerkUserButtonPopoverCard).toBe('drawer-panel-glass-surface');
 	});
 
 	it('clerk UserButton popover inner slots stay transparent over glass', () => {
@@ -165,7 +160,9 @@ describe('lib/ui/classes', () => {
 	});
 
 	it('drawer segmented footer panel stacks on mobile and rows on sm+', () => {
+		expect(drawerFooterShellEdge).toContain('drawer-footer-shell');
 		expect(drawerFooterShellEdge).toContain('px-0');
+		expect(drawerFooterSegmentedPanel).toContain('drawer-footer-segmented-panel');
 		expect(drawerFooterSegmentedPanel).toContain('flex-col');
 		expect(drawerFooterSegmentedPanel).toContain('sm:flex-row');
 		expect(drawerFooterSegmentedPanel).not.toContain('rounded-xl');

@@ -27,8 +27,10 @@
   import { DrawerHeader, DrawerContent, DrawerFooter } from '$lib/components/drawer';
   import { sidebarState } from '$lib/stores/sidebar.svelte';
   import {
-    drawerPanelFlexible,
-    drawerPanelStacked,
+    drawerPanelFlexibleOuter,
+    drawerPanelFlexibleInner,
+    drawerPanelStackedOuter,
+    drawerPanelStackedInner,
     drawerScrim,
     drawerStackDimmer,
   } from '$lib/ui/classes';
@@ -94,24 +96,26 @@
       {#if i === 0}
         <!-- Leftmost visible panel: flexible width, shrinks to fit -->
         <div
-          class={drawerPanelFlexible}
+          class={drawerPanelFlexibleOuter}
           class:border-r={i < visiblePanels.length - 1}
           style="flex: 1 1 0; max-width: {panel.width}px;{visiblePanels.length > 1 && panel.minWidth ? ` min-width: ${panel.minWidth}px;` : ''}"
         >
-          <DrawerHeader
-            title={panel.title}
-            headerSystem={panel.headerSystem}
-            headerNamespace={panel.headerNamespace}
-            onClose={onPopPanel}
-          />
-          <DrawerContent>
-            {@render panel.content({ close: onPopPanel })}
-          </DrawerContent>
-          {#if panel.footer}
-            <DrawerFooter padding="edge">
-              {@render panel.footer({ close: onPopPanel })}
-            </DrawerFooter>
-          {/if}
+          <div class={drawerPanelFlexibleInner}>
+            <DrawerHeader
+              title={panel.title}
+              headerSystem={panel.headerSystem}
+              headerNamespace={panel.headerNamespace}
+              onClose={onPopPanel}
+            />
+            <DrawerContent>
+              {@render panel.content({ close: onPopPanel })}
+            </DrawerContent>
+            {#if panel.footer}
+              <DrawerFooter padding="edge">
+                {@render panel.footer({ close: onPopPanel })}
+              </DrawerFooter>
+            {/if}
+          </div>
           {#if i < visiblePanels.length - 1}
             <div class={drawerStackDimmer}></div>
           {/if}
@@ -119,24 +123,26 @@
       {:else}
         <!-- Stacked panel: fixed width, slides in from right pushing base panel left -->
         <div
-          class={drawerPanelStacked}
+          class={drawerPanelStackedOuter}
           style="width: {panel.width}px;"
           transition:slide|global={{ duration: DRAWER_DURATION, axis: 'x', easing: DRAWER_EASING }}
         >
-          <DrawerHeader
-            title={panel.title}
-            headerSystem={panel.headerSystem}
-            headerNamespace={panel.headerNamespace}
-            onClose={onPopPanel}
-          />
-          <DrawerContent>
-            {@render panel.content({ close: onPopPanel })}
-          </DrawerContent>
-          {#if panel.footer}
-            <DrawerFooter padding="edge">
-              {@render panel.footer({ close: onPopPanel })}
-            </DrawerFooter>
-          {/if}
+          <div class={drawerPanelStackedInner}>
+            <DrawerHeader
+              title={panel.title}
+              headerSystem={panel.headerSystem}
+              headerNamespace={panel.headerNamespace}
+              onClose={onPopPanel}
+            />
+            <DrawerContent>
+              {@render panel.content({ close: onPopPanel })}
+            </DrawerContent>
+            {#if panel.footer}
+              <DrawerFooter padding="edge">
+                {@render panel.footer({ close: onPopPanel })}
+              </DrawerFooter>
+            {/if}
+          </div>
           {#if i < visiblePanels.length - 1}
             <div class={drawerStackDimmer}></div>
           {/if}

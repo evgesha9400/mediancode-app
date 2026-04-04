@@ -12,9 +12,9 @@
  * | Dashboard & stat cards | `boxShadow.glow-*` | `cardGlassSurface`, `cardGlassBorder*` |
  * | Green accent icon tiles | `glow-green-icon`, `glow-green-sm` | `accentIconTile`, `marketingFeatureIcon` |
  * | Sidebar shell & nav items | — | `sidebarShell`, `sidebarNavItem*` |
- * | Dashboard column shell & page header chrome | — | `dashboardMainColumn`, `dashboardMainColumnCanvas`, `dashboardMainColumnCanvasForPath`, `dashboardGreenWashGradient`, `dashboardGreenWashGradientTopRight`, `dashboardGreenWashGradientSettings`, `dashboardTextPrimary`, `dashboardControlTextMutedHoverPrimary`, `backNavButton`, `dashboardPageHeaderShell`, `dashboardSearchToolbarShell`, `mainColumnChromePaddingX`, `dashboardPageHeaderTitleBand`, `dashboardPageTitleText`, `dashboardPageTitleTextDetail`, `drawerHeaderTitleText`, `headerMetaSeparator`, `headerNamespaceCluster` |
+ * | Dashboard column shell & page header chrome | — | `dashboardMainColumn`, `dashboardMainColumnCanvas`, `dashboardMainColumnCanvasForPath`, `dashboardGreenWashGradient`, `dashboardTextPrimary`, `dashboardControlTextMutedHoverPrimary`, `backNavButton`, `dashboardPageHeaderShell`, `dashboardSearchToolbarShell`, `mainColumnChromePaddingX`, `dashboardPageHeaderTitleBand`, `dashboardPageTitleText`, `dashboardPageTitleTextDetail`, `drawerHeaderTitleText`, `headerMetaSeparator`, `headerNamespaceCluster` |
  * | Dashboard entity list tables | — | `tableListPageGutter`, `tableListCardShell`, `tableListBodyDivide`, `tableListCell`, `tableListCellPrimary`, `tableListHeaderSortable`, `tableListBodyPrimary`, `tableListBodyCell`, `tableListBodyCaption`, `tableListBodyLink`, `tableListAuxiliaryLabel`, `tableListDetailTitle`, `tableListPanelSectionTitle`, `tableListPanelStatLabel`, `tableListPanelStatTotal`, `tableListRowInteractive`, `tableListRowHover`, `tableListRowSelected` |
- * | Drawer & modal frosted shells | `drawer-deep` | `drawerPanelGlassSurface`, `modalPanelGlassSurface`, `drawerPanelFlexible`, `drawerPanelStacked`, `drawerFooterShellInset`, `drawerFooterShellEdge`, `drawerScrim`, `drawerLinkedEntityRow`, … |
+ * | Drawer & modal frosted shells | `drawer-deep` | `drawerPanelGlassSurface`, `modalPanelGlassSurface`, `drawerPanelFlexibleOuter`, `drawerPanelFlexibleInner`, `drawerPanelStackedOuter`, `drawerPanelStackedInner`, `drawerFooterShellInset`, `drawerFooterShellEdge`, `drawerScrim`, `drawerLinkedEntityRow`, … |
  * | Primary / secondary / destructive | `glow-green` | `drawerFooterSegmentedPanel`, `drawerFooterSegmentBtn`, `drawerFooterDeleteConfirmBanner`, `drawerFooterBtnDangerConfirmSegment*`, `drawerFooterBtnPrimary*`, `drawerFooterBtnSecondarySegment*`, `drawerFooterBtnDestructive*`, `drawerFooterDangerCallout`, `drawerFooterBtnDangerConfirm*`, `modalFooterBtn*`, `btnCtaGlow`, … |
  * | Marketing landing | `glow-*` | `marketingCtaPrimary` (nav), `marketingHeroCta` + `marketingHeroCtaSecondary`, `marketingFooterCta` + `marketingFooterCtaSecondary`, `marketingHowItWorks*` |
  * | Clerk `appearance.elements` | `glow-green`, `drawer-deep` | `clerkCard`, `clerkModalContentShell`, `clerkUserButtonPopover*`, `clerkFormButtonPrimary`, … |
@@ -226,53 +226,19 @@ export const sidebarNavItemInactive = `hover:bg-mono-800/50 ${hoverTextPrimaryOn
 /** Fills the flex slot next to the sidebar; enables scroll inside the body. */
 export const dashboardMainColumn = 'flex flex-col flex-1 min-h-0 w-full';
 
-/** Default (Types, validators, etc.): green lifts from bottom (`to-t`), fades to `mono-950` at top. */
+/**
+ * Layered dashboard green wash: top-right radial over matching linear washes — bottom-to-top and
+ * left-to-right (same stops, `transparent` into `bg-mono-950`). First image in the list paints on top.
+ */
 export const dashboardGreenWashGradient =
-  'bg-gradient-to-t from-green-400/[0.07] via-green-400/[0.020] via-45% to-mono-950';
-
-/** Settings subtree: tight spotlight from bottom-left (different “location” from default bottom edge). */
-export const dashboardGreenWashGradientSettings =
-  'bg-[radial-gradient(ellipse_52%_44%_at_0%_100%,rgb(82_226_140/0.055)_0%,transparent_58%)]';
+  'bg-[radial-gradient(ellipse_82%_68%_at_100%_0%,rgb(82_226_140/0.075)_0%,rgb(82_226_140/0.026)_50%,transparent_82%),linear-gradient(to_top,rgb(74_222_128/0.07),rgb(74_222_128/0.02)_45%,transparent),linear-gradient(to_right,rgb(74_222_128/0.045),rgb(74_222_128/0.012)_45%,transparent)]';
 
 /**
- * Top-right radial spotlight — component hub routes only (Fields, Objects, APIs list & detail, Namespaces).
- * Wider ellipse + later `transparent` stop spread the wash; corner peak alphas 0.075 / 0.026.
+ * Full dashboard viewport background: `mono-950` plus combined wash (same for every route).
+ * Signature retains `pathname` for call sites that pass `page.url.pathname`; reserved for future tuning.
  */
-export const dashboardGreenWashGradientTopRight =
-  'bg-[radial-gradient(ellipse_82%_68%_at_100%_0%,rgb(82_226_140/0.075)_0%,rgb(82_226_140/0.026)_50%,transparent_82%)]';
-
-type DashboardCanvasGradientRule = {
-  match: (pathname: string) => boolean;
-  gradient: string;
-};
-
-function isComponentHubCanvasPath(pathname: string): boolean {
-  return (
-    pathname === '/fields' ||
-    pathname === '/objects' ||
-    pathname === '/namespaces' ||
-    pathname === '/apis' ||
-    /^\/apis\/[^/]+$/.test(pathname)
-  );
-}
-
-/**
- * First matching rule wins (keep more specific routes above broader prefixes).
- * Adjust gradients or add `{ match, gradient }` entries to tune per area.
- */
-const dashboardMainColumnCanvasGradientRules: DashboardCanvasGradientRule[] = [
-  { match: (p) => p.startsWith('/settings'), gradient: dashboardGreenWashGradientSettings },
-  { match: isComponentHubCanvasPath, gradient: dashboardGreenWashGradientTopRight },
-];
-
-/**
- * Full dashboard viewport background for a route: `mono-950` plus route-specific green wash.
- */
-export function dashboardMainColumnCanvasForPath(pathname: string): string {
-  const p = pathname.replace(/\/+$/, '') || '/';
-  const gradient =
-    dashboardMainColumnCanvasGradientRules.find((r) => r.match(p))?.gradient ?? dashboardGreenWashGradient;
-  return `bg-mono-950 ${gradient}`;
+export function dashboardMainColumnCanvasForPath(_pathname: string): string {
+  return `bg-mono-950 ${dashboardGreenWashGradient}`;
 }
 
 /**
@@ -410,25 +376,32 @@ export const tableListRowSelected = 'bg-mono-800';
 
 // --- Drawer stack ---
 
-/** Dims the page behind drawers; light enough that the green canvas still reads through the blur. */
+/** Overlay behind drawers — visual values come from `.drawer-scrim` in `app.css`. */
 export const drawerScrim =
-  'fixed top-0 right-0 h-screen z-[60] bg-mono-950/45 backdrop-blur-[1.5px]';
+  'drawer-scrim fixed top-0 right-0 h-screen z-[60]';
 
 /**
- * Shared frosted shell for drawer panels: low-opacity fill + strong blur so the UI behind smears visibly.
- * Specular border / inset ring approximates glass edge lighting on dark chrome.
+ * Shared frosted shell for drawer panels (see `.drawer-panel-glass-surface` in `app.css` for blur + fill).
  */
-export const drawerPanelGlassSurface =
-  'bg-mono-900/40 backdrop-blur-2xl backdrop-saturate-150 border border-white/10 shadow-drawer-deep ring-1 ring-inset ring-white/5';
+export const drawerPanelGlassSurface = 'drawer-panel-glass-surface';
 
-export const drawerPanelFlexible =
-  `h-[calc(100vh-32px)] m-4 flex flex-col ${drawerPanelGlassSurface} overflow-hidden relative rounded-3xl pointer-events-auto`;
+/**
+ * Drawer panel shell (outer): visual chrome comes from `.drawer-panel-glass-surface` in `app.css`.
+ * Keep overflow clipping on the inner wrapper so shell treatment stays centralized.
+ */
+export const drawerPanelFlexibleOuter =
+  `h-[calc(100vh-32px)] m-4 flex min-h-0 flex-col ${drawerPanelGlassSurface} relative pointer-events-auto`;
 
-export const drawerPanelStacked =
-  `flex-shrink-0 h-[calc(100vh-32px)] my-4 mr-4 flex flex-col ${drawerPanelGlassSurface} overflow-hidden relative rounded-3xl pointer-events-auto`;
+/** Scroll clip + column layout inside {@link drawerPanelFlexibleOuter} / {@link drawerPanelStackedOuter}. */
+export const drawerPanelFlexibleInner = 'drawer-transparent-context flex min-h-0 flex-1 flex-col overflow-hidden';
 
-/** Covers the panel behind a stacked drawer without a second heavy blur. */
-export const drawerStackDimmer = 'absolute inset-0 bg-mono-950/40 z-10 pointer-events-none';
+export const drawerPanelStackedOuter =
+  `flex h-[calc(100vh-32px)] min-h-0 flex-shrink-0 flex-col ${drawerPanelGlassSurface} relative my-4 mr-4 pointer-events-auto`;
+
+export const drawerPanelStackedInner = drawerPanelFlexibleInner;
+
+/** Stacked-panel dimmer — visual values come from `.drawer-stack-dimmer` in `app.css`. */
+export const drawerStackDimmer = 'drawer-stack-dimmer absolute inset-0 z-10 pointer-events-none';
 
 /**
  * Centered modal panels — same frosted shell as `DrawerStack` so all overlay forms match.
@@ -438,10 +411,10 @@ export const modalPanelGlassSurface = drawerPanelGlassSurface;
 // --- Drawer footer & primary actions ---
 
 /** Default drawer footer shell (guttered). Pair with {@link drawerFooterShellEdge} via `DrawerFooter` `padding` prop. */
-export const drawerFooterShellInset = 'p-6 border-t border-white/10 bg-mono-950/75';
+export const drawerFooterShellInset = 'drawer-footer-shell p-6';
 
 /** Flush footer shell for full-width segmented actions (no horizontal inset). */
-export const drawerFooterShellEdge = 'border-t border-white/10 bg-mono-950/75 px-0 pt-0 pb-0';
+export const drawerFooterShellEdge = 'drawer-footer-shell px-0 pt-0 pb-0';
 
 export const drawerFooterBtnBlock =
   'w-full px-4 py-2 rounded-xl text-sm border font-inter tracking-wide transition-colors';
@@ -450,7 +423,7 @@ export const drawerFooterBtnBlock =
  * CRUD drawer segmented toolbar: edge-to-edge inside the footer, no outer box border (dividers only).
  */
 export const drawerFooterSegmentedPanel =
-  'flex flex-col sm:flex-row overflow-hidden bg-mono-900/40';
+  'drawer-footer-segmented-panel flex flex-col sm:flex-row overflow-hidden';
 
 /** Separator between {@link drawerFooterSegmentBtn} cells (horizontal rule when stacked, vertical in row layout). */
 export const drawerFooterSegmentDivider =
@@ -634,7 +607,7 @@ export const clerkCard =
 /**
  * UserButton account menu — same frost as {@link drawerPanelGlassSurface} / stacked drawers.
  */
-export const clerkUserButtonPopoverCard = `${drawerPanelGlassSurface} rounded-3xl`;
+export const clerkUserButtonPopoverCard = drawerPanelGlassSurface;
 
 /**
  * Inner Clerk slots default to `colorBackground`; keep them clear so the card glass reads like drawer chrome.
@@ -687,7 +660,7 @@ export const clerkModalBackdrop = 'bg-mono-950/45 backdrop-blur-[1.5px]';
  * Outer dialog shell for Clerk modal flows — same frost as {@link drawerPanelGlassSurface}.
  * Inner `card` is overridden to transparent where the profile opens in a modal (see `ClerkSidebarUser`).
  */
-export const clerkModalContentShell = `${drawerPanelGlassSurface} rounded-3xl overflow-hidden`;
+export const clerkModalContentShell = `${drawerPanelGlassSurface} overflow-hidden`;
 
 /**
  * Inner profile card when the shell is already frosted (`modalContent` + {@link clerkModalContentShell}).

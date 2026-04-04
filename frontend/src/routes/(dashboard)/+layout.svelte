@@ -50,7 +50,8 @@
   <div class="flex h-screen {mainColumnCanvasClass}">
     <Sidebar activeRoute={currentPath} />
 
-    <div class="flex-1 flex flex-col overflow-hidden min-w-0">
+    <!-- min-h-0: flex child can shrink so inner MainColumnFrame scroll works. Avoid overflow-hidden here: it breaks backdrop-filter on DrawerStack (frost reads as solid). -->
+    <div class="flex-1 flex flex-col min-w-0 min-h-0">
       {#if $storeLoadingState.isLoading}
         <div class="flex-1 flex items-center justify-center">
           <div class="text-center">
