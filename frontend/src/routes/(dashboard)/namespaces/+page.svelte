@@ -24,6 +24,12 @@
   } from '$lib/components';
   import type { FilterConfig, Namespace } from '$lib/types';
   import {
+    drawerFooterBtnPrimaryDisabledSegment,
+    drawerFooterBtnPrimaryEnabled,
+    drawerFooterBtnSecondarySegment,
+    drawerFooterSegmentBtn,
+    drawerFooterSegmentDivider,
+    drawerFooterSegmentedPanel,
     surfaceInsideFrostedPanel,
     tableListBodyPrimary,
     tableListPanelSectionTitle,
@@ -310,27 +316,35 @@
       onDeleteCancel={() => workflow.showDeleteConfirm = false}
     />
   {:else if workflow.editedItem && isReadOnly}
-    {#if hasDefaultChanged}
+    <div class={drawerFooterSegmentedPanel} role="group" aria-label="Namespace details actions">
+      {#if hasDefaultChanged}
+        <button
+          type="button"
+          onclick={workflow.handleSave}
+          disabled={workflow.isSaving}
+          class="{drawerFooterSegmentBtn} {workflow.isSaving
+            ? drawerFooterBtnPrimaryDisabledSegment
+            : drawerFooterBtnPrimaryEnabled}"
+        >
+          {#if workflow.isSaving}
+            <i class="fa-solid fa-spinner fa-spin" aria-hidden="true"></i>
+            <span>Saving...</span>
+          {:else}
+            <span>Save</span>
+            <i class="fa-solid fa-floppy-disk" aria-hidden="true"></i>
+          {/if}
+        </button>
+        <div class={drawerFooterSegmentDivider} aria-hidden="true"></div>
+      {/if}
       <button
         type="button"
-        onclick={workflow.handleSave}
-        disabled={workflow.isSaving}
-        class="w-full px-4 py-2 rounded-xl text-sm font-inter tracking-wide transition-colors font-medium {workflow.isSaving ? 'bg-mono-800 text-mono-500 cursor-not-allowed' : 'bg-green-400 border border-transparent text-mono-950 font-semibold hover:bg-green-300 shadow-sm cursor-pointer'}"
+        onclick={workflow.closeDrawer}
+        class="{drawerFooterSegmentBtn} {drawerFooterBtnSecondarySegment}"
       >
-        {#if workflow.isSaving}
-          Saving...
-        {:else}
-          Save
-        {/if}
+        <span>Close</span>
+        <i class="fa-solid fa-xmark" aria-hidden="true"></i>
       </button>
-    {/if}
-    <button
-      type="button"
-      onclick={workflow.closeDrawer}
-      class="w-full px-4 py-2 rounded-xl border border-mono-600 text-mono-300 text-sm font-inter tracking-wide hover:bg-mono-800 transition-colors font-medium"
-    >
-      Close
-    </button>
+    </div>
   {/if}
 {/snippet}
 

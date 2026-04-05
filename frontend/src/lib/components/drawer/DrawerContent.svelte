@@ -18,11 +18,13 @@
 </script>
 
 <script lang="ts">
+  import { drawerBodyScrollArea } from '$lib/ui/classes';
+
   interface Props extends DrawerContentProps {}
 
   let { children }: Props = $props();
 </script>
 
-<div class="flex-1 overflow-auto p-6">
+<div class={drawerBodyScrollArea}>
   {@render children?.()}
 </div>

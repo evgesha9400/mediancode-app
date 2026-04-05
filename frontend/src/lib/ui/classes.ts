@@ -14,8 +14,8 @@
  * | Sidebar shell & nav items | — | `sidebarShell`, `sidebarNavItem*` |
  * | Dashboard column shell & page header chrome | — | `dashboardMainColumn`, `dashboardMainColumnCanvas`, `dashboardMainColumnCanvasForPath`, `dashboardGreenWashGradient`, `dashboardTextPrimary`, `dashboardControlTextMutedHoverPrimary`, `backNavButton`, `dashboardPageHeaderShell`, `dashboardSearchToolbarShell`, `mainColumnChromePaddingX`, `dashboardPageHeaderTitleBand`, `dashboardPageTitleText`, `dashboardPageTitleTextDetail`, `drawerHeaderTitleText`, `headerMetaSeparator`, `headerNamespaceCluster` |
  * | Dashboard entity list tables | — | `tableListPageGutter`, `tableListCardShell`, `tableListBodyDivide`, `tableListCell`, `tableListCellPrimary`, `tableListHeaderSortable`, `tableListBodyPrimary`, `tableListBodyCell`, `tableListBodyCaption`, `tableListBodyLink`, `tableListAuxiliaryLabel`, `tableListDetailTitle`, `tableListPanelSectionTitle`, `tableListPanelStatLabel`, `tableListPanelStatTotal`, `tableListRowInteractive`, `tableListRowHover`, `tableListRowSelected` |
- * | Drawer & modal frosted shells | `drawer-deep` | `drawerPanelGlassSurface`, `modalPanelGlassSurface`, `drawerPanelFlexibleOuter`, `drawerPanelFlexibleInner`, `drawerPanelStackedOuter`, `drawerPanelStackedInner`, `drawerFooterShellInset`, `drawerFooterShellEdge`, `drawerScrim`, `drawerLinkedEntityRow`, … |
- * | Primary / secondary / destructive | `glow-green` | `drawerFooterSegmentedPanel`, `drawerFooterSegmentBtn`, `drawerFooterDeleteConfirmBanner`, `drawerFooterBtnDangerConfirmSegment*`, `drawerFooterBtnPrimary*`, `drawerFooterBtnSecondarySegment*`, `drawerFooterBtnDestructive*`, `drawerFooterDangerCallout`, `drawerFooterBtnDangerConfirm*`, `modalFooterBtn*`, `btnCtaGlow`, … |
+ * | Drawer & modal frosted shells | `drawer-deep` | `drawerPanelGlassSurface`, `modalPanelGlassSurface`, `drawerPanelFlexibleOuter`, `drawerPanelFlexibleInner`, `drawerPanelStackedOuter`, `drawerPanelStackedInner`, `drawerBodyScrollArea`, `drawerFooterShellInset`, `drawerFooterShellEdge`, `drawerScrim`, `drawerLinkedEntityRow`, … |
+ * | Primary / secondary / destructive / undo / duplicate | `glow-green` | `drawerFooterSegmentedPanel`, `drawerFooterSegmentBtn`, `drawerFooterDeleteConfirmBanner`, `drawerFooterBtnDangerConfirmSegment*`, `drawerFooterBtnPrimary*`, `drawerFooterBtnSecondarySegment*`, `drawerFooterBtnUndoSegment*`, `drawerFooterBtnDuplicateSegment*`, `drawerFooterBtnDestructive*`, `drawerFooterDangerCallout`, `drawerFooterBtnDangerConfirm*`, `drawerBodyScrollArea`, `modalFooterBtn*`, `btnCtaGlow`, … |
  * | Marketing landing | `glow-*` | `marketingCtaPrimary` (nav), `marketingHeroCta` + `marketingHeroCtaSecondary`, `marketingFooterCta` + `marketingFooterCtaSecondary`, `marketingHowItWorks*` |
  * | Clerk `appearance.elements` | `glow-green`, `drawer-deep` | `clerkCard`, `clerkModalContentShell`, `clerkUserButtonPopover*`, `clerkFormButtonPrimary`, … |
  */
@@ -414,6 +414,12 @@ export const drawerStackDimmer =
   'drawer-stack-dimmer absolute inset-0 z-10 pointer-events-none rounded-[inherit]';
 
 /**
+ * Scrollable drawer body. Class `drawer-body-scroll` scopes drawer-context hover overrides in `app.css`
+ * so footer segment hovers are not flattened.
+ */
+export const drawerBodyScrollArea = 'drawer-body-scroll flex-1 overflow-auto p-6';
+
+/**
  * Centered modal panels — same frosted shell as `DrawerStack` so all overlay forms match.
  */
 export const modalPanelGlassSurface = drawerPanelGlassSurface;
@@ -446,7 +452,7 @@ export const drawerFooterSegmentBtn =
   'inline-flex items-center justify-center gap-2 w-full sm:flex-1 min-w-0 px-3 py-3 text-sm font-inter tracking-wide transition-colors outline-none focus-visible:z-10 focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-green-400/40';
 
 export const drawerFooterBtnPrimaryEnabled =
-  'bg-green-400 border-transparent text-mono-950 font-semibold shadow-sm hover:bg-green-300 cursor-pointer';
+  'bg-green-400 border-transparent text-mono-950 font-semibold shadow-sm hover:bg-green-300 hover:shadow-md cursor-pointer';
 
 /** Box matches enabled primary; typography matches muted secondary so disabled Save/Undo read as a pair. */
 export const drawerFooterBtnPrimaryDisabled =
@@ -461,7 +467,7 @@ export const drawerFooterBtnSecondary =
 
 /** Secondary segment inside {@link drawerFooterSegmentedPanel} (no per-cell border). */
 export const drawerFooterBtnSecondarySegment =
-  'text-mono-300 transition-colors font-medium font-inter tracking-wide hover:bg-mono-800/80 cursor-pointer';
+  'text-mono-300 transition-colors font-medium font-inter tracking-wide hover:bg-mono-700/55 hover:text-mono-100 cursor-pointer';
 
 export const drawerFooterBtnSecondaryMuted =
   'border border-mono-700 text-mono-400 font-medium cursor-not-allowed bg-mono-800 shadow-sm';
@@ -470,9 +476,25 @@ export const drawerFooterBtnSecondaryMuted =
 export const drawerFooterBtnSecondarySegmentMuted =
   'text-mono-400 font-medium cursor-not-allowed bg-mono-800/80 shadow-sm';
 
+/** Undo segment — amber accent (enabled). */
+export const drawerFooterBtnUndoSegment =
+  'text-amber-300 transition-colors font-medium font-inter tracking-wide hover:bg-amber-400/20 hover:text-amber-100 cursor-pointer';
+
+/** Undo segment when changes cannot be reverted (neutral muted; not amber). */
+export const drawerFooterBtnUndoSegmentMuted =
+  'text-mono-400 font-medium font-inter tracking-wide cursor-not-allowed bg-mono-800/80 shadow-sm';
+
+/** Duplicate segment — blue accent (enabled). */
+export const drawerFooterBtnDuplicateSegment =
+  'text-blue-300 transition-colors font-medium font-inter tracking-wide hover:bg-blue-400/20 hover:text-blue-100 cursor-pointer';
+
+/** Duplicate segment when the control is inactive (e.g. save in flight). */
+export const drawerFooterBtnDuplicateSegmentMuted =
+  'text-mono-400 font-medium font-inter tracking-wide cursor-not-allowed bg-mono-800/80 shadow-sm';
+
 /** Full-width Delete control in drawer footers (paired with {@link drawerFooterBtnDestructiveDisabled}). */
 export const drawerFooterBtnDestructive =
-  'bg-red-400/10 border-transparent text-red-400 hover:bg-red-400/20 cursor-pointer';
+  'bg-red-400/10 border-transparent text-red-400 hover:bg-red-400/25 hover:text-red-200 cursor-pointer';
 
 export const drawerFooterBtnDestructiveDisabled =
   'bg-mono-700 border-mono-700 text-mono-400 cursor-not-allowed';
@@ -487,7 +509,7 @@ export const drawerFooterDeleteConfirmBanner =
 
 /** Destructive confirm segment in {@link drawerFooterSegmentedPanel} (e.g. Yes, delete). */
 export const drawerFooterBtnDangerConfirmSegment =
-  'bg-red-600 text-white font-semibold shadow-sm hover:bg-red-700 cursor-pointer border-transparent';
+  'bg-red-600 text-white font-semibold shadow-sm hover:bg-red-700 hover:shadow-md cursor-pointer border-transparent';
 
 export const drawerFooterBtnDangerConfirmSegmentBusy =
   'bg-red-400 text-white font-medium cursor-not-allowed shadow-sm border-transparent';

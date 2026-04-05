@@ -41,10 +41,14 @@
     dashboardPageTitleTextDetail,
     dashboardTextPrimary,
     drawerFooterBtnDestructive,
+    drawerFooterBtnDuplicateSegment,
+    drawerFooterBtnDuplicateSegmentMuted,
     drawerFooterBtnPrimaryDisabledSegment,
     drawerFooterBtnPrimaryEnabled,
     drawerFooterBtnSecondarySegment,
     drawerFooterBtnSecondarySegmentMuted,
+    drawerFooterBtnUndoSegment,
+    drawerFooterBtnUndoSegmentMuted,
     drawerFooterSegmentDivider,
     drawerFooterSegmentedPanel,
     drawerFooterSegmentBtn,
@@ -523,8 +527,8 @@
           onclick={apiState.handleEditUndo}
           disabled={!apiState.hasEditChanges || apiState.isSaving}
           class="{drawerFooterSegmentBtn} {apiState.hasEditChanges && !apiState.isSaving
-            ? drawerFooterBtnSecondarySegment
-            : drawerFooterBtnSecondarySegmentMuted}"
+            ? drawerFooterBtnUndoSegment
+            : drawerFooterBtnUndoSegmentMuted}"
         >
           <span>Undo</span>
           <i class="fa-solid fa-arrow-rotate-left" aria-hidden="true"></i>
@@ -788,8 +792,8 @@
               onclick={apiState.handleUndoEndpoint}
               disabled={!apiState.hasEndpointChanges || apiState.isSaving}
               class="{drawerFooterSegmentBtn} {apiState.hasEndpointChanges && !apiState.isSaving
-                ? drawerFooterBtnSecondarySegment
-                : drawerFooterBtnSecondarySegmentMuted}"
+                ? drawerFooterBtnUndoSegment
+                : drawerFooterBtnUndoSegmentMuted}"
             >
               <span>Undo</span>
               <i class="fa-solid fa-arrow-rotate-left" aria-hidden="true"></i>
@@ -799,7 +803,7 @@
               type="button"
               onclick={() => apiState.handleDuplicateEndpoint(apiState.editedEndpoint!.id)}
               disabled={apiState.isSaving}
-              class="{drawerFooterSegmentBtn} {drawerFooterBtnSecondarySegment} {apiState.isSaving ? 'cursor-not-allowed opacity-50' : ''}"
+              class="{drawerFooterSegmentBtn} {apiState.isSaving ? drawerFooterBtnDuplicateSegmentMuted : drawerFooterBtnDuplicateSegment}"
             >
               <span>Duplicate</span>
               <i class="fa-solid fa-copy" aria-hidden="true"></i>

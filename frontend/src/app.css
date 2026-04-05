@@ -123,6 +123,9 @@ html[data-theme="soft"] {
     background-color: var(--drawer-footer-bg);
     -webkit-backdrop-filter: var(--drawer-footer-backdrop);
     backdrop-filter: var(--drawer-footer-backdrop);
+    overflow: hidden;
+    border-bottom-left-radius: var(--drawer-panel-radius);
+    border-bottom-right-radius: var(--drawer-panel-radius);
   }
 
   .drawer-footer-segmented-panel {
@@ -145,7 +148,8 @@ html[data-theme="soft"] {
     box-shadow: var(--drawer-inner-surface-shadow) !important;
   }
 
-  .drawer-transparent-context [class*='hover:bg-mono-']:hover {
+  /* Flatten nested mono hovers inside scrollable drawer body only — footer segment buttons use their own hovers. */
+  .drawer-transparent-context .drawer-body-scroll [class*='hover:bg-mono-']:hover {
     background-color: var(--drawer-inner-surface-bg) !important;
   }
 }

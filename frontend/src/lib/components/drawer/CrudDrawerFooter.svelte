@@ -43,6 +43,8 @@
     drawerFooterBtnPrimaryEnabled,
     drawerFooterBtnSecondarySegment,
     drawerFooterBtnSecondarySegmentMuted,
+    drawerFooterBtnUndoSegment,
+    drawerFooterBtnUndoSegmentMuted,
     drawerFooterSegmentDivider,
     drawerFooterSegmentedPanel,
     drawerFooterSegmentBtn,
@@ -119,7 +121,7 @@
         type="button"
         onclick={onUndo}
         disabled={!hasChanges || isSaving}
-        class="{drawerFooterSegmentBtn} {hasChanges && !isSaving ? drawerFooterBtnSecondarySegment : drawerFooterBtnSecondarySegmentMuted}"
+        class="{drawerFooterSegmentBtn} {hasChanges && !isSaving ? drawerFooterBtnUndoSegment : drawerFooterBtnUndoSegmentMuted}"
       >
         <span>Undo</span>
         <i class="fa-solid fa-arrow-rotate-left" aria-hidden="true"></i>

@@ -28,7 +28,11 @@ import {
 	modalFooterBtnPrimary,
 	modalFooterBtnSecondary,
 	modalInlineError,
+	drawerBodyScrollArea,
 	drawerFooterBtnDestructive,
+	drawerFooterBtnDuplicateSegment,
+	drawerFooterBtnPrimaryEnabled,
+	drawerFooterBtnUndoSegment,
 	drawerFooterShellEdge,
 	drawerFooterSegmentedPanel,
 	drawerFooterSegmentDivider,
@@ -155,8 +159,21 @@ describe('lib/ui/classes', () => {
 
 	it('drawer destructive footer controls match chrome tokens', () => {
 		expect(drawerFooterBtnDestructive).toContain('text-red-400');
+		expect(drawerFooterBtnDestructive).toContain('hover:text-red-200');
 		expect(drawerFooterDangerCallout).toContain('rounded-xl');
 		expect(drawerFooterBtnDangerConfirm).toContain('rounded-xl');
+	});
+
+	it('drawerBodyScrollArea carries scroll hook for drawer hover scoping', () => {
+		expect(drawerBodyScrollArea).toContain('drawer-body-scroll');
+		expect(drawerBodyScrollArea).toContain('overflow-auto');
+	});
+
+	it('drawer undo and duplicate segments use amber and blue accents', () => {
+		expect(drawerFooterBtnUndoSegment).toContain('text-amber-300');
+		expect(drawerFooterBtnUndoSegment).toContain('hover:bg-amber-400/20');
+		expect(drawerFooterBtnDuplicateSegment).toContain('text-blue-300');
+		expect(drawerFooterBtnDuplicateSegment).toContain('hover:bg-blue-400/20');
 	});
 
 	it('drawer delete confirm banner aligns with segmented footer chrome', () => {
@@ -176,6 +193,8 @@ describe('lib/ui/classes', () => {
 		expect(drawerFooterSegmentDivider).toContain('sm:w-px');
 		expect(drawerFooterSegmentBtn).toContain('sm:flex-1');
 		expect(drawerFooterBtnSecondarySegment).not.toContain('border');
+		expect(drawerFooterBtnSecondarySegment).toContain('hover:text-mono-100');
+		expect(drawerFooterBtnPrimaryEnabled).toContain('hover:shadow-md');
 	});
 
 	it('drawer inner clip inherits the outer panel radius', () => {
