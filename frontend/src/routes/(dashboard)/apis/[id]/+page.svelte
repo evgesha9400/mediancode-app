@@ -11,6 +11,7 @@
     Pill,
     FormField,
     FormLabel,
+    GlassSelectDropdown,
     EndpointItem,
     ParameterEditor,
     QueryParametersEditor,
@@ -19,8 +20,8 @@
     GenerateModal
   } from '$lib/components';
   import { ObjectFormContent, FieldFormContent } from '$lib/components/form';
-  import { HTTP_METHODS } from '$lib/types';
-  import type { ObjectDefinition, Field } from '$lib/types';
+  import { HTTP_METHOD_SELECT_OPTIONS } from '$lib/types';
+  import type { HttpMethod, ObjectDefinition, Field } from '$lib/types';
   import { isValidSnakeCaseName, isValidPascalCaseName } from '$lib/utils/validation';
   import { createApiDetailState } from '$lib/stores/apiDetailState.svelte';
   import { getApiById } from '$lib/stores/apis';
@@ -60,7 +61,6 @@
     headerMetaSeparator,
     headerNamespaceCluster,
     inputGlass,
-    inputGlassAuto,
     inputGlassSearch,
     surfaceInsideFrostedPanel,
     textareaInsideFrostedPanel
@@ -652,14 +652,17 @@
               Method & Path
             </h3>
             <div class="endpoint-method-path">
-              <select
-                bind:value={apiState.editedEndpoint.method}
-                class={inputGlassAuto}
-              >
-                {#each HTTP_METHODS as method}
-                  <option value={method}>{method}</option>
-                {/each}
-              </select>
+              <div class="endpoint-method-select">
+                <GlassSelectDropdown
+                  value={apiState.editedEndpoint.method}
+                  options={HTTP_METHOD_SELECT_OPTIONS}
+                  ariaLabel="HTTP method"
+                  mono
+                  onSelect={(m) => {
+                    if (apiState.editedEndpoint) apiState.editedEndpoint.method = m as HttpMethod;
+                  }}
+                />
+              </div>
               <div class="endpoint-path-input flex items-center rounded-xl overflow-hidden border border-mono-700/80 bg-mono-900/80 focus-within:ring-2 focus-within:ring-green-400/50 focus-within:outline-none transition-colors">
                 <span class="px-3 py-1.5 text-sm font-mono text-mono-400 bg-mono-900/80 border-r border-mono-700/80">/</span>
                 <input
@@ -932,6 +935,16 @@
     display: flex;
     align-items: center;
     gap: 0.5rem;
+  }
+  .endpoint-method-select {
+    width: 100%;
+    min-width: 7rem;
+  }
+  @container (min-width: 701px) {
+    .endpoint-method-select {
+      width: auto;
+      flex: 0 0 auto;
+    }
   }
   .endpoint-path-input {
     flex: 1;
