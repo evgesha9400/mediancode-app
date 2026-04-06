@@ -24,12 +24,6 @@
   } from '$lib/components';
   import type { FilterConfig, Namespace } from '$lib/types';
   import {
-    drawerFooterBtnPrimaryDisabledSegment,
-    drawerFooterBtnPrimaryEnabled,
-    drawerFooterBtnSecondarySegment,
-    drawerFooterSegmentBtn,
-    drawerFooterSegmentDivider,
-    drawerFooterSegmentedPanel,
     surfaceInsideFrostedPanel,
     tableListBodyPrimary,
     tableListPanelSectionTitle,
@@ -81,12 +75,6 @@
 
   let isReadOnly = $derived(workflow.editedItem?.locked === true);
   let isCreating = $derived(workflow.mode === 'creating');
-  let hasDefaultChanged = $derived(
-    isReadOnly &&
-    workflow.editedItem != null &&
-    workflow.originalItem != null &&
-    workflow.editedItem.isDefault !== workflow.originalItem.isDefault
-  );
 </script>
 
 <MainColumnFrame bodyClass="">
@@ -290,61 +278,24 @@
 {/snippet}
 
 {#snippet namespaceFormFooter({ close }: { close: () => void })}
-  {#if isCreating}
+  {#if workflow.editedItem}
     <CrudDrawerFooter
-      mode="creating"
+      mode={workflow.mode === 'creating' ? 'creating' : 'editing'}
       isSaving={workflow.isSaving}
       isFormValid={workflow.isFormValid}
-      hasChanges={false}
-      canDelete={false}
-      onCreate={workflow.handleCreate}
-      onCancel={close}
-    />
-  {:else if workflow.editedItem && !isReadOnly}
-    <CrudDrawerFooter
-      mode="editing"
-      isSaving={workflow.isSaving}
       hasChanges={workflow.hasChanges}
       canDelete={workflow.canDelete}
       deleteTooltip={workflow.deleteTooltip}
       showDeleteConfirm={workflow.showDeleteConfirm}
       isDeleting={workflow.isDeleting}
+      onCreate={workflow.handleCreate}
       onSave={workflow.handleSave}
       onUndo={workflow.handleUndo}
       onDeleteRequest={() => workflow.showDeleteConfirm = true}
       onDeleteConfirm={workflow.handleDelete}
       onDeleteCancel={() => workflow.showDeleteConfirm = false}
+      onCancel={close}
     />
-  {:else if workflow.editedItem && isReadOnly}
-    <div class={drawerFooterSegmentedPanel} role="group" aria-label="Namespace details actions">
-      {#if hasDefaultChanged}
-        <button
-          type="button"
-          onclick={workflow.handleSave}
-          disabled={workflow.isSaving}
-          class="{drawerFooterSegmentBtn} {workflow.isSaving
-            ? drawerFooterBtnPrimaryDisabledSegment
-            : drawerFooterBtnPrimaryEnabled}"
-        >
-          {#if workflow.isSaving}
-            <i class="fa-solid fa-spinner fa-spin" aria-hidden="true"></i>
-            <span>Saving...</span>
-          {:else}
-            <span>Save</span>
-            <i class="fa-solid fa-floppy-disk" aria-hidden="true"></i>
-          {/if}
-        </button>
-        <div class={drawerFooterSegmentDivider} aria-hidden="true"></div>
-      {/if}
-      <button
-        type="button"
-        onclick={workflow.closeDrawer}
-        class="{drawerFooterSegmentBtn} {drawerFooterBtnSecondarySegment}"
-      >
-        <span>Close</span>
-        <i class="fa-solid fa-xmark" aria-hidden="true"></i>
-      </button>
-    </div>
   {/if}
 {/snippet}
 
