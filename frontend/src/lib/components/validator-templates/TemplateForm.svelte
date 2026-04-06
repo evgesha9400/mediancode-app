@@ -19,6 +19,11 @@
 </script>
 
 <script lang="ts">
+  import {
+    GlassSelectDropdown,
+    glassSelectEmptyLabels,
+    glassSelectOptionsWithEmptyFirst
+  } from '$lib/components/form';
   import { inputValidatorControl } from '$lib/ui/classes';
 
   interface Props extends TemplateFormProps {}
@@ -120,16 +125,17 @@
           {param.label} {#if param.required}<span class="text-red-500">*</span>{/if}
         </label>
         {#if param.type === 'select' && param.options}
-          <select
+          <GlassSelectDropdown
             id="param-{param.key}"
-            bind:value={params[param.key]}
-            class={inputValidatorControl}
-          >
-            <option value="">Select...</option>
-            {#each param.options as opt}
-              <option value={opt.value}>{opt.label}</option>
-            {/each}
-          </select>
+            value={params[param.key] ?? ''}
+            options={glassSelectOptionsWithEmptyFirst(
+              glassSelectEmptyLabels.generic,
+              param.options.map((opt) => ({ value: opt.value, label: opt.label }))
+            )}
+            onSelect={(v) => {
+              params[param.key] = v;
+            }}
+          />
         {:else}
           <input
             id="param-{param.key}"
@@ -152,16 +158,17 @@
         <label for="role-{fm.key}" class="block text-xs text-mono-300 mb-1 font-medium">
           {fm.label} {#if fm.required}<span class="text-red-500">*</span>{/if}
         </label>
-        <select
+        <GlassSelectDropdown
           id="role-{fm.key}"
-          bind:value={mappings[fm.key]}
-          class={inputValidatorControl}
-        >
-          <option value="">Select a field...</option>
-          {#each candidates as field}
-            <option value={field.name}>{field.name} ({field.type})</option>
-          {/each}
-        </select>
+          value={mappings[fm.key] ?? ''}
+          options={glassSelectOptionsWithEmptyFirst(
+            glassSelectEmptyLabels.modelField,
+            candidates.map((field) => ({ value: field.name, label: `${field.name} (${field.type})` }))
+          )}
+          onSelect={(v) => {
+            mappings[fm.key] = v;
+          }}
+        />
       </div>
     {/each}
   {/if}
@@ -174,16 +181,17 @@
           {param.label} {#if param.required}<span class="text-red-500">*</span>{/if}
         </label>
         {#if param.type === 'select' && param.options}
-          <select
+          <GlassSelectDropdown
             id="mparam-{param.key}"
-            bind:value={params[param.key]}
-            class={inputValidatorControl}
-          >
-            <option value="">Select...</option>
-            {#each param.options as opt}
-              <option value={opt.value}>{opt.label}</option>
-            {/each}
-          </select>
+            value={params[param.key] ?? ''}
+            options={glassSelectOptionsWithEmptyFirst(
+              glassSelectEmptyLabels.generic,
+              param.options.map((opt) => ({ value: opt.value, label: opt.label }))
+            )}
+            onSelect={(v) => {
+              params[param.key] = v;
+            }}
+          />
         {:else}
           <input
             id="mparam-{param.key}"
