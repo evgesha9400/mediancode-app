@@ -63,6 +63,8 @@ html[data-theme="soft"] {
   --drawer-footer-backdrop: blur(32px) saturate(1.25);
   --drawer-inner-surface-bg: rgb(29 29 31 / 0.28);
   --drawer-inner-surface-shadow: inset 0 1px 0 rgb(255 255 255 / 0.08);
+  /* In-page / stat cards: same frost tokens as drawers; smaller radius (Tailwind rounded-2xl). */
+  --dashboard-card-radius: 1rem;
 }
 
 @tailwind base;
@@ -84,6 +86,21 @@ html[data-theme="soft"] {
     -webkit-backdrop-filter: var(--drawer-panel-backdrop);
     backdrop-filter: var(--drawer-panel-backdrop);
     /* keeps blur stable while parent drawer uses transform transitions */
+    transform: translateZ(0);
+  }
+
+  /**
+   * Dashboard cards, settings shells, empty states — same tint/blur/shadow tokens as drawers; tighter radius.
+   */
+  .dashboard-card-glass {
+    border-radius: var(--dashboard-card-radius);
+    border: 1px solid var(--drawer-panel-border);
+    background-color: var(--drawer-panel-bg);
+    box-shadow:
+      inset 0 0 0 1px var(--drawer-panel-ring),
+      var(--drawer-panel-shadow);
+    -webkit-backdrop-filter: var(--drawer-panel-backdrop);
+    backdrop-filter: var(--drawer-panel-backdrop);
     transform: translateZ(0);
   }
 
@@ -151,6 +168,15 @@ html[data-theme="soft"] {
   /* Flatten nested mono hovers inside scrollable drawer body only — footer segment buttons use their own hovers. */
   .drawer-transparent-context .drawer-body-scroll [class*='hover:bg-mono-']:hover {
     background-color: var(--drawer-inner-surface-bg) !important;
+  }
+
+  /**
+   * Native `<dialog>::backdrop` — same scrim as `.drawer-scrim` (tokens on `html[data-theme="soft"]`).
+   */
+  .modal-dialog-scrim::backdrop {
+    background-color: var(--drawer-scrim-bg);
+    -webkit-backdrop-filter: var(--drawer-scrim-backdrop);
+    backdrop-filter: var(--drawer-scrim-backdrop);
   }
 }
 

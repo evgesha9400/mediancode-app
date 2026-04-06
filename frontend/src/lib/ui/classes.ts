@@ -7,14 +7,14 @@
  * | Segmented toggles (drawer / API generator) | — | `segmentFieldBase`, `segmentFieldBaseJoin`, `segmentFieldInactive`, `segmentFieldActive`, `segmentPillBase`, `segmentPillSelected`, `segmentPillUnselected`, `segmentPillUnselectedLocked` |
  * | API generator 34px row controls | — | `apiGeneratorRowInputMono`, `apiGeneratorRowSelect`, `apiGeneratorHintCell` |
  * | Modal form controls | — | `modalFormCheckbox`, `modalFormRadio` |
- * | Autocomplete / dropdown panels (solid; parent drawer is already frosted) | — | `dropdownPanel`, `dropdownPanelMessage` |
+ * | Autocomplete / dropdown panels (solid in frosted drawers — avoid nested blur) | — | `dropdownPanel`, `dropdownPanelMessage`; page-level menus use `popoverGlassMenuChrome` |
  * | Query params / pagination rows | — | `queryParamReadonlyCell`, `queryParamPaginationToggle*` |
- * | Dashboard & stat cards | `boxShadow.glow-*` | `cardGlassSurface`, `cardGlassBorder*` |
+ * | Dashboard & stat cards | `drawer-deep` | `dashboardCardGlass`, `cardGlassSurface`, `cardGlassBorder*` |
  * | Green accent icon tiles | `glow-green-icon`, `glow-green-sm` | `accentIconTile`, `marketingFeatureIcon` |
  * | Sidebar shell & nav items | — | `sidebarShell`, `sidebarNavItem*` |
  * | Dashboard column shell & page header chrome | — | `dashboardMainColumn`, `dashboardMainColumnCanvas`, `dashboardMainColumnCanvasForPath`, `dashboardGreenWashGradient`, `dashboardTextPrimary`, `dashboardControlTextMutedHoverPrimary`, `backNavButton`, `dashboardPageHeaderShell`, `dashboardSearchToolbarShell`, `mainColumnChromePaddingX`, `dashboardPageHeaderTitleBand`, `dashboardPageTitleText`, `dashboardPageTitleTextDetail`, `drawerHeaderTitleText`, `headerMetaSeparator`, `headerNamespaceCluster` |
  * | Dashboard entity list tables | — | `tableListPageGutter`, `tableListCardShell`, `tableListBodyDivide`, `tableListCell`, `tableListCellPrimary`, `tableListHeaderSortable`, `tableListBodyPrimary`, `tableListBodyCell`, `tableListBodyCaption`, `tableListBodyLink`, `tableListAuxiliaryLabel`, `tableListDetailTitle`, `tableListPanelSectionTitle`, `tableListPanelStatLabel`, `tableListPanelStatTotal`, `tableListRowInteractive`, `tableListRowHover`, `tableListRowSelected` |
- * | Drawer & modal frosted shells | `drawer-deep` | `drawerPanelGlassSurface`, `modalPanelGlassSurface`, `drawerPanelFlexibleOuter`, `drawerPanelFlexibleInner`, `drawerPanelStackedOuter`, `drawerPanelStackedInner`, `drawerBodyScrollArea`, `drawerFooterShellInset`, `drawerFooterShellEdge`, `drawerScrim`, `drawerLinkedEntityRow`, … |
+ * | Drawer & modal frosted shells | `drawer-deep` | `drawerPanelGlassSurface`, `popoverGlassMenuChrome`, `modalPanelGlassSurface`, `modalDialogBackdropClass`, `modalPanelTransparentInner`, `drawerPanelFlexibleOuter`, `drawerPanelFlexibleInner`, `drawerPanelStackedOuter`, `drawerPanelStackedInner`, `drawerBodyScrollArea`, `drawerFooterShellInset`, `drawerFooterShellEdge`, `drawerScrim`, `drawerLinkedEntityRow`, … |
  * | Primary / secondary / destructive / undo / duplicate | `glow-green` | `drawerFooterSegmentedPanel`, `drawerFooterSegmentBtn`, `drawerFooterDeleteConfirmBanner`, `drawerFooterBtnDangerConfirmSegment*`, `drawerFooterBtnPrimary*`, `drawerFooterBtnSecondarySegment*`, `drawerFooterBtnUndoSegment*`, `drawerFooterBtnDuplicateSegment*`, `drawerFooterBtnDestructive*`, `drawerFooterDangerCallout`, `drawerFooterBtnDangerConfirm*`, `drawerBodyScrollArea`, `modalFooterBtn*`, `btnCtaGlow`, … |
  * | Marketing landing | `glow-*` | `marketingCtaPrimary` (nav), `marketingHeroCta` + `marketingHeroCtaSecondary`, `marketingFooterCta` + `marketingFooterCtaSecondary`, `marketingHowItWorks*` |
  * | Clerk `appearance.elements` | `glow-green`, `drawer-deep` | `clerkCard`, `clerkModalContentShell`, `clerkUserButtonPopover*`, `clerkFormButtonPrimary`, … |
@@ -122,6 +122,7 @@ export const apiGeneratorHintCell =
 
 // --- Dropdowns / floating panels ---
 
+/** Solid list shell for controls inside `DrawerStack` (nested frost avoided). Page-level menus: {@link popoverGlassMenuChrome}. */
 export const dropdownPanel =
   'absolute z-30 w-full mt-1 bg-mono-950 border border-mono-700/80 rounded-xl shadow-lg shadow-black/30 max-h-60 overflow-hidden flex flex-col';
 
@@ -188,16 +189,20 @@ export const segmentPillUnselectedLocked = 'bg-mono-900/75 text-mono-500 border 
 
 // --- Cards (dashboard, stats) ---
 
-export const cardGlassSurface =
-  'bg-mono-900/50 backdrop-blur-sm/40 rounded-2xl shadow-sm hover:bg-mono-900/50 backdrop-blur-sm/60 transition-colors';
+/**
+ * Dashboard / settings card frost — `.dashboard-card-glass` in `app.css` (same tokens as drawer shell, `--dashboard-card-radius`).
+ */
+export const dashboardCardGlass = 'dashboard-card-glass';
 
-export const cardGlassBorderDefault = 'border border-mono-800/80';
+export const cardGlassSurface = dashboardCardGlass;
+
+/** Chrome uses {@link dashboardCardGlass}; no extra border utility. */
+export const cardGlassBorderDefault = '';
 
 export const cardGlassBorderError = 'border border-red-400/30 bg-red-950/10';
 
-/** Onboarding callout on dashboard (softer blur). */
-export const cardOnboardingShell =
-  'bg-mono-900/50 backdrop-blur-sm/30 border border-mono-800/80 rounded-2xl p-6 shadow-md';
+/** Onboarding callout on dashboard — same frost as {@link cardGlassSurface}. */
+export const cardOnboardingShell = `${dashboardCardGlass} p-6`;
 
 // --- Accent tiles (icons) ---
 
@@ -394,6 +399,12 @@ export const drawerStackRoot =
 export const drawerPanelGlassSurface = 'drawer-panel-glass-surface';
 
 /**
+ * Anchored popovers on list/dashboard chrome (namespace menu, filter panel). Not for inside `DrawerStack` — use {@link dropdownPanel}.
+ */
+export const popoverGlassMenuChrome =
+  `${drawerPanelGlassSurface} z-[100] overflow-hidden font-inter`;
+
+/**
  * Drawer panel shell (outer): visual chrome comes from `.drawer-panel-glass-surface` in `app.css`.
  * Keep overflow clipping on the inner wrapper so shell treatment stays centralized.
  */
@@ -423,6 +434,17 @@ export const drawerBodyScrollArea = 'drawer-body-scroll flex-1 overflow-auto p-6
  * Centered modal panels — same frosted shell as `DrawerStack` so all overlay forms match.
  */
 export const modalPanelGlassSurface = drawerPanelGlassSurface;
+
+/**
+ * Native `<dialog>::backdrop` — same scrim tokens as {@link drawerScrim} (see `.modal-dialog-scrim` in `app.css`).
+ */
+export const modalDialogBackdropClass = 'modal-dialog-scrim';
+
+/**
+ * Inner clip + nested `bg-mono-*` overrides inside modal glass (mirrors drawer flexible inner, without flex column).
+ */
+export const modalPanelTransparentInner =
+  'drawer-transparent-context overflow-hidden rounded-[inherit]';
 
 // --- Drawer footer & primary actions ---
 
@@ -685,8 +707,8 @@ export const clerkBadge = 'bg-mono-800/50 text-mono-300 border border-mono-700/6
 
 export const clerkModalClose = `text-mono-400 ${hoverTextPrimaryOnDark} transition-colors`;
 
-/** Match {@link drawerScrim} so Clerk modals read like `DrawerStack` overlays. */
-export const clerkModalBackdrop = 'bg-mono-950/45 backdrop-blur-[1.5px]';
+/** Same scrim layer as {@link drawerScrim} / native {@link modalDialogBackdropClass}. */
+export const clerkModalBackdrop = 'drawer-scrim';
 
 /**
  * Outer dialog shell for Clerk modal flows — same frost as {@link drawerPanelGlassSurface}.

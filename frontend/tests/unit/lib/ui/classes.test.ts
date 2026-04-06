@@ -18,13 +18,22 @@ import {
 	drawerHeaderTitleText,
 	backNavButton,
 	clerkNavbarButton,
+	dashboardCardGlass,
 	dropdownPanel,
+	drawerPanelGlassSurface,
 	marketingHeroCta,
 	clerkCard,
 	clerkUserButtonPopoverCard,
 	clerkUserButtonPopoverMain,
 	clerkUserButtonPopoverActions,
 	clerkUserButtonPopoverFooter,
+	clerkModalBackdrop,
+	modalDialogBackdropClass,
+	modalPanelTransparentInner,
+	popoverGlassMenuChrome,
+	cardGlassBorderDefault,
+	cardGlassSurface,
+	cardOnboardingShell,
 	modalFooterBtnPrimary,
 	modalFooterBtnSecondary,
 	modalInlineError,
@@ -125,9 +134,24 @@ describe('lib/ui/classes', () => {
 		}
 	});
 
-	it('dropdownPanel encodes floating list container', () => {
+	it('dropdownPanel encodes solid floating list (nested in frosted drawers)', () => {
 		expect(dropdownPanel).toContain('absolute');
 		expect(dropdownPanel).toContain('rounded-xl');
+		expect(dropdownPanel).toContain('bg-mono-950');
+	});
+
+	it('dashboard card glass hooks app.css tokens and aliases', () => {
+		expect(dashboardCardGlass).toBe('dashboard-card-glass');
+		expect(cardGlassSurface).toBe(dashboardCardGlass);
+		expect(cardGlassBorderDefault).toBe('');
+		expect(cardOnboardingShell).toContain('dashboard-card-glass');
+		expect(cardOnboardingShell).toContain('p-6');
+	});
+
+	it('popoverGlassMenuChrome reuses drawer panel glass', () => {
+		expect(popoverGlassMenuChrome).toContain(drawerPanelGlassSurface);
+		expect(popoverGlassMenuChrome).toContain('z-[100]');
+		expect(popoverGlassMenuChrome).toContain('overflow-hidden');
 	});
 
 	it('marketingHeroCta encodes primary landing CTA', () => {
@@ -149,6 +173,13 @@ describe('lib/ui/classes', () => {
 		expect(clerkUserButtonPopoverActions).toContain('bg-transparent');
 		expect(clerkUserButtonPopoverFooter).toContain('bg-mono-950/25');
 		expect(clerkUserButtonPopoverFooter).toContain('border-t');
+	});
+
+	it('modal and Clerk full-screen overlays use the same scrim layer as drawers', () => {
+		expect(clerkModalBackdrop).toBe('drawer-scrim');
+		expect(modalDialogBackdropClass).toBe('modal-dialog-scrim');
+		expect(modalPanelTransparentInner).toContain('drawer-transparent-context');
+		expect(modalPanelTransparentInner).toContain('rounded-[inherit]');
 	});
 
 	it('modal footer buttons use rounded-xl', () => {
