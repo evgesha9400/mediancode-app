@@ -63,7 +63,7 @@
 							Dashboard
 						</a>
 					{:else}
-						<a href="/signin" class={marketingNavLink}>
+						<a href="/signin" class={marketingCtaOutline}>
 							Sign In
 						</a>
 						<a href="/signup" class={marketingCtaPrimary}>
@@ -87,8 +87,8 @@
 				Philosophy
 			</a>
 			{#if $clerkState.isLoaded && !$clerkState.isSignedIn}
-				<div class="border-t border-mono-800/60 pt-3 mt-3 space-y-1">
-					<a href="/signin" onclick={closeMobileMenu} class={marketingNavLinkMobile}>
+				<div class="border-t border-mono-800/60 pt-3 mt-3 space-y-3">
+					<a href="/signin" onclick={closeMobileMenu} class="{marketingCtaOutline} w-full justify-center sm:w-auto">
 						Sign In
 					</a>
 					<a href="/signup" onclick={closeMobileMenu} class="{marketingCtaPrimary} w-full justify-center sm:w-auto">
