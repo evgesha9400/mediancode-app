@@ -170,6 +170,30 @@ html[data-theme="soft"] {
     background-color: var(--drawer-inner-surface-bg) !important;
   }
 
+  /*
+   * Dropdown rows / glass select triggers must NOT use `hover:bg-mono-*` in `class` (rule above would replace hover with inner surface — invisible).
+   * Semantic classes + rgb() hovers bypass the substring match.
+   */
+  .dropdown-list-row:hover,
+  .dropdown-create-row:hover {
+    background-color: rgb(var(--color-mono-700) / 1);
+  }
+
+  .drawer-transparent-context .drawer-body-scroll .dropdown-list-row:hover,
+  .drawer-transparent-context .drawer-body-scroll .dropdown-create-row:hover {
+    background-color: rgb(var(--color-mono-700) / 1) !important;
+  }
+
+  .glass-select-trigger:hover:not(:disabled) {
+    border-color: rgb(var(--color-mono-600) / 1);
+    background-color: rgb(var(--color-mono-800) / 0.5);
+  }
+
+  .drawer-transparent-context .drawer-body-scroll .glass-select-trigger:hover:not(:disabled) {
+    border-color: rgb(var(--color-mono-600) / 1) !important;
+    background-color: rgb(var(--color-mono-800) / 0.5) !important;
+  }
+
   /**
    * Native `<dialog>::backdrop` — same scrim as `.drawer-scrim` (tokens on `html[data-theme="soft"]`).
    */

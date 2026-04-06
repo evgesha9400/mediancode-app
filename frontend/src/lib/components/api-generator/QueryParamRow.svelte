@@ -15,12 +15,8 @@
 <script lang="ts">
   import { getCompatibleOperators, suggestFieldAndOperator } from '$lib/domain/paramInference';
   import { FILTER_OPERATORS } from '$lib/types';
-  import {
-    apiGeneratorRowInputMono,
-    apiGeneratorRowSelect,
-    listMetaBadge,
-    objectSelectorDisplayRow,
-  } from '$lib/ui/classes';
+  import { GlassSelectDropdown } from '$lib/components/form';
+  import { apiGeneratorRowInputMono, listMetaBadge, objectSelectorDisplayRow } from '$lib/ui/classes';
 
   interface Props extends QueryParamRowProps {}
 
@@ -73,15 +69,13 @@
 
     <!-- Operator dropdown -->
     <div class="w-1/4 shrink-0">
-      <select
+      <GlassSelectDropdown
         value={param.operator}
-        onchange={(e) => onUpdate({ operator: (e.target as HTMLSelectElement).value as FilterOperator })}
-        class={apiGeneratorRowSelect}
-      >
-        {#each availableOperators as op (op)}
-          <option value={op}>{op}</option>
-        {/each}
-      </select>
+        options={availableOperators.map((op) => ({ value: op, label: op }))}
+        ariaLabel="Filter operator"
+        mono
+        onSelect={(v) => onUpdate({ operator: v as FilterOperator })}
+      />
     </div>
 
     <!-- Field display with type chip and delete inside (matches path param pattern) -->

@@ -106,6 +106,9 @@ export interface Namespace {
 export type HttpMethod = 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
 export const HTTP_METHODS: HttpMethod[] = ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'];
 
+/** Options for glass HTTP method dropdowns — same order as {@link HTTP_METHODS}. */
+export const HTTP_METHOD_SELECT_OPTIONS = HTTP_METHODS.map((m) => ({ value: m, label: m }));
+
 // Response shape types
 // Request body: ONLY single object (no arrays, no primitives)
 // Response body: ONLY object or array of objects (no primitives)

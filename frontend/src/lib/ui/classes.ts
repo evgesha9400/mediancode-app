@@ -5,7 +5,7 @@
  * | Cluster | tailwind.config | this module |
  * | Text input + green focus (solid on frosted overlays) | — | `inputGlass`, `inputGlassSearch`, `inputGlassDisabled`, `textareaInsideFrostedPanel`, `inputGlassDense`, `textareaObjectForm`, `searchBarInput`, `defaultValueComboShell`, `inputValidatorControl`, `inputValidatorSearch`, `inputObjectMemberSearch` |
  * | Segmented toggles (drawer / API generator) | — | `segmentFieldBase`, `segmentFieldBaseJoin`, `segmentFieldInactive`, `segmentFieldActive`, `segmentPillBase`, `segmentPillSelected`, `segmentPillUnselected`, `segmentPillUnselectedLocked` |
- * | API generator 34px row controls | — | `apiGeneratorRowInputMono`, `apiGeneratorRowSelect`, `apiGeneratorHintCell` |
+ * | API generator 34px row controls | — | `apiGeneratorRowInputMono`, `glassSelectTrigger`, `apiGeneratorHintCell` |
  * | Modal form controls | — | `modalFormCheckbox`, `modalFormRadio` |
  * | Autocomplete / dropdown panels (solid in frosted drawers — avoid nested blur) | — | `dropdownPanel`, `dropdownPanelMessage`; page-level menus use `popoverGlassMenuChrome` |
  * | Query params / pagination rows | — | `queryParamReadonlyCell`, `queryParamPaginationToggle*` |
@@ -109,12 +109,18 @@ export const drawerLinkedEntityRow = `flex items-center space-x-2 w-full px-3 py
 export const objectSelectorDisplayRow =
   'w-full px-3 border border-mono-700/80 rounded-xl bg-mono-900/80 shadow-inner flex items-center justify-between h-[34px]';
 
+/**
+ * Closed-state trigger for glass dropdown selects (`GlassSelectDropdown`) — same shell as
+ * {@link objectSelectorDisplayRow} (native `<select>` cannot match this surface in WebKit/Blink).
+ */
+/** `glass-select-trigger` hover lives in `app.css` — do not add `hover:bg-mono-*` here (drawer body flatten rule). */
+export const glassSelectTrigger =
+  'glass-select-trigger w-full px-3 border border-mono-700/80 rounded-xl bg-mono-900/80 shadow-inner flex items-center justify-between gap-2 h-[34px] text-sm text-mono-100 cursor-pointer focus:outline-none focus:ring-2 focus:ring-green-400/50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed';
+
 /** Shared shell for API generator 34px-high inputs (query/path param editors). */
 const apiGeneratorRowControlCore = `w-full px-3 text-sm border border-mono-700/80 rounded-xl bg-mono-900/80 ${textPrimaryOnDark} focus:ring-2 focus:ring-green-400/50 outline-none focus:outline-none transition-colors h-[34px]`;
 
 export const apiGeneratorRowInputMono = `${apiGeneratorRowControlCore} font-mono`;
-
-export const apiGeneratorRowSelect = apiGeneratorRowControlCore;
 
 /** Muted placeholder row when a linked control is unavailable (no object, etc.). */
 export const apiGeneratorHintCell =
@@ -131,8 +137,12 @@ export const dropdownPanelMessage =
 
 export const dropdownListScroll = 'min-h-0 overflow-y-auto';
 
+/**
+ * List row — `dropdown-list-row` hover is defined in `app.css`.
+ * Do not use Tailwind `hover:bg-mono-*` on these elements: `.drawer-body-scroll` flattens that utility to `--drawer-inner-surface-bg`, which hides hover.
+ */
 export const dropdownRow =
-  'w-full px-3 py-2 text-left hover:bg-mono-800 border-b border-mono-700 last:border-b-0 transition-colors';
+  `dropdown-list-row w-full px-3 py-2 text-left cursor-pointer border-b border-mono-700 last:border-b-0 transition-colors ${hoverTextPrimaryOnDark}`;
 
 export const listMetaBadge = 'text-xs text-mono-400 bg-mono-800 px-2 py-0.5 rounded-lg';
 
@@ -143,7 +153,7 @@ export const listMetaBadge = 'text-xs text-mono-400 bg-mono-800 px-2 py-0.5 roun
 export const inlineRemoveIconButton =
   'p-1 text-red-400 hover:text-red-300 hover:bg-red-400/10 rounded transition-colors shrink-0';
 
-export const dropdownCreateRow = `w-full text-left px-3 py-2 text-sm text-mono-400 hover:bg-mono-800 ${hoverTextPrimaryOnDark} rounded-lg cursor-pointer flex items-center space-x-2`;
+export const dropdownCreateRow = `dropdown-create-row w-full text-left px-3 py-2 text-sm text-mono-400 ${hoverTextPrimaryOnDark} rounded-lg cursor-pointer flex items-center space-x-2`;
 
 // --- API generator: query parameters (matches QueryParamRow glass cells) ---
 
