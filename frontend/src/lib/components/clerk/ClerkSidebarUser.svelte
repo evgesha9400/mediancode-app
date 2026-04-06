@@ -99,6 +99,11 @@
         userProfileProps: {
           appearance: {
             ...clerkAppearance,
+            variables: {
+              ...clerkAppearance.variables,
+              // Avoid stacking Clerk's default opaque fill on top of `modalContent` glass.
+              colorBackground: 'transparent',
+            },
             elements: {
               ...clerkAppearance.elements,
               card: clerkProfileModalInnerCard,

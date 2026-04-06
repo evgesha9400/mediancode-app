@@ -9,7 +9,7 @@
   import { MainColumnFrame, PageHeader, StatCard } from '$lib/components';
   import { QuickActions, ProjectChecklist, ApiReadinessCard } from '$lib/components/dashboard';
   import { GenerateModal } from '$lib/components/api-generator';
-  import { dashboardTextPrimary } from '$lib/ui/classes';
+  import { cardGlassSurface, dashboardTextPrimary } from '$lib/ui/classes';
 
   let totalTypes = $derived($typesBaseStore.length);
   let totalFields = $derived($fieldsStore.length);
@@ -121,7 +121,7 @@
             {/each}
           </div>
         {:else}
-          <div class="bg-mono-900/50 backdrop-blur-sm/30 border border-mono-800/80 rounded-2xl p-8 text-center shadow-lg">
+          <div class="{cardGlassSurface} p-8 text-center">
             <i class="fa-solid fa-code text-mono-600 text-3xl mb-3 block"></i>
             <p class="text-sm text-mono-400 font-inter">No APIs yet. Create your first API to get started.</p>
           </div>

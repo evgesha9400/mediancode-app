@@ -20,6 +20,7 @@
 <script lang="ts">
   import { onDestroy } from 'svelte';
   import { getClerk, clerkAppearance, clerkState } from '$lib/clerk';
+  import { dashboardCardGlass } from '$lib/ui/classes';
 
   interface Props extends ClerkCreateOrganizationProps {}
 
@@ -86,7 +87,7 @@
       <i class="fa-solid fa-spinner fa-spin text-2xl text-mono-400"></i>
     </div>
   {:else if hasError}
-    <div class="p-6 bg-mono-950/40 border border-mono-800/80 rounded-2xl text-center shadow-sm">
+    <div class="p-6 {dashboardCardGlass} text-center">
       <i class="fa-solid fa-exclamation-circle text-2xl text-mono-400 mb-2"></i>
       <p class="text-mono-400">Unable to load organization creation form</p>
     </div>

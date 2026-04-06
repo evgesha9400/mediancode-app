@@ -1,6 +1,7 @@
 <script lang="ts">
   import { ClerkUserProfile } from '$lib/components/clerk';
   import { MainColumnFrame, PageHeader } from '$lib/components';
+  import { dashboardCardGlass } from '$lib/ui/classes';
 </script>
 
 <MainColumnFrame bodyClass="p-6">
@@ -20,7 +21,7 @@
 
   <section>
     <h2 class="text-xs uppercase tracking-wider text-mono-500 mb-3 font-medium">Account</h2>
-    <div class="bg-mono-900/50 backdrop-blur-sm border-2 border-mono-700 overflow-hidden">
+    <div class="{dashboardCardGlass} overflow-hidden">
       <ClerkUserProfile />
     </div>
   </section>

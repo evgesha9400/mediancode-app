@@ -26,6 +26,7 @@
     setActiveNamespace
   } from '$lib/stores/namespaces';
   import type { Namespace } from '$lib/types';
+  import { inputGlassAuto, popoverGlassMenuChrome } from '$lib/ui/classes';
 
   function isGlobalNamespace(ns: Namespace | undefined): boolean {
     return ns?.name?.toLowerCase() === 'global';
@@ -65,7 +66,7 @@
   <button
     type="button"
     onclick={toggleDropdown}
-    class="flex items-center space-x-3 px-4 py-2 border border-mono-700/80 bg-mono-900/50 backdrop-blur-sm/50 hover:bg-mono-800 transition-colors text-sm rounded-xl font-inter shadow-inner"
+    class="inline-flex items-center space-x-3 cursor-pointer shadow-inner {inputGlassAuto} hover:bg-mono-800 font-inter"
     aria-haspopup="listbox"
     aria-expanded={isOpen}
   >
@@ -80,7 +81,7 @@
 
   {#if isOpen}
     <div
-      class="absolute top-full right-0 mt-2 min-w-[200px] w-max max-w-sm bg-mono-900/95 backdrop-blur-xl shadow-2xl border border-mono-800/80 rounded-2xl z-[100] overflow-hidden"
+      class="{popoverGlassMenuChrome} absolute top-full right-0 mt-2 min-w-[200px] w-max max-w-sm"
       role="listbox"
     >
       <div class="p-3 border-b border-mono-800/80 bg-mono-800/40">

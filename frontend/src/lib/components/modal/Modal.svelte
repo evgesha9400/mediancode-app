@@ -1,5 +1,9 @@
 <script lang="ts">
-  import { modalPanelGlassSurface } from '$lib/ui/classes';
+  import {
+    modalDialogBackdropClass,
+    modalPanelGlassSurface,
+    modalPanelTransparentInner,
+  } from '$lib/ui/classes';
 
   export interface ModalProps {
     open: boolean;
@@ -48,10 +52,12 @@
     bind:this={dialogEl}
     onkeydown={handleKeydown}
     onclick={handleBackdropClick}
-    class="backdrop:bg-mono-950/45 backdrop:backdrop-blur-[1.5px] bg-transparent p-0 m-0 fixed inset-0 flex items-center justify-center w-full h-full"
+    class="{modalDialogBackdropClass} bg-transparent p-0 m-0 fixed inset-0 flex items-center justify-center w-full h-full"
   >
-    <div class="{modalPanelGlassSurface} rounded-3xl {maxWidth} w-full mx-4">
-      {@render children()}
+    <div class="{modalPanelGlassSurface} relative rounded-3xl {maxWidth} w-full mx-4">
+      <div class={modalPanelTransparentInner}>
+        {@render children()}
+      </div>
     </div>
   </dialog>
 {/if}

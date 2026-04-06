@@ -36,6 +36,7 @@
   import { mapApiError } from '$lib/domain/errorMap';
   import { showToast } from '$lib/stores/toasts';
   import {
+    dashboardCardGlass,
     dashboardPageHeaderShell,
     dashboardPageHeaderTitleBand,
     dashboardPageTitleTextDetail,
@@ -416,7 +417,7 @@
 
     <div class="max-w-7xl mx-auto p-6">
       {#if apiState.endpoints.length === 0}
-        <div class="bg-mono-900/50 backdrop-blur-sm border-2 border-mono-700">
+        <div class="{dashboardCardGlass} overflow-hidden rounded-2xl">
           <div class="text-center py-8 text-mono-400">
             <i class="fa-solid fa-route text-2xl mb-2 text-mono-600"></i>
             <p class="text-sm">No endpoints yet. Create your first API endpoint.</p>
@@ -424,7 +425,7 @@
         </div>
       {:else}
         <!-- Swagger-style flush tag sections -->
-        <div class="overflow-hidden border border-mono-800/80 rounded-2xl shadow-sm">
+        <div class="{dashboardCardGlass} overflow-hidden rounded-2xl">
           {#each apiState.allTagSections as section, i (section.tag)}
             {@const isExpanded = apiState.expandedTags.has(section.tag)}
             <div class="{i < apiState.allTagSections.length - 1 ? 'border-b border-mono-700' : ''}">
@@ -432,7 +433,7 @@
               <button
                 type="button"
                 onclick={() => apiState.toggleTagSection(section.tag)}
-                class="w-full flex items-center justify-between px-4 py-3 bg-mono-900/50 backdrop-blur-sm hover:bg-mono-950 transition-colors text-left"
+                class="w-full flex items-center justify-between px-4 py-3 bg-mono-950/20 hover:bg-mono-950/45 transition-colors text-left"
               >
                 <div class="flex items-center space-x-2">
                   <h2 class="text-base font-semibold {dashboardTextPrimary}">{section.tag}</h2>

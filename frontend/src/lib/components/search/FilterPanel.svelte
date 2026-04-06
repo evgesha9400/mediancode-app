@@ -52,6 +52,7 @@
 
 <script lang="ts">
   import { FILTER_PANEL_ID } from '$lib/utils/testIds';
+  import { popoverGlassMenuChrome } from '$lib/ui/classes';
 
   interface Props extends FilterPanelProps {}
 
@@ -110,7 +111,7 @@
   ></div>
 
   <!-- Panel -->
-  <div data-testid={FILTER_PANEL_ID} class="absolute right-0 top-full mt-2 w-72 bg-mono-900/95 backdrop-blur-xl shadow-2xl border border-mono-800/80 rounded-3xl z-[100] overflow-hidden font-inter">
+  <div data-testid={FILTER_PANEL_ID} class="{popoverGlassMenuChrome} absolute right-0 top-full mt-2 w-72">
     <div class="p-4 border-b border-mono-800/80 flex justify-between items-center bg-mono-800/40">
       <h3 class="font-medium text-mono-100">Filters</h3>
       <button
