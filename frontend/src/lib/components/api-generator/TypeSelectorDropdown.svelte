@@ -20,6 +20,7 @@
     inputGlassSearch,
     listMetaBadge,
   } from '$lib/ui/classes';
+  import { FIELD_TYPE_DROPDOWN_LIST } from '$lib/utils/testIds';
 
   interface Props extends TypeSelectorDropdownProps {}
 
@@ -98,7 +99,7 @@
   </div>
 
   {#if dropdownOpen && filteredTypes.length > 0}
-    <div class={dropdownPanel}>
+    <div class={dropdownPanel} data-testid={FIELD_TYPE_DROPDOWN_LIST}>
       <div class={dropdownListScroll}>
         {#each filteredTypes as type (type.id)}
           <button

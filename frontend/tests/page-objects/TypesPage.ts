@@ -7,7 +7,7 @@
  */
 
 import { type Page, type Locator } from '@playwright/test';
-import { getTableRowCellSelector } from '$lib/utils/testIds';
+import { FILTER_PANEL_ID, getTableRowCellSelector } from '$lib/utils/testIds';
 import { ACTION_DELAY_MS } from '../helpers/e2e-delays';
 
 export class TypesPage {
@@ -47,7 +47,7 @@ export class TypesPage {
 
 		// Filter
 		this.filterButton = page.locator('button').filter({ has: page.locator('i.fa-filter') });
-		this.filterPanel = page.locator('[data-testid="filter-panel"]');
+		this.filterPanel = page.getByTestId(FILTER_PANEL_ID);
 		this.clearFiltersButton = page.getByRole('button', { name: /clear all/i });
 
 		// Table

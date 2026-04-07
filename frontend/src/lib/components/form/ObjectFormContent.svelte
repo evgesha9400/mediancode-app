@@ -32,10 +32,18 @@
   import { flip } from 'svelte/animate';
   import {
     drawerLinkedEntityRow,
+    dropdownPanelSolidSurface,
     inputObjectMemberSearch,
     surfaceInsideFrostedPanel,
     textareaObjectForm,
   } from '$lib/ui/classes';
+  import {
+    OBJECT_MEMBER_DRAG_HANDLE,
+    OBJECT_MEMBER_DROPDOWN,
+    OBJECT_MEMBER_LIST,
+    OBJECT_MEMBER_ROW,
+    OBJECT_MEMBER_SEARCH,
+  } from '$lib/utils/testIds';
 
   let {
     editedItem = $bindable(),
@@ -360,13 +368,14 @@
             onfocus={handleMemberFocus}
             onblur={handleMemberBlur}
             placeholder="Add field or relationship..."
+            data-testid={OBJECT_MEMBER_SEARCH}
             class={inputObjectMemberSearch}
           />
           <i class="fa-solid fa-search absolute right-3 top-1/2 -translate-y-1/2 text-mono-400 text-xs pointer-events-none"></i>
         </div>
 
         {#if memberDropdownOpen}
-          <div class="absolute z-10 w-full mt-1 bg-mono-950 border border-mono-700/80 rounded-xl shadow-lg shadow-black/30 max-h-72 overflow-y-auto flex flex-col">
+          <div class="absolute z-10 w-full mt-1 max-h-72 overflow-y-auto flex flex-col {dropdownPanelSolidSurface}" data-testid={OBJECT_MEMBER_DROPDOWN}>
 
             <!-- Fields Section -->
             <div class="px-3 pt-2 pb-1">
@@ -447,6 +456,7 @@
           onconsider={handleDndConsider}
           onfinalize={handleDndFinalize}
           class="p-2 {surfaceInsideFrostedPanel} space-y-2"
+          data-testid={OBJECT_MEMBER_LIST}
         >
           {#each dndItems as item (item.id)}
             <div animate:flip={{ duration: 150 }}>
@@ -457,12 +467,12 @@
                 {#if field}
                   {@const inputCfg = defaultInputType(field.type)}
                   {@const modifierClass = roleHasModifiers(item.role) ? '' : 'invisible pointer-events-none'}
-                  <div class="p-3 {surfaceInsideFrostedPanel} space-y-1.5">
+                  <div class="p-3 {surfaceInsideFrostedPanel} space-y-1.5" data-testid={OBJECT_MEMBER_ROW}>
                     <div
                       class="grid grid-cols-[auto_minmax(0,1fr)_10rem_7rem_4.5rem_1.75rem] gap-x-2 items-center"
                     >
                       <!-- Drag Handle -->
-                      <div use:dragHandle class="text-mono-600 hover:text-mono-400 cursor-grab justify-self-start">
+                      <div use:dragHandle class="text-mono-600 hover:text-mono-400 cursor-grab justify-self-start" data-testid={OBJECT_MEMBER_DRAG_HANDLE}>
                         <i class="fa-solid fa-grip-vertical text-xs"></i>
                       </div>
 
@@ -577,10 +587,10 @@
               {:else if item.memberType === 'relationship'}
                 <!-- Relationship Member Row -->
                 {@const targetObj = getObjectById(item.targetObjectId)}
-                <div class="p-3 {surfaceInsideFrostedPanel} space-y-1.5">
+                <div class="p-3 {surfaceInsideFrostedPanel} space-y-1.5" data-testid={OBJECT_MEMBER_ROW}>
                   <div class="flex items-center space-x-2">
                     <!-- Drag Handle -->
-                    <div use:dragHandle class="text-mono-600 hover:text-mono-400 cursor-grab shrink-0">
+                    <div use:dragHandle class="text-mono-600 hover:text-mono-400 cursor-grab shrink-0" data-testid={OBJECT_MEMBER_DRAG_HANDLE}>
                       <i class="fa-solid fa-grip-vertical text-xs"></i>
                     </div>
 

@@ -65,6 +65,15 @@ html[data-theme="soft"] {
   --drawer-inner-surface-shadow: inset 0 1px 0 rgb(255 255 255 / 0.08);
   /* In-page / stat cards: same frost tokens as drawers; smaller radius (Tailwind rounded-2xl). */
   --dashboard-card-radius: 1rem;
+
+  /*
+   * Floating dropdown panels: fully opaque (no glass / blur). Do not use Tailwind `bg-mono-*` on
+   * these nodes — inside `.drawer-transparent-context` that substring forces `--drawer-inner-surface-bg`.
+   */
+  --dropdown-panel-radius: 0.75rem;
+  --dropdown-panel-border: rgb(var(--color-mono-700) / 0.8);
+  --dropdown-panel-bg: rgb(var(--color-mono-950) / 1);
+  --dropdown-panel-elevation-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.3), 0 4px 6px -4px rgb(0 0 0 / 0.3);
 }
 
 @tailwind base;
@@ -102,6 +111,14 @@ html[data-theme="soft"] {
     -webkit-backdrop-filter: var(--drawer-panel-backdrop);
     backdrop-filter: var(--drawer-panel-backdrop);
     transform: translateZ(0);
+  }
+
+  /** Anchored dropdown / autocomplete panels — opaque shell; tuned via `--dropdown-panel-*`. */
+  .dropdown-panel-solid-surface {
+    border-radius: var(--dropdown-panel-radius);
+    border: 1px solid var(--dropdown-panel-border);
+    background-color: var(--dropdown-panel-bg);
+    box-shadow: var(--dropdown-panel-elevation-shadow);
   }
 
   .drawer-scrim {

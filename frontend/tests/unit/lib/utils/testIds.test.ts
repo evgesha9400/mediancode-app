@@ -13,7 +13,13 @@ import {
   getSortColumnId,
   getStatCardTestId,
   TABLE_COL_ATTR,
-  getTableRowCellSelector
+  getTableRowCellSelector,
+  getDrawerPanelTestId,
+  getDetailFieldTestId,
+  getFormFieldErrorTestId,
+  FIELD_TYPE_DROPDOWN_LIST,
+  FIELD_CONSTRAINT_ROW,
+  OBJECT_MEMBER_SEARCH
 } from '$lib/utils/testIds';
 
 describe('testIds - Constants', () => {
@@ -72,5 +78,29 @@ describe('testIds - getStatCardTestId', () => {
 
   it('should lowercase and replace spaces', () => {
     expect(getStatCardTestId('Credits Available')).toBe('stat-card-credits-available');
+  });
+});
+
+describe('testIds - drawer and form E2E helpers', () => {
+  it('getDrawerPanelTestId prefixes panel id', () => {
+    expect(getDrawerPanelTestId('field')).toBe('drawer-panel-field');
+    expect(getDrawerPanelTestId('edit-api')).toBe('drawer-panel-edit-api');
+  });
+
+  it('getDetailFieldTestId slugifies labels', () => {
+    expect(getDetailFieldTestId('Name')).toBe('detail-field-name');
+    expect(getDetailFieldTestId('Parameter Types')).toBe('detail-field-parameter-types');
+    expect(getDetailFieldTestId('Documentation')).toBe('detail-field-documentation');
+  });
+
+  it('getFormFieldErrorTestId pairs with FormField id', () => {
+    expect(getFormFieldErrorTestId('fields-name')).toBe('field-error-fields-name');
+    expect(getFormFieldErrorTestId('object-name')).toBe('field-error-object-name');
+  });
+
+  it('exposes stable string constants for Playwright', () => {
+    expect(FIELD_TYPE_DROPDOWN_LIST).toBe('field-type-dropdown-list');
+    expect(FIELD_CONSTRAINT_ROW).toBe('field-constraint-row');
+    expect(OBJECT_MEMBER_SEARCH).toBe('object-member-search');
   });
 });

@@ -18,6 +18,10 @@
     inputGlassSearch,
     listMetaBadge,
   } from '$lib/ui/classes';
+  import {
+    FIELD_CONSTRAINT_DROPDOWN_LIST,
+    FIELD_CONSTRAINT_SELECTOR_ROOT,
+  } from '$lib/utils/testIds';
 
   interface Props extends FieldConstraintSelectorDropdownProps {}
 
@@ -75,7 +79,7 @@
   }
 </script>
 
-<div class="relative">
+<div class="relative" data-testid={FIELD_CONSTRAINT_SELECTOR_ROOT}>
   <div class="relative">
     <input
       type="text"
@@ -90,7 +94,7 @@
   </div>
 
   {#if dropdownOpen && filteredFieldConstraints.length > 0}
-    <div class={dropdownPanel}>
+    <div class={dropdownPanel} data-testid={FIELD_CONSTRAINT_DROPDOWN_LIST}>
       <div class={dropdownListScroll}>
         {#each filteredFieldConstraints as fc (fc.name)}
           <button

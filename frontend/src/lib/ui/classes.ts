@@ -7,7 +7,7 @@
  * | Segmented toggles (drawer / API generator) | — | `segmentFieldBase`, `segmentFieldBaseJoin`, `segmentFieldInactive`, `segmentFieldActive`, `segmentPillBase`, `segmentPillSelected`, `segmentPillUnselected`, `segmentPillUnselectedLocked` |
  * | API generator 34px row controls | — | `apiGeneratorRowInputMono`, `glassSelectTrigger`, `apiGeneratorHintCell` |
  * | Modal form controls | — | `modalFormCheckbox`, `modalFormRadio` |
- * | Autocomplete / dropdown panels (solid in frosted drawers — avoid nested blur) | — | `dropdownPanel`, `dropdownPanelMessage`; page-level menus use `popoverGlassMenuChrome` |
+ * | Autocomplete / dropdown panels (opaque; see `app.css`) | — | `dropdownPanelSolidSurface`, `dropdownPanel`, `dropdownPanelMessage`; page-level menus use `popoverGlassMenuChrome` |
  * | Query params / pagination rows | — | `queryParamReadonlyCell`, `queryParamPaginationToggle*` |
  * | Dashboard & stat cards | `drawer-deep` | `dashboardCardGlass`, `cardGlassSurface`, `cardGlassBorder*` |
  * | Green accent icon tiles | `glow-green-icon`, `glow-green-sm` | `accentIconTile`, `marketingFeatureIcon` |
@@ -128,12 +128,18 @@ export const apiGeneratorHintCell =
 
 // --- Dropdowns / floating panels ---
 
-/** Solid list shell for controls inside `DrawerStack` (nested frost avoided). Page-level menus: {@link popoverGlassMenuChrome}. */
-export const dropdownPanel =
-  'absolute z-30 w-full mt-1 bg-mono-950 border border-mono-700/80 rounded-xl shadow-lg shadow-black/30 max-h-60 overflow-hidden flex flex-col';
+/**
+ * Opaque shell for floating dropdown lists (see `.dropdown-panel-solid-surface` in `app.css`).
+ * Do not add Tailwind `bg-mono-*` to the same element — `.drawer-transparent-context` flattens those to the inner surface tint.
+ */
+export const dropdownPanelSolidSurface = 'dropdown-panel-solid-surface';
 
-export const dropdownPanelMessage =
-  'absolute z-30 w-full mt-1 bg-mono-950 border border-mono-700/80 rounded-xl shadow-lg shadow-black/30';
+/**
+ * List body for controls inside drawers / forms. Page-level menus: {@link popoverGlassMenuChrome}.
+ */
+export const dropdownPanel = `absolute z-30 w-full mt-1 max-h-60 overflow-hidden flex flex-col ${dropdownPanelSolidSurface}`;
+
+export const dropdownPanelMessage = `absolute z-30 w-full mt-1 ${dropdownPanelSolidSurface}`;
 
 export const dropdownListScroll = 'min-h-0 overflow-y-auto';
 
@@ -409,10 +415,10 @@ export const drawerStackRoot =
 export const drawerPanelGlassSurface = 'drawer-panel-glass-surface';
 
 /**
- * Anchored popovers on list/dashboard chrome (namespace menu, filter panel). Not for inside `DrawerStack` — use {@link dropdownPanel}.
+ * Anchored popovers on list/dashboard chrome (namespace menu, filter panel). Opaque shell — same as {@link dropdownPanelSolidSurface}.
  */
 export const popoverGlassMenuChrome =
-  `${drawerPanelGlassSurface} z-[100] overflow-hidden font-inter`;
+  `${dropdownPanelSolidSurface} z-[100] overflow-hidden font-inter`;
 
 /**
  * Drawer panel shell (outer): visual chrome comes from `.drawer-panel-glass-surface` in `app.css`.

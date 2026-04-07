@@ -40,6 +40,7 @@
     surfaceInsideFrostedPanel,
     textareaInsideFrostedPanel,
   } from '$lib/ui/classes';
+  import { getFormFieldErrorTestId } from '$lib/utils/testIds';
 
   let {
     editedItem = $bindable(),
@@ -190,7 +191,7 @@
         error={!!visibleErrors.type}
       />
       {#if visibleErrors.type}
-        <p class="text-xs text-red-500 mt-1">{visibleErrors.type}</p>
+        <p class="text-xs text-red-500 mt-1" data-testid={getFormFieldErrorTestId('fields-type')}>{visibleErrors.type}</p>
       {/if}
     </div>
   </div>
@@ -216,7 +217,7 @@
       onChange={(v) => { editedItem = { ...editedItem, defaultValue: v }; }}
     />
     {#if visibleErrors.defaultValue}
-      <p class="text-xs text-red-500 mt-1">{visibleErrors.defaultValue}</p>
+      <p class="text-xs text-red-500 mt-1" data-testid={getFormFieldErrorTestId('fields-default-value')}>{visibleErrors.defaultValue}</p>
     {/if}
   </div>
 

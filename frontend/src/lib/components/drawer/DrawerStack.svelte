@@ -37,6 +37,7 @@
     drawerStackRoot,
     drawerStackDimmer,
   } from '$lib/ui/classes';
+  import { getDrawerPanelTestId } from '$lib/utils/testIds';
 
   // ─── Animation config ────────────────────────────────────────────────────────
   const DRAWER_DURATION = 350; // ms — shared by backdrop, outer fly, nested panel motion
@@ -147,6 +148,7 @@
     {#each visiblePanels as panel, i (panel.id)}
       <div
         class={i === 0 ? drawerPanelFlexibleOuter : drawerPanelStackedOuter}
+        data-testid={panel.id ? getDrawerPanelTestId(panel.id) : undefined}
         class:border-r={i === 0 && i < visiblePanels.length - 1}
         style={i === 0
           ? `flex: 1 1 0; max-width: ${panel.width}px;${visiblePanels.length > 1 && panel.minWidth ? ` min-width: ${panel.minWidth}px;` : ''}`

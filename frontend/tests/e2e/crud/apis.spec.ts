@@ -14,6 +14,7 @@
 import { authenticatedTest as test, expect } from '../fixtures';
 import { ApisPage } from '../../page-objects';
 import { E2EApiClient } from '../../helpers';
+import { getDrawerPanelTestId } from '$lib/utils/testIds';
 
 const API_A = {
 	title: 'AlphaTestApi',
@@ -89,9 +90,7 @@ test('API lifecycle: create, search, edit, delete', async ({ page }) => {
 	// --- Edit API via drawer on detail page ---
 	const editButton = page.getByRole('button', { name: /Edit/i }).first();
 	await editButton.click();
-	const editDrawer = page
-		.locator('[class*="fixed"][class*="right-0"]')
-		.filter({ hasText: 'Edit API' });
+	const editDrawer = page.getByTestId(getDrawerPanelTestId('edit-api'));
 	await editDrawer.waitFor({ state: 'visible' });
 
 	// Update description

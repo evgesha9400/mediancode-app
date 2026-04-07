@@ -6,7 +6,15 @@
  */
 
 import { type Page, type Locator, expect } from '@playwright/test';
-import { getTableRowCellSelector } from '$lib/utils/testIds';
+import {
+	getDrawerPanelTestId,
+	getFormFieldErrorTestId,
+	getTableRowCellSelector,
+	OBJECT_MEMBER_DRAG_HANDLE,
+	OBJECT_MEMBER_DROPDOWN,
+	OBJECT_MEMBER_ROW,
+	OBJECT_MEMBER_SEARCH,
+} from '$lib/utils/testIds';
 import { ACTION_DELAY_MS } from '../helpers/e2e-delays';
 
 export class ObjectsPage {
@@ -80,8 +88,8 @@ export class ObjectsPage {
 		this.fieldsColumnHeader = this.table.locator('thead th').filter({ hasText: /^Members$/i });
 		this.usedInApisColumnHeader = this.table.locator('thead th').filter({ hasText: 'Used In APIs' });
 
-		// Drawer
-		this.drawer = page.locator('[class*="fixed"][class*="right-0"]').filter({ has: page.locator('text=Edit Object') });
+		// Drawer — `panel.id` from objects route is `object`
+		this.drawer = page.getByTestId(getDrawerPanelTestId('object'));
 		this.drawerCloseButton = page.locator('button[aria-label="Close drawer"]');
 
 		// Drawer form fields
@@ -90,10 +98,10 @@ export class ObjectsPage {
 		this.objectNamespaceSelect = page.locator('#object-namespace');
 		this.objectDescriptionTextarea = page.locator('#object-description');
 
-		// Field selector dropdown
-		this.fieldSelectorInput = page.getByPlaceholder('Add field to object...');
-		this.fieldDropdownOptions = page.locator('.absolute.z-10.w-full button');
-		this.fieldGripHandles = page.locator('.fa-grip-vertical').locator('..');
+		// Members — unified search + ObjectFormContent list
+		this.fieldSelectorInput = page.getByTestId(OBJECT_MEMBER_SEARCH);
+		this.fieldDropdownOptions = page.getByTestId(OBJECT_MEMBER_DROPDOWN).locator('button');
+		this.fieldGripHandles = page.getByTestId(OBJECT_MEMBER_DRAG_HANDLE);
 
 		// Drawer actions
 		this.saveButton = page.getByRole('button', { name: 'Save', exact: true });
@@ -106,7 +114,7 @@ export class ObjectsPage {
 		this.createObjectButton = page.getByRole('button', { name: /Create Object/i });
 		this.createButton = page.getByRole('button', { name: 'Create', exact: true });
 		this.cancelButton = page.getByRole('button', { name: 'Cancel' });
-		this.createDrawer = page.locator('[class*="fixed"][class*="right-0"]').filter({ has: page.locator('text=Create Object') });
+		this.createDrawer = page.getByTestId(getDrawerPanelTestId('object'));
 
 		// Namespace selector
 		this.namespaceSelector = page.locator('[data-namespace-selector]');
@@ -284,8 +292,8 @@ export class ObjectsPage {
 	 * Remove a field from the object
 	 */
 	async removeField(fieldName: string) {
-		const fieldRow = this.page.locator('.flex.items-center.space-x-2').filter({ hasText: fieldName });
-		const removeButton = fieldRow.locator('button[title="Remove member"]');
+		const fieldRow = this.page.getByTestId(OBJECT_MEMBER_ROW).filter({ hasText: fieldName });
+		const removeButton = fieldRow.getByTitle('Remove member');
 		await removeButton.click();
 	}
 
@@ -293,7 +301,7 @@ export class ObjectsPage {
 	 * Toggle required flag for a field
 	 */
 	async toggleFieldRequired(fieldName: string) {
-		const fieldRow = this.page.locator('.flex.items-center.space-x-2').filter({ hasText: fieldName });
+		const fieldRow = this.page.getByTestId(OBJECT_MEMBER_ROW).filter({ hasText: fieldName });
 		const checkbox = fieldRow.locator('input[type="checkbox"]');
 		await checkbox.click();
 	}
@@ -302,21 +310,18 @@ export class ObjectsPage {
 	 * Get number of members (scalar + relationship) in the object
 	 */
 	async getFieldCount(): Promise<number> {
-		// Target the outer member row container which has space-y-1.5
-		const memberRows = this.page.locator('.p-2.bg-mono-900.rounded.border.space-y-1\\.5');
-		return await memberRows.count();
+		return await this.page.getByTestId(OBJECT_MEMBER_ROW).count();
 	}
 
 	/**
 	 * Get ordered list of member names in the drawer
 	 */
 	async getFieldNames(): Promise<string[]> {
-		const memberRows = this.page.locator('.p-2.bg-mono-900.rounded.border.space-y-1\\.5');
+		const memberRows = this.page.getByTestId(OBJECT_MEMBER_ROW);
 		const count = await memberRows.count();
 		const names: string[] = [];
 		for (let i = 0; i < count; i++) {
-			// Use .font-mono.text-sm to match member name inputs/spans
-			const nameInput = memberRows.nth(i).locator('.font-mono.text-sm');
+			const nameInput = memberRows.nth(i).locator('input.font-mono.text-sm').first();
 			const text = await nameInput.inputValue().catch(() => nameInput.textContent());
 			if (text) names.push(text.trim());
 		}
@@ -431,9 +436,9 @@ export class ObjectsPage {
 	 * Get validation error message
 	 */
 	async getValidationError(field: 'name'): Promise<string | null> {
-		const errorLocator = this.page.locator('.text-red-500.text-xs');
+		const errorLocator = this.page.getByTestId(getFormFieldErrorTestId('object-name'));
 		if (await errorLocator.isVisible()) {
-			return await errorLocator.textContent();
+			return (await errorLocator.textContent())?.trim() ?? null;
 		}
 		return null;
 	}

@@ -13,6 +13,7 @@
  */
 
 import { type Page, type Locator } from '@playwright/test';
+import { getDrawerPanelTestId, FILTER_PANEL_ID } from '$lib/utils/testIds';
 import { ACTION_DELAY_MS } from '../helpers/e2e-delays';
 
 export class NamespacesPage {
@@ -72,7 +73,7 @@ export class NamespacesPage {
 
 		// Filter
 		this.filterButton = page.locator('button').filter({ has: page.locator('i.fa-filter') });
-		this.filterPanel = page.locator('[data-testid="filter-panel"]');
+		this.filterPanel = page.getByTestId(FILTER_PANEL_ID);
 		this.clearFiltersButton = page.getByRole('button', { name: /clear all/i });
 
 		// Table
@@ -84,10 +85,7 @@ export class NamespacesPage {
 		this.nameColumnHeader = this.table.locator('thead th').filter({ hasText: 'Name' });
 		this.entitiesColumnHeader = this.table.locator('thead th').filter({ hasText: 'Entities' });
 
-		// Drawer (handles create, edit, and view)
-		this.drawer = page.locator('[class*="fixed"][class*="right-0"]').filter({
-			has: page.locator('text=/Create Namespace|Edit Namespace|Namespace Details/')
-		});
+		this.drawer = page.getByTestId(getDrawerPanelTestId('namespace'));
 		this.createButton = page.getByRole('button', { name: 'Create', exact: true });
 		this.drawerCloseButton = page.locator('button[aria-label="Close drawer"]');
 		this.namespaceNameInput = page.locator('#namespace-name');

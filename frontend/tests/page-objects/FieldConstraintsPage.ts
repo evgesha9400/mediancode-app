@@ -8,7 +8,12 @@
  */
 
 import { type Page, type Locator } from '@playwright/test';
-import { getTableRowCellSelector } from '$lib/utils/testIds';
+import {
+	getDetailFieldTestId,
+	getDrawerPanelTestId,
+	FILTER_PANEL_ID,
+	getTableRowCellSelector,
+} from '$lib/utils/testIds';
 import { ACTION_DELAY_MS } from '../helpers/e2e-delays';
 
 export class FieldConstraintsPage {
@@ -64,7 +69,7 @@ export class FieldConstraintsPage {
 
 		// Filter
 		this.filterButton = page.locator('button').filter({ has: page.locator('i.fa-filter') });
-		this.filterPanel = page.locator('[data-testid="filter-panel"]');
+		this.filterPanel = page.getByTestId(FILTER_PANEL_ID);
 		this.clearFiltersButton = page.getByRole('button', { name: /clear all/i });
 
 		// Table
@@ -77,15 +82,16 @@ export class FieldConstraintsPage {
 		this.parameterTypesColumnHeader = this.table.locator('thead th').filter({ hasText: 'Parameter Types' });
 		this.usedInFieldsColumnHeader = this.table.locator('thead th').filter({ hasText: 'Used in Fields' });
 
-		// Drawer
-		this.drawer = page.locator('[class*="fixed"][class*="right-0"]').filter({ has: page.locator('text=Field Constraint Details') });
+		this.drawer = page.getByTestId(getDrawerPanelTestId('field-constraint'));
 		this.drawerCloseButton = page.locator('button[aria-label="Close drawer"]');
 
-		// Drawer details (read-only display elements)
-		this.fieldConstraintNameDisplay = page.locator('h3:has-text("Name") + p');
-		this.fieldConstraintDescriptionDisplay = page.locator('h3:has-text("Description") + p');
-		this.fieldConstraintParameterTypesDisplay = page.locator('h3:has-text("Parameter Types")');
-		this.fieldConstraintDocsLink = page.locator('a').filter({ hasText: 'View Docs' });
+		// Drawer details (DetailField blocks)
+		this.fieldConstraintNameDisplay = page.getByTestId(getDetailFieldTestId('Name')).locator('p');
+		this.fieldConstraintDescriptionDisplay = page.getByTestId(getDetailFieldTestId('Description')).locator('p');
+		this.fieldConstraintParameterTypesDisplay = page.getByTestId(getDetailFieldTestId('Parameter Types'));
+		this.fieldConstraintDocsLink = page
+			.getByTestId(getDetailFieldTestId('Documentation'))
+			.getByRole('link', { name: /View Docs/i });
 		this.fieldReferenceButtons = page.locator('button').filter({ has: page.locator('i.fa-vector-square') });
 
 		// Drawer actions

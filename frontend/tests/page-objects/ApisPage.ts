@@ -6,7 +6,7 @@
  */
 
 import { type Page, type Locator, expect } from '@playwright/test';
-import { getTableRowCellSelector } from '$lib/utils/testIds';
+import { getDrawerPanelTestId, getTableRowCellSelector } from '$lib/utils/testIds';
 import { ACTION_DELAY_MS } from '../helpers/e2e-delays';
 
 export class ApisPage {
@@ -72,10 +72,7 @@ export class ApisPage {
 		this.baseUrlColumnHeader = this.table.locator('thead th').filter({ hasText: 'Base URL' });
 		this.endpointsColumnHeader = this.table.locator('thead th').filter({ hasText: 'Endpoints' });
 
-		// Create drawer
-		this.createDrawer = page
-			.locator('[class*="fixed"][class*="right-0"]')
-			.filter({ has: page.locator('text=Create API') });
+		this.createDrawer = page.getByTestId(getDrawerPanelTestId('create-api'));
 		this.apiTitleInput = page.locator('#api-title');
 		this.apiVersionInput = page.locator('#api-version');
 		this.apiDescriptionInput = page.locator('#api-description');

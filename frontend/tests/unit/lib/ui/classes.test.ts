@@ -20,6 +20,7 @@ import {
 	clerkNavbarButton,
 	dashboardCardGlass,
 	dropdownPanel,
+	dropdownPanelSolidSurface,
 	drawerPanelGlassSurface,
 	marketingHeroCta,
 	clerkCard,
@@ -134,10 +135,10 @@ describe('lib/ui/classes', () => {
 		}
 	});
 
-	it('dropdownPanel encodes solid floating list (nested in frosted drawers)', () => {
+	it('dropdownPanel encodes opaque floating list and hooks dropdown-panel-solid-surface', () => {
 		expect(dropdownPanel).toContain('absolute');
-		expect(dropdownPanel).toContain('rounded-xl');
-		expect(dropdownPanel).toContain('bg-mono-950');
+		expect(dropdownPanel).toContain('dropdown-panel-solid-surface');
+		expect(dropdownPanel).toContain('max-h-60');
 	});
 
 	it('dashboard card glass hooks app.css tokens and aliases', () => {
@@ -148,8 +149,8 @@ describe('lib/ui/classes', () => {
 		expect(cardOnboardingShell).toContain('p-6');
 	});
 
-	it('popoverGlassMenuChrome reuses drawer panel glass', () => {
-		expect(popoverGlassMenuChrome).toContain(drawerPanelGlassSurface);
+	it('popoverGlassMenuChrome uses opaque dropdown shell', () => {
+		expect(popoverGlassMenuChrome).toContain(dropdownPanelSolidSurface);
 		expect(popoverGlassMenuChrome).toContain('z-[100]');
 		expect(popoverGlassMenuChrome).toContain('overflow-hidden');
 	});

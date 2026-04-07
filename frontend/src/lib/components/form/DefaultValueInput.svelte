@@ -8,7 +8,12 @@
 </script>
 
 <script lang="ts">
-  import { defaultValueComboShell } from '$lib/ui/classes';
+  import { defaultValueComboShell, dropdownPanelSolidSurface } from '$lib/ui/classes';
+  import {
+    FIELD_DEFAULT_VALUE_CONTROL,
+    FIELD_DEFAULT_VALUE_PRESET_DISPLAY,
+    FIELD_DEFAULT_VALUE_PRESET_LIST,
+  } from '$lib/utils/testIds';
   import { Pill } from '../pill';
 
   type InputKind = 'text' | 'integer' | 'float' | 'bool';
@@ -64,11 +69,11 @@
   }
 </script>
 
-<div class="relative">
+<div class="relative" data-testid={FIELD_DEFAULT_VALUE_CONTROL}>
   <div class={defaultValueComboShell}>
     {#if isPreset}
       <!-- Preset selected: show as a pill with clear button -->
-      <div class="flex-1 flex items-center px-3 py-1.5 gap-2">
+      <div class="flex-1 flex items-center px-3 py-1.5 gap-2" data-testid={FIELD_DEFAULT_VALUE_PRESET_DISPLAY}>
         <Pill class="font-medium">{value}</Pill>
         <button
           type="button"
@@ -107,7 +112,7 @@
 
   <!-- Dropdown options -->
   {#if dropdownOpen}
-    <div class="absolute z-10 w-full mt-1 bg-mono-950 border border-mono-700/80 rounded-xl shadow-lg shadow-black/30">
+    <div class="absolute z-10 w-full mt-1 {dropdownPanelSolidSurface}" data-testid={FIELD_DEFAULT_VALUE_PRESET_LIST}>
       {#each presetOptions as option}
         <button
           type="button"

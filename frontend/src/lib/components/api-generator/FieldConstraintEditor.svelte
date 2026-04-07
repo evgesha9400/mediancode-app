@@ -25,6 +25,7 @@
 <script lang="ts">
   import { FieldConstraintSelectorDropdown } from '$lib/components/api-generator';
   import { inlineRemoveIconButton, inputGlassDense, surfaceInsideFrostedPanel } from '$lib/ui/classes';
+  import { FIELD_CONSTRAINT_ROW } from '$lib/utils/testIds';
 
   interface Props extends FieldConstraintEditorProps {}
 
@@ -60,7 +61,7 @@
         {#each constraints as constraintValue, index}
           {@const constraintMeta = allConstraintMeta.find(v => v.name === constraintValue.name)}
           {#if constraintMeta}
-            <div class="flex items-center space-x-2 p-3 {surfaceInsideFrostedPanel}">
+            <div class="flex items-center space-x-2 p-3 {surfaceInsideFrostedPanel}" data-testid={FIELD_CONSTRAINT_ROW}>
               <div class="flex items-center space-x-2 shrink-0">
                 <span class="font-mono text-sm text-mono-300">{constraintMeta.name}</span>
                 <span class="text-xs text-mono-400 bg-mono-800 px-2 py-0.5 rounded-lg">{constraintMeta.parameterTypes.join(', ')}</span>

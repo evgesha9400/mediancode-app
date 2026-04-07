@@ -13,7 +13,19 @@
  */
 
 import { type Page, type Locator, expect } from '@playwright/test';
-import { getTableRowCellSelector } from '$lib/utils/testIds';
+import {
+	FIELD_CONSTRAINT_DROPDOWN_LIST,
+	FIELD_CONSTRAINT_ROW,
+	FIELD_CONSTRAINT_SELECTOR_ROOT,
+	FIELD_DEFAULT_VALUE_CONTROL,
+	FIELD_DEFAULT_VALUE_PRESET_DISPLAY,
+	FIELD_DEFAULT_VALUE_PRESET_LIST,
+	FIELD_TYPE_DROPDOWN_LIST,
+	FILTER_PANEL_ID,
+	getDrawerPanelTestId,
+	getFormFieldErrorTestId,
+	getTableRowCellSelector,
+} from '$lib/utils/testIds';
 import { ACTION_DELAY_MS } from '../helpers/e2e-delays';
 
 export class FieldsPage {
@@ -83,7 +95,7 @@ export class FieldsPage {
 
 		// Filter
 		this.filterButton = page.locator('button').filter({ has: page.locator('i.fa-filter') });
-		this.filterPanel = page.locator('[data-testid="filter-panel"]');
+		this.filterPanel = page.getByTestId(FILTER_PANEL_ID);
 		this.clearFiltersButton = page.getByRole('button', { name: /clear all/i });
 
 		// Table
@@ -97,22 +109,21 @@ export class FieldsPage {
 		this.defaultValueColumnHeader = this.table.locator('thead th').filter({ hasText: 'Default Value' });
 		this.usedInApisColumnHeader = this.table.locator('thead th').filter({ hasText: 'Used In APIs' });
 
-		// Drawer
-		this.drawer = page.locator('[class*="fixed"][class*="right-0"]').filter({ has: page.locator('text=Edit Field') });
+		// Drawer — `panel.id` from fields route is always `field`
+		this.drawer = page.getByTestId(getDrawerPanelTestId('field'));
 		this.drawerCloseButton = page.locator('button[aria-label="Close drawer"]');
 
 		// Drawer form fields (using prefixed IDs to avoid conflicts)
 		this.fieldNameInput = page.locator('#fields-name');
-		this.typeSearchInput = page.getByPlaceholder('Search types...');
-		this.typeDropdownOptions = this.typeSearchInput.locator('..').locator('..').locator('.absolute.z-30 button');
+		this.typeSearchInput = page.locator('#fields-type');
+		this.typeDropdownOptions = page.getByTestId(FIELD_TYPE_DROPDOWN_LIST).locator('button');
 		this.fieldDescriptionTextarea = page.locator('#fields-description');
 		this.fieldDefaultValueInput = page.locator('#fields-default-value');
 
-		// Drawer field constraints section - uses FieldConstraintSelectorDropdown component
-		this.constraintSelectorInput = page.getByPlaceholder('Add field constraint...');
-		this.constraintDropdownOptions = this.constraintSelectorInput.locator('..').locator('..').locator('.absolute.z-30 button');
-		// Individual field constraint rows - identified by having a "Remove field constraint" button
-		this.constraintRows = page.locator('.flex.items-center.space-x-2.p-2.bg-mono-900').filter({ has: page.getByRole('button', { name: 'Remove field constraint' }) });
+		// Drawer field constraints — FieldConstraintSelectorDropdown inside FieldConstraintEditor
+		this.constraintSelectorInput = page.getByTestId(FIELD_CONSTRAINT_SELECTOR_ROOT).getByRole('textbox');
+		this.constraintDropdownOptions = page.getByTestId(FIELD_CONSTRAINT_DROPDOWN_LIST).locator('button');
+		this.constraintRows = page.getByTestId(FIELD_CONSTRAINT_ROW);
 
 		// Drawer actions
 		this.saveButton = page.getByRole('button', { name: 'Save', exact: true });
@@ -125,7 +136,7 @@ export class FieldsPage {
 		this.addFieldButton = page.getByRole('button', { name: 'Add Field' });
 		this.createButton = page.getByRole('button', { name: 'Create', exact: true });
 		this.cancelButton = page.getByRole('button', { name: 'Cancel' });
-		this.createDrawer = page.locator('[class*="fixed"][class*="right-0"]').filter({ has: page.locator('text=Create Field') });
+		this.createDrawer = page.getByTestId(getDrawerPanelTestId('field'));
 	}
 
 	/** Single configurable delay used after every action. */
@@ -250,10 +261,10 @@ export class FieldsPage {
 	 * or a preset pill (None/True/False).
 	 */
 	async getDefaultValue(): Promise<string> {
-		// Check if a preset pill is visible (preset selected state)
-		const presetPill = this.fieldDefaultValueInput.locator('..').locator('span.bg-mono-800');
-		if (await presetPill.isVisible()) {
-			return (await presetPill.textContent()) ?? '';
+		const control = this.page.getByTestId(FIELD_DEFAULT_VALUE_CONTROL);
+		const presetDisplay = control.getByTestId(FIELD_DEFAULT_VALUE_PRESET_DISPLAY);
+		if (await presetDisplay.isVisible()) {
+			return (await presetDisplay.textContent())?.trim() ?? '';
 		}
 		return await this.fieldDefaultValueInput.inputValue();
 	}
@@ -266,17 +277,14 @@ export class FieldsPage {
 	async setDefaultValue(value: string) {
 		const presets = ['None', 'True', 'False'];
 
+		const control = this.page.getByTestId(FIELD_DEFAULT_VALUE_CONTROL);
 		if (presets.includes(value)) {
-			// Click the dropdown caret button (last button child in the wrapper)
-			const wrapper = this.fieldDefaultValueInput.locator('..').locator('..');
-			const caretButton = wrapper.locator('button[title="Select preset value"]');
+			const caretButton = control.getByTitle('Select preset value');
 			await caretButton.click();
-			// Click the preset option in the dropdown
-			const option = wrapper.locator('.absolute.z-10 button', { hasText: value });
+			const option = control.getByTestId(FIELD_DEFAULT_VALUE_PRESET_LIST).getByRole('button', { name: value, exact: true });
 			await option.click();
 		} else {
-			// Clear any existing preset first
-			const clearButton = this.fieldDefaultValueInput.locator('..').locator('..').locator('button[title="Clear preset"]');
+			const clearButton = control.getByTitle('Clear preset');
 			if (await clearButton.isVisible()) {
 				await clearButton.click();
 			}
@@ -535,9 +543,10 @@ export class FieldsPage {
 	 * Get validation error message
 	 */
 	async getValidationError(field: 'name' | 'type'): Promise<string | null> {
-		const errorLocator = this.page.locator('.text-red-500.text-xs');
+		const id = field === 'name' ? 'fields-name' : 'fields-type';
+		const errorLocator = this.page.getByTestId(getFormFieldErrorTestId(id));
 		if (await errorLocator.isVisible()) {
-			return await errorLocator.textContent();
+			return (await errorLocator.textContent())?.trim() ?? null;
 		}
 		return null;
 	}
