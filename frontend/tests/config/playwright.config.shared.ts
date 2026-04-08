@@ -31,6 +31,9 @@ export function createPlaywrightConfig(baseURL: string): PlaywrightTestConfig {
 		// Global setup to initialize MSW
 		globalSetup: globalSetupPath,
 
+		// Keep artifacts at repo root — relative paths would nest under tests/config/
+		outputDir: path.join(rootDir, 'test-results'),
+
 		// Maximum time one test can run
 		timeout: 30 * 1000,
 
@@ -48,7 +51,7 @@ export function createPlaywrightConfig(baseURL: string): PlaywrightTestConfig {
 
 		// Reporter to use
 		reporter: [
-			['html', { outputFolder: 'playwright-report' }],
+			['html', { outputFolder: path.join(rootDir, 'playwright-report') }],
 			['list'],
 			[failureReporterPath],
 			...(process.env.CI ? [['github'] as const] : [])
@@ -97,7 +100,8 @@ export function createPlaywrightConfig(baseURL: string): PlaywrightTestConfig {
 				dependencies: ['setup'],
 				use: {
 					...devices['Desktop Chrome'],
-					actionTimeout: 3_000,
+					// Nightly CRUD hits real API + preview build; 3s was too tight for member dropdown.
+					actionTimeout: 10_000,
 					ignoreHTTPSErrors: true
 				},
 				fullyParallel: false,

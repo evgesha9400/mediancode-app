@@ -238,6 +238,11 @@
     memberDropdownOpen = true;
   }
 
+  /** Clicks while already focused do not refire `focus` — still open the panel (E2E + real UX). */
+  function handleMemberSearchClick(): void {
+    memberDropdownOpen = true;
+  }
+
   function handleMemberBlur(): void {
     setTimeout(() => { memberDropdownOpen = false; }, 150);
   }
@@ -366,6 +371,7 @@
             type="text"
             bind:value={memberSearchQuery}
             onfocus={handleMemberFocus}
+            onclick={handleMemberSearchClick}
             onblur={handleMemberBlur}
             placeholder="Add field or relationship..."
             data-testid={OBJECT_MEMBER_SEARCH}

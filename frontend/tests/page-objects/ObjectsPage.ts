@@ -49,7 +49,6 @@ export class ObjectsPage {
 
 	// Field selector dropdown
 	readonly fieldSelectorInput: Locator;
-	readonly fieldDropdownOptions: Locator;
 	readonly fieldGripHandles: Locator;
 
 	// Drawer actions
@@ -100,7 +99,6 @@ export class ObjectsPage {
 
 		// Members — unified search + ObjectFormContent list
 		this.fieldSelectorInput = page.getByTestId(OBJECT_MEMBER_SEARCH);
-		this.fieldDropdownOptions = page.getByTestId(OBJECT_MEMBER_DROPDOWN).locator('button');
 		this.fieldGripHandles = page.getByTestId(OBJECT_MEMBER_DRAG_HANDLE);
 
 		// Drawer actions
@@ -278,13 +276,17 @@ export class ObjectsPage {
 	 * Add a field by searching and selecting
 	 */
 	async addField(fieldName: string) {
+		const dropdown = this.page.getByTestId(OBJECT_MEMBER_DROPDOWN);
 		await this.fieldSelectorInput.click();
+		await expect(dropdown).toBeVisible({ timeout: 15_000 });
 		await this.fieldSelectorInput.fill(fieldName);
 		await this.delay();
 
-		// Click the matching field option
-		const option = this.fieldDropdownOptions.filter({ hasText: fieldName }).first();
-		await option.click();
+		// Field rows live outside the dropdown; scope options to the panel only.
+		// CRUD project actionTimeout is tight on CI — use explicit timeouts here.
+		const option = dropdown.getByRole('button').filter({ hasText: fieldName }).first();
+		await expect(option).toBeVisible({ timeout: 15_000 });
+		await option.click({ timeout: 15_000 });
 		await this.delay();
 	}
 
