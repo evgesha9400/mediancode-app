@@ -22,10 +22,11 @@ vi.mock('$lib/utils/ids', () => ({
 import {
   reconcilePathParams,
   normalizeEndpoint,
+  hydratePathParamsForEndpoint,
   buildDuplicateEndpoint
 } from '$lib/domain/endpointReducer';
 import { fieldsStore } from '$lib/stores/fields';
-import type { ApiEndpoint } from '$lib/types';
+import type { ApiEndpoint, Field, ObjectDefinition } from '$lib/types';
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -115,6 +116,68 @@ describe('normalizeEndpoint', () => {
     const ep = makeEndpoint({ pagination: true });
     const result = normalizeEndpoint(ep);
     expect(result.pagination).toBe(true);
+  });
+});
+
+describe('hydratePathParamsForEndpoint', () => {
+  const fields: Field[] = [
+    {
+      id: 'f-track',
+      namespaceId: 'ns',
+      name: 'tracking_id',
+      type: 'uuid',
+      container: null,
+      constraints: [],
+      validators: [],
+      usedInApis: []
+    }
+  ];
+
+  const objects: ObjectDefinition[] = [
+    {
+      id: 'obj-prod',
+      namespaceId: 'ns',
+      name: 'Product',
+      members: [
+        {
+          memberType: 'scalar',
+          name: 'tracking_id',
+          fieldId: 'f-track',
+          role: 'pk',
+          isNullable: false
+        }
+      ],
+      derivedRelationships: [],
+      validators: [],
+      usedInApis: []
+    }
+  ];
+
+  it('fills field from object member when API omits field name', () => {
+    const ep = makeEndpoint({
+      objectId: 'obj-prod',
+      pathParams: [{ name: 'tracking_id', fieldId: 'f-track', field: '' }]
+    });
+    const out = hydratePathParamsForEndpoint(ep, objects, fields);
+    expect(out.pathParams[0].field).toBe('tracking_id');
+  });
+
+  it('falls back to global field catalog when objectId is missing', () => {
+    const ep = makeEndpoint({
+      objectId: undefined,
+      pathParams: [{ name: 'tracking_id', fieldId: 'f-track', field: '' }]
+    });
+    const out = hydratePathParamsForEndpoint(ep, objects, fields);
+    expect(out.pathParams[0].field).toBe('tracking_id');
+  });
+
+  it('does not overwrite an existing non-empty field', () => {
+    const ep = makeEndpoint({
+      objectId: 'obj-prod',
+      pathParams: [{ name: 'tid', fieldId: 'f-track', field: 'custom_member' }]
+    });
+    const out = hydratePathParamsForEndpoint(ep, objects, fields);
+    expect(out.pathParams[0].field).toBe('custom_member');
   });
 });
 

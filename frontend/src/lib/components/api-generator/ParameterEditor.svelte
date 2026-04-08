@@ -5,10 +5,12 @@
   export interface ParameterEditorProps {
     paramName: string;
     fieldName: string;
+    /** When the API omits ``fieldName``, the linked field can still be resolved from this id. */
+    fieldId?: string;
     targetFields: TargetField[];
     objectFields: Field[];
     validationErrors?: ValidationError[];
-    onFieldSelect: (fieldName: string) => void;
+    onFieldSelect: (fieldName: string, fieldId: string) => void;
   }
 </script>
 
@@ -18,16 +20,40 @@
 
   interface Props extends ParameterEditorProps {}
 
-  let { paramName, fieldName, targetFields, objectFields, validationErrors = [], onFieldSelect }: Props = $props();
+  let {
+    paramName,
+    fieldName,
+    fieldId = '',
+    targetFields,
+    objectFields,
+    validationErrors = [],
+    onFieldSelect
+  }: Props = $props();
+
+  /** Display name: explicit link, or resolve from ``fieldId`` when the server omitted ``field``. */
+  const effectiveFieldName = $derived.by(() => {
+    const trimmed = fieldName?.trim() ?? '';
+    if (trimmed) return trimmed;
+    if (fieldId) {
+      const byId = objectFields.find(f => f.id === fieldId);
+      if (byId) return byId.name;
+    }
+    return '';
+  });
 
   // Find the currently selected field
-  const selectedField = $derived(targetFields.find(f => f.name === fieldName));
+  const selectedField = $derived(targetFields.find(f => f.name === effectiveFieldName));
 
   // Derived type (read-only display)
   const derivedType = $derived(selectedField?.type ?? '');
 
-  // Whether a field is linked
-  const isLinked = $derived(!!fieldName && !!selectedField);
+  // Linked when the param maps to a field: on the target object, or by id when there is no body object
+  const isLinked = $derived(
+    !!effectiveFieldName &&
+      (!!selectedField ||
+        (!!fieldId &&
+          (objectFields.length === 0 || objectFields.some(f => f.id === fieldId))))
+  );
 
   // All field IDs except the currently linked one (for the dropdown's exclusion list)
   // We don't exclude any since path params should be able to pick any field
@@ -37,16 +63,16 @@
   const paramErrors = $derived(validationErrors.filter(e => e.param === paramName));
 
   // Handle field selection from dropdown: map fieldId to fieldName
-  function handleFieldSelect(fieldId: string): void {
-    const field = objectFields.find(f => f.id === fieldId);
+  function handleFieldSelect(selectedId: string): void {
+    const field = objectFields.find(f => f.id === selectedId);
     if (field) {
-      onFieldSelect(field.name);
+      onFieldSelect(field.name, field.id);
     }
   }
 
   // Unlink the current field
   function handleUnlink(): void {
-    onFieldSelect('');
+    onFieldSelect('', '');
   }
 </script>
 
@@ -65,7 +91,7 @@
         <div class={objectSelectorDisplayRow}>
           <div class="flex items-center gap-1.5">
             <i class="fa-solid fa-link text-green-400 text-[10px]"></i>
-            <span class="font-mono text-sm">{fieldName}</span>
+            <span class="font-mono text-sm">{effectiveFieldName}</span>
             {#if derivedType}
               <span class="text-[11px] text-mono-400 bg-mono-800 px-1.5 rounded-lg">{derivedType}</span>
             {/if}

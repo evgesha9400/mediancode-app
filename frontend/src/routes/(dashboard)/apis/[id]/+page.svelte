@@ -713,10 +713,12 @@
                   <ParameterEditor
                     paramName={param.name}
                     fieldName={param.field}
+                    fieldId={param.fieldId}
                     targetFields={apiState.targetFields}
                     objectFields={endpointObjectFields}
                     validationErrors={apiState.validationErrors.filter(e => (e.rule === 2 || e.rule === 3 || e.rule === 5) && e.param === param.name)}
-                    onFieldSelect={(fieldName) => apiState.handlePathParamFieldSelect(param.name, fieldName)}
+                    onFieldSelect={(fieldName, fieldId) =>
+                      apiState.handlePathParamFieldSelect(param.name, fieldName, fieldId)}
                   />
                 {/each}
               </div>

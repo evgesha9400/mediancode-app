@@ -26,6 +26,7 @@ import { typesBaseStore } from './types';
 import { fieldValidatorTemplatesStore } from './fieldValidatorTemplates';
 import { modelValidatorTemplatesStore } from './modelValidatorTemplates';
 import { SYSTEM_NAMESPACE_ID } from '$lib/utils/namespace';
+import { hydratePathParamsForEndpoint, normalizeEndpoint } from '$lib/domain/endpointReducer';
 
 /**
  * Store loading state
@@ -150,7 +151,10 @@ export async function loadStoresFromApi(): Promise<void> {
 	fieldsStore.set(fields);
 	objectsStore.set(objects);
 	apisStore.set(apis);
-	endpointsStore.set(endpoints);
+	const hydratedEndpoints = endpoints.map(ep =>
+		hydratePathParamsForEndpoint(normalizeEndpoint(ep), objects, fields)
+	);
+	endpointsStore.set(hydratedEndpoints);
 
 	// Set active namespace: prefer user's default, fall back to system namespace id, then first
 	const defaultNamespace = namespaces.find(ns => ns.isDefault);

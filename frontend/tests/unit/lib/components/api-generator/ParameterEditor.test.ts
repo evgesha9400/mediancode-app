@@ -50,22 +50,25 @@ describe('ParameterEditor Component', () => {
 			expect(props.objectFields).toHaveLength(2);
 		});
 
-		it('ParameterEditorProps onFieldSelect receives field name', () => {
+		it('ParameterEditorProps onFieldSelect receives field name and field id', () => {
 			let selectedFieldName: string | undefined;
+			let selectedFieldId: string | undefined;
 
 			const props: ParameterEditorProps = {
 				paramName: 'id',
 				fieldName: '',
 				targetFields: [],
 				objectFields: [],
-				onFieldSelect: (fieldName) => {
+				onFieldSelect: (fieldName, fieldId) => {
 					selectedFieldName = fieldName;
+					selectedFieldId = fieldId;
 				}
 			};
 
-			props.onFieldSelect('user_id');
+			props.onFieldSelect('user_id', 'f-99');
 
 			expect(selectedFieldName).toBe('user_id');
+			expect(selectedFieldId).toBe('f-99');
 		});
 	});
 

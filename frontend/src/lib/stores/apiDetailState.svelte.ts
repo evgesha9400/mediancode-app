@@ -35,7 +35,11 @@ import {
 	type UpdateEndpointRequest
 } from '$lib/api/endpoints';
 import { mapApiError } from '$lib/domain/errorMap';
-import { reconcilePathParams, normalizeEndpoint } from '$lib/domain/endpointReducer';
+import {
+	reconcilePathParams,
+	normalizeEndpoint,
+	hydratePathParamsForEndpoint
+} from '$lib/domain/endpointReducer';
 import {
 	validateEndpointParams,
 	resolveTargetFields,
@@ -139,7 +143,7 @@ export interface ApiDetailState {
 	// Endpoint editing actions
 	handlePathChange: (newPath: string) => void;
 	handlePathParamUpdate: (paramName: string, fieldId: string) => void;
-	handlePathParamFieldSelect: (paramName: string, fieldName: string) => void;
+	handlePathParamFieldSelect: (paramName: string, fieldName: string, fieldId?: string) => void;
 
 	// Target object (resolved from objectId)
 	readonly targetFields: TargetField[];
@@ -523,7 +527,12 @@ export function createApiDetailState(config: ApiDetailStateConfig): ApiDetailSta
 				responseShape: editedEndpoint.responseShape,
 				pagination: editedEndpoint.pagination ?? false
 			});
-			endpointsStore.update(eps => [...eps, endpoint]);
+			const hydrated = hydratePathParamsForEndpoint(
+				normalizeEndpoint(endpoint),
+				get(objectsStore),
+				get(fieldsStore)
+			);
+			endpointsStore.update(eps => [...eps, hydrated]);
 			showToast('Endpoint created successfully', 'success');
 			isCreating = false;
 			closeEndpointDrawer();
@@ -587,7 +596,12 @@ export function createApiDetailState(config: ApiDetailStateConfig): ApiDetailSta
 				responseShape: original.responseShape,
 				pagination: original.pagination ?? false
 			});
-			endpointsStore.update(eps => [...eps, endpoint]);
+			const hydrated = hydratePathParamsForEndpoint(
+				normalizeEndpoint(endpoint),
+				get(objectsStore),
+				get(fieldsStore)
+			);
+			endpointsStore.update(eps => [...eps, hydrated]);
 			showToast(MESSAGES.ENDPOINT_DUPLICATED, 'success');
 		} catch (err) {
 			showToast(mapApiError(err, 'duplicate endpoint'), 'error');
@@ -603,10 +617,15 @@ export function createApiDetailState(config: ApiDetailStateConfig): ApiDetailSta
 	function openEndpoint(endpoint: ApiEndpoint): void {
 		closeEditDrawer();
 		const normalized = normalizeEndpoint(endpoint);
-		selectedEndpoint = normalized;
-		editedEndpoint = deepClone(normalized);
+		const hydrated = hydratePathParamsForEndpoint(
+			normalized,
+			get(objectsStore),
+			get(fieldsStore)
+		);
+		selectedEndpoint = hydrated;
+		editedEndpoint = deepClone(hydrated);
 		endpointDrawerOpen = true;
-		tagInputValue = normalized.tagName ?? '';
+		tagInputValue = hydrated.tagName ?? '';
 		tagDropdownOpen = false;
 		pathError = '';
 	}
@@ -648,9 +667,14 @@ export function createApiDetailState(config: ApiDetailStateConfig): ApiDetailSta
 
 		try {
 			const endpoint = await updateEndpointApi(editedEndpoint.id, payload);
-			endpointsStore.update(eps => eps.map(e => (e.id === endpoint.id ? endpoint : e)));
-			selectedEndpoint = endpoint;
-			editedEndpoint = deepClone(endpoint);
+			const hydrated = hydratePathParamsForEndpoint(
+				normalizeEndpoint(endpoint),
+				get(objectsStore),
+				get(fieldsStore)
+			);
+			endpointsStore.update(eps => eps.map(e => (e.id === hydrated.id ? hydrated : e)));
+			selectedEndpoint = hydrated;
+			editedEndpoint = deepClone(hydrated);
 			showToast(MESSAGES.ENDPOINT_SAVED, 'success');
 			closeEndpointDrawer();
 			return true;
@@ -750,12 +774,23 @@ export function createApiDetailState(config: ApiDetailStateConfig): ApiDetailSta
 		editedEndpoint = { ...editedEndpoint, pathParams: updatedParams };
 	}
 
-	function handlePathParamFieldSelect(paramName: string, fieldName: string): void {
-		if (!editedEndpoint) return;
-		const updatedParams = editedEndpoint.pathParams.map(p =>
-			p.name === paramName ? { ...p, field: fieldName } : p
-		);
-		editedEndpoint = { ...editedEndpoint, pathParams: updatedParams };
+	function handlePathParamFieldSelect(paramName: string, fieldName: string, fieldIdArg?: string): void {
+		const ep = editedEndpoint;
+		if (!ep) return;
+		const updatedParams = ep.pathParams.map(p => {
+			if (p.name !== paramName) return p;
+			if (!fieldName) {
+				return { ...p, field: '', fieldId: '' };
+			}
+			let nextFieldId = fieldIdArg ?? '';
+			if (!nextFieldId && ep.objectId) {
+				const obj = allObjects.find(o => o.id === ep.objectId);
+				const member = obj?.members.find(m => m.memberType === 'scalar' && m.name === fieldName);
+				if (member?.memberType === 'scalar') nextFieldId = member.fieldId;
+			}
+			return { ...p, field: fieldName, fieldId: nextFieldId || p.fieldId };
+		});
+		editedEndpoint = { ...ep, pathParams: updatedParams };
 	}
 
 	// ============================================================================
@@ -841,10 +876,11 @@ export function createApiDetailState(config: ApiDetailStateConfig): ApiDetailSta
 			}
 		}
 
+		const withObject = { ...editedEndpoint, objectId, pathParams: autoLinkedParams };
+		const hydrated = hydratePathParamsForEndpoint(withObject, allObjects, allFields);
+
 		editedEndpoint = {
-			...editedEndpoint,
-			objectId,
-			pathParams: autoLinkedParams,
+			...hydrated,
 			// Clear query params and pagination when object changes
 			queryParams: [],
 			pagination: false

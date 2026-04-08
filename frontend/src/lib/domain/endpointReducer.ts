@@ -1,6 +1,6 @@
 // src/lib/domain/endpointReducer.ts
 import { get } from 'svelte/store';
-import type { ApiEndpoint, PathParam } from '$lib/types';
+import type { ApiEndpoint, Field, ObjectDefinition, PathParam } from '$lib/types';
 import { extractPathParameters } from '$lib/utils/urlParser';
 import { fieldsStore } from '$lib/stores/fields';
 import { deepClone, generateId } from '$lib/utils/ids';
@@ -48,6 +48,54 @@ export function normalizeEndpoint(endpoint: ApiEndpoint): ApiEndpoint {
 			field: p.field ?? '' // ensure field exists for legacy data
 		}))
 	};
+}
+
+/**
+ * Fill ``PathParam.field`` from ``fieldId`` when the API omits the name.
+ *
+ * Prefers the scalar member name on the endpoint's target object (when
+ * ``objectId`` is set), then falls back to the global field catalog.
+ */
+export function hydratePathParamsForEndpoint(
+	endpoint: ApiEndpoint,
+	objects: ObjectDefinition[],
+	fields: Field[]
+): ApiEndpoint {
+	return {
+		...endpoint,
+		pathParams: endpoint.pathParams.map(p =>
+			hydratePathParamField(p, endpoint.objectId, objects, fields)
+		)
+	};
+}
+
+function hydratePathParamField(
+	p: PathParam,
+	objectId: string | undefined,
+	objects: ObjectDefinition[],
+	fields: Field[]
+): PathParam {
+	if (!p.fieldId) {
+		return { ...p, field: p.field ?? '' };
+	}
+	if (p.field?.trim()) {
+		return p;
+	}
+	if (objectId) {
+		const obj = objects.find(o => o.id === objectId);
+		if (obj) {
+			for (const m of obj.members) {
+				if (m.memberType === 'scalar' && m.fieldId === p.fieldId) {
+					return { ...p, field: m.name };
+				}
+			}
+		}
+	}
+	const fld = fields.find(f => f.id === p.fieldId);
+	if (fld) {
+		return { ...p, field: fld.name };
+	}
+	return { ...p, field: p.field ?? '' };
 }
 
 /**

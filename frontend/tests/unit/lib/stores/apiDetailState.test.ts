@@ -49,7 +49,8 @@ vi.mock('$lib/domain/errorMap', () => ({
 
 vi.mock('$lib/domain/endpointReducer', () => ({
   reconcilePathParams: vi.fn((path: string, params: any[]) => ({ path, pathParams: params })),
-  normalizeEndpoint: vi.fn((ep: ApiEndpoint) => ({ ...ep, responseShape: ep.responseShape ?? 'object' }))
+  normalizeEndpoint: vi.fn((ep: ApiEndpoint) => ({ ...ep, responseShape: ep.responseShape ?? 'object' })),
+  hydratePathParamsForEndpoint: vi.fn((ep: ApiEndpoint) => ep)
 }));
 
 vi.mock('$lib/utils/ids', () => ({

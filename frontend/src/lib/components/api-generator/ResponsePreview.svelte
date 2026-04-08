@@ -87,6 +87,13 @@
           {/if}
         {/each}
       </div>
+
+      {#if method === 'DELETE'}
+        <p class="text-xs text-mono-500 mt-2 border-t border-mono-700/80 pt-2">
+          For DELETE, this object defines path parameter types and which entity is addressed — not a
+          response body.
+        </p>
+      {/if}
     </div>
   {:else}
     <div class="p-3 {surfaceInsideFrostedPanel}">
