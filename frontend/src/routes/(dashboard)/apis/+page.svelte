@@ -20,6 +20,7 @@
     Pill,
     NamespaceSelector,
     TableListNameCell,
+    TableListTextCell,
     TableListMetricCell
   } from '$lib/components';
   import { STORE_NAMES } from '$lib/stores/loader';
@@ -106,6 +107,12 @@
           onSort={workflow.handleSort}
         />
         <SortableColumn
+          column="description"
+          label="Description"
+          {sorts}
+          onSort={workflow.handleSort}
+        />
+        <SortableColumn
           column="version"
           label="Version"
           {sorts}
@@ -133,11 +140,16 @@
           onclick={() => handleOpenApi(api)}
           class="{tableListRowInteractive} {tableListRowHover}"
         >
-          <TableListNameCell col="title" captionText={api.description ?? undefined}>
+          <TableListNameCell col="title">
             {#snippet children()}
               {api.title || 'Untitled API'}
             {/snippet}
           </TableListNameCell>
+          <TableListTextCell col="description" class="max-w-xs truncate">
+            {#snippet children()}
+              {api.description?.trim() ? api.description : '-'}
+            {/snippet}
+          </TableListTextCell>
           <td class="{tableListCell} whitespace-nowrap" {...{ [TABLE_COL_ATTR]: 'version' }}>
             <Pill>{api.version}</Pill>
           </td>

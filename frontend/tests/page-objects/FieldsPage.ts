@@ -50,6 +50,7 @@ export class FieldsPage {
 
 	// Sortable columns
 	readonly nameColumnHeader: Locator;
+	readonly descriptionColumnHeader: Locator;
 	readonly typeColumnHeader: Locator;
 	readonly defaultValueColumnHeader: Locator;
 	readonly usedInApisColumnHeader: Locator;
@@ -105,6 +106,7 @@ export class FieldsPage {
 
 		// Sortable columns - scoped to table to avoid conflicts with drawer/filter panel
 		this.nameColumnHeader = this.table.locator('thead th').filter({ hasText: 'Field Name' });
+		this.descriptionColumnHeader = this.table.locator('thead th').filter({ hasText: 'Description' });
 		this.typeColumnHeader = this.table.locator('thead th').filter({ hasText: /^Type$/i });
 		this.defaultValueColumnHeader = this.table.locator('thead th').filter({ hasText: 'Default Value' });
 		this.usedInApisColumnHeader = this.table.locator('thead th').filter({ hasText: 'Used In APIs' });
@@ -450,12 +452,17 @@ export class FieldsPage {
 	/**
 	 * Sort by column (click column header)
 	 */
-	async sortByColumn(column: 'name' | 'type' | 'defaultValue' | 'usedInApis', withShift = false) {
+	async sortByColumn(
+		column: 'name' | 'description' | 'type' | 'constraints' | 'defaultValue' | 'usedInApis',
+		withShift = false
+	) {
 		const clickOptions = withShift ? { modifiers: ['Shift'] as ('Shift' | 'Alt' | 'Control' | 'Meta')[] } : undefined;
 
 		const headerMap = {
 			name: () => this.table.locator('thead th button').filter({ hasText: 'Field Name' }),
+			description: () => this.table.locator('thead th button').filter({ hasText: 'Description' }),
 			type: () => this.table.locator('thead th button').filter({ hasText: 'Type' }),
+			constraints: () => this.table.locator('thead th button').filter({ hasText: 'Field Constraints' }),
 			defaultValue: () => this.table.locator('thead th button').filter({ hasText: 'Default Value' }),
 			usedInApis: () => this.table.locator('thead th button').filter({ hasText: 'Used In APIs' })
 		};

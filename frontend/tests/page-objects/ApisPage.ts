@@ -32,6 +32,7 @@ export class ApisPage {
 
 	// Sortable columns
 	readonly nameColumnHeader: Locator;
+	readonly descriptionColumnHeader: Locator;
 	readonly versionColumnHeader: Locator;
 	readonly baseUrlColumnHeader: Locator;
 	readonly endpointsColumnHeader: Locator;
@@ -68,6 +69,7 @@ export class ApisPage {
 
 		// Sortable columns - scoped to table
 		this.nameColumnHeader = this.table.locator('thead th').filter({ hasText: 'Name' });
+		this.descriptionColumnHeader = this.table.locator('thead th').filter({ hasText: 'Description' });
 		this.versionColumnHeader = this.table.locator('thead th').filter({ hasText: 'Version' });
 		this.baseUrlColumnHeader = this.table.locator('thead th').filter({ hasText: 'Base URL' });
 		this.endpointsColumnHeader = this.table.locator('thead th').filter({ hasText: 'Endpoints' });
@@ -247,7 +249,7 @@ export class ApisPage {
 	 * Sort by column
 	 */
 	async sortByColumn(
-		column: 'name' | 'version' | 'baseUrl' | 'endpoints',
+		column: 'name' | 'description' | 'version' | 'baseUrl' | 'endpoints',
 		withShift = false
 	) {
 		const clickOptions = withShift
@@ -256,6 +258,7 @@ export class ApisPage {
 
 		const headerMap = {
 			name: () => this.table.locator('thead th button').filter({ hasText: 'Name' }),
+			description: () => this.table.locator('thead th button').filter({ hasText: 'Description' }),
 			version: () => this.table.locator('thead th button').filter({ hasText: 'Version' }),
 			baseUrl: () => this.table.locator('thead th button').filter({ hasText: 'Base URL' }),
 			endpoints: () => this.table.locator('thead th button').filter({ hasText: 'Endpoints' })

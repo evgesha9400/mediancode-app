@@ -48,7 +48,7 @@
       {
         type: 'checkbox-group',
         key: 'selectedCompatibleTypes',
-        label: 'Applies To',
+        label: 'Applied To',
         options: uniqueTypes.map(t => ({ label: t, value: t })),
         predicate: (item: FieldConstraint, selected: string[]) =>
           item.compatibleTypes.some(ct => selected.includes(ct))
@@ -127,20 +127,14 @@
         onSort={state.handleSort}
       />
       <SortableColumn
-        column="parameterTypes"
-        label="Parameter Types"
+        column="description"
+        label="Description"
         {sorts}
         onSort={state.handleSort}
       />
       <SortableColumn
         column="compatibleTypes"
-        label="Applies To"
-        {sorts}
-        onSort={state.handleSort}
-      />
-      <SortableColumn
-        column="description"
-        label="Description"
+        label="Applied To"
         {sorts}
         onSort={state.handleSort}
       />
@@ -171,13 +165,11 @@
             {fc.name}
           {/snippet}
         </TableListNameCell>
-        <td class="{tableListCell}" {...{ [TABLE_COL_ATTR]: 'parameterTypes' }}>
-          <div class="flex flex-wrap gap-1">
-            {#each fc.parameterTypes as ptype}
-              <Pill>{ptype}</Pill>
-            {/each}
-          </div>
-        </td>
+        <TableListTextCell col="description" class="max-w-xs truncate">
+          {#snippet children()}
+            {fc.description.split('.')[0]}.
+          {/snippet}
+        </TableListTextCell>
         <td class="{tableListCell}" {...{ [TABLE_COL_ATTR]: 'compatibleTypes' }}>
           <div class="flex flex-wrap gap-1">
             {#each fc.compatibleTypes as ctype}
@@ -185,11 +177,6 @@
             {/each}
           </div>
         </td>
-        <TableListTextCell col="description" class="max-w-xs truncate">
-          {#snippet children()}
-            {fc.description.split('.')[0]}.
-          {/snippet}
-        </TableListTextCell>
         <td class="{tableListCell} whitespace-nowrap text-sm" {...{ [TABLE_COL_ATTR]: 'docsUrl' }}>
           {#if fc.docsUrl}
             <a
@@ -227,15 +214,7 @@
       <DetailField label="Name" value={selectedFieldConstraint.name} />
       <DetailField label="Description" value={selectedFieldConstraint.description} />
 
-      <DetailField label="Parameter Types">
-        <div class="flex flex-wrap gap-1.5 mt-1">
-          {#each selectedFieldConstraint.parameterTypes as ptype}
-            <Pill>{ptype}</Pill>
-          {/each}
-        </div>
-      </DetailField>
-
-      <DetailField label="Compatible Types">
+      <DetailField label="Applied To">
         <div class="flex flex-wrap gap-1.5 mt-1">
           {#each selectedFieldConstraint.compatibleTypes as ctype}
             <Pill>{ctype}</Pill>

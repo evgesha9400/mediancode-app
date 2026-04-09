@@ -151,6 +151,12 @@
           onSort={workflow.handleSort}
         />
         <SortableColumn
+          column="description"
+          label="Description"
+          {sorts}
+          onSort={workflow.handleSort}
+        />
+        <SortableColumn
           column="type"
           label="Type"
           {sorts}
@@ -191,6 +197,11 @@
               {field.name}
             {/snippet}
           </TableListNameCell>
+          <TableListTextCell col="description" class="max-w-xs truncate">
+            {#snippet children()}
+              {field.description?.trim() ? field.description : '-'}
+            {/snippet}
+          </TableListTextCell>
           <td class="{tableListCell} whitespace-nowrap" {...{ [TABLE_COL_ATTR]: 'type' }}>
             <Pill>{field.container ? `${field.container}[${field.type}]` : field.type}</Pill>
           </td>
