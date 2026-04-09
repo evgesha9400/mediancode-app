@@ -58,7 +58,7 @@
             data-testid="stat-value">{value}</span>
         {/if}
         {#if trend && !error}
-          <span class="text-xs text-fg-muted font-inter font-medium leading-snug">{trend}</span>
+          <span class="text-xs text-fg-muted font-inter font-medium leading-none">{trend}</span>
         {/if}
       </div>
       <span class="text-sm text-fg-muted font-inter font-medium leading-snug break-normal">{title}</span>

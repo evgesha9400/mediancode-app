@@ -107,7 +107,9 @@
           <h2 class="text-xs uppercase tracking-wider font-inter font-medium {dashboardTextPrimary}">Your APIs</h2>
         </div>
         {#if apiReadiness.length > 0}
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+          <div
+            class="grid grid-cols-1 gap-3 w-full {apiReadiness.length > 1 ? 'md:grid-cols-2' : 'max-w-xl'}"
+          >
             {#each apiReadiness as item}
               <ApiReadinessCard
                 apiId={item.api.id}
