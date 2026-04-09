@@ -1,7 +1,7 @@
 import { sveltekit } from '@sveltejs/kit/vite';
 import { defineConfig } from 'vitest/config';
 
-export default defineConfig(({ mode }) => ({
+export default defineConfig({
 	plugins: [sveltekit()],
 
 	build: {
@@ -19,14 +19,7 @@ export default defineConfig(({ mode }) => ({
 		include: ['tests/**/*.{test,spec}.{js,ts}'],
 
 		// Exclude files
-		exclude: [
-			'**/node_modules/**',
-			'**/.svelte-kit/**',
-			'**/build/**',
-			'**/dist/**',
-			'tests/e2e/**',
-			'tests/smoke/**'
-		],
+		exclude: ['**/node_modules/**', '**/.svelte-kit/**', '**/build/**', '**/dist/**', 'tests/e2e/**', 'tests/smoke/**'],
 
 		// Coverage configuration
 		coverage: {
@@ -52,4 +45,4 @@ export default defineConfig(({ mode }) => ({
 		// Global test settings
 		globals: true
 	}
-}));
+});

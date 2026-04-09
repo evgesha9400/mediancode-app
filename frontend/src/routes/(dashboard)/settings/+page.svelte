@@ -1,7 +1,7 @@
 <script lang="ts">
   import { ClerkUserProfile } from '$lib/components/clerk';
   import { MainColumnFrame, PageHeader } from '$lib/components';
-  import { dashboardCardGlass } from '$lib/ui/classes';
+  import { dashboardCardGlass, dashboardPageHeaderPrimaryButton } from '$lib/ui/classes';
 </script>
 
 <MainColumnFrame bodyClass="p-6">
@@ -10,7 +10,7 @@
       {#snippet actions()}
         <a
           href="/settings/organization"
-          class="inline-flex items-center space-x-2 px-4 py-2 bg-green-400 text-mono-950 font-inter font-semibold rounded-xl text-sm tracking-wide shadow-sm hover:bg-green-300 transition-colors"
+          class="{dashboardPageHeaderPrimaryButton}"
         >
           <i class="fa-solid fa-building"></i>
           <span>Organization Settings</span>

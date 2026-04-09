@@ -24,6 +24,8 @@
   } from '$lib/components';
   import type { FilterConfig, Namespace } from '$lib/types';
   import {
+    dashboardPageHeaderPrimaryButton,
+    modalFormCheckbox,
     surfaceInsideFrostedPanel,
     tableListBodyPrimary,
     tableListPanelSectionTitle,
@@ -84,7 +86,7 @@
         <button
           type="button"
           onclick={workflow.openCreate}
-          class="px-4 py-2 bg-green-400 text-mono-950 font-inter font-semibold rounded-xl text-sm tracking-wide shadow-sm flex items-center space-x-2 hover:bg-green-300 cursor-pointer transition-colors"
+          class={dashboardPageHeaderPrimaryButton}
         >
           <i class="fa-solid fa-plus"></i>
           <span>Add Namespace</span>
@@ -217,7 +219,7 @@
             <input
               type="checkbox"
               bind:checked={workflow.editedItem.isDefault}
-              class="w-4 h-4 rounded border-mono-600 text-mono-100 focus:ring-green-400"
+              class={modalFormCheckbox}
             />
             <span class="text-sm text-mono-400">Set as default namespace</span>
           </label>
@@ -260,7 +262,7 @@
               type="checkbox"
               bind:checked={workflow.editedItem.isDefault}
               disabled={workflow.editedItem.isDefault}
-              class="w-4 h-4 rounded border-mono-600 text-mono-100 focus:ring-green-400 disabled:opacity-50 disabled:cursor-not-allowed"
+              class="{modalFormCheckbox} disabled:opacity-50 disabled:cursor-not-allowed"
             />
             <span class="text-sm text-mono-400">
               {#if workflow.editedItem.isDefault}

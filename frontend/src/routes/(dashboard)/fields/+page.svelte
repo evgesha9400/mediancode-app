@@ -22,7 +22,13 @@
     FieldFormContent
   } from '$lib/components';
   import type { FilterConfig } from '$lib/types';
-  import { tableListCell, tableListRowHover, tableListRowInteractive, tableListRowSelected } from '$lib/ui/classes';
+  import {
+    dashboardPageHeaderPrimaryButton,
+    tableListCell,
+    tableListRowHover,
+    tableListRowInteractive,
+    tableListRowSelected
+  } from '$lib/ui/classes';
   import { getTableRowId, TABLE_COL_ATTR } from '$lib/utils/testIds';
   import { fieldValidatorTemplatesStore } from '$lib/stores/fieldValidatorTemplates';
   import { STORE_NAMES } from '$lib/stores/loader';
@@ -106,7 +112,7 @@
         <button
           type="button"
           onclick={workflow.openCreate}
-          class="px-4 py-2 bg-green-400 text-mono-950 font-inter font-semibold rounded-xl text-sm tracking-wide shadow-sm flex items-center space-x-2 hover:bg-green-300 cursor-pointer transition-colors"
+          class={dashboardPageHeaderPrimaryButton}
         >
           <i class="fa-solid fa-plus"></i>
           <span>Add Field</span>

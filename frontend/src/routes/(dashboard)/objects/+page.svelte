@@ -29,7 +29,12 @@
   import { mapApiError } from '$lib/domain/errorMap';
   import { showToast } from '$lib/stores/toasts';
   import { STORE_NAMES } from '$lib/stores/loader';
-  import { tableListRowHover, tableListRowInteractive, tableListRowSelected } from '$lib/ui/classes';
+  import {
+    dashboardPageHeaderPrimaryButton,
+    tableListRowHover,
+    tableListRowInteractive,
+    tableListRowSelected
+  } from '$lib/ui/classes';
   import { getTableRowId } from '$lib/utils/testIds';
   import { page } from '$app/state';
   import { goto } from '$app/navigation';
@@ -167,7 +172,7 @@
         <button
           type="button"
           onclick={workflow.openCreate}
-          class="px-4 py-2 bg-green-400 text-mono-950 font-inter font-semibold rounded-xl text-sm tracking-wide shadow-sm flex items-center space-x-2 hover:bg-green-300 cursor-pointer transition-colors"
+          class={dashboardPageHeaderPrimaryButton}
         >
           <i class="fa-solid fa-plus"></i>
           <span>Create Object</span>

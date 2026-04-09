@@ -17,14 +17,8 @@ vi.mock('$lib/stores/organization', () => ({
 	refreshOrgState: vi.fn()
 }));
 
-import {
-	clerkState,
-	clerkAppearance,
-	initializeClerk,
-	getClerk,
-	signOut,
-	type ClerkState
-} from '$lib/clerk';
+import { clerkState, clerkAppearance, initializeClerk, getClerk, signOut, type ClerkState } from '$lib/clerk';
+import { softThemeClerkVariables } from '$lib/theme/appTheme';
 
 describe('Clerk Integration', () => {
 	describe('clerkState', () => {
@@ -72,8 +66,8 @@ describe('Clerk Integration', () => {
 			expect(typeof clerkAppearance.elements).toBe('object');
 		});
 
-		it('should define colorPrimary in variables', () => {
-			expect(clerkAppearance.variables.colorPrimary).toBe('#52e28c');
+		it('should reuse centralized theme variables', () => {
+			expect(clerkAppearance.variables).toEqual(softThemeClerkVariables);
 		});
 
 		it('should define formButtonPrimary in elements', () => {

@@ -23,7 +23,13 @@
     TableListMetricCell
   } from '$lib/components';
   import { STORE_NAMES } from '$lib/stores/loader';
-  import { dashboardTextPrimary, tableListCell, tableListRowHover, tableListRowInteractive } from '$lib/ui/classes';
+  import {
+    dashboardPageHeaderPrimaryButton,
+    tableListCell,
+    tableListRowHover,
+    tableListRowInteractive,
+    textareaObjectForm
+  } from '$lib/ui/classes';
   import { getTableRowId, TABLE_COL_ATTR } from '$lib/utils/testIds';
   import { page } from '$app/state';
   import { goto } from '$app/navigation';
@@ -72,7 +78,7 @@
         <button
           type="button"
           onclick={workflow.openCreate}
-          class="px-4 py-2 bg-green-400 text-mono-950 font-inter font-semibold rounded-xl text-sm tracking-wide shadow-sm flex items-center space-x-2 hover:bg-green-300 cursor-pointer transition-colors"
+          class={dashboardPageHeaderPrimaryButton}
         >
           <i class="fa-solid fa-plus"></i>
           <span>New API</span>
@@ -183,7 +189,7 @@
           bind:value={workflow.editedItem.description}
           rows="3"
           placeholder="Describe what this API does..."
-          class="w-full px-3 py-1.5 text-sm border border-mono-700/80 bg-mono-900/80 {dashboardTextPrimary} focus:ring-2 focus:ring-green-400/50 outline-none focus:outline-none transition-colors rounded-xl"
+          class={textareaObjectForm}
         ></textarea>
       </div>
 

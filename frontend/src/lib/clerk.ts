@@ -2,37 +2,38 @@ import { writable, type Writable } from 'svelte/store';
 import { env } from '$env/dynamic/public';
 import { initOrgState, refreshOrgState } from '$lib/stores/organization';
 import {
-  clerkAccordionTrigger,
-  clerkAvatarBox,
-  clerkBadge,
-  clerkBreadcrumbs,
-  clerkBreadcrumbsDivider,
-  clerkBreadcrumbsItem,
-  clerkCard,
-  clerkFooterActionLink,
-  clerkFormButtonPrimary,
-  clerkFormFieldInput,
-  clerkFormFieldLabel,
-  clerkHeaderSubtitle,
-  clerkHeaderTitle,
-  clerkModalBackdrop,
-  clerkModalClose,
-  clerkModalContentShell,
-  clerkNavbar,
-  clerkNavbarButton,
-  clerkPageScrollBox,
-  clerkProfilePrimaryButton,
-  clerkProfileSectionBorder,
-  clerkProfileSectionContent,
-  clerkProfileSectionDanger,
-  clerkProfileSectionTitle,
-  clerkSocialGithub,
+	clerkAccordionTrigger,
+	clerkAvatarBox,
+	clerkBadge,
+	clerkBreadcrumbs,
+	clerkBreadcrumbsDivider,
+	clerkBreadcrumbsItem,
+	clerkCard,
+	clerkFooterActionLink,
+	clerkFormButtonPrimary,
+	clerkFormFieldInput,
+	clerkFormFieldLabel,
+	clerkHeaderSubtitle,
+	clerkHeaderTitle,
+	clerkModalBackdrop,
+	clerkModalClose,
+	clerkModalContentShell,
+	clerkNavbar,
+	clerkNavbarButton,
+	clerkPageScrollBox,
+	clerkProfilePrimaryButton,
+	clerkProfileSectionBorder,
+	clerkProfileSectionContent,
+	clerkProfileSectionDanger,
+	clerkProfileSectionTitle,
+	clerkSocialGithub
 } from '$lib/ui/classes';
+import { softThemeClerkVariables } from '$lib/theme/appTheme';
 
 export interface ClerkState {
-  isLoaded: boolean;
-  isSignedIn: boolean;
-  user: any | null;
+	isLoaded: boolean;
+	isSignedIn: boolean;
+	user: any | null;
 }
 
 /**
@@ -40,57 +41,45 @@ export interface ClerkState {
  * This can be passed to any Clerk component mount method
  */
 export const clerkAppearance = {
-  variables: {
-    colorBackground: '#1d1d1f',      // mono-900 soft
-    colorInputBackground: '#1d1d1f', // mono-900 soft
-    colorText: '#f0f0f5',            // mono-100 soft
-    colorTextSecondary: '#a0a0a8',   // mono-400 soft
-    colorPrimary: '#52e28c',         // green-400 soft
-    colorInputText: '#f0f0f5',       // mono-100 soft
-    borderRadius: '16px',
-    colorNeutral: '#a0a0a8',         // mono-400 soft
-    colorDanger: '#dc2626',          // red-600 (unchanged)
-    colorSuccess: '#2ea860',         // green-600 soft
-    colorWarning: '#e4a83a',         // amber-400 soft
-  },
-  elements: {
-    card: clerkCard,
-    formButtonPrimary: clerkFormButtonPrimary,
-    formFieldInput: clerkFormFieldInput,
-    avatarBox: clerkAvatarBox,
-    footerActionLink: clerkFooterActionLink,
-    socialButtonsIconButton__github: clerkSocialGithub,
-    // UserProfile modal dark theme overrides
-    navbar: clerkNavbar,
-    navbarButton: clerkNavbarButton,
-    pageScrollBox: clerkPageScrollBox,
-    page: 'bg-transparent',
-    profilePage: 'bg-transparent',
-    profileSection__profile: clerkProfileSectionBorder,
-    profileSection__emailAddresses: clerkProfileSectionBorder,
-    profileSection__connectedAccounts: clerkProfileSectionBorder,
-    profileSection__danger: clerkProfileSectionDanger,
-    profileSectionTitleText: clerkProfileSectionTitle,
-    profileSectionContent: clerkProfileSectionContent,
-    profileSectionPrimaryButton: clerkProfilePrimaryButton,
-    badge: clerkBadge,
-    modalCloseButton: clerkModalClose,
-    modalBackdrop: clerkModalBackdrop,
-    modalContent: clerkModalContentShell,
-    headerTitle: clerkHeaderTitle,
-    headerSubtitle: clerkHeaderSubtitle,
-    formFieldLabel: clerkFormFieldLabel,
-    accordionTriggerButton: clerkAccordionTrigger,
-    breadcrumbs: clerkBreadcrumbs,
-    breadcrumbsItem: clerkBreadcrumbsItem,
-    breadcrumbsItemDivider: clerkBreadcrumbsDivider,
-  }
+	variables: softThemeClerkVariables,
+	elements: {
+		card: clerkCard,
+		formButtonPrimary: clerkFormButtonPrimary,
+		formFieldInput: clerkFormFieldInput,
+		avatarBox: clerkAvatarBox,
+		footerActionLink: clerkFooterActionLink,
+		socialButtonsIconButton__github: clerkSocialGithub,
+		// UserProfile modal dark theme overrides
+		navbar: clerkNavbar,
+		navbarButton: clerkNavbarButton,
+		pageScrollBox: clerkPageScrollBox,
+		page: 'bg-transparent',
+		profilePage: 'bg-transparent',
+		profileSection__profile: clerkProfileSectionBorder,
+		profileSection__emailAddresses: clerkProfileSectionBorder,
+		profileSection__connectedAccounts: clerkProfileSectionBorder,
+		profileSection__danger: clerkProfileSectionDanger,
+		profileSectionTitleText: clerkProfileSectionTitle,
+		profileSectionContent: clerkProfileSectionContent,
+		profileSectionPrimaryButton: clerkProfilePrimaryButton,
+		badge: clerkBadge,
+		modalCloseButton: clerkModalClose,
+		modalBackdrop: clerkModalBackdrop,
+		modalContent: clerkModalContentShell,
+		headerTitle: clerkHeaderTitle,
+		headerSubtitle: clerkHeaderSubtitle,
+		formFieldLabel: clerkFormFieldLabel,
+		accordionTriggerButton: clerkAccordionTrigger,
+		breadcrumbs: clerkBreadcrumbs,
+		breadcrumbsItem: clerkBreadcrumbsItem,
+		breadcrumbsItemDivider: clerkBreadcrumbsDivider
+	}
 };
 
 export const clerkState: Writable<ClerkState> = writable({
-  isLoaded: false,
-  isSignedIn: false,
-  user: null
+	isLoaded: false,
+	isSignedIn: false,
+	user: null
 });
 
 let clerkInstance: any = null;
@@ -101,108 +90,107 @@ let isMockMode = false;
  * Mock mode is enabled when PUBLIC_CLERK_MOCK_MODE is set to 'true'
  */
 function shouldUseMockMode(): boolean {
-  if (typeof window === 'undefined') return false;
-  return (window as any).__CLERK_MOCK_MODE__ === true ||
-         env.PUBLIC_CLERK_MOCK_MODE === 'true';
+	if (typeof window === 'undefined') return false;
+	return (window as any).__CLERK_MOCK_MODE__ === true || env.PUBLIC_CLERK_MOCK_MODE === 'true';
 }
 
 export async function initializeClerk(publishableKey: string): Promise<any> {
-  if (clerkInstance) {
-    return clerkInstance;
-  }
+	if (clerkInstance) {
+		return clerkInstance;
+	}
 
-  // Check if we should use mock mode
-  isMockMode = shouldUseMockMode();
+	// Check if we should use mock mode
+	isMockMode = shouldUseMockMode();
 
-  if (isMockMode) {
-    // Mock mode for E2E testing
-    console.log('[Clerk] Running in mock mode for testing');
-    clerkInstance = createMockClerk();
+	if (isMockMode) {
+		// Mock mode for E2E testing
+		console.log('[Clerk] Running in mock mode for testing');
+		clerkInstance = createMockClerk();
 
-    // Immediately set loaded state
-    clerkState.set({
-      isLoaded: true,
-      isSignedIn: false,
-      user: null
-    });
+		// Immediately set loaded state
+		clerkState.set({
+			isLoaded: true,
+			isSignedIn: false,
+			user: null
+		});
 
-    return clerkInstance;
-  }
+		return clerkInstance;
+	}
 
-  // Real Clerk initialization
-  try {
-    // Dynamic import - only runs in browser
-    const { Clerk } = await import('@clerk/clerk-js');
+	// Real Clerk initialization
+	try {
+		// Dynamic import - only runs in browser
+		const { Clerk } = await import('@clerk/clerk-js');
 
-    clerkInstance = new Clerk(publishableKey);
-    await clerkInstance.load({
-      signInUrl: '/signin',
-      signUpUrl: '/signup',
-      fallbackRedirectUrl: '/dashboard'
-    });
+		clerkInstance = new Clerk(publishableKey);
+		await clerkInstance.load({
+			signInUrl: '/signin',
+			signUpUrl: '/signup',
+			fallbackRedirectUrl: '/dashboard'
+		});
 
-    // Expose on window for @clerk/testing compatibility (ESM import doesn't set this)
-    (window as any).Clerk = clerkInstance;
+		// Expose on window for @clerk/testing compatibility (ESM import doesn't set this)
+		(window as any).Clerk = clerkInstance;
 
-    // Finish org/session-adjacent Clerk work before isLoaded — otherwise dashboard
-    // store loads race parallel getToken() with getOrganizationMemberships().
-    if (clerkInstance.user) {
-      await initOrgState(clerkInstance);
-    }
+		// Finish org/session-adjacent Clerk work before isLoaded — otherwise dashboard
+		// store loads race parallel getToken() with getOrganizationMemberships().
+		if (clerkInstance.user) {
+			await initOrgState(clerkInstance);
+		}
 
-    // Update store with initial state
-    clerkState.set({
-      isLoaded: true,
-      isSignedIn: !!clerkInstance.user,
-      user: clerkInstance.user
-    });
+		// Update store with initial state
+		clerkState.set({
+			isLoaded: true,
+			isSignedIn: !!clerkInstance.user,
+			user: clerkInstance.user
+		});
 
-    // Listen for auth changes
-    clerkInstance.addListener(async (resources: any) => {
-      clerkState.set({
-        isLoaded: true,
-        isSignedIn: !!resources.user,
-        user: resources.user
-      });
+		// Listen for auth changes
+		clerkInstance.addListener(async (resources: any) => {
+			clerkState.set({
+				isLoaded: true,
+				isSignedIn: !!resources.user,
+				user: resources.user
+			});
 
-      // Update organization state when auth changes
-      if (resources.user) {
-        await refreshOrgState(clerkInstance);
-      }
-    });
+			// Update organization state when auth changes
+			if (resources.user) {
+				await refreshOrgState(clerkInstance);
+			}
+		});
 
-    return clerkInstance;
-  } catch (error) {
-    console.error('[Clerk] Failed to initialize, falling back to mock mode', error);
-    // Fall back to mock mode if real initialization fails
-    isMockMode = true;
-    clerkInstance = createMockClerk();
-    (window as any).Clerk = clerkInstance;
-    clerkState.set({
-      isLoaded: true,
-      isSignedIn: false,
-      user: null
-    });
-    return clerkInstance;
-  }
+		return clerkInstance;
+	} catch (error) {
+		console.error('[Clerk] Failed to initialize, falling back to mock mode', error);
+		// Fall back to mock mode if real initialization fails
+		isMockMode = true;
+		clerkInstance = createMockClerk();
+		(window as any).Clerk = clerkInstance;
+		clerkState.set({
+			isLoaded: true,
+			isSignedIn: false,
+			user: null
+		});
+		return clerkInstance;
+	}
 }
 
 /**
  * Create a mock Clerk instance for testing
  */
 function createMockClerk() {
-  // Mock organization data for testing
-  let mockOrganization: any = null;
-  const mockOrganizations: any[] = [];
+	// Mock organization data for testing
+	let mockOrganization: any = null;
+	const mockOrganizations: any[] = [];
 
-  return {
-    loaded: true,
-    user: null,
-    session: null,
-    client: null,
-    organization: mockOrganization,
-    mountSignIn: (element: HTMLElement) => {
-      element.innerHTML = `
+	return {
+		loaded: true,
+		user: null,
+		session: null,
+		client: null,
+		organization: mockOrganization,
+		mountSignIn: (element: HTMLElement) => {
+			element.innerHTML = `
         <div class="cl-component" data-clerk-component="sign-in" data-testid="clerk-mock-signin">
           <div class="text-center p-8 border-2 border-mono-700 bg-mono-900">
             <div class="mb-4">
@@ -213,9 +201,9 @@ function createMockClerk() {
           </div>
         </div>
       `;
-    },
-    mountSignUp: (element: HTMLElement) => {
-      element.innerHTML = `
+		},
+		mountSignUp: (element: HTMLElement) => {
+			element.innerHTML = `
         <div class="cl-component" data-clerk-component="sign-up" data-testid="clerk-mock-signup">
           <div class="text-center p-8 border-2 border-mono-700 bg-mono-900">
             <div class="mb-4">
@@ -226,21 +214,21 @@ function createMockClerk() {
           </div>
         </div>
       `;
-    },
-    mountUserButton: (element: HTMLElement) => {
-      element.innerHTML = `
+		},
+		mountUserButton: (element: HTMLElement) => {
+			element.innerHTML = `
         <div class="cl-component" data-clerk-component="user-button" data-testid="clerk-mock-user-button">
           <button type="button" class="w-8 h-8 rounded-full bg-mono-700 flex items-center justify-center">
             <i class="fa-solid fa-user text-white text-sm"></i>
           </button>
         </div>
       `;
-    },
-    unmountUserButton: (element: HTMLElement) => {
-      element.innerHTML = '';
-    },
-    mountUserProfile: (element: HTMLElement) => {
-      element.innerHTML = `
+		},
+		unmountUserButton: (element: HTMLElement) => {
+			element.innerHTML = '';
+		},
+		mountUserProfile: (element: HTMLElement) => {
+			element.innerHTML = `
         <div class="cl-component" data-clerk-component="user-profile" data-testid="clerk-mock-user-profile">
           <div class="p-8 border-2 border-mono-700 bg-mono-900">
             <div class="flex items-center space-x-4 mb-6">
@@ -258,12 +246,12 @@ function createMockClerk() {
           </div>
         </div>
       `;
-    },
-    unmountUserProfile: (element: HTMLElement) => {
-      element.innerHTML = '';
-    },
-    mountOrganizationProfile: (element: HTMLElement) => {
-      element.innerHTML = `
+		},
+		unmountUserProfile: (element: HTMLElement) => {
+			element.innerHTML = '';
+		},
+		mountOrganizationProfile: (element: HTMLElement) => {
+			element.innerHTML = `
         <div class="cl-component" data-clerk-component="organization-profile" data-testid="clerk-mock-organization-profile">
           <div class="p-8 border-2 border-mono-700 bg-mono-900">
             <div class="flex items-center space-x-4 mb-6">
@@ -281,12 +269,12 @@ function createMockClerk() {
           </div>
         </div>
       `;
-    },
-    unmountOrganizationProfile: (element: HTMLElement) => {
-      element.innerHTML = '';
-    },
-    mountCreateOrganization: (element: HTMLElement) => {
-      element.innerHTML = `
+		},
+		unmountOrganizationProfile: (element: HTMLElement) => {
+			element.innerHTML = '';
+		},
+		mountCreateOrganization: (element: HTMLElement) => {
+			element.innerHTML = `
         <div class="cl-component" data-clerk-component="create-organization" data-testid="clerk-mock-create-organization">
           <div class="p-8 border-2 border-mono-700 bg-mono-900">
             <div class="flex items-center space-x-4 mb-6">
@@ -304,47 +292,47 @@ function createMockClerk() {
           </div>
         </div>
       `;
-    },
-    unmountCreateOrganization: (element: HTMLElement) => {
-      element.innerHTML = '';
-    },
-    addListener: () => {},
-    signOut: async () => {
-      clerkState.set({
-        isLoaded: true,
-        isSignedIn: false,
-        user: null
-      });
-    },
-    // Organization methods for mock mode
-    setActive: async ({ organization }: { organization: string | null }) => {
-      if (organization === null) {
-        mockOrganization = null;
-      } else {
-        mockOrganization = mockOrganizations.find(o => o.id === organization) || null;
-      }
-    },
-    createOrganization: async ({ name, slug }: { name: string; slug?: string }) => {
-      const newOrg = {
-        id: `org_mock_${Date.now()}`,
-        name,
-        slug: slug || name.toLowerCase().replace(/\s+/g, '-'),
-        imageUrl: undefined,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString()
-      };
-      mockOrganizations.push(newOrg);
-      return newOrg;
-    }
-  };
+		},
+		unmountCreateOrganization: (element: HTMLElement) => {
+			element.innerHTML = '';
+		},
+		addListener: () => {},
+		signOut: async () => {
+			clerkState.set({
+				isLoaded: true,
+				isSignedIn: false,
+				user: null
+			});
+		},
+		// Organization methods for mock mode
+		setActive: async ({ organization }: { organization: string | null }) => {
+			if (organization === null) {
+				mockOrganization = null;
+			} else {
+				mockOrganization = mockOrganizations.find((o) => o.id === organization) || null;
+			}
+		},
+		createOrganization: async ({ name, slug }: { name: string; slug?: string }) => {
+			const newOrg = {
+				id: `org_mock_${Date.now()}`,
+				name,
+				slug: slug || name.toLowerCase().replace(/\s+/g, '-'),
+				imageUrl: undefined,
+				createdAt: new Date().toISOString(),
+				updatedAt: new Date().toISOString()
+			};
+			mockOrganizations.push(newOrg);
+			return newOrg;
+		}
+	};
 }
 
 export function getClerk(): any {
-  return clerkInstance;
+	return clerkInstance;
 }
 
 export async function signOut() {
-  if (clerkInstance) {
-    await clerkInstance.signOut();
-  }
+	if (clerkInstance) {
+		await clerkInstance.signOut();
+	}
 }

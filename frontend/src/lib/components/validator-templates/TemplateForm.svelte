@@ -24,7 +24,7 @@
     glassSelectEmptyLabels,
     glassSelectOptionsWithEmptyFirst
   } from '$lib/components/form';
-  import { inputValidatorControl } from '$lib/ui/classes';
+  import { inputValidatorControl, validatorTemplateFormSubmitButton } from '$lib/ui/classes';
 
   interface Props extends TemplateFormProps {}
 
@@ -211,7 +211,7 @@
     type="button"
     onclick={handleSubmit}
     disabled={!isValid}
-    class="w-full px-4 py-2 bg-green-400 text-mono-950 font-bold text-sm tracking-wide hover:bg-green-300 transition-colors disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+    class={validatorTemplateFormSubmitButton}
   >
     Add Validator
   </button>

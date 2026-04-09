@@ -13,9 +13,11 @@
 <script lang="ts">
   import { goto } from '$app/navigation';
   import {
+    apiReadinessStatusReadyClasses,
     btnGenerateSm,
     cardGlassBorderDefault,
     cardGlassSurface,
+    tableListEntityTitleButton,
   } from '$lib/ui/classes';
 
   interface Props extends ApiReadinessCardProps {}
@@ -23,7 +25,7 @@
   let { apiId, title, version, endpointCount, readyEndpointCount, status, onGenerate }: Props = $props();
 
   const statusConfig = {
-    'ready': { label: 'Ready to generate', color: 'text-green-400 bg-green-400/10 border-green-400/20' },
+    'ready': { label: 'Ready to generate', color: apiReadinessStatusReadyClasses },
     'needs-endpoints': { label: 'Needs endpoints', color: 'text-amber-400 bg-amber-400/10 border-amber-400/20' },
     'incomplete': { label: 'Incomplete', color: 'text-mono-400 bg-mono-800/50 border-mono-700/50' },
   };
@@ -36,7 +38,7 @@
     <div class="min-w-0">
       <button
         onclick={() => goto(`/apis/${apiId}`)}
-        class="text-base font-inter font-bold text-mono-100 hover:text-green-400 transition-colors cursor-pointer truncate block"
+        class={tableListEntityTitleButton}
       >
         {title}
       </button>

@@ -38,10 +38,12 @@
   import { showToast } from '$lib/stores/toasts';
   import {
     dashboardCardGlass,
+    dashboardPageHeaderPrimaryButton,
     dashboardPageHeaderShell,
     dashboardPageHeaderTitleBand,
     dashboardPageTitleTextDetail,
     dashboardTextPrimary,
+    defaultValueComboShell,
     drawerFooterBtnDestructive,
     drawerFooterBtnDuplicateSegment,
     drawerFooterBtnDuplicateSegmentMuted,
@@ -322,7 +324,7 @@
         <button
           type="button"
           onclick={() => goto('/apis')}
-          class="px-4 py-2 bg-green-400 text-mono-950 font-inter font-semibold rounded-xl text-sm tracking-wide shadow-sm hover:bg-green-300"
+          class={dashboardPageHeaderPrimaryButton}
         >
           Back to APIs
         </button>
@@ -389,7 +391,7 @@
             <button
               type="button"
               onclick={() => generateModalOpen = true}
-              class="px-4 py-2 border border-transparent bg-green-400 text-mono-950 font-inter font-semibold rounded-xl text-sm tracking-wide shadow-sm flex items-center space-x-2 hover:bg-green-300 cursor-pointer transition-colors"
+              class="{dashboardPageHeaderPrimaryButton} border border-transparent"
             >
               <i class="fa-solid fa-code"></i>
               <span>Generate Code</span>
@@ -663,7 +665,7 @@
                   }}
                 />
               </div>
-              <div class="endpoint-path-input flex items-center rounded-xl overflow-hidden border border-mono-700/80 bg-mono-900/80 focus-within:ring-2 focus-within:ring-green-400/50 focus-within:outline-none transition-colors">
+              <div class="endpoint-path-input {defaultValueComboShell}">
                 <span class="px-3 py-1.5 text-sm font-mono text-mono-400 bg-mono-900/80 border-r border-mono-700/80">/</span>
                 <input
                   type="text"

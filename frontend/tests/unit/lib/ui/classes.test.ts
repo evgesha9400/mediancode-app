@@ -83,6 +83,8 @@ import {
 	modalFormCheckbox,
 	drawerLinkedEntityRow,
 	inlineRemoveIconButton,
+	dashboardPageHeaderPrimaryButton,
+	apiReadinessStatusReadyClasses,
 } from '$lib/ui/classes';
 
 describe('lib/ui/classes', () => {
@@ -158,6 +160,16 @@ describe('lib/ui/classes', () => {
 	it('marketingHeroCta encodes primary landing CTA', () => {
 		expect(marketingHeroCta).toContain('bg-green-400');
 		expect(marketingHeroCta).toContain('rounded-xl');
+	});
+
+	it('dashboardPageHeaderPrimaryButton uses soft-theme accent utilities', () => {
+		expect(dashboardPageHeaderPrimaryButton).toContain('bg-green-400');
+		expect(dashboardPageHeaderPrimaryButton).toContain('hover:bg-green-300');
+	});
+
+	it('apiReadinessStatusReadyClasses matches ready chip accent', () => {
+		expect(apiReadinessStatusReadyClasses).toContain('text-green-400');
+		expect(apiReadinessStatusReadyClasses).toContain('bg-green-400/10');
 	});
 
 	it('clerkCard encodes Clerk modal surface', () => {
