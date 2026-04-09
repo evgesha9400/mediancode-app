@@ -38,7 +38,7 @@
       {/if}
     </div>
     <div class="min-w-0 flex-1 flex flex-col gap-0.5">
-      <div class="flex flex-wrap items-baseline gap-x-2 gap-y-0.5 min-w-0">
+      <div class="flex flex-wrap items-center gap-x-2 gap-y-0.5 min-w-0">
         {#if error}
           <div class="flex items-center flex-wrap gap-x-1.5" data-testid="stat-value">
             <span class="text-sm text-red-400 font-medium font-inter">Error</span>

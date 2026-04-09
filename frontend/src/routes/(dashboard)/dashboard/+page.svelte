@@ -129,7 +129,7 @@
       </section>
     </div>
 
-    <section class="lg:col-start-1 lg:row-start-3">
+    <section class="min-w-0 w-full lg:col-start-1 lg:row-start-3 lg:self-start">
       <div class="flex items-center mb-3 h-[24px]">
         <h2 class="text-xs uppercase tracking-wider font-inter font-medium {dashboardTextPrimary}">Account</h2>
       </div>
