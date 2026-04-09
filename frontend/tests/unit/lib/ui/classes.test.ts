@@ -85,13 +85,17 @@ import {
 	inlineRemoveIconButton,
 	dashboardPageHeaderPrimaryButton,
 	apiReadinessStatusReadyClasses,
+	themeAccentBadge,
+	themeAccentCheckbox,
+	themeAccentStatusBadge,
+	themeAccentText,
 } from '$lib/ui/classes';
 
 describe('lib/ui/classes', () => {
 	it('inputGlass encodes solid input surface for overlay forms', () => {
 		expect(inputGlass).toContain('rounded-xl');
 		expect(inputGlass).toContain('border-mono-700/80');
-		expect(inputGlass).toContain('focus:ring-green-400');
+		expect(inputGlass).toContain('focus:ring-accent');
 		expect(inputGlass).toContain('w-full');
 		expect(inputGlass).toContain('bg-mono-900/80');
 		expect(inputGlass).toContain('text-mono-100');
@@ -158,18 +162,26 @@ describe('lib/ui/classes', () => {
 	});
 
 	it('marketingHeroCta encodes primary landing CTA', () => {
-		expect(marketingHeroCta).toContain('bg-green-400');
+		expect(marketingHeroCta).toContain('bg-accent');
 		expect(marketingHeroCta).toContain('rounded-xl');
 	});
 
 	it('dashboardPageHeaderPrimaryButton uses soft-theme accent utilities', () => {
-		expect(dashboardPageHeaderPrimaryButton).toContain('bg-green-400');
-		expect(dashboardPageHeaderPrimaryButton).toContain('hover:bg-green-300');
+		expect(dashboardPageHeaderPrimaryButton).toContain('bg-accent');
+		expect(dashboardPageHeaderPrimaryButton).toContain('hover:bg-accent-hover');
 	});
 
 	it('apiReadinessStatusReadyClasses matches ready chip accent', () => {
-		expect(apiReadinessStatusReadyClasses).toContain('text-green-400');
-		expect(apiReadinessStatusReadyClasses).toContain('bg-green-400/10');
+		expect(apiReadinessStatusReadyClasses).toContain('text-accent');
+		expect(apiReadinessStatusReadyClasses).toContain('bg-accent/10');
+	});
+
+	it('theme accent primitives centralize shared accent tokens', () => {
+		expect(themeAccentText).toBe('text-accent');
+		expect(themeAccentBadge).toContain('bg-accent/10');
+		expect(themeAccentBadge).toContain('text-accent');
+		expect(themeAccentStatusBadge).toContain('border-accent/20');
+		expect(themeAccentCheckbox).toContain('focus:ring-accent');
 	});
 
 	it('clerkCard encodes Clerk modal surface', () => {

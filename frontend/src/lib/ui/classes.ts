@@ -3,21 +3,21 @@
  *
  * Inventory — repeated Tailwind clusters and where they live:
  * | Cluster | tailwind.config | this module |
- * | Text input + green focus (solid on frosted overlays) | — | `inputGlass`, `inputGlassSearch`, `inputGlassDisabled`, `textareaInsideFrostedPanel`, `inputGlassDense`, `textareaObjectForm`, `searchBarInput`, `defaultValueComboShell`, `inputValidatorControl`, `inputValidatorSearch`, `inputObjectMemberSearch` |
+ * | Text input + accent focus (solid on frosted overlays) | — | `inputGlass`, `inputGlassSearch`, `inputGlassDisabled`, `textareaInsideFrostedPanel`, `inputGlassDense`, `textareaObjectForm`, `searchBarInput`, `defaultValueComboShell`, `inputValidatorControl`, `inputValidatorSearch`, `inputObjectMemberSearch` |
  * | Segmented toggles (drawer / API generator) | — | `segmentFieldBase`, `segmentFieldBaseJoin`, `segmentFieldInactive`, `segmentFieldActive`, `segmentPillBase`, `segmentPillSelected`, `segmentPillUnselected`, `segmentPillUnselectedLocked` |
  * | API generator 34px row controls | — | `apiGeneratorRowInputMono`, `glassSelectTrigger`, `apiGeneratorHintCell` |
  * | Modal form controls | — | `modalFormCheckbox`, `modalFormRadio` |
  * | Autocomplete / dropdown panels (opaque; see `app.css`) | — | `dropdownPanelSolidSurface`, `dropdownPanel`, `dropdownPanelMessage`; page-level menus use `popoverGlassMenuChrome` |
  * | Query params / pagination rows | — | `queryParamReadonlyCell`, `queryParamPaginationToggle*` |
  * | Dashboard & stat cards | `drawer-deep` | `dashboardCardGlass`, `cardGlassSurface`, `cardGlassBorder*` |
- * | Green accent icon tiles | `glow-green-icon`, `glow-green-sm` | `accentIconTile`, `marketingFeatureIcon` |
+ * | Accent icon tiles | `glow-accent-icon`, `glow-accent-sm` | `accentIconTile`, `marketingFeatureIcon` |
  * | Sidebar shell & nav items | `drawer-panel-backdrop` (app.css) | `sidebarShell`, `sidebarNavItem*`; active: `.sidebar-nav-item-active-glass` |
  * | Dashboard column shell & page header chrome | — | `dashboardMainColumn`, `dashboardMainColumnCanvas`, `dashboardMainColumnCanvasForPath`, `dashboardGreenWashGradient`, `dashboardTextPrimary`, `dashboardControlTextMutedHoverPrimary`, `backNavButton`, `dashboardPageHeaderShell`, `dashboardSearchToolbarShell`, `mainColumnChromePaddingX`, `dashboardPageHeaderTitleBand`, `dashboardPageTitleText`, `dashboardPageTitleTextDetail`, `drawerHeaderTitleText`, `headerMetaSeparator`, `headerNamespaceCluster` |
  * | Dashboard entity list tables | — | `tableListPageGutter`, `tableListCardShell`, `tableListBodyDivide`, `tableListCell`, `tableListCellPrimary`, `tableListHeaderSortable`, `tableListBodyPrimary`, `tableListBodyCell`, `tableListBodyCaption`, `tableListBodyLink`, `tableListAuxiliaryLabel`, `tableListDetailTitle`, `tableListPanelSectionTitle`, `tableListPanelStatLabel`, `tableListPanelStatTotal`, `tableListRowInteractive`, `tableListRowHover`, `tableListRowSelected` |
  * | Drawer & modal frosted shells | `drawer-deep` | `drawerPanelGlassSurface`, `popoverGlassMenuChrome`, `modalPanelGlassSurface`, `modalDialogBackdropClass`, `modalPanelTransparentInner`, `drawerPanelFlexibleOuter`, `drawerPanelFlexibleInner`, `drawerPanelStackedOuter`, `drawerPanelStackedInner`, `drawerBodyScrollArea`, `drawerFooterShellInset`, `drawerFooterShellEdge`, `drawerScrim`, `drawerLinkedEntityRow`, … |
- * | Primary / secondary / destructive / undo / duplicate | `glow-green` | `drawerFooterSegmentedPanel`, `drawerFooterSegmentBtn`, `drawerFooterDeleteConfirmBanner`, `drawerFooterBtnDangerConfirmSegment*`, `drawerFooterBtnPrimary*`, `drawerFooterBtnSecondarySegment*`, `drawerFooterBtnUndoSegment*`, `drawerFooterBtnDuplicateSegment*`, `drawerFooterBtnDestructive*`, `drawerFooterDangerCallout`, `drawerFooterBtnDangerConfirm*`, `drawerBodyScrollArea`, `modalFooterBtn*`, `btnCtaGlow`, … |
+ * | Primary / secondary / destructive / undo / duplicate | `glow-accent` | `drawerFooterSegmentedPanel`, `drawerFooterSegmentBtn`, `drawerFooterDeleteConfirmBanner`, `drawerFooterBtnDangerConfirmSegment*`, `drawerFooterBtnPrimary*`, `drawerFooterBtnSecondarySegment*`, `drawerFooterBtnUndoSegment*`, `drawerFooterBtnDuplicateSegment*`, `drawerFooterBtnDestructive*`, `drawerFooterDangerCallout`, `drawerFooterBtnDangerConfirm*`, `drawerBodyScrollArea`, `modalFooterBtn*`, `btnCtaGlow`, … |
  * | Marketing landing | `glow-*` | `marketingCtaPrimary` (nav), `marketingHeroCta` + `marketingHeroCtaSecondary`, `marketingFooterCta` + `marketingFooterCtaSecondary`, `marketingHowItWorks*` |
- * | Clerk `appearance.elements` | `glow-green`, `drawer-deep` | `clerkCard`, `clerkModalContentShell`, `clerkUserButtonPopover*`, `clerkFormButtonPrimary`, … |
+ * | Clerk `appearance.elements` | `glow-accent`, `drawer-deep` | `clerkCard`, `clerkModalContentShell`, `clerkUserButtonPopover*`, `clerkFormButtonPrimary`, … |
  */
 
 /** Primary foreground on dashboard dark / glass (`mono-100` chroma — use exports in components, not raw `text-white`). */
@@ -27,6 +27,52 @@ const hoverTextPrimaryOnDark = 'hover:text-mono-100';
 
 /** Import in Svelte for primary copy on dark surfaces (lists, labels, frosted panels). */
 export const dashboardTextPrimary = textPrimaryOnDark;
+
+/** Semantic soft-theme accent vocabulary — keep accent ownership here instead of scattering raw utilities. */
+export const themeAccentText = 'text-accent';
+
+export const themeAccentSurfaceSoft = 'bg-accent/10';
+
+export const themeAccentSurfaceMuted = 'bg-accent/20';
+
+export const themeAccentBorderSoft = 'border-accent/20';
+
+export const themeAccentBorderMedium = 'border-accent/30';
+
+export const themeAccentBorderStrong = 'border-accent/50';
+
+export const themeAccentBorder = 'border-accent';
+
+export const themeAccentBorderEmphasis = 'border-accent-strong';
+
+export const themeAccentFill = 'bg-accent';
+
+export const themeAccentFillStrong = 'bg-accent-strong';
+
+export const themeAccentFillHover = 'hover:bg-accent-hover';
+
+export const themeAccentGlowGradient = 'bg-gradient-to-r from-accent/20 to-accent-support/20';
+
+export const themeAccentFocusRing = 'focus:ring-accent';
+
+export const themeAccentFocusRingSoft = 'focus:ring-accent/50';
+
+export const themeAccentBadge = `${themeAccentSurfaceSoft} ${themeAccentText}`;
+
+export const themeAccentStatusBadge = `${themeAccentBadge} border ${themeAccentBorderSoft}`;
+
+export const themeAccentIconBadge = `${themeAccentBadge} flex items-center justify-center`;
+
+export const themeAccentCheckbox = `w-4 h-4 ${themeAccentText} border-mono-600 rounded focus:ring-2 ${themeAccentFocusRing} bg-mono-900`;
+
+const themeAccentSurfaceSoftHover = 'hover:bg-accent/10';
+const themeAccentTextHover = 'hover:text-accent-hover';
+const themeAccentTextHoverStrong = 'hover:text-accent';
+const themeAccentFocusWithinRingSoft = 'focus-within:ring-accent/50';
+const themeAccentFocusVisibleRingSoft = 'focus-visible:ring-accent/40';
+const themeAccentSpinnerTopBorder = 'border-t-accent';
+const themeAccentSpinnerBottomBorder = 'border-b-accent';
+const themeAccentRailBorder = 'border-accent/70';
 
 /**
  * Muted control label that brightens to {@link dashboardTextPrimary} on hover
@@ -42,7 +88,7 @@ export const backNavButton = `inline-flex items-center justify-center w-8 h-8 bo
 
 // --- Form inputs (solid fills: avoid nested backdrop-filter inside frosted drawer/modal shells) ---
 
-const inputGlassCore = `px-3 py-1.5 border border-mono-700/80 rounded-xl bg-mono-900/80 ${textPrimaryOnDark} focus:ring-2 focus:ring-green-400/50 outline-none focus:outline-none transition-colors text-sm`;
+const inputGlassCore = `px-3 py-1.5 border border-mono-700/80 rounded-xl bg-mono-900/80 ${textPrimaryOnDark} focus:ring-2 ${themeAccentFocusRingSoft} outline-none focus:outline-none transition-colors text-sm`;
 
 /** Standard search/select text field (add `inputGlassSearchSuffix` when a search icon sits on the right). */
 export const inputGlass = `w-full ${inputGlassCore}`;
@@ -57,35 +103,35 @@ export const inputGlassSearch = `${inputGlass} ${inputGlassSearchSuffix}`;
 /**
  * Dashboard list search field (`SearchBar`): leading icon slot via `pl-10`, solid fill for frosted canvas.
  */
-export const searchBarInput = `w-full pl-10 pr-4 py-2 text-sm font-inter border border-mono-700/80 rounded-xl bg-mono-900/80 ${textPrimaryOnDark} focus:ring-2 focus:ring-green-400 focus:outline-none focus:border-transparent placeholder:text-mono-500 shadow-inner transition-colors`;
+export const searchBarInput = `w-full pl-10 pr-4 py-2 text-sm font-inter border border-mono-700/80 rounded-xl bg-mono-900/80 ${textPrimaryOnDark} focus:ring-2 ${themeAccentFocusRing} focus:outline-none focus:border-transparent placeholder:text-mono-500 shadow-inner transition-colors`;
 
 /**
  * Compact text field embedded in flex rows (e.g. constraint value beside chips).
  */
-export const inputGlassDense = `flex-1 min-w-0 px-2 py-1 rounded-xl border border-mono-700/80 text-sm bg-mono-900/80 ${textPrimaryOnDark} focus:ring-2 focus:ring-green-400/50 outline-none focus:outline-none transition-colors`;
+export const inputGlassDense = `flex-1 min-w-0 px-2 py-1 rounded-xl border border-mono-700/80 text-sm bg-mono-900/80 ${textPrimaryOnDark} focus:ring-2 ${themeAccentFocusRingSoft} outline-none focus:outline-none transition-colors`;
 
 /**
  * Object drawer: description textarea uses slightly taller padding than {@link textareaInsideFrostedPanel}.
  */
-export const textareaObjectForm = `w-full px-3 py-2 rounded-xl border border-mono-700/80 bg-mono-900/80 ${textPrimaryOnDark} focus:ring-2 focus:ring-green-400/50 outline-none focus:outline-none transition-colors`;
+export const textareaObjectForm = `w-full px-3 py-2 rounded-xl border border-mono-700/80 bg-mono-900/80 ${textPrimaryOnDark} focus:ring-2 ${themeAccentFocusRingSoft} outline-none focus:outline-none transition-colors`;
 
 /**
  * `DefaultValueInput` outer shell (focus ring wraps control + preset pill).
  */
 export const defaultValueComboShell =
-	'flex items-center w-full rounded-xl border border-mono-700/80 bg-mono-900/80 focus-within:ring-2 focus-within:ring-green-400/50 focus-within:outline-none transition-colors overflow-hidden';
+	`flex items-center w-full rounded-xl border border-mono-700/80 bg-mono-900/80 focus-within:ring-2 ${themeAccentFocusWithinRingSoft} focus-within:outline-none transition-colors overflow-hidden`;
 
 /**
  * Validator template gallery / form: muted `border-mono-600` controls used inside frosted drawers.
  */
-export const inputValidatorControl = `w-full px-3 py-1.5 border border-mono-600 text-sm focus:ring-2 focus:ring-green-400 focus:border-transparent bg-mono-900/80 ${textPrimaryOnDark} transition-colors`;
+export const inputValidatorControl = `w-full px-3 py-1.5 border border-mono-600 text-sm focus:ring-2 ${themeAccentFocusRing} focus:border-transparent bg-mono-900/80 ${textPrimaryOnDark} transition-colors`;
 
-export const inputValidatorSearch = `w-full px-3 py-2 border border-mono-600 rounded-xl text-sm bg-mono-900/80 ${textPrimaryOnDark} focus:ring-2 focus:ring-green-400 focus:border-transparent transition-colors`;
+export const inputValidatorSearch = `w-full px-3 py-2 border border-mono-600 rounded-xl text-sm bg-mono-900/80 ${textPrimaryOnDark} focus:ring-2 ${themeAccentFocusRing} focus:border-transparent transition-colors`;
 
 /**
- * Member search inline on object form — green focus ring variant, `pr-8` for icon.
+ * Member search inline on object form — accent focus ring variant, `pr-8` for icon.
  */
-export const inputObjectMemberSearch = `w-full px-3 py-1.5 border border-mono-700/80 bg-mono-900/80 rounded-xl ${textPrimaryOnDark} focus:ring-2 focus:ring-green-400 focus:border-transparent outline-none transition-colors text-sm pr-8`;
+export const inputObjectMemberSearch = `w-full px-3 py-1.5 border border-mono-700/80 bg-mono-900/80 rounded-xl ${textPrimaryOnDark} focus:ring-2 ${themeAccentFocusRing} focus:border-transparent outline-none transition-colors text-sm pr-8`;
 
 /**
  * Disabled read-only field — same shell and radius as {@link inputGlass}, muted text, no focus ring.
@@ -115,10 +161,10 @@ export const objectSelectorDisplayRow =
  */
 /** `glass-select-trigger` hover lives in `app.css` — do not add `hover:bg-mono-*` here (drawer body flatten rule). */
 export const glassSelectTrigger =
-	'glass-select-trigger w-full px-3 border border-mono-700/80 rounded-xl bg-mono-900/80 shadow-inner flex items-center justify-between gap-2 h-[34px] text-sm text-mono-100 cursor-pointer focus:outline-none focus:ring-2 focus:ring-green-400/50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed';
+	`glass-select-trigger w-full px-3 border border-mono-700/80 rounded-xl bg-mono-900/80 shadow-inner flex items-center justify-between gap-2 h-[34px] text-sm text-mono-100 cursor-pointer focus:outline-none focus:ring-2 ${themeAccentFocusRingSoft} transition-colors disabled:opacity-50 disabled:cursor-not-allowed`;
 
 /** Shared shell for API generator 34px-high inputs (query/path param editors). */
-const apiGeneratorRowControlCore = `w-full px-3 text-sm border border-mono-700/80 rounded-xl bg-mono-900/80 ${textPrimaryOnDark} focus:ring-2 focus:ring-green-400/50 outline-none focus:outline-none transition-colors h-[34px]`;
+const apiGeneratorRowControlCore = `w-full px-3 text-sm border border-mono-700/80 rounded-xl bg-mono-900/80 ${textPrimaryOnDark} focus:ring-2 ${themeAccentFocusRingSoft} outline-none focus:outline-none transition-colors h-[34px]`;
 
 export const apiGeneratorRowInputMono = `${apiGeneratorRowControlCore} font-mono`;
 
@@ -188,12 +234,12 @@ export const segmentFieldBaseJoin =
 
 export const segmentFieldInactive = 'bg-mono-900/75 text-mono-400 border-mono-600 hover:border-mono-500';
 
-export const segmentFieldActive = 'bg-green-400 text-mono-950 font-bold border-green-400';
+export const segmentFieldActive = `${themeAccentFill} text-mono-950 font-bold ${themeAccentBorder}`;
 
 export const segmentPillBase =
 	'px-5 py-1.5 text-sm font-medium whitespace-nowrap transition-colors text-center first:rounded-l-xl last:rounded-r-xl';
 
-export const segmentPillSelected = 'bg-mono-900/75 text-green-400 border border-green-400/50';
+export const segmentPillSelected = `bg-mono-900/75 ${themeAccentText} border ${themeAccentBorderStrong}`;
 
 export const segmentPillUnselected =
 	'bg-mono-900/75 text-mono-400 border border-mono-700 hover:border-mono-500 hover:text-mono-300';
@@ -220,7 +266,7 @@ export const cardOnboardingShell = `${dashboardCardGlass} p-6`;
 // --- Accent tiles (icons) ---
 
 export const accentIconTile =
-	'rounded-xl bg-green-400/10 text-green-400 flex items-center justify-center shadow-glow-green-icon';
+	`rounded-xl ${themeAccentIconBadge} shadow-glow-accent-icon`;
 
 export const accentIconTileError = 'rounded-xl bg-red-400/10 text-red-400 flex items-center justify-center';
 
@@ -249,7 +295,7 @@ export const sidebarNavItemInactive = `hover:bg-mono-800/50 ${hoverTextPrimaryOn
 export const dashboardMainColumn = 'flex flex-col flex-1 min-h-0 w-full';
 
 /**
- * Layered dashboard green wash: top-right radial over matching linear washes — bottom-to-top and
+ * Layered dashboard accent wash: top-right radial over matching linear washes — bottom-to-top and
  * left-to-right (same stops, `transparent` into `bg-mono-950`). First image in the list paints on top.
  */
 export const dashboardGreenWashGradient =
@@ -370,10 +416,10 @@ export const tableListBodyCaption = 'text-xs text-mono-400';
 export const tableListBodyLink = `text-sm ${dashboardTextPrimary} underline hover:text-mono-300 transition-colors`;
 
 /**
- * Clickable entity title in a card or panel (e.g. API readiness) — hover uses soft accent (`green-400`).
+ * Clickable entity title in a card or panel (e.g. API readiness) — hover uses the shared accent token.
  */
 export const tableListEntityTitleButton =
-	'text-base font-inter font-bold text-mono-100 hover:text-green-400 transition-colors cursor-pointer truncate block';
+	`text-base font-inter font-bold text-mono-100 ${themeAccentTextHoverStrong} transition-colors cursor-pointer truncate block`;
 
 /**
  * Muted inline label in auxiliary rows (validator parameter / field-mapping titles).
@@ -480,10 +526,10 @@ export const drawerFooterSegmentDivider = 'shrink-0 h-px sm:h-auto sm:self-stret
  * Segment control inside {@link drawerFooterSegmentedPanel}. Combine with {@link drawerFooterBtnPrimaryEnabled} and friends.
  */
 export const drawerFooterSegmentBtn =
-	'inline-flex items-center justify-center gap-2 w-full sm:flex-1 min-w-0 px-3 py-3 text-sm font-inter tracking-wide transition-colors outline-none focus-visible:z-10 focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-green-400/40';
+	`inline-flex items-center justify-center gap-2 w-full sm:flex-1 min-w-0 px-3 py-3 text-sm font-inter tracking-wide transition-colors outline-none focus-visible:z-10 focus-visible:ring-2 focus-visible:ring-inset ${themeAccentFocusVisibleRingSoft}`;
 
 export const drawerFooterBtnPrimaryEnabled =
-	'bg-green-400 border-transparent text-mono-950 font-semibold shadow-sm hover:bg-green-300 hover:shadow-md cursor-pointer';
+	`${themeAccentFill} border-transparent text-mono-950 font-semibold shadow-sm ${themeAccentFillHover} hover:shadow-md cursor-pointer`;
 
 /** Box matches enabled primary; typography matches muted secondary so disabled Save/Undo read as a pair. */
 export const drawerFooterBtnPrimaryDisabled =
@@ -561,13 +607,13 @@ export const drawerFooterBtnDangerCancelBusy =
 	'flex-1 px-3 py-1.5 rounded-xl border text-sm font-medium font-inter tracking-wide transition-colors border-mono-700 text-mono-400 cursor-not-allowed bg-mono-800';
 
 export const btnCtaGlow =
-	'px-5 py-2.5 bg-green-400 text-mono-950 font-inter font-semibold rounded-xl text-sm hover:bg-green-300 transition-all shadow-glow-green cursor-pointer';
+	`px-5 py-2.5 ${themeAccentFill} text-mono-950 font-inter font-semibold rounded-xl text-sm ${themeAccentFillHover} transition-all shadow-glow-accent cursor-pointer`;
 
 export const btnGenerateSm =
-	'text-xs px-4 py-1.5 rounded-lg bg-green-400 text-mono-950 font-inter font-bold hover:bg-green-300 transition-colors cursor-pointer flex items-center space-x-1 shadow-glow-green-sm';
+	`text-xs px-4 py-1.5 rounded-lg ${themeAccentFill} text-mono-950 font-inter font-bold ${themeAccentFillHover} transition-colors cursor-pointer flex items-center space-x-1 shadow-glow-accent-sm`;
 
 export const btnEmptyStatePrimary =
-	'mt-5 px-6 py-2.5 bg-green-400 text-mono-950 font-inter font-bold rounded-2xl tracking-wide shadow-glow-green hover:bg-green-300 transition-all cursor-pointer';
+	`mt-5 px-6 py-2.5 ${themeAccentFill} text-mono-950 font-inter font-bold rounded-2xl tracking-wide shadow-glow-accent ${themeAccentFillHover} transition-all cursor-pointer`;
 
 // --- Modal dialogs (inline footer row, not full-width like drawer) ---
 
@@ -578,7 +624,7 @@ export const modalFooterBtnPrimary =
 	'px-4 py-2 rounded-xl font-inter font-semibold text-sm tracking-wide flex items-center space-x-2 transition-colors';
 
 export const modalFooterBtnPrimaryEnabled =
-	'bg-green-400 text-mono-950 hover:bg-green-300 cursor-pointer shadow-glow-green-sm';
+	`${themeAccentFill} text-mono-950 ${themeAccentFillHover} cursor-pointer shadow-glow-accent-sm`;
 
 export const modalFooterBtnPrimaryDisabled = 'bg-mono-700 text-mono-400 cursor-not-allowed';
 
@@ -587,13 +633,13 @@ export const modalInlineError = 'bg-red-400/10 border border-red-400/30 p-3 mb-4
 
 /** Checkbox / radio inside frosted modal — solid fill, no nested blur */
 export const modalFormCheckbox =
-	'w-4 h-4 text-green-400 border-mono-600 rounded focus:ring-2 focus:ring-green-400 bg-mono-900';
+	themeAccentCheckbox;
 
-export const modalFormRadio = 'w-3.5 h-3.5 text-green-400 border-mono-600 bg-mono-900 focus:ring-green-400';
+export const modalFormRadio = `w-3.5 h-3.5 ${themeAccentText} border-mono-600 bg-mono-900 ${themeAccentFocusRing}`;
 
 /** Full-width primary action in validator template form (inside frosted drawer). */
 export const validatorTemplateFormSubmitButton =
-	'w-full px-4 py-2 bg-green-400 text-mono-950 font-bold text-sm tracking-wide hover:bg-green-300 transition-colors disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer';
+	`w-full px-4 py-2 ${themeAccentFill} text-mono-950 font-bold text-sm tracking-wide ${themeAccentFillHover} transition-colors disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer`;
 
 // --- Dashboard loading shell ---
 
@@ -601,27 +647,27 @@ export const dashboardLoadingRoot = 'flex h-screen items-center justify-center b
 
 export const dashboardLoadingLabel = 'mt-4 text-mono-400 font-inter text-sm font-medium';
 
-/** Full-page or route-blocking spinner; ring uses soft accent (`--color-green-400` via Tailwind). */
+/** Full-page or route-blocking spinner; ring uses the shared accent token. */
 export const dashboardBlockingSpinner =
-	'animate-spin rounded-full h-8 w-8 border-2 border-transparent border-t-green-400 mx-auto opacity-80';
+	`animate-spin rounded-full h-8 w-8 border-2 border-transparent ${themeAccentSpinnerTopBorder} mx-auto opacity-80`;
 
 /**
- * Primary “Create …” / “Add …” in dashboard list page headers (`green-*` → `app.css` accent channels).
+ * Primary “Create …” / “Add …” in dashboard list page headers (semantic accent token).
  */
 export const dashboardPageHeaderPrimaryButton =
-	'inline-flex items-center gap-2 px-4 py-2 bg-green-400 text-mono-950 font-inter font-semibold rounded-xl text-sm tracking-wide shadow-sm hover:bg-green-300 cursor-pointer transition-colors';
+	`inline-flex items-center gap-2 px-4 py-2 ${themeAccentFill} text-mono-950 font-inter font-semibold rounded-xl text-sm tracking-wide shadow-sm ${themeAccentFillHover} cursor-pointer transition-colors`;
 
 /**
  * Large blurred wash behind sign-in / sign-up cards (same accent as marketing orbs).
  */
 export const authPageAccentGlowOrb =
-	'absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[600px] opacity-[0.12] bg-green-400 blur-[120px] rounded-full pointer-events-none';
+	`absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[600px] opacity-[0.12] ${themeAccentFill} blur-[120px] rounded-full pointer-events-none`;
 
 /** Clerk-style spinner on auth pages (`border-b` accent). */
-export const authPageInlineSpinner = 'animate-spin rounded-full h-8 w-8 border-b-2 border-green-400 mx-auto opacity-80';
+export const authPageInlineSpinner = `animate-spin rounded-full h-8 w-8 border-b-2 ${themeAccentSpinnerBottomBorder} mx-auto opacity-80`;
 
 /** API list card: “ready to generate” status chip (accent from theme). */
-export const apiReadinessStatusReadyClasses = 'text-green-400 bg-green-400/10 border-green-400/20';
+export const apiReadinessStatusReadyClasses = `${themeAccentText} ${themeAccentSurfaceSoft} ${themeAccentBorderSoft}`;
 
 // --- Marketing (landing) ---
 
@@ -637,30 +683,30 @@ export const marketingNavLinkMobile = `block text-mono-400 ${hoverTextPrimaryOnD
 const marketingNavCtaShell =
 	'inline-flex items-center justify-center px-5 py-2.5 min-h-[40px] font-inter font-medium text-sm rounded-xl';
 
-export const marketingCtaOutline = `${marketingNavCtaShell} text-green-400 border border-green-400/50 hover:bg-green-400/10 transition-colors`;
+export const marketingCtaOutline = `${marketingNavCtaShell} ${themeAccentText} border ${themeAccentBorderStrong} ${themeAccentSurfaceSoftHover} transition-colors`;
 
-export const marketingCtaPrimary = `${marketingNavCtaShell} bg-green-400 text-mono-950 hover:bg-green-300 transition-colors shadow-glow-green`;
+export const marketingCtaPrimary = `${marketingNavCtaShell} ${themeAccentFill} text-mono-950 ${themeAccentFillHover} transition-colors shadow-glow-accent`;
 
 export const marketingBetaPill =
-	'inline-flex items-center space-x-2 bg-green-400/10 px-3 py-1.5 rounded-full border border-green-400/20 shadow-glow-green-sm';
+	`inline-flex items-center space-x-2 ${themeAccentSurfaceSoft} px-3 py-1.5 rounded-full border ${themeAccentBorderSoft} shadow-glow-accent-sm`;
 
-export const marketingBetaDot = 'w-1.5 h-1.5 bg-green-400 rounded-full animate-pulse shadow-glow-green-dot';
+export const marketingBetaDot = `w-1.5 h-1.5 ${themeAccentFill} rounded-full animate-pulse shadow-glow-accent-dot`;
 
 /** Hero, final CTA, and paired outline buttons share one geometry so adjacent rows align */
 const marketingLgCtaShell =
 	'inline-flex items-center justify-center px-8 py-3.5 min-h-[48px] font-inter font-semibold text-base rounded-xl';
 
-export const marketingHeroCta = `${marketingLgCtaShell} bg-green-400 text-mono-950 shadow-glow-green-lg hover:shadow-glow-green-xl hover:bg-green-300 transition-all`;
+export const marketingHeroCta = `${marketingLgCtaShell} ${themeAccentFill} text-mono-950 shadow-glow-accent-lg hover:shadow-glow-accent-xl ${themeAccentFillHover} transition-all`;
 
 export const marketingHeroCtaSecondary = `${marketingLgCtaShell} bg-mono-900/50 backdrop-blur-sm text-white border border-mono-800 hover:bg-mono-800/80 transition-all`;
 
-export const marketingFooterCta = `${marketingLgCtaShell} bg-green-400 text-mono-950 shadow-glow-green-lg hover:shadow-glow-green-xl hover:bg-green-300 transition-all`;
+export const marketingFooterCta = `${marketingLgCtaShell} ${themeAccentFill} text-mono-950 shadow-glow-accent-lg hover:shadow-glow-accent-xl ${themeAccentFillHover} transition-all`;
 
 /** Tertiary / sign-in next to primary in closing section — same box as `marketingFooterCta` */
 export const marketingFooterCtaSecondary = `${marketingLgCtaShell} border border-mono-700/80 text-mono-300 hover:text-white hover:bg-mono-900/40 transition-all`;
 
 export const marketingFeatureIcon =
-	'w-12 h-12 bg-green-400/10 text-green-400 rounded-xl flex items-center justify-center mb-6 shadow-glow-green-icon';
+	`w-12 h-12 ${themeAccentIconBadge} rounded-xl mb-6 shadow-glow-accent-icon`;
 
 /**
  * Step column: index + rail row; index sits left of the copy (see {@link marketingHowItWorksWatermark}).
@@ -675,12 +721,12 @@ export const marketingHowItWorksWatermark =
 
 /** Green rail + step copy (foreground); top padding lowers title/body vs the index cap height. */
 export const marketingHowItWorksStepBody =
-	'relative z-10 min-w-0 flex-1 border-l-2 border-green-400/70 pl-4 sm:pl-5 pt-2 sm:pt-2.5';
+	`relative z-10 min-w-0 flex-1 border-l-2 ${themeAccentRailBorder} pl-4 sm:pl-5 pt-2 sm:pt-2.5`;
 
 /** Step title — same rhythm as feature cards. */
 export const marketingHowItWorksStepTitle = 'mb-3 font-inter text-lg font-semibold text-white tracking-wide';
 
-export const marketingProgressBarGlow = 'shadow-glow-green-bar';
+export const marketingProgressBarGlow = 'shadow-glow-accent-bar';
 
 // --- Clerk appearance.elements (class strings; `clerk.ts` variables from `appTheme.ts`) ---
 
@@ -705,13 +751,13 @@ export const clerkUserButtonPopoverActions = 'bg-transparent';
 export const clerkUserButtonPopoverFooter = 'bg-mono-950/25 border-t border-white/10';
 
 export const clerkFormButtonPrimary =
-	'bg-green-400 text-mono-950 hover:bg-green-300 font-inter font-semibold tracking-wide rounded-xl shadow-glow-green';
+	`${themeAccentFill} text-mono-950 ${themeAccentFillHover} font-inter font-semibold tracking-wide rounded-xl shadow-glow-accent`;
 
 export const clerkFormFieldInput = `bg-mono-900/50 border border-mono-700/80 ${textPrimaryOnDark} rounded-xl`;
 
 export const clerkAvatarBox = 'border border-mono-800/80 rounded-full';
 
-export const clerkFooterActionLink = 'text-green-400 hover:text-green-300';
+export const clerkFooterActionLink = `${themeAccentText} ${themeAccentTextHover}`;
 
 export const clerkSocialGithub = '[&>img]:invert';
 
@@ -729,7 +775,7 @@ export const clerkProfileSectionTitle = `${textPrimaryOnDark} font-inter font-se
 
 export const clerkProfileSectionContent = 'text-mono-300 font-inter';
 
-export const clerkProfilePrimaryButton = 'text-green-400 hover:text-green-300';
+export const clerkProfilePrimaryButton = `${themeAccentText} ${themeAccentTextHover}`;
 
 export const clerkBadge = 'bg-mono-800/50 text-mono-300 border border-mono-700/60 rounded-full';
 

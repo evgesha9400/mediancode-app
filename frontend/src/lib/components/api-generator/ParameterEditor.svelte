@@ -15,7 +15,13 @@
 </script>
 
 <script lang="ts">
-  import { apiGeneratorHintCell, objectSelectorDisplayRow } from '$lib/ui/classes';
+  import {
+    apiGeneratorHintCell,
+    listMetaBadge,
+    objectSelectorDisplayRow,
+    themeAccentBadge,
+    themeAccentText
+  } from '$lib/ui/classes';
   import FieldSelectorDropdown from './FieldSelectorDropdown.svelte';
 
   interface Props extends ParameterEditorProps {}
@@ -90,13 +96,13 @@
       <div class="flex-1 min-w-0">
         <div class={objectSelectorDisplayRow}>
           <div class="flex items-center gap-1.5">
-            <i class="fa-solid fa-link text-green-400 text-[10px]"></i>
+            <i class={`fa-solid fa-link text-[10px] ${themeAccentText}`}></i>
             <span class="font-mono text-sm">{effectiveFieldName}</span>
             {#if derivedType}
-              <span class="text-[11px] text-mono-400 bg-mono-800 px-1.5 rounded-lg">{derivedType}</span>
+              <span class={`${listMetaBadge} px-1.5 text-[11px]`}>{derivedType}</span>
             {/if}
             {#if selectedField?.isPk}
-              <span class="text-[10px] text-green-400 bg-green-400/10 px-1.5 rounded-lg uppercase font-bold">PK</span>
+              <span class={`text-[10px] px-1.5 rounded-lg uppercase font-bold ${themeAccentBadge}`}>PK</span>
             {/if}
           </div>
           <button

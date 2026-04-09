@@ -54,6 +54,7 @@ export const softThemeColors = {
 		'100': [218, 227, 247],
 		'200': [180, 199, 240],
 		'400': [91, 139, 224],
+		'500': [59, 130, 246],
 		'600': [61, 102, 184],
 		'800': [43, 74, 138]
 	}
@@ -78,6 +79,10 @@ function toHex(rgb: RgbChannels): string {
 }
 
 const softThemeCssVars = {
+	'color-accent': toRgbChannelsValue(softThemeColors.green['400']),
+	'color-accent-hover': toRgbChannelsValue(softThemeColors.green['300']),
+	'color-accent-strong': toRgbChannelsValue(softThemeColors.green['500']),
+	'color-accent-support': toRgbChannelsValue(softThemeColors.blue['500']),
 	'drawer-panel-radius': '1.5rem',
 	'drawer-panel-border': toRgbAlpha(white, 0.14),
 	'drawer-panel-ring': toRgbAlpha(white, 0.08),

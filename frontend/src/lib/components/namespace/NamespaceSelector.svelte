@@ -26,7 +26,7 @@
     setActiveNamespace
   } from '$lib/stores/namespaces';
   import type { Namespace } from '$lib/types';
-  import { inputGlassAuto, popoverGlassMenuChrome } from '$lib/ui/classes';
+  import { inputGlassAuto, popoverGlassMenuChrome, themeAccentText } from '$lib/ui/classes';
 
   function isGlobalNamespace(ns: Namespace | undefined): boolean {
     return ns?.name?.toLowerCase() === 'global';
@@ -114,7 +114,7 @@
               {/if}
             </div>
             {#if $activeNamespaceId === namespace.id}
-              <i class="fa-solid fa-check text-green-400 text-xs"></i>
+              <i class="fa-solid fa-check text-xs {themeAccentText}"></i>
             {/if}
           </button>
         {/each}

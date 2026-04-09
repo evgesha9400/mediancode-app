@@ -27,6 +27,10 @@ describe('appTheme', () => {
 	});
 
 	it('defines semantic surface variables for drawer and sidebar chrome', () => {
+		expect(appThemeCssText).toContain(`--color-accent: ${softThemeColors.green['400'].join(' ')};`);
+		expect(appThemeCssText).toContain(`--color-accent-hover: ${softThemeColors.green['300'].join(' ')};`);
+		expect(appThemeCssText).toContain(`--color-accent-strong: ${softThemeColors.green['500'].join(' ')};`);
+		expect(appThemeCssText).toContain(`--color-accent-support: ${softThemeColors.blue['500'].join(' ')};`);
 		expect(appThemeCssText).toContain('--drawer-panel-bg:');
 		expect(appThemeCssText).toContain('--dropdown-panel-bg:');
 		expect(appThemeCssText).toContain('--sidebar-nav-item-active-border:');

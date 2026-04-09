@@ -52,7 +52,7 @@
 
 <script lang="ts">
   import { FILTER_PANEL_ID } from '$lib/utils/testIds';
-  import { popoverGlassMenuChrome } from '$lib/ui/classes';
+  import { modalFormCheckbox, popoverGlassMenuChrome } from '$lib/ui/classes';
 
   interface Props extends FilterPanelProps {}
 
@@ -141,7 +141,7 @@
                       type="checkbox"
                       checked={ensureArray(state[section.key]).includes(option.value)}
                       onchange={() => toggleCheckbox(section.key, option.value)}
-                      class="peer h-4 w-4 rounded border-mono-600 text-green-400 focus:ring-green-400"
+                      class={`peer ${modalFormCheckbox}`}
                     />
                   </div>
                   <span class="text-sm text-mono-300 group-hover:text-mono-100">{option.label}</span>
@@ -154,7 +154,7 @@
                 type="checkbox"
                 checked={Boolean(state[section.key])}
                 onchange={(event) => setToggle(section.key, (event.currentTarget as HTMLInputElement).checked)}
-                class="h-4 w-4 rounded border-mono-600 text-green-400 focus:ring-green-400"
+                class={modalFormCheckbox}
               />
               <span class="text-sm text-mono-300 group-hover:text-mono-100">{section.toggleLabel ?? section.label}</span>
             </label>

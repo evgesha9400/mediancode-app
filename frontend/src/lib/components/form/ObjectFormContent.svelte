@@ -34,7 +34,12 @@
     drawerLinkedEntityRow,
     dropdownPanelSolidSurface,
     inputObjectMemberSearch,
+    listMetaBadge,
     surfaceInsideFrostedPanel,
+    themeAccentBorderEmphasis,
+    themeAccentFocusRing,
+    themeAccentSurfaceSoft,
+    themeAccentText,
     textareaObjectForm,
   } from '$lib/ui/classes';
   import {
@@ -60,6 +65,16 @@
     { value: 'one_to_many', label: 'has many' },
     { value: 'many_to_many', label: 'many to many' }
   ];
+
+  const compactMonoControlBase =
+    `bg-mono-800 border border-mono-700 text-mono-300 rounded-lg focus:ring-1 ${themeAccentFocusRing} focus:border-transparent`;
+  const compactMonoInput = `${compactMonoControlBase} font-mono text-sm px-2 py-0.5`;
+  const compactMonoInputXs = `${compactMonoControlBase} font-mono text-xs px-2 py-0.5`;
+  const compactMonoSelect = `${compactMonoControlBase} text-xs px-1.5 py-0.5`;
+  const compactMonoSelectFull = `${compactMonoSelect} w-full min-h-[1.5rem]`;
+  const compactMonoToggleOn = `${themeAccentBorderEmphasis} ${themeAccentText} ${themeAccentSurfaceSoft}`;
+  const compactMonoToggleOff = 'border-mono-600 text-mono-500 hover:border-mono-500 hover:text-mono-400';
+  const compactMonoToggleHidden = 'invisible pointer-events-none border-mono-600 text-mono-500';
 
   // --- Derive selected field IDs (to exclude already-added fields from unified dropdown) ---
   let selectedFieldIds = $derived(
@@ -397,7 +412,7 @@
                   <div class="flex items-center space-x-2">
                     <i class="fa-solid fa-vector-square text-mono-400 text-xs"></i>
                     <span class="font-mono text-sm text-mono-300">{field.name}</span>
-                    <span class="text-xs text-mono-400 bg-mono-800 px-2 py-0.5 rounded-lg">{field.type}</span>
+                    <span class={listMetaBadge}>{field.type}</span>
                   </div>
                   {#if field.description}
                     <p class="text-xs text-mono-500 mt-0.5">{field.description}</p>
@@ -502,16 +517,16 @@
                           type="text"
                           value={item.name}
                           oninput={(e) => setMemberName(item.id, (e.target as HTMLInputElement).value)}
-                          class="font-mono text-sm text-mono-300 bg-mono-800 border border-mono-700 px-2 py-0.5 rounded-lg w-28 focus:ring-1 focus:ring-green-400 focus:border-transparent"
+                          class={`${compactMonoInput} w-28`}
                           title="Member name (column name in generated code)"
                         />
-                        <span class="text-xs text-mono-400 bg-mono-800 px-2 py-0.5 rounded-lg shrink-0">{field.type}</span>
+                        <span class={`${listMetaBadge} shrink-0`}>{field.type}</span>
                         <span class="text-xs text-mono-500 truncate" title="Field: {field.name}">{field.name}</span>
                       </div>
 
                       <!-- Role Selector -->
                       <select
-                        class="w-full min-h-[1.5rem] bg-mono-800 border border-mono-700 text-mono-300 text-xs rounded-lg px-1.5 py-0.5 focus:ring-1 focus:ring-green-400 focus:border-transparent"
+                        class={compactMonoSelectFull}
                         value={item.role}
                         onchange={(e) => setMemberRole(item.id, e.currentTarget.value as FieldRole)}
                         title={ROLE_TOOLTIPS[item.role]}
@@ -524,7 +539,7 @@
                       <!-- Default Value Input -->
                       {#if inputCfg.isBool}
                         <select
-                          class="bg-mono-800 border border-mono-700 text-mono-300 text-xs rounded-lg px-1.5 py-0.5 w-full min-h-[1.5rem] focus:ring-1 focus:ring-green-400 focus:border-transparent {modifierClass}"
+                          class={`${compactMonoSelectFull} ${modifierClass}`}
                           value={item.defaultValue ?? ''}
                           onchange={(e) => setMemberDefaultValue(item.id, e.currentTarget.value)}
                           disabled={!roleHasModifiers(item.role)}
@@ -537,7 +552,7 @@
                         <input
                           type={inputCfg.inputType}
                           step={inputCfg.step}
-                          class="bg-mono-800 border border-mono-700 text-mono-300 text-xs rounded-lg px-1.5 py-0.5 w-full min-h-[1.5rem] focus:ring-1 focus:ring-green-400 focus:border-transparent {modifierClass}"
+                          class={`${compactMonoSelectFull} ${modifierClass}`}
                           placeholder="Default value"
                           value={item.defaultValue ?? ''}
                           oninput={(e) => setMemberDefaultValue(item.id, e.currentTarget.value)}
@@ -551,7 +566,7 @@
                         onclick={() => toggleMemberNullable(item.id)}
                         disabled={!roleHasModifiers(item.role)}
                         title="Allow null values"
-                        class="justify-self-start text-xs px-2 py-0.5 rounded-lg border transition-colors {roleHasModifiers(item.role) ? (item.isNullable ? 'border-green-500 text-green-400 bg-green-400/10' : 'border-mono-600 text-mono-500 hover:border-mono-500 hover:text-mono-400') : 'invisible pointer-events-none border-mono-600 text-mono-500'}"
+                        class={`justify-self-start text-xs px-2 py-0.5 rounded-lg border transition-colors ${roleHasModifiers(item.role) ? (item.isNullable ? compactMonoToggleOn : compactMonoToggleOff) : compactMonoToggleHidden}`}
                       >
                         nullable
                       </button>
@@ -605,7 +620,7 @@
                       type="text"
                       value={item.name}
                       oninput={(e) => updateRelationshipField(item.id, { name: (e.target as HTMLInputElement).value })}
-                      class="font-mono text-sm text-mono-300 bg-mono-800 border border-mono-700 px-2 py-0.5 rounded-lg w-28 focus:ring-1 focus:ring-green-400 focus:border-transparent"
+                      class={`${compactMonoInput} w-28`}
                       title="Relationship field name"
                     />
 
@@ -613,7 +628,7 @@
                     <select
                       value={item.kind}
                       onchange={(e) => updateRelationshipKind(item.id, (e.target as HTMLSelectElement).value as RelationshipKind)}
-                      class="text-xs text-mono-300 bg-mono-800 border border-mono-700 px-2 py-0.5 rounded-lg focus:ring-1 focus:ring-green-400"
+                      class={compactMonoSelect}
                     >
                       {#each KIND_OPTIONS as opt}
                         <option value={opt.value}>{opt.label}</option>
@@ -630,7 +645,7 @@
                       type="text"
                       value={item.inverseName}
                       oninput={(e) => updateRelationshipField(item.id, { inverseName: (e.target as HTMLInputElement).value })}
-                      class="font-mono text-xs text-mono-300 bg-mono-800 border border-mono-700 px-2 py-0.5 rounded-lg w-24 focus:ring-1 focus:ring-green-400 focus:border-transparent"
+                      class={`${compactMonoInputXs} w-24`}
                       placeholder="inverse name"
                       title="Inverse relationship name on the target object"
                     />
@@ -641,7 +656,7 @@
                         type="button"
                         onclick={() => updateRelationshipField(item.id, { required: !item.required })}
                         title="Whether the FK column is NOT NULL"
-                        class="text-xs px-2 py-0.5 rounded-lg border transition-colors shrink-0 {item.required ? 'border-green-500 text-green-400 bg-green-400/10' : 'border-mono-600 text-mono-500 hover:border-mono-500 hover:text-mono-400'}"
+                        class={`text-xs px-2 py-0.5 rounded-lg border transition-colors shrink-0 ${item.required ? compactMonoToggleOn : compactMonoToggleOff}`}
                       >
                         required
                       </button>

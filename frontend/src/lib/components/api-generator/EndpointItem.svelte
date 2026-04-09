@@ -8,6 +8,12 @@
 </script>
 
 <script lang="ts">
+  import {
+    themeAccentBorderMedium,
+    themeAccentFillStrong,
+    themeAccentSurfaceSoft
+  } from '$lib/ui/classes';
+
   interface Props extends EndpointItemProps {}
 
   let { endpoint, onClick }: Props = $props();
@@ -29,9 +35,9 @@
         };
       case 'POST':
         return {
-          badge: 'bg-green-500 text-white',
-          row: 'bg-green-400/10',
-          border: 'border-green-400/30'
+          badge: `${themeAccentFillStrong} text-white`,
+          row: themeAccentSurfaceSoft,
+          border: themeAccentBorderMedium
         };
       case 'PUT':
         return {

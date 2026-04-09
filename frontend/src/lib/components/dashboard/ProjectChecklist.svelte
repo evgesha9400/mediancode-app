@@ -16,6 +16,9 @@
     dashboardControlTextMutedHoverPrimary,
     dashboardTextPrimary,
     marketingProgressBarGlow,
+    themeAccentFill,
+    themeAccentSurfaceMuted,
+    themeAccentText,
   } from '$lib/ui/classes';
 
   interface Props extends ProjectChecklistProps {}
@@ -47,6 +50,7 @@
   ]);
 
   let completedCount = $derived(steps.filter(s => s.completed).length);
+  const checklistCompletedMarker = `${themeAccentSurfaceMuted} ${themeAccentText}`;
 </script>
 
 {#if !dismissed}
@@ -70,7 +74,7 @@
       <!-- Progress bar -->
       <div class="w-full bg-mono-800/50 rounded-full h-2 mb-5 overflow-hidden">
         <div
-          class="bg-green-400 h-full rounded-full transition-all duration-500 ease-out {marketingProgressBarGlow}"
+          class="{themeAccentFill} h-full rounded-full transition-all duration-500 ease-out {marketingProgressBarGlow}"
           style="width: {(completedCount / steps.length) * 100}%"
           data-testid="checklist-progress"
         ></div>
@@ -79,7 +83,7 @@
       <ul class="space-y-4">
         {#each steps as step, i}
         <li class="flex items-start space-x-3.5">
-          <div class="mt-0.5 w-5 h-5 rounded-full flex items-center justify-center shrink-0 transition-colors {step.completed ? 'bg-green-400/20 text-green-400' : 'border border-mono-600/50 text-transparent'}">
+          <div class="mt-0.5 w-5 h-5 rounded-full flex items-center justify-center shrink-0 transition-colors {step.completed ? checklistCompletedMarker : 'border border-mono-600/50 text-transparent'}">
             <i class="fa-solid fa-check text-[10px]"></i>
           </div>
           <div class="flex-1 min-w-0">
