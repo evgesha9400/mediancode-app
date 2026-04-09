@@ -169,7 +169,7 @@ export class NamespacesPage {
 		for (let i = 0; i < count; i++) {
 			const row = this.tableRows.nth(i);
 			const nameCell = row.locator('td').first();
-			const nameSpan = nameCell.locator('.text-mono-100.font-medium');
+			const nameSpan = nameCell.locator('.text-fg.font-medium');
 			const name = await nameSpan.textContent();
 			if (name) names.push(name.trim());
 		}

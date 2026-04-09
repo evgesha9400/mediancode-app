@@ -107,21 +107,21 @@
     <button
       type="button"
       onclick={onBack}
-      class="text-mono-400 hover:text-mono-300 transition-colors"
+      class="text-fg-muted hover:text-fg-secondary transition-colors"
       title="Back to templates"
     >
       <i class="fa-solid fa-arrow-left"></i>
     </button>
-    <h3 class="text-sm text-mono-300 font-medium">{templateName}</h3>
+    <h3 class="text-sm text-fg-secondary font-medium">{templateName}</h3>
   </div>
 
-  <p class="text-xs text-mono-400">{templateDescription}</p>
+  <p class="text-xs text-fg-muted">{templateDescription}</p>
 
   <!-- Parameters (field validators) -->
   {#if kind === 'field' && fieldTemplate?.parameters}
     {#each fieldTemplate.parameters as param}
       <div>
-        <label for="param-{param.key}" class="block text-xs text-mono-300 mb-1 font-medium">
+        <label for="param-{param.key}" class="block text-xs text-fg-secondary mb-1 font-medium">
           {param.label} {#if param.required}<span class="text-red-500">*</span>{/if}
         </label>
         {#if param.type === 'select' && param.options}
@@ -155,7 +155,7 @@
     {#each modelTemplate.fieldMappings as fm}
       {@const candidates = fieldsForRole(fm.compatibleTypes)}
       <div>
-        <label for="role-{fm.key}" class="block text-xs text-mono-300 mb-1 font-medium">
+        <label for="role-{fm.key}" class="block text-xs text-fg-secondary mb-1 font-medium">
           {fm.label} {#if fm.required}<span class="text-red-500">*</span>{/if}
         </label>
         <GlassSelectDropdown
@@ -177,7 +177,7 @@
   {#if kind === 'model' && modelTemplate?.parameters}
     {#each modelTemplate.parameters as param}
       <div>
-        <label for="mparam-{param.key}" class="block text-xs text-mono-300 mb-1 font-medium">
+        <label for="mparam-{param.key}" class="block text-xs text-fg-secondary mb-1 font-medium">
           {param.label} {#if param.required}<span class="text-red-500">*</span>{/if}
         </label>
         {#if param.type === 'select' && param.options}

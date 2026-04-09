@@ -33,10 +33,10 @@ describe('ClerkSidebarUser Component', () => {
 
 		it('ClerkSidebarUserProps class accepts CSS class strings', () => {
 			const props: ClerkSidebarUserProps = {
-				class: 'px-4 py-3 border-t border-mono-700'
+				class: 'px-4 py-3 border-t border-edge'
 			};
 
-			expect(props.class).toBe('px-4 py-3 border-t border-mono-700');
+			expect(props.class).toBe('px-4 py-3 border-t border-edge');
 		});
 	});
 

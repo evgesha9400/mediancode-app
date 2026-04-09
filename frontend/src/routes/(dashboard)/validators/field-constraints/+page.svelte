@@ -190,7 +190,7 @@
               <i class="fa-solid fa-arrow-up-right-from-square"></i>
             </a>
           {:else}
-            <span class="text-mono-600">-</span>
+            <span class="text-fg-faint">-</span>
           {/if}
         </td>
         <TableListMetricCell col="usedInFields" label="fields">

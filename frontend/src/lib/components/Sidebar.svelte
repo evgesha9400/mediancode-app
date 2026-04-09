@@ -102,7 +102,7 @@
 
     <!-- Catalog -->
     {#if !collapsed}
-      <h2 class="text-xs uppercase tracking-wider text-mono-500 mb-3 font-bold px-4">Catalog</h2>
+      <h2 class="text-xs uppercase tracking-wider text-fg-dimmed mb-3 font-bold px-4">Catalog</h2>
     {:else}
       <div class="{sidebarSectionDividerHorizontal}"></div>
     {/if}
@@ -126,7 +126,7 @@
 
     <!-- Components -->
     {#if !collapsed}
-      <h2 class="text-xs uppercase tracking-wider text-mono-500 mb-3 font-bold px-4">Components</h2>
+      <h2 class="text-xs uppercase tracking-wider text-fg-dimmed mb-3 font-bold px-4">Components</h2>
     {:else}
       <div class="{sidebarSectionDividerHorizontal}"></div>
     {/if}

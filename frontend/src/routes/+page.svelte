@@ -162,7 +162,7 @@
 	const marketingPhilosophyIcon = `w-8 h-8 rounded-full flex-shrink-0 mt-0.5 ${themeAccentIconBadge}`;
 	const marketingManifestIncludedPill = `text-xs px-2 py-1 rounded-md font-medium ${themeAccentBadge}`;
 	const marketingFeatureCard =
-		'p-8 bg-mono-950/40 border border-mono-800/80 rounded-2xl hover:bg-mono-950/60 hover:border-mono-700/80 transition-all hover:-translate-y-1 shadow-lg';
+		'p-8 bg-surface-base/40 border border-edge-faint/80 rounded-2xl hover:bg-surface-base/60 hover:border-edge/80 transition-all hover:-translate-y-1 shadow-lg';
 	const marketingManifestRow =
 		'flex items-center justify-between px-4 py-3 hover:bg-white/[0.03] rounded-xl transition-colors';
 
@@ -194,7 +194,7 @@
 				class="flex items-center space-x-3 cursor-pointer hover:opacity-80 transition-opacity"
 			>
 				<Logo size="md" />
-				<span class="text-lg font-inter font-semibold text-mono-100 tracking-tight">Median Code</span>
+				<span class="text-lg font-inter font-semibold text-fg tracking-tight">Median Code</span>
 			</a>
 			<button
 				onclick={toggleMobileMenu}
@@ -209,7 +209,7 @@
 				{/each}
 
 				{#if $clerkState.isLoaded}
-					<div class="h-5 w-px bg-mono-800"></div>
+					<div class="h-5 w-px bg-surface-raised"></div>
 
 					{#if $clerkState.isSignedIn}
 						<a href="/dashboard" class={marketingCtaOutline}>
@@ -236,7 +236,7 @@
 				</a>
 			{/each}
 			{#if $clerkState.isLoaded && !$clerkState.isSignedIn}
-				<div class="border-t border-mono-800/60 pt-3 mt-3 space-y-3">
+				<div class="border-t border-edge-faint/60 pt-3 mt-3 space-y-3">
 					<a href="/signin" onclick={closeMobileMenu} class="{marketingCtaOutline} w-full justify-center sm:w-auto">
 						Sign In
 					</a>
@@ -246,7 +246,7 @@
 				</div>
 			{/if}
 			{#if $clerkState.isLoaded && $clerkState.isSignedIn}
-				<div class="border-t border-mono-800/60 pt-3 mt-3">
+				<div class="border-t border-edge-faint/60 pt-3 mt-3">
 					<a href="/dashboard" onclick={closeMobileMenu} class="{marketingCtaOutline} w-full justify-center sm:w-auto">
 						Go to Dashboard
 					</a>
@@ -257,7 +257,7 @@
 </header>
 
 <!-- One continuous canvas: base + sprinkled green glows (sections stay transparent) -->
-<div class="relative bg-mono-950 text-white overflow-x-hidden">
+<div class="relative bg-surface-base text-white overflow-x-hidden">
 	<div class="pointer-events-none absolute inset-0 z-0 overflow-hidden" aria-hidden="true">
 		{#each heroGlowOrbs as orbClass}
 			<div class={`${marketingAccentGlowOrb} ${orbClass}`}></div>
@@ -279,11 +279,11 @@
 
 				<!-- Softened headline -->
 				<h1 class="text-4xl sm:text-5xl lg:text-7xl font-bold text-white leading-[1.1] tracking-tighter font-inter">
-					The Shortest Path to a <br class="hidden sm:block" /><span class="text-mono-300">Production API</span>
+					The Shortest Path to a <br class="hidden sm:block" /><span class="text-fg-secondary">Production API</span>
 				</h1>
 
-				<p class="text-lg sm:text-xl text-mono-400 leading-relaxed max-w-2xl font-inter">
-					Define your data models. Get a complete FastAPI application with PostgreSQL, SQLAlchemy, Pydantic schemas, and AWS CDK infrastructure. <span class="text-mono-200">Instantly.</span>
+				<p class="text-lg sm:text-xl text-fg-muted leading-relaxed max-w-2xl font-inter">
+					Define your data models. Get a complete FastAPI application with PostgreSQL, SQLAlchemy, Pydantic schemas, and AWS CDK infrastructure. <span class="text-fg">Instantly.</span>
 				</p>
 
 				<!-- CTA buttons -->
@@ -305,7 +305,7 @@
 				</div>
 
 				<!-- Trust badges -->
-				<div class="flex flex-wrap gap-x-8 gap-y-4 text-sm font-inter text-mono-400 font-medium pt-4">
+				<div class="flex flex-wrap gap-x-8 gap-y-4 text-sm font-inter text-fg-muted font-medium pt-4">
 					{#each trustBadges as badge}
 						<div class="flex items-center space-x-2">
 							<div class={marketingTrustBadgeIcon}>
@@ -322,7 +322,7 @@
 				<!-- Subtle glow behind terminal -->
 				<div class={`absolute -inset-1 rounded-3xl blur-xl opacity-50 ${marketingAccentInfoGlow}`}></div>
 
-				<div class="relative bg-mono-950/80 backdrop-blur-xl border border-mono-800/80 rounded-2xl shadow-2xl overflow-hidden ring-1 ring-white/5">
+				<div class="relative bg-surface-base/80 backdrop-blur-xl border border-edge-faint/80 rounded-2xl shadow-2xl overflow-hidden ring-1 ring-white/5">
 					<!-- Terminal chrome -->
 					<div class="flex items-center justify-between px-4 py-3 bg-white/[0.02] border-b border-white/5">
 						<div class="flex items-center space-x-2">
@@ -330,25 +330,25 @@
 							<div class="w-3 h-3 bg-yellow-500/80 rounded-full"></div>
 							<div class="w-3 h-3 bg-accent-strong/80 rounded-full"></div>
 						</div>
-						<div class="flex items-center space-x-2 bg-black/20 px-3 py-1 rounded-md text-mono-400 text-[10px] font-mono tracking-wider">
+						<div class="flex items-center space-x-2 bg-black/20 px-3 py-1 rounded-md text-fg-muted text-[10px] font-mono tracking-wider">
 							<i class="fa-brands fa-apple opacity-50"></i>
 							<span>median-cli</span>
 						</div>
 						<div class="w-12"></div>
 					</div>
 					<!-- Generation log content -->
-					<div class="p-6 font-mono text-sm leading-relaxed text-mono-300">
+					<div class="p-6 font-mono text-sm leading-relaxed text-fg-secondary">
 						<div class="terminal-line" style="--line-index: 0"><span class={`${themeAccentText} opacity-80`}>➜</span> <span class="text-blue-400">~/project</span> <span class="text-white">median generate --api "My API"</span></div>
-						<div class="terminal-line" style="--line-index: 1"><span class={themeAccentText}>✓</span> <span class="text-mono-400">Parsed 2 objects, 8 fields, 4 endpoints</span></div>
+						<div class="terminal-line" style="--line-index: 1"><span class={themeAccentText}>✓</span> <span class="text-fg-muted">Parsed 2 objects, 8 fields, 4 endpoints</span></div>
 						{#each terminalGeneratedFiles as file, index}
 							<div class="terminal-line" style={`--line-index: ${index + 2}`}>
 								<span class={themeAccentText}>✓</span>
-								<span class="text-mono-400">Generated</span>
-								<span class="text-mono-300">{file.path}</span>
-								<span class="text-mono-500">({file.lines} lines)</span>
+								<span class="text-fg-muted">Generated</span>
+								<span class="text-fg-secondary">{file.path}</span>
+								<span class="text-fg-dimmed">({file.lines} lines)</span>
 							</div>
 						{/each}
-						<div class="terminal-line mt-3" style="--line-index: 10"><span class={`${themeAccentText} font-bold`}>✨ Done.</span> <span class="text-mono-300">12 files, 654 lines. Ready to deploy.</span></div>
+						<div class="terminal-line mt-3" style="--line-index: 10"><span class={`${themeAccentText} font-bold`}>✨ Done.</span> <span class="text-fg-secondary">12 files, 654 lines. Ready to deploy.</span></div>
 					</div>
 				</div>
 			</div>
@@ -363,7 +363,7 @@
 				<h2 class="text-3xl sm:text-4xl lg:text-5xl font-bold text-white tracking-tight leading-tight font-inter">
 					Everything Your API Needs
 				</h2>
-				<p class="text-base text-mono-400 mt-4 max-w-xl font-inter">
+				<p class="text-base text-fg-muted mt-4 max-w-xl font-inter">
 					A complete, deployable FastAPI application. Not fragments you have to stitch together.
 				</p>
 			</div>
@@ -376,11 +376,11 @@
 							<i class={`fa-solid ${feature.icon} text-lg`}></i>
 						</div>
 						<h3 class="text-lg font-semibold text-white mb-3 tracking-wide font-inter">{feature.title}</h3>
-						<p class="text-sm text-mono-400 leading-relaxed font-inter">
+						<p class="text-sm text-fg-muted leading-relaxed font-inter">
 							{feature.description}
 							{#if feature.codeExample}
 								Run
-								<code class="text-mono-300 bg-white/5 px-1.5 py-0.5 rounded font-mono text-xs">{feature.codeExample}</code>
+								<code class="text-fg-secondary bg-white/5 px-1.5 py-0.5 rounded font-mono text-xs">{feature.codeExample}</code>
 								and go live.
 							{/if}
 						</p>
@@ -398,7 +398,7 @@
 				<h2 class="text-3xl sm:text-4xl lg:text-5xl font-bold text-white tracking-tight leading-tight font-inter">
 					Three Steps. Working API.
 				</h2>
-				<p class="mt-4 max-w-xl font-inter text-base leading-relaxed text-mono-400">
+				<p class="mt-4 max-w-xl font-inter text-base leading-relaxed text-fg-muted">
 					No boilerplate. No configuration puzzles. Define what you need and get production code.
 				</p>
 			</div>
@@ -409,7 +409,7 @@
 						<span class={marketingHowItWorksWatermark} aria-hidden="true">{step.index}</span>
 						<div class={marketingHowItWorksStepBody}>
 							<h3 class={marketingHowItWorksStepTitle}>{step.title}</h3>
-							<p class="text-sm font-inter leading-relaxed text-mono-400">{step.description}</p>
+							<p class="text-sm font-inter leading-relaxed text-fg-muted">{step.description}</p>
 						</div>
 					</div>
 				{/each}
@@ -426,9 +426,9 @@
 					<h2 class="text-3xl sm:text-4xl lg:text-5xl font-bold text-white tracking-tight leading-[1.1] mb-6 font-inter">
 						Not the simplest API.<br />
 						Not the most custom.<br />
-						<span class="text-mono-400">The median.</span>
+						<span class="text-fg-muted">The median.</span>
 					</h2>
-					<p class="text-base text-mono-400 leading-relaxed mb-10 font-inter">
+					<p class="text-base text-fg-muted leading-relaxed mb-10 font-inter">
 						We target the statistical center of what developers build. 90% of the code you'd write for any new API is the same structural work like models, schemas, routes, and config. Median Code generates all of it so you can focus on the 10% that makes your project unique.
 					</p>
 					<div class="space-y-6">
@@ -439,7 +439,7 @@
 								</div>
 								<div>
 									<span class="text-white font-inter font-semibold tracking-wide text-sm">{item.title}</span>
-									<span class="text-mono-400 text-sm font-inter block mt-1 leading-relaxed">{item.description}</span>
+									<span class="text-fg-muted text-sm font-inter block mt-1 leading-relaxed">{item.description}</span>
 								</div>
 							</div>
 						{/each}
@@ -449,20 +449,20 @@
 				<!-- Right: What you get table (same green→blue wash as hero terminal) -->
 				<div class="relative">
 					<div class={`pointer-events-none absolute -inset-1 rounded-3xl opacity-50 blur-xl ${marketingAccentInfoGlow}`} aria-hidden="true"></div>
-					<div class="relative overflow-hidden rounded-3xl border border-mono-800/80 bg-mono-950/60 shadow-2xl ring-1 ring-white/5 backdrop-blur-md">
+					<div class="relative overflow-hidden rounded-3xl border border-edge-faint/80 bg-surface-base/60 shadow-2xl ring-1 ring-white/5 backdrop-blur-md">
 						<div class="px-6 py-5 border-b border-white/5 bg-white/[0.02]">
 							<p class="text-sm font-inter font-semibold text-white">Output Manifest</p>
 						</div>
 						<div class="p-2 space-y-1">
 							{#each outputManifestItems as item}
 								<div class={marketingManifestRow}>
-									<span class="text-mono-300 text-sm font-inter font-medium">{item}</span>
+									<span class="text-fg-secondary text-sm font-inter font-medium">{item}</span>
 									<span class={marketingManifestIncludedPill}>Included</span>
 								</div>
 							{/each}
 							<div class="flex items-center justify-between px-4 py-3 mt-2 bg-white/[0.02] border border-white/5 rounded-xl">
 								<span class="text-white text-sm font-inter font-semibold">Your Business Logic</span>
-								<span class="text-xs bg-mono-800 text-mono-300 px-2 py-1 rounded-md font-medium">You write this</span>
+								<span class="text-xs bg-surface-raised text-fg-secondary px-2 py-1 rounded-md font-medium">You write this</span>
 							</div>
 						</div>
 					</div>
@@ -477,7 +477,7 @@
 			<h2 class="text-4xl sm:text-5xl lg:text-6xl font-bold text-white tracking-tight leading-tight mb-6 font-inter">
 				Start Building Your API
 			</h2>
-			<p class="text-base sm:text-lg text-mono-400 mb-10 max-w-xl mx-auto font-inter">
+			<p class="text-base sm:text-lg text-fg-muted mb-10 max-w-xl mx-auto font-inter">
 				Define your models, generate production-ready code, and deploy. It takes minutes, not days.
 			</p>
 
@@ -498,19 +498,19 @@
 				{/if}
 			</div>
 
-			<p class="text-xs font-inter text-mono-500 mt-8 tracking-wide uppercase font-semibold">Free during beta. No credit card required.</p>
+			<p class="text-xs font-inter text-fg-dimmed mt-8 tracking-wide uppercase font-semibold">Free during beta. No credit card required.</p>
 		</div>
 	</section>
 
 	<!-- Footer -->
-	<footer id="footer" class="relative z-10 border-t border-mono-800/40 py-12">
+	<footer id="footer" class="relative z-10 border-t border-edge-faint/40 py-12">
 		<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
 			<div class="flex flex-col sm:flex-row items-center justify-between space-y-4 sm:space-y-0">
 				<div class="flex items-center space-x-3 opacity-80 hover:opacity-100 transition-opacity">
 					<Logo size="md" />
-					<span class="text-lg font-inter font-semibold text-mono-200 tracking-tight">Median Code</span>
+					<span class="text-lg font-inter font-semibold text-fg tracking-tight">Median Code</span>
 				</div>
-				<div class="text-mono-500 text-sm font-inter">
+				<div class="text-fg-dimmed text-sm font-inter">
 					&copy; {new Date().getFullYear()} Median Code. Deterministic API generation.
 				</div>
 			</div>

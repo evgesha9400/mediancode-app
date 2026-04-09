@@ -88,8 +88,8 @@
     onclick={handleTriggerClick}
     onblur={scheduleClose}
   >
-    <span class="truncate text-left text-mono-300 {mono ? 'font-mono' : ''}">{selectedLabel}</span>
-    <i class="fa-solid fa-chevron-down text-mono-400 text-xs shrink-0 pointer-events-none" aria-hidden="true"></i>
+    <span class="truncate text-left text-fg-secondary {mono ? 'font-mono' : ''}">{selectedLabel}</span>
+    <i class="fa-solid fa-chevron-down text-fg-muted text-xs shrink-0 pointer-events-none" aria-hidden="true"></i>
   </button>
 
   {#if dropdownOpen && !disabled}
@@ -100,7 +100,7 @@
             type="button"
             role="option"
             aria-selected={opt.value === value}
-            class="{dropdownRow} text-sm text-mono-300 {mono ? 'font-mono' : ''} {opt.value === value ? 'bg-mono-800' : ''}"
+            class="{dropdownRow} text-sm text-fg-secondary {mono ? 'font-mono' : ''} {opt.value === value ? 'bg-surface-raised' : ''}"
             onmousedown={(e) => e.preventDefault()}
             onclick={() => handleSelect(opt.value)}
           >

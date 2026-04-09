@@ -122,8 +122,8 @@
           </div>
         {:else}
           <div class="{cardGlassSurface} p-8 text-center">
-            <i class="fa-solid fa-code text-mono-600 text-3xl mb-3 block"></i>
-            <p class="text-sm text-mono-400 font-inter">No APIs yet. Create your first API to get started.</p>
+            <i class="fa-solid fa-code text-fg-faint text-3xl mb-3 block"></i>
+            <p class="text-sm text-fg-muted font-inter">No APIs yet. Create your first API to get started.</p>
           </div>
         {/if}
       </section>

@@ -95,7 +95,7 @@
       placeholder={placeholder}
       class="{inputGlassSearch} {error ? 'border-red-500' : ''}"
     />
-    <i class="fa-solid fa-search absolute right-3 top-1/2 -translate-y-1/2 text-mono-400 text-xs pointer-events-none"></i>
+    <i class="fa-solid fa-search absolute right-3 top-1/2 -translate-y-1/2 text-fg-muted text-xs pointer-events-none"></i>
   </div>
 
   {#if dropdownOpen && filteredTypes.length > 0}
@@ -105,16 +105,16 @@
           <button
             type="button"
             onclick={() => handleSelect(type.name)}
-            class="{dropdownRow} {type.name === selectedTypeName ? 'bg-mono-800' : ''}"
+            class="{dropdownRow} {type.name === selectedTypeName ? 'bg-surface-raised' : ''}"
           >
             <div class="flex items-start justify-between">
               <div class="flex-1">
                 <div class="flex items-center space-x-2">
-                  <span class="font-mono text-sm text-mono-300">{type.name}</span>
+                  <span class="font-mono text-sm text-fg-secondary">{type.name}</span>
                   <span class={listMetaBadge}>{type.pythonType}</span>
                 </div>
                 {#if type.description}
-                  <p class="text-xs text-mono-400 mt-1">{type.description}</p>
+                  <p class="text-xs text-fg-muted mt-1">{type.description}</p>
                 {/if}
               </div>
             </div>
@@ -126,7 +126,7 @@
 
   {#if dropdownOpen && filteredTypes.length === 0 && searchQuery.trim()}
     <div class={dropdownPanelMessage}>
-      <div class="px-3 py-2 text-sm text-mono-400">
+      <div class="px-3 py-2 text-sm text-fg-muted">
         No types found matching "{searchQuery}"
       </div>
     </div>

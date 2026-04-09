@@ -192,12 +192,12 @@ function createMockClerk() {
 		mountSignIn: (element: HTMLElement) => {
 			element.innerHTML = `
         <div class="cl-component" data-clerk-component="sign-in" data-testid="clerk-mock-signin">
-          <div class="text-center p-8 border-2 border-mono-700 bg-mono-900">
+          <div class="text-center p-8 border-2 border-edge bg-surface">
             <div class="mb-4">
-              <i class="fa-solid fa-vial text-4xl text-mono-400"></i>
+              <i class="fa-solid fa-vial text-4xl text-fg-muted"></i>
             </div>
-            <h2 class="text-xl font-semibold text-mono-100 mb-2">Mock Sign In</h2>
-            <p class="text-mono-400">Clerk is running in mock mode for testing</p>
+            <h2 class="text-xl font-semibold text-fg mb-2">Mock Sign In</h2>
+            <p class="text-fg-muted">Clerk is running in mock mode for testing</p>
           </div>
         </div>
       `;
@@ -205,12 +205,12 @@ function createMockClerk() {
 		mountSignUp: (element: HTMLElement) => {
 			element.innerHTML = `
         <div class="cl-component" data-clerk-component="sign-up" data-testid="clerk-mock-signup">
-          <div class="text-center p-8 border-2 border-mono-700 bg-mono-900">
+          <div class="text-center p-8 border-2 border-edge bg-surface">
             <div class="mb-4">
-              <i class="fa-solid fa-vial text-4xl text-mono-400"></i>
+              <i class="fa-solid fa-vial text-4xl text-fg-muted"></i>
             </div>
-            <h2 class="text-xl font-semibold text-mono-100 mb-2">Mock Sign Up</h2>
-            <p class="text-mono-400">Clerk is running in mock mode for testing</p>
+            <h2 class="text-xl font-semibold text-fg mb-2">Mock Sign Up</h2>
+            <p class="text-fg-muted">Clerk is running in mock mode for testing</p>
           </div>
         </div>
       `;
@@ -218,7 +218,7 @@ function createMockClerk() {
 		mountUserButton: (element: HTMLElement) => {
 			element.innerHTML = `
         <div class="cl-component" data-clerk-component="user-button" data-testid="clerk-mock-user-button">
-          <button type="button" class="w-8 h-8 rounded-full bg-mono-700 flex items-center justify-center">
+          <button type="button" class="w-8 h-8 rounded-full bg-surface-overlay flex items-center justify-center">
             <i class="fa-solid fa-user text-white text-sm"></i>
           </button>
         </div>
@@ -230,17 +230,17 @@ function createMockClerk() {
 		mountUserProfile: (element: HTMLElement) => {
 			element.innerHTML = `
         <div class="cl-component" data-clerk-component="user-profile" data-testid="clerk-mock-user-profile">
-          <div class="p-8 border-2 border-mono-700 bg-mono-900">
+          <div class="p-8 border-2 border-edge bg-surface">
             <div class="flex items-center space-x-4 mb-6">
-              <div class="w-16 h-16 rounded-full border-2 border-mono-700 flex items-center justify-center">
-                <i class="fa-solid fa-user text-2xl text-mono-500"></i>
+              <div class="w-16 h-16 rounded-full border-2 border-edge flex items-center justify-center">
+                <i class="fa-solid fa-user text-2xl text-fg-dimmed"></i>
               </div>
               <div>
-                <h2 class="text-xl font-semibold text-mono-100">Mock User Profile</h2>
-                <p class="text-mono-400">Clerk is running in mock mode for testing</p>
+                <h2 class="text-xl font-semibold text-fg">Mock User Profile</h2>
+                <p class="text-fg-muted">Clerk is running in mock mode for testing</p>
               </div>
             </div>
-            <div class="space-y-4 text-mono-400">
+            <div class="space-y-4 text-fg-muted">
               <p>Profile management features would appear here in production.</p>
             </div>
           </div>
@@ -253,17 +253,17 @@ function createMockClerk() {
 		mountOrganizationProfile: (element: HTMLElement) => {
 			element.innerHTML = `
         <div class="cl-component" data-clerk-component="organization-profile" data-testid="clerk-mock-organization-profile">
-          <div class="p-8 border-2 border-mono-700 bg-mono-900">
+          <div class="p-8 border-2 border-edge bg-surface">
             <div class="flex items-center space-x-4 mb-6">
-              <div class="w-16 h-16 border-2 border-mono-700 flex items-center justify-center">
-                <i class="fa-solid fa-building text-2xl text-mono-500"></i>
+              <div class="w-16 h-16 border-2 border-edge flex items-center justify-center">
+                <i class="fa-solid fa-building text-2xl text-fg-dimmed"></i>
               </div>
               <div>
-                <h2 class="text-xl font-semibold text-mono-100">Mock Organization Profile</h2>
-                <p class="text-mono-400">Clerk is running in mock mode for testing</p>
+                <h2 class="text-xl font-semibold text-fg">Mock Organization Profile</h2>
+                <p class="text-fg-muted">Clerk is running in mock mode for testing</p>
               </div>
             </div>
-            <div class="space-y-4 text-mono-400">
+            <div class="space-y-4 text-fg-muted">
               <p>Organization management features would appear here in production.</p>
             </div>
           </div>
@@ -276,17 +276,17 @@ function createMockClerk() {
 		mountCreateOrganization: (element: HTMLElement) => {
 			element.innerHTML = `
         <div class="cl-component" data-clerk-component="create-organization" data-testid="clerk-mock-create-organization">
-          <div class="p-8 border-2 border-mono-700 bg-mono-900">
+          <div class="p-8 border-2 border-edge bg-surface">
             <div class="flex items-center space-x-4 mb-6">
-              <div class="w-16 h-16 border-2 border-mono-700 flex items-center justify-center">
-                <i class="fa-solid fa-plus text-2xl text-mono-500"></i>
+              <div class="w-16 h-16 border-2 border-edge flex items-center justify-center">
+                <i class="fa-solid fa-plus text-2xl text-fg-dimmed"></i>
               </div>
               <div>
-                <h2 class="text-xl font-semibold text-mono-100">Mock Create Organization</h2>
-                <p class="text-mono-400">Clerk is running in mock mode for testing</p>
+                <h2 class="text-xl font-semibold text-fg">Mock Create Organization</h2>
+                <p class="text-fg-muted">Clerk is running in mock mode for testing</p>
               </div>
             </div>
-            <div class="space-y-4 text-mono-400">
+            <div class="space-y-4 text-fg-muted">
               <p>Organization creation form would appear here in production.</p>
             </div>
           </div>

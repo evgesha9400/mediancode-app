@@ -136,7 +136,7 @@
   <Tooltip text={userName} position="right" disabled={!collapsed}>
     <div
       bind:this={buttonContainer}
-      class="flex-shrink-0 transition-colors {collapsed ? 'hover:bg-mono-800 p-1' : ''}"
+      class="flex-shrink-0 transition-colors {collapsed ? 'hover:bg-surface-raised p-1' : ''}"
     ></div>
   </Tooltip>
 
@@ -146,14 +146,14 @@
       <div class="flex-1 min-w-0">
         <p class="text-sm font-medium {dashboardTextPrimary} truncate">{userName}</p>
         {#if userEmail}
-          <p class="text-xs text-mono-400 truncate">{userEmail}</p>
+          <p class="text-xs text-fg-muted truncate">{userEmail}</p>
         {/if}
       </div>
     {:else if !$clerkState.isLoaded}
       <!-- Loading state -->
       <div class="flex-1 min-w-0">
-        <div class="h-4 w-24 bg-mono-700 rounded animate-pulse"></div>
-        <div class="h-3 w-32 bg-mono-700 rounded animate-pulse mt-1"></div>
+        <div class="h-4 w-24 bg-surface-overlay rounded animate-pulse"></div>
+        <div class="h-3 w-32 bg-surface-overlay rounded animate-pulse mt-1"></div>
       </div>
     {/if}
   {/if}

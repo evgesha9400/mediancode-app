@@ -20,7 +20,7 @@
   {/snippet}
 
   <section>
-    <h2 class="text-xs uppercase tracking-wider text-mono-500 mb-3 font-medium">Account</h2>
+    <h2 class="text-xs uppercase tracking-wider text-fg-dimmed mb-3 font-medium">Account</h2>
     <div class="{dashboardCardGlass} overflow-hidden">
       <ClerkUserProfile />
     </div>

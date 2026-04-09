@@ -56,12 +56,12 @@
 {#if !dismissed}
   <section class="flex flex-col" data-testid="project-checklist-wrapper">
     <div class="flex items-center justify-between mb-3 h-[24px]">
-      <h2 class="text-xs uppercase font-inter tracking-wider text-mono-500 font-bold">Project Setup</h2>
+      <h2 class="text-xs uppercase font-inter tracking-wider text-fg-dimmed font-bold">Project Setup</h2>
       <div class="flex items-center space-x-3">
-        <span class="text-xs font-inter font-medium text-mono-400">{completedCount}/{steps.length} completed</span>
+        <span class="text-xs font-inter font-medium text-fg-muted">{completedCount}/{steps.length} completed</span>
         <button
           onclick={dismiss}
-          class="text-mono-500 hover:text-mono-300 transition-colors cursor-pointer w-6 h-6 flex items-center justify-center rounded-full hover:bg-white/5"
+          class="text-fg-dimmed hover:text-fg-secondary transition-colors cursor-pointer w-6 h-6 flex items-center justify-center rounded-full hover:bg-white/5"
           aria-label="Dismiss checklist"
           data-testid="checklist-dismiss-btn"
         >
@@ -72,7 +72,7 @@
     
     <div class="{cardGlassSurface} {cardGlassBorderDefault} p-6" data-testid="project-checklist">
       <!-- Progress bar -->
-      <div class="w-full bg-mono-800/50 rounded-full h-2 mb-5 overflow-hidden">
+      <div class="w-full bg-surface-raised/50 rounded-full h-2 mb-5 overflow-hidden">
         <div
           class="{themeAccentFill} h-full rounded-full transition-all duration-500 ease-out {marketingProgressBarGlow}"
           style="width: {(completedCount / steps.length) * 100}%"
@@ -83,12 +83,12 @@
       <ul class="space-y-4">
         {#each steps as step, i}
         <li class="flex items-start space-x-3.5">
-          <div class="mt-0.5 w-5 h-5 rounded-full flex items-center justify-center shrink-0 transition-colors {step.completed ? checklistCompletedMarker : 'border border-mono-600/50 text-transparent'}">
+          <div class="mt-0.5 w-5 h-5 rounded-full flex items-center justify-center shrink-0 transition-colors {step.completed ? checklistCompletedMarker : 'border border-edge-strong/50 text-transparent'}">
             <i class="fa-solid fa-check text-[10px]"></i>
           </div>
           <div class="flex-1 min-w-0">
             <div class="flex items-center justify-between">
-              <span class="text-sm font-inter {step.completed ? 'text-mono-500 line-through' : `${dashboardTextPrimary} font-semibold`}">{step.label}</span>
+              <span class="text-sm font-inter {step.completed ? 'text-fg-dimmed line-through' : `${dashboardTextPrimary} font-semibold`}">{step.label}</span>
               {#if !step.completed}
                 <button
                   onclick={() => goto(step.href)}
@@ -99,7 +99,7 @@
                 </button>
               {/if}
             </div>
-            <p class="text-xs font-inter text-mono-400 mt-1 leading-relaxed">{step.description}</p>
+            <p class="text-xs font-inter text-fg-muted mt-1 leading-relaxed">{step.description}</p>
           </div>
         </li>
       {/each}

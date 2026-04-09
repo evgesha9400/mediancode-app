@@ -117,7 +117,7 @@
 	}
 
 	/* One override point for nested form controls and content panels inside drawers. */
-	.drawer-transparent-context [class*='bg-mono-'],
+	.drawer-transparent-context [class*='bg-surface'],
 	.drawer-transparent-context [class*='bg-red-950/10'],
 	.drawer-transparent-context [class*='bg-white/'] {
 		background-color: var(--drawer-inner-surface-bg) !important;
@@ -131,33 +131,33 @@
 		box-shadow: var(--drawer-inner-surface-shadow) !important;
 	}
 
-	/* Flatten nested mono hovers inside scrollable drawer body only — footer segment buttons use their own hovers. */
-	.drawer-transparent-context .drawer-body-scroll [class*='hover:bg-mono-']:hover {
+	/* Flatten nested surface hovers inside scrollable drawer body only — footer segment buttons use their own hovers. */
+	.drawer-transparent-context .drawer-body-scroll [class*='hover\:bg-surface']:hover {
 		background-color: var(--drawer-inner-surface-bg) !important;
 	}
 
 	/*
-   * Dropdown rows / glass select triggers must NOT use `hover:bg-mono-*` in `class` (rule above would replace hover with inner surface — invisible).
-   * Semantic classes + rgb() hovers bypass the substring match.
+   * Dropdown rows / glass select triggers use CSS-class hovers (not Tailwind `hover:bg-*` utilities)
+   * so the drawer-body-scroll flatten rule does not suppress them.
    */
 	.dropdown-list-row:hover,
 	.dropdown-create-row:hover {
-		background-color: rgb(var(--color-mono-700) / 1);
+		background-color: rgb(var(--color-surface-overlay) / 1);
 	}
 
 	.drawer-transparent-context .drawer-body-scroll .dropdown-list-row:hover,
 	.drawer-transparent-context .drawer-body-scroll .dropdown-create-row:hover {
-		background-color: rgb(var(--color-mono-700) / 1) !important;
+		background-color: rgb(var(--color-surface-overlay) / 1) !important;
 	}
 
 	.glass-select-trigger:hover:not(:disabled) {
-		border-color: rgb(var(--color-mono-600) / 1);
-		background-color: rgb(var(--color-mono-800) / 0.5);
+		border-color: rgb(var(--color-edge-strong) / 1);
+		background-color: rgb(var(--color-surface-raised) / 0.5);
 	}
 
 	.drawer-transparent-context .drawer-body-scroll .glass-select-trigger:hover:not(:disabled) {
-		border-color: rgb(var(--color-mono-600) / 1) !important;
-		background-color: rgb(var(--color-mono-800) / 0.5) !important;
+		border-color: rgb(var(--color-edge-strong) / 1) !important;
+		background-color: rgb(var(--color-surface-raised) / 0.5) !important;
 	}
 
 	/**

@@ -112,12 +112,12 @@
 
   <!-- Panel -->
   <div data-testid={FILTER_PANEL_ID} class="{popoverGlassMenuChrome} absolute right-0 top-full mt-2 w-72">
-    <div class="p-4 border-b border-mono-800/80 flex justify-between items-center bg-mono-800/40">
-      <h3 class="font-medium text-mono-100">Filters</h3>
+    <div class="p-4 border-b border-edge-faint/80 flex justify-between items-center bg-surface-raised/40">
+      <h3 class="font-medium text-fg">Filters</h3>
       <button
         type="button"
         onclick={clearFilters}
-        class="text-xs text-mono-400 hover:text-mono-100 hover:underline"
+        class="text-xs text-fg-muted hover:text-fg hover:underline"
       >
         Clear all
       </button>
@@ -126,11 +126,11 @@
     <div class="p-4 space-y-6 max-h-[60vh] overflow-y-auto">
       {#each config as section, i}
         {#if i > 0}
-          <div class="h-px bg-mono-700"></div>
+          <div class="h-px bg-surface-overlay"></div>
         {/if}
 
         <div>
-          <h4 class="text-xs font-semibold text-mono-400 uppercase tracking-wider mb-3">{section.label}</h4>
+          <h4 class="text-xs font-semibold text-fg-muted uppercase tracking-wider mb-3">{section.label}</h4>
 
           {#if section.type === 'checkbox-group' && section.options}
             <div class="space-y-2">
@@ -144,7 +144,7 @@
                       class={`peer ${modalFormCheckbox}`}
                     />
                   </div>
-                  <span class="text-sm text-mono-300 group-hover:text-mono-100">{option.label}</span>
+                  <span class="text-sm text-fg-secondary group-hover:text-fg">{option.label}</span>
                 </label>
               {/each}
             </div>
@@ -156,7 +156,7 @@
                 onchange={(event) => setToggle(section.key, (event.currentTarget as HTMLInputElement).checked)}
                 class={modalFormCheckbox}
               />
-              <span class="text-sm text-mono-300 group-hover:text-mono-100">{section.toggleLabel ?? section.label}</span>
+              <span class="text-sm text-fg-secondary group-hover:text-fg">{section.toggleLabel ?? section.label}</span>
             </label>
           {/if}
         </div>

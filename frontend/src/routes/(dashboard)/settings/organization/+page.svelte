@@ -14,14 +14,14 @@
   {/snippet}
 
   <section>
-    <h2 class="text-xs uppercase tracking-wider text-mono-500 mb-3 font-medium">Create Organization</h2>
+    <h2 class="text-xs uppercase tracking-wider text-fg-dimmed mb-3 font-medium">Create Organization</h2>
     <div class="{dashboardCardGlass} overflow-hidden">
       <ClerkCreateOrganization />
     </div>
   </section>
 
   <section>
-    <h2 class="text-xs uppercase tracking-wider text-mono-500 mb-3 font-medium">Manage Organization</h2>
+    <h2 class="text-xs uppercase tracking-wider text-fg-dimmed mb-3 font-medium">Manage Organization</h2>
     <div class="{dashboardCardGlass} overflow-hidden">
       <ClerkOrganizationProfile />
     </div>

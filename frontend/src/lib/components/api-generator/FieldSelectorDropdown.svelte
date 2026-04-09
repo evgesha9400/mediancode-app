@@ -70,7 +70,7 @@
       placeholder={placeholder}
       class={inputGlassSearch}
     />
-    <i class="fa-solid fa-search absolute right-3 top-1/2 -translate-y-1/2 text-mono-400 text-xs pointer-events-none"></i>
+    <i class="fa-solid fa-search absolute right-3 top-1/2 -translate-y-1/2 text-fg-muted text-xs pointer-events-none"></i>
   </div>
 
   {#if dropdownOpen}
@@ -86,29 +86,29 @@
               <div class="flex items-start justify-between">
                 <div class="flex-1">
                   <div class="flex items-center space-x-2">
-                    <i class="fa-solid fa-vector-square text-mono-400 text-xs"></i>
-                    <span class="font-mono text-sm text-mono-300">{field.name}</span>
+                    <i class="fa-solid fa-vector-square text-fg-muted text-xs"></i>
+                    <span class="font-mono text-sm text-fg-secondary">{field.name}</span>
                     <span class={listMetaBadge}>{field.type}</span>
                   </div>
                   {#if field.description}
-                    <p class="text-xs text-mono-400 mt-1">{field.description}</p>
+                    <p class="text-xs text-fg-muted mt-1">{field.description}</p>
                   {/if}
                 </div>
               </div>
             </button>
           {/each}
         {:else if searchQuery.trim()}
-          <div class="px-3 py-2 text-sm text-mono-400">
+          <div class="px-3 py-2 text-sm text-fg-muted">
             No fields found matching "{searchQuery}" in this namespace
           </div>
         {:else}
-          <div class="px-3 py-2 text-sm text-mono-400">
+          <div class="px-3 py-2 text-sm text-fg-muted">
             No fields available in this namespace. Create fields in the same namespace first.
           </div>
         {/if}
       </div>
       {#if onCreateNew}
-        <div class="border-t border-mono-700 p-2">
+        <div class="border-t border-edge p-2">
           <button
             type="button"
             class={dropdownCreateRow}

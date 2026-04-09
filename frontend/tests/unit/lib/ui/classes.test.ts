@@ -94,24 +94,24 @@ import {
 describe('lib/ui/classes', () => {
 	it('inputGlass encodes solid input surface for overlay forms', () => {
 		expect(inputGlass).toContain('rounded-xl');
-		expect(inputGlass).toContain('border-mono-700/80');
+		expect(inputGlass).toContain('border-edge/80');
 		expect(inputGlass).toContain('focus:ring-accent');
 		expect(inputGlass).toContain('w-full');
-		expect(inputGlass).toContain('bg-mono-900/80');
-		expect(inputGlass).toContain('text-mono-100');
+		expect(inputGlass).toContain('bg-surface/80');
+		expect(inputGlass).toContain('text-fg');
 		expect(inputGlass).not.toContain('text-white');
 	});
 
 	it('inputGlassAuto matches glass surface without full width', () => {
 		expect(inputGlassAuto).toContain('rounded-xl');
-		expect(inputGlassAuto).toContain('border-mono-700/80');
+		expect(inputGlassAuto).toContain('border-edge/80');
 		expect(inputGlassAuto).not.toContain('w-full');
 	});
 
 	it('inputGlassDisabled matches solid shell and muted readonly treatment', () => {
 		expect(inputGlassDisabled).toContain('rounded-xl');
-		expect(inputGlassDisabled).toContain('bg-mono-900/70');
-		expect(inputGlassDisabled).toContain('text-mono-400');
+		expect(inputGlassDisabled).toContain('bg-surface/70');
+		expect(inputGlassDisabled).toContain('text-fg-muted');
 		expect(inputGlassDisabled).toContain('cursor-not-allowed');
 	});
 
@@ -133,7 +133,7 @@ describe('lib/ui/classes', () => {
 			'/settings/organization',
 		]) {
 			const c = dashboardMainColumnCanvasForPath(path);
-			expect(c).toContain('bg-mono-950');
+			expect(c).toContain('bg-surface-base');
 			expect(c).toContain('linear-gradient(to_top');
 			expect(c).toContain('linear-gradient(to_right');
 			expect(c).toContain('radial-gradient');
@@ -196,7 +196,7 @@ describe('lib/ui/classes', () => {
 	it('clerk UserButton popover inner slots stay transparent over glass', () => {
 		expect(clerkUserButtonPopoverMain).toContain('bg-transparent');
 		expect(clerkUserButtonPopoverActions).toContain('bg-transparent');
-		expect(clerkUserButtonPopoverFooter).toContain('bg-mono-950/25');
+		expect(clerkUserButtonPopoverFooter).toContain('bg-surface-base/25');
 		expect(clerkUserButtonPopoverFooter).toContain('border-t');
 	});
 
@@ -249,7 +249,7 @@ describe('lib/ui/classes', () => {
 		expect(drawerFooterSegmentDivider).toContain('sm:w-px');
 		expect(drawerFooterSegmentBtn).toContain('sm:flex-1');
 		expect(drawerFooterBtnSecondarySegment).not.toContain('border');
-		expect(drawerFooterBtnSecondarySegment).toContain('hover:text-mono-100');
+		expect(drawerFooterBtnSecondarySegment).toContain('hover:text-fg');
 		expect(drawerFooterBtnPrimaryEnabled).toContain('hover:shadow-md');
 	});
 
@@ -271,25 +271,25 @@ describe('lib/ui/classes', () => {
 		expect(drawerStackRoot).toContain('pointer-events-none');
 	});
 
-	it('dashboard titles use text-mono-100 like sidebar brand, not text-white', () => {
-		expect(dashboardPageTitleText).toContain('text-mono-100');
+	it('dashboard titles use text-fg like sidebar brand, not text-white', () => {
+		expect(dashboardPageTitleText).toContain('text-fg');
 		expect(dashboardPageTitleText).toContain('shrink');
 		expect(dashboardPageTitleText).not.toContain('text-white');
-		expect(dashboardPageTitleTextDetail).toContain('text-mono-100');
+		expect(dashboardPageTitleTextDetail).toContain('text-fg');
 		expect(dashboardPageTitleTextDetail).toContain('shrink-0');
-		expect(drawerHeaderTitleText).toContain('text-mono-100');
+		expect(drawerHeaderTitleText).toContain('text-fg');
 		expect(drawerHeaderTitleText).toContain('text-xl');
 	});
 
 	it('dashboard semantic text tokens and back nav shell stay on mono-100 chroma', () => {
-		expect(dashboardTextPrimary).toBe('text-mono-100');
-		expect(dashboardControlTextMutedHoverPrimary).toContain('text-mono-300');
-		expect(dashboardControlTextMutedHoverPrimary).toContain('hover:text-mono-100');
+		expect(dashboardTextPrimary).toBe('text-fg');
+		expect(dashboardControlTextMutedHoverPrimary).toContain('text-fg-secondary');
+		expect(dashboardControlTextMutedHoverPrimary).toContain('hover:text-fg');
 		expect(dashboardControlTextMutedHoverPrimary).toContain('transition-colors');
 		expect(backNavButton).toContain('w-8');
 		expect(backNavButton).toContain('h-8');
-		expect(backNavButton).toContain('hover:text-mono-100');
-		expect(clerkNavbarButton).toContain('data-[active=true]:text-mono-100');
+		expect(backNavButton).toContain('hover:text-fg');
+		expect(clerkNavbarButton).toContain('data-[active=true]:text-fg');
 	});
 
 	it('sidebar shell can drop width transitions during drawer motion', () => {
@@ -308,42 +308,42 @@ describe('lib/ui/classes', () => {
 		expect(tableListCardShell).not.toContain('backdrop-blur');
 		expect(tableListCardShell).not.toContain('border');
 		expect(tableListBodyDivide).toContain('divide-y');
-		expect(tableListBodyDivide).toContain('divide-mono-800/30');
+		expect(tableListBodyDivide).toContain('divide-edge-faint/30');
 		expect(tableListThead).toContain('sticky');
 		expect(tableListThead).toContain('bg-transparent');
-		expect(tableListThead).not.toContain('bg-mono-800');
+		expect(tableListThead).not.toContain('bg-surface-raised');
 		expect(tableListThead).not.toContain('backdrop-blur');
-		expect(tableListThead).toContain('border-mono-800/30');
+		expect(tableListThead).toContain('border-edge-faint/30');
 		expect(tableListCell).toContain('px-4');
 		expect(tableListCell).toContain('py-4');
-		expect(tableListHeaderSortable).toContain('text-mono-100');
+		expect(tableListHeaderSortable).toContain('text-fg');
 		expect(tableListHeaderSortable).toContain('uppercase');
-		expect(tableListBodyPrimary).toContain('text-mono-100');
+		expect(tableListBodyPrimary).toContain('text-fg');
 		expect(tableListBodyPrimary).toContain('font-medium');
-		expect(tableListBodyCell).toContain('text-mono-100');
+		expect(tableListBodyCell).toContain('text-fg');
 		expect(tableListBodyCell).not.toContain('font-medium');
-		expect(tableListBodyCaption).toContain('text-mono-400');
+		expect(tableListBodyCaption).toContain('text-fg-muted');
 		expect(tableListCellPrimary).toContain('px-4');
 		expect(tableListCellPrimary).toContain('whitespace-nowrap');
-		expect(tableListCellPrimary).toContain('text-mono-100');
+		expect(tableListCellPrimary).toContain('text-fg');
 		expect(tableListBodyLink).toContain('underline');
-		expect(tableListBodyLink).toContain('hover:text-mono-300');
-		expect(tableListAuxiliaryLabel).toContain('text-mono-300');
+		expect(tableListBodyLink).toContain('hover:text-fg-secondary');
+		expect(tableListAuxiliaryLabel).toContain('text-fg-secondary');
 		expect(tableListAuxiliaryLabel).toContain('font-medium');
 		expect(tableListDetailTitle).toBe(tableListBodyPrimary);
 		expect(tableListPanelSectionTitle).toContain('mb-2');
-		expect(tableListPanelStatLabel).toContain('text-mono-300');
+		expect(tableListPanelStatLabel).toContain('text-fg-secondary');
 		expect(tableListPanelStatTotal).toContain('font-bold');
 	});
 
 	it('query param pagination cells use glass row styling', () => {
 		expect(queryParamReadonlyCell).toContain('rounded-xl');
-		expect(queryParamReadonlyCell).toContain('border-mono-700/80');
+		expect(queryParamReadonlyCell).toContain('border-edge/80');
 		expect(queryParamPaginationToggleBase).toContain('rounded-xl');
 	});
 
 	it('search bar and API generator rows reuse solid control tokens', () => {
-		expect(searchBarInput).toContain('bg-mono-900/80');
+		expect(searchBarInput).toContain('bg-surface/80');
 		expect(searchBarInput).toContain('pl-10');
 		expect(apiGeneratorRowInputMono).toContain('font-mono');
 		expect(apiGeneratorRowInputMono).toContain('h-[34px]');
@@ -352,8 +352,8 @@ describe('lib/ui/classes', () => {
 
 	it('segmented pills and modal controls are centralized', () => {
 		expect(segmentPillBase).toContain('first:rounded-l-xl');
-		expect(modalFormCheckbox).toContain('border-mono-600');
-		expect(drawerLinkedEntityRow).toContain('hover:bg-mono-700');
+		expect(modalFormCheckbox).toContain('border-edge-strong');
+		expect(drawerLinkedEntityRow).toContain('hover:bg-surface-overlay');
 	});
 
 	it('inlineRemoveIconButton encodes row icon remove treatment', () => {

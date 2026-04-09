@@ -79,6 +79,27 @@ function toHex(rgb: RgbChannels): string {
 }
 
 const softThemeCssVars = {
+	// --- Semantic foreground (text) ---
+	'color-fg': toRgbChannelsValue(softThemeColors.mono['100']),
+	'color-fg-secondary': toRgbChannelsValue(softThemeColors.mono['300']),
+	'color-fg-muted': toRgbChannelsValue(softThemeColors.mono['400']),
+	'color-fg-dimmed': toRgbChannelsValue(softThemeColors.mono['500']),
+	'color-fg-faint': toRgbChannelsValue(softThemeColors.mono['600']),
+	'color-fg-on-accent': toRgbChannelsValue(softThemeColors.mono['950']),
+
+	// --- Semantic surfaces (backgrounds) ---
+	'color-surface-base': toRgbChannelsValue(softThemeColors.mono['950']),
+	'color-surface': toRgbChannelsValue(softThemeColors.mono['900']),
+	'color-surface-raised': toRgbChannelsValue(softThemeColors.mono['800']),
+	'color-surface-overlay': toRgbChannelsValue(softThemeColors.mono['700']),
+
+	// --- Semantic edges (borders) ---
+	'color-edge': toRgbChannelsValue(softThemeColors.mono['700']),
+	'color-edge-strong': toRgbChannelsValue(softThemeColors.mono['600']),
+	'color-edge-faint': toRgbChannelsValue(softThemeColors.mono['800']),
+	'color-edge-hover': toRgbChannelsValue(softThemeColors.mono['500']),
+
+	// --- Accent tokens ---
 	'color-accent': toRgbChannelsValue(softThemeColors.green['400']),
 	'color-accent-hover': toRgbChannelsValue(softThemeColors.green['300']),
 	'color-accent-strong': toRgbChannelsValue(softThemeColors.green['500']),

@@ -82,11 +82,11 @@
   }
 </script>
 
-<div class="border-b border-mono-700 last:border-b-0">
+<div class="border-b border-edge last:border-b-0">
   <div class="flex items-center gap-2 py-1.5">
     <!-- Param name (read-only, extracted from path) -->
     <div class="w-32 shrink-0">
-      <div class="w-full px-3 text-sm font-mono border border-mono-700/80 rounded-xl bg-mono-800 text-mono-300 flex items-center h-[34px]">
+      <div class="w-full px-3 text-sm font-mono border border-edge/80 rounded-xl bg-surface-raised text-fg-secondary flex items-center h-[34px]">
         {paramName}
       </div>
     </div>

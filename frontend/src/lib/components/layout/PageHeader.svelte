@@ -81,9 +81,9 @@
         {title}
       </h1>
       {#if description?.trim()}
-        <span class="text-mono-600 shrink-0" aria-hidden="true">·</span>
+        <span class="text-fg-faint shrink-0" aria-hidden="true">·</span>
         <span
-          class="text-sm text-mono-400 truncate min-w-0 flex-1 basis-0 font-inter"
+          class="text-sm text-fg-muted truncate min-w-0 flex-1 basis-0 font-inter"
           title={description.trim()}
         >{description.trim()}</span>
       {/if}

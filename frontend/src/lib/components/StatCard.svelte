@@ -43,7 +43,7 @@
           <div class="flex items-center flex-wrap gap-x-1.5" data-testid="stat-value">
             <span class="text-sm text-red-400 font-medium font-inter">Error</span>
             {#if onRetry}
-              <span class="text-mono-600">·</span>
+              <span class="text-fg-faint">·</span>
               <button
                 onclick={onRetry}
                 class="text-sm text-red-400 hover:text-red-300 transition-colors underline font-inter"
@@ -54,14 +54,14 @@
           </div>
         {:else}
           <span
-            class="text-2xl text-mono-100 font-inter font-bold tracking-tight tabular-nums leading-none"
+            class="text-2xl text-fg font-inter font-bold tracking-tight tabular-nums leading-none"
             data-testid="stat-value">{value}</span>
         {/if}
         {#if trend && !error}
-          <span class="text-xs text-mono-400 font-inter font-medium leading-snug">{trend}</span>
+          <span class="text-xs text-fg-muted font-inter font-medium leading-snug">{trend}</span>
         {/if}
       </div>
-      <span class="text-sm text-mono-400 font-inter font-medium leading-snug break-normal">{title}</span>
+      <span class="text-sm text-fg-muted font-inter font-medium leading-snug break-normal">{title}</span>
     </div>
   </div>
 </div>

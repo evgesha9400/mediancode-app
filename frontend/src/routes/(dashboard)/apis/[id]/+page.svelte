@@ -318,9 +318,9 @@
     {#snippet header()}{/snippet}
     <div class="flex min-h-[50vh] flex-col items-center justify-center">
       <div class="text-center">
-        <i class="fa-solid fa-circle-exclamation text-4xl text-mono-400 mb-4"></i>
+        <i class="fa-solid fa-circle-exclamation text-4xl text-fg-muted mb-4"></i>
         <h2 class="text-xl mb-2 {dashboardTextPrimary}">API Not Found</h2>
-        <p class="text-mono-400 mb-4">The API you're looking for doesn't exist or has been deleted.</p>
+        <p class="text-fg-muted mb-4">The API you're looking for doesn't exist or has been deleted.</p>
         <button
           type="button"
           onclick={() => goto('/apis')}
@@ -349,9 +349,9 @@
             <Pill class="shrink-0">{apiState.api?.version ?? ''}</Pill>
 
             {#if apiState.api?.description?.trim()}
-              <span class="text-mono-600 shrink-0 hidden md:inline" aria-hidden="true">·</span>
+              <span class="text-fg-faint shrink-0 hidden md:inline" aria-hidden="true">·</span>
               <span
-                class="hidden md:inline text-sm text-mono-400 truncate min-w-0 max-w-[min(28vw,14rem)] lg:max-w-md"
+                class="hidden md:inline text-sm text-fg-muted truncate min-w-0 max-w-[min(28vw,14rem)] lg:max-w-md"
                 title={apiState.api.description}
               >{apiState.api.description.trim()}</span>
             {/if}
@@ -365,9 +365,9 @@
             {/if}
 
             {#if apiState.api?.serverUrl}
-              <span class="text-mono-600 shrink-0 hidden lg:inline" aria-hidden="true">·</span>
+              <span class="text-fg-faint shrink-0 hidden lg:inline" aria-hidden="true">·</span>
               <span
-                class="hidden lg:inline-flex items-center gap-1 text-xs text-mono-400 max-w-[8rem] min-w-0 truncate font-mono"
+                class="hidden lg:inline-flex items-center gap-1 text-xs text-fg-muted max-w-[8rem] min-w-0 truncate font-mono"
                 title={apiState.api.serverUrl}
               >
                 <i class="fa-solid fa-server text-[10px] shrink-0"></i>
@@ -376,9 +376,9 @@
             {/if}
 
             {#if apiState.api?.baseUrl}
-              <span class="text-mono-600 shrink-0 hidden lg:inline" aria-hidden="true">·</span>
+              <span class="text-fg-faint shrink-0 hidden lg:inline" aria-hidden="true">·</span>
               <span
-                class="hidden lg:inline-flex items-center gap-1 text-xs text-mono-400 max-w-[6rem] min-w-0 truncate font-mono"
+                class="hidden lg:inline-flex items-center gap-1 text-xs text-fg-muted max-w-[6rem] min-w-0 truncate font-mono"
                 title={apiState.api.baseUrl}
               >
                 <i class="fa-solid fa-link text-[10px] shrink-0"></i>
@@ -399,7 +399,7 @@
             <button
               type="button"
               onclick={apiState.handleAddEndpoint}
-              class="px-4 py-2 border border-mono-700 rounded-xl font-inter font-medium text-sm tracking-wide text-mono-300 flex items-center space-x-2 hover:bg-mono-900 cursor-pointer transition-all shadow-sm"
+              class="px-4 py-2 border border-edge rounded-xl font-inter font-medium text-sm tracking-wide text-fg-secondary flex items-center space-x-2 hover:bg-surface cursor-pointer transition-all shadow-sm"
             >
               <i class="fa-solid fa-plus"></i>
               <span>Add Endpoint</span>
@@ -407,7 +407,7 @@
             <button
               type="button"
               onclick={apiState.openEditDrawer}
-              class="px-4 py-2 border border-mono-700 rounded-xl font-inter font-medium text-sm tracking-wide text-mono-300 flex items-center space-x-2 hover:bg-mono-900 cursor-pointer transition-all shadow-sm"
+              class="px-4 py-2 border border-edge rounded-xl font-inter font-medium text-sm tracking-wide text-fg-secondary flex items-center space-x-2 hover:bg-surface cursor-pointer transition-all shadow-sm"
             >
               <i class="fa-solid fa-pen-to-square"></i>
               <span>Edit API</span>
@@ -420,8 +420,8 @@
     <div class="max-w-7xl mx-auto p-6">
       {#if apiState.endpoints.length === 0}
         <div class="{dashboardCardGlass} overflow-hidden rounded-2xl">
-          <div class="text-center py-8 text-mono-400">
-            <i class="fa-solid fa-route text-2xl mb-2 text-mono-600"></i>
+          <div class="text-center py-8 text-fg-muted">
+            <i class="fa-solid fa-route text-2xl mb-2 text-fg-faint"></i>
             <p class="text-sm">No endpoints yet. Create your first API endpoint.</p>
           </div>
         </div>
@@ -430,18 +430,18 @@
         <div class="{dashboardCardGlass} overflow-hidden rounded-2xl">
           {#each apiState.allTagSections as section, i (section.tag)}
             {@const isExpanded = apiState.expandedTags.has(section.tag)}
-            <div class="{i < apiState.allTagSections.length - 1 ? 'border-b border-mono-700' : ''}">
+            <div class="{i < apiState.allTagSections.length - 1 ? 'border-b border-edge' : ''}">
               <!-- Tag section header -->
               <button
                 type="button"
                 onclick={() => apiState.toggleTagSection(section.tag)}
-                class="w-full flex items-center justify-between px-4 py-3 bg-mono-950/20 hover:bg-mono-950/45 transition-colors text-left"
+                class="w-full flex items-center justify-between px-4 py-3 bg-surface-base/20 hover:bg-surface-base/45 transition-colors text-left"
               >
                 <div class="flex items-center space-x-2">
                   <h2 class="text-base font-semibold {dashboardTextPrimary}">{section.tag}</h2>
-                  <span class="text-xs text-mono-400">{section.endpoints.length} endpoint{section.endpoints.length !== 1 ? 's' : ''}</span>
+                  <span class="text-xs text-fg-muted">{section.endpoints.length} endpoint{section.endpoints.length !== 1 ? 's' : ''}</span>
                 </div>
-                <i class="fa-solid fa-chevron-down text-mono-400 text-sm transition-transform {isExpanded ? 'rotate-0' : '-rotate-90'}"></i>
+                <i class="fa-solid fa-chevron-down text-fg-muted text-sm transition-transform {isExpanded ? 'rotate-0' : '-rotate-90'}"></i>
               </button>
               <!-- Tag section body -->
               {#if isExpanded}
@@ -572,7 +572,7 @@
           <!-- Tag and Description -->
           <div class="endpoint-tag-description">
             <div class="relative">
-              <h3 class="text-sm text-mono-300 mb-2 flex items-center font-medium">
+              <h3 class="text-sm text-fg-secondary mb-2 flex items-center font-medium">
                 <i class="fa-solid fa-tag mr-2"></i>
                 Tag
               </h3>
@@ -601,7 +601,7 @@
                     <i class="fa-solid fa-xmark text-xs"></i>
                   </button>
                 {:else}
-                  <i class="fa-solid fa-chevron-down absolute right-3 top-1/2 -translate-y-1/2 text-mono-400 text-xs pointer-events-none"></i>
+                  <i class="fa-solid fa-chevron-down absolute right-3 top-1/2 -translate-y-1/2 text-fg-muted text-xs pointer-events-none"></i>
                 {/if}
               </div>
               {#if apiState.tagDropdownOpen}
@@ -611,7 +611,7 @@
                       <button
                         type="button"
                         onclick={handleTagInputCommit}
-                        class="{dropdownCreateRow} border-b border-mono-700 rounded-none text-mono-300"
+                        class="{dropdownCreateRow} border-b border-edge rounded-none text-fg-secondary"
                       >
                         <i class="fa-solid fa-plus text-xs"></i>
                         <span>Use "<strong>{apiState.tagInputValue.trim()}</strong>"</span>
@@ -621,20 +621,20 @@
                       <button
                         type="button"
                         onclick={() => apiState.handleTagSelect(tag)}
-                        class="{dropdownRow} text-sm text-mono-300 {apiState.editedEndpoint?.tagName === tag ? 'bg-mono-800' : ''}"
+                        class="{dropdownRow} text-sm text-fg-secondary {apiState.editedEndpoint?.tagName === tag ? 'bg-surface-raised' : ''}"
                       >
                         {tag}
                       </button>
                     {/each}
                     {#if filteredTags.length === 0 && !apiState.tagInputValue.trim()}
-                      <div class="px-3 py-2 text-sm text-mono-400">No tags yet</div>
+                      <div class="px-3 py-2 text-sm text-fg-muted">No tags yet</div>
                     {/if}
                   </div>
                 </div>
               {/if}
             </div>
             <div>
-              <h3 class="text-sm text-mono-300 mb-2 flex items-center font-medium">
+              <h3 class="text-sm text-fg-secondary mb-2 flex items-center font-medium">
                 <i class="fa-solid fa-align-left mr-2"></i>
                 Description
               </h3>
@@ -649,7 +649,7 @@
 
           <!-- Method and Path -->
           <div>
-            <h3 class="text-sm text-mono-300 mb-2 flex items-center font-medium">
+            <h3 class="text-sm text-fg-secondary mb-2 flex items-center font-medium">
               <i class="fa-solid fa-route mr-2"></i>
               Method & Path
             </h3>
@@ -666,7 +666,7 @@
                 />
               </div>
               <div class="endpoint-path-input {defaultValueComboShell}">
-                <span class="px-3 py-1.5 text-sm font-mono text-mono-400 bg-mono-900/80 border-r border-mono-700/80">/</span>
+                <span class="px-3 py-1.5 text-sm font-mono text-fg-muted bg-surface/80 border-r border-edge/80">/</span>
                 <input
                   type="text"
                   value={apiState.editedEndpoint.path.substring(1)}
@@ -696,18 +696,18 @@
 
           <!-- Path Parameters -->
           <div>
-            <h3 class="text-sm text-mono-300 mb-2 flex items-center font-medium">
+            <h3 class="text-sm text-fg-secondary mb-2 flex items-center font-medium">
               <i class="fa-solid fa-link mr-2"></i>
               Path Parameters
             </h3>
             {#if apiState.editedEndpoint.pathParams.length === 0}
               <div class="px-3 py-2 {surfaceInsideFrostedPanel}">
-                <p class="text-xs text-mono-400">No path parameters. Add parameters to your URL path using <code class="bg-mono-800 px-1 rounded-lg">{`{param_name}`}</code></p>
+                <p class="text-xs text-fg-muted">No path parameters. Add parameters to your URL path using <code class="bg-surface-raised px-1 rounded-lg">{`{param_name}`}</code></p>
               </div>
             {:else}
               <div class="px-3 py-1 {surfaceInsideFrostedPanel}">
                 <!-- Column headers -->
-                <div class="flex items-center gap-2 py-1 border-b border-mono-700 text-[10px] text-mono-500 uppercase tracking-wider">
+                <div class="flex items-center gap-2 py-1 border-b border-edge text-[10px] text-fg-dimmed uppercase tracking-wider">
                   <div class="w-32 shrink-0">Name</div>
                   <div class="flex-1">Field</div>
                 </div>

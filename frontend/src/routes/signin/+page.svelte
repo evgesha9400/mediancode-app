@@ -51,7 +51,7 @@
 	});
 </script>
 
-<div class="min-h-screen flex items-center justify-center p-4 relative overflow-hidden bg-mono-950">
+<div class="min-h-screen flex items-center justify-center p-4 relative overflow-hidden bg-surface-base">
 	<!-- Ambient Glow Background -->
 	<div class={authPageAccentGlowOrb}></div>
 
@@ -60,26 +60,26 @@
 			<div class="text-center space-y-4">
 				<div class="flex items-center justify-center space-x-3 mb-8 opacity-80">
 					<Logo size="lg" />
-					<h1 class="text-3xl font-inter font-bold text-mono-100 tracking-tight">Median Code</h1>
+					<h1 class="text-3xl font-inter font-bold text-fg tracking-tight">Median Code</h1>
 				</div>
 				<div class={authPageInlineSpinner}></div>
-				<p class="text-mono-400 font-inter text-sm">Loading...</p>
+				<p class="text-fg-muted font-inter text-sm">Loading...</p>
 			</div>
 		{:else if $clerkState.isSignedIn}
 			<div class="text-center space-y-4">
 				<div class="flex items-center justify-center space-x-3 mb-8 opacity-80">
 					<Logo size="lg" />
-					<h1 class="text-3xl font-inter font-bold text-mono-100 tracking-tight">Median Code</h1>
+					<h1 class="text-3xl font-inter font-bold text-fg tracking-tight">Median Code</h1>
 				</div>
 				<div class={authPageInlineSpinner}></div>
-				<p class="text-mono-400 font-inter text-sm">Redirecting to dashboard...</p>
+				<p class="text-fg-muted font-inter text-sm">Redirecting to dashboard...</p>
 			</div>
 		{:else}
 			<div class="w-full flex flex-col items-center">
 				<!-- Logo above Clerk form -->
 				<div class="flex items-center justify-center space-x-3 mb-8 opacity-90">
 					<Logo size="lg" />
-					<h1 class="text-3xl font-inter font-bold text-mono-100 tracking-tight">Median Code</h1>
+					<h1 class="text-3xl font-inter font-bold text-fg tracking-tight">Median Code</h1>
 				</div>
 				<div bind:this={clerkMountDiv} class="w-full flex justify-center"></div>
 			</div>

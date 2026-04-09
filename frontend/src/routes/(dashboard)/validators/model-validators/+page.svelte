@@ -184,7 +184,7 @@
                   {/if}
                 </div>
                 {#if param.placeholder}
-                  <p class="text-xs text-mono-400 mt-1">e.g. {param.placeholder}</p>
+                  <p class="text-xs text-fg-muted mt-1">e.g. {param.placeholder}</p>
                 {/if}
               </div>
             {/each}
