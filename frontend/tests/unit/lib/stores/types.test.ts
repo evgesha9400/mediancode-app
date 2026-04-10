@@ -15,8 +15,8 @@ import {
   getTypeIdByName,
   type TypeBase,
   type FieldType
-} from '$lib/stores/types';
-import { fieldsStore } from '$lib/stores/fields';
+} from '$lib/stores/stores';
+import { fieldsStore } from '$lib/stores/stores';
 
 // ---------------------------------------------------------------------------
 // Helpers

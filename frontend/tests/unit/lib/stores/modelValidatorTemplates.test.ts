@@ -10,7 +10,7 @@ import {
   modelValidatorTemplatesStore,
   searchModelValidatorTemplates,
   getModelValidatorTemplateById
-} from '$lib/stores/modelValidatorTemplates';
+} from '$lib/stores/stores';
 
 import type { ModelValidatorTemplate } from '$lib/types';
 

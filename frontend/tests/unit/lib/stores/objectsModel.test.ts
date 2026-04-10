@@ -5,7 +5,7 @@
 // deletion guard, and CRUD action flows (save, create, delete).
 
 import { describe, it, expect, vi, beforeEach, afterEach, type Mock } from 'vitest';
-import type { ObjectDefinition } from '$lib/stores/objects';
+import type { ObjectDefinition } from '$lib/stores/stores';
 
 // ---------------------------------------------------------------------------
 // Mocks -- must be declared before imports that use them
@@ -56,7 +56,8 @@ vi.mock('$lib/utils/references', () => ({
 // Imports (after mocks)
 // ---------------------------------------------------------------------------
 
-import { createObjectsModel, type ObjectsModelConfig, type ObjectsModelState } from '$lib/stores/objectsModel.svelte';
+import { createCrudModel, type CrudModelState } from '$lib/stores/crudModel.svelte';
+import { createObjectsContract } from '$lib/stores/objectsConfig.svelte';
 import { createObjectApi, updateObjectApi, deleteObjectApi } from '$lib/api/objects';
 import { mapApiError } from '$lib/domain/errorMap';
 import { showToast } from '$lib/stores/toasts';
@@ -81,23 +82,29 @@ function makeObject(overrides: Partial<ObjectDefinition> & { id: string; name: s
   };
 }
 
-function createTestModel(overrides: Partial<ObjectsModelConfig> = {}): {
-  model: ObjectsModelState;
+function createTestModel(overrides: {
+  itemsStore?: () => ObjectDefinition[];
+  getActiveNamespaceId?: () => string;
+  afterCreate?: (object: ObjectDefinition) => void;
+} = {}): {
+  model: CrudModelState<ObjectDefinition>;
   cleanup: () => void;
 } {
-  let model!: ObjectsModelState;
+  let model!: CrudModelState<ObjectDefinition>;
 
   const cleanup = effect_root(() => {
-    model = createObjectsModel({
-      itemsStore: () => [],
+    const contract = createObjectsContract({
+      getActiveNamespaceId: overrides.getActiveNamespaceId ?? (() => 'ns-1'),
+      afterCreate: overrides.afterCreate
+    });
+    model = createCrudModel(contract, {
+      itemsStore: overrides.itemsStore ?? (() => []),
       searchFn: (items, query) => {
         if (!query) return items;
         return items.filter(i => i.name.toLowerCase().includes(query.toLowerCase()));
       },
       filterSections: () => [],
-      urlScope: { page: page as any, goto: goto as any },
-      getActiveNamespaceId: () => 'ns-1',
-      ...overrides
+      urlScope: { page: page as any, goto: goto as any }
     });
   });
 
@@ -109,7 +116,7 @@ function createTestModel(overrides: Partial<ObjectsModelConfig> = {}): {
 // ---------------------------------------------------------------------------
 
 describe('objectsModel - Initial State', () => {
-  let model: ObjectsModelState;
+  let model: CrudModelState<ObjectDefinition>;
   let cleanup: () => void;
 
   afterEach(() => cleanup?.());
@@ -130,7 +137,7 @@ describe('objectsModel - Initial State', () => {
 });
 
 describe('objectsModel - Validation', () => {
-  let model: ObjectsModelState;
+  let model: CrudModelState<ObjectDefinition>;
   let cleanup: () => void;
 
   afterEach(() => cleanup?.());
@@ -212,7 +219,7 @@ describe('objectsModel - Validation', () => {
 });
 
 describe('objectsModel - Draft Creation', () => {
-  let model: ObjectsModelState;
+  let model: CrudModelState<ObjectDefinition>;
   let cleanup: () => void;
 
   afterEach(() => cleanup?.());
@@ -247,7 +254,7 @@ describe('objectsModel - Draft Creation', () => {
 });
 
 describe('objectsModel - Deletion Guard', () => {
-  let model: ObjectsModelState;
+  let model: CrudModelState<ObjectDefinition>;
   let cleanup: () => void;
 
   afterEach(() => cleanup?.());
@@ -293,7 +300,7 @@ describe('objectsModel - Deletion Guard', () => {
 });
 
 describe('objectsModel - Save (Update)', () => {
-  let model: ObjectsModelState;
+  let model: CrudModelState<ObjectDefinition>;
   let cleanup: () => void;
 
   beforeEach(() => vi.clearAllMocks());
@@ -407,7 +414,7 @@ describe('objectsModel - Save (Update)', () => {
 });
 
 describe('objectsModel - Create', () => {
-  let model: ObjectsModelState;
+  let model: CrudModelState<ObjectDefinition>;
   let cleanup: () => void;
 
   beforeEach(() => vi.clearAllMocks());
@@ -482,10 +489,26 @@ describe('objectsModel - Create', () => {
 
     expect(showToast).toHaveBeenCalledWith('Create failed', 'error', 5000);
   });
+
+  it('should call afterCreate hook with the created object', async () => {
+    const afterCreate = vi.fn();
+    ({ model, cleanup } = createTestModel({ afterCreate }));
+    const newObject = makeObject({ id: 'o-new', name: 'User' });
+    (createObjectApi as Mock).mockResolvedValue(newObject);
+
+    model.openCreate();
+    flushSync();
+    model.editedItem!.name = 'User';
+    flushSync();
+
+    await model.handleCreate();
+
+    expect(afterCreate).toHaveBeenCalledWith(newObject);
+  });
 });
 
 describe('objectsModel - Delete', () => {
-  let model: ObjectsModelState;
+  let model: CrudModelState<ObjectDefinition>;
   let cleanup: () => void;
 
   beforeEach(() => vi.clearAllMocks());
@@ -529,7 +552,7 @@ describe('objectsModel - Delete', () => {
 });
 
 describe('objectsModel - Undo', () => {
-  let model: ObjectsModelState;
+  let model: CrudModelState<ObjectDefinition>;
   let cleanup: () => void;
 
   afterEach(() => cleanup?.());
@@ -555,7 +578,7 @@ describe('objectsModel - Undo', () => {
 });
 
 describe('objectsModel - isSelected', () => {
-  let model: ObjectsModelState;
+  let model: CrudModelState<ObjectDefinition>;
   let cleanup: () => void;
 
   afterEach(() => cleanup?.());

@@ -17,13 +17,14 @@ import type { Api, ApiEndpoint } from '$lib/types';
 
 vi.mock('$app/environment', () => ({ browser: false }));
 
-vi.mock('$lib/stores/apis', () => {
+vi.mock('$lib/stores/stores', () => {
   const { writable } = require('svelte/store');
-  const apisStore = writable([]);
-  const endpointsStore = writable([]);
   return {
-    apisStore,
-    endpointsStore,
+    apisStore: writable([]),
+    endpointsStore: writable([]),
+    objectsStore: writable([]),
+    fieldsStore: writable([]),
+    getEndpointCountByApi: vi.fn(() => 0),
     getEndpointCountByTagName: vi.fn(() => 0)
   };
 });
@@ -33,6 +34,7 @@ vi.mock('$lib/stores/toasts', () => ({
 }));
 
 vi.mock('$lib/api/apis', () => ({
+  createApiApi: vi.fn(),
   updateApiApi: vi.fn(),
   deleteApiApi: vi.fn()
 }));
@@ -50,7 +52,14 @@ vi.mock('$lib/domain/errorMap', () => ({
 vi.mock('$lib/domain/endpointReducer', () => ({
   reconcilePathParams: vi.fn((path: string, params: any[]) => ({ path, pathParams: params })),
   normalizeEndpoint: vi.fn((ep: ApiEndpoint) => ({ ...ep, responseShape: ep.responseShape ?? 'object' })),
-  hydratePathParamsForEndpoint: vi.fn((ep: ApiEndpoint) => ep)
+  hydratePathParamsForEndpoint: vi.fn((ep: ApiEndpoint) => ep),
+  buildDuplicateEndpoint: vi.fn((ep: ApiEndpoint) => ({
+    ...ep,
+    id: 'ep-copy',
+    path: `${ep.path}-copy`,
+    pathParams: ep.pathParams.map((p) => ({ ...p })),
+    queryParams: (ep.queryParams ?? []).map((q) => ({ ...q }))
+  }))
 }));
 
 vi.mock('$lib/utils/ids', () => ({
@@ -67,11 +76,12 @@ import {
   type ApiDetailStateConfig,
   type TagSection
 } from '$lib/stores/apiDetailState.svelte';
-import { apisStore, endpointsStore, getEndpointCountByTagName } from '$lib/stores/apis';
+import { apisStore, endpointsStore, getEndpointCountByTagName } from '$lib/stores/stores';
 import { updateApiApi, deleteApiApi } from '$lib/api/apis';
 import { createEndpointApi, updateEndpointApi, deleteEndpointApi } from '$lib/api/endpoints';
 import { mapApiError } from '$lib/domain/errorMap';
 import { showToast } from '$lib/stores/toasts';
+import { get } from 'svelte/store';
 import { effect_root } from 'svelte/internal/client';
 import { flushSync } from 'svelte';
 
@@ -481,6 +491,8 @@ describe('apiDetailState - Delete API', () => {
 
   it('should call deleteApiApi and navigate back on success', async () => {
     (deleteApiApi as Mock).mockResolvedValue(undefined);
+    endpointsStore.set([makeEndpoint({ id: 'ep-1', apiId: 'api-1' })]);
+    flushSync();
 
     ({ state, cleanup } = createTestState({ onNavigateBack }));
     flushSync();
@@ -489,6 +501,7 @@ describe('apiDetailState - Delete API', () => {
     flushSync();
 
     await state.handleDeleteApi();
+    flushSync();
 
     expect(deleteApiApi).toHaveBeenCalledWith('api-1');
     expect(onNavigateBack).toHaveBeenCalled();
@@ -496,6 +509,7 @@ describe('apiDetailState - Delete API', () => {
       expect.stringContaining('deleted'),
       'success'
     );
+    expect(get(endpointsStore)).toEqual([]);
   });
 
   it('should show error toast on delete failure', async () => {

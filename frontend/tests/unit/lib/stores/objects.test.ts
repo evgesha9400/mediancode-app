@@ -8,7 +8,7 @@ import {
 	getObjectCountByNamespace,
 	searchObjects,
 	type ObjectDefinition
-} from '$lib/stores/objects';
+} from '$lib/stores/stores';
 import { GLOBAL_NAMESPACE_ID } from '$lib/utils/namespace';
 
 // Helper to create an object definition for seeding the store directly

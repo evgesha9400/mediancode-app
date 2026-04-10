@@ -5,7 +5,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 // Mocks
 // ---------------------------------------------------------------------------
 
-vi.mock('$lib/stores/apis', () => {
+vi.mock('$lib/stores/stores', () => {
   const { writable } = require('svelte/store');
   return { apisStore: writable([]) };
 });
@@ -19,7 +19,7 @@ import {
   checkFieldDeletion,
   checkObjectDeletion
 } from '$lib/utils/references';
-import { apisStore } from '$lib/stores/apis';
+import { apisStore } from '$lib/stores/stores';
 
 // ---------------------------------------------------------------------------
 // Tests

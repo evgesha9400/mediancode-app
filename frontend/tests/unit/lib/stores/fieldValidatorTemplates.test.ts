@@ -10,7 +10,7 @@ import {
   fieldValidatorTemplatesStore,
   searchFieldValidatorTemplates,
   getFieldValidatorTemplateById
-} from '$lib/stores/fieldValidatorTemplates';
+} from '$lib/stores/stores';
 
 import type { FieldValidatorTemplate } from '$lib/types';
 

@@ -11,7 +11,7 @@ import {
 	getEndpointsByApi,
 	getEndpointCountByTagName,
 	getTotalEndpointCount
-} from '$lib/stores/apis';
+} from '$lib/stores/stores';
 import { GLOBAL_NAMESPACE_ID } from '$lib/utils/namespace';
 import { createMockEndpoint, createMockApi } from '../../../shared/testUtils';
 

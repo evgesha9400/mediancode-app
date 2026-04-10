@@ -10,12 +10,12 @@ import {
 	getNamespaceEntityCount,
 	getNamespaceEntityDetails,
 	setActiveNamespace,
-} from '$lib/stores/namespaces';
+} from '$lib/stores/stores';
 import { GLOBAL_NAMESPACE_ID } from '$lib/utils/namespace';
 import { initialNamespaces } from '../../../fixtures/seedData';
-import { fieldsStore } from '$lib/stores/fields';
-import { objectsStore } from '$lib/stores/objects';
-import { endpointsStore, apisStore } from '$lib/stores/apis';
+import { fieldsStore } from '$lib/stores/stores';
+import { objectsStore } from '$lib/stores/stores';
+import { endpointsStore, apisStore } from '$lib/stores/stores';
 import type { Namespace } from '$lib/types';
 
 // Helper to create a namespace for seeding the store directly

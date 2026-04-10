@@ -20,57 +20,32 @@ vi.mock('$lib/api/namespaces', () => ({ listNamespaces: vi.fn() }));
 vi.mock('$lib/api/apis', () => ({ listApis: vi.fn() }));
 vi.mock('$lib/api/fields', () => ({ listFields: vi.fn() }));
 vi.mock('$lib/api/objects', () => ({ listObjects: vi.fn() }));
-vi.mock('$lib/api/endpoints', () => ({ listEndpoints: vi.fn() }));
+vi.mock('$lib/api/endpoints', () => ({
+  listEndpoints: vi.fn(),
+  createEndpointApi: vi.fn(),
+  updateEndpointApi: vi.fn(),
+  deleteEndpointApi: vi.fn()
+}));
 vi.mock('$lib/api/fieldConstraints', () => ({ listFieldConstraints: vi.fn() }));
 vi.mock('$lib/api/types', () => ({ listTypes: vi.fn() }));
 vi.mock('$lib/api/fieldValidatorTemplates', () => ({ listFieldValidatorTemplates: vi.fn() }));
 vi.mock('$lib/api/modelValidatorTemplates', () => ({ listModelValidatorTemplates: vi.fn() }));
 
-// Mock all store modules
-vi.mock('$lib/stores/namespaces', () => {
+// Mock consolidated stores module
+vi.mock('$lib/stores/stores', () => {
   const { writable } = require('svelte/store');
   return {
     namespacesStore: writable([]),
-    activeNamespaceId: writable('')
-  };
-});
-
-vi.mock('$lib/stores/apis', () => {
-  const { writable } = require('svelte/store');
-  return {
+    activeNamespaceId: writable(''),
     apisStore: writable([]),
-    endpointsStore: writable([])
+    endpointsStore: writable([]),
+    fieldsStore: writable([]),
+    objectsStore: writable([]),
+    fieldConstraintsStore: writable([]),
+    typesBaseStore: writable([]),
+    fieldValidatorTemplatesStore: writable([]),
+    modelValidatorTemplatesStore: writable([])
   };
-});
-
-vi.mock('$lib/stores/fields', () => {
-  const { writable } = require('svelte/store');
-  return { fieldsStore: writable([]) };
-});
-
-vi.mock('$lib/stores/objects', () => {
-  const { writable } = require('svelte/store');
-  return { objectsStore: writable([]) };
-});
-
-vi.mock('$lib/stores/fieldConstraints', () => {
-  const { writable } = require('svelte/store');
-  return { fieldConstraintsStore: writable([]) };
-});
-
-vi.mock('$lib/stores/types', () => {
-  const { writable } = require('svelte/store');
-  return { typesBaseStore: writable([]) };
-});
-
-vi.mock('$lib/stores/fieldValidatorTemplates', () => {
-  const { writable } = require('svelte/store');
-  return { fieldValidatorTemplatesStore: writable([]) };
-});
-
-vi.mock('$lib/stores/modelValidatorTemplates', () => {
-  const { writable } = require('svelte/store');
-  return { modelValidatorTemplatesStore: writable([]) };
 });
 
 // ---------------------------------------------------------------------------
@@ -96,14 +71,14 @@ import { listTypes } from '$lib/api/types';
 import { listFieldValidatorTemplates } from '$lib/api/fieldValidatorTemplates';
 import { listModelValidatorTemplates } from '$lib/api/modelValidatorTemplates';
 
-import { namespacesStore, activeNamespaceId } from '$lib/stores/namespaces';
-import { apisStore, endpointsStore } from '$lib/stores/apis';
-import { fieldsStore } from '$lib/stores/fields';
-import { objectsStore } from '$lib/stores/objects';
-import { fieldConstraintsStore } from '$lib/stores/fieldConstraints';
-import { typesBaseStore } from '$lib/stores/types';
-import { fieldValidatorTemplatesStore } from '$lib/stores/fieldValidatorTemplates';
-import { modelValidatorTemplatesStore } from '$lib/stores/modelValidatorTemplates';
+import { namespacesStore, activeNamespaceId } from '$lib/stores/stores';
+import { apisStore, endpointsStore } from '$lib/stores/stores';
+import { fieldsStore } from '$lib/stores/stores';
+import { objectsStore } from '$lib/stores/stores';
+import { fieldConstraintsStore } from '$lib/stores/stores';
+import { typesBaseStore } from '$lib/stores/stores';
+import { fieldValidatorTemplatesStore } from '$lib/stores/stores';
+import { modelValidatorTemplatesStore } from '$lib/stores/stores';
 
 // ---------------------------------------------------------------------------
 // Setup
