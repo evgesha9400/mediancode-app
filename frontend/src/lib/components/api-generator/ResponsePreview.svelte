@@ -10,9 +10,7 @@
 
 <script lang="ts">
   import type { ScalarMember } from '$lib/types';
-  import { objectsStore } from '$lib/stores/objects';
-  import { getFieldById } from '$lib/stores/fields';
-  import { getObjectById } from '$lib/stores/objects';
+  import { objectsStore, getFieldById, getObjectById } from '$lib/stores/stores';
   import { buildRequestPreviewFromObject, buildResponsePreviewFromObject } from '$lib/utils/examples';
   import { dashboardTextPrimary, surfaceInsideFrostedPanel } from '$lib/ui/classes';
 

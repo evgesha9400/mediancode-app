@@ -3,9 +3,10 @@
   import {
     apisStore,
     endpointsStore,
-    searchApis
-  } from '$lib/stores/apis';
-  import { activeNamespaceId, namespacesStore } from '$lib/stores/namespaces';
+    searchApis,
+    activeNamespaceId,
+    namespacesStore
+  } from '$lib/stores/stores';
   import {
     MainColumnFrame,
     PageHeader,
@@ -34,7 +35,8 @@
   import { getTableRowId, TABLE_COL_ATTR } from '$lib/utils/testIds';
   import { page } from '$app/state';
   import { goto } from '$app/navigation';
-  import { createApiModel } from '$lib/stores/apiModel.svelte';
+  import { createCrudModel } from '$lib/stores/crudModel.svelte';
+  import { createApisContract } from '$lib/stores/apisConfig.svelte';
 
   // Extended API type with computed properties for sorting
   type ApiWithCounts = Api & {
@@ -49,13 +51,16 @@
   let namespacedApis = $derived($apisStore.filter(a => a.namespaceId === $activeNamespaceId));
 
   // Create entity model (owns all reactive state + CRUD)
-  const workflow = createApiModel({
+  const contract = createApisContract({
+    getActiveNamespaceId: () => $activeNamespaceId,
+    getEndpointCount: (apiId) => allEndpoints.filter(e => e.apiId === apiId).length,
+    afterCreate: (api) => goto(`/apis/${api.id}`)
+  });
+  const workflow = createCrudModel(contract, {
     itemsStore: () => namespacedApis,
     searchFn: searchApis,
     filterSections: () => [],
-    urlScope: { page, goto },
-    getActiveNamespaceId: () => $activeNamespaceId,
-    getEndpointCount: (apiId) => allEndpoints.filter(e => e.apiId === apiId).length
+    urlScope: { page, goto }
   });
 
   let filteredApis = $derived(workflow.results as ApiWithCounts[]);

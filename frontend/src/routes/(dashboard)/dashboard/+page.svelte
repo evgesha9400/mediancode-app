@@ -1,9 +1,12 @@
 <script lang="ts">
-  import { typesBaseStore } from '$lib/stores/types';
-  import { fieldsStore } from '$lib/stores/fields';
-  import { fieldConstraintsStore } from '$lib/stores/fieldConstraints';
-  import { objectsStore } from '$lib/stores/objects';
-  import { apisStore, endpointsStore } from '$lib/stores/apis';
+  import {
+    typesBaseStore,
+    fieldsStore,
+    fieldConstraintsStore,
+    objectsStore,
+    apisStore,
+    endpointsStore
+  } from '$lib/stores/stores';
   import { clerkState } from '$lib/clerk';
   import { storeLoadingState, reloadStores, STORE_NAMES } from '$lib/stores/loader';
   import { MainColumnFrame, PageHeader, StatCard } from '$lib/components';

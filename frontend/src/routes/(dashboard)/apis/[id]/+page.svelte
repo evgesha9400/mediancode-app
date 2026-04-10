@@ -2,6 +2,9 @@
   import { page } from '$app/state';
   import { goto } from '$app/navigation';
   import { untrack } from 'svelte';
+  import { createCrudModel } from '$lib/stores/crudModel.svelte';
+  import { createObjectsContract } from '$lib/stores/objectsConfig.svelte';
+  import { createFieldsContract } from '$lib/stores/fieldsConfig.svelte';
   import {
     BackNavButton,
     MainColumnFrame,
@@ -21,21 +24,21 @@
   } from '$lib/components';
   import { ObjectFormContent, FieldFormContent } from '$lib/components/form';
   import { HTTP_METHOD_SELECT_OPTIONS } from '$lib/types';
-  import type { HttpMethod, ObjectDefinition, Field } from '$lib/types';
-  import { isValidSnakeCaseName, isValidPascalCaseName } from '$lib/utils/validation';
+  import type { HttpMethod, Field } from '$lib/types';
   import { createApiDetailState } from '$lib/stores/apiDetailState.svelte';
-  import { getApiById } from '$lib/stores/apis';
-  import { namespacesStore } from '$lib/stores/namespaces';
-  import { fieldsStore } from '$lib/stores/fields';
-  import { typesStore, getTypeIdByName } from '$lib/stores/types';
-  import { fieldConstraintsStore } from '$lib/stores/fieldConstraints';
-  import { fieldValidatorTemplatesStore } from '$lib/stores/fieldValidatorTemplates';
-  import { modelValidatorTemplatesStore } from '$lib/stores/modelValidatorTemplates';
-  import { objectsStore } from '$lib/stores/objects';
-  import { createObjectApi } from '$lib/api/objects';
-  import { createFieldApi } from '$lib/api/fields';
-  import { mapApiError } from '$lib/domain/errorMap';
-  import { showToast } from '$lib/stores/toasts';
+  import {
+    getApiById,
+    namespacesStore,
+    fieldsStore,
+    searchFields,
+    searchObjects,
+    typesStore,
+    getTypeIdByName,
+    fieldConstraintsStore,
+    fieldValidatorTemplatesStore,
+    modelValidatorTemplatesStore,
+    objectsStore
+  } from '$lib/stores/stores';
   import {
     dashboardCardGlass,
     dashboardPageHeaderPrimaryButton,
@@ -84,6 +87,13 @@
   const availableFields = $derived(
     $fieldsStore.filter(f => f.namespaceId === apiState.apiNamespaceId)
   );
+  const availableObjects = $derived(
+    $objectsStore.filter(o => o.namespaceId === apiState.apiNamespaceId)
+  );
+  const selectableTypes = $derived($typesStore);
+  const fieldConstraintDefinitions = $derived($fieldConstraintsStore);
+  const fieldValidatorTemplates = $derived($fieldValidatorTemplatesStore);
+  const modelValidatorTemplates = $derived($modelValidatorTemplatesStore);
 
   // Fields on the endpoint's selected object (for query param field selector)
   const endpointObjectFields = $derived.by((): Field[] => {
@@ -122,144 +132,63 @@
   }
 
   // ============================================================================
-  // Inline Object Creation Overlay
+  // Nested Object + Field Creation Overlays
   // ============================================================================
 
-  let objectCreateOpen = $state(false);
-  let editedNewObject = $state<ObjectDefinition | null>(null);
   let objectCreateTarget = $state<'query' | 'body'>('body');
-  let objectFormTouched = $state(false);
-  let objectSaving = $state(false);
 
-  let objectFormErrors = $derived.by(() => {
-    if (!editedNewObject) return {};
-    const errors: Record<string, string> = {};
-    if (!editedNewObject.name.trim()) {
-      errors.name = 'Object name is required';
-    } else if (!isValidPascalCaseName(editedNewObject.name)) {
-      errors.name = 'Must be PascalCase (e.g. UserEmail)';
+  const objectWorkflow = createCrudModel(
+    createObjectsContract({
+      getActiveNamespaceId: () => apiState.apiNamespaceId,
+      afterCreate: (object) => {
+        if (objectCreateTarget === 'query') {
+          apiState.handleSelectQueryParamsObject(object.id);
+        } else {
+          apiState.handleSelectObject(object.id);
+        }
+      }
+    }),
+    {
+      itemsStore: () => availableObjects,
+      searchFn: searchObjects,
+      filterSections: () => [],
+      urlScope: { page, goto }
     }
-    return errors;
-  });
-  let objectFormValid = $derived(editedNewObject !== null && Object.keys(objectFormErrors).length === 0);
-  let objectImmediateErrors = $derived.by((): Record<string, string> => {
-    if (!editedNewObject || !editedNewObject.name.trim()) return {};
-    if (!isValidPascalCaseName(editedNewObject.name)) {
-      return { name: objectFormErrors.name };
+  );
+
+  const fieldWorkflow = createCrudModel(
+    createFieldsContract({
+      getActiveNamespaceId: () => objectWorkflow.editedItem?.namespaceId ?? apiState.apiNamespaceId,
+      getDefaultType: () => selectableTypes[0]?.name ?? 'str',
+      getTypeIdByName,
+      afterCreate: (field) => {
+        if (!objectWorkflow.editedItem) return;
+        objectWorkflow.editedItem = {
+          ...objectWorkflow.editedItem,
+          members: [
+            ...objectWorkflow.editedItem.members,
+            {
+              memberType: 'scalar',
+              name: field.name,
+              fieldId: field.id,
+              role: 'writable',
+              isNullable: false
+            }
+          ]
+        };
+      }
+    }),
+    {
+      itemsStore: () => availableFields,
+      searchFn: searchFields,
+      filterSections: () => [],
+      urlScope: { page, goto }
     }
-    return {};
-  });
-  let objectVisibleErrors = $derived({ ...objectImmediateErrors, ...(objectFormTouched ? objectFormErrors : {}) });
+  );
 
   function openObjectCreate(target: 'query' | 'body') {
     objectCreateTarget = target;
-    editedNewObject = {
-      id: '',
-      namespaceId: apiState.apiNamespaceId,
-      name: '',
-      description: '',
-      members: [],
-      derivedRelationships: [],
-      validators: [],
-      usedInApis: []
-    };
-    objectFormTouched = false;
-    objectCreateOpen = true;
-  }
-
-  function closeObjectCreate() {
-    objectCreateOpen = false;
-    editedNewObject = null;
-  }
-
-  async function handleCreateObject() {
-    objectFormTouched = true;
-    if (!objectFormValid || !editedNewObject) return;
-
-    objectSaving = true;
-    try {
-      const obj = await createObjectApi({
-        namespaceId: editedNewObject.namespaceId,
-        name: editedNewObject.name,
-        description: editedNewObject.description,
-        members: editedNewObject.members.map(({ id, ...rest }) => rest),
-        validators: editedNewObject.validators.length > 0
-          ? editedNewObject.validators.map(v => ({
-              templateId: v.templateId,
-              parameters: v.parameters ?? undefined,
-              fieldMappings: v.fieldMappings
-            }))
-          : undefined
-      });
-
-      objectsStore.update(objects => [...objects, obj]);
-
-      // Auto-select the new object in the appropriate selector
-      if (objectCreateTarget === 'query') {
-        apiState.handleSelectQueryParamsObject(obj.id);
-      } else {
-        apiState.handleSelectObject(obj.id);
-      }
-
-      showToast(`Object "${editedNewObject.name}" created`, 'success');
-      closeObjectCreate();
-    } catch (err) {
-      showToast(mapApiError(err, 'create object'), 'error');
-    } finally {
-      objectSaving = false;
-    }
-  }
-
-  // ============================================================================
-  // Inline Field Creation Overlay (from within Object creation)
-  // ============================================================================
-
-  let fieldCreateOpen = $state(false);
-  let editedNewField = $state<Field | null>(null);
-  let fieldFormTouched = $state(false);
-  let fieldSaving = $state(false);
-
-  let fieldFormErrors = $derived.by(() => {
-    if (!editedNewField) return {};
-    const errors: Record<string, string> = {};
-    if (!editedNewField.name.trim()) {
-      errors.name = 'Field name is required';
-    } else if (!isValidSnakeCaseName(editedNewField.name)) {
-      errors.name = 'Must be snake_case (e.g. user_email)';
-    }
-    if (!editedNewField.type) errors.type = 'Type is required';
-    return errors;
-  });
-  let fieldFormValid = $derived(editedNewField !== null && Object.keys(fieldFormErrors).length === 0);
-  let fieldImmediateErrors = $derived.by((): Record<string, string> => {
-    if (!editedNewField || !editedNewField.name.trim()) return {};
-    if (!isValidSnakeCaseName(editedNewField.name)) {
-      return { name: fieldFormErrors.name };
-    }
-    return {};
-  });
-  let fieldVisibleErrors = $derived({ ...fieldImmediateErrors, ...(fieldFormTouched ? fieldFormErrors : {}) });
-
-  function openFieldCreate() {
-    editedNewField = {
-      id: '',
-      namespaceId: apiState.apiNamespaceId,
-      name: '',
-      type: $typesStore.length > 0 ? $typesStore[0].name : 'str',
-      container: null,
-      constraints: [],
-      validators: [],
-      usedInApis: [],
-      description: '',
-      defaultValue: ''
-    };
-    fieldFormTouched = false;
-    fieldCreateOpen = true;
-  }
-
-  function closeFieldCreate() {
-    fieldCreateOpen = false;
-    editedNewField = null;
+    objectWorkflow.openCreate();
   }
 
   // ============================================================================
@@ -267,50 +196,6 @@
   // ============================================================================
 
   let generateModalOpen = $state(false);
-
-  async function handleCreateField() {
-    fieldFormTouched = true;
-    if (!fieldFormValid || !editedNewField) return;
-
-    const typeId = getTypeIdByName(editedNewField.type);
-    if (!typeId) {
-      showToast(`Unknown type "${editedNewField.type}"`, 'error');
-      return;
-    }
-
-    fieldSaving = true;
-    try {
-      const field = await createFieldApi({
-        namespaceId: editedNewField.namespaceId,
-        name: editedNewField.name,
-        typeId,
-        container: editedNewField.container,
-        description: editedNewField.description,
-        defaultValue: editedNewField.defaultValue,
-        constraints: editedNewField.constraints.map(c => ({ constraintId: c.constraintId, value: c.value })),
-        validators: editedNewField.validators.length > 0
-          ? editedNewField.validators.map(v => ({ templateId: v.templateId, parameters: v.parameters ?? undefined }))
-          : undefined
-      });
-
-      fieldsStore.update(fields => [...fields, field]);
-
-      // Auto-add the new field to the object being created
-      if (editedNewObject) {
-        editedNewObject = {
-          ...editedNewObject,
-          members: [...editedNewObject.members, { memberType: 'scalar' as const, name: field.name, fieldId: field.id, role: 'writable' as const, isNullable: false }]
-        };
-      }
-
-      showToast(`Field "${editedNewField.name}" created`, 'success');
-      closeFieldCreate();
-    } catch (err) {
-      showToast(mapApiError(err, 'create field'), 'error');
-    } finally {
-      fieldSaving = false;
-    }
-  }
 </script>
 
 {#if !apiExists}
@@ -843,14 +728,14 @@
   {/snippet}
 
   {#snippet objectFormContent(_: { close: () => void })}
-    {#if editedNewObject}
+    {#if objectWorkflow.editedItem}
       <ObjectFormContent
-        bind:editedItem={editedNewObject}
+        bind:editedItem={objectWorkflow.editedItem}
         mode="creating"
         {availableFields}
-        modelValidatorTemplates={$modelValidatorTemplatesStore}
-        visibleErrors={objectVisibleErrors}
-        onCreateNewField={openFieldCreate}
+        {modelValidatorTemplates}
+        visibleErrors={objectWorkflow.visibleErrors}
+        onCreateNewField={fieldWorkflow.openCreate}
       />
     {/if}
   {/snippet}
@@ -858,22 +743,22 @@
   {#snippet objectFormFooter({ close }: { close: () => void })}
     <CrudDrawerFooter
       mode="creating"
-      isSaving={objectSaving}
-      isFormValid={objectFormValid}
-      onCreate={handleCreateObject}
+      isSaving={objectWorkflow.isSaving}
+      isFormValid={objectWorkflow.isFormValid}
+      onCreate={objectWorkflow.handleCreate}
       onCancel={close}
     />
   {/snippet}
 
   {#snippet fieldFormContent(_: { close: () => void })}
-    {#if editedNewField}
+    {#if fieldWorkflow.editedItem}
       <FieldFormContent
-        bind:editedItem={editedNewField}
+        bind:editedItem={fieldWorkflow.editedItem}
         mode="creating"
-        selectableTypes={$typesStore}
-        fieldConstraintDefinitions={$fieldConstraintsStore}
-        fieldValidatorTemplates={$fieldValidatorTemplatesStore}
-        visibleErrors={fieldVisibleErrors}
+        {selectableTypes}
+        {fieldConstraintDefinitions}
+        {fieldValidatorTemplates}
+        visibleErrors={fieldWorkflow.visibleErrors}
       />
     {/if}
   {/snippet}
@@ -881,9 +766,9 @@
   {#snippet fieldFormFooter({ close }: { close: () => void })}
     <CrudDrawerFooter
       mode="creating"
-      isSaving={fieldSaving}
-      isFormValid={fieldFormValid}
-      onCreate={handleCreateField}
+      isSaving={fieldWorkflow.isSaving}
+      isFormValid={fieldWorkflow.isFormValid}
+      onCreate={fieldWorkflow.handleCreate}
       onCancel={close}
     />
   {/snippet}
@@ -897,16 +782,16 @@
       ...(apiState.endpointDrawerOpen
         ? [{ id: 'endpoint', title: apiState.isCreating ? 'Create Endpoint' : 'Edit Endpoint', headerNamespace: namespaceName, width: 1200, minWidth: 700, content: endpointFormContent, footer: endpointFormFooter }]
         : []),
-      ...(objectCreateOpen
+      ...(objectWorkflow.drawerOpen
         ? [{ id: 'object', title: 'Create Object', headerNamespace: namespaceName, width: 800, minWidth: 500, content: objectFormContent, footer: objectFormFooter }]
         : []),
-      ...(fieldCreateOpen
+      ...(fieldWorkflow.drawerOpen
         ? [{ id: 'field', title: 'Create Field', headerNamespace: namespaceName, width: 800, minWidth: 500, content: fieldFormContent, footer: fieldFormFooter }]
         : [])
     ]}
     onPopPanel={() => {
-      if (fieldCreateOpen) closeFieldCreate();
-      else if (objectCreateOpen) closeObjectCreate();
+      if (fieldWorkflow.drawerOpen) fieldWorkflow.closeDrawer();
+      else if (objectWorkflow.drawerOpen) objectWorkflow.closeDrawer();
       else if (apiState.endpointDrawerOpen) {
         if (apiState.isCreating) apiState.handleCancelCreate();
         else apiState.closeEndpointDrawer();

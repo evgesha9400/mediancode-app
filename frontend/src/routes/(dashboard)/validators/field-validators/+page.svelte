@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { fieldValidatorTemplatesStore, searchFieldValidatorTemplates } from '$lib/stores/fieldValidatorTemplates';
+  import { fieldValidatorTemplatesStore, searchFieldValidatorTemplates } from '$lib/stores/stores';
   import {
     MainColumnFrame,
     PageHeader,

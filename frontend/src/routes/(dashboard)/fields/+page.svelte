@@ -1,9 +1,16 @@
 <script lang="ts">
-  import { fieldsStore, searchFields, type Field, type FieldConstraintValue } from '$lib/stores/fields';
-  import { fieldConstraintsStore } from '$lib/stores/fieldConstraints';
-  import { typesStore, getTypeIdByName } from '$lib/stores/types';
-  import { activeNamespaceId, namespacesStore } from '$lib/stores/namespaces';
-  import { createFieldsModel } from '$lib/stores/fieldsModel.svelte';
+  import {
+    fieldsStore,
+    searchFields,
+    fieldConstraintsStore,
+    typesStore,
+    getTypeIdByName,
+    activeNamespaceId,
+    namespacesStore
+  } from '$lib/stores/stores';
+  import type { Field, FieldConstraintValue } from '$lib/types';
+  import { createCrudModel } from '$lib/stores/crudModel.svelte';
+  import { createFieldsContract } from '$lib/stores/fieldsConfig.svelte';
   import {
     MainColumnFrame,
     PageHeader,
@@ -30,7 +37,7 @@
     tableListRowSelected
   } from '$lib/ui/classes';
   import { getTableRowId, TABLE_COL_ATTR } from '$lib/utils/testIds';
-  import { fieldValidatorTemplatesStore } from '$lib/stores/fieldValidatorTemplates';
+  import { fieldValidatorTemplatesStore } from '$lib/stores/stores';
   import { STORE_NAMES } from '$lib/stores/loader';
   import { page } from '$app/state';
   import { goto } from '$app/navigation';
@@ -72,15 +79,17 @@
   // Filter fields by active namespace
   let namespacedFields = $derived($fieldsStore.filter(f => f.namespaceId === $activeNamespaceId));
 
-  // Per-entity CRUD model (replaces listViewState + crudWorkflow + entityContract)
-  const workflow = createFieldsModel({
-    itemsStore: () => namespacedFields,
-    searchFn: searchFields,
-    filterSections: () => fieldFilterConfig,
-    urlScope: { page, goto },
+  // Per-entity CRUD model
+  const contract = createFieldsContract({
     getActiveNamespaceId: () => $activeNamespaceId,
     getDefaultType: () => selectableTypes[0]?.name ?? 'str',
     getTypeIdByName
+  });
+  const workflow = createCrudModel(contract, {
+    itemsStore: () => namespacedFields,
+    searchFn: searchFields,
+    filterSections: () => fieldFilterConfig,
+    urlScope: { page, goto }
   });
 
   let fieldDrawerNamespaceName = $derived(

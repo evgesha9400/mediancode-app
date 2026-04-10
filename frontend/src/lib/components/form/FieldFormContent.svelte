@@ -1,9 +1,9 @@
 <script module lang="ts">
   export interface FieldFormContentProps {
-    editedItem: import('$lib/stores/fields').Field;
+    editedItem: import('$lib/types').Field;
     mode: 'creating' | 'editing';
-    selectableTypes: import('$lib/stores/types').FieldType[];
-    fieldConstraintDefinitions: import('$lib/stores/fieldConstraints').FieldConstraint[];
+    selectableTypes: import('$lib/stores/stores').FieldType[];
+    fieldConstraintDefinitions: import('$lib/stores/stores').FieldConstraint[];
     fieldValidatorTemplates: import('$lib/types').FieldValidatorTemplate[];
     visibleErrors: Record<string, string>;
     onTypeChange?: (typeName: string) => void;
@@ -12,10 +12,8 @@
 </script>
 
 <script lang="ts">
-  import type { Field, FieldConstraintValue } from '$lib/stores/fields';
-  import type { FieldType } from '$lib/stores/types';
-  import type { FieldConstraint } from '$lib/stores/fieldConstraints';
-  import type { FieldValidatorTemplate, InlineFieldValidator } from '$lib/types';
+  import type { Field, FieldConstraintValue, FieldValidatorTemplate, InlineFieldValidator } from '$lib/types';
+  import type { FieldType, FieldConstraint } from '$lib/stores/stores';
   import { CONTAINER_VALUES } from '$lib/types';
   import {
     FormField,
@@ -27,9 +25,8 @@
     DefaultValueInput,
     Pill
   } from '$lib/components';
-  import { apisStore } from '$lib/stores/apis';
+  import { apisStore, getFieldValidatorTemplateById } from '$lib/stores/stores';
   import { goto } from '$app/navigation';
-  import { getFieldValidatorTemplateById } from '$lib/stores/fieldValidatorTemplates';
   import {
     drawerLinkedEntityRow,
     inlineRemoveIconButton,

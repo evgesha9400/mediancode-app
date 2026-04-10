@@ -96,6 +96,12 @@
   function handleMouseLeave() {
     showTooltip = false;
   }
+
+  $effect(() => {
+    if (disabled) {
+      showTooltip = false;
+    }
+  });
 </script>
 
 <div

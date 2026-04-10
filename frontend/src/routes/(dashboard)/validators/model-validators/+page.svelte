@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { modelValidatorTemplatesStore, searchModelValidatorTemplates } from '$lib/stores/modelValidatorTemplates';
+  import { modelValidatorTemplatesStore, searchModelValidatorTemplates } from '$lib/stores/stores';
   import {
     MainColumnFrame,
     PageHeader,

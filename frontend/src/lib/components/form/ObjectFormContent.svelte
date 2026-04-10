@@ -2,7 +2,7 @@
   export interface ObjectFormContentProps {
     editedItem: import('$lib/types').ObjectDefinition;
     mode: 'creating' | 'editing';
-    availableFields: import('$lib/stores/fields').Field[];
+    availableFields: import('$lib/types').Field[];
     modelValidatorTemplates: import('$lib/types').ModelValidatorTemplate[];
     visibleErrors: Record<string, string>;
     onCreateNewField?: () => void;
@@ -11,9 +11,8 @@
 
 <script lang="ts">
   import type { ObjectDefinition, ObjectMember, ScalarMember, RelationshipMember, RelationshipKind } from '$lib/types';
-  import type { Field } from '$lib/stores/fields';
-  import type { ModelValidatorTemplate, InlineModelValidator, FieldRole } from '$lib/types';
-  import { getFieldById } from '$lib/stores/fields';
+  import type { Field, ModelValidatorTemplate, InlineModelValidator, FieldRole } from '$lib/types';
+  import { getFieldById, getModelValidatorTemplateById, objectsStore, getObjectById, apisStore } from '$lib/stores/stores';
   import { ROLE_LABELS, ROLE_TOOLTIPS, getAvailableRoles, roleHasModifiers } from '$lib/types';
   import {
     FormField,
@@ -22,9 +21,6 @@
     TemplateForm,
     Pill
   } from '$lib/components';
-  import { getModelValidatorTemplateById } from '$lib/stores/modelValidatorTemplates';
-  import { objectsStore, getObjectById } from '$lib/stores/objects';
-  import { apisStore } from '$lib/stores/apis';
   import { showToast } from '$lib/stores/toasts';
   import { goto } from '$app/navigation';
   import { dragHandleZone, dragHandle } from 'svelte-dnd-action';

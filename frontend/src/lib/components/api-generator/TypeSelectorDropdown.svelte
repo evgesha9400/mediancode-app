@@ -1,5 +1,5 @@
 <script module lang="ts">
-  import type { FieldType } from '$lib/stores/types';
+  import type { FieldType } from '$lib/stores/stores';
 
   export interface TypeSelectorDropdownProps {
     availableTypes: FieldType[];

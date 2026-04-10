@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { fieldConstraintsStore, searchFieldConstraints, type FieldConstraint } from '$lib/stores/fieldConstraints';
+  import { fieldConstraintsStore, searchFieldConstraints, type FieldConstraint } from '$lib/stores/stores';
   import { isSystemEntity } from '$lib/utils/namespace';
   import {
     MainColumnFrame,

@@ -5,7 +5,7 @@
  */
 
 import { apiGet } from './client';
-import type { FieldConstraint } from '$lib/stores/fieldConstraints';
+import type { FieldConstraint } from '$lib/stores/stores';
 
 /**
  * Backend API response for FieldConstraint entity

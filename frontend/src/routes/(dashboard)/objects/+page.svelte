@@ -1,8 +1,16 @@
 <script lang="ts">
-  import { objectsStore, searchObjects, type ObjectDefinition } from '$lib/stores/objects';
-  import { fieldsStore } from '$lib/stores/fields';
-  import { activeNamespaceId, namespacesStore } from '$lib/stores/namespaces';
-  import { createObjectsModel } from '$lib/stores/objectsModel.svelte';
+  import {
+    objectsStore,
+    searchObjects,
+    searchFields,
+    fieldsStore,
+    activeNamespaceId,
+    namespacesStore
+  } from '$lib/stores/stores';
+  import type { ObjectDefinition } from '$lib/types';
+  import { createCrudModel } from '$lib/stores/crudModel.svelte';
+  import { createObjectsContract } from '$lib/stores/objectsConfig.svelte';
+  import { createFieldsContract } from '$lib/stores/fieldsConfig.svelte';
   import {
     MainColumnFrame,
     PageHeader,
@@ -20,14 +28,13 @@
     ObjectFormContent
   } from '$lib/components';
   import { FieldFormContent } from '$lib/components/form';
-  import type { Field } from '$lib/types';
-  import { modelValidatorTemplatesStore } from '$lib/stores/modelValidatorTemplates';
-  import { typesStore, getTypeIdByName } from '$lib/stores/types';
-  import { fieldConstraintsStore } from '$lib/stores/fieldConstraints';
-  import { fieldValidatorTemplatesStore } from '$lib/stores/fieldValidatorTemplates';
-  import { createFieldApi } from '$lib/api/fields';
-  import { mapApiError } from '$lib/domain/errorMap';
-  import { showToast } from '$lib/stores/toasts';
+  import {
+    modelValidatorTemplatesStore,
+    typesStore,
+    getTypeIdByName,
+    fieldConstraintsStore,
+    fieldValidatorTemplatesStore
+  } from '$lib/stores/stores';
   import { STORE_NAMES } from '$lib/stores/loader';
   import {
     dashboardPageHeaderPrimaryButton,
@@ -54,13 +61,13 @@
   // Filter objects by active namespace
   let namespacedObjects = $derived($objectsStore.filter(o => o.namespaceId === $activeNamespaceId));
 
-  // Per-entity CRUD model (replaces listViewState + crudWorkflow + entityContract)
-  const workflow = createObjectsModel({
+  // Per-entity CRUD model
+  const contract = createObjectsContract({ getActiveNamespaceId: () => $activeNamespaceId });
+  const workflow = createCrudModel(contract, {
     itemsStore: () => namespacedObjects,
     searchFn: searchObjects,
     filterSections: () => objectFilterConfig,
-    urlScope: { page, goto },
-    getActiveNamespaceId: () => $activeNamespaceId
+    urlScope: { page, goto }
   });
 
   // Truly derived values (read-only computations)
@@ -68,6 +75,9 @@
   let sorts = $derived(workflow.sorts);
 
   let fields = $derived($fieldsStore);
+  let selectableTypes = $derived($typesStore);
+  let fieldConstraints = $derived($fieldConstraintsStore);
+  let fieldValidatorTemplates = $derived($fieldValidatorTemplatesStore);
   let modelValidatorTemplates = $derived($modelValidatorTemplatesStore);
 
   // Filter fields to only show those in the object's namespace
@@ -78,90 +88,33 @@
     allNamespaces.find(ns => ns.id === workflow.editedItem?.namespaceId)?.name ?? 'No namespace selected'
   );
 
-  // ============================================================================
-  // Inline Field Creation Overlay
-  // ============================================================================
-
-  let fieldCreateOpen = $state(false);
-  let editedNewField = $state<Field | null>(null);
-  let fieldFormTouched = $state(false);
-  let fieldSaving = $state(false);
-
-  let fieldFormErrors = $derived.by(() => {
-    if (!editedNewField) return {};
-    const errors: Record<string, string> = {};
-    if (!editedNewField.name.trim()) errors.name = 'Field name is required';
-    if (!editedNewField.type) errors.type = 'Type is required';
-    return errors;
+  const fieldContract = createFieldsContract({
+    getActiveNamespaceId: () => workflow.editedItem?.namespaceId ?? $activeNamespaceId,
+    getDefaultType: () => selectableTypes[0]?.name ?? 'str',
+    getTypeIdByName,
+    afterCreate: (field) => {
+      if (!workflow.editedItem) return;
+      workflow.editedItem = {
+        ...workflow.editedItem,
+        members: [
+          ...workflow.editedItem.members,
+          {
+            memberType: 'scalar',
+            name: field.name,
+            fieldId: field.id,
+            role: 'writable',
+            isNullable: false
+          }
+        ]
+      };
+    }
   });
-  let fieldFormValid = $derived(editedNewField !== null && Object.keys(fieldFormErrors).length === 0);
-  let fieldVisibleErrors = $derived(fieldFormTouched ? fieldFormErrors : {});
-
-  function openFieldCreate() {
-    editedNewField = {
-      id: '',
-      namespaceId: workflow.editedItem?.namespaceId ?? $activeNamespaceId,
-      name: '',
-      type: $typesStore.length > 0 ? $typesStore[0].name : 'str',
-      container: null,
-      constraints: [],
-      validators: [],
-      usedInApis: [],
-      description: '',
-      defaultValue: ''
-    };
-    fieldFormTouched = false;
-    fieldCreateOpen = true;
-  }
-
-  function closeFieldCreate() {
-    fieldCreateOpen = false;
-    editedNewField = null;
-  }
-
-  async function handleCreateField() {
-    fieldFormTouched = true;
-    if (!fieldFormValid || !editedNewField) return;
-
-    const typeId = getTypeIdByName(editedNewField.type);
-    if (!typeId) {
-      showToast(`Unknown type "${editedNewField.type}"`, 'error');
-      return;
-    }
-
-    fieldSaving = true;
-    try {
-      const field = await createFieldApi({
-        namespaceId: editedNewField.namespaceId,
-        name: editedNewField.name,
-        typeId,
-        container: editedNewField.container,
-        description: editedNewField.description,
-        defaultValue: editedNewField.defaultValue,
-        constraints: editedNewField.constraints.map(c => ({ constraintId: c.constraintId, value: c.value })),
-        validators: editedNewField.validators.length > 0
-          ? editedNewField.validators.map(v => ({ templateId: v.templateId, parameters: v.parameters ?? undefined }))
-          : undefined
-      });
-
-      fieldsStore.update(fields => [...fields, field]);
-
-      // Auto-add the new field to the object being edited/created
-      if (workflow.editedItem) {
-        workflow.editedItem = {
-          ...workflow.editedItem,
-          members: [...workflow.editedItem.members, { memberType: 'scalar' as const, name: field.name, fieldId: field.id, role: 'writable' as const, isNullable: false }]
-        };
-      }
-
-      showToast(`Field "${editedNewField.name}" created`, 'success');
-      closeFieldCreate();
-    } catch (err) {
-      showToast(mapApiError(err, 'create field'), 'error');
-    } finally {
-      fieldSaving = false;
-    }
-  }
+  const fieldWorkflow = createCrudModel(fieldContract, {
+    itemsStore: () => namespacedFields,
+    searchFn: searchFields,
+    filterSections: () => [],
+    urlScope: { page, goto }
+  });
 </script>
 
 <MainColumnFrame bodyClass="">
@@ -267,7 +220,7 @@
       availableFields={namespacedFields}
       {modelValidatorTemplates}
       visibleErrors={workflow.visibleErrors}
-      onCreateNewField={openFieldCreate}
+      onCreateNewField={fieldWorkflow.openCreate}
     />
   {/if}
 {/snippet}
@@ -295,14 +248,14 @@
 {/snippet}
 
 {#snippet fieldFormContent(_: { close: () => void })}
-  {#if editedNewField}
+  {#if fieldWorkflow.editedItem}
     <FieldFormContent
-      bind:editedItem={editedNewField}
+      bind:editedItem={fieldWorkflow.editedItem}
       mode="creating"
-      selectableTypes={$typesStore}
-      fieldConstraintDefinitions={$fieldConstraintsStore}
-      fieldValidatorTemplates={$fieldValidatorTemplatesStore}
-      visibleErrors={fieldVisibleErrors}
+      {selectableTypes}
+      fieldConstraintDefinitions={fieldConstraints}
+      {fieldValidatorTemplates}
+      visibleErrors={fieldWorkflow.visibleErrors}
     />
   {/if}
 {/snippet}
@@ -310,9 +263,9 @@
 {#snippet fieldFormFooter({ close }: { close: () => void })}
   <CrudDrawerFooter
     mode="creating"
-    isSaving={fieldSaving}
-    isFormValid={fieldFormValid}
-    onCreate={handleCreateField}
+    isSaving={fieldWorkflow.isSaving}
+    isFormValid={fieldWorkflow.isFormValid}
+    onCreate={fieldWorkflow.handleCreate}
     onCancel={close}
   />
 {/snippet}
@@ -329,7 +282,7 @@
           content: objectFormContent,
           footer: objectFormFooter
         },
-        ...(fieldCreateOpen
+        ...(fieldWorkflow.drawerOpen
           ? [{
               id: 'field',
               title: 'Create Field',
@@ -343,5 +296,5 @@
       ]
     : []
   }
-  onPopPanel={fieldCreateOpen ? closeFieldCreate : workflow.closeDrawer}
+  onPopPanel={fieldWorkflow.drawerOpen ? fieldWorkflow.closeDrawer : workflow.closeDrawer}
 />

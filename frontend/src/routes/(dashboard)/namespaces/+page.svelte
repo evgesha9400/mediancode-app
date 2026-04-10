@@ -3,8 +3,9 @@
     namespacesStore,
     searchNamespaces,
     getNamespaceEntityDetails
-  } from '$lib/stores/namespaces';
-  import { createNamespacesModel } from '$lib/stores/namespacesModel.svelte';
+  } from '$lib/stores/stores';
+  import { createCrudModel } from '$lib/stores/crudModel.svelte';
+  import { createNamespacesContract } from '$lib/stores/namespacesConfig.svelte';
   import {
     MainColumnFrame,
     PageHeader,
@@ -62,12 +63,12 @@
   ];
 
   // Per-entity CRUD model
-  const workflow = createNamespacesModel({
+  const contract = createNamespacesContract({ getNamespaceEntityDetails });
+  const workflow = createCrudModel(contract, {
     itemsStore: () => $namespacesStore,
     searchFn: searchNamespaces,
     filterSections: namespaceFilterConfig,
-    urlScope: { page, goto },
-    getNamespaceEntityDetails
+    urlScope: { page, goto }
   });
 
   // Truly derived values (read-only computations)

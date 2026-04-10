@@ -1,6 +1,6 @@
 <script module lang="ts">
-  import type { FieldConstraintValue } from '$lib/stores/fields';
-  import type { FieldConstraint } from '$lib/stores/fieldConstraints';
+  import type { FieldConstraintValue } from '$lib/types';
+  import type { FieldConstraint } from '$lib/stores/stores';
 
   export interface FieldConstraintEditorProps {
     /** Currently attached constraints on the field */

@@ -10,7 +10,7 @@
   import { Logo } from '$lib/components/logo';
   import { Tooltip } from '$lib/components/tooltip';
   import { ClerkSidebarUser } from '$lib/components/clerk';
-  import { sidebarState } from '$lib/stores/sidebar.svelte';
+  import { isSidebarCollapsed, sidebarState } from '$lib/stores/sidebar.svelte';
   import {
     dashboardTextPrimary,
     sidebarNavItemActive,
@@ -25,7 +25,7 @@
 
   let { activeRoute }: Props = $props();
 
-  let collapsed = $derived(sidebarState.collapsed);
+  let collapsed = $derived.by(() => isSidebarCollapsed());
   let sidebarShellClass = $derived(sidebarState.drawerMotionActive ? sidebarShellMotionLocked : sidebarShell);
 
   beforeNavigate(() => {

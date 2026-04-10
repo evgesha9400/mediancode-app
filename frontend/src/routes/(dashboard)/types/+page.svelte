@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { typesStore, searchTypes, type FieldType } from '$lib/stores/types';
+  import { typesStore, searchTypes, type FieldType } from '$lib/stores/stores';
   import { isSystemEntity } from '$lib/utils/namespace';
   import {
     MainColumnFrame,

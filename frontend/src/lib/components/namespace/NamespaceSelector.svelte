@@ -24,7 +24,7 @@
     activeNamespaceId,
     activeNamespace,
     setActiveNamespace
-  } from '$lib/stores/namespaces';
+  } from '$lib/stores/stores';
   import type { Namespace } from '$lib/types';
   import { inputGlassAuto, popoverGlassMenuChrome, themeAccentText } from '$lib/ui/classes';
 

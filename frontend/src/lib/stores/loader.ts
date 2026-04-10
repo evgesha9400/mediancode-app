@@ -17,16 +17,20 @@ import { listFieldConstraints } from '$lib/api/fieldConstraints';
 import { listTypes } from '$lib/api/types';
 import { listFieldValidatorTemplates } from '$lib/api/fieldValidatorTemplates';
 import { listModelValidatorTemplates } from '$lib/api/modelValidatorTemplates';
-import { namespacesStore, activeNamespaceId } from './namespaces';
-import { apisStore, endpointsStore } from './apis';
-import { fieldsStore } from './fields';
-import { objectsStore } from './objects';
-import { fieldConstraintsStore } from './fieldConstraints';
-import { typesBaseStore } from './types';
-import { fieldValidatorTemplatesStore } from './fieldValidatorTemplates';
-import { modelValidatorTemplatesStore } from './modelValidatorTemplates';
+import {
+	namespacesStore,
+	activeNamespaceId,
+	apisStore,
+	endpointsStore,
+	fieldsStore,
+	objectsStore,
+	fieldConstraintsStore,
+	typesBaseStore,
+	fieldValidatorTemplatesStore,
+	modelValidatorTemplatesStore
+} from './stores';
 import { SYSTEM_NAMESPACE_ID } from '$lib/utils/namespace';
-import { hydratePathParamsForEndpoint, normalizeEndpoint } from '$lib/domain/endpointReducer';
+import { hydrateStoredEndpoint } from '$lib/stores/endpointsConfig.svelte';
 
 /**
  * Store loading state
@@ -148,13 +152,13 @@ export async function loadStoresFromApi(): Promise<void> {
 	});
 
 	// Populate phase 2 stores
-	fieldsStore.set(fields);
-	objectsStore.set(objects);
-	apisStore.set(apis);
-	const hydratedEndpoints = endpoints.map(ep =>
-		hydratePathParamsForEndpoint(normalizeEndpoint(ep), objects, fields)
-	);
-	endpointsStore.set(hydratedEndpoints);
+		fieldsStore.set(fields);
+		objectsStore.set(objects);
+		apisStore.set(apis);
+		const hydratedEndpoints = endpoints.map(ep =>
+			hydrateStoredEndpoint(ep, objects, fields)
+		);
+		endpointsStore.set(hydratedEndpoints);
 
 	// Set active namespace: prefer user's default, fall back to system namespace id, then first
 	const defaultNamespace = namespaces.find(ns => ns.isDefault);

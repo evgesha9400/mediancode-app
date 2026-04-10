@@ -19,7 +19,7 @@
 </script>
 
 <script lang="ts">
-  import { objectsStore } from '$lib/stores/objects';
+  import { objectsStore } from '$lib/stores/stores';
   import { Tooltip } from '$lib/components/tooltip';
   import {
     segmentPillBase,

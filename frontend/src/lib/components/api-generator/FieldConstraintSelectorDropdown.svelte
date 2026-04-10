@@ -1,5 +1,5 @@
 <script module lang="ts">
-  import type { FieldConstraint } from '$lib/stores/fieldConstraints';
+  import type { FieldConstraint } from '$lib/stores/stores';
 
   export interface FieldConstraintSelectorDropdownProps {
     availableFieldConstraints: FieldConstraint[];

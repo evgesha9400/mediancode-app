@@ -1,6 +1,6 @@
 import type { DeletionResult, Reference } from '$lib/types';
 import { get } from 'svelte/store';
-import { apisStore } from '$lib/stores/apis';
+import { apisStore } from '$lib/stores/stores';
 
 /**
  * Builds a tooltip message for deletion blocking references
