@@ -2,7 +2,7 @@
 //
 // Entity contract for Objects — validation, payloads, and hooks.
 
-import type { ObjectDefinition } from '$lib/types';
+import type { ObjectDefinition, ObjectMember } from '$lib/types';
 import type { EntityContract } from './crudModel.svelte';
 import {
 	createObjectApi,
@@ -15,6 +15,20 @@ import { objectsStore, apisStore, getFieldById } from './stores';
 import { buildDeletionTooltip, checkObjectDeletion } from '$lib/utils/references';
 import { isValidPascalCaseName } from '$lib/utils/validation';
 import { get } from 'svelte/store';
+
+// Sentinel prefix for client-generated member ids. The drawer assigns these
+// so DnD has a stable key; the backend must never see them (reconcile-by-id
+// would silently drop them — see _reconcile_members in api/services/object.py).
+export const TEMP_MEMBER_ID_PREFIX = 'tmp-';
+export const newTempMemberId = (): string => TEMP_MEMBER_ID_PREFIX + crypto.randomUUID();
+export const isTempMemberId = (id: string | undefined): boolean =>
+	id?.startsWith(TEMP_MEMBER_ID_PREFIX) ?? false;
+
+function stripTempMemberIds(members: ObjectMember[]): ObjectMember[] {
+	return members.map(({ id, ...rest }) =>
+		id && !isTempMemberId(id) ? ({ ...rest, id } as ObjectMember) : (rest as ObjectMember)
+	);
+}
 
 // Extended object type with computed properties for sorting
 type ObjectWithCounts = ObjectDefinition & {
@@ -113,7 +127,7 @@ export function createObjectsContract(deps: {
 					namespaceId: item.namespaceId,
 					name: item.name,
 					description: item.description,
-					members: item.members.map(({ id, ...rest }) => rest),
+					members: stripTempMemberIds(item.members).map(({ id: _id, ...rest }) => rest),
 					validators:
 						item.validators.length > 0
 							? item.validators.map((v) => ({
@@ -133,7 +147,7 @@ export function createObjectsContract(deps: {
 				data: {
 					name: clean.name,
 					description: clean.description,
-					members: clean.members,
+					members: stripTempMemberIds(clean.members),
 					validators: clean.validators.map((v) => ({
 						templateId: v.templateId,
 						parameters: v.parameters ?? undefined,

@@ -3,7 +3,7 @@
   import { goto } from '$app/navigation';
   import { untrack } from 'svelte';
   import { createCrudModel } from '$lib/stores/crudModel.svelte';
-  import { createObjectsContract } from '$lib/stores/objectsConfig.svelte';
+  import { createObjectsContract, newTempMemberId } from '$lib/stores/objectsConfig.svelte';
   import { createFieldsContract } from '$lib/stores/fieldsConfig.svelte';
   import {
     BackNavButton,
@@ -169,6 +169,7 @@
             ...objectWorkflow.editedItem.members,
             {
               memberType: 'scalar',
+              id: newTempMemberId(),
               name: field.name,
               fieldId: field.id,
               role: 'writable',

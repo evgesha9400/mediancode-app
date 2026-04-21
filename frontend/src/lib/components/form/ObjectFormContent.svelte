@@ -13,6 +13,7 @@
   import type { ObjectDefinition, ObjectMember, ScalarMember, RelationshipMember, RelationshipKind } from '$lib/types';
   import type { Field, ModelValidatorTemplate, InlineModelValidator, FieldRole } from '$lib/types';
   import { getFieldById, getModelValidatorTemplateById, objectsStore, getObjectById, apisStore } from '$lib/stores/stores';
+  import { newTempMemberId } from '$lib/stores/objectsConfig.svelte';
   import { ROLE_LABELS, ROLE_TOOLTIPS, getAvailableRoles, roleHasModifiers } from '$lib/types';
   import {
     FormField,
@@ -80,34 +81,27 @@
   );
 
   // --- Drag-and-drop member reordering ---
+  // Members carry their own stable id throughout an edit session: either a
+  // backend uuid (loaded from the server) or a `tmp-*` sentinel assigned by
+  // addScalarMember / addRelationshipMember. DnD uses member.id directly.
   type DndItem = ObjectMember & { id: string };
-
-  // Snapshot of original members for distinguishing backend-assigned IDs from temp IDs
-  let originalMembers: ObjectMember[] = [...editedItem.members];
 
   // Mutable state for dndzone — synced from editedItem.members
   let dndItems: DndItem[] = $state(
-    editedItem.members.map(m => ({
-      ...m,
-      id: m.id ?? crypto.randomUUID()
-    }))
+    editedItem.members.map(m => ({ ...m, id: m.id! }))
   );
 
   // Re-sync when editedItem.members changes externally (undo, member add/remove)
   $effect(() => {
-    dndItems = editedItem.members.map(m => ({
-      ...m,
-      id: m.id ?? crypto.randomUUID()
-    }));
-    originalMembers = [...editedItem.members];
+    dndItems = editedItem.members.map(m => ({ ...m, id: m.id! }));
   });
 
-  // Convert DnD items back to API-ready members (strip temp IDs from new members)
+  // Convert DnD items back to ObjectMember[] for editedItem. Stable ids
+  // (backend uuids and tmp-* sentinels) stay in memory so subsequent DnD
+  // keys don't go undefined; objectsConfig.toUpdatePayload strips tmp-*
+  // ids at save time so the backend treats them as inserts.
   function toApiMembers(items: DndItem[]): ObjectMember[] {
-    return items.map(({ id, ...member }) => {
-      const isBackendAssigned = originalMembers.some(m => m.id === id);
-      return isBackendAssigned ? { ...member, id } : member;
-    }) as ObjectMember[];
+    return items.map(({ id, ...member }) => ({ ...member, id }) as ObjectMember);
   }
 
   function handleDndConsider(e: CustomEvent<DndEvent<DndItem>>) {
@@ -133,7 +127,7 @@
     if (!field) return;
     const newMember: ScalarMember = {
       memberType: 'scalar',
-      id: crypto.randomUUID(),
+      id: newTempMemberId(),
       name: field.name,
       fieldId,
       role: 'writable',
@@ -265,7 +259,7 @@
     const defaultInverseName = editedItem.name ? editedItem.name.toLowerCase() : 'source';
     const newMember: RelationshipMember = {
       memberType: 'relationship',
-      id: crypto.randomUUID(),
+      id: newTempMemberId(),
       name: defaultName,
       targetObjectId,
       kind: 'one_to_many',

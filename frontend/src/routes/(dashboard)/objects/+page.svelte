@@ -9,7 +9,7 @@
   } from '$lib/stores/stores';
   import type { ObjectDefinition } from '$lib/types';
   import { createCrudModel } from '$lib/stores/crudModel.svelte';
-  import { createObjectsContract } from '$lib/stores/objectsConfig.svelte';
+  import { createObjectsContract, newTempMemberId } from '$lib/stores/objectsConfig.svelte';
   import { createFieldsContract } from '$lib/stores/fieldsConfig.svelte';
   import {
     MainColumnFrame,
@@ -100,6 +100,7 @@
           ...workflow.editedItem.members,
           {
             memberType: 'scalar',
+            id: newTempMemberId(),
             name: field.name,
             fieldId: field.id,
             role: 'writable',
