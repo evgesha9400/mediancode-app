@@ -190,10 +190,14 @@ jobs:
     needs: playwright-smoke
     runs-on: ubuntu-latest
     timeout-minutes: 30
-    # Run nightly and on manual trigger only (expensive, hits external backend)
+    # Runs on nightly schedule, manual trigger, and every push to main/develop.
+    # Feature-branch pushes and PRs skip this job to keep iteration fast;
+    # the all-tests gate below then only tolerates a skip on those branches.
     if: |
       github.event_name == 'schedule' ||
-      github.event_name == 'workflow_dispatch'
+      github.event_name == 'workflow_dispatch' ||
+      (github.event_name == 'push' &&
+       (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop'))
 
     steps:
       - name: Checkout code
@@ -270,11 +274,18 @@ jobs:
             exit 1
           fi
 
-          # E2E CRUD is conditional — skipped is acceptable
-          if [ "${{ needs.e2e-crud.result }}" != "success" ] &&
-             [ "${{ needs.e2e-crud.result }}" != "skipped" ]; then
-            echo "E2E CRUD tests failed"
-            exit 1
+          # E2E CRUD must succeed, except that a `skipped` result is
+          # tolerated only on feature branches and PRs (where the job
+          # is intentionally skipped to keep iteration fast).
+          if [ "${{ needs.e2e-crud.result }}" != "success" ]; then
+            if [ "${{ needs.e2e-crud.result }}" == "skipped" ] &&
+               [ "${{ github.ref }}" != "refs/heads/main" ] &&
+               [ "${{ github.ref }}" != "refs/heads/develop" ]; then
+              echo "E2E CRUD skipped on feature branch — OK"
+            else
+              echo "E2E CRUD tests failed (or skipped on protected branch)"
+              exit 1
+            fi
           fi
 
           echo "All tests passed!"
