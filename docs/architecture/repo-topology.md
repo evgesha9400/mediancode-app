@@ -1,23 +1,14 @@
 # Repo Topology
 
-## Layout
+Two deployable apps share one repo and one OpenAPI contract.
 
-```
-mediancode-app/
-├── api-spec.yaml         # OpenAPI contract — source of truth
-├── backend/              # FastAPI service (Python 3.13)
-├── frontend/             # SvelteKit app (Bun)
-├── docs/                 # cross-cutting docs
-│   ├── philosophy/       # product philosophy and decision framing
-│   ├── standards/        # commit messages, etc.
-│   ├── protocols/        # cross-app verification flows
-│   ├── architecture/     # this doc and other topology notes
-│   └── work/             # active and completed initiatives
-├── .github/workflows/    # backend-ci.yml, frontend-ci.yml (path-filtered)
-├── Makefile              # root entry points (delegates to subdir Makefiles)
-├── CLAUDE.md             # cross-cutting agent guidance
-└── AGENTS.md             # cross-cutting agent guidance (Codex)
-```
+- `backend/` — FastAPI service (Python 3.13), deployed to Coolify
+- `frontend/` — SvelteKit app (Bun), deployed to Vercel
+- `api-spec.yaml` — single source of truth, backend-generated, frontend-consumed
+- `docs/` — cross-cutting only (`philosophy/`, `standards/`, `protocols/`, `architecture/`, `work/`)
+- `.github/workflows/` — path-filtered CI per app
+- `Makefile` — root entry points delegating to subdir Makefiles
+- `CLAUDE.md` / `AGENTS.md` — cross-cutting agent guidance
 
 ## Ownership
 

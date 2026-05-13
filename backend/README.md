@@ -81,52 +81,12 @@ make migration msg="..."    # Create new migration file
             Clerk Auth
 ```
 
-## Project Structure
+## Packages
 
-```
-src/
-├── api/                    # FastAPI service
-│   ├── main.py             # App entry point, router registration
-│   ├── auth.py             # Clerk JWT authentication
-│   ├── database.py         # Async SQLAlchemy engine and session
-│   ├── deps.py             # Shared dependencies (DbSession, ProvisionedUser)
-│   ├── middleware.py        # Security headers middleware
-│   ├── rate_limit.py       # Rate limiting configuration (slowapi)
-│   ├── settings.py         # Environment-based settings (pydantic-settings)
-│   ├── routers/            # API endpoint handlers
-│   │   ├── namespaces.py
-│   │   ├── apis.py
-│   │   ├── types.py
-│   │   ├── field_constraints.py
-│   │   ├── fields.py
-│   │   ├── objects.py
-│   │   └── endpoints.py
-│   ├── services/           # Business logic layer
-│   │   ├── base.py         # Base service class
-│   │   ├── namespace.py
-│   │   ├── api.py
-│   │   ├── type.py
-│   │   ├── field_constraint.py
-│   │   ├── field.py
-│   │   ├── object.py
-│   │   ├── endpoint.py
-│   │   ├── generation.py   # Code generation orchestration
-│   │   └── user.py         # User provisioning and generation limits
-│   ├── schemas/            # Pydantic request/response models
-│   ├── models/             # SQLAlchemy ORM models
-│   ├── migrations/         # Alembic migrations
-│   └── data/               # Reference configuration (global_config.yaml)
-│
-└── api_craft/              # Code generation library
-    ├── main.py             # APIGenerator class, generate_fastapi()
-    ├── transformers.py     # InputAPI -> TemplateAPI conversion
-    ├── extractors.py       # Extract models, views, parameters
-    ├── renderers.py        # Apply Mako templates to components
-    ├── placeholders.py     # Placeholder data generation
-    ├── utils.py            # Shared utilities
-    ├── models/             # Pydantic models (input, template, types, validators)
-    └── templates/          # Mako templates (*.mako) and static files
-```
+- `src/api/` — FastAPI service (routers, services, schemas, models, migrations).
+- `src/api_craft/` — code generation library (transformers, extractors, renderers, Mako templates).
+
+See [CLAUDE.md](CLAUDE.md) for the generation pipeline and conventions.
 
 ## Deployment
 

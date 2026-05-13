@@ -2,19 +2,15 @@
 
 Median Code monorepo. Combines the former `mediancode-backend` and `mediancode-frontend` repositories.
 
-## Layout
+## What lives here
 
-```
-.
-├── api-spec.yaml         # OpenAPI contract — source of truth, generated from backend
-├── backend/              # FastAPI service (Python 3.13, poetry/uv)
-├── frontend/             # SvelteKit app (Bun)
-├── docs/                 # cross-cutting docs (philosophy, standards, protocols, work)
-├── .github/workflows/    # path-filtered CI per app
-├── CLAUDE.md             # cross-cutting agent guidance
-├── AGENTS.md             # cross-cutting agent guidance (Codex)
-└── Makefile              # parallel dev/test entry points
-```
+- `backend/` — FastAPI service. See [backend/README.md](backend/README.md).
+- `frontend/` — SvelteKit app. See [frontend/README.md](frontend/README.md).
+- `api-spec.yaml` — OpenAPI contract, source of truth. Generated from backend; never edit by hand.
+- `docs/` — cross-cutting docs (philosophy, standards, protocols, work artifacts).
+- `Makefile` — parallel dev/test entry points across both apps.
+- `.github/workflows/` — path-filtered CI per app.
+- `CLAUDE.md` / `AGENTS.md` — cross-cutting agent guidance.
 
 ## Quickstart
 
