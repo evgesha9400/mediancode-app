@@ -37,7 +37,9 @@ def committed_spec() -> dict:
         return yaml.safe_load(f)
 
 
-def test_openapi_matches_committed_spec(runtime_spec: dict, committed_spec: dict) -> None:
+def test_openapi_matches_committed_spec(
+    runtime_spec: dict, committed_spec: dict
+) -> None:
     if runtime_spec == committed_spec:
         return
 
@@ -57,9 +59,13 @@ def test_openapi_matches_committed_spec(runtime_spec: dict, committed_spec: dict
     if removed:
         diff_summary_lines.append(f"  Paths in spec, missing in code: {removed}")
     if added_schemas:
-        diff_summary_lines.append(f"  Schemas added in code, missing in spec: {added_schemas}")
+        diff_summary_lines.append(
+            f"  Schemas added in code, missing in spec: {added_schemas}"
+        )
     if removed_schemas:
-        diff_summary_lines.append(f"  Schemas in spec, missing in code: {removed_schemas}")
+        diff_summary_lines.append(
+            f"  Schemas in spec, missing in code: {removed_schemas}"
+        )
     diff_summary_lines.append(
         "  Regenerate with the snippet in this test module's docstring."
     )
