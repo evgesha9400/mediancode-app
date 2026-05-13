@@ -11,20 +11,10 @@ Median Code Backend consists of two packages:
 
 **Python 3.13+ required.**
 
-## Package Structure
+## Packages
 
-```
-src/
-├── api_craft/          # Code generation library
-│   ├── main.py         # APIGenerator class, generate_fastapi()
-│   ├── models/         # Pydantic models (input.py, template.py, types.py)
-│   ├── templates/      # Mako templates (*.mako)
-│   ├── transformers.py
-│   ├── extractors.py
-│   └── renderers.py
-└── api/                # FastAPI service
-    └── ...
-```
+- `src/api/` — FastAPI service: routers, services, schemas, models, migrations.
+- `src/api_craft/` — code generation library: `APIGenerator`, transformers, extractors, renderers, Mako templates.
 
 ## Commands
 
