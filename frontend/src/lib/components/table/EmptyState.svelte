@@ -58,9 +58,9 @@
 </script>
 
 <div data-testid={EMPTY_STATE_ID} class="flex flex-col items-center justify-center py-12 px-6">
-  <i class="fa-solid {icon} text-4xl {variant === 'error' ? 'text-red-400' : 'text-mono-600'} mb-4"></i>
-  <h3 class="text-lg font-medium {variant === 'error' ? 'text-red-400' : 'text-mono-100'} mb-2">{title}</h3>
-  <p class="text-sm text-mono-400">{message}</p>
+  <i class="fa-solid {icon} text-4xl {variant === 'error' ? 'text-red-400' : 'text-fg-faint'} mb-4"></i>
+  <h3 class="text-lg font-medium {variant === 'error' ? 'text-red-400' : 'text-fg'} mb-2">{title}</h3>
+  <p class="text-sm text-fg-muted">{message}</p>
   {#if actionLabel && onAction}
     <button
       onclick={onAction}

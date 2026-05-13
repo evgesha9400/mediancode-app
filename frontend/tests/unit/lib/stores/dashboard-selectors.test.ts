@@ -14,13 +14,13 @@ import {
 	fieldsStore,
 	getTotalFieldCount,
 	getTotalApiCount
-} from '$lib/stores/fields';
-import { fieldConstraintsStore, getTotalFieldConstraintCount } from '$lib/stores/fieldConstraints';
+} from '$lib/stores/stores';
+import { fieldConstraintsStore, getTotalFieldConstraintCount } from '$lib/stores/stores';
 import {
 	initialFields,
 	initialFieldConstraints
 } from '../../../fixtures/seedData';
-import type { FieldConstraint } from '$lib/stores/fieldConstraints';
+import type { FieldConstraint } from '$lib/stores/stores';
 
 // Helper to transform FieldConstraintBase to FieldConstraint with usage count
 function createFieldConstraintWithUsage(

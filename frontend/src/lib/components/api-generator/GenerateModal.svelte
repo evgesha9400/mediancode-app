@@ -65,19 +65,19 @@
 <Modal {open} onClose={generating ? undefined : onClose} preventCloseOnOverlay={generating}>
   <div class="p-6">
     <!-- Header -->
-    <h2 class="text-lg font-semibold text-mono-100 mb-4">Generate Code</h2>
+    <h2 class="text-lg font-semibold text-fg mb-4">Generate Code</h2>
 
     <!-- Credit cost -->
-    <div class="flex items-center space-x-2 text-sm text-mono-400 mb-4">
-      <i class="fa-solid fa-coins text-mono-400"></i>
-      <span>This will use <strong class="text-mono-100">1 credit</strong></span>
+    <div class="flex items-center space-x-2 text-sm text-fg-muted mb-4">
+      <i class="fa-solid fa-coins text-fg-muted"></i>
+      <span>This will use <strong class="text-fg">1 credit</strong></span>
     </div>
 
     <!-- Options -->
     <div class="mb-6">
       <div class="flex items-center space-x-2 mb-3">
-        <i class="fa-solid fa-gear text-mono-400 text-sm"></i>
-        <span class="text-sm font-medium text-mono-300">Options</span>
+        <i class="fa-solid fa-gear text-fg-muted text-sm"></i>
+        <span class="text-sm font-medium text-fg-secondary">Options</span>
       </div>
 
       <div class="space-y-3">
@@ -85,7 +85,7 @@
         <div>
           <label class="flex items-center space-x-2 cursor-pointer">
             <input type="checkbox" bind:checked={responsePlaceholders} class={modalFormCheckbox} />
-            <span class="text-xs text-mono-300">Generate response placeholders</span>
+            <span class="text-xs text-fg-secondary">Generate response placeholders</span>
           </label>
         </div>
 
@@ -93,8 +93,8 @@
         <div>
           <label class="flex items-center space-x-2 cursor-pointer">
             <input type="checkbox" bind:checked={databaseEnabled} class={modalFormCheckbox} />
-            <span class="text-xs text-mono-300">Database support</span>
-            <span class="text-xs text-mono-400">PostgreSQL, SQLAlchemy, Alembic, Docker Compose</span>
+            <span class="text-xs text-fg-secondary">Database support</span>
+            <span class="text-xs text-fg-muted">PostgreSQL, SQLAlchemy, Alembic, Docker Compose</span>
           </label>
         </div>
 
@@ -102,21 +102,21 @@
         <div>
           <label class="flex items-center space-x-2 cursor-pointer">
             <input type="checkbox" bind:checked={cdkEnabled} class={modalFormCheckbox} />
-            <span class="text-xs text-mono-300">CDK infrastructure</span>
-            <span class="text-xs text-mono-400">AWS CDK stack files</span>
+            <span class="text-xs text-fg-secondary">CDK infrastructure</span>
+            <span class="text-xs text-fg-muted">AWS CDK stack files</span>
           </label>
 
           {#if cdkEnabled}
             <div class="mt-2 ml-6">
-              <p class="text-xs text-mono-400 mb-1">Compute</p>
+              <p class="text-xs text-fg-muted mb-1">Compute</p>
               <div class="flex space-x-3">
                 <label class="flex items-center space-x-1.5 cursor-pointer">
                   <input type="radio" bind:group={cdkCompute} value="lambda" class={modalFormRadio} />
-                  <span class="text-xs text-mono-300">Lambda</span>
+                  <span class="text-xs text-fg-secondary">Lambda</span>
                 </label>
                 <label class="flex items-center space-x-1.5 cursor-pointer">
                   <input type="radio" bind:group={cdkCompute} value="ecs" class={modalFormRadio} />
-                  <span class="text-xs text-mono-300">ECS Fargate</span>
+                  <span class="text-xs text-fg-secondary">ECS Fargate</span>
                 </label>
               </div>
             </div>
@@ -138,7 +138,7 @@
         type="button"
         onclick={onClose}
         disabled={generating}
-        class="{modalFooterBtnSecondary} {generating ? 'opacity-50 cursor-not-allowed' : 'hover:bg-mono-800 cursor-pointer'}"
+        class="{modalFooterBtnSecondary} {generating ? 'opacity-50 cursor-not-allowed' : 'hover:bg-surface-raised cursor-pointer'}"
       >
         Cancel
       </button>

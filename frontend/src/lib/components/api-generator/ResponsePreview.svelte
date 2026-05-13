@@ -10,9 +10,7 @@
 
 <script lang="ts">
   import type { ScalarMember } from '$lib/types';
-  import { objectsStore } from '$lib/stores/objects';
-  import { getFieldById } from '$lib/stores/fields';
-  import { getObjectById } from '$lib/stores/objects';
+  import { objectsStore, getFieldById, getObjectById } from '$lib/stores/stores';
   import { buildRequestPreviewFromObject, buildResponsePreviewFromObject } from '$lib/utils/examples';
   import { dashboardTextPrimary, surfaceInsideFrostedPanel } from '$lib/ui/classes';
 
@@ -43,7 +41,7 @@
 </script>
 
 <div class="space-y-4">
-  <h3 class="text-sm text-mono-300 flex items-center font-medium">
+  <h3 class="text-sm text-fg-secondary flex items-center font-medium">
     <i class="fa-solid fa-eye mr-2"></i>
     Request & Response Preview
   </h3>
@@ -53,30 +51,30 @@
     <div class="p-3 {surfaceInsideFrostedPanel}">
       <div class="flex items-center justify-between mb-2">
         <div class="flex items-center space-x-2">
-          <i class="fa-solid fa-cube text-mono-400 text-sm"></i>
-          <span class="font-mono text-sm text-mono-300">{selectedObject.name}</span>
+          <i class="fa-solid fa-cube text-fg-muted text-sm"></i>
+          <span class="font-mono text-sm text-fg-secondary">{selectedObject.name}</span>
         </div>
-        <span class="text-xs text-mono-400">{selectedObject.members.length} members</span>
+        <span class="text-xs text-fg-muted">{selectedObject.members.length} members</span>
       </div>
 
       {#if selectedObject.description}
-        <p class="text-xs text-mono-400 mb-2">{selectedObject.description}</p>
+        <p class="text-xs text-fg-muted mb-2">{selectedObject.description}</p>
       {/if}
 
       <!-- Field List (scalar members only) -->
       <div class="space-y-1 mt-2">
-        <p class="text-xs text-mono-400 font-medium">Fields:</p>
+        <p class="text-xs text-fg-muted font-medium">Fields:</p>
         {#each selectedObject.members.filter(m => m.memberType === 'scalar') as member (member.fieldId)}
           {@const scalarMember = member as ScalarMember}
           {@const field = getFieldById(scalarMember.fieldId)}
           {#if field}
             <div class="flex items-center justify-between text-xs">
-              <span class="font-mono text-mono-300">{scalarMember.name}</span>
+              <span class="font-mono text-fg-secondary">{scalarMember.name}</span>
               <div class="flex items-center space-x-2">
                 {#if scalarMember.role !== 'writable'}
-                  <span class="text-mono-500 text-[10px] uppercase">{scalarMember.role.replace(/_/g, ' ')}</span>
+                  <span class="text-fg-dimmed text-[10px] uppercase">{scalarMember.role.replace(/_/g, ' ')}</span>
                 {/if}
-                <span class="text-mono-400 bg-mono-800 px-1.5 py-0.5 rounded-lg">{field.type}</span>
+                <span class="text-fg-muted bg-surface-raised px-1.5 py-0.5 rounded-lg">{field.type}</span>
               </div>
             </div>
           {:else}
@@ -89,7 +87,7 @@
       </div>
 
       {#if method === 'DELETE'}
-        <p class="text-xs text-mono-500 mt-2 border-t border-mono-700/80 pt-2">
+        <p class="text-xs text-fg-dimmed mt-2 border-t border-edge/80 pt-2">
           For DELETE, this object defines path parameter types and which entity is addressed — not a
           response body.
         </p>
@@ -97,7 +95,7 @@
     </div>
   {:else}
     <div class="p-3 {surfaceInsideFrostedPanel}">
-      <p class="text-xs text-mono-400">No object selected — select an object above to see previews</p>
+      <p class="text-xs text-fg-muted">No object selected — select an object above to see previews</p>
     </div>
   {/if}
 
@@ -107,7 +105,7 @@
       {#if hasRequestBody}
         <!-- Request column -->
         <div class="space-y-2">
-          <h4 class="text-xs text-mono-400 flex items-center font-medium uppercase tracking-wider">
+          <h4 class="text-xs text-fg-muted flex items-center font-medium uppercase tracking-wider">
             <i class="fa-solid fa-arrow-up mr-2"></i>
             Request Body
           </h4>
@@ -120,7 +118,7 @@
       {#if hasResponseBody}
         <!-- Response column -->
         <div class="space-y-2">
-          <h4 class="text-xs text-mono-400 flex items-center font-medium uppercase tracking-wider">
+          <h4 class="text-xs text-fg-muted flex items-center font-medium uppercase tracking-wider">
             <i class="fa-solid fa-arrow-down mr-2"></i>
             Response Body
           </h4>
@@ -133,7 +131,7 @@
   {:else}
     <!-- DELETE: no request or response body -->
     <div class="p-3 {surfaceInsideFrostedPanel}">
-      <p class="text-sm text-mono-400">DELETE returns <code class="bg-mono-800 px-1 rounded-lg">204 No Content</code> with no response body.</p>
+      <p class="text-sm text-fg-muted">DELETE returns <code class="bg-surface-raised px-1 rounded-lg">204 No Content</code> with no response body.</p>
     </div>
   {/if}
 </div>

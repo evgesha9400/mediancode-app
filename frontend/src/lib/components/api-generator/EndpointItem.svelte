@@ -8,6 +8,12 @@
 </script>
 
 <script lang="ts">
+  import {
+    themeAccentBorderMedium,
+    themeAccentFillStrong,
+    themeAccentSurfaceSoft
+  } from '$lib/ui/classes';
+
   interface Props extends EndpointItemProps {}
 
   let { endpoint, onClick }: Props = $props();
@@ -29,9 +35,9 @@
         };
       case 'POST':
         return {
-          badge: 'bg-green-500 text-white',
-          row: 'bg-green-400/10',
-          border: 'border-green-400/30'
+          badge: `${themeAccentFillStrong} text-white`,
+          row: themeAccentSurfaceSoft,
+          border: themeAccentBorderMedium
         };
       case 'PUT':
         return {
@@ -53,9 +59,9 @@
         };
       default:
         return {
-          badge: 'bg-mono-500 text-white',
-          row: 'bg-mono-800',
-          border: 'border-mono-700'
+          badge: 'bg-surface-raised text-white',
+          row: 'bg-surface-raised',
+          border: 'border-edge'
         };
     }
   }
@@ -72,10 +78,10 @@
     <span class="w-[70px] text-center flex-shrink-0 px-2 py-1 text-xs font-inter font-bold rounded-lg {colors.badge} shadow-sm backdrop-blur-md">
       {endpoint.method}
     </span>
-    <span class="text-sm font-medium text-mono-100">{endpoint.path}</span>
+    <span class="text-sm font-medium text-fg">{endpoint.path}</span>
     {#if endpoint.description}
-      <span class="text-xs text-mono-400">{endpoint.description}</span>
+      <span class="text-xs text-fg-muted">{endpoint.description}</span>
     {/if}
   </div>
-  <i class="fa-solid fa-chevron-right text-mono-400"></i>
+  <i class="fa-solid fa-chevron-right text-fg-muted"></i>
 </button>

@@ -62,7 +62,7 @@
     <button
       type="button"
       onclick={onClose}
-      class="text-mono-400 hover:text-mono-300 transition-colors"
+      class="text-fg-muted hover:text-fg-secondary transition-colors"
       title="Close gallery"
     >
       <i class="fa-solid fa-xmark"></i>
@@ -84,42 +84,42 @@
         <button
           type="button"
           onclick={() => onSelectField?.(template)}
-          class="w-full text-left p-3 {surfaceInsideFrostedPanel} hover:border-mono-400 hover:bg-mono-800 transition-colors cursor-pointer"
+          class="w-full text-left p-3 {surfaceInsideFrostedPanel} hover:border-edge-hover hover:bg-surface-raised transition-colors cursor-pointer"
         >
           <div class="flex items-center justify-between">
             <span class={tableListBodyPrimary}>{template.name}</span>
             <Pill>{template.mode}</Pill>
           </div>
-          <p class="text-xs text-mono-400 mt-1">{template.description}</p>
+          <p class="text-xs text-fg-muted mt-1">{template.description}</p>
           <div class="flex flex-wrap gap-1 mt-1">
             {#each template.compatibleTypes as ctype}
-              <span class="px-1.5 py-0.5 text-[10px] rounded-full bg-mono-700 text-mono-400">{ctype}</span>
+              <span class="px-1.5 py-0.5 text-[10px] rounded-full bg-surface-overlay text-fg-muted">{ctype}</span>
             {/each}
           </div>
         </button>
       {:else}
-        <p class="text-xs text-mono-400 italic p-2">No matching templates</p>
+        <p class="text-xs text-fg-muted italic p-2">No matching templates</p>
       {/each}
     {:else}
       {#each filteredModelTemplates as template}
         <button
           type="button"
           onclick={() => onSelectModel?.(template)}
-          class="w-full text-left p-3 {surfaceInsideFrostedPanel} hover:border-mono-400 hover:bg-mono-800 transition-colors cursor-pointer"
+          class="w-full text-left p-3 {surfaceInsideFrostedPanel} hover:border-edge-hover hover:bg-surface-raised transition-colors cursor-pointer"
         >
           <div class="flex items-center justify-between">
             <span class={tableListBodyPrimary}>{template.name}</span>
             <Pill>{template.mode}</Pill>
           </div>
-          <p class="text-xs text-mono-400 mt-1">{template.description}</p>
+          <p class="text-xs text-fg-muted mt-1">{template.description}</p>
           <div class="flex flex-wrap gap-1 mt-1">
             {#each template.fieldMappings as fm}
-              <span class="px-1.5 py-0.5 text-[10px] rounded-full bg-mono-700 text-mono-400">{fm.label}</span>
+              <span class="px-1.5 py-0.5 text-[10px] rounded-full bg-surface-overlay text-fg-muted">{fm.label}</span>
             {/each}
           </div>
         </button>
       {:else}
-        <p class="text-xs text-mono-400 italic p-2">No matching templates</p>
+        <p class="text-xs text-fg-muted italic p-2">No matching templates</p>
       {/each}
     {/if}
   </div>

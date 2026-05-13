@@ -23,7 +23,7 @@
 <Table {isEmpty}>
   {#snippet header()}
     <tr>
-      <th class="px-6 py-3 text-left text-xs font-medium text-mono-500 uppercase tracking-wider">
+      <th class="px-6 py-3 text-left text-xs font-medium text-fg-dimmed uppercase tracking-wider">
         Name
       </th>
     </tr>
@@ -31,13 +31,13 @@
   {#snippet body()}
     {#each items as item (item.id)}
       <tr>
-        <td class="px-6 py-4 whitespace-nowrap text-sm text-mono-900">
+        <td class="px-6 py-4 whitespace-nowrap text-sm text-fg-on-accent">
           {item.name}
         </td>
       </tr>
     {/each}
   {/snippet}
   {#snippet empty()}
-    <p class="text-mono-500 text-center py-8">No items found</p>
+    <p class="text-fg-dimmed text-center py-8">No items found</p>
   {/snippet}
 </Table>

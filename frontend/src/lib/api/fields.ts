@@ -7,7 +7,7 @@
 import { apiGet, apiPost, apiPut, apiDelete } from './client';
 import type { Field, FieldConstraintValue, InlineFieldValidator } from '$lib/types';
 import { get } from 'svelte/store';
-import { typesBaseStore } from '$lib/stores/types';
+import { typesBaseStore } from '$lib/stores/stores';
 
 /**
  * Backend API response for field constraint value

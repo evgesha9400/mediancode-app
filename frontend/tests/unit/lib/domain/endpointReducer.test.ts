@@ -5,7 +5,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 // Mocks
 // ---------------------------------------------------------------------------
 
-vi.mock('$lib/stores/fields', () => {
+vi.mock('$lib/stores/stores', () => {
   const { writable } = require('svelte/store');
   return { fieldsStore: writable([]) };
 });
@@ -25,7 +25,7 @@ import {
   hydratePathParamsForEndpoint,
   buildDuplicateEndpoint
 } from '$lib/domain/endpointReducer';
-import { fieldsStore } from '$lib/stores/fields';
+import { fieldsStore } from '$lib/stores/stores';
 import type { ApiEndpoint, Field, ObjectDefinition } from '$lib/types';
 
 // ---------------------------------------------------------------------------

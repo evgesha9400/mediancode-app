@@ -3,8 +3,9 @@
     namespacesStore,
     searchNamespaces,
     getNamespaceEntityDetails
-  } from '$lib/stores/namespaces';
-  import { createNamespacesModel } from '$lib/stores/namespacesModel.svelte';
+  } from '$lib/stores/stores';
+  import { createCrudModel } from '$lib/stores/crudModel.svelte';
+  import { createNamespacesContract } from '$lib/stores/namespacesConfig.svelte';
   import {
     MainColumnFrame,
     PageHeader,
@@ -24,6 +25,8 @@
   } from '$lib/components';
   import type { FilterConfig, Namespace } from '$lib/types';
   import {
+    dashboardPageHeaderPrimaryButton,
+    modalFormCheckbox,
     surfaceInsideFrostedPanel,
     tableListBodyPrimary,
     tableListPanelSectionTitle,
@@ -60,12 +63,12 @@
   ];
 
   // Per-entity CRUD model
-  const workflow = createNamespacesModel({
+  const contract = createNamespacesContract({ getNamespaceEntityDetails });
+  const workflow = createCrudModel(contract, {
     itemsStore: () => $namespacesStore,
     searchFn: searchNamespaces,
     filterSections: namespaceFilterConfig,
-    urlScope: { page, goto },
-    getNamespaceEntityDetails
+    urlScope: { page, goto }
   });
 
   // Truly derived values (read-only computations)
@@ -84,7 +87,7 @@
         <button
           type="button"
           onclick={workflow.openCreate}
-          class="px-4 py-2 bg-green-400 text-mono-950 font-inter font-semibold rounded-xl text-sm tracking-wide shadow-sm flex items-center space-x-2 hover:bg-green-300 cursor-pointer transition-colors"
+          class={dashboardPageHeaderPrimaryButton}
         >
           <i class="fa-solid fa-plus"></i>
           <span>Add Namespace</span>
@@ -151,7 +154,7 @@
               <div class="flex items-center space-x-2">
                 <span>{namespace.name}</span>
                 {#if namespace.name?.toLowerCase() === 'global'}
-                  <i class="fa-solid fa-earth-americas text-mono-400 text-xs" title="Global"></i>
+                  <i class="fa-solid fa-earth-americas text-fg-muted text-xs" title="Global"></i>
                 {/if}
                 {#if namespace.isDefault}
                   <Pill>Default</Pill>
@@ -205,7 +208,7 @@
           rows="3"
           placeholder={isCreating ? 'Optional description...' : ''}
           class="{isReadOnly
-            ? 'w-full px-3 py-1.5 text-sm border border-mono-700/80 rounded-xl bg-mono-800 text-mono-400 cursor-not-allowed outline-none'
+            ? 'w-full px-3 py-1.5 text-sm border border-edge/80 rounded-xl bg-surface-raised text-fg-muted cursor-not-allowed outline-none'
             : textareaInsideFrostedPanel}"
         ></textarea>
       </div>
@@ -217,11 +220,11 @@
             <input
               type="checkbox"
               bind:checked={workflow.editedItem.isDefault}
-              class="w-4 h-4 rounded border-mono-600 text-mono-100 focus:ring-green-400"
+              class={modalFormCheckbox}
             />
-            <span class="text-sm text-mono-400">Set as default namespace</span>
+            <span class="text-sm text-fg-muted">Set as default namespace</span>
           </label>
-          <p class="text-xs text-mono-400 mt-1">The default namespace is auto-selected when the app loads.</p>
+          <p class="text-xs text-fg-muted mt-1">The default namespace is auto-selected when the app loads.</p>
         </div>
       {/if}
 
@@ -231,22 +234,22 @@
           <h3 class={tableListPanelSectionTitle}>Contents</h3>
           <div class="space-y-2">
             <div class="flex justify-between text-sm">
-              <span class="text-mono-400">Fields</span>
+              <span class="text-fg-muted">Fields</span>
               <span class={tableListBodyPrimary}>{details.fields}</span>
             </div>
             <div class="flex justify-between text-sm">
-              <span class="text-mono-400">Field Constraints</span>
+              <span class="text-fg-muted">Field Constraints</span>
               <span class={tableListBodyPrimary}>{details.fieldConstraints}</span>
             </div>
             <div class="flex justify-between text-sm">
-              <span class="text-mono-400">Objects</span>
+              <span class="text-fg-muted">Objects</span>
               <span class={tableListBodyPrimary}>{details.objects}</span>
             </div>
             <div class="flex justify-between text-sm">
-              <span class="text-mono-400">Endpoints</span>
+              <span class="text-fg-muted">Endpoints</span>
               <span class={tableListBodyPrimary}>{details.endpoints}</span>
             </div>
-            <div class="flex justify-between text-sm border-t border-mono-700 pt-2 mt-2">
+            <div class="flex justify-between text-sm border-t border-edge pt-2 mt-2">
               <span class={tableListPanelStatLabel}>Total</span>
               <span class={tableListPanelStatTotal}>{details.total}</span>
             </div>
@@ -260,9 +263,9 @@
               type="checkbox"
               bind:checked={workflow.editedItem.isDefault}
               disabled={workflow.editedItem.isDefault}
-              class="w-4 h-4 rounded border-mono-600 text-mono-100 focus:ring-green-400 disabled:opacity-50 disabled:cursor-not-allowed"
+              class="{modalFormCheckbox} disabled:opacity-50 disabled:cursor-not-allowed"
             />
-            <span class="text-sm text-mono-400">
+            <span class="text-sm text-fg-muted">
               {#if workflow.editedItem.isDefault}
                 This is your default namespace
               {:else}
@@ -270,7 +273,7 @@
               {/if}
             </span>
           </label>
-          <p class="text-xs text-mono-400 mt-1">The default namespace is auto-selected when the app loads.</p>
+          <p class="text-xs text-fg-muted mt-1">The default namespace is auto-selected when the app loads.</p>
         </div>
       {/if}
     </div>

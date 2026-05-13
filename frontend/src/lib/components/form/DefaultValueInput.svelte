@@ -78,7 +78,7 @@
         <button
           type="button"
           onclick={clearPreset}
-          class="text-mono-400 hover:text-mono-200 transition-colors cursor-pointer"
+          class="text-fg-muted hover:text-fg transition-colors cursor-pointer"
           title="Clear preset"
         >
           <i class="fa-solid fa-xmark text-xs"></i>
@@ -94,7 +94,7 @@
         disabled={kind === 'bool'}
         oninput={handleInputChange}
         placeholder={kind === 'text' ? 'e.g. default text' : kind === 'integer' ? 'e.g. 0' : kind === 'float' ? 'e.g. 0.0' : 'Select a value...'}
-        class="flex-1 min-w-0 px-3 py-1.5 text-sm border-0 outline-none bg-transparent text-mono-100 {kind === 'bool' ? 'cursor-default text-mono-400' : ''}"
+        class="flex-1 min-w-0 px-3 py-1.5 text-sm border-0 outline-none bg-transparent text-fg {kind === 'bool' ? 'cursor-default text-fg-muted' : ''}"
       />
     {/if}
 
@@ -103,7 +103,7 @@
       type="button"
       onclick={toggleDropdown}
       onblur={handleBlur}
-      class="px-2.5 py-1.5 text-mono-400 hover:text-mono-200 transition-colors cursor-pointer shrink-0 border-l border-mono-700"
+      class="px-2.5 py-1.5 text-fg-muted hover:text-fg transition-colors cursor-pointer shrink-0 border-l border-edge"
       title="Select preset value"
     >
       <i class="fa-solid fa-chevron-down text-xs {dropdownOpen ? 'rotate-180' : ''} transition-transform"></i>
@@ -117,7 +117,7 @@
         <button
           type="button"
           onclick={() => selectPreset(option)}
-          class="w-full px-3 py-2 text-left text-sm hover:bg-mono-800 transition-colors {value === option ? 'bg-mono-800 text-mono-100 font-medium' : 'text-mono-300'}"
+          class="w-full px-3 py-2 text-left text-sm hover:bg-surface-raised transition-colors {value === option ? 'bg-surface-raised text-fg font-medium' : 'text-fg-secondary'}"
         >
           {option}
         </button>

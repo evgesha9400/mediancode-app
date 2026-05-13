@@ -12,41 +12,36 @@
  */
 
 import { fromStore, get } from 'svelte/store';
-import type { Api, ApiEndpoint, PathParam, QueryParam, ResponseShape } from '$lib/types';
+import type { Api, ApiEndpoint, QueryParam, ResponseShape } from '$lib/types';
 import {
 	apisStore,
 	endpointsStore,
-	getEndpointCountByTagName
-} from './apis';
-import { objectsStore } from './objects';
-import { fieldsStore } from './fields';
+	getEndpointCountByApi,
+	getEndpointCountByTagName,
+	objectsStore,
+	fieldsStore
+} from './stores';
 import { showToast } from './toasts';
 import { deepClone } from '$lib/utils/ids';
-import {
-	updateApiApi,
-	deleteApiApi,
-	type UpdateApiRequest
-} from '$lib/api/apis';
-import {
-	createEndpointApi,
-	updateEndpointApi,
-	deleteEndpointApi,
-	type CreateEndpointRequest,
-	type UpdateEndpointRequest
-} from '$lib/api/endpoints';
 import { mapApiError } from '$lib/domain/errorMap';
-import {
-	reconcilePathParams,
-	normalizeEndpoint,
-	hydratePathParamsForEndpoint
-} from '$lib/domain/endpointReducer';
+import { reconcilePathParams } from '$lib/domain/endpointReducer';
 import {
 	validateEndpointParams,
 	resolveTargetFields,
 	type ValidationError,
 	type TargetField
 } from '$lib/domain/paramInference';
-import { isValidSnakeCaseName, isValidPascalCaseName } from '$lib/utils/validation';
+import { isValidSnakeCaseName } from '$lib/utils/validation';
+import { createApisContract } from './apisConfig.svelte';
+import {
+	applyEndpointUpdate,
+	createEndpointDraft,
+	endpointApi,
+	hydrateStoredEndpoint,
+	toCreateEndpointPayload,
+	toDuplicateEndpointPayload,
+	toUpdateEndpointPayload
+} from './endpointsConfig.svelte';
 
 /**
  * Toast message constants
@@ -202,6 +197,10 @@ export function createApiDetailState(config: ApiDetailStateConfig): ApiDetailSta
 	// The current API from store
 	let storedApi = $derived(allApis.find(a => a.id === apiId) ?? null);
 	let api = $derived(storedApi);
+	const apiContract = createApisContract({
+		getActiveNamespaceId: () => storedApi?.namespaceId ?? '',
+		getEndpointCount: getEndpointCountByApi
+	});
 
 	// Derived: the namespace ID for this API
 	let apiNamespaceId = $derived(storedApi?.namespaceId ?? '');
@@ -277,40 +276,40 @@ export function createApiDetailState(config: ApiDetailStateConfig): ApiDetailSta
 	let hasEditChanges = $derived(JSON.stringify(editForm) !== originalEditFormSnapshot);
 	let showEditDeleteConfirm = $state(false);
 	let editFormTouched = $state(false);
-
-	let editFormErrors = $derived.by(() => {
-		const errors: Record<string, string> = {};
-		if (!editForm.title.trim()) {
-			errors.title = 'API title is required';
-		} else if (!isValidPascalCaseName(editForm.title)) {
-			errors.title = 'Must be PascalCase (e.g. UserApi)';
-		}
-		return errors;
+	let editDraft = $derived.by((): Api | null => {
+		if (!storedApi) return null;
+		return { ...storedApi, ...editForm };
 	});
 
-	let editFormValid = $derived(Object.keys(editFormErrors).length === 0);
+	let editFormErrors = $derived.by(() => {
+		if (!editDraft) return {};
+		return apiContract.validate(editDraft);
+	});
+
+	let editFormValid = $derived(editDraft !== null && Object.keys(editFormErrors).length === 0);
 
 	let editImmediateErrors = $derived.by((): Record<string, string> => {
-		if (!editForm.title.trim()) return {};
-		if (!isValidPascalCaseName(editForm.title)) {
-			return { title: editFormErrors.title };
-		}
-		return {};
+		if (!editDraft) return {};
+		return apiContract.immediateErrors?.(editDraft, editFormErrors) ?? {};
 	});
 
 	let editVisibleErrors: Record<string, string> = $derived({ ...editImmediateErrors, ...(editFormTouched ? editFormErrors : {}) });
+
+	function toEditForm(api: Api) {
+		return {
+			title: api.title,
+			version: api.version,
+			description: api.description,
+			serverUrl: api.serverUrl,
+			baseUrl: api.baseUrl
+		};
+	}
 
 	function openEditDrawer(): void {
 		// Close endpoint drawer first
 		closeEndpointDrawer();
 		if (storedApi) {
-			editForm = {
-				title: storedApi.title,
-				version: storedApi.version,
-				description: storedApi.description,
-				serverUrl: storedApi.serverUrl,
-				baseUrl: storedApi.baseUrl
-			};
+			editForm = toEditForm(storedApi);
 			originalEditFormSnapshot = JSON.stringify(editForm);
 		}
 		showEditDeleteConfirm = false;
@@ -324,25 +323,26 @@ export function createApiDetailState(config: ApiDetailStateConfig): ApiDetailSta
 	}
 
 	async function handleEditSave(): Promise<void> {
+		if (!editDraft) return;
 		editFormTouched = true;
 		if (!editFormValid) return;
 
-		const payload: UpdateApiRequest = {
-			title: editForm.title,
-			version: editForm.version,
-			description: editForm.description,
-			serverUrl: editForm.serverUrl,
-			baseUrl: editForm.baseUrl
-		};
+		const payloadResult = apiContract.toUpdatePayload(editDraft);
+		if (!payloadResult.ok) {
+			showToast(payloadResult.error, 'error', 5000);
+			return;
+		}
 
 		isSaving = true;
 		const previousApis = get(apisStore);
 		apisStore.update(apis =>
-			apis.map(a => (a.id === apiId ? { ...a, ...payload, updatedAt: new Date().toISOString() } : a))
+			apis.map(a => (a.id === apiId ? { ...a, ...payloadResult.data, updatedAt: new Date().toISOString() } : a))
 		);
 
 		try {
-			await updateApiApi(apiId, payload);
+			const saved = await apiContract.api.update(apiId, payloadResult.data);
+			apisStore.update(apis => apis.map(a => (a.id === saved.id ? saved : a)));
+			editForm = toEditForm(saved);
 			originalEditFormSnapshot = JSON.stringify(editForm);
 			showToast(MESSAGES.API_SAVED, 'success');
 			closeEditDrawer();
@@ -369,13 +369,15 @@ export function createApiDetailState(config: ApiDetailStateConfig): ApiDetailSta
 	}
 
 	async function handleDeleteApi(): Promise<void> {
+		if (!storedApi) return;
 		isSaving = true;
-		const apiTitle = storedApi?.title ?? 'this API';
+		const deletedApi = storedApi;
+		const apiTitle = deletedApi.title;
 
 		try {
-			await deleteApiApi(apiId);
+			await apiContract.api.delete(apiId);
 			apisStore.update(apis => apis.filter(a => a.id !== apiId));
-			endpointsStore.update(eps => eps.filter(e => e.apiId !== apiId));
+			endpointsStore.update(eps => eps.filter(e => e.apiId !== deletedApi.id));
 			showToast(`API "${apiTitle}" deleted successfully`, 'success');
 			closeEditDrawer();
 			onNavigateBack();
@@ -408,20 +410,7 @@ export function createApiDetailState(config: ApiDetailStateConfig): ApiDetailSta
 	let isSaving = $state(false);
 	let pathError = $state('');
 
-	// Defaults used when creating a new endpoint (also used for change detection)
-	const CREATE_DEFAULTS = {
-		method: 'GET' as const,
-		path: '/',
-		description: '',
-		tagName: undefined as string | undefined,
-		pathParams: [] as PathParam[],
-		queryParams: [] as QueryParam[],
-		queryParamsObjectId: undefined as string | undefined,
-		objectId: undefined as string | undefined,
-		useEnvelope: true,
-		responseShape: 'object' as const,
-		pagination: false
-	};
+		let createEndpointDefaults = $derived(createEndpointDraft(apiId));
 
 	// ============================================================================
 	// Target Object and Validation (param inference)
@@ -447,21 +436,21 @@ export function createApiDetailState(config: ApiDetailStateConfig): ApiDetailSta
 	});
 
 	// Derived: Track if there are unsaved endpoint changes
-	let hasEndpointChanges = $derived.by(() => {
-		if (!editedEndpoint) return false;
-		if (isCreating) {
-			return editedEndpoint.method !== CREATE_DEFAULTS.method
-				|| editedEndpoint.path !== CREATE_DEFAULTS.path
-				|| editedEndpoint.description !== CREATE_DEFAULTS.description
-				|| editedEndpoint.tagName !== CREATE_DEFAULTS.tagName
-				|| editedEndpoint.pathParams.length !== CREATE_DEFAULTS.pathParams.length
-				|| (editedEndpoint.queryParams ?? []).length !== CREATE_DEFAULTS.queryParams.length
-				|| editedEndpoint.queryParamsObjectId !== CREATE_DEFAULTS.queryParamsObjectId
-				|| editedEndpoint.objectId !== CREATE_DEFAULTS.objectId
-				|| editedEndpoint.useEnvelope !== CREATE_DEFAULTS.useEnvelope
-				|| editedEndpoint.responseShape !== CREATE_DEFAULTS.responseShape
-				|| (editedEndpoint.pagination ?? false) !== CREATE_DEFAULTS.pagination;
-		}
+		let hasEndpointChanges = $derived.by(() => {
+			if (!editedEndpoint) return false;
+			if (isCreating) {
+				return editedEndpoint.method !== createEndpointDefaults.method
+					|| editedEndpoint.path !== createEndpointDefaults.path
+					|| editedEndpoint.description !== createEndpointDefaults.description
+					|| editedEndpoint.tagName !== createEndpointDefaults.tagName
+					|| editedEndpoint.pathParams.length !== createEndpointDefaults.pathParams.length
+					|| (editedEndpoint.queryParams ?? []).length !== createEndpointDefaults.queryParams.length
+					|| editedEndpoint.queryParamsObjectId !== createEndpointDefaults.queryParamsObjectId
+					|| editedEndpoint.objectId !== createEndpointDefaults.objectId
+					|| editedEndpoint.useEnvelope !== createEndpointDefaults.useEnvelope
+					|| editedEndpoint.responseShape !== createEndpointDefaults.responseShape
+					|| (editedEndpoint.pagination ?? false) !== createEndpointDefaults.pagination;
+			}
 		if (!selectedEndpoint) return false;
 		return JSON.stringify(editedEndpoint) !== JSON.stringify(selectedEndpoint);
 	});
@@ -489,19 +478,7 @@ export function createApiDetailState(config: ApiDetailStateConfig): ApiDetailSta
 		closeEditDrawer();
 		isCreating = true;
 		selectedEndpoint = null;
-		editedEndpoint = {
-			id: '',
-			apiId,
-			method: CREATE_DEFAULTS.method,
-			path: CREATE_DEFAULTS.path,
-			description: CREATE_DEFAULTS.description,
-			pathParams: [],
-			queryParams: [],
-			useEnvelope: CREATE_DEFAULTS.useEnvelope,
-			responseShape: CREATE_DEFAULTS.responseShape,
-			pagination: CREATE_DEFAULTS.pagination,
-			expanded: false
-		};
+		editedEndpoint = createEndpointDraft(apiId);
 		endpointDrawerOpen = true;
 		tagInputValue = '';
 		tagDropdownOpen = false;
@@ -513,25 +490,8 @@ export function createApiDetailState(config: ApiDetailStateConfig): ApiDetailSta
 
 		isSaving = true;
 		try {
-			const endpoint = await createEndpointApi({
-				apiId,
-				method: editedEndpoint.method,
-				path: editedEndpoint.path,
-				description: editedEndpoint.description,
-				tagName: editedEndpoint.tagName,
-				pathParams: editedEndpoint.pathParams,
-				queryParams: editedEndpoint.queryParams ?? [],
-				queryParamsObjectId: editedEndpoint.queryParamsObjectId,
-				objectId: editedEndpoint.objectId,
-				useEnvelope: editedEndpoint.useEnvelope,
-				responseShape: editedEndpoint.responseShape,
-				pagination: editedEndpoint.pagination ?? false
-			});
-			const hydrated = hydratePathParamsForEndpoint(
-				normalizeEndpoint(endpoint),
-				get(objectsStore),
-				get(fieldsStore)
-			);
+			const endpoint = await endpointApi.create(toCreateEndpointPayload(editedEndpoint));
+			const hydrated = hydrateStoredEndpoint(endpoint, get(objectsStore), get(fieldsStore));
 			endpointsStore.update(eps => [...eps, hydrated]);
 			showToast('Endpoint created successfully', 'success');
 			isCreating = false;
@@ -557,7 +517,7 @@ export function createApiDetailState(config: ApiDetailStateConfig): ApiDetailSta
 
 		isSaving = true;
 		try {
-			await deleteEndpointApi(editedEndpoint.id);
+			await endpointApi.delete(editedEndpoint.id);
 			endpointsStore.update(eps => eps.filter(e => e.id !== editedEndpoint!.id));
 			showToast(MESSAGES.ENDPOINT_DELETED, 'success');
 			showEndpointDeleteConfirm = false;
@@ -582,25 +542,8 @@ export function createApiDetailState(config: ApiDetailStateConfig): ApiDetailSta
 
 		isSaving = true;
 		try {
-			const endpoint = await createEndpointApi({
-				apiId: original.apiId,
-				method: original.method,
-				path: original.path + '-copy',
-				description: original.description,
-				tagName: original.tagName,
-				pathParams: original.pathParams.map(p => ({ ...p })),
-				queryParams: (original.queryParams ?? []).map(q => ({ ...q })),
-				queryParamsObjectId: original.queryParamsObjectId,
-				objectId: original.objectId,
-				useEnvelope: original.useEnvelope,
-				responseShape: original.responseShape,
-				pagination: original.pagination ?? false
-			});
-			const hydrated = hydratePathParamsForEndpoint(
-				normalizeEndpoint(endpoint),
-				get(objectsStore),
-				get(fieldsStore)
-			);
+			const endpoint = await endpointApi.create(toDuplicateEndpointPayload(original));
+			const hydrated = hydrateStoredEndpoint(endpoint, get(objectsStore), get(fieldsStore));
 			endpointsStore.update(eps => [...eps, hydrated]);
 			showToast(MESSAGES.ENDPOINT_DUPLICATED, 'success');
 		} catch (err) {
@@ -616,12 +559,7 @@ export function createApiDetailState(config: ApiDetailStateConfig): ApiDetailSta
 
 	function openEndpoint(endpoint: ApiEndpoint): void {
 		closeEditDrawer();
-		const normalized = normalizeEndpoint(endpoint);
-		const hydrated = hydratePathParamsForEndpoint(
-			normalized,
-			get(objectsStore),
-			get(fieldsStore)
-		);
+		const hydrated = hydrateStoredEndpoint(endpoint, get(objectsStore), get(fieldsStore));
 		selectedEndpoint = hydrated;
 		editedEndpoint = deepClone(hydrated);
 		endpointDrawerOpen = true;
@@ -644,34 +582,17 @@ export function createApiDetailState(config: ApiDetailStateConfig): ApiDetailSta
 		if (!editedEndpoint || !selectedEndpoint) return false;
 		if (pathError) return false;
 
-		const payload: UpdateEndpointRequest = {
-			method: editedEndpoint.method,
-			path: editedEndpoint.path,
-			description: editedEndpoint.description,
-			tagName: editedEndpoint.tagName ?? null,
-			pathParams: editedEndpoint.pathParams,
-			queryParams: editedEndpoint.queryParams ?? [],
-			queryParamsObjectId: editedEndpoint.queryParamsObjectId ?? null,
-			objectId: editedEndpoint.objectId ?? null,
-			useEnvelope: editedEndpoint.useEnvelope,
-			responseShape: editedEndpoint.responseShape,
-			pagination: editedEndpoint.pagination ?? false
-		};
+		const payload = toUpdateEndpointPayload(editedEndpoint);
 
 		isSaving = true;
 		const previousEndpoints = get(endpointsStore);
-		const normalizedUpdates = { ...payload, tagName: payload.tagName === null ? undefined : payload.tagName };
 		endpointsStore.update(eps =>
-			eps.map(e => (e.id === editedEndpoint!.id ? { ...e, ...normalizedUpdates } as ApiEndpoint : e))
+			eps.map(e => (e.id === editedEndpoint!.id ? applyEndpointUpdate(e, payload) : e))
 		);
 
 		try {
-			const endpoint = await updateEndpointApi(editedEndpoint.id, payload);
-			const hydrated = hydratePathParamsForEndpoint(
-				normalizeEndpoint(endpoint),
-				get(objectsStore),
-				get(fieldsStore)
-			);
+			const endpoint = await endpointApi.update(editedEndpoint.id, payload);
+			const hydrated = hydrateStoredEndpoint(endpoint, get(objectsStore), get(fieldsStore));
 			endpointsStore.update(eps => eps.map(e => (e.id === hydrated.id ? hydrated : e)));
 			selectedEndpoint = hydrated;
 			editedEndpoint = deepClone(hydrated);
@@ -876,8 +797,8 @@ export function createApiDetailState(config: ApiDetailStateConfig): ApiDetailSta
 			}
 		}
 
-		const withObject = { ...editedEndpoint, objectId, pathParams: autoLinkedParams };
-		const hydrated = hydratePathParamsForEndpoint(withObject, allObjects, allFields);
+			const withObject = { ...editedEndpoint, objectId, pathParams: autoLinkedParams };
+			const hydrated = hydrateStoredEndpoint(withObject, allObjects, allFields);
 
 		editedEndpoint = {
 			...hydrated,

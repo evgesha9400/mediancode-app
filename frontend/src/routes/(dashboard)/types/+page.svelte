@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { typesStore, searchTypes, type FieldType } from '$lib/stores/types';
+  import { typesStore, searchTypes, type FieldType } from '$lib/stores/stores';
   import { isSystemEntity } from '$lib/utils/namespace';
   import {
     MainColumnFrame,
@@ -97,14 +97,14 @@
           onSort={state.handleSort}
         />
         <SortableColumn
-          column="pythonType"
-          label="Python Type"
+          column="description"
+          label="Description"
           {sorts}
           onSort={state.handleSort}
         />
         <SortableColumn
-          column="description"
-          label="Description"
+          column="pythonType"
+          label="Python Type"
           {sorts}
           onSort={state.handleSort}
         />
@@ -131,14 +131,14 @@
               {type.name}
             {/snippet}
           </TableListNameCell>
-          <td class="{tableListCell} whitespace-nowrap" {...{ [TABLE_COL_ATTR]: 'pythonType' }}>
-            <Pill>{type.pythonType}</Pill>
-          </td>
           <TableListTextCell col="description">
             {#snippet children()}
               {type.description}
             {/snippet}
           </TableListTextCell>
+          <td class="{tableListCell} whitespace-nowrap" {...{ [TABLE_COL_ATTR]: 'pythonType' }}>
+            <Pill>{type.pythonType}</Pill>
+          </td>
           <TableListMetricCell col="usedInFields" label="fields">
             {#snippet pill()}
               <Pill>{type.usedInFields}</Pill>
@@ -158,8 +158,8 @@
   {#if state.selectedItem}
     <div class="space-y-6">
       <DetailField label="Name" value={state.selectedItem.name} />
-      <DetailField label="Python Type" value={state.selectedItem.pythonType} />
       <DetailField label="Description" value={state.selectedItem.description} />
+      <DetailField label="Python Type" value={state.selectedItem.pythonType} />
     </div>
   {/if}
 {/snippet}

@@ -24,8 +24,8 @@
         <i class="fa-solid fa-rocket text-xl"></i>
       </div>
       <div>
-        <h3 class="text-lg font-bold font-inter text-mono-100 mb-1">Get started with Median Code</h3>
-        <p class="text-sm text-mono-400 mb-5 font-inter leading-relaxed">
+        <h3 class="text-lg font-bold font-inter text-fg mb-1">Get started with Median Code</h3>
+        <p class="text-sm text-fg-muted mb-5 font-inter leading-relaxed">
           Define Fields, compose them into Objects, create APIs with endpoints, then generate production-ready FastAPI code.
         </p>
         <button

@@ -5,7 +5,7 @@
  */
 
 import { apiGet } from './client';
-import type { FieldType } from '$lib/stores/types';
+import type { FieldType } from '$lib/stores/stores';
 
 /**
  * Backend API response for Type entity

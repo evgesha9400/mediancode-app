@@ -1,9 +1,16 @@
 <script lang="ts">
-  import { fieldsStore, searchFields, type Field, type FieldConstraintValue } from '$lib/stores/fields';
-  import { fieldConstraintsStore } from '$lib/stores/fieldConstraints';
-  import { typesStore, getTypeIdByName } from '$lib/stores/types';
-  import { activeNamespaceId, namespacesStore } from '$lib/stores/namespaces';
-  import { createFieldsModel } from '$lib/stores/fieldsModel.svelte';
+  import {
+    fieldsStore,
+    searchFields,
+    fieldConstraintsStore,
+    typesStore,
+    getTypeIdByName,
+    activeNamespaceId,
+    namespacesStore
+  } from '$lib/stores/stores';
+  import type { Field, FieldConstraintValue } from '$lib/types';
+  import { createCrudModel } from '$lib/stores/crudModel.svelte';
+  import { createFieldsContract } from '$lib/stores/fieldsConfig.svelte';
   import {
     MainColumnFrame,
     PageHeader,
@@ -22,9 +29,15 @@
     FieldFormContent
   } from '$lib/components';
   import type { FilterConfig } from '$lib/types';
-  import { tableListCell, tableListRowHover, tableListRowInteractive, tableListRowSelected } from '$lib/ui/classes';
+  import {
+    dashboardPageHeaderPrimaryButton,
+    tableListCell,
+    tableListRowHover,
+    tableListRowInteractive,
+    tableListRowSelected
+  } from '$lib/ui/classes';
   import { getTableRowId, TABLE_COL_ATTR } from '$lib/utils/testIds';
-  import { fieldValidatorTemplatesStore } from '$lib/stores/fieldValidatorTemplates';
+  import { fieldValidatorTemplatesStore } from '$lib/stores/stores';
   import { STORE_NAMES } from '$lib/stores/loader';
   import { page } from '$app/state';
   import { goto } from '$app/navigation';
@@ -66,15 +79,17 @@
   // Filter fields by active namespace
   let namespacedFields = $derived($fieldsStore.filter(f => f.namespaceId === $activeNamespaceId));
 
-  // Per-entity CRUD model (replaces listViewState + crudWorkflow + entityContract)
-  const workflow = createFieldsModel({
-    itemsStore: () => namespacedFields,
-    searchFn: searchFields,
-    filterSections: () => fieldFilterConfig,
-    urlScope: { page, goto },
+  // Per-entity CRUD model
+  const contract = createFieldsContract({
     getActiveNamespaceId: () => $activeNamespaceId,
     getDefaultType: () => selectableTypes[0]?.name ?? 'str',
     getTypeIdByName
+  });
+  const workflow = createCrudModel(contract, {
+    itemsStore: () => namespacedFields,
+    searchFn: searchFields,
+    filterSections: () => fieldFilterConfig,
+    urlScope: { page, goto }
   });
 
   let fieldDrawerNamespaceName = $derived(
@@ -106,7 +121,7 @@
         <button
           type="button"
           onclick={workflow.openCreate}
-          class="px-4 py-2 bg-green-400 text-mono-950 font-inter font-semibold rounded-xl text-sm tracking-wide shadow-sm flex items-center space-x-2 hover:bg-green-300 cursor-pointer transition-colors"
+          class={dashboardPageHeaderPrimaryButton}
         >
           <i class="fa-solid fa-plus"></i>
           <span>Add Field</span>
@@ -141,6 +156,12 @@
         <SortableColumn
           column="name"
           label="Field Name"
+          {sorts}
+          onSort={workflow.handleSort}
+        />
+        <SortableColumn
+          column="description"
+          label="Description"
           {sorts}
           onSort={workflow.handleSort}
         />
@@ -185,6 +206,11 @@
               {field.name}
             {/snippet}
           </TableListNameCell>
+          <TableListTextCell col="description" class="max-w-xs truncate">
+            {#snippet children()}
+              {field.description?.trim() ? field.description : '-'}
+            {/snippet}
+          </TableListTextCell>
           <td class="{tableListCell} whitespace-nowrap" {...{ [TABLE_COL_ATTR]: 'type' }}>
             <Pill>{field.container ? `${field.container}[${field.type}]` : field.type}</Pill>
           </td>

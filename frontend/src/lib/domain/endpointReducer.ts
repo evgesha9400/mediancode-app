@@ -2,7 +2,7 @@
 import { get } from 'svelte/store';
 import type { ApiEndpoint, Field, ObjectDefinition, PathParam } from '$lib/types';
 import { extractPathParameters } from '$lib/utils/urlParser';
-import { fieldsStore } from '$lib/stores/fields';
+import { fieldsStore } from '$lib/stores/stores';
 import { deepClone, generateId } from '$lib/utils/ids';
 
 export interface PathReconciliationResult {

@@ -73,7 +73,9 @@
     dashboardSearchToolbarShell,
     dashboardTextPrimary,
     mainColumnChromePaddingX,
-    searchBarInput
+    searchBarInput,
+    themeAccentFill,
+    themeAccentText
   } from '$lib/ui/classes';
   import { SEARCH_INPUT_ID, FILTER_TOGGLE_ID } from '$lib/utils/testIds';
 
@@ -104,25 +106,25 @@
           data-testid={SEARCH_INPUT_ID}
           class={searchBarInput}
         />
-        <i class="fa-solid fa-search absolute left-3.5 top-1/2 transform -translate-y-1/2 text-mono-400 text-sm"></i>
+        <i class="fa-solid fa-search absolute left-3.5 top-1/2 transform -translate-y-1/2 text-fg-muted text-sm"></i>
       </div>
       <div class="relative">
         <button
           type="button"
           onclick={() => onFilterClick?.()}
           data-testid={FILTER_TOGGLE_ID}
-          class="flex items-center space-x-2 px-4 py-2 text-sm font-inter rounded-xl transition-all shadow-sm {showFilter ? (active ? `bg-mono-700/80 border border-transparent ${dashboardTextPrimary}` : `bg-mono-800/40 border border-mono-700/80 hover:bg-mono-800/80 ${dashboardControlTextMutedHoverPrimary}`) : 'hidden'}"
+          class="flex items-center space-x-2 px-4 py-2 text-sm font-inter rounded-xl transition-all shadow-sm {showFilter ? (active ? `bg-surface-overlay/80 border border-transparent ${dashboardTextPrimary}` : `bg-surface-raised/40 border border-edge/80 hover:bg-surface-raised/80 ${dashboardControlTextMutedHoverPrimary}`) : 'hidden'}"
         >
-          <i class="fa-solid fa-filter text-xs {active ? 'text-green-400' : 'text-mono-400'}"></i>
+          <i class="fa-solid fa-filter text-xs {active ? themeAccentText : 'text-fg-muted'}"></i>
           <span>Filter</span>
           {#if active}
-            <span class="ml-1 w-2 h-2 bg-green-400 rounded-full"></span>
+            <span class={`ml-1 w-2 h-2 rounded-full ${themeAccentFill}`}></span>
           {/if}
         </button>
         {@render filterPanel?.()}
       </div>
     </div>
-    <div class="flex items-center text-sm font-inter font-medium text-mono-400">
+    <div class="flex items-center text-sm font-inter font-medium text-fg-muted">
       <span>{resultsCount} {pluralLabel}</span>
     </div>
   </div>

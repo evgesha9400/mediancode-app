@@ -45,8 +45,8 @@ vi.mock('$lib/stores/toasts', () => ({
 }));
 
 // Mock namespace store selectors (used by inlined handleDelete guard)
-vi.mock('$lib/stores/namespaces', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('$lib/stores/namespaces')>();
+vi.mock('$lib/stores/stores', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('$lib/stores/stores')>();
   return {
     ...actual,
     getNamespaceById: vi.fn(),
@@ -59,11 +59,12 @@ vi.mock('$lib/stores/namespaces', async (importOriginal) => {
 // Imports (after mocks)
 // ---------------------------------------------------------------------------
 
-import { createNamespacesModel, type NamespacesModelConfig, type NamespacesModelState } from '$lib/stores/namespacesModel.svelte';
+import { createCrudModel, type CrudModelState } from '$lib/stores/crudModel.svelte';
+import { createNamespacesContract } from '$lib/stores/namespacesConfig.svelte';
 import { createNamespaceApi, updateNamespaceApi, deleteNamespaceApi } from '$lib/api/namespaces';
 import { mapApiError } from '$lib/domain/errorMap';
 import { showToast } from '$lib/stores/toasts';
-import { getNamespaceById, getNamespaceEntityCount } from '$lib/stores/namespaces';
+import { getNamespaceById, getNamespaceEntityCount } from '$lib/stores/stores';
 import { page } from '$app/state';
 import { goto } from '$app/navigation';
 import { effect_root } from 'svelte/internal/client';
@@ -85,23 +86,27 @@ function makeNamespace(overrides: Partial<Namespace> & { id: string; name: strin
   };
 }
 
-function createTestModel(overrides: Partial<NamespacesModelConfig> = {}): {
-  model: NamespacesModelState;
+function createTestModel(overrides: {
+  itemsStore?: () => Namespace[];
+  getNamespaceEntityDetails?: () => { total: number; fields: number; fieldConstraints: number; objects: number; endpoints: number };
+} = {}): {
+  model: CrudModelState<Namespace>;
   cleanup: () => void;
 } {
-  let model!: NamespacesModelState;
+  let model!: CrudModelState<Namespace>;
 
   const cleanup = effect_root(() => {
-    model = createNamespacesModel({
-      itemsStore: () => [],
+    const contract = createNamespacesContract({
+      getNamespaceEntityDetails: overrides.getNamespaceEntityDetails ?? (() => emptyDetails)
+    });
+    model = createCrudModel(contract, {
+      itemsStore: overrides.itemsStore ?? (() => []),
       searchFn: (items, query) => {
         if (!query) return items;
         return items.filter(i => i.name.toLowerCase().includes(query.toLowerCase()));
       },
       filterSections: [],
-      urlScope: { page: page as any, goto: goto as any },
-      getNamespaceEntityDetails: () => emptyDetails,
-      ...overrides
+      urlScope: { page: page as any, goto: goto as any }
     });
   });
 
@@ -113,7 +118,7 @@ function createTestModel(overrides: Partial<NamespacesModelConfig> = {}): {
 // ---------------------------------------------------------------------------
 
 describe('namespacesModel - Initial State', () => {
-  let model: NamespacesModelState;
+  let model: CrudModelState<Namespace>;
   let cleanup: () => void;
 
   afterEach(() => cleanup?.());
@@ -134,7 +139,7 @@ describe('namespacesModel - Initial State', () => {
 });
 
 describe('namespacesModel - Validation', () => {
-  let model: NamespacesModelState;
+  let model: CrudModelState<Namespace>;
   let cleanup: () => void;
 
   afterEach(() => cleanup?.());
@@ -183,7 +188,7 @@ describe('namespacesModel - Validation', () => {
 });
 
 describe('namespacesModel - Deletion Guard', () => {
-  let model: NamespacesModelState;
+  let model: CrudModelState<Namespace>;
   let cleanup: () => void;
 
   afterEach(() => cleanup?.());
@@ -258,7 +263,7 @@ describe('namespacesModel - Deletion Guard', () => {
 });
 
 describe('namespacesModel - Save (Update)', () => {
-  let model: NamespacesModelState;
+  let model: CrudModelState<Namespace>;
   let cleanup: () => void;
 
   beforeEach(() => vi.clearAllMocks());
@@ -418,7 +423,7 @@ describe('namespacesModel - Save (Update)', () => {
 });
 
 describe('namespacesModel - Delete', () => {
-  let model: NamespacesModelState;
+  let model: CrudModelState<Namespace>;
   let cleanup: () => void;
 
   beforeEach(() => vi.clearAllMocks());
@@ -466,7 +471,7 @@ describe('namespacesModel - Delete', () => {
 });
 
 describe('namespacesModel - Undo', () => {
-  let model: NamespacesModelState;
+  let model: CrudModelState<Namespace>;
   let cleanup: () => void;
 
   afterEach(() => cleanup?.());
@@ -492,7 +497,7 @@ describe('namespacesModel - Undo', () => {
 });
 
 describe('namespacesModel - Create Payload', () => {
-  let model: NamespacesModelState;
+  let model: CrudModelState<Namespace>;
   let cleanup: () => void;
 
   beforeEach(() => vi.clearAllMocks());
@@ -538,7 +543,7 @@ describe('namespacesModel - Create Payload', () => {
 });
 
 describe('namespacesModel - isSelected', () => {
-  let model: NamespacesModelState;
+  let model: CrudModelState<Namespace>;
   let cleanup: () => void;
 
   afterEach(() => cleanup?.());

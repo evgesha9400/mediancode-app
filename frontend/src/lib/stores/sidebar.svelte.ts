@@ -17,6 +17,14 @@ function calculateCollapsed(): boolean {
   return false;
 }
 
+/**
+ * Prefer this inside UI `$derived.by(() => isSidebarCollapsed())` instead of `sidebarState.collapsed`.
+ * A plain `$derived(sidebarState.collapsed)` may not subscribe to this module’s `$state` updates.
+ */
+export function isSidebarCollapsed(): boolean {
+  return calculateCollapsed();
+}
+
 function calculateHidden(): boolean {
   return viewportWidth < BREAKPOINT && totalDrawerPanelWidth > 0;
 }
@@ -35,7 +43,7 @@ function syncRenderedWidth(): void {
 
 export const sidebarState = {
   get collapsed(): boolean {
-    return calculateCollapsed();
+    return isSidebarCollapsed();
   },
   get hidden(): boolean {
     return calculateHidden();

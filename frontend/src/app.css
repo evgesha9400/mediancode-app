@@ -1,227 +1,176 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
 
-html[data-theme="soft"] {
-  /* Neutrals */
-  --color-mono-950: 16 16 18;
-  --color-mono-900: 29 29 31;
-  --color-mono-800: 43 43 46;
-  --color-mono-700: 68 68 73;
-  --color-mono-600: 85 85 91;
-  --color-mono-500: 116 116 123;
-  --color-mono-400: 160 160 168;
-  --color-mono-300: 207 207 214;
-  --color-mono-200: 224 224 230;
-  --color-mono-100: 240 240 245;
-  --color-mono-50: 246 246 250;
-
-  /* Success / Primary accent (green) */
-  --color-green-50: 240 253 246;
-  --color-green-100: 214 245 228;
-  --color-green-200: 170 235 200;
-  --color-green-300: 140 240 180;
-  --color-green-400: 82 226 140;
-  --color-green-600: 46 168 96;
-
-  /* Error / Destructive (red) — unchanged values */
-  --color-red-50: 254 242 242;
-  --color-red-100: 254 226 226;
-  --color-red-200: 254 202 202;
-  --color-red-600: 220 38 38;
-  --color-red-700: 185 28 28;
-  --color-red-800: 153 27 27;
-
-  /* Warning (amber) */
-  --color-amber-50: 253 246 232;
-  --color-amber-100: 250 232 194;
-  --color-amber-200: 245 212 142;
-  --color-amber-400: 228 168 58;
-  --color-amber-600: 196 138 26;
-  --color-amber-800: 138 92 16;
-
-  /* Info (blue) */
-  --color-blue-50: 240 244 252;
-  --color-blue-100: 218 227 247;
-  --color-blue-200: 180 199 240;
-  --color-blue-400: 91 139 224;
-  --color-blue-600: 61 102 184;
-  --color-blue-800: 43 74 138;
-
-  /* Drawer theme: single source of truth for shell, overlay, footer, and nested drawer surfaces. */
-  --drawer-panel-radius: 1.5rem;
-  --drawer-panel-border: rgb(255 255 255 / 0.14);
-  --drawer-panel-ring: rgb(255 255 255 / 0.08);
-  /* Frosted glass: blur + light mono-900 tint (~ Tailwind blur-2xl + saturate) */
-  --drawer-panel-bg: rgb(29 29 31 / 0.38);
-  --drawer-panel-shadow: 0 0 50px rgb(0 0 0 / 0.5);
-  --drawer-panel-backdrop: blur(40px) saturate(1.35);
-  --drawer-scrim-bg: rgb(16 16 18 / 0.38);
-  --drawer-scrim-backdrop: blur(14px) saturate(1.15);
-  --drawer-stack-dimmer-bg: rgb(16 16 18 / 0.22);
-  --drawer-stack-dimmer-backdrop: blur(8px) saturate(1.05);
-  --drawer-footer-border: rgb(255 255 255 / 0.12);
-  --drawer-footer-bg: rgb(29 29 31 / 0.45);
-  --drawer-footer-backdrop: blur(32px) saturate(1.25);
-  --drawer-inner-surface-bg: rgb(29 29 31 / 0.28);
-  --drawer-inner-surface-shadow: inset 0 1px 0 rgb(255 255 255 / 0.08);
-  /* In-page / stat cards: same frost tokens as drawers; smaller radius (Tailwind rounded-2xl). */
-  --dashboard-card-radius: 1rem;
-
-  /*
-   * Floating dropdown panels: fully opaque (no glass / blur). Do not use Tailwind `bg-mono-*` on
-   * these nodes — inside `.drawer-transparent-context` that substring forces `--drawer-inner-surface-bg`.
-   */
-  --dropdown-panel-radius: 0.75rem;
-  --dropdown-panel-border: rgb(var(--color-mono-700) / 0.8);
-  --dropdown-panel-bg: rgb(var(--color-mono-950) / 1);
-  --dropdown-panel-elevation-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.3), 0 4px 6px -4px rgb(0 0 0 / 0.3);
-}
-
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 /**
- * Drawer theme: all visual glass/tint/overlay decisions live here.
+ * Theme tokens are injected from `src/lib/theme/appTheme.ts` in the root layout.
  * Classes in `src/lib/ui/classes.ts` should only compose these hooks with layout utilities.
  */
 @layer components {
-  .drawer-panel-glass-surface {
-    border-radius: var(--drawer-panel-radius);
-    border: 1px solid var(--drawer-panel-border);
-    background-color: var(--drawer-panel-bg);
-    box-shadow:
-      inset 0 0 0 1px var(--drawer-panel-ring),
-      var(--drawer-panel-shadow);
-    -webkit-backdrop-filter: var(--drawer-panel-backdrop);
-    backdrop-filter: var(--drawer-panel-backdrop);
-    /* keeps blur stable while parent drawer uses transform transitions */
-    transform: translateZ(0);
-  }
+	.drawer-panel-glass-surface {
+		border-radius: var(--drawer-panel-radius);
+		border: 1px solid var(--drawer-panel-border);
+		background-color: var(--drawer-panel-bg);
+		box-shadow:
+			inset 0 0 0 1px var(--drawer-panel-ring),
+			var(--drawer-panel-shadow);
+		-webkit-backdrop-filter: var(--drawer-panel-backdrop);
+		backdrop-filter: var(--drawer-panel-backdrop);
+		/* keeps blur stable while parent drawer uses transform transitions */
+		transform: translateZ(0);
+	}
 
-  /**
+	/**
    * Dashboard cards, settings shells, empty states — same tint/blur/shadow tokens as drawers; tighter radius.
    */
-  .dashboard-card-glass {
-    border-radius: var(--dashboard-card-radius);
-    border: 1px solid var(--drawer-panel-border);
-    background-color: var(--drawer-panel-bg);
-    box-shadow:
-      inset 0 0 0 1px var(--drawer-panel-ring),
-      var(--drawer-panel-shadow);
-    -webkit-backdrop-filter: var(--drawer-panel-backdrop);
-    backdrop-filter: var(--drawer-panel-backdrop);
-    transform: translateZ(0);
-  }
+	.dashboard-card-glass {
+		border-radius: var(--dashboard-card-radius);
+		border: 1px solid var(--drawer-panel-border);
+		background-color: var(--drawer-panel-bg);
+		box-shadow:
+			inset 0 0 0 1px var(--drawer-panel-ring),
+			var(--drawer-panel-shadow);
+		-webkit-backdrop-filter: var(--drawer-panel-backdrop);
+		backdrop-filter: var(--drawer-panel-backdrop);
+		transform: translateZ(0);
+	}
 
-  /** Anchored dropdown / autocomplete panels — opaque shell; tuned via `--dropdown-panel-*`. */
-  .dropdown-panel-solid-surface {
-    border-radius: var(--dropdown-panel-radius);
-    border: 1px solid var(--dropdown-panel-border);
-    background-color: var(--dropdown-panel-bg);
-    box-shadow: var(--dropdown-panel-elevation-shadow);
-  }
-
-  .drawer-scrim {
-    background-color: var(--drawer-scrim-bg);
-    -webkit-backdrop-filter: var(--drawer-scrim-backdrop);
-    backdrop-filter: var(--drawer-scrim-backdrop);
-  }
-
-  .drawer-stack-dimmer {
-    background-color: var(--drawer-stack-dimmer-bg);
-    -webkit-backdrop-filter: var(--drawer-stack-dimmer-backdrop);
-    backdrop-filter: var(--drawer-stack-dimmer-backdrop);
-  }
-
-  .drawer-scrim[data-drawer-motion='active'] {
-    will-change: opacity;
-  }
-
-  .drawer-stack-root[data-drawer-motion='active'] {
-    will-change: transform;
-  }
-
-  .drawer-stack-root[data-drawer-motion='active'] .drawer-panel-glass-surface,
-  .drawer-stack-root[data-drawer-motion='active'] .drawer-stack-dimmer,
-  .drawer-stack-root[data-drawer-motion='active'] .drawer-footer-shell {
-    will-change: transform, opacity;
-  }
-
-  .drawer-stack-root[data-drawer-motion='active'] .drawer-panel-glass-surface,
-  .drawer-stack-root[data-drawer-motion='active'] .drawer-stack-dimmer {
-    contain: paint;
-  }
-
-  .drawer-footer-shell {
-    border-top: 1px solid var(--drawer-footer-border);
-    background-color: var(--drawer-footer-bg);
-    -webkit-backdrop-filter: var(--drawer-footer-backdrop);
-    backdrop-filter: var(--drawer-footer-backdrop);
-    overflow: hidden;
-    border-bottom-left-radius: var(--drawer-panel-radius);
-    border-bottom-right-radius: var(--drawer-panel-radius);
-  }
-
-  .drawer-footer-segmented-panel {
-    background-color: var(--drawer-inner-surface-bg);
-    box-shadow: var(--drawer-inner-surface-shadow);
-  }
-
-  /* One override point for nested form controls and content panels inside drawers. */
-  .drawer-transparent-context [class*='bg-mono-'],
-  .drawer-transparent-context [class*='bg-red-950/10'],
-  .drawer-transparent-context [class*='bg-white/'] {
-    background-color: var(--drawer-inner-surface-bg) !important;
-    background-image: none !important;
-  }
-
-  .drawer-transparent-context [class*='shadow-inner'],
-  .drawer-transparent-context [class*='shadow-lg'],
-  .drawer-transparent-context [class*='shadow-md'],
-  .drawer-transparent-context [class*='shadow-black/30'] {
-    box-shadow: var(--drawer-inner-surface-shadow) !important;
-  }
-
-  /* Flatten nested mono hovers inside scrollable drawer body only — footer segment buttons use their own hovers. */
-  .drawer-transparent-context .drawer-body-scroll [class*='hover:bg-mono-']:hover {
-    background-color: var(--drawer-inner-surface-bg) !important;
-  }
-
-  /*
-   * Dropdown rows / glass select triggers must NOT use `hover:bg-mono-*` in `class` (rule above would replace hover with inner surface — invisible).
-   * Semantic classes + rgb() hovers bypass the substring match.
+	/**
+   * Sidebar active nav row: same blur + saturation as `.dashboard-card-glass` (Tailwind
+   * `backdrop-blur-sm` is ~4px and reads as flat). Layered fills + inset sheen improve the glass read
+   * when the backdrop under the narrow sidebar is mostly uniform.
    */
-  .dropdown-list-row:hover,
-  .dropdown-create-row:hover {
-    background-color: rgb(var(--color-mono-700) / 1);
-  }
+	.sidebar-nav-item-active-glass {
+		border: 1px solid var(--sidebar-nav-item-active-border);
+		background:
+			linear-gradient(
+				118deg,
+				var(--sidebar-nav-item-active-highlight-strong) 0%,
+				var(--sidebar-nav-item-active-highlight-soft) 38%,
+				transparent 62%
+			),
+			linear-gradient(180deg, var(--sidebar-nav-item-active-accent-start), var(--sidebar-nav-item-active-accent-end)),
+			var(--sidebar-nav-item-active-surface);
+		box-shadow:
+			inset 0 1px 0 var(--sidebar-nav-item-active-inset-light),
+			inset 0 0 0 1px var(--sidebar-nav-item-active-inset-border),
+			0 0 12px var(--sidebar-nav-item-active-shadow);
+		-webkit-backdrop-filter: var(--drawer-panel-backdrop);
+		backdrop-filter: var(--drawer-panel-backdrop);
+		transform: translateZ(0);
+	}
 
-  .drawer-transparent-context .drawer-body-scroll .dropdown-list-row:hover,
-  .drawer-transparent-context .drawer-body-scroll .dropdown-create-row:hover {
-    background-color: rgb(var(--color-mono-700) / 1) !important;
-  }
+	/** Anchored dropdown / autocomplete panels — opaque shell; tuned via `--dropdown-panel-*`. */
+	.dropdown-panel-solid-surface {
+		border-radius: var(--dropdown-panel-radius);
+		border: 1px solid var(--dropdown-panel-border);
+		background-color: var(--dropdown-panel-bg);
+		box-shadow: var(--dropdown-panel-elevation-shadow);
+	}
 
-  .glass-select-trigger:hover:not(:disabled) {
-    border-color: rgb(var(--color-mono-600) / 1);
-    background-color: rgb(var(--color-mono-800) / 0.5);
-  }
+	.drawer-scrim {
+		background-color: var(--drawer-scrim-bg);
+		-webkit-backdrop-filter: var(--drawer-scrim-backdrop);
+		backdrop-filter: var(--drawer-scrim-backdrop);
+	}
 
-  .drawer-transparent-context .drawer-body-scroll .glass-select-trigger:hover:not(:disabled) {
-    border-color: rgb(var(--color-mono-600) / 1) !important;
-    background-color: rgb(var(--color-mono-800) / 0.5) !important;
-  }
+	.drawer-stack-dimmer {
+		background-color: var(--drawer-stack-dimmer-bg);
+		-webkit-backdrop-filter: var(--drawer-stack-dimmer-backdrop);
+		backdrop-filter: var(--drawer-stack-dimmer-backdrop);
+	}
 
-  /**
+	.drawer-scrim[data-drawer-motion='active'] {
+		will-change: opacity;
+	}
+
+	.drawer-stack-root[data-drawer-motion='active'] {
+		will-change: transform;
+	}
+
+	.drawer-stack-root[data-drawer-motion='active'] .drawer-panel-glass-surface,
+	.drawer-stack-root[data-drawer-motion='active'] .drawer-stack-dimmer,
+	.drawer-stack-root[data-drawer-motion='active'] .drawer-footer-shell {
+		will-change: transform, opacity;
+	}
+
+	.drawer-stack-root[data-drawer-motion='active'] .drawer-panel-glass-surface,
+	.drawer-stack-root[data-drawer-motion='active'] .drawer-stack-dimmer {
+		contain: paint;
+	}
+
+	.drawer-footer-shell {
+		border-top: 1px solid var(--drawer-footer-border);
+		background-color: var(--drawer-footer-bg);
+		-webkit-backdrop-filter: var(--drawer-footer-backdrop);
+		backdrop-filter: var(--drawer-footer-backdrop);
+		overflow: hidden;
+		border-bottom-left-radius: var(--drawer-panel-radius);
+		border-bottom-right-radius: var(--drawer-panel-radius);
+	}
+
+	.drawer-footer-segmented-panel {
+		background-color: var(--drawer-inner-surface-bg);
+		box-shadow: var(--drawer-inner-surface-shadow);
+	}
+
+	/* One override point for nested form controls and content panels inside drawers. */
+	.drawer-transparent-context [class*='bg-surface'],
+	.drawer-transparent-context [class*='bg-red-950/10'],
+	.drawer-transparent-context [class*='bg-white/'] {
+		background-color: var(--drawer-inner-surface-bg) !important;
+		background-image: none !important;
+	}
+
+	.drawer-transparent-context [class*='shadow-inner'],
+	.drawer-transparent-context [class*='shadow-lg'],
+	.drawer-transparent-context [class*='shadow-md'],
+	.drawer-transparent-context [class*='shadow-black/30'] {
+		box-shadow: var(--drawer-inner-surface-shadow) !important;
+	}
+
+	/* Flatten nested surface hovers inside scrollable drawer body only — footer segment buttons use their own hovers. */
+	.drawer-transparent-context .drawer-body-scroll [class*='hover\:bg-surface']:hover {
+		background-color: var(--drawer-inner-surface-bg) !important;
+	}
+
+	/*
+   * Dropdown rows / glass select triggers use CSS-class hovers (not Tailwind `hover:bg-*` utilities)
+   * so the drawer-body-scroll flatten rule does not suppress them.
+   */
+	.dropdown-list-row:hover,
+	.dropdown-create-row:hover {
+		background-color: rgb(var(--color-surface-overlay) / 1);
+	}
+
+	.drawer-transparent-context .drawer-body-scroll .dropdown-list-row:hover,
+	.drawer-transparent-context .drawer-body-scroll .dropdown-create-row:hover {
+		background-color: rgb(var(--color-surface-overlay) / 1) !important;
+	}
+
+	.glass-select-trigger:hover:not(:disabled) {
+		border-color: rgb(var(--color-edge-strong) / 1);
+		background-color: rgb(var(--color-surface-raised) / 0.5);
+	}
+
+	.drawer-transparent-context .drawer-body-scroll .glass-select-trigger:hover:not(:disabled) {
+		border-color: rgb(var(--color-edge-strong) / 1) !important;
+		background-color: rgb(var(--color-surface-raised) / 0.5) !important;
+	}
+
+	/**
    * Native `<dialog>::backdrop` — same scrim as `.drawer-scrim` (tokens on `html[data-theme="soft"]`).
    */
-  .modal-dialog-scrim::backdrop {
-    background-color: var(--drawer-scrim-bg);
-    -webkit-backdrop-filter: var(--drawer-scrim-backdrop);
-    backdrop-filter: var(--drawer-scrim-backdrop);
-  }
+	.modal-dialog-scrim::backdrop {
+		background-color: var(--drawer-scrim-bg);
+		-webkit-backdrop-filter: var(--drawer-scrim-backdrop);
+		backdrop-filter: var(--drawer-scrim-backdrop);
+	}
 }
 
 body {
-  font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-  color-scheme: dark;
+	font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+	color-scheme: dark;
 }

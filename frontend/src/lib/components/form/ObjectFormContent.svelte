@@ -2,7 +2,7 @@
   export interface ObjectFormContentProps {
     editedItem: import('$lib/types').ObjectDefinition;
     mode: 'creating' | 'editing';
-    availableFields: import('$lib/stores/fields').Field[];
+    availableFields: import('$lib/types').Field[];
     modelValidatorTemplates: import('$lib/types').ModelValidatorTemplate[];
     visibleErrors: Record<string, string>;
     onCreateNewField?: () => void;
@@ -11,9 +11,9 @@
 
 <script lang="ts">
   import type { ObjectDefinition, ObjectMember, ScalarMember, RelationshipMember, RelationshipKind } from '$lib/types';
-  import type { Field } from '$lib/stores/fields';
-  import type { ModelValidatorTemplate, InlineModelValidator, FieldRole } from '$lib/types';
-  import { getFieldById } from '$lib/stores/fields';
+  import type { Field, ModelValidatorTemplate, InlineModelValidator, FieldRole } from '$lib/types';
+  import { getFieldById, getModelValidatorTemplateById, objectsStore, getObjectById, apisStore } from '$lib/stores/stores';
+  import { newTempMemberId } from '$lib/stores/objectsConfig.svelte';
   import { ROLE_LABELS, ROLE_TOOLTIPS, getAvailableRoles, roleHasModifiers } from '$lib/types';
   import {
     FormField,
@@ -22,9 +22,6 @@
     TemplateForm,
     Pill
   } from '$lib/components';
-  import { getModelValidatorTemplateById } from '$lib/stores/modelValidatorTemplates';
-  import { objectsStore, getObjectById } from '$lib/stores/objects';
-  import { apisStore } from '$lib/stores/apis';
   import { showToast } from '$lib/stores/toasts';
   import { goto } from '$app/navigation';
   import { dragHandleZone, dragHandle } from 'svelte-dnd-action';
@@ -34,7 +31,12 @@
     drawerLinkedEntityRow,
     dropdownPanelSolidSurface,
     inputObjectMemberSearch,
+    listMetaBadge,
     surfaceInsideFrostedPanel,
+    themeAccentBorderEmphasis,
+    themeAccentFocusRing,
+    themeAccentSurfaceSoft,
+    themeAccentText,
     textareaObjectForm,
   } from '$lib/ui/classes';
   import {
@@ -61,6 +63,16 @@
     { value: 'many_to_many', label: 'many to many' }
   ];
 
+  const compactMonoControlBase =
+    `bg-surface-raised border border-edge text-fg-secondary rounded-lg focus:ring-1 ${themeAccentFocusRing} focus:border-transparent`;
+  const compactMonoInput = `${compactMonoControlBase} font-mono text-sm px-2 py-0.5`;
+  const compactMonoInputXs = `${compactMonoControlBase} font-mono text-xs px-2 py-0.5`;
+  const compactMonoSelect = `${compactMonoControlBase} text-xs px-1.5 py-0.5`;
+  const compactMonoSelectFull = `${compactMonoSelect} w-full min-h-[1.5rem]`;
+  const compactMonoToggleOn = `${themeAccentBorderEmphasis} ${themeAccentText} ${themeAccentSurfaceSoft}`;
+  const compactMonoToggleOff = 'border-edge-strong text-fg-dimmed hover:border-edge-hover hover:text-fg-muted';
+  const compactMonoToggleHidden = 'invisible pointer-events-none border-edge-strong text-fg-dimmed';
+
   // --- Derive selected field IDs (to exclude already-added fields from unified dropdown) ---
   let selectedFieldIds = $derived(
     editedItem.members
@@ -69,34 +81,27 @@
   );
 
   // --- Drag-and-drop member reordering ---
+  // Members carry their own stable id throughout an edit session: either a
+  // backend uuid (loaded from the server) or a `tmp-*` sentinel assigned by
+  // addScalarMember / addRelationshipMember. DnD uses member.id directly.
   type DndItem = ObjectMember & { id: string };
-
-  // Snapshot of original members for distinguishing backend-assigned IDs from temp IDs
-  let originalMembers: ObjectMember[] = [...editedItem.members];
 
   // Mutable state for dndzone — synced from editedItem.members
   let dndItems: DndItem[] = $state(
-    editedItem.members.map(m => ({
-      ...m,
-      id: m.id ?? crypto.randomUUID()
-    }))
+    editedItem.members.map(m => ({ ...m, id: m.id! }))
   );
 
   // Re-sync when editedItem.members changes externally (undo, member add/remove)
   $effect(() => {
-    dndItems = editedItem.members.map(m => ({
-      ...m,
-      id: m.id ?? crypto.randomUUID()
-    }));
-    originalMembers = [...editedItem.members];
+    dndItems = editedItem.members.map(m => ({ ...m, id: m.id! }));
   });
 
-  // Convert DnD items back to API-ready members (strip temp IDs from new members)
+  // Convert DnD items back to ObjectMember[] for editedItem. Stable ids
+  // (backend uuids and tmp-* sentinels) stay in memory so subsequent DnD
+  // keys don't go undefined; objectsConfig.toUpdatePayload strips tmp-*
+  // ids at save time so the backend treats them as inserts.
   function toApiMembers(items: DndItem[]): ObjectMember[] {
-    return items.map(({ id, ...member }) => {
-      const isBackendAssigned = originalMembers.some(m => m.id === id);
-      return isBackendAssigned ? { ...member, id } : member;
-    }) as ObjectMember[];
+    return items.map(({ id, ...member }) => ({ ...member, id }) as ObjectMember);
   }
 
   function handleDndConsider(e: CustomEvent<DndEvent<DndItem>>) {
@@ -122,7 +127,7 @@
     if (!field) return;
     const newMember: ScalarMember = {
       memberType: 'scalar',
-      id: crypto.randomUUID(),
+      id: newTempMemberId(),
       name: field.name,
       fieldId,
       role: 'writable',
@@ -254,7 +259,7 @@
     const defaultInverseName = editedItem.name ? editedItem.name.toLowerCase() : 'source';
     const newMember: RelationshipMember = {
       memberType: 'relationship',
-      id: crypto.randomUUID(),
+      id: newTempMemberId(),
       name: defaultName,
       targetObjectId,
       kind: 'one_to_many',
@@ -361,7 +366,7 @@
 
   <!-- Members (unified: scalars + relationships) -->
   <div>
-    <h3 class="text-sm text-mono-300 mb-2 font-medium">Members ({editedItem.members.length})</h3>
+    <h3 class="text-sm text-fg-secondary mb-2 font-medium">Members ({editedItem.members.length})</h3>
 
     <div class="space-y-2">
       <!-- Unified Member Add Dropdown: Fields + Relationships -->
@@ -377,7 +382,7 @@
             data-testid={OBJECT_MEMBER_SEARCH}
             class={inputObjectMemberSearch}
           />
-          <i class="fa-solid fa-search absolute right-3 top-1/2 -translate-y-1/2 text-mono-400 text-xs pointer-events-none"></i>
+          <i class="fa-solid fa-search absolute right-3 top-1/2 -translate-y-1/2 text-fg-muted text-xs pointer-events-none"></i>
         </div>
 
         {#if memberDropdownOpen}
@@ -385,37 +390,37 @@
 
             <!-- Fields Section -->
             <div class="px-3 pt-2 pb-1">
-              <span class="text-[10px] uppercase tracking-widest text-mono-500 font-medium">Fields</span>
+              <span class="text-[10px] uppercase tracking-widest text-fg-dimmed font-medium">Fields</span>
             </div>
             {#if filteredFieldsForAdd.length > 0}
               {#each filteredFieldsForAdd as field (field.id)}
                 <button
                   type="button"
                   onmousedown={(e) => { e.preventDefault(); addScalarMember(field.id); memberSearchQuery = ''; memberDropdownOpen = false; }}
-                  class="w-full px-3 py-2 text-left hover:bg-mono-800 border-b border-mono-700/50 last:border-b-0 transition-colors"
+                  class="w-full px-3 py-2 text-left hover:bg-surface-raised border-b border-edge/50 last:border-b-0 transition-colors"
                 >
                   <div class="flex items-center space-x-2">
-                    <i class="fa-solid fa-vector-square text-mono-400 text-xs"></i>
-                    <span class="font-mono text-sm text-mono-300">{field.name}</span>
-                    <span class="text-xs text-mono-400 bg-mono-800 px-2 py-0.5 rounded-lg">{field.type}</span>
+                    <i class="fa-solid fa-vector-square text-fg-muted text-xs"></i>
+                    <span class="font-mono text-sm text-fg-secondary">{field.name}</span>
+                    <span class={listMetaBadge}>{field.type}</span>
                   </div>
                   {#if field.description}
-                    <p class="text-xs text-mono-500 mt-0.5">{field.description}</p>
+                    <p class="text-xs text-fg-dimmed mt-0.5">{field.description}</p>
                   {/if}
                 </button>
               {/each}
             {:else}
-              <div class="px-3 py-1.5 text-xs text-mono-500 italic">
+              <div class="px-3 py-1.5 text-xs text-fg-dimmed italic">
                 {memberSearchQuery.trim() ? `No fields matching "${memberSearchQuery}"` : 'No fields available'}
               </div>
             {/if}
 
             <!-- Create new field footer -->
             {#if onCreateNewField}
-              <div class="border-t border-mono-700 p-2">
+              <div class="border-t border-edge p-2">
                 <button
                   type="button"
-                  class="w-full text-left px-3 py-1.5 text-sm text-mono-400 hover:bg-mono-800 hover:text-mono-100 rounded-lg cursor-pointer flex items-center space-x-2"
+                  class="w-full text-left px-3 py-1.5 text-sm text-fg-muted hover:bg-surface-raised hover:text-fg rounded-lg cursor-pointer flex items-center space-x-2"
                   onmousedown={(e) => { e.preventDefault(); onCreateNewField?.(); }}
                 >
                   <i class="fa-solid fa-plus text-xs"></i>
@@ -425,24 +430,24 @@
             {/if}
 
             <!-- Relationships Section -->
-            <div class="px-3 pt-2 pb-1 border-t border-mono-700">
-              <span class="text-[10px] uppercase tracking-widest text-mono-500 font-medium">Relationships</span>
+            <div class="px-3 pt-2 pb-1 border-t border-edge">
+              <span class="text-[10px] uppercase tracking-widest text-fg-dimmed font-medium">Relationships</span>
             </div>
             {#if filteredTargetObjects.length > 0}
               {#each filteredTargetObjects as obj (obj.id)}
                 <button
                   type="button"
                   onmousedown={(e) => { e.preventDefault(); addRelationshipMember(obj.id); }}
-                  class="w-full px-3 py-2 text-left hover:bg-mono-800 border-b border-mono-700/50 last:border-b-0 transition-colors"
+                  class="w-full px-3 py-2 text-left hover:bg-surface-raised border-b border-edge/50 last:border-b-0 transition-colors"
                 >
                   <div class="flex items-center space-x-2">
-                    <i class="fa-solid fa-cube text-mono-400 text-xs"></i>
-                    <span class="text-sm text-mono-300">{obj.name}</span>
+                    <i class="fa-solid fa-cube text-fg-muted text-xs"></i>
+                    <span class="text-sm text-fg-secondary">{obj.name}</span>
                   </div>
                 </button>
               {/each}
             {:else}
-              <div class="px-3 py-1.5 text-xs text-mono-500 italic">
+              <div class="px-3 py-1.5 text-xs text-fg-dimmed italic">
                 {memberSearchQuery.trim() ? `No objects matching "${memberSearchQuery}"` : 'No other objects available'}
               </div>
             {/if}
@@ -454,7 +459,7 @@
       <!-- DnD Member List -->
       {#if editedItem.members.length === 0}
         <div class="p-3 {surfaceInsideFrostedPanel}">
-          <p class="text-xs text-mono-400">No members added</p>
+          <p class="text-xs text-fg-muted">No members added</p>
         </div>
       {:else}
         <div
@@ -478,7 +483,7 @@
                       class="grid grid-cols-[auto_minmax(0,1fr)_10rem_7rem_4.5rem_1.75rem] gap-x-2 items-center"
                     >
                       <!-- Drag Handle -->
-                      <div use:dragHandle class="text-mono-600 hover:text-mono-400 cursor-grab justify-self-start" data-testid={OBJECT_MEMBER_DRAG_HANDLE}>
+                      <div use:dragHandle class="text-fg-faint hover:text-fg-muted cursor-grab justify-self-start" data-testid={OBJECT_MEMBER_DRAG_HANDLE}>
                         <i class="fa-solid fa-grip-vertical text-xs"></i>
                       </div>
 
@@ -502,16 +507,16 @@
                           type="text"
                           value={item.name}
                           oninput={(e) => setMemberName(item.id, (e.target as HTMLInputElement).value)}
-                          class="font-mono text-sm text-mono-300 bg-mono-800 border border-mono-700 px-2 py-0.5 rounded-lg w-28 focus:ring-1 focus:ring-green-400 focus:border-transparent"
+                          class={`${compactMonoInput} w-28`}
                           title="Member name (column name in generated code)"
                         />
-                        <span class="text-xs text-mono-400 bg-mono-800 px-2 py-0.5 rounded-lg shrink-0">{field.type}</span>
-                        <span class="text-xs text-mono-500 truncate" title="Field: {field.name}">{field.name}</span>
+                        <span class={`${listMetaBadge} shrink-0`}>{field.type}</span>
+                        <span class="text-xs text-fg-dimmed truncate" title="Field: {field.name}">{field.name}</span>
                       </div>
 
                       <!-- Role Selector -->
                       <select
-                        class="w-full min-h-[1.5rem] bg-mono-800 border border-mono-700 text-mono-300 text-xs rounded-lg px-1.5 py-0.5 focus:ring-1 focus:ring-green-400 focus:border-transparent"
+                        class={compactMonoSelectFull}
                         value={item.role}
                         onchange={(e) => setMemberRole(item.id, e.currentTarget.value as FieldRole)}
                         title={ROLE_TOOLTIPS[item.role]}
@@ -524,7 +529,7 @@
                       <!-- Default Value Input -->
                       {#if inputCfg.isBool}
                         <select
-                          class="bg-mono-800 border border-mono-700 text-mono-300 text-xs rounded-lg px-1.5 py-0.5 w-full min-h-[1.5rem] focus:ring-1 focus:ring-green-400 focus:border-transparent {modifierClass}"
+                          class={`${compactMonoSelectFull} ${modifierClass}`}
                           value={item.defaultValue ?? ''}
                           onchange={(e) => setMemberDefaultValue(item.id, e.currentTarget.value)}
                           disabled={!roleHasModifiers(item.role)}
@@ -537,7 +542,7 @@
                         <input
                           type={inputCfg.inputType}
                           step={inputCfg.step}
-                          class="bg-mono-800 border border-mono-700 text-mono-300 text-xs rounded-lg px-1.5 py-0.5 w-full min-h-[1.5rem] focus:ring-1 focus:ring-green-400 focus:border-transparent {modifierClass}"
+                          class={`${compactMonoSelectFull} ${modifierClass}`}
                           placeholder="Default value"
                           value={item.defaultValue ?? ''}
                           oninput={(e) => setMemberDefaultValue(item.id, e.currentTarget.value)}
@@ -551,7 +556,7 @@
                         onclick={() => toggleMemberNullable(item.id)}
                         disabled={!roleHasModifiers(item.role)}
                         title="Allow null values"
-                        class="justify-self-start text-xs px-2 py-0.5 rounded-lg border transition-colors {roleHasModifiers(item.role) ? (item.isNullable ? 'border-green-500 text-green-400 bg-green-400/10' : 'border-mono-600 text-mono-500 hover:border-mono-500 hover:text-mono-400') : 'invisible pointer-events-none border-mono-600 text-mono-500'}"
+                        class={`justify-self-start text-xs px-2 py-0.5 rounded-lg border transition-colors ${roleHasModifiers(item.role) ? (item.isNullable ? compactMonoToggleOn : compactMonoToggleOff) : compactMonoToggleHidden}`}
                       >
                         nullable
                       </button>
@@ -596,7 +601,7 @@
                 <div class="p-3 {surfaceInsideFrostedPanel} space-y-1.5" data-testid={OBJECT_MEMBER_ROW}>
                   <div class="flex items-center space-x-2">
                     <!-- Drag Handle -->
-                    <div use:dragHandle class="text-mono-600 hover:text-mono-400 cursor-grab shrink-0" data-testid={OBJECT_MEMBER_DRAG_HANDLE}>
+                    <div use:dragHandle class="text-fg-faint hover:text-fg-muted cursor-grab shrink-0" data-testid={OBJECT_MEMBER_DRAG_HANDLE}>
                       <i class="fa-solid fa-grip-vertical text-xs"></i>
                     </div>
 
@@ -605,7 +610,7 @@
                       type="text"
                       value={item.name}
                       oninput={(e) => updateRelationshipField(item.id, { name: (e.target as HTMLInputElement).value })}
-                      class="font-mono text-sm text-mono-300 bg-mono-800 border border-mono-700 px-2 py-0.5 rounded-lg w-28 focus:ring-1 focus:ring-green-400 focus:border-transparent"
+                      class={`${compactMonoInput} w-28`}
                       title="Relationship field name"
                     />
 
@@ -613,7 +618,7 @@
                     <select
                       value={item.kind}
                       onchange={(e) => updateRelationshipKind(item.id, (e.target as HTMLSelectElement).value as RelationshipKind)}
-                      class="text-xs text-mono-300 bg-mono-800 border border-mono-700 px-2 py-0.5 rounded-lg focus:ring-1 focus:ring-green-400"
+                      class={compactMonoSelect}
                     >
                       {#each KIND_OPTIONS as opt}
                         <option value={opt.value}>{opt.label}</option>
@@ -630,7 +635,7 @@
                       type="text"
                       value={item.inverseName}
                       oninput={(e) => updateRelationshipField(item.id, { inverseName: (e.target as HTMLInputElement).value })}
-                      class="font-mono text-xs text-mono-300 bg-mono-800 border border-mono-700 px-2 py-0.5 rounded-lg w-24 focus:ring-1 focus:ring-green-400 focus:border-transparent"
+                      class={`${compactMonoInputXs} w-24`}
                       placeholder="inverse name"
                       title="Inverse relationship name on the target object"
                     />
@@ -641,7 +646,7 @@
                         type="button"
                         onclick={() => updateRelationshipField(item.id, { required: !item.required })}
                         title="Whether the FK column is NOT NULL"
-                        class="text-xs px-2 py-0.5 rounded-lg border transition-colors shrink-0 {item.required ? 'border-green-500 text-green-400 bg-green-400/10' : 'border-mono-600 text-mono-500 hover:border-mono-500 hover:text-mono-400'}"
+                        class={`text-xs px-2 py-0.5 rounded-lg border transition-colors shrink-0 ${item.required ? compactMonoToggleOn : compactMonoToggleOff}`}
                       >
                         required
                       </button>
@@ -671,12 +676,12 @@
   <!-- Derived Relationships (read-only, incoming from other objects) -->
   {#if editedItem.derivedRelationships.length > 0}
     <div>
-      <h3 class="text-sm text-mono-300 mb-2 font-medium">
+      <h3 class="text-sm text-fg-secondary mb-2 font-medium">
         Incoming Relationships ({editedItem.derivedRelationships.length})
       </h3>
       <div class="space-y-1">
         {#each editedItem.derivedRelationships as dr}
-          <div class="flex items-center space-x-2 px-2 py-1.5 bg-mono-800 rounded-lg border border-dashed border-mono-600">
+          <div class="flex items-center space-x-2 px-2 py-1.5 bg-surface-raised rounded-lg border border-dashed border-edge-strong">
             <button
               type="button"
               onclick={() => navigateToObject(dr.sourceObjectId)}
@@ -684,13 +689,13 @@
             >
               {dr.sourceObject}.{dr.sourceField}
             </button>
-            <span class="text-xs text-mono-400 bg-mono-700 px-2 py-0.5 rounded">
+            <span class="text-xs text-fg-muted bg-surface-overlay px-2 py-0.5 rounded">
               {dr.kind.replace(/_/g, ' ')}
             </span>
             {#if dr.impliesFk}
-              <span class="text-xs text-mono-500">implies {dr.impliesFk}</span>
+              <span class="text-xs text-fg-dimmed">implies {dr.impliesFk}</span>
             {:else if dr.junctionTable}
-              <span class="text-xs text-mono-500">via {dr.junctionTable}</span>
+              <span class="text-xs text-fg-dimmed">via {dr.junctionTable}</span>
             {/if}
           </div>
         {/each}
@@ -700,14 +705,14 @@
 
   <!-- Validators -->
   <div>
-    <h3 class="text-sm text-mono-300 mb-2 font-medium">Validators ({editedItem.validators.length})</h3>
+    <h3 class="text-sm text-fg-secondary mb-2 font-medium">Validators ({editedItem.validators.length})</h3>
 
     <div class="space-y-2">
       {#if !validatorGalleryOpen}
         <button
           type="button"
           onclick={openValidatorGallery}
-          class="w-full px-3 py-2 rounded-xl border border-dashed border-mono-600 text-sm text-mono-400 hover:border-mono-500 hover:bg-mono-800 hover:text-mono-300 transition-colors cursor-pointer"
+          class="w-full px-3 py-2 rounded-xl border border-dashed border-edge-strong text-sm text-fg-muted hover:border-edge-hover hover:bg-surface-raised hover:text-fg-secondary transition-colors cursor-pointer"
         >
           <i class="fa-solid fa-plus mr-1"></i> Add Validator
         </button>
@@ -738,7 +743,7 @@
             {@const tmpl = getModelValidatorTemplateById(validator.templateId)}
             <div class="flex items-center space-x-2 p-3 {surfaceInsideFrostedPanel}">
               <div class="flex items-center space-x-2 flex-1 min-w-0">
-                <span class="text-sm text-mono-300 truncate">{tmpl?.name ?? validator.templateId}</span>
+                <span class="text-sm text-fg-secondary truncate">{tmpl?.name ?? validator.templateId}</span>
                 <Pill class="shrink-0">{tmpl?.mode ?? 'after'}</Pill>
               </div>
               <button
@@ -759,7 +764,7 @@
   <!-- Used In APIs (only when editing) -->
   {#if mode === 'editing'}
     <div>
-      <h3 class="text-sm text-mono-300 mb-2 font-medium">Used In APIs ({editedItem.usedInApis.length})</h3>
+      <h3 class="text-sm text-fg-secondary mb-2 font-medium">Used In APIs ({editedItem.usedInApis.length})</h3>
       <div class="space-y-1">
         {#each editedItem.usedInApis as apiId}
           {@const api = $apisStore.find(a => a.id === apiId)}
@@ -768,17 +773,17 @@
             onclick={() => goto(`/apis/${apiId}`)}
             class={drawerLinkedEntityRow}
           >
-            <i class="fa-solid fa-code text-mono-400 text-xs"></i>
-            <span class="text-sm text-mono-100">{api?.title ?? apiId}</span>
+            <i class="fa-solid fa-code text-fg-muted text-xs"></i>
+            <span class="text-sm text-fg">{api?.title ?? apiId}</span>
             {#if api?.version}
-              <span class="text-xs text-mono-500">{api.version}</span>
+              <span class="text-xs text-fg-dimmed">{api.version}</span>
             {/if}
             <div class="flex-1"></div>
-            <i class="fa-solid fa-arrow-right text-mono-600 text-xs"></i>
+            <i class="fa-solid fa-arrow-right text-fg-faint text-xs"></i>
           </button>
         {/each}
         {#if editedItem.usedInApis.length === 0}
-          <p class="text-sm text-mono-400 italic">Not used in any APIs</p>
+          <p class="text-sm text-fg-muted italic">Not used in any APIs</p>
         {/if}
       </div>
     </div>

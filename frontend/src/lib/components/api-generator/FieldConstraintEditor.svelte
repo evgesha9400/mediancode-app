@@ -1,6 +1,6 @@
 <script module lang="ts">
-  import type { FieldConstraintValue } from '$lib/stores/fields';
-  import type { FieldConstraint } from '$lib/stores/fieldConstraints';
+  import type { FieldConstraintValue } from '$lib/types';
+  import type { FieldConstraint } from '$lib/stores/stores';
 
   export interface FieldConstraintEditorProps {
     /** Currently attached constraints on the field */
@@ -42,7 +42,7 @@
 </script>
 
 <div>
-  <h3 class="text-sm text-mono-300 mb-2 font-medium">Field Constraints ({constraints.length})</h3>
+  <h3 class="text-sm text-fg-secondary mb-2 font-medium">Field Constraints ({constraints.length})</h3>
 
   <div class="space-y-2">
     <FieldConstraintSelectorDropdown
@@ -54,7 +54,7 @@
 
     {#if constraints.length === 0}
       <div class="p-3 {surfaceInsideFrostedPanel}">
-        <p class="text-xs text-mono-400">No field constraints selected</p>
+        <p class="text-xs text-fg-muted">No field constraints selected</p>
       </div>
     {:else}
       <div class="p-2 {surfaceInsideFrostedPanel} space-y-2">
@@ -63,8 +63,8 @@
           {#if constraintMeta}
             <div class="flex items-center space-x-2 p-3 {surfaceInsideFrostedPanel}" data-testid={FIELD_CONSTRAINT_ROW}>
               <div class="flex items-center space-x-2 shrink-0">
-                <span class="font-mono text-sm text-mono-300">{constraintMeta.name}</span>
-                <span class="text-xs text-mono-400 bg-mono-800 px-2 py-0.5 rounded-lg">{constraintMeta.parameterTypes.join(', ')}</span>
+                <span class="font-mono text-sm text-fg-secondary">{constraintMeta.name}</span>
+                <span class="text-xs text-fg-muted bg-surface-raised px-2 py-0.5 rounded-lg">{constraintMeta.parameterTypes.join(', ')}</span>
               </div>
 
               <input

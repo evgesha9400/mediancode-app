@@ -54,7 +54,7 @@
   }
 </script>
 
-<div class="border-b border-mono-700 last:border-b-0">
+<div class="border-b border-edge last:border-b-0">
   <div class="flex items-center gap-2 py-1.5">
     <!-- Name input -->
     <div class="w-1/4 shrink-0">
@@ -88,7 +88,7 @@
               <span class={listMetaBadge}>{derivedType}</span>
             {/if}
           {:else}
-            <span class="text-sm text-mono-400">Select field...</span>
+            <span class="text-sm text-fg-muted">Select field...</span>
           {/if}
         </div>
         <button

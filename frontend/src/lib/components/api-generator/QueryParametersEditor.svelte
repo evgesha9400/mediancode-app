@@ -82,7 +82,7 @@
 {#if !isDetail}
   <div>
     <div class="flex items-center justify-between mb-2">
-      <h3 class="text-sm text-mono-300 flex items-center font-medium">
+      <h3 class="text-sm text-fg-secondary flex items-center font-medium">
         <i class="fa-solid fa-filter mr-2"></i>
         Query Parameters
       </h3>
@@ -102,7 +102,7 @@
     {#if hasRows}
       <div class="px-3 py-2 {surfaceInsideFrostedPanel} mb-2">
         <!-- Column headers -->
-        <div class="flex items-center gap-2 py-1 border-b border-mono-700 text-[10px] text-mono-500 uppercase tracking-wider">
+        <div class="flex items-center gap-2 py-1 border-b border-edge text-[10px] text-fg-dimmed uppercase tracking-wider">
           <div class="w-1/4 shrink-0">Name</div>
           <div class="w-1/4 shrink-0">Operator</div>
           <div class="w-1/2">Field</div>
@@ -180,7 +180,7 @@
       />
     {:else if queryParams.length === 0 && !pagination}
       <div class="px-3 py-2 {surfaceInsideFrostedPanel}">
-        <p class="text-xs text-mono-400">No query parameters. Select an object to add field-based filters.</p>
+        <p class="text-xs text-fg-muted">No query parameters. Select an object to add field-based filters.</p>
       </div>
     {/if}
 

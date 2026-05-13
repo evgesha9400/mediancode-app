@@ -8,6 +8,7 @@
   import { loadStoresFromApi, storeLoadingState } from '$lib/stores/loader';
   import { sidebarState } from '$lib/stores/sidebar.svelte';
   import {
+    dashboardBlockingSpinner,
     dashboardLoadingLabel,
     dashboardLoadingRoot,
     dashboardMainColumnCanvasForPath,
@@ -42,7 +43,7 @@
 {#if !$clerkState.isLoaded || !$clerkState.isSignedIn}
   <div class={dashboardLoadingRoot}>
     <div class="text-center">
-      <div class="animate-spin rounded-full h-8 w-8 border-2 border-transparent border-t-green-400 mx-auto opacity-80"></div>
+      <div class={dashboardBlockingSpinner}></div>
       <p class={dashboardLoadingLabel}>Loading...</p>
     </div>
   </div>
@@ -55,7 +56,7 @@
       {#if $storeLoadingState.isLoading}
         <div class="flex-1 flex items-center justify-center">
           <div class="text-center">
-            <div class="animate-spin rounded-full h-8 w-8 border-2 border-transparent border-t-green-400 mx-auto opacity-80"></div>
+            <div class={dashboardBlockingSpinner}></div>
             <p class={dashboardLoadingLabel}>Loading data...</p>
           </div>
         </div>

@@ -13,9 +13,11 @@
 <script lang="ts">
   import { goto } from '$app/navigation';
   import {
+    apiReadinessStatusReadyClasses,
     btnGenerateSm,
     cardGlassBorderDefault,
     cardGlassSurface,
+    tableListEntityTitleButton,
   } from '$lib/ui/classes';
 
   interface Props extends ApiReadinessCardProps {}
@@ -23,9 +25,9 @@
   let { apiId, title, version, endpointCount, readyEndpointCount, status, onGenerate }: Props = $props();
 
   const statusConfig = {
-    'ready': { label: 'Ready to generate', color: 'text-green-400 bg-green-400/10 border-green-400/20' },
+    'ready': { label: 'Ready to generate', color: apiReadinessStatusReadyClasses },
     'needs-endpoints': { label: 'Needs endpoints', color: 'text-amber-400 bg-amber-400/10 border-amber-400/20' },
-    'incomplete': { label: 'Incomplete', color: 'text-mono-400 bg-mono-800/50 border-mono-700/50' },
+    'incomplete': { label: 'Incomplete', color: 'text-fg-muted bg-surface-raised/50 border-edge/50' },
   };
 
   let config = $derived(statusConfig[status]);
@@ -36,11 +38,11 @@
     <div class="min-w-0">
       <button
         onclick={() => goto(`/apis/${apiId}`)}
-        class="text-base font-inter font-bold text-mono-100 hover:text-green-400 transition-colors cursor-pointer truncate block"
+        class={tableListEntityTitleButton}
       >
         {title}
       </button>
-      <span class="text-xs font-mono text-mono-400">v{version}</span>
+      <span class="text-xs font-mono text-fg-muted">v{version}</span>
     </div>
     <span class="text-[11px] px-2.5 py-1 rounded-full border shrink-0 ml-2 font-inter font-medium tracking-wide {config.color}">
       {config.label}
@@ -48,10 +50,10 @@
   </div>
 
   <div class="flex items-center justify-between">
-    <span class="text-sm font-inter text-mono-400">
+    <span class="text-sm font-inter text-fg-muted">
       {endpointCount} endpoint{endpointCount !== 1 ? 's' : ''}
       {#if endpointCount > 0}
-        <span class="text-mono-600 mx-1">&middot;</span>
+        <span class="text-fg-faint mx-1">&middot;</span>
         {readyEndpointCount} configured
       {/if}
     </span>
@@ -68,7 +70,7 @@
     {:else}
       <button
         onclick={() => goto(`/apis/${apiId}`)}
-        class="text-xs px-4 py-1.5 rounded-lg border border-mono-600/80 text-mono-300 font-inter font-medium hover:bg-mono-700 transition-colors cursor-pointer"
+        class="text-xs px-4 py-1.5 rounded-lg border border-edge-strong/80 text-fg-secondary font-inter font-medium hover:bg-surface-overlay transition-colors cursor-pointer"
       >
         Configure
       </button>

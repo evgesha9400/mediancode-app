@@ -10,7 +10,7 @@
   import { Logo } from '$lib/components/logo';
   import { Tooltip } from '$lib/components/tooltip';
   import { ClerkSidebarUser } from '$lib/components/clerk';
-  import { sidebarState } from '$lib/stores/sidebar.svelte';
+  import { isSidebarCollapsed, sidebarState } from '$lib/stores/sidebar.svelte';
   import {
     dashboardTextPrimary,
     sidebarNavItemActive,
@@ -25,7 +25,7 @@
 
   let { activeRoute }: Props = $props();
 
-  let collapsed = $derived(sidebarState.collapsed);
+  let collapsed = $derived.by(() => isSidebarCollapsed());
   let sidebarShellClass = $derived(sidebarState.drawerMotionActive ? sidebarShellMotionLocked : sidebarShell);
 
   beforeNavigate(() => {
@@ -102,7 +102,7 @@
 
     <!-- Catalog -->
     {#if !collapsed}
-      <h2 class="text-xs uppercase tracking-wider text-mono-500 mb-3 font-bold px-4">Catalog</h2>
+      <h2 class="text-xs uppercase tracking-wider text-fg-dimmed mb-3 font-bold px-4">Catalog</h2>
     {:else}
       <div class="{sidebarSectionDividerHorizontal}"></div>
     {/if}
@@ -126,7 +126,7 @@
 
     <!-- Components -->
     {#if !collapsed}
-      <h2 class="text-xs uppercase tracking-wider text-mono-500 mb-3 font-bold px-4">Components</h2>
+      <h2 class="text-xs uppercase tracking-wider text-fg-dimmed mb-3 font-bold px-4">Components</h2>
     {:else}
       <div class="{sidebarSectionDividerHorizontal}"></div>
     {/if}

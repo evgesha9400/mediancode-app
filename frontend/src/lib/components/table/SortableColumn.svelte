@@ -35,14 +35,14 @@
   <button
     type="button"
     onclick={handleClick}
-    class="flex items-center space-x-1 hover:text-mono-50 transition-colors"
+    class="flex items-center space-x-1 hover:text-fg transition-colors"
     aria-label={ariaLabel}
     title="Click to sort, Shift+Click to add to sort"
   >
     <span>{label}</span>
     <i class="fa-solid {icon}"></i>
     {#if priority !== null}
-      <span class="inline-flex items-center justify-center w-4 h-4 text-xs font-semibold rounded-full bg-mono-800 {dashboardTextPrimary}">
+      <span class="inline-flex items-center justify-center w-4 h-4 text-xs font-semibold rounded-full bg-surface-raised {dashboardTextPrimary}">
         {priority}
       </span>
     {/if}

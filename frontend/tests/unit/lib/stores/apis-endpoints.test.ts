@@ -17,7 +17,7 @@ import {
 	endpointsStore,
 	getTotalEndpointCount,
 	getEndpointCountByTagName
-} from '$lib/stores/apis';
+} from '$lib/stores/stores';
 import { createMockEndpoint, createMockApi } from '../../../shared/testUtils';
 
 const TEST_API_ID = 'cccccccc-0000-0000-0000-000000000001';

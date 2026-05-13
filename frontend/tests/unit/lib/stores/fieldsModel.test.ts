@@ -5,7 +5,7 @@
 // deletion guard, and CRUD action flows (save, create, delete).
 
 import { describe, it, expect, vi, beforeEach, afterEach, type Mock } from 'vitest';
-import type { Field } from '$lib/stores/fields';
+import type { Field } from '$lib/stores/stores';
 
 // ---------------------------------------------------------------------------
 // Mocks -- must be declared before imports that use them
@@ -57,7 +57,8 @@ vi.mock('$lib/utils/references', () => ({
 // Imports (after mocks)
 // ---------------------------------------------------------------------------
 
-import { createFieldsModel, type FieldsModelConfig, type FieldsModelState } from '$lib/stores/fieldsModel.svelte';
+import { createCrudModel, type CrudModelState } from '$lib/stores/crudModel.svelte';
+import { createFieldsContract } from '$lib/stores/fieldsConfig.svelte';
 import { createFieldApi, updateFieldApi, deleteFieldApi } from '$lib/api/fields';
 import { mapApiError } from '$lib/domain/errorMap';
 import { showToast } from '$lib/stores/toasts';
@@ -86,25 +87,33 @@ function makeField(overrides: Partial<Field> & { id: string; name: string }): Fi
 }
 
 /** Wraps model creation in an effect root so $effect runes work outside components */
-function createTestModel(overrides: Partial<FieldsModelConfig> = {}): {
-  model: FieldsModelState;
+function createTestModel(overrides: {
+  itemsStore?: () => Field[];
+  getActiveNamespaceId?: () => string;
+  getDefaultType?: () => string;
+  getTypeIdByName?: (name: string) => string | undefined;
+  afterCreate?: (field: Field) => void;
+} = {}): {
+  model: CrudModelState<Field>;
   cleanup: () => void;
 } {
-  let model!: FieldsModelState;
+  let model!: CrudModelState<Field>;
 
   const cleanup = effect_root(() => {
-    model = createFieldsModel({
-      itemsStore: () => [],
+    const contract = createFieldsContract({
+      getActiveNamespaceId: overrides.getActiveNamespaceId ?? (() => 'ns-1'),
+      getDefaultType: overrides.getDefaultType ?? (() => 'str'),
+      getTypeIdByName: overrides.getTypeIdByName ?? ((name: string) => (name === 'str' ? 'type-str' : name === 'int' ? 'type-int' : undefined)),
+      afterCreate: overrides.afterCreate
+    });
+    model = createCrudModel(contract, {
+      itemsStore: overrides.itemsStore ?? (() => []),
       searchFn: (items, query) => {
         if (!query) return items;
         return items.filter(i => i.name.toLowerCase().includes(query.toLowerCase()));
       },
       filterSections: () => [],
-      urlScope: { page: page as any, goto: goto as any },
-      getActiveNamespaceId: () => 'ns-1',
-      getDefaultType: () => 'str',
-      getTypeIdByName: (name: string) => (name === 'str' ? 'type-str' : name === 'int' ? 'type-int' : undefined),
-      ...overrides
+      urlScope: { page: page as any, goto: goto as any }
     });
   });
 
@@ -116,7 +125,7 @@ function createTestModel(overrides: Partial<FieldsModelConfig> = {}): {
 // ---------------------------------------------------------------------------
 
 describe('fieldsModel - Initial State', () => {
-  let model: FieldsModelState;
+  let model: CrudModelState<Field>;
   let cleanup: () => void;
 
   afterEach(() => cleanup?.());
@@ -137,7 +146,7 @@ describe('fieldsModel - Initial State', () => {
 });
 
 describe('fieldsModel - Validation', () => {
-  let model: FieldsModelState;
+  let model: CrudModelState<Field>;
   let cleanup: () => void;
 
   afterEach(() => cleanup?.());
@@ -251,7 +260,7 @@ describe('fieldsModel - Validation', () => {
 });
 
 describe('fieldsModel - Draft Creation', () => {
-  let model: FieldsModelState;
+  let model: CrudModelState<Field>;
   let cleanup: () => void;
 
   afterEach(() => cleanup?.());
@@ -298,7 +307,7 @@ describe('fieldsModel - Draft Creation', () => {
 });
 
 describe('fieldsModel - Deletion Guard', () => {
-  let model: FieldsModelState;
+  let model: CrudModelState<Field>;
   let cleanup: () => void;
 
   afterEach(() => cleanup?.());
@@ -344,7 +353,7 @@ describe('fieldsModel - Deletion Guard', () => {
 });
 
 describe('fieldsModel - Save (Update)', () => {
-  let model: FieldsModelState;
+  let model: CrudModelState<Field>;
   let cleanup: () => void;
 
   beforeEach(() => {
@@ -457,7 +466,7 @@ describe('fieldsModel - Save (Update)', () => {
 });
 
 describe('fieldsModel - Create', () => {
-  let model: FieldsModelState;
+  let model: CrudModelState<Field>;
   let cleanup: () => void;
 
   beforeEach(() => {
@@ -536,10 +545,26 @@ describe('fieldsModel - Create', () => {
       { templateId: 'tmpl-1', parameters: { case: 'lowercase' } }
     ]);
   });
+
+  it('should call afterCreate hook with the created field', async () => {
+    const afterCreate = vi.fn();
+    ({ model, cleanup } = createTestModel({ afterCreate }));
+    const newField = makeField({ id: 'f-new', name: 'new_field' });
+    (createFieldApi as Mock).mockResolvedValue(newField);
+
+    model.openCreate();
+    flushSync();
+    model.editedItem!.name = 'new_field';
+    flushSync();
+
+    await model.handleCreate();
+
+    expect(afterCreate).toHaveBeenCalledWith(newField);
+  });
 });
 
 describe('fieldsModel - Delete', () => {
-  let model: FieldsModelState;
+  let model: CrudModelState<Field>;
   let cleanup: () => void;
 
   beforeEach(() => {
@@ -585,7 +610,7 @@ describe('fieldsModel - Delete', () => {
 });
 
 describe('fieldsModel - Undo', () => {
-  let model: FieldsModelState;
+  let model: CrudModelState<Field>;
   let cleanup: () => void;
 
   afterEach(() => cleanup?.());
@@ -611,7 +636,7 @@ describe('fieldsModel - Undo', () => {
 });
 
 describe('fieldsModel - isSelected', () => {
-  let model: FieldsModelState;
+  let model: CrudModelState<Field>;
   let cleanup: () => void;
 
   afterEach(() => cleanup?.());

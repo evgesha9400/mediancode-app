@@ -75,9 +75,9 @@
       <!-- Display selected object with clear button -->
       <div class={objectSelectorDisplayRow}>
         <div class="flex items-center space-x-2">
-          <i class="fa-solid fa-cube text-mono-400 text-xs"></i>
-          <span class="font-mono text-sm text-mono-300">{selectedObject.name}</span>
-          <span class="text-xs text-mono-400">({selectedObject.members.length} members)</span>
+          <i class="fa-solid fa-cube text-fg-muted text-xs"></i>
+          <span class="font-mono text-sm text-fg-secondary">{selectedObject.name}</span>
+          <span class="text-xs text-fg-muted">({selectedObject.members.length} members)</span>
         </div>
         <button
           type="button"
@@ -98,7 +98,7 @@
         placeholder={placeholder}
         class="{inputGlass} {inputGlassSearchSuffix}"
       />
-      <i class="fa-solid fa-search absolute right-3 top-1/2 -translate-y-1/2 text-mono-400 text-xs pointer-events-none"></i>
+      <i class="fa-solid fa-search absolute right-3 top-1/2 -translate-y-1/2 text-fg-muted text-xs pointer-events-none"></i>
     {/if}
   </div>
 
@@ -115,31 +115,31 @@
               <div class="flex items-start justify-between">
                 <div class="flex-1">
                   <div class="flex items-center space-x-2">
-                    <i class="fa-solid fa-cube text-mono-400 text-xs"></i>
-                    <span class="font-mono text-sm text-mono-300">{object.name}</span>
+                    <i class="fa-solid fa-cube text-fg-muted text-xs"></i>
+                    <span class="font-mono text-sm text-fg-secondary">{object.name}</span>
                     <span class={listMetaBadge}>
                       {object.members.length} members
                     </span>
                   </div>
                   {#if object.description}
-                    <p class="text-xs text-mono-400 mt-1">{object.description}</p>
+                    <p class="text-xs text-fg-muted mt-1">{object.description}</p>
                   {/if}
                 </div>
               </div>
             </button>
           {/each}
         {:else if searchQuery.trim()}
-          <div class="px-3 py-2 text-sm text-mono-400">
+          <div class="px-3 py-2 text-sm text-fg-muted">
             No objects found matching "{searchQuery}"
           </div>
         {:else}
-          <div class="px-3 py-2 text-sm text-mono-400">
+          <div class="px-3 py-2 text-sm text-fg-muted">
             No objects available in this namespace. Create objects in the same namespace first.
           </div>
         {/if}
       </div>
       {#if onCreateNew}
-        <div class="border-t border-mono-700 p-2">
+        <div class="border-t border-edge p-2">
           <button
             type="button"
             class={dropdownCreateRow}

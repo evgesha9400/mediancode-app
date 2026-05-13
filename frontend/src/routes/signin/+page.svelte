@@ -3,6 +3,7 @@
 	import { goto } from '$app/navigation';
 	import { page } from '$app/state';
 	import { Logo } from '$lib/components/logo';
+	import { authPageAccentGlowOrb, authPageInlineSpinner } from '$lib/ui/classes';
 
 	let clerkMountDiv = $state<HTMLDivElement>();
 	let hasAttemptedMount = $state(false);
@@ -50,35 +51,35 @@
 	});
 </script>
 
-<div class="min-h-screen flex items-center justify-center p-4 relative overflow-hidden bg-mono-950">
+<div class="min-h-screen flex items-center justify-center p-4 relative overflow-hidden bg-surface-base">
 	<!-- Ambient Glow Background -->
-	<div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[600px] opacity-[0.12] bg-green-400 blur-[120px] rounded-full pointer-events-none"></div>
+	<div class={authPageAccentGlowOrb}></div>
 
 	<div class="relative z-10 w-full max-w-md">
 		{#if !$clerkState.isLoaded}
 			<div class="text-center space-y-4">
 				<div class="flex items-center justify-center space-x-3 mb-8 opacity-80">
 					<Logo size="lg" />
-					<h1 class="text-3xl font-inter font-bold text-mono-100 tracking-tight">Median Code</h1>
+					<h1 class="text-3xl font-inter font-bold text-fg tracking-tight">Median Code</h1>
 				</div>
-				<div class="animate-spin rounded-full h-8 w-8 border-b-2 border-green-400 mx-auto opacity-80"></div>
-				<p class="text-mono-400 font-inter text-sm">Loading...</p>
+				<div class={authPageInlineSpinner}></div>
+				<p class="text-fg-muted font-inter text-sm">Loading...</p>
 			</div>
 		{:else if $clerkState.isSignedIn}
 			<div class="text-center space-y-4">
 				<div class="flex items-center justify-center space-x-3 mb-8 opacity-80">
 					<Logo size="lg" />
-					<h1 class="text-3xl font-inter font-bold text-mono-100 tracking-tight">Median Code</h1>
+					<h1 class="text-3xl font-inter font-bold text-fg tracking-tight">Median Code</h1>
 				</div>
-				<div class="animate-spin rounded-full h-8 w-8 border-b-2 border-green-400 mx-auto opacity-80"></div>
-				<p class="text-mono-400 font-inter text-sm">Redirecting to dashboard...</p>
+				<div class={authPageInlineSpinner}></div>
+				<p class="text-fg-muted font-inter text-sm">Redirecting to dashboard...</p>
 			</div>
 		{:else}
 			<div class="w-full flex flex-col items-center">
 				<!-- Logo above Clerk form -->
 				<div class="flex items-center justify-center space-x-3 mb-8 opacity-90">
 					<Logo size="lg" />
-					<h1 class="text-3xl font-inter font-bold text-mono-100 tracking-tight">Median Code</h1>
+					<h1 class="text-3xl font-inter font-bold text-fg tracking-tight">Median Code</h1>
 				</div>
 				<div bind:this={clerkMountDiv} class="w-full flex justify-center"></div>
 			</div>

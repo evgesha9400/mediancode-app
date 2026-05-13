@@ -48,7 +48,8 @@ vi.mock('$lib/stores/toasts', () => ({
 // Imports (after mocks)
 // ---------------------------------------------------------------------------
 
-import { createApiModel, type ApiModelConfig, type ApiModelState } from '$lib/stores/apiModel.svelte';
+import { createCrudModel, type CrudModelState } from '$lib/stores/crudModel.svelte';
+import { createApisContract } from '$lib/stores/apisConfig.svelte';
 import { createApiApi, updateApiApi, deleteApiApi } from '$lib/api/apis';
 import { mapApiError } from '$lib/domain/errorMap';
 import { showToast } from '$lib/stores/toasts';
@@ -76,24 +77,30 @@ function makeApi(overrides: Partial<Api> & { id: string; title: string }): Api {
 }
 
 /** Wraps model creation in an effect root so $effect runes work outside components */
-function createTestModel(overrides: Partial<ApiModelConfig> = {}): {
-  model: ApiModelState;
+function createTestModel(overrides: {
+  itemsStore?: () => Api[];
+  getActiveNamespaceId?: () => string;
+  getEndpointCount?: (apiId: string) => number;
+} = {}): {
+  model: CrudModelState<Api>;
   cleanup: () => void;
 } {
-  let model!: ApiModelState;
+  let model!: CrudModelState<Api>;
 
   const cleanup = effect_root(() => {
-    model = createApiModel({
-      itemsStore: () => [],
+    const contract = createApisContract({
+      getActiveNamespaceId: overrides.getActiveNamespaceId ?? (() => 'ns-1'),
+      getEndpointCount: overrides.getEndpointCount ?? (() => 0),
+      afterCreate: (api: Api) => (goto as any)(`/apis/${api.id}`)
+    });
+    model = createCrudModel(contract, {
+      itemsStore: overrides.itemsStore ?? (() => []),
       searchFn: (items, query) => {
         if (!query) return items;
         return items.filter(i => i.title.toLowerCase().includes(query.toLowerCase()));
       },
       filterSections: () => [],
-      urlScope: { page: page as any, goto: goto as any },
-      getActiveNamespaceId: () => 'ns-1',
-      getEndpointCount: () => 0,
-      ...overrides
+      urlScope: { page: page as any, goto: goto as any }
     });
   });
 
@@ -105,7 +112,7 @@ function createTestModel(overrides: Partial<ApiModelConfig> = {}): {
 // ---------------------------------------------------------------------------
 
 describe('apiModel - Initial State', () => {
-  let model: ApiModelState;
+  let model: CrudModelState<Api>;
   let cleanup: () => void;
 
   afterEach(() => cleanup?.());
@@ -126,7 +133,7 @@ describe('apiModel - Initial State', () => {
 });
 
 describe('apiModel - Validation', () => {
-  let model: ApiModelState;
+  let model: CrudModelState<Api>;
   let cleanup: () => void;
 
   afterEach(() => cleanup?.());
@@ -192,7 +199,7 @@ describe('apiModel - Validation', () => {
 });
 
 describe('apiModel - Draft Creation', () => {
-  let model: ApiModelState;
+  let model: CrudModelState<Api>;
   let cleanup: () => void;
 
   afterEach(() => cleanup?.());
@@ -227,7 +234,7 @@ describe('apiModel - Draft Creation', () => {
 });
 
 describe('apiModel - Deletion Guard', () => {
-  let model: ApiModelState;
+  let model: CrudModelState<Api>;
   let cleanup: () => void;
 
   afterEach(() => cleanup?.());
@@ -247,7 +254,7 @@ describe('apiModel - Deletion Guard', () => {
 });
 
 describe('apiModel - Save (Update)', () => {
-  let model: ApiModelState;
+  let model: CrudModelState<Api>;
   let cleanup: () => void;
 
   beforeEach(() => {
@@ -274,7 +281,7 @@ describe('apiModel - Save (Update)', () => {
 });
 
 describe('apiModel - Create', () => {
-  let model: ApiModelState;
+  let model: CrudModelState<Api>;
   let cleanup: () => void;
 
   beforeEach(() => {
@@ -351,7 +358,7 @@ describe('apiModel - Create', () => {
 });
 
 describe('apiModel - Delete', () => {
-  let model: ApiModelState;
+  let model: CrudModelState<Api>;
   let cleanup: () => void;
 
   beforeEach(() => {
@@ -378,7 +385,7 @@ describe('apiModel - Delete', () => {
 });
 
 describe('apiModel - Undo', () => {
-  let model: ApiModelState;
+  let model: CrudModelState<Api>;
   let cleanup: () => void;
 
   afterEach(() => cleanup?.());
@@ -401,7 +408,7 @@ describe('apiModel - Undo', () => {
 });
 
 describe('apiModel - isSelected', () => {
-  let model: ApiModelState;
+  let model: CrudModelState<Api>;
   let cleanup: () => void;
 
   afterEach(() => cleanup?.());

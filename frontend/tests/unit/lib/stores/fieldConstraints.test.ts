@@ -13,7 +13,7 @@ import {
   getFieldConstraintsByFieldType,
   addFieldConstraint,
   type FieldConstraint
-} from '$lib/stores/fieldConstraints';
+} from '$lib/stores/stores';
 
 // ---------------------------------------------------------------------------
 // Helpers

@@ -1,9 +1,9 @@
 <script module lang="ts">
   export interface FieldFormContentProps {
-    editedItem: import('$lib/stores/fields').Field;
+    editedItem: import('$lib/types').Field;
     mode: 'creating' | 'editing';
-    selectableTypes: import('$lib/stores/types').FieldType[];
-    fieldConstraintDefinitions: import('$lib/stores/fieldConstraints').FieldConstraint[];
+    selectableTypes: import('$lib/stores/stores').FieldType[];
+    fieldConstraintDefinitions: import('$lib/stores/stores').FieldConstraint[];
     fieldValidatorTemplates: import('$lib/types').FieldValidatorTemplate[];
     visibleErrors: Record<string, string>;
     onTypeChange?: (typeName: string) => void;
@@ -12,10 +12,8 @@
 </script>
 
 <script lang="ts">
-  import type { Field, FieldConstraintValue } from '$lib/stores/fields';
-  import type { FieldType } from '$lib/stores/types';
-  import type { FieldConstraint } from '$lib/stores/fieldConstraints';
-  import type { FieldValidatorTemplate, InlineFieldValidator } from '$lib/types';
+  import type { Field, FieldConstraintValue, FieldValidatorTemplate, InlineFieldValidator } from '$lib/types';
+  import type { FieldType, FieldConstraint } from '$lib/stores/stores';
   import { CONTAINER_VALUES } from '$lib/types';
   import {
     FormField,
@@ -27,9 +25,8 @@
     DefaultValueInput,
     Pill
   } from '$lib/components';
-  import { apisStore } from '$lib/stores/apis';
+  import { apisStore, getFieldValidatorTemplateById } from '$lib/stores/stores';
   import { goto } from '$app/navigation';
-  import { getFieldValidatorTemplateById } from '$lib/stores/fieldValidatorTemplates';
   import {
     drawerLinkedEntityRow,
     inlineRemoveIconButton,
@@ -235,14 +232,14 @@
 
   <!-- Validators -->
   <div>
-    <h3 class="text-sm text-mono-300 mb-2 font-medium">Validators ({editedItem.validators.length})</h3>
+    <h3 class="text-sm text-fg-secondary mb-2 font-medium">Validators ({editedItem.validators.length})</h3>
 
     <div class="space-y-2">
       {#if !validatorGalleryOpen}
         <button
           type="button"
           onclick={openValidatorGallery}
-          class="w-full px-3 py-2 rounded-xl border border-dashed border-mono-600 text-sm text-mono-400 hover:border-mono-500 hover:bg-mono-800 hover:text-mono-300 transition-colors cursor-pointer"
+          class="w-full px-3 py-2 rounded-xl border border-dashed border-edge-strong text-sm text-fg-muted hover:border-edge-hover hover:bg-surface-raised hover:text-fg-secondary transition-colors cursor-pointer"
         >
           <i class="fa-solid fa-plus mr-1"></i> Add Validator
         </button>
@@ -272,7 +269,7 @@
             {@const tmpl = getFieldValidatorTemplateById(validator.templateId)}
             <div class="flex items-center space-x-2 p-3 {surfaceInsideFrostedPanel}">
               <div class="flex items-center space-x-2 flex-1 min-w-0">
-                <span class="text-sm text-mono-300 truncate">{tmpl?.name ?? validator.templateId}</span>
+                <span class="text-sm text-fg-secondary truncate">{tmpl?.name ?? validator.templateId}</span>
                 <Pill class="shrink-0">{tmpl?.mode ?? 'after'}</Pill>
               </div>
               <button
@@ -294,7 +291,7 @@
   <!-- Used In APIs (only when editing) -->
   {#if mode === 'editing'}
     <div>
-      <h3 class="text-sm text-mono-300 mb-2 font-medium">Used In APIs ({editedItem.usedInApis.length})</h3>
+      <h3 class="text-sm text-fg-secondary mb-2 font-medium">Used In APIs ({editedItem.usedInApis.length})</h3>
       <div class="space-y-1">
         {#each editedItem.usedInApis as apiId}
           {@const api = $apisStore.find(a => a.id === apiId)}
@@ -303,17 +300,17 @@
             onclick={() => goto(`/apis/${apiId}`)}
             class={drawerLinkedEntityRow}
           >
-            <i class="fa-solid fa-code text-mono-400 text-xs"></i>
-            <span class="text-sm text-mono-100">{api?.title ?? apiId}</span>
+            <i class="fa-solid fa-code text-fg-muted text-xs"></i>
+            <span class="text-sm text-fg">{api?.title ?? apiId}</span>
             {#if api?.version}
-              <span class="text-xs text-mono-500">{api.version}</span>
+              <span class="text-xs text-fg-dimmed">{api.version}</span>
             {/if}
             <div class="flex-1"></div>
-            <i class="fa-solid fa-arrow-right text-mono-600 text-xs"></i>
+            <i class="fa-solid fa-arrow-right text-fg-faint text-xs"></i>
           </button>
         {/each}
         {#if editedItem.usedInApis.length === 0}
-          <p class="text-sm text-mono-400 italic">Not used in any APIs</p>
+          <p class="text-sm text-fg-muted italic">Not used in any APIs</p>
         {/if}
       </div>
     </div>

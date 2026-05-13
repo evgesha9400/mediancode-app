@@ -8,6 +8,11 @@
 
 <script lang="ts">
   import { dismissToast } from '$lib/stores/toasts';
+  import {
+    themeAccentBorderMedium,
+    themeAccentSurfaceSoft,
+    themeAccentText
+  } from '$lib/ui/classes';
   import { onMount } from 'svelte';
 
   interface Props extends ToastProps {}
@@ -35,10 +40,10 @@
   const toastStyles = {
     success: {
       icon: 'fa-solid fa-check-circle',
-      bgColor: 'bg-green-400/10',
-      borderColor: 'border-green-400/30',
-      textColor: 'text-green-400',
-      iconColor: 'text-green-400'
+      bgColor: themeAccentSurfaceSoft,
+      borderColor: themeAccentBorderMedium,
+      textColor: themeAccentText,
+      iconColor: themeAccentText
     },
     error: {
       icon: 'fa-solid fa-exclamation-circle',

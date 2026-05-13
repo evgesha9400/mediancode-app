@@ -8,7 +8,7 @@ import {
 	getFieldCountByNamespace,
 	searchFields,
 	type Field
-} from '$lib/stores/fields';
+} from '$lib/stores/stores';
 import { GLOBAL_NAMESPACE_ID } from '$lib/utils/namespace';
 
 // Helper to create a field object for seeding the store directly

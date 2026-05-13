@@ -7,8 +7,8 @@ import {
 	buildRequestPreviewFromObject,
 	buildResponsePreviewFromObject
 } from '$lib/utils/examples';
-import { fieldsStore } from '$lib/stores/fields';
-import { objectsStore } from '$lib/stores/objects';
+import { fieldsStore } from '$lib/stores/stores';
+import { objectsStore } from '$lib/stores/stores';
 import { initialFields } from '../../../fixtures/seedData';
 import type { ResponseShape, ObjectDefinition, Field } from '$lib/types';
 

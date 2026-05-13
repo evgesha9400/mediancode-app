@@ -25,7 +25,7 @@
     "test:e2e:ui": "playwright test --config=playwright.config.ts --ui",
     "lint:dead": "tsx scripts/lint-dead-code.ts",
     "lint:consistency": "tsx scripts/check-consistency.ts",
-    "lint:api": "spectral lint api-spec.yaml --fail-severity=warn",
+    "lint:api": "spectral lint ../api-spec.yaml --fail-severity=warn",
     "lint:ci": "bun run check && bun run lint:dead && bun run lint:consistency && bun run test:fixtures:validate",
     "format": "prettier --write .",
     "format:check": "prettier --check ."

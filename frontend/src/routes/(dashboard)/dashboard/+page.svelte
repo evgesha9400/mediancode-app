@@ -1,9 +1,12 @@
 <script lang="ts">
-  import { typesBaseStore } from '$lib/stores/types';
-  import { fieldsStore } from '$lib/stores/fields';
-  import { fieldConstraintsStore } from '$lib/stores/fieldConstraints';
-  import { objectsStore } from '$lib/stores/objects';
-  import { apisStore, endpointsStore } from '$lib/stores/apis';
+  import {
+    typesBaseStore,
+    fieldsStore,
+    fieldConstraintsStore,
+    objectsStore,
+    apisStore,
+    endpointsStore
+  } from '$lib/stores/stores';
   import { clerkState } from '$lib/clerk';
   import { storeLoadingState, reloadStores, STORE_NAMES } from '$lib/stores/loader';
   import { MainColumnFrame, PageHeader, StatCard } from '$lib/components';
@@ -107,7 +110,9 @@
           <h2 class="text-xs uppercase tracking-wider font-inter font-medium {dashboardTextPrimary}">Your APIs</h2>
         </div>
         {#if apiReadiness.length > 0}
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+          <div
+            class="grid grid-cols-1 gap-3 w-full {apiReadiness.length > 1 ? 'md:grid-cols-2' : 'max-w-xl'}"
+          >
             {#each apiReadiness as item}
               <ApiReadinessCard
                 apiId={item.api.id}
@@ -122,14 +127,14 @@
           </div>
         {:else}
           <div class="{cardGlassSurface} p-8 text-center">
-            <i class="fa-solid fa-code text-mono-600 text-3xl mb-3 block"></i>
-            <p class="text-sm text-mono-400 font-inter">No APIs yet. Create your first API to get started.</p>
+            <i class="fa-solid fa-code text-fg-faint text-3xl mb-3 block"></i>
+            <p class="text-sm text-fg-muted font-inter">No APIs yet. Create your first API to get started.</p>
           </div>
         {/if}
       </section>
     </div>
 
-    <section class="lg:col-start-1 lg:row-start-3">
+    <section class="min-w-0 w-full lg:col-start-1 lg:row-start-3 lg:self-start">
       <div class="flex items-center mb-3 h-[24px]">
         <h2 class="text-xs uppercase tracking-wider font-inter font-medium {dashboardTextPrimary}">Account</h2>
       </div>

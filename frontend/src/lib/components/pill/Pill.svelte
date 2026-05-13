@@ -22,7 +22,7 @@
 </script>
 
 <span
-  class="{sizeClasses[size]} rounded-full border border-mono-700/60 bg-mono-800/40 font-mono tracking-wide {dashboardTextPrimary} {extraClass}"
+  class="{sizeClasses[size]} rounded-full border border-edge/60 bg-surface-raised/40 font-mono tracking-wide {dashboardTextPrimary} {extraClass}"
 >
   {#if children}
     {@render children()}

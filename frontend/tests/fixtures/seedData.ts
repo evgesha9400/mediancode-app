@@ -8,7 +8,7 @@
  * Production code does NOT import from this file.
  */
 
-import type { PrimitiveTypeName } from '../../src/lib/stores/types';
+import type { PrimitiveTypeName } from '../../src/lib/stores/stores';
 import type { Field, FieldConstraintValue, FieldConstraintBase, ObjectDefinition, Namespace } from '../../src/lib/types';
 import { GLOBAL_NAMESPACE_ID } from '../../src/lib/utils/namespace';
 

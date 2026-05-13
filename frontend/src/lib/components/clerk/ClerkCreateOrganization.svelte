@@ -84,12 +84,12 @@
 <div class="clerk-create-organization {className}" data-testid="clerk-create-organization">
   {#if isLoading}
     <div class="flex items-center justify-center p-8">
-      <i class="fa-solid fa-spinner fa-spin text-2xl text-mono-400"></i>
+      <i class="fa-solid fa-spinner fa-spin text-2xl text-fg-muted"></i>
     </div>
   {:else if hasError}
     <div class="p-6 {dashboardCardGlass} text-center">
-      <i class="fa-solid fa-exclamation-circle text-2xl text-mono-400 mb-2"></i>
-      <p class="text-mono-400">Unable to load organization creation form</p>
+      <i class="fa-solid fa-exclamation-circle text-2xl text-fg-muted mb-2"></i>
+      <p class="text-fg-muted">Unable to load organization creation form</p>
     </div>
   {/if}
   <div bind:this={containerElement}></div>

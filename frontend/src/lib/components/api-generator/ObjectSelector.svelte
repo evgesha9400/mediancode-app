@@ -19,7 +19,7 @@
 </script>
 
 <script lang="ts">
-  import { objectsStore } from '$lib/stores/objects';
+  import { objectsStore } from '$lib/stores/stores';
   import { Tooltip } from '$lib/components/tooltip';
   import {
     segmentPillBase,
@@ -53,7 +53,7 @@
 </script>
 
 <div>
-  <h3 class="text-sm text-mono-300 flex items-center font-medium mb-2">
+  <h3 class="text-sm text-fg-secondary flex items-center font-medium mb-2">
     <i class="fa-solid fa-cube mr-2"></i>
     Object & Response Shape
   </h3>
@@ -61,7 +61,7 @@
   <div class="object-selector-grid">
     <!-- Object dropdown -->
     <div>
-      <p class="text-[10px] text-mono-500 uppercase tracking-wider mb-1">Object</p>
+      <p class="text-[10px] text-fg-dimmed uppercase tracking-wider mb-1">Object</p>
       <ObjectSelectorDropdown
         availableObjects={namespacedObjects}
         selectedObjectId={selectedObjectId}
@@ -83,7 +83,7 @@
 
     <!-- Response shape toggle -->
     <div>
-      <p class="text-[10px] text-mono-500 uppercase tracking-wider mb-1">Response Shape</p>
+      <p class="text-[10px] text-fg-dimmed uppercase tracking-wider mb-1">Response Shape</p>
       <Tooltip
         text={responseShapeLocked ? responseShapeLockedReason : ''}
         disabled={!responseShapeLocked}

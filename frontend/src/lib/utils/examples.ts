@@ -4,8 +4,7 @@
  */
 
 import type { ResponseShape, ScalarMember } from '$lib/types';
-import { getFieldById } from '$lib/stores/fields';
-import { getObjectById } from '$lib/stores/objects';
+import { getFieldById, getObjectById } from '$lib/stores/stores';
 
 /**
  * Get the PK field type of a target object for FK type derivation.

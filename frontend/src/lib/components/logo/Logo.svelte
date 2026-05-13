@@ -85,6 +85,6 @@
 		aria-hidden="true"
 	></canvas>
 	{#if showText}
-		<span class="font-bold {variant === 'light' ? 'text-mono-900' : dashboardTextPrimary}">Median Code</span>
+		<span class="font-bold {variant === 'light' ? 'text-fg-on-accent' : dashboardTextPrimary}">Median Code</span>
 	{/if}
 </div>

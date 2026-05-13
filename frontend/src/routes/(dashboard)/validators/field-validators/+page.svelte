@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { fieldValidatorTemplatesStore, searchFieldValidatorTemplates } from '$lib/stores/fieldValidatorTemplates';
+  import { fieldValidatorTemplatesStore, searchFieldValidatorTemplates } from '$lib/stores/stores';
   import {
     MainColumnFrame,
     PageHeader,
@@ -73,6 +73,12 @@
         onSort={state.handleSort}
       />
       <SortableColumn
+        column="description"
+        label="Description"
+        {sorts}
+        onSort={state.handleSort}
+      />
+      <SortableColumn
         column="mode"
         label="Mode"
         {sorts}
@@ -81,12 +87,6 @@
       <SortableColumn
         column="compatibleTypes"
         label="Compatible Types"
-        {sorts}
-        onSort={state.handleSort}
-      />
-      <SortableColumn
-        column="description"
-        label="Description"
         {sorts}
         onSort={state.handleSort}
       />
@@ -107,6 +107,11 @@
             {template.name}
           {/snippet}
         </TableListNameCell>
+        <TableListTextCell col="description" class="max-w-xs truncate">
+          {#snippet children()}
+            {template.description}
+          {/snippet}
+        </TableListTextCell>
         <td class="{tableListCell} whitespace-nowrap" {...{ [TABLE_COL_ATTR]: 'mode' }}>
           <Pill>{template.mode}</Pill>
         </td>
@@ -117,11 +122,6 @@
             {/each}
           </div>
         </td>
-        <TableListTextCell col="description" class="max-w-xs truncate">
-          {#snippet children()}
-            {template.description}
-          {/snippet}
-        </TableListTextCell>
       </tr>
     {/each}
   {/snippet}
@@ -170,7 +170,7 @@
                   {/if}
                 </div>
                 {#if param.placeholder}
-                  <p class="text-xs text-mono-400 mt-1">e.g. {param.placeholder}</p>
+                  <p class="text-xs text-fg-muted mt-1">e.g. {param.placeholder}</p>
                 {/if}
               </div>
             {/each}

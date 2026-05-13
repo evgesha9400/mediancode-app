@@ -2,6 +2,9 @@
   import { page } from '$app/state';
   import { goto } from '$app/navigation';
   import { untrack } from 'svelte';
+  import { createCrudModel } from '$lib/stores/crudModel.svelte';
+  import { createObjectsContract, newTempMemberId } from '$lib/stores/objectsConfig.svelte';
+  import { createFieldsContract } from '$lib/stores/fieldsConfig.svelte';
   import {
     BackNavButton,
     MainColumnFrame,
@@ -21,27 +24,29 @@
   } from '$lib/components';
   import { ObjectFormContent, FieldFormContent } from '$lib/components/form';
   import { HTTP_METHOD_SELECT_OPTIONS } from '$lib/types';
-  import type { HttpMethod, ObjectDefinition, Field } from '$lib/types';
-  import { isValidSnakeCaseName, isValidPascalCaseName } from '$lib/utils/validation';
+  import type { HttpMethod, Field } from '$lib/types';
   import { createApiDetailState } from '$lib/stores/apiDetailState.svelte';
-  import { getApiById } from '$lib/stores/apis';
-  import { namespacesStore } from '$lib/stores/namespaces';
-  import { fieldsStore } from '$lib/stores/fields';
-  import { typesStore, getTypeIdByName } from '$lib/stores/types';
-  import { fieldConstraintsStore } from '$lib/stores/fieldConstraints';
-  import { fieldValidatorTemplatesStore } from '$lib/stores/fieldValidatorTemplates';
-  import { modelValidatorTemplatesStore } from '$lib/stores/modelValidatorTemplates';
-  import { objectsStore } from '$lib/stores/objects';
-  import { createObjectApi } from '$lib/api/objects';
-  import { createFieldApi } from '$lib/api/fields';
-  import { mapApiError } from '$lib/domain/errorMap';
-  import { showToast } from '$lib/stores/toasts';
+  import {
+    getApiById,
+    namespacesStore,
+    fieldsStore,
+    searchFields,
+    searchObjects,
+    typesStore,
+    getTypeIdByName,
+    fieldConstraintsStore,
+    fieldValidatorTemplatesStore,
+    modelValidatorTemplatesStore,
+    objectsStore
+  } from '$lib/stores/stores';
   import {
     dashboardCardGlass,
+    dashboardPageHeaderPrimaryButton,
     dashboardPageHeaderShell,
     dashboardPageHeaderTitleBand,
     dashboardPageTitleTextDetail,
     dashboardTextPrimary,
+    defaultValueComboShell,
     drawerFooterBtnDestructive,
     drawerFooterBtnDuplicateSegment,
     drawerFooterBtnDuplicateSegmentMuted,
@@ -82,6 +87,13 @@
   const availableFields = $derived(
     $fieldsStore.filter(f => f.namespaceId === apiState.apiNamespaceId)
   );
+  const availableObjects = $derived(
+    $objectsStore.filter(o => o.namespaceId === apiState.apiNamespaceId)
+  );
+  const selectableTypes = $derived($typesStore);
+  const fieldConstraintDefinitions = $derived($fieldConstraintsStore);
+  const fieldValidatorTemplates = $derived($fieldValidatorTemplatesStore);
+  const modelValidatorTemplates = $derived($modelValidatorTemplatesStore);
 
   // Fields on the endpoint's selected object (for query param field selector)
   const endpointObjectFields = $derived.by((): Field[] => {
@@ -120,144 +132,64 @@
   }
 
   // ============================================================================
-  // Inline Object Creation Overlay
+  // Nested Object + Field Creation Overlays
   // ============================================================================
 
-  let objectCreateOpen = $state(false);
-  let editedNewObject = $state<ObjectDefinition | null>(null);
   let objectCreateTarget = $state<'query' | 'body'>('body');
-  let objectFormTouched = $state(false);
-  let objectSaving = $state(false);
 
-  let objectFormErrors = $derived.by(() => {
-    if (!editedNewObject) return {};
-    const errors: Record<string, string> = {};
-    if (!editedNewObject.name.trim()) {
-      errors.name = 'Object name is required';
-    } else if (!isValidPascalCaseName(editedNewObject.name)) {
-      errors.name = 'Must be PascalCase (e.g. UserEmail)';
+  const objectWorkflow = createCrudModel(
+    createObjectsContract({
+      getActiveNamespaceId: () => apiState.apiNamespaceId,
+      afterCreate: (object) => {
+        if (objectCreateTarget === 'query') {
+          apiState.handleSelectQueryParamsObject(object.id);
+        } else {
+          apiState.handleSelectObject(object.id);
+        }
+      }
+    }),
+    {
+      itemsStore: () => availableObjects,
+      searchFn: searchObjects,
+      filterSections: () => [],
+      urlScope: { page, goto }
     }
-    return errors;
-  });
-  let objectFormValid = $derived(editedNewObject !== null && Object.keys(objectFormErrors).length === 0);
-  let objectImmediateErrors = $derived.by((): Record<string, string> => {
-    if (!editedNewObject || !editedNewObject.name.trim()) return {};
-    if (!isValidPascalCaseName(editedNewObject.name)) {
-      return { name: objectFormErrors.name };
+  );
+
+  const fieldWorkflow = createCrudModel(
+    createFieldsContract({
+      getActiveNamespaceId: () => objectWorkflow.editedItem?.namespaceId ?? apiState.apiNamespaceId,
+      getDefaultType: () => selectableTypes[0]?.name ?? 'str',
+      getTypeIdByName,
+      afterCreate: (field) => {
+        if (!objectWorkflow.editedItem) return;
+        objectWorkflow.editedItem = {
+          ...objectWorkflow.editedItem,
+          members: [
+            ...objectWorkflow.editedItem.members,
+            {
+              memberType: 'scalar',
+              id: newTempMemberId(),
+              name: field.name,
+              fieldId: field.id,
+              role: 'writable',
+              isNullable: false
+            }
+          ]
+        };
+      }
+    }),
+    {
+      itemsStore: () => availableFields,
+      searchFn: searchFields,
+      filterSections: () => [],
+      urlScope: { page, goto }
     }
-    return {};
-  });
-  let objectVisibleErrors = $derived({ ...objectImmediateErrors, ...(objectFormTouched ? objectFormErrors : {}) });
+  );
 
   function openObjectCreate(target: 'query' | 'body') {
     objectCreateTarget = target;
-    editedNewObject = {
-      id: '',
-      namespaceId: apiState.apiNamespaceId,
-      name: '',
-      description: '',
-      members: [],
-      derivedRelationships: [],
-      validators: [],
-      usedInApis: []
-    };
-    objectFormTouched = false;
-    objectCreateOpen = true;
-  }
-
-  function closeObjectCreate() {
-    objectCreateOpen = false;
-    editedNewObject = null;
-  }
-
-  async function handleCreateObject() {
-    objectFormTouched = true;
-    if (!objectFormValid || !editedNewObject) return;
-
-    objectSaving = true;
-    try {
-      const obj = await createObjectApi({
-        namespaceId: editedNewObject.namespaceId,
-        name: editedNewObject.name,
-        description: editedNewObject.description,
-        members: editedNewObject.members.map(({ id, ...rest }) => rest),
-        validators: editedNewObject.validators.length > 0
-          ? editedNewObject.validators.map(v => ({
-              templateId: v.templateId,
-              parameters: v.parameters ?? undefined,
-              fieldMappings: v.fieldMappings
-            }))
-          : undefined
-      });
-
-      objectsStore.update(objects => [...objects, obj]);
-
-      // Auto-select the new object in the appropriate selector
-      if (objectCreateTarget === 'query') {
-        apiState.handleSelectQueryParamsObject(obj.id);
-      } else {
-        apiState.handleSelectObject(obj.id);
-      }
-
-      showToast(`Object "${editedNewObject.name}" created`, 'success');
-      closeObjectCreate();
-    } catch (err) {
-      showToast(mapApiError(err, 'create object'), 'error');
-    } finally {
-      objectSaving = false;
-    }
-  }
-
-  // ============================================================================
-  // Inline Field Creation Overlay (from within Object creation)
-  // ============================================================================
-
-  let fieldCreateOpen = $state(false);
-  let editedNewField = $state<Field | null>(null);
-  let fieldFormTouched = $state(false);
-  let fieldSaving = $state(false);
-
-  let fieldFormErrors = $derived.by(() => {
-    if (!editedNewField) return {};
-    const errors: Record<string, string> = {};
-    if (!editedNewField.name.trim()) {
-      errors.name = 'Field name is required';
-    } else if (!isValidSnakeCaseName(editedNewField.name)) {
-      errors.name = 'Must be snake_case (e.g. user_email)';
-    }
-    if (!editedNewField.type) errors.type = 'Type is required';
-    return errors;
-  });
-  let fieldFormValid = $derived(editedNewField !== null && Object.keys(fieldFormErrors).length === 0);
-  let fieldImmediateErrors = $derived.by((): Record<string, string> => {
-    if (!editedNewField || !editedNewField.name.trim()) return {};
-    if (!isValidSnakeCaseName(editedNewField.name)) {
-      return { name: fieldFormErrors.name };
-    }
-    return {};
-  });
-  let fieldVisibleErrors = $derived({ ...fieldImmediateErrors, ...(fieldFormTouched ? fieldFormErrors : {}) });
-
-  function openFieldCreate() {
-    editedNewField = {
-      id: '',
-      namespaceId: apiState.apiNamespaceId,
-      name: '',
-      type: $typesStore.length > 0 ? $typesStore[0].name : 'str',
-      container: null,
-      constraints: [],
-      validators: [],
-      usedInApis: [],
-      description: '',
-      defaultValue: ''
-    };
-    fieldFormTouched = false;
-    fieldCreateOpen = true;
-  }
-
-  function closeFieldCreate() {
-    fieldCreateOpen = false;
-    editedNewField = null;
+    objectWorkflow.openCreate();
   }
 
   // ============================================================================
@@ -265,50 +197,6 @@
   // ============================================================================
 
   let generateModalOpen = $state(false);
-
-  async function handleCreateField() {
-    fieldFormTouched = true;
-    if (!fieldFormValid || !editedNewField) return;
-
-    const typeId = getTypeIdByName(editedNewField.type);
-    if (!typeId) {
-      showToast(`Unknown type "${editedNewField.type}"`, 'error');
-      return;
-    }
-
-    fieldSaving = true;
-    try {
-      const field = await createFieldApi({
-        namespaceId: editedNewField.namespaceId,
-        name: editedNewField.name,
-        typeId,
-        container: editedNewField.container,
-        description: editedNewField.description,
-        defaultValue: editedNewField.defaultValue,
-        constraints: editedNewField.constraints.map(c => ({ constraintId: c.constraintId, value: c.value })),
-        validators: editedNewField.validators.length > 0
-          ? editedNewField.validators.map(v => ({ templateId: v.templateId, parameters: v.parameters ?? undefined }))
-          : undefined
-      });
-
-      fieldsStore.update(fields => [...fields, field]);
-
-      // Auto-add the new field to the object being created
-      if (editedNewObject) {
-        editedNewObject = {
-          ...editedNewObject,
-          members: [...editedNewObject.members, { memberType: 'scalar' as const, name: field.name, fieldId: field.id, role: 'writable' as const, isNullable: false }]
-        };
-      }
-
-      showToast(`Field "${editedNewField.name}" created`, 'success');
-      closeFieldCreate();
-    } catch (err) {
-      showToast(mapApiError(err, 'create field'), 'error');
-    } finally {
-      fieldSaving = false;
-    }
-  }
 </script>
 
 {#if !apiExists}
@@ -316,13 +204,13 @@
     {#snippet header()}{/snippet}
     <div class="flex min-h-[50vh] flex-col items-center justify-center">
       <div class="text-center">
-        <i class="fa-solid fa-circle-exclamation text-4xl text-mono-400 mb-4"></i>
+        <i class="fa-solid fa-circle-exclamation text-4xl text-fg-muted mb-4"></i>
         <h2 class="text-xl mb-2 {dashboardTextPrimary}">API Not Found</h2>
-        <p class="text-mono-400 mb-4">The API you're looking for doesn't exist or has been deleted.</p>
+        <p class="text-fg-muted mb-4">The API you're looking for doesn't exist or has been deleted.</p>
         <button
           type="button"
           onclick={() => goto('/apis')}
-          class="px-4 py-2 bg-green-400 text-mono-950 font-inter font-semibold rounded-xl text-sm tracking-wide shadow-sm hover:bg-green-300"
+          class={dashboardPageHeaderPrimaryButton}
         >
           Back to APIs
         </button>
@@ -347,9 +235,9 @@
             <Pill class="shrink-0">{apiState.api?.version ?? ''}</Pill>
 
             {#if apiState.api?.description?.trim()}
-              <span class="text-mono-600 shrink-0 hidden md:inline" aria-hidden="true">·</span>
+              <span class="text-fg-faint shrink-0 hidden md:inline" aria-hidden="true">·</span>
               <span
-                class="hidden md:inline text-sm text-mono-400 truncate min-w-0 max-w-[min(28vw,14rem)] lg:max-w-md"
+                class="hidden md:inline text-sm text-fg-muted truncate min-w-0 max-w-[min(28vw,14rem)] lg:max-w-md"
                 title={apiState.api.description}
               >{apiState.api.description.trim()}</span>
             {/if}
@@ -363,9 +251,9 @@
             {/if}
 
             {#if apiState.api?.serverUrl}
-              <span class="text-mono-600 shrink-0 hidden lg:inline" aria-hidden="true">·</span>
+              <span class="text-fg-faint shrink-0 hidden lg:inline" aria-hidden="true">·</span>
               <span
-                class="hidden lg:inline-flex items-center gap-1 text-xs text-mono-400 max-w-[8rem] min-w-0 truncate font-mono"
+                class="hidden lg:inline-flex items-center gap-1 text-xs text-fg-muted max-w-[8rem] min-w-0 truncate font-mono"
                 title={apiState.api.serverUrl}
               >
                 <i class="fa-solid fa-server text-[10px] shrink-0"></i>
@@ -374,9 +262,9 @@
             {/if}
 
             {#if apiState.api?.baseUrl}
-              <span class="text-mono-600 shrink-0 hidden lg:inline" aria-hidden="true">·</span>
+              <span class="text-fg-faint shrink-0 hidden lg:inline" aria-hidden="true">·</span>
               <span
-                class="hidden lg:inline-flex items-center gap-1 text-xs text-mono-400 max-w-[6rem] min-w-0 truncate font-mono"
+                class="hidden lg:inline-flex items-center gap-1 text-xs text-fg-muted max-w-[6rem] min-w-0 truncate font-mono"
                 title={apiState.api.baseUrl}
               >
                 <i class="fa-solid fa-link text-[10px] shrink-0"></i>
@@ -389,7 +277,7 @@
             <button
               type="button"
               onclick={() => generateModalOpen = true}
-              class="px-4 py-2 border border-transparent bg-green-400 text-mono-950 font-inter font-semibold rounded-xl text-sm tracking-wide shadow-sm flex items-center space-x-2 hover:bg-green-300 cursor-pointer transition-colors"
+              class="{dashboardPageHeaderPrimaryButton} border border-transparent"
             >
               <i class="fa-solid fa-code"></i>
               <span>Generate Code</span>
@@ -397,7 +285,7 @@
             <button
               type="button"
               onclick={apiState.handleAddEndpoint}
-              class="px-4 py-2 border border-mono-700 rounded-xl font-inter font-medium text-sm tracking-wide text-mono-300 flex items-center space-x-2 hover:bg-mono-900 cursor-pointer transition-all shadow-sm"
+              class="px-4 py-2 border border-edge rounded-xl font-inter font-medium text-sm tracking-wide text-fg-secondary flex items-center space-x-2 hover:bg-surface cursor-pointer transition-all shadow-sm"
             >
               <i class="fa-solid fa-plus"></i>
               <span>Add Endpoint</span>
@@ -405,7 +293,7 @@
             <button
               type="button"
               onclick={apiState.openEditDrawer}
-              class="px-4 py-2 border border-mono-700 rounded-xl font-inter font-medium text-sm tracking-wide text-mono-300 flex items-center space-x-2 hover:bg-mono-900 cursor-pointer transition-all shadow-sm"
+              class="px-4 py-2 border border-edge rounded-xl font-inter font-medium text-sm tracking-wide text-fg-secondary flex items-center space-x-2 hover:bg-surface cursor-pointer transition-all shadow-sm"
             >
               <i class="fa-solid fa-pen-to-square"></i>
               <span>Edit API</span>
@@ -418,8 +306,8 @@
     <div class="max-w-7xl mx-auto p-6">
       {#if apiState.endpoints.length === 0}
         <div class="{dashboardCardGlass} overflow-hidden rounded-2xl">
-          <div class="text-center py-8 text-mono-400">
-            <i class="fa-solid fa-route text-2xl mb-2 text-mono-600"></i>
+          <div class="text-center py-8 text-fg-muted">
+            <i class="fa-solid fa-route text-2xl mb-2 text-fg-faint"></i>
             <p class="text-sm">No endpoints yet. Create your first API endpoint.</p>
           </div>
         </div>
@@ -428,18 +316,18 @@
         <div class="{dashboardCardGlass} overflow-hidden rounded-2xl">
           {#each apiState.allTagSections as section, i (section.tag)}
             {@const isExpanded = apiState.expandedTags.has(section.tag)}
-            <div class="{i < apiState.allTagSections.length - 1 ? 'border-b border-mono-700' : ''}">
+            <div class="{i < apiState.allTagSections.length - 1 ? 'border-b border-edge' : ''}">
               <!-- Tag section header -->
               <button
                 type="button"
                 onclick={() => apiState.toggleTagSection(section.tag)}
-                class="w-full flex items-center justify-between px-4 py-3 bg-mono-950/20 hover:bg-mono-950/45 transition-colors text-left"
+                class="w-full flex items-center justify-between px-4 py-3 bg-surface-base/20 hover:bg-surface-base/45 transition-colors text-left"
               >
                 <div class="flex items-center space-x-2">
                   <h2 class="text-base font-semibold {dashboardTextPrimary}">{section.tag}</h2>
-                  <span class="text-xs text-mono-400">{section.endpoints.length} endpoint{section.endpoints.length !== 1 ? 's' : ''}</span>
+                  <span class="text-xs text-fg-muted">{section.endpoints.length} endpoint{section.endpoints.length !== 1 ? 's' : ''}</span>
                 </div>
-                <i class="fa-solid fa-chevron-down text-mono-400 text-sm transition-transform {isExpanded ? 'rotate-0' : '-rotate-90'}"></i>
+                <i class="fa-solid fa-chevron-down text-fg-muted text-sm transition-transform {isExpanded ? 'rotate-0' : '-rotate-90'}"></i>
               </button>
               <!-- Tag section body -->
               {#if isExpanded}
@@ -570,7 +458,7 @@
           <!-- Tag and Description -->
           <div class="endpoint-tag-description">
             <div class="relative">
-              <h3 class="text-sm text-mono-300 mb-2 flex items-center font-medium">
+              <h3 class="text-sm text-fg-secondary mb-2 flex items-center font-medium">
                 <i class="fa-solid fa-tag mr-2"></i>
                 Tag
               </h3>
@@ -599,7 +487,7 @@
                     <i class="fa-solid fa-xmark text-xs"></i>
                   </button>
                 {:else}
-                  <i class="fa-solid fa-chevron-down absolute right-3 top-1/2 -translate-y-1/2 text-mono-400 text-xs pointer-events-none"></i>
+                  <i class="fa-solid fa-chevron-down absolute right-3 top-1/2 -translate-y-1/2 text-fg-muted text-xs pointer-events-none"></i>
                 {/if}
               </div>
               {#if apiState.tagDropdownOpen}
@@ -609,7 +497,7 @@
                       <button
                         type="button"
                         onclick={handleTagInputCommit}
-                        class="{dropdownCreateRow} border-b border-mono-700 rounded-none text-mono-300"
+                        class="{dropdownCreateRow} border-b border-edge rounded-none text-fg-secondary"
                       >
                         <i class="fa-solid fa-plus text-xs"></i>
                         <span>Use "<strong>{apiState.tagInputValue.trim()}</strong>"</span>
@@ -619,20 +507,20 @@
                       <button
                         type="button"
                         onclick={() => apiState.handleTagSelect(tag)}
-                        class="{dropdownRow} text-sm text-mono-300 {apiState.editedEndpoint?.tagName === tag ? 'bg-mono-800' : ''}"
+                        class="{dropdownRow} text-sm text-fg-secondary {apiState.editedEndpoint?.tagName === tag ? 'bg-surface-raised' : ''}"
                       >
                         {tag}
                       </button>
                     {/each}
                     {#if filteredTags.length === 0 && !apiState.tagInputValue.trim()}
-                      <div class="px-3 py-2 text-sm text-mono-400">No tags yet</div>
+                      <div class="px-3 py-2 text-sm text-fg-muted">No tags yet</div>
                     {/if}
                   </div>
                 </div>
               {/if}
             </div>
             <div>
-              <h3 class="text-sm text-mono-300 mb-2 flex items-center font-medium">
+              <h3 class="text-sm text-fg-secondary mb-2 flex items-center font-medium">
                 <i class="fa-solid fa-align-left mr-2"></i>
                 Description
               </h3>
@@ -647,7 +535,7 @@
 
           <!-- Method and Path -->
           <div>
-            <h3 class="text-sm text-mono-300 mb-2 flex items-center font-medium">
+            <h3 class="text-sm text-fg-secondary mb-2 flex items-center font-medium">
               <i class="fa-solid fa-route mr-2"></i>
               Method & Path
             </h3>
@@ -663,8 +551,8 @@
                   }}
                 />
               </div>
-              <div class="endpoint-path-input flex items-center rounded-xl overflow-hidden border border-mono-700/80 bg-mono-900/80 focus-within:ring-2 focus-within:ring-green-400/50 focus-within:outline-none transition-colors">
-                <span class="px-3 py-1.5 text-sm font-mono text-mono-400 bg-mono-900/80 border-r border-mono-700/80">/</span>
+              <div class="endpoint-path-input {defaultValueComboShell}">
+                <span class="px-3 py-1.5 text-sm font-mono text-fg-muted bg-surface/80 border-r border-edge/80">/</span>
                 <input
                   type="text"
                   value={apiState.editedEndpoint.path.substring(1)}
@@ -694,18 +582,18 @@
 
           <!-- Path Parameters -->
           <div>
-            <h3 class="text-sm text-mono-300 mb-2 flex items-center font-medium">
+            <h3 class="text-sm text-fg-secondary mb-2 flex items-center font-medium">
               <i class="fa-solid fa-link mr-2"></i>
               Path Parameters
             </h3>
             {#if apiState.editedEndpoint.pathParams.length === 0}
               <div class="px-3 py-2 {surfaceInsideFrostedPanel}">
-                <p class="text-xs text-mono-400">No path parameters. Add parameters to your URL path using <code class="bg-mono-800 px-1 rounded-lg">{`{param_name}`}</code></p>
+                <p class="text-xs text-fg-muted">No path parameters. Add parameters to your URL path using <code class="bg-surface-raised px-1 rounded-lg">{`{param_name}`}</code></p>
               </div>
             {:else}
               <div class="px-3 py-1 {surfaceInsideFrostedPanel}">
                 <!-- Column headers -->
-                <div class="flex items-center gap-2 py-1 border-b border-mono-700 text-[10px] text-mono-500 uppercase tracking-wider">
+                <div class="flex items-center gap-2 py-1 border-b border-edge text-[10px] text-fg-dimmed uppercase tracking-wider">
                   <div class="w-32 shrink-0">Name</div>
                   <div class="flex-1">Field</div>
                 </div>
@@ -841,14 +729,14 @@
   {/snippet}
 
   {#snippet objectFormContent(_: { close: () => void })}
-    {#if editedNewObject}
+    {#if objectWorkflow.editedItem}
       <ObjectFormContent
-        bind:editedItem={editedNewObject}
+        bind:editedItem={objectWorkflow.editedItem}
         mode="creating"
         {availableFields}
-        modelValidatorTemplates={$modelValidatorTemplatesStore}
-        visibleErrors={objectVisibleErrors}
-        onCreateNewField={openFieldCreate}
+        {modelValidatorTemplates}
+        visibleErrors={objectWorkflow.visibleErrors}
+        onCreateNewField={fieldWorkflow.openCreate}
       />
     {/if}
   {/snippet}
@@ -856,22 +744,22 @@
   {#snippet objectFormFooter({ close }: { close: () => void })}
     <CrudDrawerFooter
       mode="creating"
-      isSaving={objectSaving}
-      isFormValid={objectFormValid}
-      onCreate={handleCreateObject}
+      isSaving={objectWorkflow.isSaving}
+      isFormValid={objectWorkflow.isFormValid}
+      onCreate={objectWorkflow.handleCreate}
       onCancel={close}
     />
   {/snippet}
 
   {#snippet fieldFormContent(_: { close: () => void })}
-    {#if editedNewField}
+    {#if fieldWorkflow.editedItem}
       <FieldFormContent
-        bind:editedItem={editedNewField}
+        bind:editedItem={fieldWorkflow.editedItem}
         mode="creating"
-        selectableTypes={$typesStore}
-        fieldConstraintDefinitions={$fieldConstraintsStore}
-        fieldValidatorTemplates={$fieldValidatorTemplatesStore}
-        visibleErrors={fieldVisibleErrors}
+        {selectableTypes}
+        {fieldConstraintDefinitions}
+        {fieldValidatorTemplates}
+        visibleErrors={fieldWorkflow.visibleErrors}
       />
     {/if}
   {/snippet}
@@ -879,9 +767,9 @@
   {#snippet fieldFormFooter({ close }: { close: () => void })}
     <CrudDrawerFooter
       mode="creating"
-      isSaving={fieldSaving}
-      isFormValid={fieldFormValid}
-      onCreate={handleCreateField}
+      isSaving={fieldWorkflow.isSaving}
+      isFormValid={fieldWorkflow.isFormValid}
+      onCreate={fieldWorkflow.handleCreate}
       onCancel={close}
     />
   {/snippet}
@@ -895,16 +783,16 @@
       ...(apiState.endpointDrawerOpen
         ? [{ id: 'endpoint', title: apiState.isCreating ? 'Create Endpoint' : 'Edit Endpoint', headerNamespace: namespaceName, width: 1200, minWidth: 700, content: endpointFormContent, footer: endpointFormFooter }]
         : []),
-      ...(objectCreateOpen
+      ...(objectWorkflow.drawerOpen
         ? [{ id: 'object', title: 'Create Object', headerNamespace: namespaceName, width: 800, minWidth: 500, content: objectFormContent, footer: objectFormFooter }]
         : []),
-      ...(fieldCreateOpen
+      ...(fieldWorkflow.drawerOpen
         ? [{ id: 'field', title: 'Create Field', headerNamespace: namespaceName, width: 800, minWidth: 500, content: fieldFormContent, footer: fieldFormFooter }]
         : [])
     ]}
     onPopPanel={() => {
-      if (fieldCreateOpen) closeFieldCreate();
-      else if (objectCreateOpen) closeObjectCreate();
+      if (fieldWorkflow.drawerOpen) fieldWorkflow.closeDrawer();
+      else if (objectWorkflow.drawerOpen) objectWorkflow.closeDrawer();
       else if (apiState.endpointDrawerOpen) {
         if (apiState.isCreating) apiState.handleCancelCreate();
         else apiState.closeEndpointDrawer();

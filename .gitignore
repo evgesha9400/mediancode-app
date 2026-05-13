@@ -1,0 +1,26 @@
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE / editors
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# AI assistant local state
+.claude/
+.serena/
+.cursor/
+.aider/
+.auto-claude/
+.superpowers/
+
+# Git worktrees
+.worktrees/
+
+# Generic temp / logs
+*.tmp
+*.temp
+*.log

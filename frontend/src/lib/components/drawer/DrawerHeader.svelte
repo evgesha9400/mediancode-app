@@ -77,7 +77,7 @@
     </div>
     <button
       onclick={onClose}
-      class="text-mono-400 hover:text-mono-200 transition-colors"
+      class="text-fg-muted hover:text-fg transition-colors"
       aria-label="Close drawer"
     >
       <i class="fa-solid fa-xmark"></i>

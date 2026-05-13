@@ -15,7 +15,13 @@
 </script>
 
 <script lang="ts">
-  import { apiGeneratorHintCell, objectSelectorDisplayRow } from '$lib/ui/classes';
+  import {
+    apiGeneratorHintCell,
+    listMetaBadge,
+    objectSelectorDisplayRow,
+    themeAccentBadge,
+    themeAccentText
+  } from '$lib/ui/classes';
   import FieldSelectorDropdown from './FieldSelectorDropdown.svelte';
 
   interface Props extends ParameterEditorProps {}
@@ -76,11 +82,11 @@
   }
 </script>
 
-<div class="border-b border-mono-700 last:border-b-0">
+<div class="border-b border-edge last:border-b-0">
   <div class="flex items-center gap-2 py-1.5">
     <!-- Param name (read-only, extracted from path) -->
     <div class="w-32 shrink-0">
-      <div class="w-full px-3 text-sm font-mono border border-mono-700/80 rounded-xl bg-mono-800 text-mono-300 flex items-center h-[34px]">
+      <div class="w-full px-3 text-sm font-mono border border-edge/80 rounded-xl bg-surface-raised text-fg-secondary flex items-center h-[34px]">
         {paramName}
       </div>
     </div>
@@ -90,13 +96,13 @@
       <div class="flex-1 min-w-0">
         <div class={objectSelectorDisplayRow}>
           <div class="flex items-center gap-1.5">
-            <i class="fa-solid fa-link text-green-400 text-[10px]"></i>
+            <i class={`fa-solid fa-link text-[10px] ${themeAccentText}`}></i>
             <span class="font-mono text-sm">{effectiveFieldName}</span>
             {#if derivedType}
-              <span class="text-[11px] text-mono-400 bg-mono-800 px-1.5 rounded-lg">{derivedType}</span>
+              <span class={`${listMetaBadge} px-1.5 text-[11px]`}>{derivedType}</span>
             {/if}
             {#if selectedField?.isPk}
-              <span class="text-[10px] text-green-400 bg-green-400/10 px-1.5 rounded-lg uppercase font-bold">PK</span>
+              <span class={`text-[10px] px-1.5 rounded-lg uppercase font-bold ${themeAccentBadge}`}>PK</span>
             {/if}
           </div>
           <button

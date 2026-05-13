@@ -8,7 +8,7 @@ vi.mock('$lib/api/client', () => ({
 }));
 
 // Mock types store for buildTypeIdToNameMap
-vi.mock('$lib/stores/types', () => ({
+vi.mock('$lib/stores/stores', () => ({
   typesBaseStore: {
     subscribe: vi.fn((fn: any) => {
       fn([
