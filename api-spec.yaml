@@ -302,6 +302,16 @@ paths:
         schema:
           type: string
           title: Api Id
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GenerateOptions'
+              default:
+                responsePlaceholders: true
+                databaseEnabled: false
+                cdkEnabled: false
+                cdkCompute: lambda
       responses:
         '200':
           description: Successfully generated FastAPI application
@@ -725,73 +735,6 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
-  /v1/objects/{object_id}/relationships:
-    post:
-      tags:
-      - Objects
-      summary: Create a relationship
-      description: Create a relationship from this object to a target object. Auto-creates
-        the inverse.
-      operationId: create_relationship_v1_objects__object_id__relationships_post
-      security:
-      - HTTPBearer: []
-      parameters:
-      - name: object_id
-        in: path
-        required: true
-        schema:
-          type: string
-          title: Object Id
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/ObjectRelationshipCreate'
-      responses:
-        '201':
-          description: Successful Response
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ObjectRelationshipResponse'
-        '422':
-          description: Validation Error
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/HTTPValidationError'
-  /v1/objects/{object_id}/relationships/{relationship_id}:
-    delete:
-      tags:
-      - Objects
-      summary: Delete a relationship
-      description: Delete a relationship and its auto-created inverse.
-      operationId: delete_relationship_v1_objects__object_id__relationships__relationship_id__delete
-      security:
-      - HTTPBearer: []
-      parameters:
-      - name: object_id
-        in: path
-        required: true
-        schema:
-          type: string
-          title: Object Id
-      - name: relationship_id
-        in: path
-        required: true
-        schema:
-          type: string
-          title: Relationship Id
-      responses:
-        '204':
-          description: Successful Response
-        '422':
-          description: Validation Error
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/HTTPValidationError'
   /v1/endpoints:
     get:
       tags:
@@ -977,7 +920,7 @@ components:
           type: string
           title: Title
           examples:
-          - User Management API
+          - UserManagementApi
         version:
           type: string
           title: Version
@@ -1018,7 +961,7 @@ components:
 
         :ivar namespace_id: Namespace this API belongs to.
 
-        :ivar title: API title for OpenAPI spec.
+        :ivar title: API title in PascalCase (used as project identifier).
 
         :ivar version: Semantic version string.
 
@@ -1145,6 +1088,12 @@ components:
           - 00000000-0000-0000-0005-000000000001
         method:
           type: string
+          enum:
+          - GET
+          - POST
+          - PUT
+          - PATCH
+          - DELETE
           title: Method
           examples:
           - GET
@@ -1193,6 +1142,9 @@ components:
           - true
         responseShape:
           type: string
+          enum:
+          - object
+          - list
           title: Responseshape
           examples:
           - object
@@ -1419,7 +1371,7 @@ components:
           - type: 'null'
           title: Title
           examples:
-          - Updated API Title
+          - UpdatedApiTitle
         version:
           anyOf:
           - type: string
@@ -1453,7 +1405,7 @@ components:
       description: 'Request schema for updating an API.
 
 
-        :ivar title: Updated API title.
+        :ivar title: Updated API title in PascalCase.
 
         :ivar version: Updated version string.
 
@@ -1462,6 +1414,71 @@ components:
         :ivar base_url: Updated base path.
 
         :ivar server_url: Updated server URL.'
+    DerivedRelationshipResponse:
+      properties:
+        name:
+          type: string
+          title: Name
+        sourceObject:
+          type: string
+          title: Sourceobject
+        sourceObjectId:
+          type: string
+          format: uuid
+          title: Sourceobjectid
+        sourceField:
+          type: string
+          title: Sourcefield
+        kind:
+          type: string
+          title: Kind
+        side:
+          type: string
+          title: Side
+        impliesFk:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Impliesfk
+        junctionTable:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Junctiontable
+        required:
+          type: boolean
+          title: Required
+          default: true
+      type: object
+      required:
+      - name
+      - sourceObject
+      - sourceObjectId
+      - sourceField
+      - kind
+      - side
+      title: DerivedRelationshipResponse
+      description: 'Read-only derived (incoming) relationship computed from other
+        objects.
+
+
+        :ivar name: Inverse field name on this object.
+
+        :ivar source_object: Name of the object that authored the relationship.
+
+        :ivar source_object_id: ID of the object that authored the relationship.
+
+        :ivar source_field: Authored relationship field name on the source.
+
+        :ivar kind: Relationship kind.
+
+        :ivar side: Which side of the relationship this object is on.
+
+        :ivar implies_fk: Derived FK column name, or null for many_to_many.
+
+        :ivar junction_table: Junction table name for many_to_many relationships.
+
+        :ivar required: Whether the derived FK column is NOT NULL.'
     FieldConstraintResponse:
       properties:
         id:
@@ -1618,6 +1635,14 @@ components:
           title: Defaultvalue
           examples:
           - ''
+        container:
+          anyOf:
+          - type: string
+            const: List
+          - type: 'null'
+          title: Container
+          examples:
+          - List
         constraints:
           items:
             $ref: '#/components/schemas/FieldConstraintValueInput'
@@ -1689,6 +1714,12 @@ components:
           title: Defaultvalue
           examples:
           - ''
+        container:
+          anyOf:
+          - type: string
+            const: List
+          - type: 'null'
+          title: Container
         usedInApis:
           items:
             type: string
@@ -1757,6 +1788,14 @@ components:
           title: Defaultvalue
           examples:
           - new_default
+        container:
+          anyOf:
+          - type: string
+            const: List
+          - type: 'null'
+          title: Container
+          examples:
+          - List
         constraints:
           anyOf:
           - items:
@@ -1857,6 +1896,9 @@ components:
           title: Compatibletypes
         mode:
           type: string
+          enum:
+          - before
+          - after
           title: Mode
         parameters:
           items:
@@ -1893,6 +1935,34 @@ components:
         :ivar parameters: Template parameter definitions.
 
         :ivar body_template: Jinja2 template for the function body.'
+    GenerateOptions:
+      properties:
+        responsePlaceholders:
+          type: boolean
+          title: Responseplaceholders
+          default: true
+        databaseEnabled:
+          type: boolean
+          title: Databaseenabled
+          default: false
+        cdkEnabled:
+          type: boolean
+          title: Cdkenabled
+          default: false
+        cdkCompute:
+          type: string
+          enum:
+          - lambda
+          - ecs
+          title: Cdkcompute
+          default: lambda
+      type: object
+      title: GenerateOptions
+      description: "Options for code generation passed to POST /v1/apis/{api_id}/generate.\n\
+        \n:ivar response_placeholders: Generate placeholder response bodies.\n:ivar\
+        \ database_enabled: Generate database support (SQLAlchemy, Alembic, Docker\
+        \ Compose).\n:ivar cdk_enabled: Generate CDK infrastructure files.\n:ivar\
+        \ cdk_compute: Compute platform for CDK \u2014 'lambda' or 'ecs'."
     HTTPValidationError:
       properties:
         detail:
@@ -1986,6 +2056,9 @@ components:
           title: Description
         mode:
           type: string
+          enum:
+          - before
+          - after
           title: Mode
         parameters:
           items:
@@ -2042,6 +2115,11 @@ components:
           title: Description
           examples:
           - Custom namespace for my API project
+        isDefault:
+          anyOf:
+          - type: boolean
+          - type: 'null'
+          title: Isdefault
       type: object
       required:
       - name
@@ -2077,11 +2155,17 @@ components:
           title: Isdefault
           examples:
           - false
+        locked:
+          type: boolean
+          title: Locked
+          description: True for the provisioned Global namespace (fully read-only).
+          readOnly: true
       type: object
       required:
       - id
       - name
       - isDefault
+      - locked
       title: NamespaceResponse
       description: 'Response schema for namespace data.
 
@@ -2144,11 +2228,18 @@ components:
           title: Description
           examples:
           - User object definition
-        fields:
+        members:
           items:
-            $ref: '#/components/schemas/ObjectFieldReferenceSchema'
+            oneOf:
+            - $ref: '#/components/schemas/ScalarMemberInput'
+            - $ref: '#/components/schemas/RelationshipMemberInput'
+            discriminator:
+              propertyName: memberType
+              mapping:
+                relationship: '#/components/schemas/RelationshipMemberInput'
+                scalar: '#/components/schemas/ScalarMemberInput'
           type: array
-          title: Fields
+          title: Members
         validators:
           items:
             $ref: '#/components/schemas/ModelValidatorInput'
@@ -2158,7 +2249,6 @@ components:
       required:
       - namespaceId
       - name
-      - fields
       title: ObjectCreate
       description: 'Request schema for creating an object.
 
@@ -2169,141 +2259,9 @@ components:
 
         :ivar description: Object description.
 
-        :ivar fields: List of field references.
+        :ivar members: Ordered list of scalar and relationship members.
 
         :ivar validators: Inline model validator definitions for this object.'
-    ObjectFieldReferenceSchema:
-      properties:
-        fieldId:
-          type: string
-          format: uuid
-          title: Fieldid
-          examples:
-          - 00000000-0000-0000-0003-000000000001
-        optional:
-          type: boolean
-          title: Optional
-          default: false
-          examples:
-          - false
-        isPk:
-          type: boolean
-          title: Ispk
-          default: false
-          examples:
-          - false
-        appears:
-          type: string
-          enum:
-          - both
-          - request
-          - response
-          title: Appears
-          default: both
-      type: object
-      required:
-      - fieldId
-      title: ObjectFieldReferenceSchema
-      description: 'Schema for a field reference in an object.
-
-
-        :ivar field_id: Reference to Field.id.
-
-        :ivar optional: Whether this field is optional in the object.
-
-        :ivar is_pk: Whether this field is the primary key.
-
-        :ivar appears: Where this field appears: both, request, or response.'
-    ObjectRelationshipCreate:
-      properties:
-        targetObjectId:
-          type: string
-          format: uuid
-          title: Targetobjectid
-        name:
-          type: string
-          title: Name
-        cardinality:
-          type: string
-          enum:
-          - has_one
-          - has_many
-          - references
-          - many_to_many
-          title: Cardinality
-      type: object
-      required:
-      - targetObjectId
-      - name
-      - cardinality
-      title: ObjectRelationshipCreate
-      description: 'Request schema for creating a relationship.
-
-
-        :ivar target_object_id: Reference to the target object.
-
-        :ivar name: Relationship name.
-
-        :ivar cardinality: Relationship type.'
-    ObjectRelationshipResponse:
-      properties:
-        id:
-          type: string
-          format: uuid
-          title: Id
-        sourceObjectId:
-          type: string
-          format: uuid
-          title: Sourceobjectid
-        targetObjectId:
-          type: string
-          format: uuid
-          title: Targetobjectid
-        name:
-          type: string
-          title: Name
-        cardinality:
-          type: string
-          enum:
-          - has_one
-          - has_many
-          - references
-          - many_to_many
-          title: Cardinality
-        isInferred:
-          type: boolean
-          title: Isinferred
-          default: false
-        inverseId:
-          anyOf:
-          - type: string
-            format: uuid
-          - type: 'null'
-          title: Inverseid
-      type: object
-      required:
-      - id
-      - sourceObjectId
-      - targetObjectId
-      - name
-      - cardinality
-      title: ObjectRelationshipResponse
-      description: 'Response schema for a relationship.
-
-
-        :ivar id: Unique identifier.
-
-        :ivar source_object_id: Source object reference.
-
-        :ivar target_object_id: Target object reference.
-
-        :ivar name: Relationship name.
-
-        :ivar cardinality: Relationship type.
-
-        :ivar is_inferred: Whether this is an auto-created inverse.
-
-        :ivar inverse_id: Reference to the inverse relationship.'
     ObjectResponse:
       properties:
         id:
@@ -2330,11 +2288,23 @@ components:
           title: Description
           examples:
           - User account object
-        fields:
+        members:
           items:
-            $ref: '#/components/schemas/ObjectFieldReferenceSchema'
+            oneOf:
+            - $ref: '#/components/schemas/ScalarMemberResponse'
+            - $ref: '#/components/schemas/RelationshipMemberResponse'
+            discriminator:
+              propertyName: memberType
+              mapping:
+                relationship: '#/components/schemas/RelationshipMemberResponse'
+                scalar: '#/components/schemas/ScalarMemberResponse'
           type: array
-          title: Fields
+          title: Members
+        derivedRelationships:
+          items:
+            $ref: '#/components/schemas/DerivedRelationshipResponse'
+          type: array
+          title: Derivedrelationships
         usedInApis:
           items:
             type: string
@@ -2348,11 +2318,6 @@ components:
             $ref: '#/components/schemas/ModelValidatorResponse'
           type: array
           title: Validators
-        relationships:
-          items:
-            $ref: '#/components/schemas/ObjectRelationshipResponse'
-          type: array
-          title: Relationships
       type: object
       required:
       - id
@@ -2370,13 +2335,13 @@ components:
 
         :ivar description: Object description.
 
-        :ivar fields: List of field references.
+        :ivar members: Ordered list of scalar and relationship members.
+
+        :ivar derived_relationships: Incoming relationships from other objects.
 
         :ivar used_in_apis: Array of API IDs that use this object.
 
-        :ivar validators: Model validators attached to this object.
-
-        :ivar relationships: Object relationships.'
+        :ivar validators: Model validators attached to this object.'
     ObjectUpdate:
       properties:
         name:
@@ -2393,13 +2358,20 @@ components:
           title: Description
           examples:
           - Updated description
-        fields:
+        members:
           anyOf:
           - items:
-              $ref: '#/components/schemas/ObjectFieldReferenceSchema'
+              oneOf:
+              - $ref: '#/components/schemas/ScalarMemberInput'
+              - $ref: '#/components/schemas/RelationshipMemberInput'
+              discriminator:
+                propertyName: memberType
+                mapping:
+                  relationship: '#/components/schemas/RelationshipMemberInput'
+                  scalar: '#/components/schemas/ScalarMemberInput'
             type: array
           - type: 'null'
-          title: Fields
+          title: Members
         validators:
           anyOf:
           - items:
@@ -2416,7 +2388,7 @@ components:
 
         :ivar description: Updated description.
 
-        :ivar fields: Updated list of field references (None = don''t touch).
+        :ivar members: Complete members array for reconcile-by-ID (None = don''t touch).
 
         :ivar validators: Updated validators (None = don''t touch, [] = clear all).'
     PathParamSchema:
@@ -2443,6 +2415,230 @@ components:
         :ivar name: Parameter name (extracted from path {braces}).
 
         :ivar field_id: Reference to the field definition.'
+    RelationshipMemberInput:
+      properties:
+        id:
+          anyOf:
+          - type: string
+            format: uuid
+          - type: 'null'
+          title: Id
+        memberType:
+          type: string
+          const: relationship
+          title: Membertype
+          default: relationship
+        name:
+          type: string
+          title: Name
+        targetObjectId:
+          type: string
+          format: uuid
+          title: Targetobjectid
+        kind:
+          type: string
+          enum:
+          - one_to_one
+          - one_to_many
+          - many_to_many
+          title: Kind
+        inverseName:
+          type: string
+          title: Inversename
+        required:
+          type: boolean
+          title: Required
+          default: true
+      type: object
+      required:
+      - name
+      - targetObjectId
+      - kind
+      - inverseName
+      title: RelationshipMemberInput
+      description: 'Input schema for a relationship member.
+
+
+        :ivar id: Existing member ID for reconcile-by-ID updates (omit for new).
+
+        :ivar member_type: Discriminator, always ``"relationship"``.
+
+        :ivar name: Relationship name on the source object.
+
+        :ivar target_object_id: Reference to the target object.
+
+        :ivar kind: Relationship kind.
+
+        :ivar inverse_name: Name for the derived reverse field on the target.
+
+        :ivar required: Whether the derived FK column is NOT NULL.'
+    RelationshipMemberResponse:
+      properties:
+        id:
+          type: string
+          format: uuid
+          title: Id
+        memberType:
+          type: string
+          const: relationship
+          title: Membertype
+          default: relationship
+        name:
+          type: string
+          title: Name
+        targetObjectId:
+          type: string
+          format: uuid
+          title: Targetobjectid
+        kind:
+          type: string
+          title: Kind
+        inverseName:
+          type: string
+          title: Inversename
+        required:
+          type: boolean
+          title: Required
+          default: true
+      type: object
+      required:
+      - id
+      - name
+      - targetObjectId
+      - kind
+      - inverseName
+      title: RelationshipMemberResponse
+      description: 'Response schema for a relationship member.
+
+
+        :ivar id: Unique identifier.
+
+        :ivar member_type: Discriminator, always ``"relationship"``.
+
+        :ivar name: Relationship name.
+
+        :ivar target_object_id: Reference to the target object.
+
+        :ivar kind: Relationship kind.
+
+        :ivar inverse_name: Derived reverse field name.
+
+        :ivar required: Whether the FK column is NOT NULL.'
+    ScalarMemberInput:
+      properties:
+        id:
+          anyOf:
+          - type: string
+            format: uuid
+          - type: 'null'
+          title: Id
+        memberType:
+          type: string
+          const: scalar
+          title: Membertype
+          default: scalar
+        name:
+          type: string
+          title: Name
+        fieldId:
+          type: string
+          format: uuid
+          title: Fieldid
+        role:
+          type: string
+          enum:
+          - pk
+          - writable
+          - write_only
+          - read_only
+          - created_timestamp
+          - updated_timestamp
+          - generated_uuid
+          title: Role
+          default: writable
+        isNullable:
+          type: boolean
+          title: Isnullable
+          default: false
+        defaultValue:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Defaultvalue
+      type: object
+      required:
+      - name
+      - fieldId
+      title: ScalarMemberInput
+      description: 'Input schema for a scalar (field-backed) member.
+
+
+        :ivar id: Existing member ID for reconcile-by-ID updates (omit for new).
+
+        :ivar member_type: Discriminator, always ``"scalar"``.
+
+        :ivar name: Member name on the object.
+
+        :ivar field_id: Reference to the field definition.
+
+        :ivar role: Structural role of the field.
+
+        :ivar is_nullable: Whether the field is nullable.
+
+        :ivar default_value: Optional literal default value.'
+    ScalarMemberResponse:
+      properties:
+        id:
+          type: string
+          format: uuid
+          title: Id
+        memberType:
+          type: string
+          const: scalar
+          title: Membertype
+          default: scalar
+        name:
+          type: string
+          title: Name
+        fieldId:
+          type: string
+          format: uuid
+          title: Fieldid
+        role:
+          type: string
+          title: Role
+        isNullable:
+          type: boolean
+          title: Isnullable
+          default: false
+        defaultValue:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Defaultvalue
+      type: object
+      required:
+      - id
+      - name
+      - fieldId
+      - role
+      title: ScalarMemberResponse
+      description: 'Response schema for a scalar member.
+
+
+        :ivar id: Unique identifier.
+
+        :ivar member_type: Discriminator, always ``"scalar"``.
+
+        :ivar name: Member name.
+
+        :ivar field_id: Reference to the field definition.
+
+        :ivar role: Structural role.
+
+        :ivar is_nullable: Whether the field is nullable.
+
+        :ivar default_value: Optional literal default value.'
     TypeResponse:
       properties:
         id:
