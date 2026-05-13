@@ -1,0 +1,76 @@
+/** @type {import('tailwindcss').Config} */
+export default {
+  content: ['./src/**/*.{html,js,svelte,ts}'],
+  theme: {
+    extend: {
+      fontFamily: {
+        'inter': ['Inter', 'sans-serif'],
+        'mono': ['JetBrains Mono', 'ui-monospace', 'SFMono-Regular', 'Menlo', 'Monaco', 'Consolas', 'monospace'],
+      },
+      colors: {
+        // --- Semantic tokens (use these in templates) ---
+        fg: {
+          DEFAULT: 'rgb(var(--color-fg) / <alpha-value>)',
+          secondary: 'rgb(var(--color-fg-secondary) / <alpha-value>)',
+          muted: 'rgb(var(--color-fg-muted) / <alpha-value>)',
+          dimmed: 'rgb(var(--color-fg-dimmed) / <alpha-value>)',
+          faint: 'rgb(var(--color-fg-faint) / <alpha-value>)',
+          'on-accent': 'rgb(var(--color-fg-on-accent) / <alpha-value>)',
+        },
+        surface: {
+          DEFAULT: 'rgb(var(--color-surface) / <alpha-value>)',
+          base: 'rgb(var(--color-surface-base) / <alpha-value>)',
+          raised: 'rgb(var(--color-surface-raised) / <alpha-value>)',
+          overlay: 'rgb(var(--color-surface-overlay) / <alpha-value>)',
+        },
+        edge: {
+          DEFAULT: 'rgb(var(--color-edge) / <alpha-value>)',
+          strong: 'rgb(var(--color-edge-strong) / <alpha-value>)',
+          faint: 'rgb(var(--color-edge-faint) / <alpha-value>)',
+          hover: 'rgb(var(--color-edge-hover) / <alpha-value>)',
+        },
+        'red-50': 'rgb(var(--color-red-50) / <alpha-value>)',
+        'red-100': 'rgb(var(--color-red-100) / <alpha-value>)',
+        'red-200': 'rgb(var(--color-red-200) / <alpha-value>)',
+        'red-600': 'rgb(var(--color-red-600) / <alpha-value>)',
+        'red-700': 'rgb(var(--color-red-700) / <alpha-value>)',
+        'red-800': 'rgb(var(--color-red-800) / <alpha-value>)',
+        'green-50': 'rgb(var(--color-green-50) / <alpha-value>)',
+        'green-100': 'rgb(var(--color-green-100) / <alpha-value>)',
+        'green-200': 'rgb(var(--color-green-200) / <alpha-value>)',
+        'green-300': 'rgb(var(--color-green-300) / <alpha-value>)',
+        'green-400': 'rgb(var(--color-green-400) / <alpha-value>)',
+        'green-500': 'rgb(var(--color-green-500) / <alpha-value>)',
+        'green-600': 'rgb(var(--color-green-600) / <alpha-value>)',
+        'accent': 'rgb(var(--color-accent) / <alpha-value>)',
+        'accent-hover': 'rgb(var(--color-accent-hover) / <alpha-value>)',
+        'accent-strong': 'rgb(var(--color-accent-strong) / <alpha-value>)',
+        'accent-support': 'rgb(var(--color-accent-support) / <alpha-value>)',
+        'amber-50': 'rgb(var(--color-amber-50) / <alpha-value>)',
+        'amber-100': 'rgb(var(--color-amber-100) / <alpha-value>)',
+        'amber-200': 'rgb(var(--color-amber-200) / <alpha-value>)',
+        'amber-400': 'rgb(var(--color-amber-400) / <alpha-value>)',
+        'amber-600': 'rgb(var(--color-amber-600) / <alpha-value>)',
+        'amber-800': 'rgb(var(--color-amber-800) / <alpha-value>)',
+        'blue-50': 'rgb(var(--color-blue-50) / <alpha-value>)',
+        'blue-100': 'rgb(var(--color-blue-100) / <alpha-value>)',
+        'blue-200': 'rgb(var(--color-blue-200) / <alpha-value>)',
+        'blue-400': 'rgb(var(--color-blue-400) / <alpha-value>)',
+        'blue-500': 'rgb(var(--color-blue-500) / <alpha-value>)',
+        'blue-600': 'rgb(var(--color-blue-600) / <alpha-value>)',
+        'blue-800': 'rgb(var(--color-blue-800) / <alpha-value>)',
+      },
+      boxShadow: {
+        'glow-accent': '0 0 15px rgb(var(--color-accent) / 0.2)',
+        'glow-accent-lg': '0 0 20px rgb(var(--color-accent) / 0.2)',
+        'glow-accent-xl': '0 0 30px rgb(var(--color-accent) / 0.4)',
+        'glow-accent-sm': '0 0 10px rgb(var(--color-accent) / 0.1)',
+        'glow-accent-icon': '0 0 15px rgb(var(--color-accent) / 0.1)',
+        'glow-accent-dot': '0 0 5px rgb(var(--color-accent) / 0.8)',
+        'glow-accent-bar': '0 0 10px rgb(var(--color-accent) / 0.4)',
+        'drawer-deep': '0 0 50px rgba(0, 0, 0, 0.5)',
+      },
+    }
+  },
+  plugins: []
+}

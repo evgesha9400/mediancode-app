@@ -1,0 +1,298 @@
+<script lang="ts">
+  import {
+    fieldsStore,
+    searchFields,
+    fieldConstraintsStore,
+    typesStore,
+    getTypeIdByName,
+    activeNamespaceId,
+    namespacesStore
+  } from '$lib/stores/stores';
+  import type { Field, FieldConstraintValue } from '$lib/types';
+  import { createCrudModel } from '$lib/stores/crudModel.svelte';
+  import { createFieldsContract } from '$lib/stores/fieldsConfig.svelte';
+  import {
+    MainColumnFrame,
+    PageHeader,
+    SearchBar,
+    FilterPanel,
+    Table,
+    SortableColumn,
+    Pill,
+    TableListNameCell,
+    TableListTextCell,
+    TableListMetricCell,
+    TableEmptyState,
+    DrawerStack,
+    CrudDrawerFooter,
+    NamespaceSelector,
+    FieldFormContent
+  } from '$lib/components';
+  import type { FilterConfig } from '$lib/types';
+  import {
+    dashboardPageHeaderPrimaryButton,
+    tableListCell,
+    tableListRowHover,
+    tableListRowInteractive,
+    tableListRowSelected
+  } from '$lib/ui/classes';
+  import { getTableRowId, TABLE_COL_ATTR } from '$lib/utils/testIds';
+  import { fieldValidatorTemplatesStore } from '$lib/stores/stores';
+  import { STORE_NAMES } from '$lib/stores/loader';
+  import { page } from '$app/state';
+  import { goto } from '$app/navigation';
+
+  // Extended field type with computed properties for sorting
+  type FieldWithApiCount = Field & { usedInApisCount: number };
+
+  // Reactive store subscriptions for derived computations
+  let allNamespaces = $derived($namespacesStore);
+  let selectableTypes = $derived($typesStore);
+
+  // Build filter config from selectable types (reactive to store changes)
+  let fieldFilterConfig = $derived.by((): FilterConfig => {
+    return [
+      {
+        type: 'checkbox-group',
+        key: 'selectedTypes',
+        label: 'Field Type',
+        options: selectableTypes.map(type => ({ label: type.name, value: type.name })),
+        predicate: (item: Field, selected: string[]) => selected.includes(item.type)
+      },
+      {
+        type: 'toggle',
+        key: 'onlyUsedInApis',
+        label: 'Usage',
+        toggleLabel: 'Used in APIs only',
+        predicate: (item: Field) => item.usedInApis.length > 0
+      },
+      {
+        type: 'toggle',
+        key: 'onlyHasConstraints',
+        label: 'Validation',
+        toggleLabel: 'Has constraints only',
+        predicate: (item: Field) => item.constraints.length > 0
+      }
+    ];
+  });
+
+  // Filter fields by active namespace
+  let namespacedFields = $derived($fieldsStore.filter(f => f.namespaceId === $activeNamespaceId));
+
+  // Per-entity CRUD model
+  const contract = createFieldsContract({
+    getActiveNamespaceId: () => $activeNamespaceId,
+    getDefaultType: () => selectableTypes[0]?.name ?? 'str',
+    getTypeIdByName
+  });
+  const workflow = createCrudModel(contract, {
+    itemsStore: () => namespacedFields,
+    searchFn: searchFields,
+    filterSections: () => fieldFilterConfig,
+    urlScope: { page, goto }
+  });
+
+  let fieldDrawerNamespaceName = $derived(
+    allNamespaces.find(ns => ns.id === workflow.editedItem?.namespaceId)?.name ?? ''
+  );
+
+  // Truly derived values (read-only computations)
+  let filteredFields = $derived(workflow.results as FieldWithApiCount[]);
+  let sorts = $derived(workflow.sorts);
+  let activeFiltersCount = $derived(workflow.activeFiltersCount);
+
+  let fieldConstraints = $derived($fieldConstraintsStore);
+  let fieldValidatorTemplates = $derived($fieldValidatorTemplatesStore);
+
+  // Entity-specific UI helper for table rendering
+  function formatFieldConstraintPill(constraintValue: FieldConstraintValue): string {
+    if (constraintValue.value !== null) {
+      return `${constraintValue.name}: ${constraintValue.value}`;
+    }
+    return constraintValue.name;
+  }
+</script>
+
+<MainColumnFrame bodyClass="">
+  {#snippet header()}
+    <PageHeader title="Fields">
+      {#snippet actions()}
+        <NamespaceSelector />
+        <button
+          type="button"
+          onclick={workflow.openCreate}
+          class={dashboardPageHeaderPrimaryButton}
+        >
+          <i class="fa-solid fa-plus"></i>
+          <span>Add Field</span>
+        </button>
+      {/snippet}
+    </PageHeader>
+
+    <SearchBar
+      bind:searchQuery={workflow.query}
+      placeholder="Search fields..."
+      resultsCount={filteredFields.length}
+      resultLabel="field"
+      showFilter={true}
+      active={workflow.filtersOpen || activeFiltersCount > 0}
+      onFilterClick={workflow.toggleFilters}
+    >
+      {#snippet filterPanel()}
+        <FilterPanel
+          visible={workflow.filtersOpen}
+          config={fieldFilterConfig}
+          bind:state={workflow.filters}
+          onClose={() => workflow.filtersOpen = false}
+          onClear={workflow.resetFilters}
+        />
+      {/snippet}
+    </SearchBar>
+  {/snippet}
+
+  <Table isEmpty={filteredFields.length === 0}>
+    {#snippet header()}
+      <tr>
+        <SortableColumn
+          column="name"
+          label="Field Name"
+          {sorts}
+          onSort={workflow.handleSort}
+        />
+        <SortableColumn
+          column="description"
+          label="Description"
+          {sorts}
+          onSort={workflow.handleSort}
+        />
+        <SortableColumn
+          column="type"
+          label="Type"
+          {sorts}
+          onSort={workflow.handleSort}
+        />
+        <SortableColumn
+          column="constraints"
+          label="Field Constraints"
+          {sorts}
+          onSort={workflow.handleSort}
+        />
+        <SortableColumn
+          column="defaultValue"
+          label="Default Value"
+          {sorts}
+          onSort={workflow.handleSort}
+        />
+        <SortableColumn
+          column="usedInApis"
+          label="Used In APIs"
+          {sorts}
+          onSort={workflow.handleSort}
+        />
+      </tr>
+    {/snippet}
+
+    {#snippet body()}
+      {#each filteredFields as field}
+        <tr
+          data-testid={getTableRowId(field.id)}
+          onclick={() => workflow.selectItem(field)}
+          class="{tableListRowInteractive} {workflow.isSelected(field)
+            ? tableListRowSelected
+            : tableListRowHover}"
+        >
+          <TableListNameCell col="name">
+            {#snippet children()}
+              {field.name}
+            {/snippet}
+          </TableListNameCell>
+          <TableListTextCell col="description" class="max-w-xs truncate">
+            {#snippet children()}
+              {field.description?.trim() ? field.description : '-'}
+            {/snippet}
+          </TableListTextCell>
+          <td class="{tableListCell} whitespace-nowrap" {...{ [TABLE_COL_ATTR]: 'type' }}>
+            <Pill>{field.container ? `${field.container}[${field.type}]` : field.type}</Pill>
+          </td>
+          <TableListTextCell col="constraints">
+            {#snippet children()}
+              {#if field.constraints.length > 0}
+                <div class="flex flex-wrap gap-1">
+                  {#each field.constraints as constraintValue}
+                    <Pill>{formatFieldConstraintPill(constraintValue)}</Pill>
+                  {/each}
+                </div>
+              {:else}
+                <span>-</span>
+              {/if}
+            {/snippet}
+          </TableListTextCell>
+          <TableListTextCell col="defaultValue" nowrap>
+            {#snippet children()}
+              {field.defaultValue !== undefined && field.defaultValue !== '' ? field.defaultValue : '-'}
+            {/snippet}
+          </TableListTextCell>
+          <TableListMetricCell col="usedInApis" label="APIs">
+            {#snippet pill()}
+              <Pill>{field.usedInApis.length}</Pill>
+            {/snippet}
+          </TableListMetricCell>
+        </tr>
+      {/each}
+    {/snippet}
+
+    {#snippet empty()}
+      <TableEmptyState entityName="fields" storeKey={STORE_NAMES.FIELDS} />
+    {/snippet}
+  </Table>
+</MainColumnFrame>
+
+{#snippet fieldFormContentSnippet(_: { close: () => void })}
+  {#if workflow.editedItem}
+    <FieldFormContent
+      bind:editedItem={workflow.editedItem}
+      mode={workflow.mode === 'creating' ? 'creating' : 'editing'}
+      {selectableTypes}
+      fieldConstraintDefinitions={fieldConstraints}
+      {fieldValidatorTemplates}
+      visibleErrors={workflow.visibleErrors}
+    />
+  {/if}
+{/snippet}
+
+{#snippet fieldFormFooter({ close }: { close: () => void })}
+  {#if workflow.editedItem}
+    <CrudDrawerFooter
+      mode={workflow.mode === 'creating' ? 'creating' : 'editing'}
+      isSaving={workflow.isSaving}
+      isFormValid={workflow.isFormValid}
+      hasChanges={workflow.hasChanges}
+      canDelete={workflow.canDelete}
+      deleteTooltip={workflow.deleteTooltip}
+      showDeleteConfirm={workflow.showDeleteConfirm}
+      isDeleting={workflow.isDeleting}
+      onCreate={workflow.handleCreate}
+      onSave={workflow.handleSave}
+      onUndo={workflow.handleUndo}
+      onDeleteRequest={() => workflow.showDeleteConfirm = true}
+      onDeleteConfirm={workflow.handleDelete}
+      onDeleteCancel={() => workflow.showDeleteConfirm = false}
+      onCancel={close}
+    />
+  {/if}
+{/snippet}
+
+<DrawerStack
+  panels={workflow.drawerOpen
+    ? [{
+        id: 'field',
+        title: workflow.mode === 'creating' ? 'Create Field' : 'Edit Field',
+        headerNamespace: fieldDrawerNamespaceName,
+        width: 720,
+        minWidth: 500,
+        content: fieldFormContentSnippet,
+        footer: fieldFormFooter
+      }]
+    : []}
+  onPopPanel={workflow.closeDrawer}
+/>

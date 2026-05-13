@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="en" data-theme="soft">
+	<head>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<title>Median Code</title>
+		<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32' fill='none' stroke='%23f0f0f5' stroke-width='1.2' stroke-linecap='round'%3E%3C!-- Outer cube --%3E%3Cpolygon points='6,10 16,5 26,10 26,22 16,27 6,22' fill='none'/%3E%3Cline x1='16' y1='5' x2='16' y2='13'/%3E%3Cline x1='6' y1='10' x2='11' y2='12'/%3E%3Cline x1='26' y1='10' x2='21' y2='12'/%3E%3Cline x1='6' y1='22' x2='11' y2='20'/%3E%3Cline x1='26' y1='22' x2='21' y2='20'/%3E%3Cline x1='16' y1='27' x2='16' y2='19'/%3E%3C!-- Inner cube --%3E%3Cpolygon points='11,12 16,9 21,12 21,20 16,23 11,20' fill='none'/%3E%3Cline x1='16' y1='9' x2='16' y2='13'/%3E%3Cline x1='11' y1='12' x2='11' y2='20'/%3E%3Cline x1='21' y1='12' x2='21' y2='20'/%3E%3Cline x1='16' y1='23' x2='16' y2='19'/%3E%3Cline x1='11' y1='16' x2='16' y2='13'/%3E%3Cline x1='21' y1='16' x2='16' y2='13'/%3E%3Cline x1='11' y1='16' x2='16' y2='19'/%3E%3Cline x1='21' y1='16' x2='16' y2='19'/%3E%3C/svg%3E">
+
+		<!-- Google Fonts preconnect for performance -->
+		<link rel="preconnect" href="https://fonts.googleapis.com">
+		<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+		<!-- JetBrains Mono for terminal aesthetic -->
+		<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:ital,wght@0,100..800;1,100..800&display=swap" rel="stylesheet">
+
+		<!-- Local Font Awesome -->
+		<link rel="stylesheet" href="/font-awesome.min.css">
+
+		<!-- Hide scrollbar -->
+		<style>
+			::-webkit-scrollbar { display: none; }
+			html { scrollbar-width: none; -ms-overflow-style: none; }
+		</style>
+
+		%sveltekit.head%
+	</head>
+	<body data-sveltekit-preload-data="hover" class="bg-surface-base text-fg-secondary font-inter antialiased">
+		<div style="display: contents">%sveltekit.body%</div>
+	</body>
+</html>
