@@ -13,7 +13,7 @@ Cross-cutting guidance for the Median Code monorepo. Per-app rules live in `back
 
 `api-spec.yaml` at repo root is the single source of truth.
 
-1. Backend owns the spec generation. A backend test (`tests/contract/test_openapi_export.py` — to be added if missing) asserts `app.openapi()` matches the committed file.
+1. Backend owns the spec generation. `backend/tests/contract/test_openapi_spec.py` asserts `app.openapi()` matches the committed file and tells you how to regenerate when stale.
 2. Frontend regenerates types from the same file. Never edit a derived types file by hand.
 3. To change the contract: edit backend route signatures / Pydantic models, regenerate the spec file, then regenerate frontend types in the same commit (or paired commits in the same PR).
 

@@ -100,11 +100,7 @@ jobs:
   deploy:
     name: Deploy
     needs: [lint, test]
-    # Disabled during monorepo grace period — Coolify still points at the old
-    # mediancode-backend repo. Re-enable by setting repo variable
-    # MONOREPO_DEPLOY_ENABLED=true once Coolify is pointed at mediancode-app.
-    # See docs/work/completed/monorepo-migration/spec.md Phase 5.
-    if: github.event_name == 'push' && vars.MONOREPO_DEPLOY_ENABLED == 'true'
+    if: github.event_name == 'push'
     runs-on: ubuntu-latest
     environment: ${{ github.ref == 'refs/heads/main' && 'production' || 'development' }}
     steps:
