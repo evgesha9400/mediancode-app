@@ -1,0 +1,12 @@
+# Bun Configuration
+#
+# IMPORTANT: This project uses Vitest as its test runner, NOT bun:test.
+# The SvelteKit Vite plugin is required to compile .svelte.ts files and process
+# Svelte 5 runes ($state, $derived). Bun's native test runner lacks this plugin.
+#
+# Use `bun run test` (which invokes Vitest) instead of `bun test`.
+
+[test]
+# Preload a guard script that exits with a helpful error message when `bun test`
+# is invoked directly, redirecting the user to `bun run test` (Vitest).
+preload = ["./scripts/bun-test-guard.ts"]
