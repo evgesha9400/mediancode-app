@@ -1,91 +1,89 @@
-name: Nightly E2E Tests
+name: frontend-ci
 
 on:
   push:
     branches: [main, develop]
+    paths:
+      - 'frontend/**'
+      - 'api-spec.yaml'
+      - '.github/workflows/frontend-ci.yml'
   pull_request:
     branches: [main, develop]
+    paths:
+      - 'frontend/**'
+      - 'api-spec.yaml'
+      - '.github/workflows/frontend-ci.yml'
   schedule:
-    # Run full test suite nightly at 2 AM UTC
     - cron: '0 2 * * *'
-  workflow_dispatch: # Allow manual trigger
+  workflow_dispatch:
 
 concurrency:
-  group: tests-${{ github.ref }}
+  group: frontend-${{ github.ref }}
   cancel-in-progress: true
 
+defaults:
+  run:
+    working-directory: frontend
+
 jobs:
-  # ============================================
-  # Job 1: Lint and Type Check
-  # ============================================
   lint-and-typecheck:
     name: Lint & Type Check
     runs-on: ubuntu-latest
     timeout-minutes: 10
-
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: Setup Bun
-        uses: oven-sh/setup-bun@v1
+      - uses: oven-sh/setup-bun@v1
         with:
           bun-version: latest
 
       - name: Install dependencies
         run: bun install --frozen-lockfile
 
-      - name: Run SvelteKit sync
+      - name: SvelteKit sync
         run: bun run prepare
         env:
           PUBLIC_CLERK_PUBLISHABLE_KEY: ${{ vars.PUBLIC_CLERK_PUBLISHABLE_KEY || 'pk_test_placeholder' }}
 
-      - name: Run svelte-check
+      - name: svelte-check
         run: bun run check
         env:
           PUBLIC_CLERK_PUBLISHABLE_KEY: ${{ vars.PUBLIC_CLERK_PUBLISHABLE_KEY || 'pk_test_placeholder' }}
 
-      - name: Run dead code guard
+      - name: Dead code guard
         run: bun run lint:dead
 
-      - name: Check consistency (stale refs + test mirrors)
+      - name: Consistency check
         run: bun run lint:consistency
 
-      - name: Validate fixtures schema
+      - name: Validate fixtures
         run: bun run test:fixtures:validate
 
-  # ============================================
-  # Job 2: Unit Tests
-  # ============================================
   unit-tests:
     name: Unit Tests
     runs-on: ubuntu-latest
     timeout-minutes: 15
-
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: Setup Bun
-        uses: oven-sh/setup-bun@v1
+      - uses: oven-sh/setup-bun@v1
         with:
           bun-version: latest
 
       - name: Install dependencies
         run: bun install --frozen-lockfile
 
-      - name: Run unit tests
+      - name: Unit tests
         run: bun run test:unit
 
-      - name: Generate coverage report
+      - name: Coverage
         run: bun run test:coverage
 
-      - name: Upload coverage to artifacts
-        uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v4
         if: always()
         with:
           name: coverage-report
-          path: coverage/
+          path: frontend/coverage/
           retention-days: 30
 
       - name: Comment coverage on PR
@@ -94,12 +92,10 @@ jobs:
         with:
           script: |
             const fs = require('fs');
-            const coveragePath = 'coverage/coverage-summary.json';
-
+            const coveragePath = 'frontend/coverage/coverage-summary.json';
             if (fs.existsSync(coveragePath)) {
               const coverage = JSON.parse(fs.readFileSync(coveragePath, 'utf8'));
               const total = coverage.total;
-
               const comment = `## Test Coverage Report
 
               | Metric | Coverage |
@@ -108,10 +104,7 @@ jobs:
               | Statements | ${total.statements.pct}% |
               | Functions | ${total.functions.pct}% |
               | Branches | ${total.branches.pct}% |
-
-              📊 [Full Coverage Report](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})
               `;
-
               github.rest.issues.createComment({
                 issue_number: context.issue.number,
                 owner: context.repo.owner,
@@ -120,21 +113,15 @@ jobs:
               });
             }
 
-  # ============================================
-  # Job 3: Playwright Smoke Tests
-  # ============================================
   playwright-smoke:
     name: Playwright Smoke Tests
     needs: [lint-and-typecheck, unit-tests]
     runs-on: ubuntu-latest
     timeout-minutes: 15
-
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: Setup Bun
-        uses: oven-sh/setup-bun@v1
+      - uses: oven-sh/setup-bun@v1
         with:
           bun-version: latest
 
@@ -144,13 +131,12 @@ jobs:
       - name: Install Playwright Browsers
         run: bunx playwright install --with-deps chromium
 
-      - name: Build application
+      - name: Build
         run: bun run build
         env:
-          # SvelteKit uses PUBLIC_ prefix for client-side env vars
           PUBLIC_CLERK_PUBLISHABLE_KEY: ${{ vars.PUBLIC_CLERK_PUBLISHABLE_KEY || 'pk_test_placeholder' }}
 
-      - name: Run Playwright smoke tests
+      - name: Smoke tests
         run: bun run test:e2e:smoke:ci
         env:
           CI: true
@@ -158,53 +144,34 @@ jobs:
           PUBLIC_CLERK_PUBLISHABLE_KEY: ${{ vars.PUBLIC_CLERK_PUBLISHABLE_KEY }}
           CLERK_SECRET_KEY: ${{ secrets.CLERK_SECRET_KEY }}
 
-      - name: Upload test results
-        uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v4
         if: always()
         with:
           name: playwright-smoke-report
-          path: playwright-report/
+          path: frontend/playwright-report/
           retention-days: 30
 
-      - name: Upload failure screenshots
-        uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v4
         if: failure()
         with:
           name: playwright-smoke-screenshots
-          path: test-results/
+          path: frontend/test-results/
           retention-days: 30
 
-      - name: Upload traces
-        uses: actions/upload-artifact@v4
-        if: failure()
-        with:
-          name: playwright-smoke-traces
-          path: test-results/**/*.zip
-          retention-days: 30
-
-  # ============================================
-  # Job 4: Playwright E2E Tests (Backend Integration)
-  # ============================================
   e2e-crud:
     name: Playwright E2E Tests
     needs: playwright-smoke
     runs-on: ubuntu-latest
     timeout-minutes: 30
-    # Runs on nightly schedule, manual trigger, and every push to main/develop.
-    # Feature-branch pushes and PRs skip this job to keep iteration fast;
-    # the all-tests gate below then only tolerates a skip on those branches.
     if: |
       github.event_name == 'schedule' ||
       github.event_name == 'workflow_dispatch' ||
       (github.event_name == 'push' &&
        (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop'))
-
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: Setup Bun
-        uses: oven-sh/setup-bun@v1
+      - uses: oven-sh/setup-bun@v1
         with:
           bun-version: latest
 
@@ -214,13 +181,13 @@ jobs:
       - name: Install Playwright Browsers
         run: bunx playwright install --with-deps chromium
 
-      - name: Build application
+      - name: Build
         run: bun run build
         env:
           PUBLIC_CLERK_PUBLISHABLE_KEY: ${{ vars.PUBLIC_CLERK_PUBLISHABLE_KEY }}
           PUBLIC_API_BASE_URL: ${{ vars.PUBLIC_API_BASE_URL }}
 
-      - name: Run E2E CRUD tests
+      - name: E2E CRUD tests
         run: bun run test:e2e:crud:ci
         env:
           CI: true
@@ -231,61 +198,42 @@ jobs:
           PUBLIC_CLERK_PUBLISHABLE_KEY: ${{ vars.PUBLIC_CLERK_PUBLISHABLE_KEY }}
           CLERK_SECRET_KEY: ${{ secrets.CLERK_SECRET_KEY }}
 
-      - name: Upload test results
-        uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v4
         if: always()
         with:
           name: e2e-crud-report
-          path: playwright-report/
+          path: frontend/playwright-report/
           retention-days: 30
 
-      - name: Upload failure screenshots
-        uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v4
         if: failure()
         with:
           name: e2e-crud-screenshots
-          path: test-results/
+          path: frontend/test-results/
           retention-days: 30
 
-      - name: Upload traces
-        uses: actions/upload-artifact@v4
-        if: failure()
-        with:
-          name: e2e-crud-traces
-          path: test-results/**/*.zip
-          retention-days: 30
-
-  # ============================================
-  # Job 5: All Tests (Combined for CI Badge)
-  # ============================================
   all-tests:
     name: All Tests
     runs-on: ubuntu-latest
     needs: [lint-and-typecheck, unit-tests, playwright-smoke, e2e-crud]
     if: always()
-
     steps:
-      - name: Check test results
+      - name: Check results
         run: |
-          if [ "${{ needs.lint-and-typecheck.result }}" != "success" ] ||
-             [ "${{ needs.unit-tests.result }}" != "success" ] ||
+          if [ "${{ needs.lint-and-typecheck.result }}" != "success" ] || \
+             [ "${{ needs.unit-tests.result }}" != "success" ] || \
              [ "${{ needs.playwright-smoke.result }}" != "success" ]; then
             echo "One or more test jobs failed"
             exit 1
           fi
-
-          # E2E CRUD must succeed, except that a `skipped` result is
-          # tolerated only on feature branches and PRs (where the job
-          # is intentionally skipped to keep iteration fast).
           if [ "${{ needs.e2e-crud.result }}" != "success" ]; then
-            if [ "${{ needs.e2e-crud.result }}" == "skipped" ] &&
-               [ "${{ github.ref }}" != "refs/heads/main" ] &&
+            if [ "${{ needs.e2e-crud.result }}" == "skipped" ] && \
+               [ "${{ github.ref }}" != "refs/heads/main" ] && \
                [ "${{ github.ref }}" != "refs/heads/develop" ]; then
               echo "E2E CRUD skipped on feature branch — OK"
             else
-              echo "E2E CRUD tests failed (or skipped on protected branch)"
+              echo "E2E CRUD tests failed"
               exit 1
             fi
           fi
-
           echo "All tests passed!"

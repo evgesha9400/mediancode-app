@@ -1,43 +1,51 @@
-name: CI
+name: backend-ci
 
 on:
   push:
     branches: [main, develop]
+    paths:
+      - 'backend/**'
+      - 'api-spec.yaml'
+      - '.github/workflows/backend-ci.yml'
   pull_request:
     branches: [main, develop]
+    paths:
+      - 'backend/**'
+      - 'api-spec.yaml'
+      - '.github/workflows/backend-ci.yml'
 
 concurrency:
-  group: ${{ github.ref }}
+  group: backend-${{ github.ref }}
   cancel-in-progress: true
+
+defaults:
+  run:
+    working-directory: backend
 
 jobs:
   lint:
     name: Lint
     runs-on: ubuntu-latest
-
     steps:
-      - name: Checkout Repository
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: Set Up Python 3.13
-        uses: actions/setup-python@v5
+      - uses: actions/setup-python@v5
         with:
           python-version: "3.13"
 
       - name: Install Poetry
         run: pip install poetry
 
-      - name: Cache Poetry Dependencies
-        uses: actions/cache@v4
+      - uses: actions/cache@v4
         with:
           path: ~/.cache/pypoetry
-          key: v1-poetry-${{ hashFiles('poetry.lock') }}
+          key: v1-poetry-${{ hashFiles('backend/poetry.lock') }}
           restore-keys: v1-poetry-
 
-      - name: Install Dependencies
+      - name: Install dependencies
         run: poetry install --no-interaction --no-ansi
 
-      - name: Pre-commit (Ruff — same as local hooks)
+      - name: Pre-commit (Ruff)
         run: poetry run pre-commit run --all-files
 
   test:
@@ -63,31 +71,28 @@ jobs:
       DATABASE_URL: postgresql+asyncpg://postgres:postgres@localhost:5432/median_code
 
     steps:
-      - name: Checkout Repository
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: Set Up Python 3.13
-        uses: actions/setup-python@v5
+      - uses: actions/setup-python@v5
         with:
           python-version: "3.13"
 
       - name: Install Poetry
         run: pip install poetry
 
-      - name: Cache Poetry Dependencies
-        uses: actions/cache@v4
+      - uses: actions/cache@v4
         with:
           path: ~/.cache/pypoetry
-          key: v1-poetry-${{ hashFiles('poetry.lock') }}
+          key: v1-poetry-${{ hashFiles('backend/poetry.lock') }}
           restore-keys: v1-poetry-
 
-      - name: Install Dependencies
+      - name: Install dependencies
         run: poetry install --no-interaction --no-ansi
 
-      - name: Run Database Migrations
+      - name: Run migrations
         run: poetry run alembic upgrade head
 
-      - name: Run Tests
+      - name: Run tests
         run: poetry run pytest tests/ -v
 
   deploy:
@@ -96,7 +101,6 @@ jobs:
     if: github.event_name == 'push'
     runs-on: ubuntu-latest
     environment: ${{ github.ref == 'refs/heads/main' && 'production' || 'development' }}
-
     steps:
       - name: Trigger Coolify Deployment
         run: |
