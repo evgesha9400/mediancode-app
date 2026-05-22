@@ -78,3 +78,7 @@ force-sort-within-sections = true
 
 [tool.mypy]
 exclude = ["^src/api_craft/templates/static/"]
+
+[[tool.mypy.overrides]]
+module = ["mako.*"]
+ignore_missing_imports = true

@@ -7,6 +7,7 @@ Three tables implement a joined-table-inheritance hierarchy:
 - ``relationship_members`` — child table for relationship members
 """
 
+from typing import TYPE_CHECKING
 from uuid import UUID, uuid4
 
 from sqlalchemy import Boolean, ForeignKey, Integer, Text, UniqueConstraint
@@ -14,6 +15,9 @@ from sqlalchemy.dialects.postgresql import UUID as PgUUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from api.database import Base
+
+if TYPE_CHECKING:
+    from api.models.database import FieldModel, ObjectDefinition
 
 
 def _generate_uuid() -> UUID:

@@ -7,7 +7,7 @@ Update, and Response schemas.
 """
 
 from api_craft.models.input import InputAPI, InputField, InputModel
-from api_craft.models.types import PascalCaseName
+from api_craft.models.types import PascalCaseName, SnakeCaseName
 
 
 def _resolve_fk_type(
@@ -78,7 +78,7 @@ def split_model_schemas(
                     create_fields.append(
                         InputField(
                             type=fk_type,
-                            name=fk_name,
+                            name=SnakeCaseName(fk_name),
                             nullable=not is_required,
                             description=f"FK reference to {source_model.name}",
                         )
@@ -90,7 +90,7 @@ def split_model_schemas(
                     update_fields.append(
                         InputField(
                             type=fk_type,
-                            name=fk_name,
+                            name=SnakeCaseName(fk_name),
                             nullable=True,
                             description=f"FK reference to {source_model.name}",
                         )
@@ -102,7 +102,7 @@ def split_model_schemas(
                     response_fields.append(
                         InputField(
                             type=fk_type,
-                            name=fk_name,
+                            name=SnakeCaseName(fk_name),
                             nullable=not is_required,
                             description=f"FK reference to {source_model.name}",
                         )

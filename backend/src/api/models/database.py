@@ -22,7 +22,7 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 from api.database import Base
 
 if TYPE_CHECKING:
-    pass
+    from api.models.members import ObjectMember
 
 
 def generate_uuid() -> UUID:

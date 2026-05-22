@@ -1,15 +1,17 @@
 # src/api/main.py
 """FastAPI application entry point."""
 
-from collections.abc import AsyncGenerator
+from collections.abc import AsyncGenerator, Awaitable, Callable
 from contextlib import asynccontextmanager
 import logging
+from typing import cast
 
 from fastapi import FastAPI, Request, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from slowapi import _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
+from starlette.responses import Response
 
 from api.middleware import SecurityHeadersMiddleware
 from api.rate_limit import limiter
@@ -79,7 +81,11 @@ app = FastAPI(
 
 # Configure rate limiting
 app.state.limiter = limiter
-app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+rate_limit_handler = cast(
+    Callable[[Request, Exception], Response | Awaitable[Response]],
+    _rate_limit_exceeded_handler,
+)
+app.add_exception_handler(RateLimitExceeded, rate_limit_handler)
 
 # Add security headers middleware (must be added before CORS)
 app.add_middleware(SecurityHeadersMiddleware)

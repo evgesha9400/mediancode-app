@@ -73,7 +73,7 @@ class APIGenerator:
     5. Write files into the target project structure.
     """
 
-    def __init__(self, template_dir: str = None):
+    def __init__(self, template_dir: str | None = None):
         """Initialize the generator.
 
         :param template_dir: Optional templates directory. If ``None``, the
@@ -433,7 +433,9 @@ class APIGenerator:
         self._write_cdk_template("platform-new", infra_dir / "platform", project_name)
         self._write_cdk_template(app_tpl, infra_dir / "app", project_name)
 
-    def generate(self, api: InputAPI, path: str = None, dry_run: bool = False) -> None:
+    def generate(
+        self, api: InputAPI, path: str | None = None, dry_run: bool = False
+    ) -> None:
         """Run the end-to-end generation flow.
 
         :param api: Input API to generate code for.
@@ -484,7 +486,9 @@ class APIGenerator:
             raise
 
 
-def generate_fastapi(api: InputAPI, path: str = None, dry_run: bool = False) -> None:
+def generate_fastapi(
+    api: InputAPI, path: str | None = None, dry_run: bool = False
+) -> None:
     """Generate FastAPI code from an input specification.
 
     :param api: Input API specification.

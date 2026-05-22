@@ -4,6 +4,7 @@
 import io
 import os
 import tempfile
+from uuid import UUID
 import zipfile
 
 from sqlalchemy import select
@@ -21,6 +22,7 @@ from api.models.database import (
 from api.models.members import ObjectMember, RelationshipMember, ScalarMember
 from api.schemas.api import GenerateOptions
 from api.services.api_craft_input import build_input_api
+from api.services.path_params import get_path_param_field_id
 from api_craft.main import APIGenerator
 
 
@@ -69,7 +71,7 @@ async def generate_api_zip(
 
 async def _fetch_objects(
     api: ApiModel, db: AsyncSession
-) -> dict[str, ObjectDefinition]:
+) -> dict[UUID, ObjectDefinition]:
     """Fetch ALL objects in the user's namespace for full-graph FK derivation.
 
     All objects are needed (not just endpoint-selected) because any object
@@ -102,9 +104,9 @@ async def _fetch_objects(
 
 async def _fetch_fields(
     api: ApiModel,
-    objects_map: dict[str, ObjectDefinition],
+    objects_map: dict[UUID, ObjectDefinition],
     db: AsyncSession,
-) -> dict[str, FieldModel]:
+) -> dict[UUID, FieldModel]:
     """Fetch all fields referenced by objects and path parameters.
 
     :param api: The API model with endpoints loaded.
@@ -113,7 +115,7 @@ async def _fetch_fields(
     :returns: Map of field ID to FieldModel.
     """
     # Collect all field IDs from scalar members
-    field_ids: set[str] = set()
+    field_ids: set[UUID] = set()
     for obj in objects_map.values():
         for member in obj.members:
             if isinstance(member, ScalarMember):
@@ -122,7 +124,9 @@ async def _fetch_fields(
     # Collect field IDs from endpoint path_params
     for endpoint in api.endpoints:
         for param in endpoint.path_params or []:
-            field_id = param.get("fieldId")
+            if not isinstance(param, dict):
+                continue
+            field_id = get_path_param_field_id(param)
             if field_id:
                 field_ids.add(field_id)
 

@@ -38,9 +38,11 @@ class BaseService(Generic[ModelT]):
         :param user_id: Optional user ID for filtering.
         :returns: The entity if found, None otherwise.
         """
-        query = select(self.model_class).where(self.model_class.id == entity_id)
+        id_field = getattr(self.model_class, "id")
+        query = select(self.model_class).where(id_field == entity_id)
         if user_id and hasattr(self.model_class, "user_id"):
-            query = query.where(self.model_class.user_id == user_id)
+            user_id_field = getattr(self.model_class, "user_id")
+            query = query.where(user_id_field == user_id)
         result = await self.db.execute(query)
         return result.scalar_one_or_none()
 
@@ -57,9 +59,11 @@ class BaseService(Generic[ModelT]):
         """
         query = select(self.model_class)
         if user_id and hasattr(self.model_class, "user_id"):
-            query = query.where(self.model_class.user_id == user_id)
+            user_id_field = getattr(self.model_class, "user_id")
+            query = query.where(user_id_field == user_id)
         if namespace_id and hasattr(self.model_class, "namespace_id"):
-            query = query.where(self.model_class.namespace_id == namespace_id)
+            namespace_id_field = getattr(self.model_class, "namespace_id")
+            query = query.where(namespace_id_field == namespace_id)
         result = await self.db.execute(query)
         return list(result.scalars().all())
 

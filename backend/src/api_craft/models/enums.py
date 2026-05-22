@@ -8,7 +8,7 @@ Single source of truth consumed by:
 - OpenAPI spec (Pydantic auto-generates enum arrays from Literals)
 """
 
-from typing import Literal, get_args
+from typing import Any, Literal, get_args
 
 HttpMethod = Literal["GET", "POST", "PUT", "PATCH", "DELETE"]
 ResponseShape = Literal["object", "list"]
@@ -37,7 +37,7 @@ FieldRole = Literal[
 Cardinality = Literal["has_one", "has_many", "references", "many_to_many"]
 
 
-def check_constraint_sql(column: str, literal_type: type) -> str:
+def check_constraint_sql(column: str, literal_type: Any) -> str:
     """Generate a CHECK constraint SQL clause from a Literal type.
 
     :param column: The database column name.

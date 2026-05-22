@@ -312,7 +312,7 @@ class InputAPI(BaseModel):
         :raises ValueError: If any reference points to an unknown object or object names are not unique.
         """
         validate_unique_object_names(self.objects)
-        declared_object_names = {obj.name for obj in self.objects}
+        declared_object_names = {str(obj.name) for obj in self.objects}
         validate_model_field_types(self.objects, declared_object_names)
         validate_endpoint_references(self.endpoints, declared_object_names)
         validate_primary_keys(self.objects)

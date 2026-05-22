@@ -420,15 +420,15 @@ def upgrade() -> None:
     # ------------------------------------------------------------------
     # 4. Data integrity check
     # ------------------------------------------------------------------
-    total_members = conn.execute(
-        sa.text("SELECT count(*) FROM object_members")
-    ).scalar()
-    total_scalars = conn.execute(
-        sa.text("SELECT count(*) FROM scalar_members")
-    ).scalar()
-    total_rels = conn.execute(
-        sa.text("SELECT count(*) FROM relationship_members")
-    ).scalar()
+    total_members = (
+        conn.execute(sa.text("SELECT count(*) FROM object_members")).scalar() or 0
+    )
+    total_scalars = (
+        conn.execute(sa.text("SELECT count(*) FROM scalar_members")).scalar() or 0
+    )
+    total_rels = (
+        conn.execute(sa.text("SELECT count(*) FROM relationship_members")).scalar() or 0
+    )
 
     if total_members != total_scalars + total_rels:
         raise RuntimeError(

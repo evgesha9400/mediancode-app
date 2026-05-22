@@ -5,7 +5,7 @@ Full-graph approach: collects all relationships across all models, then for each
 model emits authored relationships, incoming FK columns, and inverse relationships.
 """
 
-from api_craft.models.input import InputModel
+from api_craft.models.input import InputModel, InputRelationship
 from api_craft.models.orm_types import (
     TemplateORMField,
     TemplateORMModel,
@@ -148,7 +148,7 @@ def transform_orm_models(input_models: list[InputModel]) -> list[TemplateORMMode
 
     # Collect all relationships for full-graph processing
     # Each entry: (source_model_name, relationship)
-    all_relationships: list[tuple[str, object]] = []
+    all_relationships: list[tuple[str, InputRelationship]] = []
     for model in input_models:
         for rel in model.relationships:
             all_relationships.append((str(model.name), rel))
