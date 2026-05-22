@@ -8,7 +8,6 @@ from api.schemas.endpoint import (
     ApiEndpointCreate,
     ApiEndpointResponse,
     ApiEndpointUpdate,
-    PathParamSchema,
 )
 from api.services.endpoint import EndpointService, get_endpoint_service
 
@@ -22,27 +21,6 @@ def get_service(db: DbSession) -> EndpointService:
     :returns: EndpointService instance.
     """
     return get_endpoint_service(db)
-
-
-def _to_response(endpoint) -> ApiEndpointResponse:
-    """Convert an endpoint model to response schema.
-
-    :param endpoint: Endpoint database model.
-    :returns: ApiEndpointResponse schema.
-    """
-    return ApiEndpointResponse(
-        id=endpoint.id,
-        api_id=endpoint.api_id,
-        method=endpoint.method,
-        path=endpoint.path,
-        description=endpoint.description,
-        tag_name=endpoint.tag_name,
-        path_params=[PathParamSchema(**p) for p in (endpoint.path_params or [])],
-        query_params_object_id=endpoint.query_params_object_id,
-        object_id=endpoint.object_id,
-        use_envelope=endpoint.use_envelope,
-        response_shape=endpoint.response_shape,
-    )
 
 
 @router.get(
@@ -65,7 +43,7 @@ async def list_endpoints(
     """
     service = get_service(db)
     endpoints = await service.list_for_user(user.id, namespace_id)
-    return [_to_response(ep) for ep in endpoints]
+    return [service.to_response(endpoint) for endpoint in endpoints]
 
 
 @router.post(
@@ -89,7 +67,7 @@ async def create_endpoint(
     """
     service = get_service(db)
     endpoint = await service.create_for_user(user.id, data)
-    return _to_response(endpoint)
+    return service.to_response(endpoint)
 
 
 @router.get(
@@ -118,7 +96,7 @@ async def get_endpoint(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"Endpoint with ID '{endpoint_id}' not found",
         )
-    return _to_response(endpoint)
+    return service.to_response(endpoint)
 
 
 @router.put(
@@ -151,7 +129,7 @@ async def update_endpoint(
         )
 
     updated = await service.update_endpoint(endpoint, data)
-    return _to_response(updated)
+    return service.to_response(updated)
 
 
 @router.delete(

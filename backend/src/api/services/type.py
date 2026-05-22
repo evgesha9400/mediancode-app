@@ -7,6 +7,7 @@ from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from api.models.database import FieldModel, Namespace, TypeModel
+from api.schemas.type import TypeResponse
 from api.services.base import BaseService
 
 
@@ -77,6 +78,41 @@ class TypeService(BaseService[TypeModel]):
         )
         result = await self.db.execute(query)
         return {str(row[0]): row[1] for row in result.fetchall()}
+
+    async def list_responses_for_user(
+        self,
+        user_id: UUID,
+        namespace_id: str | None = None,
+    ) -> list[TypeResponse]:
+        """List type response schemas visible to a user.
+
+        :param user_id: The authenticated user's ID.
+        :param namespace_id: Optional namespace filter.
+        :returns: List of type response schemas.
+        """
+        types = await self.list_for_user(user_id, namespace_id)
+        field_counts = await self.get_field_counts_for_user(user_id)
+        return [self.to_response(type_model, field_counts) for type_model in types]
+
+    def to_response(
+        self, type_model: TypeModel, field_counts: dict[str, int]
+    ) -> TypeResponse:
+        """Convert a Type model to a response schema.
+
+        :param type_model: Type database model.
+        :param field_counts: Field usage counts keyed by type ID.
+        :returns: Type response schema.
+        """
+        return TypeResponse(
+            id=type_model.id,
+            namespaceId=type_model.namespace_id,
+            name=type_model.name,
+            pythonType=type_model.python_type,
+            description=type_model.description,
+            importPath=type_model.import_path,
+            parentTypeId=type_model.parent_type_id,
+            usedInFields=field_counts.get(str(type_model.id), 0),
+        )
 
 
 def get_type_service(db: AsyncSession) -> TypeService:

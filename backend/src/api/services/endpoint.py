@@ -1,13 +1,20 @@
 # src/api/services/endpoint.py
 """Service layer for ApiEndpoint operations."""
 
+from typing import cast
 from uuid import UUID
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from api.models.database import ApiEndpoint, ApiModel, Namespace
-from api.schemas.endpoint import ApiEndpointCreate, ApiEndpointUpdate
+from api.schemas.endpoint import (
+    ApiEndpointCreate,
+    ApiEndpointResponse,
+    ApiEndpointUpdate,
+    PathParamSchema,
+)
+from api.schemas.literals import HttpMethod, ResponseShape
 from api.services.base import BaseService
 
 
@@ -133,6 +140,29 @@ class EndpointService(BaseService[ApiEndpoint]):
         """
         await self.db.delete(endpoint)
         await self.db.flush()
+
+    def to_response(self, endpoint: ApiEndpoint) -> ApiEndpointResponse:
+        """Convert an endpoint model to a response schema.
+
+        :param endpoint: Endpoint database model.
+        :returns: Endpoint response schema.
+        """
+        return ApiEndpointResponse(
+            id=endpoint.id,
+            apiId=endpoint.api_id,
+            method=cast(HttpMethod, endpoint.method),
+            path=endpoint.path,
+            description=endpoint.description,
+            tagName=endpoint.tag_name,
+            pathParams=[
+                PathParamSchema(**path_param)
+                for path_param in (endpoint.path_params or [])
+            ],
+            queryParamsObjectId=endpoint.query_params_object_id,
+            objectId=endpoint.object_id,
+            useEnvelope=endpoint.use_envelope,
+            responseShape=cast(ResponseShape, endpoint.response_shape),
+        )
 
 
 def get_endpoint_service(db: AsyncSession) -> EndpointService:

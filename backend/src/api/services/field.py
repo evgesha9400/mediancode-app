@@ -19,9 +19,12 @@ from api.models.database import (
 from api.models.members import ScalarMember
 from api.schemas.field import (
     FieldConstraintValueInput,
+    FieldConstraintValueResponse,
     FieldCreate,
+    FieldResponse,
     FieldUpdate,
     FieldValidatorInput,
+    FieldValidatorResponse,
 )
 from api.services.base import BaseService
 
@@ -217,6 +220,40 @@ class FieldService(BaseService[FieldModel]):
 
         await self.db.delete(field)
         await self.db.flush()
+
+    async def to_response(self, field: FieldModel) -> FieldResponse:
+        """Convert a Field model to a response schema.
+
+        :param field: Field database model.
+        :returns: Field response schema.
+        """
+        constraints = [
+            FieldConstraintValueResponse(
+                constraintId=constraint_value.constraint_id,
+                name=constraint_value.constraint.name,
+                value=constraint_value.value,
+            )
+            for constraint_value in field.constraint_values
+        ]
+        validators = [
+            FieldValidatorResponse(
+                id=validator.id,
+                templateId=validator.template_id,
+                parameters=validator.parameters,
+            )
+            for validator in sorted(field.validators, key=lambda item: item.position)
+        ]
+        return FieldResponse(
+            id=field.id,
+            namespaceId=field.namespace_id,
+            name=field.name,
+            typeId=field.type_id,
+            description=field.description,
+            defaultValue=field.default_value,
+            usedInApis=await self.get_used_in_apis(field.id),
+            constraints=constraints,
+            validators=validators,
+        )
 
     async def get_used_in_apis(self, field_id: UUID) -> list[UUID]:
         """Get API IDs where this field is used.

@@ -12,6 +12,7 @@ from api.models.database import (
     FieldModel,
     Namespace,
 )
+from api.schemas.field_constraint import FieldConstraintResponse
 from api.services.base import BaseService
 
 
@@ -86,6 +87,45 @@ class FieldConstraintService(BaseService[FieldConstraintModel]):
         )
         result = await self.db.execute(query)
         return {str(row[0]): row[1] for row in result.fetchall()}
+
+    async def list_responses_for_user(
+        self,
+        user_id: UUID,
+        namespace_id: str | None = None,
+    ) -> list[FieldConstraintResponse]:
+        """List field constraint response schemas visible to a user.
+
+        :param user_id: The authenticated user's ID.
+        :param namespace_id: Optional namespace filter.
+        :returns: List of field constraint response schemas.
+        """
+        constraints = await self.list_for_user(user_id, namespace_id)
+        field_counts = await self.get_field_counts_for_user(user_id)
+        return [
+            self.to_response(constraint, field_counts) for constraint in constraints
+        ]
+
+    def to_response(
+        self,
+        constraint: FieldConstraintModel,
+        field_counts: dict[str, int],
+    ) -> FieldConstraintResponse:
+        """Convert a Field Constraint model to a response schema.
+
+        :param constraint: Field Constraint database model.
+        :param field_counts: Field usage counts keyed by constraint ID.
+        :returns: Field Constraint response schema.
+        """
+        return FieldConstraintResponse(
+            id=constraint.id,
+            namespaceId=constraint.namespace_id,
+            name=constraint.name,
+            description=constraint.description,
+            parameterTypes=constraint.parameter_types,
+            docsUrl=constraint.docs_url,
+            compatibleTypes=constraint.compatible_types,
+            usedInFields=field_counts.get(str(constraint.id), 0),
+        )
 
 
 def get_field_constraint_service(db: AsyncSession) -> FieldConstraintService:

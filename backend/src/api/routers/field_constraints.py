@@ -41,19 +41,4 @@ async def list_field_constraints(
     :returns: List of field constraint responses.
     """
     service = get_service(db)
-    constraints = await service.list_for_user(user.id, namespace_id)
-    field_counts = await service.get_field_counts_for_user(user.id)
-
-    return [
-        FieldConstraintResponse(
-            id=c.id,
-            namespace_id=c.namespace_id,
-            name=c.name,
-            description=c.description,
-            parameter_types=c.parameter_types,
-            docs_url=c.docs_url,
-            compatible_types=c.compatible_types,
-            used_in_fields=field_counts.get(str(c.id), 0),
-        )
-        for c in constraints
-    ]
+    return await service.list_responses_for_user(user.id, namespace_id)
