@@ -11,6 +11,7 @@ import inspect
 import io
 import os
 from pathlib import Path
+import re
 import tempfile
 from typing import get_args
 from unittest.mock import MagicMock
@@ -20,12 +21,8 @@ from fastapi.testclient import TestClient
 import pytest
 
 from api.schemas.api import GenerateOptions
-from api.services.generation import (
-    _build_endpoint_name,
-    _build_field_type,
-    _convert_to_input_api,
-    generate_api_zip,
-)
+from api.services.api_craft_input import build_input_api
+from api.services.generation import generate_api_zip
 from api_craft.extractors import collect_association_tables
 from api_craft.main import APIGenerator
 from api_craft.models.enums import FilterOperator
@@ -59,8 +56,84 @@ def _make_model(name, fields, relationships=None):
     )
 
 
+def _make_api_model(endpoints=None):
+    api = MagicMock()
+    api.title = "TestApi"
+    api.version = "1.0.0"
+    api.description = "Test"
+    api.namespace_id = "ns-1"
+    api.endpoints = endpoints or []
+    return api
+
+
+def _make_endpoint(method: str, path: str):
+    endpoint = MagicMock()
+    endpoint.method = method
+    endpoint.path = path
+    endpoint.tag_name = None
+    endpoint.path_params = [{"name": name} for name in re.findall(r"\{([^}]+)\}", path)]
+    endpoint.query_params_object_id = None
+    endpoint.object_id = None
+    endpoint.description = None
+    endpoint.use_envelope = True
+    endpoint.response_shape = "object"
+    return endpoint
+
+
+def _make_field(python_type: str, container: str | None = None):
+    field = MagicMock()
+    field.name = "value"
+    field.field_type = MagicMock()
+    field.field_type.python_type = python_type
+    field.description = None
+    field.default_value = None
+    field.container = container
+    field.constraint_values = []
+    field.validators = []
+    return field
+
+
+def _make_scalar_member(*, is_pk=False):
+    from api.models.members import ScalarMember
+
+    member = MagicMock(spec=ScalarMember)
+    member.member_type = "scalar"
+    member.field_id = "field-1"
+    member.is_nullable = False
+    member.position = 0
+    member.role = "pk" if is_pk else "writable"
+    member.default_value = None
+    member.name = "value"
+    return member
+
+
+def _make_object(member):
+    obj = MagicMock()
+    obj.id = "obj-1"
+    obj.name = "Item"
+    obj.description = "Test item"
+    obj.namespace_id = "ns-1"
+    obj.members = [member]
+    obj.validators = []
+    return obj
+
+
+def _build_single_field_input_api(
+    python_type: str,
+    container: str | None = None,
+):
+    field = _make_field(python_type, container)
+    obj = _make_object(_make_scalar_member())
+    return build_input_api(
+        _make_api_model(),
+        {"obj-1": obj},
+        {"field-1": field},
+        GenerateOptions(),
+    )
+
+
 # ---------------------------------------------------------------------------
-# Build Field Type (from test_generation_unit)
+# api_craft input adapter field type behavior
 # ---------------------------------------------------------------------------
 
 
@@ -86,11 +159,14 @@ class TestBuildFieldType:
         ],
     )
     def test_type_mapping(self, python_type: str, container: str | None, expected: str):
-        assert _build_field_type(python_type, container) == expected
+        result = _build_single_field_input_api(python_type, container)
+        item_obj = result.objects[0]
+        value_field = item_obj.fields[0]
+        assert value_field.type == expected
 
 
 # ---------------------------------------------------------------------------
-# Build Endpoint Name (from test_generation_unit)
+# api_craft input adapter endpoint naming behavior
 # ---------------------------------------------------------------------------
 
 
@@ -111,11 +187,26 @@ class TestBuildEndpointName:
         ],
     )
     def test_endpoint_name(self, method: str, path: str, expected: str):
-        assert _build_endpoint_name(method, path) == expected
+        endpoint = _make_endpoint(method, path)
+        result = build_input_api(
+            _make_api_model([endpoint]),
+            {},
+            {},
+            GenerateOptions(),
+        )
+        assert result.endpoints[0].name == expected
 
     def test_endpoint_name_differentiates_with_path_param(self):
-        list_name = _build_endpoint_name("GET", "/products")
-        detail_name = _build_endpoint_name("GET", "/products/{tracking_id}")
+        list_endpoint = _make_endpoint("GET", "/products")
+        detail_endpoint = _make_endpoint("GET", "/products/{tracking_id}")
+        result = build_input_api(
+            _make_api_model([list_endpoint, detail_endpoint]),
+            {},
+            {},
+            GenerateOptions(),
+        )
+        list_name = result.endpoints[0].name
+        detail_name = result.endpoints[1].name
         assert list_name != detail_name
 
 
@@ -128,16 +219,9 @@ class TestConvertToInputApi:
     """Merged from TestConvertToInputApiOptions and TestConvertToInputApiPk."""
 
     def _make_api_model(self):
-        api = MagicMock()
-        api.title = "TestApi"
-        api.version = "1.0.0"
-        api.description = "Test"
-        api.endpoints = []
-        return api
+        return _make_api_model()
 
     def _make_api_with_objects(self, *, is_pk=False):
-        from api.models.members import ScalarMember
-
         field = MagicMock()
         field.name = "id"
         field.field_type = MagicMock()
@@ -148,29 +232,12 @@ class TestConvertToInputApi:
         field.constraint_values = []
         field.validators = []
 
-        member = MagicMock(spec=ScalarMember)
-        member.member_type = "scalar"
-        member.field_id = "field-1"
-        member.is_nullable = False
-        member.position = 0
-        member.role = "pk" if is_pk else "writable"
-        member.default_value = None
+        member = _make_scalar_member(is_pk=is_pk)
         member.name = "id"
 
-        obj = MagicMock()
-        obj.id = "obj-1"
-        obj.name = "Item"
-        obj.description = "Test item"
-        obj.namespace_id = "ns-1"
-        obj.members = [member]
-        obj.validators = []
+        obj = _make_object(member)
 
-        api = MagicMock()
-        api.title = "TestApi"
-        api.version = "1.0.0"
-        api.description = "Test"
-        api.namespace_id = "ns-1"
-        api.endpoints = []
+        api = _make_api_model()
 
         objects_map = {"obj-1": obj}
         fields_map = {"field-1": field}
@@ -181,7 +248,7 @@ class TestConvertToInputApi:
     def test_default_options_match_current_behavior(self):
         api = self._make_api_model()
         opts = GenerateOptions()
-        result = _convert_to_input_api(api, {}, {}, opts)
+        result = build_input_api(api, {}, {}, opts)
         assert result.config.healthcheck == "/health"
         assert result.config.response_placeholders is True
         assert result.config.database.enabled is False
@@ -189,13 +256,13 @@ class TestConvertToInputApi:
     def test_database_enabled_passed_through(self):
         api, objects_map, fields_map = self._make_api_with_objects(is_pk=True)
         opts = GenerateOptions(database_enabled=True, response_placeholders=False)
-        result = _convert_to_input_api(api, objects_map, fields_map, opts)
+        result = build_input_api(api, objects_map, fields_map, opts)
         assert result.config.database.enabled is True
 
     def test_response_placeholders_false_passed_through(self):
         api = self._make_api_model()
         opts = GenerateOptions(response_placeholders=False)
-        result = _convert_to_input_api(api, {}, {}, opts)
+        result = build_input_api(api, {}, {}, opts)
         assert result.config.response_placeholders is False
 
     # --- PK tests (from TestConvertToInputApiPk) ---
@@ -203,7 +270,7 @@ class TestConvertToInputApi:
     def test_pk_passed_through(self):
         api, objects_map, fields_map = self._make_api_with_objects(is_pk=True)
         opts = GenerateOptions(database_enabled=True, response_placeholders=False)
-        result = _convert_to_input_api(api, objects_map, fields_map, opts)
+        result = build_input_api(api, objects_map, fields_map, opts)
         item_obj = next(o for o in result.objects if o.name == "Item")
         id_field = next(f for f in item_obj.fields if f.name == "id")
         assert id_field.pk is True
@@ -211,7 +278,7 @@ class TestConvertToInputApi:
     def test_pk_false_by_default(self):
         api, objects_map, fields_map = self._make_api_with_objects(is_pk=False)
         opts = GenerateOptions()
-        result = _convert_to_input_api(api, objects_map, fields_map, opts)
+        result = build_input_api(api, objects_map, fields_map, opts)
         item_obj = next(o for o in result.objects if o.name == "Item")
         id_field = next(f for f in item_obj.fields if f.name == "id")
         assert id_field.pk is False
