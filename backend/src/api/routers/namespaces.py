@@ -122,13 +122,6 @@ async def update_namespace(
             detail=f"Namespace with ID '{namespace_id}' not found",
         )
 
-    # Verify ownership (not global namespace)
-    if namespace.user_id != user.id:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Cannot modify this namespace",
-        )
-
     updated = await service.update_namespace(namespace, data)
     return NamespaceResponse.model_validate(updated)
 
@@ -157,13 +150,6 @@ async def delete_namespace(
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"Namespace with ID '{namespace_id}' not found",
-        )
-
-    # Verify ownership (not global namespace)
-    if namespace.user_id != user.id:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Cannot delete this namespace",
         )
 
     await service.delete_namespace(namespace)

@@ -3,7 +3,7 @@
 
 from uuid import UUID
 
-from sqlalchemy import func, or_, select
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from api.models.database import (
@@ -13,7 +13,6 @@ from api.models.database import (
     Namespace,
 )
 from api.services.base import BaseService
-from api.settings import get_settings
 
 
 class FieldConstraintService(BaseService[FieldConstraintModel]):
@@ -35,16 +34,10 @@ class FieldConstraintService(BaseService[FieldConstraintModel]):
         :param namespace_id: Optional namespace filter.
         :returns: List of visible field constraints.
         """
-        settings = get_settings()
         query = (
             select(FieldConstraintModel)
             .join(Namespace)
-            .where(
-                or_(
-                    Namespace.user_id == user_id,
-                    Namespace.id == settings.system_namespace_id,
-                )
-            )
+            .where(self.namespace_access.visible_catalog_filter(user_id))
         )
         if namespace_id:
             query = query.where(FieldConstraintModel.namespace_id == namespace_id)
@@ -69,7 +62,7 @@ class FieldConstraintService(BaseService[FieldConstraintModel]):
             .join(Namespace)
             .where(
                 FieldConstraintModel.id == constraint_id,
-                Namespace.user_id == user_id,
+                self.namespace_access.owned_namespace_filter(user_id),
             )
         )
         result = await self.db.execute(query)
@@ -88,7 +81,7 @@ class FieldConstraintService(BaseService[FieldConstraintModel]):
             )
             .join(FieldModel)
             .join(Namespace)
-            .where(Namespace.user_id == user_id)
+            .where(self.namespace_access.owned_namespace_filter(user_id))
             .group_by(FieldConstraintValueAssociation.constraint_id)
         )
         result = await self.db.execute(query)

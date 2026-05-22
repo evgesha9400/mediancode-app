@@ -32,9 +32,7 @@ class NamespaceService(BaseService[Namespace]):
         :param user_id: The authenticated user's ID.
         :returns: List of user's namespaces.
         """
-        query = select(Namespace).where(Namespace.user_id == user_id)
-        result = await self.db.execute(query)
-        return list(result.scalars().all())
+        return await self.namespace_access.list_owned_namespaces(user_id)
 
     async def get_by_id_for_user(
         self, namespace_id: str, user_id: UUID
@@ -45,12 +43,7 @@ class NamespaceService(BaseService[Namespace]):
         :param user_id: The authenticated user's ID.
         :returns: The namespace if owned by user, None otherwise.
         """
-        query = select(Namespace).where(
-            Namespace.id == namespace_id,
-            Namespace.user_id == user_id,
-        )
-        result = await self.db.execute(query)
-        return result.scalar_one_or_none()
+        return await self.namespace_access.get_owned_namespace(namespace_id, user_id)
 
     async def create_for_user(self, user_id: UUID, data: NamespaceCreate) -> Namespace:
         """Create a new namespace for a user.

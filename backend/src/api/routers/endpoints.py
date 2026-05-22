@@ -10,7 +10,6 @@ from api.schemas.endpoint import (
     ApiEndpointUpdate,
     PathParamSchema,
 )
-from api.services.api import get_api_service
 from api.services.endpoint import EndpointService, get_endpoint_service
 
 router = APIRouter(prefix="/endpoints", tags=["Endpoints"])
@@ -151,15 +150,6 @@ async def update_endpoint(
             detail=f"Endpoint with ID '{endpoint_id}' not found",
         )
 
-    # Verify ownership through parent API
-    api_service = get_api_service(db)
-    api = await api_service.get_by_id_for_user(str(endpoint.api_id), user.id)
-    if not api or api.user_id != user.id:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Cannot modify this endpoint",
-        )
-
     updated = await service.update_endpoint(endpoint, data)
     return _to_response(updated)
 
@@ -188,15 +178,6 @@ async def delete_endpoint(
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"Endpoint with ID '{endpoint_id}' not found",
-        )
-
-    # Verify ownership through parent API
-    api_service = get_api_service(db)
-    api = await api_service.get_by_id_for_user(str(endpoint.api_id), user.id)
-    if not api or api.user_id != user.id:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Cannot delete this endpoint",
         )
 
     await service.delete_endpoint(endpoint)

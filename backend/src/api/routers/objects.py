@@ -4,13 +4,7 @@
 from fastapi import APIRouter, HTTPException, status
 
 from api.deps import DbSession, ProvisionedUser
-from api.models.members import RelationshipMember, ScalarMember
-from api.schemas.members import (
-    RelationshipMemberResponse,
-    ScalarMemberResponse,
-)
 from api.schemas.object import (
-    ModelValidatorResponse,
     ObjectCreate,
     ObjectResponse,
     ObjectUpdate,
@@ -27,63 +21,6 @@ def get_service(db: DbSession) -> ObjectService:
     :returns: ObjectService instance.
     """
     return get_object_service(db)
-
-
-async def _to_response(obj, service: ObjectService) -> ObjectResponse:
-    """Convert an object model to response schema.
-
-    :param obj: Object database model.
-    :param service: ObjectService for fetching usage and derived relationships.
-    :returns: ObjectResponse schema.
-    """
-    members = []
-    for m in sorted(obj.members, key=lambda x: x.position):
-        if isinstance(m, ScalarMember):
-            members.append(
-                ScalarMemberResponse(
-                    id=m.id,
-                    name=m.name,
-                    field_id=m.field_id,
-                    role=m.role,
-                    is_nullable=m.is_nullable,
-                    default_value=m.default_value,
-                )
-            )
-        elif isinstance(m, RelationshipMember):
-            members.append(
-                RelationshipMemberResponse(
-                    id=m.id,
-                    name=m.name,
-                    target_object_id=m.target_object_id,
-                    kind=m.kind,
-                    inverse_name=m.inverse_name,
-                    required=m.required,
-                )
-            )
-
-    validators = [
-        ModelValidatorResponse(
-            id=v.id,
-            template_id=v.template_id,
-            parameters=v.parameters,
-            field_mappings=v.field_mappings,
-        )
-        for v in sorted(obj.validators, key=lambda x: x.position)
-    ]
-
-    used_in_apis = await service.get_used_in_apis(obj.id)
-    derived_relationships = await service.compute_derived_relationships(obj.id)
-
-    return ObjectResponse(
-        id=obj.id,
-        namespace_id=obj.namespace_id,
-        name=obj.name,
-        description=obj.description,
-        members=members,
-        derived_relationships=derived_relationships,
-        used_in_apis=used_in_apis,
-        validators=validators,
-    )
 
 
 @router.get(
@@ -106,7 +43,7 @@ async def list_objects(
     """
     service = get_service(db)
     objects = await service.list_for_user(user.id, namespace_id)
-    return [await _to_response(obj, service) for obj in objects]
+    return [await service.to_response(obj) for obj in objects]
 
 
 @router.post(
@@ -129,10 +66,15 @@ async def create_object(
     :returns: Created object response.
     """
     service = get_service(db)
-    obj = await service.create_for_user(user.id, data)
+    created = await service.create_for_user(user.id, data)
     # Reload with members
-    obj = await service.get_by_id_for_user(obj.id, user.id)
-    return await _to_response(obj, service)
+    obj = await service.get_by_id_for_user(str(created.id), user.id)
+    if not obj:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Object not found after creation",
+        )
+    return await service.to_response(obj)
 
 
 @router.get(
@@ -161,7 +103,7 @@ async def get_object(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"Object with ID '{object_id}' not found",
         )
-    return await _to_response(obj, service)
+    return await service.to_response(obj)
 
 
 @router.put(
@@ -193,17 +135,15 @@ async def update_object(
             detail=f"Object with ID '{object_id}' not found",
         )
 
-    # Verify ownership
-    if obj.user_id != user.id:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Cannot modify this object",
-        )
-
     updated = await service.update_object(obj, data)
     # Reload with members
-    updated = await service.get_by_id_for_user(updated.id, user.id)
-    return await _to_response(updated, service)
+    reloaded = await service.get_by_id_for_user(str(updated.id), user.id)
+    if not reloaded:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Object with ID '{object_id}' not found",
+        )
+    return await service.to_response(reloaded)
 
 
 @router.delete(
@@ -230,13 +170,6 @@ async def delete_object(
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"Object with ID '{object_id}' not found",
-        )
-
-    # Verify ownership
-    if obj.user_id != user.id:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Cannot delete this object",
         )
 
     await service.delete_object(obj)

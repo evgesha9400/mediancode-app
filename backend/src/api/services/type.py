@@ -3,12 +3,11 @@
 
 from uuid import UUID
 
-from sqlalchemy import func, or_, select
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from api.models.database import FieldModel, Namespace, TypeModel
 from api.services.base import BaseService
-from api.settings import get_settings
 
 
 class TypeService(BaseService[TypeModel]):
@@ -30,23 +29,19 @@ class TypeService(BaseService[TypeModel]):
         :param namespace_id: Optional namespace filter.
         :returns: List of visible types.
         """
-        settings = get_settings()
         query = (
             select(TypeModel)
             .join(Namespace)
-            .where(
-                or_(
-                    Namespace.user_id == user_id,
-                    Namespace.id == settings.system_namespace_id,
-                )
-            )
+            .where(self.namespace_access.visible_catalog_filter(user_id))
         )
         if namespace_id:
             query = query.where(TypeModel.namespace_id == namespace_id)
         result = await self.db.execute(query)
         return list(result.scalars().all())
 
-    async def get_by_id_for_user(self, type_id: str, user_id: UUID) -> TypeModel | None:
+    async def get_by_id_for_user(
+        self, type_id: str, user_id: UUID
+    ) -> TypeModel | None:
         """Get a type if owned by the user.
 
         System namespace types (``user_id IS NULL``) are excluded, so this
@@ -62,7 +57,7 @@ class TypeService(BaseService[TypeModel]):
             .join(Namespace)
             .where(
                 TypeModel.id == type_id,
-                Namespace.user_id == user_id,
+                self.namespace_access.owned_namespace_filter(user_id),
             )
         )
         result = await self.db.execute(query)
@@ -77,7 +72,7 @@ class TypeService(BaseService[TypeModel]):
         query = (
             select(FieldModel.type_id, func.count(FieldModel.id))
             .join(Namespace)
-            .where(Namespace.user_id == user_id)
+            .where(self.namespace_access.owned_namespace_filter(user_id))
             .group_by(FieldModel.type_id)
         )
         result = await self.db.execute(query)

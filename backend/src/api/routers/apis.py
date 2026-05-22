@@ -140,13 +140,6 @@ async def update_api(
             detail=f"API with ID '{api_id}' not found",
         )
 
-    # Verify ownership
-    if api.user_id != user.id:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Cannot modify this API",
-        )
-
     updated = await service.update_api(api, data)
     return ApiResponse.model_validate(updated)
 
@@ -175,13 +168,6 @@ async def delete_api(
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"API with ID '{api_id}' not found",
-        )
-
-    # Verify ownership
-    if api.user_id != user.id:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Cannot delete this API",
         )
 
     await service.delete_api(api)

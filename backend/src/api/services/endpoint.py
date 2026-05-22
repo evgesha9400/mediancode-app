@@ -34,7 +34,7 @@ class EndpointService(BaseService[ApiEndpoint]):
             select(ApiEndpoint)
             .join(ApiModel)
             .join(Namespace)
-            .where(Namespace.user_id == user_id)
+            .where(self.namespace_access.owned_namespace_filter(user_id))
         )
         if namespace_id:
             query = query.where(ApiModel.namespace_id == namespace_id)
@@ -56,7 +56,7 @@ class EndpointService(BaseService[ApiEndpoint]):
             .join(Namespace)
             .where(
                 ApiEndpoint.id == endpoint_id,
-                Namespace.user_id == user_id,
+                self.namespace_access.owned_namespace_filter(user_id),
             )
         )
         result = await self.db.execute(query)

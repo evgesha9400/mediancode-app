@@ -61,7 +61,7 @@ class FieldService(BaseService[FieldModel]):
             select(FieldModel)
             .join(Namespace)
             .options(*self._field_load_options())
-            .where(Namespace.user_id == user_id)
+            .where(self.namespace_access.owned_namespace_filter(user_id))
         )
         if namespace_id:
             query = query.where(FieldModel.namespace_id == namespace_id)
@@ -83,7 +83,7 @@ class FieldService(BaseService[FieldModel]):
             .options(*self._field_load_options())
             .where(
                 FieldModel.id == field_id,
-                Namespace.user_id == user_id,
+                self.namespace_access.owned_namespace_filter(user_id),
             )
         )
         result = await self.db.execute(query)
@@ -97,7 +97,7 @@ class FieldService(BaseService[FieldModel]):
         :returns: The created field.
         :raises HTTPException: If namespace not owned by user.
         """
-        await self.validate_namespace_for_creation(data.namespace_id, user_id)
+        await self.namespace_access.require_owned_namespace(data.namespace_id, user_id)
 
         field = FieldModel(
             namespace_id=data.namespace_id,

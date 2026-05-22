@@ -169,13 +169,6 @@ async def update_field(
             detail=f"Field with ID '{field_id}' not found",
         )
 
-    # Verify ownership
-    if field.user_id != user.id:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Cannot modify this field",
-        )
-
     updated = await service.update_field(field, data)
     # Reload with relationships
     updated = await service.get_by_id_for_user(updated.id, user.id)
@@ -206,13 +199,6 @@ async def delete_field(
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"Field with ID '{field_id}' not found",
-        )
-
-    # Verify ownership
-    if field.user_id != user.id:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Cannot delete this field",
         )
 
     await service.delete_field(field)
