@@ -8,6 +8,10 @@ Domain language for the Mediancode backend. Use these names when discussing gene
 A user-defined FastAPI project specification stored in Mediancode. An API owns endpoints and is generated into a standalone FastAPI project.
 _Avoid_: App, project, spec
 
+**Generated FastAPI Project Plan**:
+The filesystem plan created after an API has rendered components and before those components are written. It decides generated FastAPI project directories, file destinations, Alembic support files, and static CDK template copies.
+_Avoid_: Rendered component map, writer internals
+
 **Object**:
 A named model definition that can be used as an endpoint request, response, or query parameter object. An Object has zero or more Object Members.
 _Avoid_: Model, resource, table

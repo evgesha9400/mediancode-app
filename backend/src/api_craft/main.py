@@ -29,13 +29,14 @@ from api_craft.extractors import (
 )
 from api_craft.models.input import InputAPI
 from api_craft.prepare import PreparedAPI, indent_body, prepare_api, render_field
-from api_craft.utils import camel_to_kebab, create_dir, write_file
+from api_craft.project_plan import (
+    build_generated_fastapi_project_plan,
+    write_generated_fastapi_project_plan,
+)
 
 # Configure logging
 logging.basicConfig(level="INFO")
 logger = logging.getLogger(__name__)
-
-_CDK_STATIC_DIR = Path(os.path.dirname(__file__)) / "templates" / "static" / "cdk"
 
 
 def format_python_files(directory: Path) -> None:
@@ -276,163 +277,6 @@ class APIGenerator:
             logger.error(f"Failed to render components: {str(e)}")
             raise ValueError("Component rendering failed") from e
 
-    def write_files(
-        self, rendered_components: dict[str, str], api: InputAPI, path: str
-    ) -> None:
-        """Write rendered components to files.
-
-        :param rendered_components: Mapping of filename to content.
-        :param api: Original input API.
-        :param path: Output directory path.
-        :raises IOError: If file writing fails.
-        """
-        try:
-            project_name = camel_to_kebab(api.name)
-            project_directory = os.path.join(path, project_name)
-            src_directory = os.path.join(project_directory, "src")
-
-            # Create directories
-            create_dir(src_directory)
-
-            # Files that go in the project root (not src/)
-            root_files = {
-                "pyproject.toml",
-                "Makefile",
-                "Dockerfile",
-                "README.md",
-                "docker-compose.yml",
-                "alembic.ini",
-                ".env",
-            }
-
-            # Create migrations directory if alembic_env.py is present
-            if "alembic_env.py" in rendered_components:
-                migrations_dir = os.path.join(project_directory, "migrations")
-                versions_dir = os.path.join(migrations_dir, "versions")
-                create_dir(versions_dir)
-
-                # Write Alembic script template for autogenerate
-                script_template = (
-                    '"""${message}\n\n'
-                    "Revision ID: ${up_revision}\n"
-                    "Revises: ${down_revision | comma,n}\n"
-                    "Create Date: ${create_date}\n\n"
-                    '"""\n'
-                    "from typing import Sequence, Union\n\n"
-                    "from alembic import op\n"
-                    "import sqlalchemy as sa\n\n\n"
-                    "# revision identifiers, used by Alembic.\n"
-                    "revision: str = ${repr(up_revision)}\n"
-                    "down_revision: Union[str, None] = ${repr(down_revision)}\n"
-                    "branch_labels: Union[str, Sequence[str], None] = ${repr(branch_labels)}\n"
-                    "depends_on: Union[str, Sequence[str], None] = ${repr(depends_on)}\n\n\n"
-                    "def upgrade() -> None:\n"
-                    "    ${upgrades if upgrades else 'pass'}\n\n\n"
-                    "def downgrade() -> None:\n"
-                    "    ${downgrades if downgrades else 'pass'}\n"
-                )
-                write_file(
-                    os.path.join(migrations_dir, "script.py.mako"),
-                    script_template,
-                )
-
-            # Write source files
-            for filename, content in rendered_components.items():
-                if filename == "alembic_env.py":
-                    # alembic_env.py goes to migrations/env.py
-                    file_path = os.path.join(project_directory, "migrations", "env.py")
-                elif filename == "initial_migration.py":
-                    file_path = os.path.join(
-                        project_directory,
-                        "migrations",
-                        "versions",
-                        "0001_initial.py",
-                    )
-                elif filename in root_files:
-                    file_path = os.path.join(project_directory, filename)
-                else:
-                    file_path = os.path.join(src_directory, filename)
-                write_file(file_path, content)
-
-            # Write CDK infrastructure files (only when enabled)
-            self._write_cdk_files(Path(project_directory), api)
-
-        except Exception as e:
-            logger.error(f"Failed to write files: {str(e)}")
-            raise IOError("File writing failed") from e
-
-    def _select_app_template(self, compute: str, db_enabled: bool) -> str:
-        """Select the CDK app template directory name.
-
-        :param compute: Compute type — 'lambda' or 'ecs'.
-        :param db_enabled: Whether database support is enabled.
-        :returns: App template directory name.
-        """
-        if compute == "lambda":
-            return "app-lambda-db" if db_enabled else "app-lambda"
-        return "app-ecs-db" if db_enabled else "app-ecs"
-
-    def _write_cdk_template(
-        self, template_name: str, dest_dir: Path, project_name: str
-    ) -> None:
-        """Copy a static CDK template to dest_dir, rendering cdk.json with the project name.
-
-        Skips __pycache__ and cdk.out directories. All other files are copied verbatim.
-        cdk.json is regenerated so the default context.project matches the generated project.
-
-        :param template_name: Directory name under templates/static/cdk/ (e.g. 'app-lambda').
-        :param dest_dir: Destination directory path.
-        :param project_name: Kebab-case project name (e.g. 'shop-api').
-        """
-        src = _CDK_STATIC_DIR / template_name
-        dest_dir.mkdir(parents=True, exist_ok=True)
-
-        for item in src.rglob("*"):
-            rel = item.relative_to(src)
-            if any(part in ("__pycache__", "cdk.out") for part in rel.parts):
-                continue
-            if item.name == ".DS_Store":
-                continue
-            target = dest_dir / rel
-            if item.is_dir():
-                target.mkdir(parents=True, exist_ok=True)
-            elif item.name == "cdk.json":
-                continue  # written separately below
-            elif item.is_file():
-                target.write_text(item.read_text())
-
-        cdk_json_content = (
-            "{\n"
-            '  "app": "python3 app.py",\n'
-            '  "context": {\n'
-            '    "env": "dev",\n'
-            f'    "project": "{project_name}"\n'
-            "  }\n"
-            "}\n"
-        )
-        (dest_dir / "cdk.json").write_text(cdk_json_content)
-
-    def _write_cdk_files(self, project_dir: Path, api) -> None:
-        """Write CDK infrastructure files into infra/ subdirectory.
-
-        Always writes platform-new. Selects app template by compute + database.
-
-        :param project_dir: Root directory of the generated project.
-        :param api: InputAPI with config.cdk populated.
-        """
-        cdk_config = api.config.cdk
-        if not cdk_config.enabled:
-            return
-
-        db_enabled = api.config.database.enabled
-        app_tpl = self._select_app_template(cdk_config.compute, db_enabled)
-
-        project_name = camel_to_kebab(api.name)
-        infra_dir = project_dir / "infra"
-
-        self._write_cdk_template("platform-new", infra_dir / "platform", project_name)
-        self._write_cdk_template(app_tpl, infra_dir / "app", project_name)
-
     def generate(
         self, api: InputAPI, path: str | None = None, dry_run: bool = False
     ) -> None:
@@ -466,13 +310,14 @@ class APIGenerator:
             if not dry_run:
                 logger.info("Writing files...")
                 output_path = path or os.path.dirname(__file__)
-                self.write_files(rendered_components, api, output_path)
-
-                project_dir = Path(output_path) / camel_to_kebab(api.name)
+                project_plan = build_generated_fastapi_project_plan(
+                    rendered_components, api, output_path
+                )
+                write_generated_fastapi_project_plan(project_plan)
 
                 # 6. Format generated code
                 logger.info("Formatting generated code...")
-                format_python_files(project_dir)
+                format_python_files(project_plan.project_dir)
 
                 logger.info("API generation completed successfully.")
             else:
