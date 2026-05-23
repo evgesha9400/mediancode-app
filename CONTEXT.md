@@ -5,12 +5,20 @@ Domain language for the Mediancode backend. Use these names when discussing gene
 ## Language
 
 **API**:
-A user-defined FastAPI project specification stored in Mediancode. An API owns endpoints and is generated into a standalone FastAPI project.
+A user-defined service specification stored in Mediancode. An API owns endpoints and is generated into one or more API Implementations.
 _Avoid_: App, project, spec
+
+**API Implementation**:
+A concrete generated implementation of an API for a chosen framework, language, database, deploy provider, and test strategy.
+_Avoid_: FastAPI-only output, generated app
 
 **Generated FastAPI Project Plan**:
 The filesystem plan created after an API has rendered components and before those components are written. It decides generated FastAPI project directories, file destinations, Alembic support files, and static CDK template copies.
 _Avoid_: Rendered component map, writer internals
+
+**Generation Target**:
+A substitutable output target for generating an API Implementation, such as FastAPI with SQLAlchemy and PostgreSQL, another Python framework, another database, another cloud deploy artifact, or another language runtime.
+_Avoid_: Hard-coded backend stack, template variant
 
 **Prepared Endpoint/View Semantics**:
 The generator step that turns API endpoints into prepared FastAPI view metadata, including request/response schema selection, target Object inference, path/query parameter typing, placeholder response decisions, ORM-backed filtering, pagination, signatures, and view imports.
@@ -36,6 +44,10 @@ _Avoid_: Field
 An Object Member that points from one Object to another Object. It authors the relationship on the source Object and produces a derived relationship on the target Object.
 _Avoid_: Link, reference
 
+**Relationship Derivation**:
+The rules that turn an authored Relationship Member into portable derived relationship facts used by Object responses and Generation Targets, including inverse relationship side, reference ownership, cardinality, required/nullability, and source/target Object names.
+_Avoid_: Relationship helper logic, ORM relationship internals
+
 **Field**:
 A reusable scalar definition that provides the generated Python type, constraints, validators, and description for Scalar Members and endpoint parameters.
 _Avoid_: Object member
@@ -57,3 +69,11 @@ Domain expert: "Object is the named model definition. Object Membership is the r
 Developer: "Where does the inverse relationship come from?"
 
 Domain expert: "A Relationship Member authored on the source Object creates a derived relationship on the target Object."
+
+Developer: "Is Mediancode only generating FastAPI projects?"
+
+Domain expert: "No. FastAPI is the first API Implementation. The architecture should support substitutable Generation Targets for deploy artifacts, databases, test modules, frameworks, and languages."
+
+Developer: "Why do Object responses and generated SQLAlchemy models both calculate relationship facts?"
+
+Domain expert: "Those are Relationship Derivation facts. Object Membership authors the Relationship Member, Relationship Derivation explains the portable semantics, and each Generation Target translates those semantics into concrete artifact names."

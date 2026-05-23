@@ -5,13 +5,18 @@ Full-graph approach: collects all relationships across all models, then for each
 model emits authored relationships, incoming FK columns, and inverse relationships.
 """
 
-from api_craft.models.input import InputModel, InputRelationship
+from api_craft.models.input import InputModel
 from api_craft.models.orm_types import (
     TemplateORMField,
     TemplateORMModel,
     TemplateRelationship,
 )
-from api_craft.utils import camel_to_snake, snake_to_plural
+from api_craft.relationship_derivation import derive_input_model_relationships
+from api_craft.sqlalchemy_relationships import (
+    association_table_name,
+    foreign_key_field_name,
+    object_table_name,
+)
 
 # Map input type names to Python type annotations for Mapped[].
 ORM_PYTHON_TYPE_MAP = {
@@ -70,16 +75,6 @@ def map_column_type(type_str: str, validators: list) -> str | None:
     return factory()
 
 
-def _make_association_table_name(source_table: str, relationship_name: str) -> str:
-    """Build association table name: {source_table}_{relationship_name}.
-
-    :param source_table: Source model's table name.
-    :param relationship_name: Relationship field name.
-    :returns: Association table name.
-    """
-    return f"{source_table}_{relationship_name}"
-
-
 def _sort_by_dependencies(orm_models: list[TemplateORMModel]) -> list[TemplateORMModel]:
     """Sort ORM models so tables with FK dependencies come after referenced tables.
 
@@ -122,15 +117,6 @@ def _sort_by_dependencies(orm_models: list[TemplateORMModel]) -> list[TemplateOR
     return [model_by_table[t] for t in sorted_tables]
 
 
-def _singular(table_name: str) -> str:
-    """Naive de-pluralization: strip trailing 's'.
-
-    :param table_name: Pluralized table name.
-    :returns: Singular form.
-    """
-    return table_name.rstrip("s") if table_name.endswith("s") else table_name
-
-
 def transform_orm_models(input_models: list[InputModel]) -> list[TemplateORMModel]:
     """Convert InputModels into TemplateORMModels using full-graph FK derivation.
 
@@ -142,16 +128,10 @@ def transform_orm_models(input_models: list[InputModel]) -> list[TemplateORMMode
     for model in input_models:
         pk_fields = [f for f in model.fields if f.pk]
         if pk_fields:
-            table_name = snake_to_plural(camel_to_snake(model.name))
+            table_name = object_table_name(str(model.name))
             class_name = f"{model.name}Record"
             entity_lookup[str(model.name)] = (table_name, model, class_name)
-
-    # Collect all relationships for full-graph processing
-    # Each entry: (source_model_name, relationship)
-    all_relationships: list[tuple[str, InputRelationship]] = []
-    for model in input_models:
-        for rel in model.relationships:
-            all_relationships.append((str(model.name), rel))
+    relationship_derivations = derive_input_model_relationships(input_models)
 
     # Build per-model data: fields + relationships + incoming FK columns
     model_fields: dict[str, list[TemplateORMField]] = {}
@@ -163,7 +143,6 @@ def transform_orm_models(input_models: list[InputModel]) -> list[TemplateORMMode
         if not pk_fields:
             continue
 
-        table_name = snake_to_plural(camel_to_snake(model.name))
         orm_fields = []
 
         for field in model.fields:
@@ -222,24 +201,28 @@ def transform_orm_models(input_models: list[InputModel]) -> list[TemplateORMMode
         model_rels[str(model.name)] = []
 
     # Second pass: process relationships (full graph)
-    for source_name, rel in all_relationships:
-        source_info = entity_lookup.get(source_name)
-        target_info = entity_lookup.get(rel.target_model)
+    for derivation in relationship_derivations:
+        source_info = entity_lookup.get(derivation.source_object_name)
+        target_info = entity_lookup.get(derivation.target_object_name)
         if not source_info or not target_info:
             continue
 
         source_table, source_model, source_class = source_info
-        target_table, target_model, target_class = target_info
-        is_self_referential = source_name == rel.target_model
+        _target_table, _target_model, target_class = target_info
+        is_self_referential = (
+            derivation.source_object_name == derivation.target_object_name
+        )
 
         # Get source PK for FK type derivation
         source_pk_field = next((f for f in source_model.fields if f.pk), None)
         if not source_pk_field:
             continue
 
-        if rel.kind in ("one_to_many", "one_to_one"):
-            # FK goes on the target side, named {inverse_name}_id
-            fk_col_name = f"{rel.inverse_name}_id"
+        if derivation.reference_owner == "target":
+            # FK goes on the target side for the current SQLAlchemy target.
+            fk_col_name = foreign_key_field_name(derivation)
+            if fk_col_name is None:
+                continue
             fk_ref = f"{source_table}.{source_pk_field.name}"
 
             # Derive FK column type from source PK
@@ -255,12 +238,12 @@ def transform_orm_models(input_models: list[InputModel]) -> list[TemplateORMMode
                 source_pk_field.type
             ) or ORM_PYTHON_TYPE_MAP.get(fk_base_type, fk_base_type)
 
-            nullable = not rel.required
+            nullable = not derivation.required
             fk_python_type = f"{fk_orm_type} | None" if nullable else fk_orm_type
 
-            if fk_col_type and rel.target_model in model_fields:
+            if fk_col_type and derivation.target_object_name in model_fields:
                 # Add FK column to target model
-                model_fields[rel.target_model].append(
+                model_fields[derivation.target_object_name].append(
                     TemplateORMField(
                         name=fk_col_name,
                         python_type=fk_python_type,
@@ -270,31 +253,28 @@ def transform_orm_models(input_models: list[InputModel]) -> list[TemplateORMMode
                     )
                 )
 
-            uselist_source = rel.kind == "one_to_many"
-            uselist_target = rel.kind != "one_to_one"
-
             # Source-side relationship (authored)
             source_rel = TemplateRelationship(
-                name=rel.name,
-                target_model=rel.target_model,
+                name=derivation.source_member_name,
+                target_model=derivation.target_object_name,
                 target_class_name=target_class,
-                kind=rel.kind,
-                back_populates=rel.inverse_name,
-                uselist=uselist_source,
+                kind=derivation.kind,
+                back_populates=derivation.target_member_name,
+                uselist=derivation.source_field_cardinality == "many",
             )
             if is_self_referential:
                 source_rel = source_rel.model_copy(update={"fk_column": None})
-            model_rels[source_name].append(source_rel)
+            model_rels[derivation.source_object_name].append(source_rel)
 
             # Target-side relationship (inverse)
             inverse_rel = TemplateRelationship(
-                name=rel.inverse_name,
-                target_model=source_name,
+                name=derivation.target_member_name,
+                target_model=derivation.source_object_name,
                 target_class_name=source_class,
-                kind=rel.kind,
-                back_populates=rel.name,
+                kind=derivation.kind,
+                back_populates=derivation.source_member_name,
                 fk_column=fk_col_name,
-                uselist=not uselist_target if rel.kind == "one_to_one" else False,
+                uselist=derivation.target_field_cardinality == "many",
             )
             if is_self_referential:
                 # Self-referential: target-side uses remote_side
@@ -304,31 +284,33 @@ def transform_orm_models(input_models: list[InputModel]) -> list[TemplateORMMode
                         "uselist": False,
                     }
                 )
-            model_rels[rel.target_model].append(inverse_rel)
+            model_rels[derivation.target_object_name].append(inverse_rel)
 
-        elif rel.kind == "many_to_many":
-            assoc_table = _make_association_table_name(source_table, rel.name)
+        elif derivation.reference_owner == "association":
+            assoc_table = association_table_name(derivation)
+            if assoc_table is None:
+                continue
 
             # Source-side
-            model_rels[source_name].append(
+            model_rels[derivation.source_object_name].append(
                 TemplateRelationship(
-                    name=rel.name,
-                    target_model=rel.target_model,
+                    name=derivation.source_member_name,
+                    target_model=derivation.target_object_name,
                     target_class_name=target_class,
                     kind="many_to_many",
-                    back_populates=rel.inverse_name,
+                    back_populates=derivation.target_member_name,
                     association_table=assoc_table,
                 )
             )
 
             # Target-side (inverse)
-            model_rels[rel.target_model].append(
+            model_rels[derivation.target_object_name].append(
                 TemplateRelationship(
-                    name=rel.inverse_name,
-                    target_model=source_name,
+                    name=derivation.target_member_name,
+                    target_model=derivation.source_object_name,
                     target_class_name=source_class,
                     kind="many_to_many",
-                    back_populates=rel.name,
+                    back_populates=derivation.source_member_name,
                     association_table=assoc_table,
                 )
             )
@@ -340,7 +322,7 @@ def transform_orm_models(input_models: list[InputModel]) -> list[TemplateORMMode
         if name not in model_fields:
             continue
 
-        table_name = snake_to_plural(camel_to_snake(model.name))
+        table_name = object_table_name(str(model.name))
         orm_models.append(
             TemplateORMModel(
                 class_name=f"{model.name}Record",

@@ -4,6 +4,7 @@ import re
 from api_craft.models.input import InputModel
 from api_craft.models.orm_types import TemplateORMModel
 from api_craft.prepare import PreparedAPI, PreparedPathParam, PreparedQueryParam
+from api_craft.sqlalchemy_relationships import association_fk_column_name
 
 # Mapping of module.Type patterns to their import statements
 MODULE_TYPE_IMPORTS = {
@@ -230,10 +231,10 @@ def collect_association_tables(orm_models: list[TemplateORMModel]) -> list[dict]
                     "name": rel.association_table,
                     "left_table": source_table,
                     "left_pk": source_pk,
-                    "left_fk_col": f"{source_table.rstrip('s')}_id",
+                    "left_fk_col": association_fk_column_name(source_table),
                     "right_table": target_table,
                     "right_pk": target_pk,
-                    "right_fk_col": f"{target_table.rstrip('s')}_id",
+                    "right_fk_col": association_fk_column_name(target_table),
                 }
             )
 

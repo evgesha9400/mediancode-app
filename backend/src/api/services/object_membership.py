@@ -1,6 +1,7 @@
 # src/api/services/object_membership.py
 """Object Membership module for object member lifecycle rules."""
 
+from typing import cast
 from uuid import UUID
 
 from fastapi import HTTPException, status
@@ -25,8 +26,13 @@ from api.schemas.members import (
     ScalarMemberResponse,
 )
 from api.schemas.object import ModelValidatorInput, ModelValidatorResponse
-from api_craft.models.types import PascalCaseName
+from api_craft.models.enums import RelationshipKind
 from api_craft.models.validation_catalog import ALLOWED_PK_TYPES
+from api_craft.relationship_derivation import derive_relationship
+from api_craft.sqlalchemy_relationships import (
+    association_table_name,
+    foreign_key_field_name,
+)
 
 
 class ObjectMembership:
@@ -256,32 +262,30 @@ class ObjectMembership:
             source_name = source_obj.name if source_obj else "Unknown"
             source_obj_id = source_obj.id if source_obj else rel.object_id
 
-            if rel.kind == "one_to_many":
-                side = "many"
-                implies_fk = f"{rel.inverse_name}_id"
-                junction_table = None
-            elif rel.kind == "one_to_one":
-                side = "target"
-                implies_fk = f"{rel.inverse_name}_id"
-                junction_table = None
-            elif rel.kind == "many_to_many":
-                side = "many"
-                implies_fk = None
-                source_table = PascalCaseName(source_name).snake_name + "s"
-                junction_table = f"{source_table}_{rel.name}"
-            else:
+            try:
+                derivation = derive_relationship(
+                    source_object_name=source_name,
+                    target_object_name="Unknown",
+                    source_member_name=rel.name,
+                    target_member_name=rel.inverse_name,
+                    kind=cast(RelationshipKind, rel.kind),
+                    required=rel.required,
+                    source_object_id=source_obj_id,
+                    target_object_id=object_id,
+                )
+            except ValueError:
                 continue
 
             derived.append(
                 DerivedRelationshipResponse(
-                    name=rel.inverse_name,
-                    sourceObject=source_name,
+                    name=derivation.target_member_name,
+                    sourceObject=derivation.source_object_name,
                     sourceObjectId=source_obj_id,
-                    sourceField=rel.name,
-                    kind=rel.kind,
-                    side=side,
-                    impliesFk=implies_fk,
-                    junctionTable=junction_table,
+                    sourceField=derivation.source_member_name,
+                    kind=derivation.kind,
+                    side=derivation.target_object_side,
+                    impliesFk=foreign_key_field_name(derivation),
+                    junctionTable=association_table_name(derivation),
                     required=rel.required,
                 )
             )
@@ -513,7 +517,9 @@ class ObjectMembership:
             )
         self.db.add(row)
 
-    def _scalar_storage_values(self, member: ScalarMemberInput) -> tuple[bool, str | None]:
+    def _scalar_storage_values(
+        self, member: ScalarMemberInput
+    ) -> tuple[bool, str | None]:
         """Return normalized persistence values for a Scalar Member.
 
         :param member: Scalar member input.

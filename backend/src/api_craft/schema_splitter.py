@@ -8,6 +8,8 @@ Update, and Response schemas.
 
 from api_craft.models.input import InputAPI, InputField, InputModel
 from api_craft.models.types import PascalCaseName, SnakeCaseName
+from api_craft.relationship_derivation import relationship_derivations_for_target
+from api_craft.sqlalchemy_relationships import foreign_key_field_name
 
 
 def _resolve_fk_type(
@@ -60,53 +62,50 @@ def split_model_schemas(
     # Inject FK fields from incoming relationships across the full graph
     if all_models:
         model_name = str(input_model.name)
-        for source_model in all_models:
-            for rel in source_model.relationships:
-                if rel.target_model != model_name:
-                    continue
-                if rel.kind not in ("one_to_one", "one_to_many"):
-                    continue
+        for derivation in relationship_derivations_for_target(model_name, all_models):
+            fk_name = foreign_key_field_name(derivation)
+            if fk_name is None:
+                continue
 
-                fk_name = f"{rel.inverse_name}_id"
-                # Resolve FK type from the source model's PK
-                fk_type = _resolve_fk_type(str(source_model.name), all_models)
-                is_required = rel.required
+            # Resolve FK type from the source model's PK
+            fk_type = _resolve_fk_type(derivation.source_object_name, all_models)
+            is_required = derivation.required
 
-                # Add to Create
-                existing_create = {str(f.name) for f in create_fields}
-                if fk_name not in existing_create:
-                    create_fields.append(
-                        InputField(
-                            type=fk_type,
-                            name=SnakeCaseName(fk_name),
-                            nullable=not is_required,
-                            description=f"FK reference to {source_model.name}",
-                        )
+            # Add to Create
+            existing_create = {str(f.name) for f in create_fields}
+            if fk_name not in existing_create:
+                create_fields.append(
+                    InputField(
+                        type=fk_type,
+                        name=SnakeCaseName(fk_name),
+                        nullable=not is_required,
+                        description=f"FK reference to {derivation.source_object_name}",
                     )
+                )
 
-                # Add to Update (always nullable on partial update)
-                existing_update = {str(f.name) for f in update_fields}
-                if fk_name not in existing_update:
-                    update_fields.append(
-                        InputField(
-                            type=fk_type,
-                            name=SnakeCaseName(fk_name),
-                            nullable=True,
-                            description=f"FK reference to {source_model.name}",
-                        )
+            # Add to Update (always nullable on partial update)
+            existing_update = {str(f.name) for f in update_fields}
+            if fk_name not in existing_update:
+                update_fields.append(
+                    InputField(
+                        type=fk_type,
+                        name=SnakeCaseName(fk_name),
+                        nullable=True,
+                        description=f"FK reference to {derivation.source_object_name}",
                     )
+                )
 
-                # Add to Response
-                existing_response = {str(f.name) for f in response_fields}
-                if fk_name not in existing_response:
-                    response_fields.append(
-                        InputField(
-                            type=fk_type,
-                            name=SnakeCaseName(fk_name),
-                            nullable=not is_required,
-                            description=f"FK reference to {source_model.name}",
-                        )
+            # Add to Response
+            existing_response = {str(f.name) for f in response_fields}
+            if fk_name not in existing_response:
+                response_fields.append(
+                    InputField(
+                        type=fk_type,
+                        name=SnakeCaseName(fk_name),
+                        nullable=not is_required,
+                        description=f"FK reference to {derivation.source_object_name}",
                     )
+                )
 
     return [
         InputModel(
