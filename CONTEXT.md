@@ -12,6 +12,10 @@ _Avoid_: App, project, spec
 The filesystem plan created after an API has rendered components and before those components are written. It decides generated FastAPI project directories, file destinations, Alembic support files, and static CDK template copies.
 _Avoid_: Rendered component map, writer internals
 
+**Prepared Endpoint/View Semantics**:
+The generator step that turns API endpoints into prepared FastAPI view metadata, including request/response schema selection, target Object inference, path/query parameter typing, placeholder response decisions, ORM-backed filtering, pagination, signatures, and view imports.
+_Avoid_: Endpoint helper soup, template conditionals
+
 **Object**:
 A named model definition that can be used as an endpoint request, response, or query parameter object. An Object has zero or more Object Members.
 _Avoid_: Model, resource, table
