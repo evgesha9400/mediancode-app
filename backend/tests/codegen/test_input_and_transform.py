@@ -2574,7 +2574,7 @@ class TestGenerateOptionsSchema:
 
 ENUM_CHECK_PAIRS = [
     (Container, "container", "fields"),
-    (FieldRole, "role", "scalar_members"),
+    (FieldRole, "role", "field_members"),
     (RelationshipKind, "kind", "relationship_members"),
     (HttpMethod, "method", "api_endpoints"),
     (ResponseShape, "response_shape", "api_endpoints"),

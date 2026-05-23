@@ -24,7 +24,7 @@
   } from '$lib/components';
   import { ObjectFormContent, FieldFormContent } from '$lib/components/form';
   import { HTTP_METHOD_SELECT_OPTIONS } from '$lib/types';
-  import type { HttpMethod, Field } from '$lib/types';
+  import type { HttpMethod } from '$lib/types';
   import { createApiDetailState } from '$lib/stores/apiDetailState.svelte';
   import {
     getApiById,
@@ -83,7 +83,7 @@
     onNavigateBack: () => goto('/apis')
   });
 
-  // Fields filtered by API namespace (for path param field selectors)
+  // Fields filtered by API namespace for nested object editing
   const availableFields = $derived(
     $fieldsStore.filter(f => f.namespaceId === apiState.apiNamespaceId)
   );
@@ -94,18 +94,6 @@
   const fieldConstraintDefinitions = $derived($fieldConstraintsStore);
   const fieldValidatorTemplates = $derived($fieldValidatorTemplatesStore);
   const modelValidatorTemplates = $derived($modelValidatorTemplatesStore);
-
-  // Fields on the endpoint's selected object (for query param field selector)
-  const endpointObjectFields = $derived.by((): Field[] => {
-    const objectId = apiState.editedEndpoint?.objectId;
-    if (!objectId) return [];
-    const obj = $objectsStore.find(o => o.id === objectId);
-    if (!obj) return [];
-    return obj.members
-      .filter(m => m.memberType === 'scalar')
-      .map(m => $fieldsStore.find(f => f.id === m.fieldId))
-      .filter((f): f is Field => f !== undefined);
-  });
 
   // Namespace name for display
   let namespaceName = $derived(
@@ -135,17 +123,11 @@
   // Nested Object + Field Creation Overlays
   // ============================================================================
 
-  let objectCreateTarget = $state<'query' | 'body'>('body');
-
   const objectWorkflow = createCrudModel(
     createObjectsContract({
       getActiveNamespaceId: () => apiState.apiNamespaceId,
       afterCreate: (object) => {
-        if (objectCreateTarget === 'query') {
-          apiState.handleSelectQueryParamsObject(object.id);
-        } else {
-          apiState.handleSelectObject(object.id);
-        }
+        apiState.handleSelectObject(object.id);
       }
     }),
     {
@@ -168,7 +150,7 @@
           members: [
             ...objectWorkflow.editedItem.members,
             {
-              memberType: 'scalar',
+              memberType: 'field',
               id: newTempMemberId(),
               name: field.name,
               fieldId: field.id,
@@ -187,8 +169,7 @@
     }
   );
 
-  function openObjectCreate(target: 'query' | 'body') {
-    objectCreateTarget = target;
+  function openObjectCreate() {
     objectWorkflow.openCreate();
   }
 
@@ -570,14 +551,14 @@
           <!-- Object Selection + Response Shape (input controls, placed near top) -->
           <ObjectSelector
             endpointNamespaceId={apiState.apiNamespaceId}
-            selectedObjectId={apiState.editedEndpoint.objectId}
+            selectedObjectId={apiState.editedEndpoint.targetObjectId}
             responseShape={apiState.editedEndpoint.responseShape}
             responseShapeLocked={apiState.responseShapeLocked}
             responseShapeLockedReason={apiState.responseShapeLockedReason}
             validationErrors={apiState.validationErrors.filter(e => e.rule === 1)}
             onSelectObject={apiState.handleSelectObject}
             onSetResponseShape={apiState.handleSetResponseShape}
-            onCreateNewObject={() => openObjectCreate('body')}
+            onCreateNewObject={openObjectCreate}
           />
 
           <!-- Path Parameters -->
@@ -600,13 +581,11 @@
                 {#each apiState.editedEndpoint.pathParams as param (param.name)}
                   <ParameterEditor
                     paramName={param.name}
-                    fieldName={param.field}
-                    fieldId={param.fieldId}
+                    fieldMemberId={param.fieldMemberId}
                     targetFields={apiState.targetFields}
-                    objectFields={endpointObjectFields}
                     validationErrors={apiState.validationErrors.filter(e => (e.rule === 2 || e.rule === 3 || e.rule === 5) && e.param === param.name)}
-                    onFieldSelect={(fieldName, fieldId) =>
-                      apiState.handlePathParamFieldSelect(param.name, fieldName, fieldId)}
+                    onFieldSelect={(fieldMemberId) =>
+                      apiState.handlePathParamFieldSelect(param.name, fieldMemberId)}
                   />
                 {/each}
               </div>
@@ -617,7 +596,6 @@
           <QueryParametersEditor
             queryParams={apiState.editedEndpoint.queryParams ?? []}
             targetFields={apiState.targetFields}
-            objectFields={endpointObjectFields}
             responseShape={apiState.editedEndpoint.responseShape}
             pagination={apiState.editedEndpoint.pagination ?? false}
             validationErrors={apiState.validationErrors}
@@ -629,7 +607,7 @@
 
           <!-- Request/Response Preview (output, placed at bottom) -->
           <ResponsePreview
-            selectedObjectId={apiState.editedEndpoint.objectId}
+            selectedObjectId={apiState.editedEndpoint.targetObjectId}
             responseShape={apiState.editedEndpoint.responseShape}
             method={apiState.editedEndpoint.method}
           />

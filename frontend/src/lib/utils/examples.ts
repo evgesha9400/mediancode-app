@@ -3,7 +3,7 @@
  * Used by the ResponsePreview component for request/response previews
  */
 
-import type { ResponseShape, ScalarMember } from '$lib/types';
+import type { ResponseShape, FieldMember } from '$lib/types';
 import { getFieldById, getObjectById } from '$lib/stores/stores';
 
 /**
@@ -15,8 +15,8 @@ function getTargetPkType(targetObjectId: string): string {
 	if (!targetObj) return 'uuid';
 
 	const pkMember = targetObj.members.find(
-		m => m.memberType === 'scalar' && m.role === 'pk'
-	) as ScalarMember | undefined;
+		m => m.memberType === 'field' && m.role === 'pk'
+	) as FieldMember | undefined;
 	if (!pkMember) return 'uuid';
 
 	const pkField = getFieldById(pkMember.fieldId);
@@ -47,16 +47,16 @@ export function getExampleValueForType(type: string): any {
 /**
  * Build an object from an ObjectDefinition
  *
- * @param objectId - The ID of the object definition to build from
+ * @param objectDefinitionId - The ID of the object definition to build from
  * @param objects - Optional objects array for reactive dependencies (not used directly but ensures reactivity)
  * @returns An object with field names as keys and example values
  */
-export function buildObjectFromObjectId(objectId: string | undefined, objects?: any[]): Record<string, any> {
-	if (!objectId) {
+export function buildObjectFromObjectId(objectDefinitionId: string | undefined, objects?: any[]): Record<string, any> {
+	if (!objectDefinitionId) {
 		return {};
 	}
 
-	const objectDef = getObjectById(objectId);
+	const objectDef = getObjectById(objectDefinitionId);
 	if (!objectDef) {
 		return {};
 	}
@@ -64,9 +64,9 @@ export function buildObjectFromObjectId(objectId: string | undefined, objects?: 
 	const obj: Record<string, any> = {};
 
 	objectDef.members
-		.filter(m => m.memberType === 'scalar')
+		.filter(m => m.memberType === 'field')
 		.forEach(member => {
-			const field = getFieldById((member as ScalarMember).fieldId);
+			const field = getFieldById((member as FieldMember).fieldId);
 			if (field) obj[member.name] = getExampleValueForType(field.type);
 		});
 
@@ -78,17 +78,17 @@ export function buildObjectFromObjectId(objectId: string | undefined, objects?: 
  * Excludes PK, read-only, and auto-generated fields.
  * Includes FK columns implied by derived relationships.
  */
-export function buildRequestBodyFromObjectId(objectId: string | undefined, objects?: any[]): Record<string, any> {
-	if (!objectId) return {};
-	const objectDef = getObjectById(objectId);
+export function buildRequestBodyFromObjectId(objectDefinitionId: string | undefined, objects?: any[]): Record<string, any> {
+	if (!objectDefinitionId) return {};
+	const objectDef = getObjectById(objectDefinitionId);
 	if (!objectDef) return {};
 
 	const obj: Record<string, any> = {};
 	objectDef.members
-		.filter(m => m.memberType === 'scalar')
-		.filter(m => (m as ScalarMember).role === 'writable' || (m as ScalarMember).role === 'write_only')
+		.filter(m => m.memberType === 'field')
+		.filter(m => (m as FieldMember).role === 'writable' || (m as FieldMember).role === 'write_only')
 		.forEach(member => {
-			const field = getFieldById((member as ScalarMember).fieldId);
+			const field = getFieldById((member as FieldMember).fieldId);
 			if (field) obj[member.name] = getExampleValueForType(field.type);
 		});
 
@@ -107,17 +107,17 @@ export function buildRequestBodyFromObjectId(objectId: string | undefined, objec
  * Excludes write-only fields (everything else appears in responses).
  * Includes FK columns implied by derived relationships.
  */
-export function buildResponseBodyFromObjectId(objectId: string | undefined, objects?: any[]): Record<string, any> {
-	if (!objectId) return {};
-	const objectDef = getObjectById(objectId);
+export function buildResponseBodyFromObjectId(objectDefinitionId: string | undefined, objects?: any[]): Record<string, any> {
+	if (!objectDefinitionId) return {};
+	const objectDef = getObjectById(objectDefinitionId);
 	if (!objectDef) return {};
 
 	const obj: Record<string, any> = {};
 	objectDef.members
-		.filter(m => m.memberType === 'scalar')
-		.filter(m => (m as ScalarMember).role !== 'write_only')
+		.filter(m => m.memberType === 'field')
+		.filter(m => (m as FieldMember).role !== 'write_only')
 		.forEach(member => {
-			const field = getFieldById((member as ScalarMember).fieldId);
+			const field = getFieldById((member as FieldMember).fieldId);
 			if (field) obj[member.name] = getExampleValueForType(field.type);
 		});
 
@@ -134,8 +134,8 @@ export function buildResponseBodyFromObjectId(objectId: string | undefined, obje
 /**
  * Build request body preview JSON from an object ID
  */
-export function buildRequestPreviewFromObject(objectId: string | undefined, objects?: any[]): string {
-	const bodyContent = buildRequestBodyFromObjectId(objectId, objects);
+export function buildRequestPreviewFromObject(objectDefinitionId: string | undefined, objects?: any[]): string {
+	const bodyContent = buildRequestBodyFromObjectId(objectDefinitionId, objects);
 	return JSON.stringify(bodyContent, null, 2);
 }
 
@@ -144,13 +144,13 @@ export function buildRequestPreviewFromObject(objectId: string | undefined, obje
  */
 export function buildResponsePreviewFromObject(
 	shape: ResponseShape,
-	objectId: string | undefined,
+	objectDefinitionId: string | undefined,
 	useEnvelope: boolean,
 	objects?: any[]
 ): string {
 	let bodyContent: any;
 
-	const objectData = buildResponseBodyFromObjectId(objectId, objects);
+	const objectData = buildResponseBodyFromObjectId(objectDefinitionId, objects);
 
 	if (shape === 'object') {
 		bodyContent = objectData;

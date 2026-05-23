@@ -137,26 +137,23 @@ export interface ApiDetailState {
 
 	// Endpoint editing actions
 	handlePathChange: (newPath: string) => void;
-	handlePathParamUpdate: (paramName: string, fieldId: string) => void;
-	handlePathParamFieldSelect: (paramName: string, fieldName: string, fieldId?: string) => void;
+	handlePathParamUpdate: (paramName: string, fieldMemberId: string) => void;
+	handlePathParamFieldSelect: (paramName: string, fieldMemberId: string) => void;
 
-	// Target object (resolved from objectId)
+	// Target object fields
 	readonly targetFields: TargetField[];
 	readonly validationErrors: ValidationError[];
 
 	// Query param CRUD
-	handleAddQueryParamFromField: (fieldName: string) => void;
+	handleAddQueryParamFromField: (fieldMemberId: string) => void;
 	handleUpdateQueryParam: (index: number, updates: Partial<QueryParam>) => void;
 	handleRemoveQueryParam: (index: number) => void;
 
 	// Pagination toggle
 	handleTogglePagination: () => void;
 
-	// Query parameters object selection (deprecated, kept for compat)
-	handleSelectQueryParamsObject: (objectId: string | undefined) => void;
-
 	// Object selection (merged request/response body)
-	handleSelectObject: (objectId: string | undefined) => void;
+	handleSelectObject: (targetObjectId: string | undefined) => void;
 	handleEnvelopeToggle: (enabled: boolean) => void;
 
 	// Response shape configuration
@@ -410,17 +407,16 @@ export function createApiDetailState(config: ApiDetailStateConfig): ApiDetailSta
 	let isSaving = $state(false);
 	let pathError = $state('');
 
-		let createEndpointDefaults = $derived(createEndpointDraft(apiId));
+	let createEndpointDefaults = $derived(createEndpointDraft(apiId));
 
 	// ============================================================================
 	// Target Object and Validation (param inference)
 	// ============================================================================
 
 	// Fields on the target object (for populating dropdowns)
-	// Target is always objectId -- there is no separate target selection
 	let targetFields = $derived.by((): TargetField[] => {
-		if (!editedEndpoint?.objectId) return [];
-		return resolveTargetFields(editedEndpoint.objectId, allObjects, allFields);
+		if (!editedEndpoint?.targetObjectId) return [];
+		return resolveTargetFields(editedEndpoint.targetObjectId, allObjects, allFields);
 	});
 
 	// Live validation errors
@@ -428,7 +424,7 @@ export function createApiDetailState(config: ApiDetailStateConfig): ApiDetailSta
 		if (!editedEndpoint) return [];
 		return validateEndpointParams({
 			responseShape: editedEndpoint.responseShape,
-			objectId: editedEndpoint.objectId,
+			targetObjectId: editedEndpoint.targetObjectId,
 			targetFields,
 			pathParams: editedEndpoint.pathParams,
 			queryParams: editedEndpoint.queryParams ?? []
@@ -436,21 +432,20 @@ export function createApiDetailState(config: ApiDetailStateConfig): ApiDetailSta
 	});
 
 	// Derived: Track if there are unsaved endpoint changes
-		let hasEndpointChanges = $derived.by(() => {
-			if (!editedEndpoint) return false;
-			if (isCreating) {
-				return editedEndpoint.method !== createEndpointDefaults.method
-					|| editedEndpoint.path !== createEndpointDefaults.path
-					|| editedEndpoint.description !== createEndpointDefaults.description
-					|| editedEndpoint.tagName !== createEndpointDefaults.tagName
-					|| editedEndpoint.pathParams.length !== createEndpointDefaults.pathParams.length
-					|| (editedEndpoint.queryParams ?? []).length !== createEndpointDefaults.queryParams.length
-					|| editedEndpoint.queryParamsObjectId !== createEndpointDefaults.queryParamsObjectId
-					|| editedEndpoint.objectId !== createEndpointDefaults.objectId
-					|| editedEndpoint.useEnvelope !== createEndpointDefaults.useEnvelope
-					|| editedEndpoint.responseShape !== createEndpointDefaults.responseShape
-					|| (editedEndpoint.pagination ?? false) !== createEndpointDefaults.pagination;
-			}
+	let hasEndpointChanges = $derived.by(() => {
+		if (!editedEndpoint) return false;
+		if (isCreating) {
+			return editedEndpoint.method !== createEndpointDefaults.method
+				|| editedEndpoint.path !== createEndpointDefaults.path
+				|| editedEndpoint.description !== createEndpointDefaults.description
+				|| editedEndpoint.tagName !== createEndpointDefaults.tagName
+				|| editedEndpoint.targetObjectId !== createEndpointDefaults.targetObjectId
+				|| editedEndpoint.pathParams.length !== createEndpointDefaults.pathParams.length
+				|| (editedEndpoint.queryParams ?? []).length !== createEndpointDefaults.queryParams.length
+				|| editedEndpoint.useEnvelope !== createEndpointDefaults.useEnvelope
+				|| editedEndpoint.responseShape !== createEndpointDefaults.responseShape
+				|| (editedEndpoint.pagination ?? false) !== createEndpointDefaults.pagination;
+		}
 		if (!selectedEndpoint) return false;
 		return JSON.stringify(editedEndpoint) !== JSON.stringify(selectedEndpoint);
 	});
@@ -491,7 +486,7 @@ export function createApiDetailState(config: ApiDetailStateConfig): ApiDetailSta
 		isSaving = true;
 		try {
 			const endpoint = await endpointApi.create(toCreateEndpointPayload(editedEndpoint));
-			const hydrated = hydrateStoredEndpoint(endpoint, get(objectsStore), get(fieldsStore));
+			const hydrated = hydrateStoredEndpoint(endpoint);
 			endpointsStore.update(eps => [...eps, hydrated]);
 			showToast('Endpoint created successfully', 'success');
 			isCreating = false;
@@ -543,7 +538,7 @@ export function createApiDetailState(config: ApiDetailStateConfig): ApiDetailSta
 		isSaving = true;
 		try {
 			const endpoint = await endpointApi.create(toDuplicateEndpointPayload(original));
-			const hydrated = hydrateStoredEndpoint(endpoint, get(objectsStore), get(fieldsStore));
+			const hydrated = hydrateStoredEndpoint(endpoint);
 			endpointsStore.update(eps => [...eps, hydrated]);
 			showToast(MESSAGES.ENDPOINT_DUPLICATED, 'success');
 		} catch (err) {
@@ -559,7 +554,7 @@ export function createApiDetailState(config: ApiDetailStateConfig): ApiDetailSta
 
 	function openEndpoint(endpoint: ApiEndpoint): void {
 		closeEditDrawer();
-		const hydrated = hydrateStoredEndpoint(endpoint, get(objectsStore), get(fieldsStore));
+		const hydrated = hydrateStoredEndpoint(endpoint);
 		selectedEndpoint = hydrated;
 		editedEndpoint = deepClone(hydrated);
 		endpointDrawerOpen = true;
@@ -592,7 +587,7 @@ export function createApiDetailState(config: ApiDetailStateConfig): ApiDetailSta
 
 		try {
 			const endpoint = await endpointApi.update(editedEndpoint.id, payload);
-			const hydrated = hydrateStoredEndpoint(endpoint, get(objectsStore), get(fieldsStore));
+			const hydrated = hydrateStoredEndpoint(endpoint);
 			endpointsStore.update(eps => eps.map(e => (e.id === hydrated.id ? hydrated : e)));
 			selectedEndpoint = hydrated;
 			editedEndpoint = deepClone(hydrated);
@@ -658,9 +653,9 @@ export function createApiDetailState(config: ApiDetailStateConfig): ApiDetailSta
 
 		// Auto-link new (unlinked) path params by name match against the target object
 		const autoLinkedParams = pathParams.map(p => {
-			if (p.field) return p; // already linked, preserve
+			if (p.fieldMemberId) return p;
 			const match = targetFields.find(f => f.name.toLowerCase() === p.name.toLowerCase());
-			return match ? { ...p, field: match.name } : p;
+			return match ? { ...p, fieldMemberId: match.fieldMemberId } : p;
 		});
 
 		// Detail path: auto-link last path param to PK field if unlinked
@@ -668,10 +663,10 @@ export function createApiDetailState(config: ApiDetailStateConfig): ApiDetailSta
 		if (isDetail && autoLinkedParams.length > 0) {
 			const lastIdx = autoLinkedParams.length - 1;
 			const lastParam = autoLinkedParams[lastIdx];
-			if (!lastParam.field) {
+			if (!lastParam.fieldMemberId) {
 				const pkField = targetFields.find(f => f.isPk);
 				if (pkField) {
-					autoLinkedParams[lastIdx] = { ...lastParam, field: pkField.name };
+					autoLinkedParams[lastIdx] = { ...lastParam, fieldMemberId: pkField.fieldMemberId };
 				}
 			}
 		}
@@ -687,29 +682,20 @@ export function createApiDetailState(config: ApiDetailStateConfig): ApiDetailSta
 			: '';
 	}
 
-	function handlePathParamUpdate(paramName: string, fieldId: string): void {
+	function handlePathParamUpdate(paramName: string, fieldMemberId: string): void {
 		if (!editedEndpoint) return;
 		const updatedParams = editedEndpoint.pathParams.map(p =>
-			p.name === paramName ? { ...p, fieldId } : p
+			p.name === paramName ? { ...p, fieldMemberId } : p
 		);
 		editedEndpoint = { ...editedEndpoint, pathParams: updatedParams };
 	}
 
-	function handlePathParamFieldSelect(paramName: string, fieldName: string, fieldIdArg?: string): void {
+	function handlePathParamFieldSelect(paramName: string, fieldMemberId: string): void {
 		const ep = editedEndpoint;
 		if (!ep) return;
 		const updatedParams = ep.pathParams.map(p => {
 			if (p.name !== paramName) return p;
-			if (!fieldName) {
-				return { ...p, field: '', fieldId: '' };
-			}
-			let nextFieldId = fieldIdArg ?? '';
-			if (!nextFieldId && ep.objectId) {
-				const obj = allObjects.find(o => o.id === ep.objectId);
-				const member = obj?.members.find(m => m.memberType === 'scalar' && m.name === fieldName);
-				if (member?.memberType === 'scalar') nextFieldId = member.fieldId;
-			}
-			return { ...p, field: fieldName, fieldId: nextFieldId || p.fieldId };
+			return { ...p, fieldMemberId };
 		});
 		editedEndpoint = { ...ep, pathParams: updatedParams };
 	}
@@ -718,12 +704,18 @@ export function createApiDetailState(config: ApiDetailStateConfig): ApiDetailSta
 	// Query Param CRUD
 	// ============================================================================
 
-	function handleAddQueryParamFromField(fieldName: string): void {
+	function handleAddQueryParamFromField(fieldMemberId: string): void {
 		if (!editedEndpoint) return;
+		const resolvedTargetFields = editedEndpoint.targetObjectId
+			? resolveTargetFields(editedEndpoint.targetObjectId, allObjects, allFields)
+			: targetFields;
+		const targetField = resolvedTargetFields.find(f => f.fieldMemberId === fieldMemberId);
+		if (!targetField) return;
 		const newParam: QueryParam = {
-			name: fieldName,
-			field: fieldName,
-			operator: 'eq'
+			name: targetField.name,
+			fieldMemberId,
+			operator: 'eq',
+			required: false
 		};
 		editedEndpoint = {
 			...editedEndpoint,
@@ -758,30 +750,21 @@ export function createApiDetailState(config: ApiDetailStateConfig): ApiDetailSta
 	}
 
 	// ============================================================================
-	// Query Parameters Object Selection (deprecated, kept for backward compat)
+	// Object Selection
 	// ============================================================================
 
-	function handleSelectQueryParamsObject(objectId: string | undefined): void {
-		if (!editedEndpoint) return;
-		editedEndpoint = { ...editedEndpoint, queryParamsObjectId: objectId };
-	}
-
-	// ============================================================================
-	// Object Selection (merged request/response body)
-	// ============================================================================
-
-	function handleSelectObject(objectId: string | undefined): void {
+	function handleSelectObject(targetObjectId: string | undefined): void {
 		if (!editedEndpoint) return;
 
 		// Resolve field names on the new object for auto-linking
-		const newTargetFields = objectId
-			? resolveTargetFields(objectId, allObjects, allFields)
+		const newTargetFields = targetObjectId
+			? resolveTargetFields(targetObjectId, allObjects, allFields)
 			: [];
 
 		// Auto-link path params by case-insensitive name match; clear if no match
 		const autoLinkedParams = editedEndpoint.pathParams.map(p => {
 			const match = newTargetFields.find(f => f.name.toLowerCase() === p.name.toLowerCase());
-			return { ...p, field: match ? match.name : '' };
+			return { ...p, fieldMemberId: match ? match.fieldMemberId : '' };
 		});
 
 		// Detail path: auto-link last path param to PK field if still unlinked
@@ -789,16 +772,19 @@ export function createApiDetailState(config: ApiDetailStateConfig): ApiDetailSta
 		if (isDetail && autoLinkedParams.length > 0) {
 			const lastIdx = autoLinkedParams.length - 1;
 			const lastParam = autoLinkedParams[lastIdx];
-			if (!lastParam.field) {
+			if (!lastParam.fieldMemberId) {
 				const pkField = newTargetFields.find(f => f.isPk);
 				if (pkField) {
-					autoLinkedParams[lastIdx] = { ...lastParam, field: pkField.name };
+					autoLinkedParams[lastIdx] = { ...lastParam, fieldMemberId: pkField.fieldMemberId };
 				}
 			}
 		}
 
-			const withObject = { ...editedEndpoint, objectId, pathParams: autoLinkedParams };
-			const hydrated = hydrateStoredEndpoint(withObject, allObjects, allFields);
+		const hydrated = hydrateStoredEndpoint({
+			...editedEndpoint,
+			targetObjectId,
+			pathParams: autoLinkedParams
+		});
 
 		editedEndpoint = {
 			...hydrated,
@@ -830,7 +816,7 @@ export function createApiDetailState(config: ApiDetailStateConfig): ApiDetailSta
 			...editedEndpoint,
 			useEnvelope: true,
 			responseShape: 'object',
-			objectId: undefined
+			targetObjectId: undefined
 		};
 	}
 
@@ -919,7 +905,6 @@ export function createApiDetailState(config: ApiDetailStateConfig): ApiDetailSta
 		// Pagination toggle
 		handleTogglePagination,
 
-		handleSelectQueryParamsObject,
 		handleSelectObject,
 		handleEnvelopeToggle,
 		get responseShapeLocked() { return responseShapeLocked; },

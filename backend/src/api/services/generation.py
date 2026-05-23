@@ -19,10 +19,9 @@ from api.models.database import (
     FieldModel,
     ObjectDefinition,
 )
-from api.models.members import ObjectMember, RelationshipMember, ScalarMember
+from api.models.members import FieldMember, ObjectMember, RelationshipMember
 from api.schemas.api import GenerateOptions
 from api.services.api_craft_input import build_input_api
-from api.services.path_params import get_path_param_field_id
 from api_craft.main import APIGenerator
 
 
@@ -88,8 +87,8 @@ async def _fetch_objects(
         .where(ObjectDefinition.namespace_id == api.namespace_id)
         .options(
             selectinload(ObjectDefinition.members).options(
-                selectin_polymorphic(ObjectMember, [ScalarMember, RelationshipMember]),
-                selectinload(ScalarMember.field),
+                selectin_polymorphic(ObjectMember, [FieldMember, RelationshipMember]),
+                selectinload(FieldMember.field),
             ),
             selectinload(ObjectDefinition.validators).selectinload(
                 AppliedModelValidatorModel.template
@@ -107,28 +106,19 @@ async def _fetch_fields(
     objects_map: dict[UUID, ObjectDefinition],
     db: AsyncSession,
 ) -> dict[UUID, FieldModel]:
-    """Fetch all fields referenced by objects and path parameters.
+    """Fetch all fields referenced by object Field Members.
 
     :param api: The API model with endpoints loaded.
     :param objects_map: Map of object ID to ObjectDefinition.
     :param db: Database session.
     :returns: Map of field ID to FieldModel.
     """
-    # Collect all field IDs from scalar members
+    # Collect all field IDs from field members
     field_ids: set[UUID] = set()
     for obj in objects_map.values():
         for member in obj.members:
-            if isinstance(member, ScalarMember):
+            if isinstance(member, FieldMember):
                 field_ids.add(member.field_id)
-
-    # Collect field IDs from endpoint path_params
-    for endpoint in api.endpoints:
-        for param in endpoint.path_params or []:
-            if not isinstance(param, dict):
-                continue
-            field_id = get_path_param_field_id(param)
-            if field_id:
-                field_ids.add(field_id)
 
     if not field_ids:
         return {}

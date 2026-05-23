@@ -16,30 +16,24 @@ describe('ParameterEditor Component', () => {
 		it('ParameterEditorProps interface accepts all required properties', () => {
 			const props: ParameterEditorProps = {
 				paramName: 'user_id',
-				fieldName: 'user_id',
+				fieldMemberId: 'fm-user-id',
 				targetFields: [],
-				objectFields: [],
 				onFieldSelect: () => {}
 			};
 
 			expect(props.paramName).toBe('user_id');
-			expect(props.fieldName).toBe('user_id');
+			expect(props.fieldMemberId).toBe('fm-user-id');
 			expect(props.targetFields).toEqual([]);
-			expect(props.objectFields).toEqual([]);
 			expect(typeof props.onFieldSelect).toBe('function');
 		});
 
-		it('ParameterEditorProps accepts target field and object field data', () => {
+		it('ParameterEditorProps accepts target Field Member data', () => {
 			const props: ParameterEditorProps = {
 				paramName: 'item_id',
-				fieldName: 'id',
+				fieldMemberId: 'fm-id',
 				targetFields: [
-					{ name: 'id', type: 'uuid', isPk: true },
-					{ name: 'store_id', type: 'uuid', isPk: false }
-				],
-				objectFields: [
-					{ id: 'f-1', namespaceId: 'ns', name: 'id', type: 'uuid', container: null, constraints: [], validators: [], usedInApis: [] },
-					{ id: 'f-2', namespaceId: 'ns', name: 'store_id', type: 'uuid', container: null, constraints: [], validators: [], usedInApis: [] }
+					{ fieldMemberId: 'fm-id', name: 'id', type: 'uuid', isPk: true },
+					{ fieldMemberId: 'fm-store-id', name: 'store_id', type: 'uuid', isPk: false }
 				],
 				onFieldSelect: () => {}
 			};
@@ -47,28 +41,23 @@ describe('ParameterEditor Component', () => {
 			expect(props.targetFields).toHaveLength(2);
 			expect(props.targetFields[0].name).toBe('id');
 			expect(props.targetFields[0].isPk).toBe(true);
-			expect(props.objectFields).toHaveLength(2);
 		});
 
-		it('ParameterEditorProps onFieldSelect receives field name and field id', () => {
-			let selectedFieldName: string | undefined;
-			let selectedFieldId: string | undefined;
+		it('ParameterEditorProps onFieldSelect receives Field Member ID', () => {
+			let selectedFieldMemberId: string | undefined;
 
 			const props: ParameterEditorProps = {
 				paramName: 'id',
-				fieldName: '',
+				fieldMemberId: '',
 				targetFields: [],
-				objectFields: [],
-				onFieldSelect: (fieldName, fieldId) => {
-					selectedFieldName = fieldName;
-					selectedFieldId = fieldId;
+				onFieldSelect: (fieldMemberId) => {
+					selectedFieldMemberId = fieldMemberId;
 				}
 			};
 
-			props.onFieldSelect('user_id', 'f-99');
+			props.onFieldSelect('fm-user-id');
 
-			expect(selectedFieldName).toBe('user_id');
-			expect(selectedFieldId).toBe('f-99');
+			expect(selectedFieldMemberId).toBe('fm-user-id');
 		});
 	});
 
@@ -81,9 +70,8 @@ describe('ParameterEditor Component', () => {
 		it('ParameterEditorProps type exports correctly from barrel export', () => {
 			const props: ParameterEditorProps = {
 				paramName: 'test',
-				fieldName: '',
+				fieldMemberId: '',
 				targetFields: [],
-				objectFields: [],
 				onFieldSelect: () => {}
 			};
 

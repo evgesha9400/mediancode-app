@@ -165,9 +165,9 @@ describe('API Generator Page - Store Integration', () => {
 			expect(endpoints[0]).toHaveProperty('method');
 			expect(endpoints[0]).toHaveProperty('path');
 			expect(endpoints[0]).toHaveProperty('description');
+			expect(endpoints[0]).toHaveProperty('targetObjectId');
 			expect(endpoints[0]).toHaveProperty('pathParams');
-			expect(endpoints[0]).toHaveProperty('queryParamsObjectId');
-			expect(endpoints[0]).toHaveProperty('objectId');
+			expect(endpoints[0]).toHaveProperty('queryParams');
 			expect(endpoints[0]).toHaveProperty('useEnvelope');
 			expect(endpoints[0]).toHaveProperty('responseShape');
 		});

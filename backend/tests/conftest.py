@@ -1,7 +1,6 @@
 # tests/conftest.py
 """Pytest configuration and shared fixtures."""
 
-import asyncio
 import subprocess
 
 import asyncpg
@@ -14,6 +13,7 @@ from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_asyn
 from api.main import app
 from api.models.database import GenerationModel, Namespace, UserModel
 from api.settings import get_settings
+from support.event_loop import run_async
 
 # --- Database availability check ---
 
@@ -51,7 +51,7 @@ def _check_database_available() -> bool:
     """
     try:
         dsn, _location = _database_check_url()
-        asyncio.run(_open_database_check_connection(dsn))
+        run_async(_open_database_check_connection(dsn))
         return True
     except (OSError, asyncpg.PostgresError, TimeoutError):
         return False
@@ -114,22 +114,28 @@ async def client(request):
     from httpx import ASGITransport
     from httpx import AsyncClient as _AsyncClient
 
+    from api.database import engine
     from support.api_client import cleanup_user_data, clear_auth, override_auth
 
     clerk_id = getattr(request.module, "TEST_CLERK_ID", None)
     if clerk_id is None:
         pytest.skip("Module does not define TEST_CLERK_ID")
 
+    await engine.dispose()
     override_auth(clerk_id)
 
-    async with _AsyncClient(
-        transport=ASGITransport(app=app),
-        base_url="http://test/v1",
-    ) as c:
-        yield c
-
-    clear_auth()
-    await cleanup_user_data(clerk_id)
+    try:
+        async with _AsyncClient(
+            transport=ASGITransport(app=app),
+            base_url="http://test/v1",
+        ) as c:
+            yield c
+    finally:
+        clear_auth()
+        try:
+            await cleanup_user_data(clerk_id)
+        finally:
+            await engine.dispose()
 
 
 # --- Integration test (database) fixtures ---

@@ -1,16 +1,14 @@
 <script module lang="ts">
-  import type { QueryParam, FilterOperator, ResponseShape } from '$lib/types';
-  import type { Field } from '$lib/types';
+  import type { QueryParam, ResponseShape } from '$lib/types';
   import type { TargetField, ValidationError } from '$lib/domain/paramInference';
 
   export interface QueryParametersEditorProps {
     queryParams: QueryParam[];
     targetFields: TargetField[];
-    objectFields: Field[];
     responseShape: ResponseShape;
     pagination: boolean;
     validationErrors: ValidationError[];
-    onAddFromField: (fieldName: string) => void;
+    onAddFromField: (fieldMemberId: string) => void;
     onUpdate: (index: number, updates: Partial<QueryParam>) => void;
     onRemove: (index: number) => void;
     onTogglePagination: () => void;
@@ -19,7 +17,7 @@
 
 <script lang="ts">
   import QueryParamRow from './QueryParamRow.svelte';
-  import FieldSelectorDropdown from './FieldSelectorDropdown.svelte';
+  import FieldSelectorDropdown, { type FieldSelectorOption } from './FieldSelectorDropdown.svelte';
   import {
     listMetaBadge,
     queryParamBuiltinBadge,
@@ -36,7 +34,6 @@
   let {
     queryParams,
     targetFields,
-    objectFields,
     responseShape,
     pagination,
     validationErrors,
@@ -62,21 +59,15 @@
   // Whether we have any rows to show (query params or pagination)
   const hasRows = $derived(queryParams.length > 0 || pagination);
 
-  // Field IDs already linked to a query param (to exclude from dropdown)
-  const linkedFieldIds = $derived.by(() => {
-    const linkedNames = new Set(queryParams.map(qp => qp.field).filter(Boolean));
-    return objectFields
-      .filter(f => linkedNames.has(f.name))
-      .map(f => f.id);
-  });
+  const linkedFieldMemberIds = $derived(queryParams.map(qp => qp.fieldMemberId).filter(Boolean));
 
-  // Handle field selection from the dropdown: map fieldId to fieldName
-  function handleFieldSelect(fieldId: string): void {
-    const field = objectFields.find(f => f.id === fieldId);
-    if (field) {
-      onAddFromField(field.name);
-    }
-  }
+  const targetFieldOptions = $derived.by((): FieldSelectorOption[] =>
+    targetFields.map(field => ({
+      id: field.fieldMemberId,
+      name: field.name,
+      type: field.type
+    }))
+  );
 </script>
 
 {#if !isDetail}
@@ -116,7 +107,7 @@
             validationErrors={errorsForParam(param.name)}
             onUpdate={(updates) => onUpdate(i, updates)}
             onRemove={() => onRemove(i)}
-            onSuggest={(suggestion) => onUpdate(i, { field: suggestion.field, operator: suggestion.operator })}
+            onSuggest={(suggestion) => onUpdate(i, { fieldMemberId: suggestion.fieldMemberId, operator: suggestion.operator })}
           />
         {/each}
 
@@ -171,16 +162,16 @@
     {/if}
 
     <!-- Field selector dropdown to add query params -->
-    {#if objectFields.length > 0}
+    {#if targetFieldOptions.length > 0}
       <FieldSelectorDropdown
-        availableFields={objectFields}
-        selectedFieldIds={linkedFieldIds}
-        onSelect={handleFieldSelect}
-        placeholder="Add query parameter from field..."
+        availableFields={targetFieldOptions}
+        selectedFieldIds={linkedFieldMemberIds}
+        onSelect={onAddFromField}
+        placeholder="Add query parameter from Field Member..."
       />
     {:else if queryParams.length === 0 && !pagination}
       <div class="px-3 py-2 {surfaceInsideFrostedPanel}">
-        <p class="text-xs text-fg-muted">No query parameters. Select an object to add field-based filters.</p>
+        <p class="text-xs text-fg-muted">No query parameters. Select an object to add Field Member filters.</p>
       </div>
     {/if}
 

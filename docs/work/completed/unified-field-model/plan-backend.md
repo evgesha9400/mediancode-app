@@ -4,7 +4,7 @@
 
 **Goal:** Replace the dual field/relationship model with CTI-based unified object members, eliminating the duplicate FK column bug class.
 
-**Architecture:** Three new DB tables (object_members, scalar_members, relationship_members) using SQLAlchemy joined table inheritance. RelationshipService eliminated. ObjectService absorbs all member CRUD with reconcile-by-ID updates. Code generation pipeline rewritten to derive FK columns from relationships at generation time.
+**Architecture:** Three new DB tables (object_members, field_members, relationship_members) using SQLAlchemy joined table inheritance. RelationshipService eliminated. ObjectService absorbs all member CRUD with reconcile-by-ID updates. Code generation pipeline rewritten to derive FK columns from relationships at generation time.
 
 **Tech Stack:** Python 3.13, SQLAlchemy 2.x (async), Alembic, FastAPI, Pydantic v2, Mako templates
 
@@ -21,7 +21,7 @@ These items were flagged during review and should be addressed during implementa
 1. **Generation service graph scope:** `_fetch_objects()` currently fetches only endpoint-selected objects. For full-graph FK derivation, it must fetch ALL objects with relationship members so the codegen pipeline can compute incoming FK columns across the entire graph.
 2. **CTI model-level tests:** Phase 4 should include tests for child-table integrity (every `object_members` row has exactly one child), cascade delete behavior, and unified position ordering — not just HTTP/codegen tests.
 3. **`DerivedRelationshipResponse` must include `sourceObjectId`:** The frontend depends on this for navigation. Add `source_object_id: UUID` alongside `source_object: str` in the response schema.
-4. **Reconcile-by-ID type change:** Define behavior if a member `id` is reused with a different `member_type` (e.g., scalar→relationship). Recommended: reject as validation error.
+4. **Reconcile-by-ID type change:** Define behavior if a member `id` is reused with a different `member_type` (e.g., field→relationship). Recommended: reject as validation error.
 
 ---
 
@@ -41,7 +41,7 @@ Everything that touches the database: new CTI models, updated enums, Alembic mig
 
 - [ ] **Create `src/api/models/members.py` with CTI models**
 
-Write `ObjectMember` (base), `ScalarMember`, `RelationshipMember` exactly as specified in spec Section 3. Include `__table_args__` for unique constraints and deferrable position constraint.
+Write `ObjectMember` (base), `FieldMember`, `RelationshipMember` exactly as specified in spec Section 3. Include `__table_args__` for unique constraints and deferrable position constraint.
 
 ```python
 class ObjectMember(Base):
@@ -56,8 +56,8 @@ class ObjectMember(Base):
         "polymorphic_on": member_type,
     }
 
-class ScalarMember(ObjectMember):
-    __tablename__ = "scalar_members"
+class FieldMember(ObjectMember):
+    __tablename__ = "field_members"
     id            = mapped_column(UUID, ForeignKey("object_members.id", ondelete="CASCADE"), primary_key=True)
     field_id      = mapped_column(UUID, ForeignKey("fields.id"))
     role          = mapped_column(Text, nullable=False)
@@ -96,7 +96,7 @@ members: Mapped[list["ObjectMember"]] = relationship(
 
 - [ ] **Register new models for Alembic discovery**
 
-Import `ObjectMember`, `ScalarMember`, `RelationshipMember` in `src/api/models/__init__.py` (or `src/api/migrations/env.py` if that is where model imports are registered) so Alembic autogenerate detects the new tables.
+Import `ObjectMember`, `FieldMember`, `RelationshipMember` in `src/api/models/__init__.py` (or `src/api/migrations/env.py` if that is where model imports are registered) so Alembic autogenerate detects the new tables.
 
 #### Step 3: Alembic migration
 
@@ -106,11 +106,11 @@ Run: `cd ../mediancode-backend && poetry run alembic revision -m "unified_field_
 
 - [ ] **Write upgrade function — table creation**
 
-Create `object_members`, `scalar_members`, `relationship_members` tables with all constraints and indexes per spec Section 3.
+Create `object_members`, `field_members`, `relationship_members` tables with all constraints and indexes per spec Section 3.
 
 - [ ] **Write upgrade function — scalar member data migration**
 
-Migrate `fields_on_objects` to `object_members` + `scalar_members`:
+Migrate `fields_on_objects` to `object_members` + `field_members`:
 - Skip `role='fk'` rows (derived artifacts)
 - Preserve existing `position` values from `fields_on_objects`
 
@@ -145,25 +145,25 @@ Run: `cd ../mediancode-backend && poetry run alembic upgrade head`
 
 - [ ] **Update FieldService for new member model**
 
-`src/api/services/field.py` depends on `ObjectFieldAssociation`. Update it to work with `ScalarMember` instead, or adjust the dependency as needed for the new model.
+`src/api/services/field.py` depends on `ObjectFieldAssociation`. Update it to work with `FieldMember` instead, or adjust the dependency as needed for the new model.
 
 #### Step 5: Verify and commit
 
 - [ ] **Verify models load without errors**
 
-Run: `cd ../mediancode-backend && poetry run python -c "from api.models.members import ObjectMember, ScalarMember, RelationshipMember; print('OK')"`
+Run: `cd ../mediancode-backend && poetry run python -c "from api.models.members import ObjectMember, FieldMember, RelationshipMember; print('OK')"`
 
 - [ ] **Commit**
 
 ```
 feat(db): add CTI member models, migration, and enum updates
 
-- Create ObjectMember base, ScalarMember, RelationshipMember with joined table inheritance
+- Create ObjectMember base, FieldMember, RelationshipMember with joined table inheritance
 - Add RelationshipKind enum, remove fk from FieldRole, remove old Cardinality values
 - Update initial migration import to inline old Cardinality if needed
 - Add members relationship to ObjectDefinition
 - Alembic migration: create new tables, migrate data, rename old tables to _old
-- Update FieldService to use ScalarMember instead of ObjectFieldAssociation
+- Update FieldService to use FieldMember instead of ObjectFieldAssociation
 ```
 
 ---
@@ -189,10 +189,10 @@ Everything that touches the API surface: Pydantic schemas, ObjectService rewrite
 - [ ] **Create `src/api/schemas/members.py`**
 
 Define:
-- `ScalarMemberInput` (id: str | None = None, memberType="scalar", name, fieldId, role, isNullable, defaultValue)
+- `FieldMemberInput` (id: str | None = None, memberType="field", name, fieldId, role, isNullable, defaultValue)
 - `RelationshipMemberInput` (id: str | None = None, memberType="relationship", name, targetObjectId, kind, inverseName, required)
-- `MemberInput = Annotated[ScalarMemberInput | RelationshipMemberInput, Field(discriminator="memberType")]`
-- `ScalarMemberResponse`, `RelationshipMemberResponse`, `MemberResponse`
+- `MemberInput = Annotated[FieldMemberInput | RelationshipMemberInput, Field(discriminator="memberType")]`
+- `FieldMemberResponse`, `RelationshipMemberResponse`, `MemberResponse`
 - `DerivedRelationshipResponse`
 
 Include optional `id` field on both input schemas to support reconcile-by-ID updates.
@@ -215,7 +215,7 @@ Update `ObjectService` query methods to use `selectinload` for `members` to avoi
 
 - [ ] **Rewrite `create_for_user` in ObjectService**
 
-Process `members` array: for each member, create `ObjectMember` base row + appropriate child row (`ScalarMember` or `RelationshipMember`). Position from array index.
+Process `members` array: for each member, create `ObjectMember` base row + appropriate child row (`FieldMember` or `RelationshipMember`). Position from array index.
 
 - [ ] **Rewrite `update_object` with reconcile-by-ID**
 
@@ -250,7 +250,7 @@ Remove `create_relationship()` and `delete_relationship()` handlers and their ro
 - [ ] **Rewrite `_convert_to_input_api` in `src/api/services/generation.py`**
 
 Single loop over `object.members`:
-- `ScalarMember` -> `InputField`
+- `FieldMember` -> `InputField`
 - `RelationshipMember` -> `InputRelationship(name, target_model, kind, inverse_name, required)`
 
 No FK fields. No dedup.
@@ -517,7 +517,7 @@ Drop old tables, clean up orphaned FK FieldModel rows, final verification.
 
 - [ ] **Create migration to drop _old tables and orphan FK fields**
 
-Drop `fields_on_objects_old` and `object_relationships_old` tables. Delete orphaned `FieldModel` rows that were only used as FK fields — identified by having `role='fk'` in the old `fields_on_objects` data and no remaining `scalar_members` references.
+Drop `fields_on_objects_old` and `object_relationships_old` tables. Delete orphaned `FieldModel` rows that were only used as FK fields — identified by having `role='fk'` in the old `fields_on_objects` data and no remaining `field_members` references.
 
 - [ ] **Write downgrade function**
 

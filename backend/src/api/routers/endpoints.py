@@ -128,7 +128,7 @@ async def update_endpoint(
             detail=f"Endpoint with ID '{endpoint_id}' not found",
         )
 
-    updated = await service.update_endpoint(endpoint, data)
+    updated = await service.update_endpoint(endpoint, data, user.id)
     return service.to_response(updated)
 
 

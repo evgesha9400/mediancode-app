@@ -4,7 +4,7 @@
 from types import SimpleNamespace
 from uuid import uuid4
 
-from api.models.members import RelationshipMember, ScalarMember
+from api.models.members import FieldMember, RelationshipMember
 from api.services.api_design_snapshot import build_api_design_snapshot
 
 
@@ -74,7 +74,7 @@ def test_build_api_design_snapshot_maps_objects_and_members():
     field_id = uuid4()
     source_id = uuid4()
     target_id = uuid4()
-    scalar = ScalarMember(
+    field_member = FieldMember(
         object_id=source_id,
         name="display_title",
         position=1,
@@ -92,7 +92,7 @@ def test_build_api_design_snapshot_maps_objects_and_members():
         inverse_name="items",
         required=False,
     )
-    source = _object_model(source_id, "Item", [scalar, relationship])
+    source = _object_model(source_id, "Item", [field_member, relationship])
     target = _object_model(target_id, "Category")
     api = SimpleNamespace(
         title="ShopApi",
@@ -109,41 +109,61 @@ def test_build_api_design_snapshot_maps_objects_and_members():
 
     item = snapshot.objects[0]
     assert item.name == "Item"
-    assert item.scalar_members[0].member_name == "display_title"
-    assert item.scalar_members[0].field_name == "title"
-    assert item.scalar_members[0].constraints[0].value == "40"
-    assert item.scalar_members[0].field_validators[0].name == "Append Suffix"
+    assert item.field_members[0].member_name == "display_title"
+    assert item.field_members[0].field_name == "title"
+    assert item.field_members[0].constraints[0].value == "40"
+    assert item.field_members[0].field_validators[0].name == "Append Suffix"
     assert item.relationship_members[0].target_object_name == "Category"
     assert item.relationship_members[0].kind == "many_to_many"
 
 
 def test_build_api_design_snapshot_resolves_endpoint_params():
     """Resolve endpoint path and query parameters without api_craft models."""
+    path_member_id = uuid4()
     path_field_id = uuid4()
+    query_member_id = uuid4()
     query_field_id = uuid4()
     item_id = uuid4()
-    query_id = uuid4()
-    query_member = ScalarMember(
-        object_id=query_id,
-        name="search",
+    path_member = FieldMember(
+        id=path_member_id,
+        object_id=item_id,
+        name="id",
         position=0,
-        field_id=query_field_id,
-        role="writable",
-        is_nullable=True,
+        field_id=path_field_id,
+        role="pk",
+        is_nullable=False,
         default_value=None,
     )
-    item = _object_model(item_id, "Item")
-    query_object = _object_model(query_id, "ItemFilters", [query_member])
+    query_member = FieldMember(
+        id=query_member_id,
+        object_id=item_id,
+        name="search",
+        position=1,
+        field_id=query_field_id,
+        role="writable",
+        is_nullable=False,
+        default_value=None,
+    )
+    item = _object_model(item_id, "Item", [path_member, query_member])
     endpoint = SimpleNamespace(
         method="GET",
-        path="/items/{item_id}",
+        path="/items",
         tag_name="Items",
-        path_params=[{"name": "item_id", "fieldId": str(path_field_id)}],
-        query_params_object_id=query_id,
-        object_id=item_id,
+        target_object_id=item_id,
+        path_params=[],
+        query_params=[
+            SimpleNamespace(
+                position=0,
+                name="q",
+                field_member_id=query_member_id,
+                operator="ilike",
+                required=False,
+            )
+        ],
+        pagination=True,
         description="Get item",
         use_envelope=True,
-        response_shape="object",
+        response_shape="list",
     )
     api = SimpleNamespace(
         title="ShopApi",
@@ -154,7 +174,7 @@ def test_build_api_design_snapshot_resolves_endpoint_params():
 
     snapshot = build_api_design_snapshot(
         api,
-        {item_id: item, query_id: query_object},
+        {item_id: item},
         {
             path_field_id: _field_model(
                 name="id",
@@ -171,9 +191,10 @@ def test_build_api_design_snapshot_resolves_endpoint_params():
 
     endpoint_snapshot = snapshot.endpoints[0]
     assert snapshot.tag_names == ["Items"]
-    assert endpoint_snapshot.object_name == "Item"
-    assert endpoint_snapshot.path_params[0].name == "item_id"
-    assert endpoint_snapshot.path_params[0].type == "uuid.UUID"
-    assert endpoint_snapshot.path_params[0].description == "Item ID"
-    assert endpoint_snapshot.query_params[0].name == "query"
-    assert endpoint_snapshot.query_params[0].optional is True
+    assert endpoint_snapshot.target_object_name == "Item"
+    assert endpoint_snapshot.query_params[0].name == "q"
+    assert endpoint_snapshot.query_params[0].field_member_name == "search"
+    assert endpoint_snapshot.query_params[0].type == "str"
+    assert endpoint_snapshot.query_params[0].operator == "ilike"
+    assert endpoint_snapshot.query_params[0].required is False
+    assert endpoint_snapshot.pagination is True

@@ -1,8 +1,13 @@
 <script module lang="ts">
-  import type { Field } from '$lib/types';
+  export interface FieldSelectorOption {
+    id: string;
+    name: string;
+    type: string;
+    description?: string;
+  }
 
   export interface FieldSelectorDropdownProps {
-    availableFields: Field[];
+    availableFields: FieldSelectorOption[];
     selectedFieldIds: string[];
     onSelect: (fieldId: string) => void;
     placeholder?: string;

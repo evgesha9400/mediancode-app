@@ -157,7 +157,7 @@ class InputQueryParam(BaseModel):
 
     :ivar name: Snake_case identifier exposed to consumers.
     :ivar type: Declared type string compatible with FastAPI annotations.
-    :ivar optional: Whether this parameter is optional (default False = required).
+    :ivar required: Whether this parameter is required.
     :ivar description: Human-readable description of the parameter.
     :ivar field: Field name on the target object this param filters by.
     :ivar operator: Filter operation to apply (eq, gte, lte, etc.).
@@ -165,7 +165,7 @@ class InputQueryParam(BaseModel):
 
     name: SnakeCaseName
     type: str
-    optional: bool = False
+    required: bool = False
     description: str | None = None
     field: str | None = None
     operator: FilterOperator | None = None

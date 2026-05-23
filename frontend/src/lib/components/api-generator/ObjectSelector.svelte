@@ -12,7 +12,7 @@
     responseShapeLockedReason?: string;
     /** Validation errors to display inline (e.g. rule 1 — no target object) */
     validationErrors?: ValidationError[];
-    onSelectObject: (objectId: string | undefined) => void;
+    onSelectObject: (objectDefinitionId: string | undefined) => void;
     onSetResponseShape: (shape: ResponseShape) => void;
     onCreateNewObject?: () => void;
   }

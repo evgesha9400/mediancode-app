@@ -3,7 +3,7 @@
 // Unit tests for shared endpoint CRUD configuration helpers.
 
 import { describe, it, expect } from 'vitest';
-import type { ApiEndpoint, Field, ObjectDefinition } from '$lib/types';
+import type { ApiEndpoint } from '$lib/types';
 import {
 	applyEndpointUpdate,
 	createEndpointDraft,
@@ -21,10 +21,9 @@ function makeEndpoint(overrides: Partial<ApiEndpoint> = {}): ApiEndpoint {
 		path: '/users',
 		description: '',
 		tagName: undefined,
+		targetObjectId: undefined,
 		pathParams: [],
 		queryParams: [],
-		queryParamsObjectId: undefined,
-		objectId: undefined,
 		useEnvelope: true,
 		responseShape: 'object',
 		pagination: false,
@@ -51,16 +50,14 @@ describe('endpointsConfig', () => {
 	it('maps endpoint draft to create payload', () => {
 		const endpoint = makeEndpoint({
 			tagName: 'users',
-			objectId: 'obj-1',
-			queryParamsObjectId: 'obj-2'
+			targetObjectId: 'obj-1'
 		});
 
 		expect(toCreateEndpointPayload(endpoint)).toEqual(
 			expect.objectContaining({
 				apiId: 'api-1',
 				tagName: 'users',
-				objectId: 'obj-1',
-				queryParamsObjectId: 'obj-2'
+				targetObjectId: 'obj-1'
 			})
 		);
 	});
@@ -71,8 +68,7 @@ describe('endpointsConfig', () => {
 		expect(toUpdateEndpointPayload(endpoint)).toEqual(
 			expect.objectContaining({
 				tagName: null,
-				objectId: null,
-				queryParamsObjectId: null
+				targetObjectId: undefined
 			})
 		);
 	});
@@ -81,77 +77,40 @@ describe('endpointsConfig', () => {
 		const updated = applyEndpointUpdate(
 			makeEndpoint({
 				tagName: 'users',
-				objectId: 'obj-1',
-				queryParamsObjectId: 'obj-2'
+				targetObjectId: 'obj-1'
 			}),
 			{
 				path: '/users/v2',
 				tagName: null,
-				objectId: null,
-				queryParamsObjectId: null
+				targetObjectId: undefined
 			}
 		);
 
 		expect(updated.path).toBe('/users/v2');
 		expect(updated.tagName).toBeUndefined();
-		expect(updated.objectId).toBeUndefined();
-		expect(updated.queryParamsObjectId).toBeUndefined();
+		expect(updated.targetObjectId).toBeUndefined();
 	});
 
-	it('hydrates stored endpoint path param names from the target object', () => {
-		const field: Field = {
-			id: 'field-1',
-			namespaceId: 'ns-1',
-			name: 'user_id',
-			type: 'uuid',
-			container: null,
-			constraints: [],
-			validators: [],
-			usedInApis: [],
-			description: '',
-			defaultValue: ''
-		};
-		const object: ObjectDefinition = {
-			id: 'obj-1',
-			namespaceId: 'ns-1',
-			name: 'User',
-			description: '',
-			members: [
-				{
-					id: 'member-1',
-					memberType: 'scalar',
-					name: 'user_id',
-					fieldId: 'field-1',
-					role: 'pk',
-					isNullable: false
-				}
-			],
-			derivedRelationships: [],
-			validators: [],
-			usedInApis: []
-		};
+	it('hydrates stored endpoint defaults', () => {
+		const hydrated = hydrateStoredEndpoint(makeEndpoint({
+			pathParams: [{ name: 'user_id', fieldMemberId: 'member-1' }],
+			queryParams: [{ name: 'status', fieldMemberId: 'member-2', operator: 'eq' as any, required: undefined as any }]
+		}));
 
-		const hydrated = hydrateStoredEndpoint(
-			makeEndpoint({
-				objectId: 'obj-1',
-				pathParams: [{ name: 'user_id', fieldId: 'field-1', field: '' }]
-			}),
-			[object],
-			[field]
-		);
-
-		expect(hydrated.pathParams[0].field).toBe('user_id');
+		expect(hydrated.pathParams[0].fieldMemberId).toBe('member-1');
+		expect(hydrated.queryParams[0].required).toBe(false);
 	});
 
 	it('builds duplicate create payload from an existing endpoint', () => {
 		const payload = toDuplicateEndpointPayload(
 			makeEndpoint({
 				path: '/users',
-				queryParams: [{ name: 'status', field: 'status', operator: 'eq' }]
+				targetObjectId: 'obj-1',
+				queryParams: [{ name: 'status', fieldMemberId: 'member-2', operator: 'eq' as any, required: false }]
 			})
 		);
 
 		expect(payload.path).toBe('/users-copy');
-		expect(payload.queryParams).toEqual([{ name: 'status', field: 'status', operator: 'eq' }]);
+		expect(payload.queryParams).toEqual([{ name: 'status', fieldMemberId: 'member-2', operator: 'eq', required: false }]);
 	});
 });

@@ -15,12 +15,12 @@ import {
  * Suggestion result from auto-inference based on param naming conventions.
  */
 export interface ParamSuggestion {
-	field: string;
+	fieldMemberId: string;
 	operator: FilterOperator;
 }
 
 /**
- * Prefixes that imply a specific operator when stripped to reveal a field name.
+ * Prefixes that imply a specific operator when stripped to reveal a Field Member name.
  * Order matters: longer/more-specific prefixes first.
  */
 const PREFIX_RULES: { prefix: string; operator: FilterOperator }[] = [
@@ -51,7 +51,7 @@ export function getCompatibleOperators(fieldTypeName: string): FilterOperator[] 
 }
 
 /**
- * Auto-suggest a field name and operator based on a query parameter's name.
+ * Auto-suggest a Field Member ID and operator based on a query parameter's name.
  *
  * This is a UI convenience -- not schema validation. The user can always
  * accept or override the suggestion.
@@ -60,23 +60,25 @@ export function getCompatibleOperators(fieldTypeName: string): FilterOperator[] 
  */
 export function suggestFieldAndOperator(
 	paramName: string,
-	targetFieldNames: string[]
+	targetFields: TargetField[]
 ): ParamSuggestion | null {
 	if (!paramName) return null;
 
-	// Try prefix rules first (min_price -> field: price, operator: gte)
+	// Try prefix rules first (min_price -> price Field Member, operator: gte)
 	for (const rule of PREFIX_RULES) {
 		if (paramName.startsWith(rule.prefix)) {
 			const candidate = paramName.slice(rule.prefix.length);
-			if (candidate && targetFieldNames.includes(candidate)) {
-				return { field: candidate, operator: rule.operator };
+			const field = targetFields.find(f => f.name === candidate);
+			if (field) {
+				return { fieldMemberId: field.fieldMemberId, operator: rule.operator };
 			}
 		}
 	}
 
-	// Exact match (category -> field: category, operator: eq)
-	if (targetFieldNames.includes(paramName)) {
-		return { field: paramName, operator: 'eq' };
+	// Exact match (category -> category Field Member, operator: eq)
+	const field = targetFields.find(f => f.name === paramName);
+	if (field) {
+		return { fieldMemberId: field.fieldMemberId, operator: 'eq' };
 	}
 
 	return null;
@@ -90,6 +92,7 @@ export function suggestFieldAndOperator(
  * A field on the resolved target object, as seen by validation.
  */
 export interface TargetField {
+	fieldMemberId: string;
 	name: string;
 	type: string;
 	isPk: boolean;
@@ -100,7 +103,7 @@ export interface TargetField {
  */
 export interface ValidationInput {
 	responseShape: ResponseShape;
-	objectId?: string; // the object used for request/response body AND param inference target
+	targetObjectId?: string;
 	targetFields: TargetField[];
 	pathParams: PathParam[];
 	queryParams: QueryParam[];
@@ -123,7 +126,7 @@ export function validateEndpointParams(input: ValidationInput): ValidationError[
 	const errors: ValidationError[] = [];
 	const {
 		responseShape,
-		objectId,
+		targetObjectId,
 		targetFields,
 		pathParams,
 		queryParams
@@ -132,8 +135,8 @@ export function validateEndpointParams(input: ValidationInput): ValidationError[
 	const isDetail = responseShape === 'object';
 	const isList = responseShape === 'list';
 
-	// Rule 1: Target is known when objectId is set (for both detail and list)
-	if (!objectId) {
+	// Rule 1: Target is known when targetObjectId is set.
+	if (!targetObjectId) {
 		errors.push({
 			rule: 1,
 			message: isList
@@ -145,23 +148,23 @@ export function validateEndpointParams(input: ValidationInput): ValidationError[
 	}
 
 	// Rule 2: Every param field exists on target
-	const fieldNameSet = new Set(targetFields.map(f => f.name));
+	const fieldMemberIds = new Set(targetFields.map(f => f.fieldMemberId));
 
 	for (const pp of pathParams) {
-		if (pp.field && !fieldNameSet.has(pp.field)) {
+		if (pp.fieldMemberId && !fieldMemberIds.has(pp.fieldMemberId)) {
 			errors.push({
 				rule: 2,
-				message: `Field "${pp.field}" does not exist on the target object`,
+				message: `Path parameter "${pp.name}" is not linked to a target Field Member`,
 				param: pp.name
 			});
 		}
 	}
 
 	for (const qp of queryParams) {
-		if (qp.field && !fieldNameSet.has(qp.field)) {
+		if (qp.fieldMemberId && !fieldMemberIds.has(qp.fieldMemberId)) {
 			errors.push({
 				rule: 2,
-				message: `Field "${qp.field}" does not exist on the target object`,
+				message: `Query parameter "${qp.name}" is not linked to a target Field Member`,
 				param: qp.name
 			});
 		}
@@ -170,7 +173,7 @@ export function validateEndpointParams(input: ValidationInput): ValidationError[
 	// Rule 3: Detail endpoint -- last path param maps to PK
 	if (isDetail && pathParams.length > 0) {
 		const lastParam = pathParams[pathParams.length - 1];
-		const lastField = targetFields.find(f => f.name === lastParam.field);
+		const lastField = targetFields.find(f => f.fieldMemberId === lastParam.fieldMemberId);
 		if (!lastField || !lastField.isPk) {
 			errors.push({
 				rule: 3,
@@ -180,9 +183,8 @@ export function validateEndpointParams(input: ValidationInput): ValidationError[
 		}
 	}
 
-	// Rule 4: Detail endpoint -- no field-mapped query params
-	// Legacy query params without a field are allowed (backward compat with backend)
-	if (isDetail && queryParams.some(qp => !!qp.field)) {
+	// Rule 4: Detail endpoint -- no query params
+	if (isDetail && queryParams.length > 0) {
 		errors.push({
 			rule: 4,
 			message: 'Detail endpoints cannot have query parameters with field references'
@@ -193,10 +195,11 @@ export function validateEndpointParams(input: ValidationInput): ValidationError[
 	if (isList) {
 		const pkFieldNames = new Set(targetFields.filter(f => f.isPk).map(f => f.name));
 		for (const pp of pathParams) {
-			if (pp.field && pkFieldNames.has(pp.field)) {
+			const linkedField = targetFields.find(f => f.fieldMemberId === pp.fieldMemberId);
+			if (linkedField && pkFieldNames.has(linkedField.name)) {
 				errors.push({
 					rule: 5,
-					message: `Path param "${pp.name}" maps to PK field "${pp.field}" -- use a detail endpoint instead`,
+					message: `Path param "${pp.name}" maps to PK field "${linkedField.name}" -- use a detail endpoint instead`,
 					param: pp.name
 				});
 			}
@@ -205,7 +208,7 @@ export function validateEndpointParams(input: ValidationInput): ValidationError[
 
 	// Rule 6: Operator compatible with field type
 	for (const qp of queryParams) {
-		const field = targetFields.find(f => f.name === qp.field);
+		const field = targetFields.find(f => f.fieldMemberId === qp.fieldMemberId);
 		if (!field) continue; // already caught by rule 2
 		const compatible = getCompatibleOperators(field.type);
 		if (!compatible.includes(qp.operator)) {
@@ -240,11 +243,12 @@ export function resolveTargetFields(
 
 	const result: TargetField[] = [];
 	for (const member of obj.members) {
-		if (member.memberType !== 'scalar') continue;
+		if (member.memberType !== 'field') continue;
 		const field = fields.find(f => f.id === member.fieldId);
 		if (!field) continue;
 		result.push({
 			name: member.name,
+			fieldMemberId: member.id ?? '',
 			type: field.type,
 			isPk: member.role === 'pk'
 		});

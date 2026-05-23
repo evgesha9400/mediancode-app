@@ -1,16 +1,12 @@
 <script module lang="ts">
-  import type { Field } from '$lib/types';
   import type { TargetField, ValidationError } from '$lib/domain/paramInference';
 
   export interface ParameterEditorProps {
     paramName: string;
-    fieldName: string;
-    /** When the API omits ``fieldName``, the linked field can still be resolved from this id. */
-    fieldId?: string;
+    fieldMemberId: string;
     targetFields: TargetField[];
-    objectFields: Field[];
     validationErrors?: ValidationError[];
-    onFieldSelect: (fieldName: string, fieldId: string) => void;
+    onFieldSelect: (fieldMemberId: string) => void;
   }
 </script>
 
@@ -22,63 +18,44 @@
     themeAccentBadge,
     themeAccentText
   } from '$lib/ui/classes';
-  import FieldSelectorDropdown from './FieldSelectorDropdown.svelte';
+  import FieldSelectorDropdown, { type FieldSelectorOption } from './FieldSelectorDropdown.svelte';
 
   interface Props extends ParameterEditorProps {}
 
   let {
     paramName,
-    fieldName,
-    fieldId = '',
+    fieldMemberId,
     targetFields,
-    objectFields,
     validationErrors = [],
     onFieldSelect
   }: Props = $props();
 
-  /** Display name: explicit link, or resolve from ``fieldId`` when the server omitted ``field``. */
-  const effectiveFieldName = $derived.by(() => {
-    const trimmed = fieldName?.trim() ?? '';
-    if (trimmed) return trimmed;
-    if (fieldId) {
-      const byId = objectFields.find(f => f.id === fieldId);
-      if (byId) return byId.name;
-    }
-    return '';
-  });
-
   // Find the currently selected field
-  const selectedField = $derived(targetFields.find(f => f.name === effectiveFieldName));
+  const selectedField = $derived(targetFields.find(f => f.fieldMemberId === fieldMemberId));
 
   // Derived type (read-only display)
   const derivedType = $derived(selectedField?.type ?? '');
 
-  // Linked when the param maps to a field: on the target object, or by id when there is no body object
-  const isLinked = $derived(
-    !!effectiveFieldName &&
-      (!!selectedField ||
-        (!!fieldId &&
-          (objectFields.length === 0 || objectFields.some(f => f.id === fieldId))))
-  );
+  const isLinked = $derived(!!selectedField);
 
-  // All field IDs except the currently linked one (for the dropdown's exclusion list)
-  // We don't exclude any since path params should be able to pick any field
-  const selectedFieldIds = $derived.by((): string[] => []);
+  const targetFieldOptions = $derived.by((): FieldSelectorOption[] =>
+    targetFields.map(field => ({
+      id: field.fieldMemberId,
+      name: field.name,
+      type: field.type
+    }))
+  );
 
   // Errors specific to this parameter
   const paramErrors = $derived(validationErrors.filter(e => e.param === paramName));
 
-  // Handle field selection from dropdown: map fieldId to fieldName
   function handleFieldSelect(selectedId: string): void {
-    const field = objectFields.find(f => f.id === selectedId);
-    if (field) {
-      onFieldSelect(field.name, field.id);
-    }
+    onFieldSelect(selectedId);
   }
 
   // Unlink the current field
   function handleUnlink(): void {
-    onFieldSelect('', '');
+    onFieldSelect('');
   }
 </script>
 
@@ -97,7 +74,7 @@
         <div class={objectSelectorDisplayRow}>
           <div class="flex items-center gap-1.5">
             <i class={`fa-solid fa-link text-[10px] ${themeAccentText}`}></i>
-            <span class="font-mono text-sm">{effectiveFieldName}</span>
+            <span class="font-mono text-sm">{selectedField?.name}</span>
             {#if derivedType}
               <span class={`${listMetaBadge} px-1.5 text-[11px]`}>{derivedType}</span>
             {/if}
@@ -118,16 +95,16 @@
     {:else}
       <!-- Unlinked state: show field selector dropdown -->
       <div class="flex-1 min-w-0">
-        {#if objectFields.length > 0}
+        {#if targetFieldOptions.length > 0}
           <FieldSelectorDropdown
-            availableFields={objectFields}
-            selectedFieldIds={selectedFieldIds}
+            availableFields={targetFieldOptions}
+            selectedFieldIds={[]}
             onSelect={handleFieldSelect}
-            placeholder="Link to field..."
+            placeholder="Link to Field Member..."
           />
         {:else}
           <div class={apiGeneratorHintCell}>
-            Select an object to link fields
+            Select an object to link Field Members
           </div>
         {/if}
       </div>

@@ -1,5 +1,5 @@
 # src/api/schemas/members.py
-"""Pydantic schemas for unified object members (scalar + relationship)."""
+"""Pydantic schemas for unified object members (field + relationship)."""
 
 from typing import Annotated, Literal
 from uuid import UUID
@@ -13,11 +13,11 @@ from api.schemas.literals import FieldRole, RelationshipKind
 # ---------------------------------------------------------------------------
 
 
-class ScalarMemberInput(BaseModel):
-    """Input schema for a scalar (field-backed) member.
+class FieldMemberInput(BaseModel):
+    """Input schema for a field-backed member.
 
     :ivar id: Existing member ID for reconcile-by-ID updates (omit for new).
-    :ivar member_type: Discriminator, always ``"scalar"``.
+    :ivar member_type: Discriminator, always ``"field"``.
     :ivar name: Member name on the object.
     :ivar field_id: Reference to the field definition.
     :ivar role: Structural role of the field.
@@ -26,7 +26,7 @@ class ScalarMemberInput(BaseModel):
     """
 
     id: UUID | None = None
-    member_type: Literal["scalar"] = Field("scalar", alias="memberType")
+    member_type: Literal["field"] = Field("field", alias="memberType")
     name: str
     field_id: UUID = Field(..., alias="fieldId")
     role: FieldRole = Field(default="writable")
@@ -60,7 +60,7 @@ class RelationshipMemberInput(BaseModel):
 
 
 MemberInput = Annotated[
-    ScalarMemberInput | RelationshipMemberInput,
+    FieldMemberInput | RelationshipMemberInput,
     Field(discriminator="member_type"),
 ]
 
@@ -70,11 +70,11 @@ MemberInput = Annotated[
 # ---------------------------------------------------------------------------
 
 
-class ScalarMemberResponse(BaseModel):
-    """Response schema for a scalar member.
+class FieldMemberResponse(BaseModel):
+    """Response schema for a field member.
 
     :ivar id: Unique identifier.
-    :ivar member_type: Discriminator, always ``"scalar"``.
+    :ivar member_type: Discriminator, always ``"field"``.
     :ivar name: Member name.
     :ivar field_id: Reference to the field definition.
     :ivar role: Structural role.
@@ -83,7 +83,7 @@ class ScalarMemberResponse(BaseModel):
     """
 
     id: UUID
-    member_type: Literal["scalar"] = Field("scalar", alias="memberType")
+    member_type: Literal["field"] = Field("field", alias="memberType")
     name: str
     field_id: UUID = Field(..., alias="fieldId")
     role: str
@@ -117,7 +117,7 @@ class RelationshipMemberResponse(BaseModel):
 
 
 MemberResponse = Annotated[
-    ScalarMemberResponse | RelationshipMemberResponse,
+    FieldMemberResponse | RelationshipMemberResponse,
     Field(discriminator="member_type"),
 ]
 

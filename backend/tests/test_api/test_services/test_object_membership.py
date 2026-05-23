@@ -7,8 +7,8 @@ from uuid import uuid4
 from fastapi import HTTPException
 import pytest
 
-from api.models.members import ObjectMember, RelationshipMember, ScalarMember
-from api.schemas.members import RelationshipMemberInput, ScalarMemberInput
+from api.models.members import FieldMember, ObjectMember, RelationshipMember
+from api.schemas.members import FieldMemberInput, RelationshipMemberInput
 from api.services.object_membership import ObjectMembership
 
 
@@ -91,10 +91,10 @@ class _DbSession:
 
 
 def _scalar_input(**overrides):
-    """Build a Scalar Member input.
+    """Build a Field Member input.
 
     :param overrides: Field overrides for the input.
-    :returns: ScalarMemberInput instance.
+    :returns: FieldMemberInput instance.
     """
     values = {
         "name": "title",
@@ -104,7 +104,7 @@ def _scalar_input(**overrides):
         "default_value": None,
     }
     values.update(overrides)
-    return ScalarMemberInput(**values)
+    return FieldMemberInput(**values)
 
 
 def test_member_responses_order_and_map_member_types():
@@ -112,7 +112,7 @@ def test_member_responses_order_and_map_member_types():
     object_id = uuid4()
     field_id = uuid4()
     target_id = uuid4()
-    scalar = ScalarMember(
+    scalar = FieldMember(
         id=uuid4(),
         object_id=object_id,
         name="title",
@@ -139,7 +139,7 @@ def test_member_responses_order_and_map_member_types():
     assert [response.name for response in responses] == ["orders", "title"]
     assert responses[0].member_type == "relationship"
     assert responses[0].target_object_id == target_id
-    assert responses[1].member_type == "scalar"
+    assert responses[1].member_type == "field"
     assert responses[1].field_id == field_id
 
 
@@ -173,7 +173,7 @@ async def test_set_members_forces_generated_role_storage_values():
     await membership.set_members(obj, [member])
 
     assert len(db.added) == 1
-    assert isinstance(db.added[0], ScalarMember)
+    assert isinstance(db.added[0], FieldMember)
     assert db.added[0].is_nullable is False
     assert db.added[0].default_value is None
     assert db.added[0].position == 0

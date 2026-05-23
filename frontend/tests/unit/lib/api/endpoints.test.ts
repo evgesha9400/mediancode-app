@@ -23,10 +23,9 @@ const MOCK_ENDPOINT_RESPONSE = {
   path: '/users',
   description: 'List users',
   tagName: 'users',
-  pathParams: [{ name: 'userId', fieldId: 'f-1', field: 'user_id' }],
-  queryParams: [{ name: 'min_age', field: 'age', operator: 'gte' }],
-  queryParamsObjectId: 'o-1',
-  objectId: 'o-2',
+  targetObjectId: 'o-2',
+  pathParams: [{ name: 'userId', fieldMemberId: 'fm-1' }],
+  queryParams: [{ name: 'min_age', fieldMemberId: 'fm-2', operator: 'gte', required: false }],
   useEnvelope: true,
   responseShape: 'list',
   pagination: true
@@ -62,17 +61,14 @@ describe('Endpoints API Service', () => {
     it('should get endpoint by ID and transform', async () => {
       (apiGet as any).mockResolvedValue({
         ...MOCK_ENDPOINT_RESPONSE,
-        tagName: null,
-        queryParamsObjectId: null,
-        objectId: null
+        tagName: null
       });
 
       const result = await getEndpoint('e-1');
 
       expect(apiGet).toHaveBeenCalledWith('/endpoints/e-1');
       expect(result.tagName).toBeUndefined();
-      expect(result.queryParamsObjectId).toBeUndefined();
-      expect(result.objectId).toBeUndefined();
+      expect(result.targetObjectId).toBe('o-2');
       expect(result.expanded).toBe(false);
     });
 
@@ -82,7 +78,20 @@ describe('Endpoints API Service', () => {
       const result = await getEndpoint('e-1');
 
       expect(result.pathParams).toHaveLength(1);
-      expect(result.pathParams[0]).toEqual({ name: 'userId', fieldId: 'f-1', field: 'user_id' });
+      expect(result.pathParams[0]).toEqual({ name: 'userId', fieldMemberId: 'fm-1' });
+    });
+
+    it('transforms query params', async () => {
+      (apiGet as any).mockResolvedValue(MOCK_ENDPOINT_RESPONSE);
+
+      const result = await getEndpoint('e-1');
+
+      expect(result.queryParams[0]).toEqual({
+        name: 'min_age',
+        fieldMemberId: 'fm-2',
+        operator: 'gte',
+        required: false
+      });
     });
   });
 
@@ -93,7 +102,8 @@ describe('Endpoints API Service', () => {
       const result = await createEndpointApi({
         apiId: 'a-1',
         method: 'GET',
-        path: '/users'
+        path: '/users',
+        targetObjectId: 'o-2'
       });
 
       expect(apiPost).toHaveBeenCalledWith('/endpoints', expect.any(Object));

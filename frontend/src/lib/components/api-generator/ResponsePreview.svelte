@@ -9,7 +9,7 @@
 </script>
 
 <script lang="ts">
-  import type { ScalarMember } from '$lib/types';
+  import type { FieldMember } from '$lib/types';
   import { objectsStore, getFieldById, getObjectById } from '$lib/stores/stores';
   import { buildRequestPreviewFromObject, buildResponsePreviewFromObject } from '$lib/utils/examples';
   import { dashboardTextPrimary, surfaceInsideFrostedPanel } from '$lib/ui/classes';
@@ -61,18 +61,18 @@
         <p class="text-xs text-fg-muted mb-2">{selectedObject.description}</p>
       {/if}
 
-      <!-- Field List (scalar members only) -->
+      <!-- Field List (field members only) -->
       <div class="space-y-1 mt-2">
         <p class="text-xs text-fg-muted font-medium">Fields:</p>
-        {#each selectedObject.members.filter(m => m.memberType === 'scalar') as member (member.fieldId)}
-          {@const scalarMember = member as ScalarMember}
-          {@const field = getFieldById(scalarMember.fieldId)}
+        {#each selectedObject.members.filter(m => m.memberType === 'field') as member (member.fieldId)}
+          {@const fieldMember = member as FieldMember}
+          {@const field = getFieldById(fieldMember.fieldId)}
           {#if field}
             <div class="flex items-center justify-between text-xs">
-              <span class="font-mono text-fg-secondary">{scalarMember.name}</span>
+              <span class="font-mono text-fg-secondary">{fieldMember.name}</span>
               <div class="flex items-center space-x-2">
-                {#if scalarMember.role !== 'writable'}
-                  <span class="text-fg-dimmed text-[10px] uppercase">{scalarMember.role.replace(/_/g, ' ')}</span>
+                {#if fieldMember.role !== 'writable'}
+                  <span class="text-fg-dimmed text-[10px] uppercase">{fieldMember.role.replace(/_/g, ' ')}</span>
                 {/if}
                 <span class="text-fg-muted bg-surface-raised px-1.5 py-0.5 rounded-lg">{field.type}</span>
               </div>
@@ -80,7 +80,7 @@
           {:else}
             <div class="flex items-center gap-2 text-xs text-red-400">
               <i class="fa-solid fa-triangle-exclamation"></i>
-              <span>Field not found ({scalarMember.fieldId})</span>
+              <span>Field not found ({fieldMember.fieldId})</span>
             </div>
           {/if}
         {/each}

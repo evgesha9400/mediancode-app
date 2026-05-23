@@ -4,7 +4,7 @@
   export interface ObjectSelectorDropdownProps {
     availableObjects: ObjectDefinition[];
     selectedObjectId?: string;
-    onSelect: (objectId: string | undefined) => void;
+    onSelect: (objectDefinitionId: string | undefined) => void;
     placeholder?: string;
     onCreateNew?: () => void;
   }
@@ -47,8 +47,8 @@
     });
   });
 
-  function handleSelect(objectId: string): void {
-    onSelect(objectId);
+  function handleSelect(objectDefinitionId: string): void {
+    onSelect(objectDefinitionId);
     searchQuery = '';
     dropdownOpen = false;
   }

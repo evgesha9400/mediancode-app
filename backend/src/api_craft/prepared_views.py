@@ -30,7 +30,7 @@ class PreparedQueryParam:
     snake_name: str
     type: str
     title: str
-    optional: bool
+    required: bool
     description: str | None = None
     field: str | None = None
     operator: str | None = None
@@ -292,7 +292,7 @@ def _prepare_query_params(
     result = []
     for param in input_query_params:
         param_type = param.type
-        optional = param.optional
+        required = param.required
 
         if param.field and target_fields and param.field in target_fields:
             field_type = target_fields[param.field].type
@@ -300,7 +300,6 @@ def _prepare_query_params(
                 param_type = f"List[{field_type}]"
             else:
                 param_type = field_type
-            optional = True
 
         result.append(
             PreparedQueryParam(
@@ -308,7 +307,7 @@ def _prepare_query_params(
                 snake_name=str(param.name),
                 camel_name=snake_to_camel(param.name),
                 title=snake_to_camel(param.name),
-                optional=optional,
+                required=required,
                 description=param.description,
                 field=param.field,
                 operator=param.operator,
@@ -325,7 +324,7 @@ def _pagination_params() -> list[PreparedQueryParam]:
             snake_name="limit",
             camel_name="Limit",
             title="Limit",
-            optional=True,
+            required=False,
             description="Maximum number of results to return (1-100).",
             constraints={"ge": 1, "le": 100},
         ),
@@ -334,7 +333,7 @@ def _pagination_params() -> list[PreparedQueryParam]:
             snake_name="offset",
             camel_name="Offset",
             title="Offset",
-            optional=True,
+            required=False,
             description="Number of results to skip.",
             constraints={"ge": 0},
         ),
@@ -490,7 +489,7 @@ def _build_signature_lines(view: PreparedView, inject_session: bool) -> list[str
     if view.request_model:
         lines.append(f"    request: {view.request_model},")
     for q_param in view.query_params:
-        suffix = " = None" if q_param.optional else ""
+        suffix = "" if q_param.required else " = None"
         lines.append(f"    {q_param.snake_name}: query.{q_param.camel_name}{suffix},")
     if inject_session:
         lines.append("    session: AsyncSession = Depends(get_session),")

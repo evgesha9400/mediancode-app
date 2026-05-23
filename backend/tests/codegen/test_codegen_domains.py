@@ -15,13 +15,21 @@ import re
 import tempfile
 from typing import get_args
 from unittest.mock import MagicMock
+from uuid import UUID
 import zipfile
 
 from fastapi.testclient import TestClient
 import pytest
 
 from api.schemas.api import GenerateOptions
-from api.services.api_craft_input import build_input_api
+from api.services.api_craft_input import build_input_api, build_input_api_from_snapshot
+from api.services.api_design_snapshot import (
+    APIDesignEndpoint,
+    APIDesignFieldMember,
+    APIDesignObject,
+    APIDesignPathParam,
+    APIDesignSnapshot,
+)
 from api.services.generation import generate_api_zip
 from api_craft.extractors import collect_association_tables
 from api_craft.main import APIGenerator
@@ -66,18 +74,61 @@ def _make_api_model(endpoints=None):
     return api
 
 
-def _make_endpoint(method: str, path: str):
-    endpoint = MagicMock()
-    endpoint.method = method
-    endpoint.path = path
-    endpoint.tag_name = None
-    endpoint.path_params = [{"name": name} for name in re.findall(r"\{([^}]+)\}", path)]
-    endpoint.query_params_object_id = None
-    endpoint.object_id = None
-    endpoint.description = None
-    endpoint.use_envelope = True
-    endpoint.response_shape = "object"
-    return endpoint
+def _make_endpoint_snapshot(method: str, path: str) -> APIDesignEndpoint:
+    """Build a minimal endpoint snapshot for operation-name tests."""
+    return APIDesignEndpoint(
+        method=method,
+        path=path,
+        tag_name=None,
+        path_params=[
+            APIDesignPathParam(
+                name=name,
+                field_member_name="id",
+                type="int",
+                description="ID",
+            )
+            for name in re.findall(r"\{([^}]+)\}", path)
+        ],
+        query_params=[],
+        target_object_name="Item",
+        description=None,
+        use_envelope=True,
+        response_shape="object",
+        pagination=False,
+    )
+
+
+def _build_input_from_endpoint_snapshots(
+    endpoints: list[APIDesignEndpoint],
+) -> InputAPI:
+    """Build api_craft input from minimal endpoint snapshots."""
+    snapshot = APIDesignSnapshot(
+        name="TestApi",
+        version="1.0.0",
+        description="Test",
+        objects=[
+            APIDesignObject(
+                id=UUID("00000000-0000-0000-0000-000000000001"),
+                name="Item",
+                description="Item",
+                field_members=[
+                    APIDesignFieldMember(
+                        member_name="id",
+                        field_name="id",
+                        field_type="int",
+                        container=None,
+                        nullable=False,
+                        description="ID",
+                        role="pk",
+                        default_value=None,
+                    )
+                ],
+            )
+        ],
+        endpoints=endpoints,
+        tag_names=[],
+    )
+    return build_input_api_from_snapshot(snapshot, GenerateOptions())
 
 
 def _make_field(python_type: str, container: str | None = None):
@@ -94,10 +145,10 @@ def _make_field(python_type: str, container: str | None = None):
 
 
 def _make_scalar_member(*, is_pk=False):
-    from api.models.members import ScalarMember
+    from api.models.members import FieldMember
 
-    member = MagicMock(spec=ScalarMember)
-    member.member_type = "scalar"
+    member = MagicMock(spec=FieldMember)
+    member.member_type = "field"
     member.field_id = "field-1"
     member.is_nullable = False
     member.position = 0
@@ -187,24 +238,14 @@ class TestBuildEndpointName:
         ],
     )
     def test_endpoint_name(self, method: str, path: str, expected: str):
-        endpoint = _make_endpoint(method, path)
-        result = build_input_api(
-            _make_api_model([endpoint]),
-            {},
-            {},
-            GenerateOptions(),
-        )
+        endpoint = _make_endpoint_snapshot(method, path)
+        result = _build_input_from_endpoint_snapshots([endpoint])
         assert result.endpoints[0].name == expected
 
     def test_endpoint_name_differentiates_with_path_param(self):
-        list_endpoint = _make_endpoint("GET", "/products")
-        detail_endpoint = _make_endpoint("GET", "/products/{tracking_id}")
-        result = build_input_api(
-            _make_api_model([list_endpoint, detail_endpoint]),
-            {},
-            {},
-            GenerateOptions(),
-        )
+        list_endpoint = _make_endpoint_snapshot("GET", "/products")
+        detail_endpoint = _make_endpoint_snapshot("GET", "/products/{tracking_id}")
+        result = _build_input_from_endpoint_snapshots([list_endpoint, detail_endpoint])
         list_name = result.endpoints[0].name
         detail_name = result.endpoints[1].name
         assert list_name != detail_name
@@ -1101,7 +1142,7 @@ class TestParamInferenceBackwardCompatibility:
                     response="ItemList",
                     response_shape="list",
                     query_params=[
-                        InputQueryParam(name="limit", type="int", optional=True),
+                        InputQueryParam(name="limit", type="int", required=False),
                     ],
                 ),
             ],
@@ -1145,7 +1186,7 @@ class TestTemplateModelExtensions:
             camel_name="MinPrice",
             type="float",
             title="Min Price",
-            optional=True,
+            required=False,
             field="price",
             operator="gte",
         )
@@ -1291,7 +1332,7 @@ class TestTypeDerivation:
         qp = result.views[0].query_params[0]
         assert qp.type == "List[str]"
 
-    def test_field_query_params_forced_optional(self):
+    def test_field_query_params_preserve_required(self):
         api = self._build_api(
             query_params=[
                 InputQueryParam(
@@ -1299,13 +1340,13 @@ class TestTypeDerivation:
                     type="float",
                     field="price",
                     operator="gte",
-                    optional=False,
+                    required=True,
                 ),
             ],
         )
         result = prepare_api(api)
         qp = result.views[0].query_params[0]
-        assert qp.optional is True
+        assert qp.required is True
 
     def test_pagination_injects_limit_and_offset(self):
         objects = [
@@ -1349,11 +1390,11 @@ class TestTypeDerivation:
         offset_param = qps[1]
         assert limit_param.snake_name == "limit"
         assert limit_param.type == "int"
-        assert limit_param.optional is True
+        assert limit_param.required is False
         assert limit_param.constraints == {"ge": 1, "le": 100}
         assert offset_param.snake_name == "offset"
         assert offset_param.type == "int"
-        assert offset_param.optional is True
+        assert offset_param.required is False
         assert offset_param.constraints == {"ge": 0}
 
     def test_pagination_false_does_not_inject(self):
@@ -1406,7 +1447,7 @@ class TestTypeDerivation:
     def test_legacy_params_without_field_unchanged(self):
         api = self._build_api(
             query_params=[
-                InputQueryParam(name="limit", type="int", optional=True),
+                InputQueryParam(name="limit", type="int", required=False),
             ],
         )
         result = prepare_api(api)

@@ -10,7 +10,7 @@
 </script>
 
 <script lang="ts">
-  import type { ObjectDefinition, ObjectMember, ScalarMember, RelationshipMember, RelationshipKind } from '$lib/types';
+  import type { ObjectDefinition, ObjectMember, FieldMember, RelationshipMember, RelationshipKind } from '$lib/types';
   import type { Field, ModelValidatorTemplate, InlineModelValidator, FieldRole } from '$lib/types';
   import { getFieldById, getModelValidatorTemplateById, objectsStore, getObjectById, apisStore } from '$lib/stores/stores';
   import { newTempMemberId } from '$lib/stores/objectsConfig.svelte';
@@ -76,14 +76,14 @@
   // --- Derive selected field IDs (to exclude already-added fields from unified dropdown) ---
   let selectedFieldIds = $derived(
     editedItem.members
-      .filter((m): m is ScalarMember => m.memberType === 'scalar')
+      .filter((m): m is FieldMember => m.memberType === 'field')
       .map(m => m.fieldId)
   );
 
   // --- Drag-and-drop member reordering ---
   // Members carry their own stable id throughout an edit session: either a
   // backend uuid (loaded from the server) or a `tmp-*` sentinel assigned by
-  // addScalarMember / addRelationshipMember. DnD uses member.id directly.
+  // addFieldMember / addRelationshipMember. DnD uses member.id directly.
   type DndItem = ObjectMember & { id: string };
 
   // Mutable state for dndzone — synced from editedItem.members
@@ -113,20 +113,20 @@
     editedItem = { ...editedItem, members: toApiMembers(e.detail.items) };
   }
 
-  // Resolve object's scalar members to full Field objects for template role dropdowns
+  // Resolve object's field members to full Field objects for template role dropdowns
   let objectFieldDefinitions = $derived.by((): Field[] => {
     return editedItem.members
-      .filter((m): m is ScalarMember => m.memberType === 'scalar')
+      .filter((m): m is FieldMember => m.memberType === 'field')
       .map(ref => getFieldById(ref.fieldId))
       .filter((f): f is Field => f !== undefined);
   });
 
   // --- Scalar member helpers ---
-  function addScalarMember(fieldId: string) {
+  function addFieldMember(fieldId: string) {
     const field = getFieldById(fieldId);
     if (!field) return;
-    const newMember: ScalarMember = {
-      memberType: 'scalar',
+    const newMember: FieldMember = {
+      memberType: 'field',
       id: newTempMemberId(),
       name: field.name,
       fieldId,
@@ -146,22 +146,22 @@
     };
   }
 
-  /** Change a scalar member's role — clear modifiers if switching to a non-modifier role */
+  /** Change a field member's role — clear modifiers if switching to a non-modifier role */
   function setMemberRole(memberId: string, role: FieldRole) {
     const newMembers = editedItem.members.map(m => {
-      if (m.id !== memberId || m.memberType !== 'scalar') return m;
+      if (m.id !== memberId || m.memberType !== 'field') return m;
       const base = { ...m, role };
       if (!roleHasModifiers(role)) {
         return { ...base, isNullable: false, defaultValue: null };
       }
       return base;
     });
-    // Only one PK allowed — if setting to PK, clear PK on all other scalar members
+    // Only one PK allowed — if setting to PK, clear PK on all other field members
     if (role === 'pk') {
       editedItem = {
         ...editedItem,
         members: newMembers.map(m =>
-          m.id !== memberId && m.memberType === 'scalar' && m.role === 'pk'
+          m.id !== memberId && m.memberType === 'field' && m.role === 'pk'
             ? { ...m, role: 'writable' as FieldRole, isNullable: false }
             : m
         )
@@ -171,10 +171,10 @@
     }
   }
 
-  /** Toggle nullable for a scalar member (only for modifier roles) */
+  /** Toggle nullable for a field member (only for modifier roles) */
   function toggleMemberNullable(memberId: string) {
     const newMembers = editedItem.members.map(m => {
-      if (m.id !== memberId || m.memberType !== 'scalar') return m;
+      if (m.id !== memberId || m.memberType !== 'field') return m;
       if (!roleHasModifiers(m.role)) return m;
       return { ...m, isNullable: !m.isNullable };
     });
@@ -198,13 +198,13 @@
   /** Set literal default value (empty string -> null) */
   function setMemberDefaultValue(memberId: string, value: string) {
     const newMembers = editedItem.members.map(m => {
-      if (m.id !== memberId || m.memberType !== 'scalar') return m;
+      if (m.id !== memberId || m.memberType !== 'field') return m;
       return { ...m, defaultValue: value.trim() || null };
     });
     editedItem = { ...editedItem, members: newMembers };
   }
 
-  /** Update a scalar member's name */
+  /** Update a field member's name */
   function setMemberName(memberId: string, name: string) {
     const newMembers = editedItem.members.map(m => {
       if (m.id !== memberId) return m;
@@ -303,8 +303,8 @@
   }
 
   // --- Navigate to source object from derived relationship ---
-  function navigateToObject(objectId: string) {
-    goto(`/objects?highlight=${objectId}`);
+  function navigateToObject(objectDefinitionId: string) {
+    goto(`/objects?highlight=${objectDefinitionId}`);
   }
 
   // --- Validator template UI state (local to this component) ---
@@ -396,7 +396,7 @@
               {#each filteredFieldsForAdd as field (field.id)}
                 <button
                   type="button"
-                  onmousedown={(e) => { e.preventDefault(); addScalarMember(field.id); memberSearchQuery = ''; memberDropdownOpen = false; }}
+                  onmousedown={(e) => { e.preventDefault(); addFieldMember(field.id); memberSearchQuery = ''; memberDropdownOpen = false; }}
                   class="w-full px-3 py-2 text-left hover:bg-surface-raised border-b border-edge/50 last:border-b-0 transition-colors"
                 >
                   <div class="flex items-center space-x-2">
@@ -471,8 +471,8 @@
         >
           {#each dndItems as item (item.id)}
             <div animate:flip={{ duration: 150 }}>
-              {#if item.memberType === 'scalar'}
-                <!-- Scalar Member Row -->
+              {#if item.memberType === 'field'}
+                <!-- Field Member Row -->
                 {@const field = getFieldById(item.fieldId)}
                 {@const availableRoles = field ? getAvailableRoles(field.type) : []}
                 {#if field}
@@ -488,9 +488,9 @@
                       </div>
 
                       <!--
-                        TODO(mediancode): Review scalar member rename vs codegen — see api/services/generation.py
+                        TODO(mediancode): Review field member rename vs codegen — see api/services/generation.py
                         same topic (InputField / query params from object use field.name, not member.name).
-                        - Object drawer: user can set ScalarMember.name per object; fieldId points at the Field row;
+                        - Object drawer: user can set FieldMember.name per object; fieldId points at the Field row;
                           create/update payloads include this name; backend stores it and requires unique names
                           per object.
                         - Backend zip generation: scalar model fields and query params derived from an object

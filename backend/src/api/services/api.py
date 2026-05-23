@@ -7,7 +7,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
-from api.models.database import ApiModel, Namespace
+from api.models.database import ApiEndpoint, ApiModel, Namespace
 from api.schemas.api import ApiCreate, ApiUpdate
 from api.services.base import BaseService
 
@@ -71,6 +71,8 @@ class ApiService(BaseService[ApiModel]):
             .join(Namespace)
             .options(
                 selectinload(ApiModel.endpoints),
+                selectinload(ApiModel.endpoints).selectinload(ApiEndpoint.path_params),
+                selectinload(ApiModel.endpoints).selectinload(ApiEndpoint.query_params),
             )
             .where(
                 ApiModel.id == api_id,

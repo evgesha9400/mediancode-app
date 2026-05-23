@@ -225,7 +225,7 @@ async def generate_api_code(
     except ValidationError as exc:
         messages = [e["msg"] for e in exc.errors()]
         raise HTTPException(
-            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
             detail="; ".join(messages),
         )
 

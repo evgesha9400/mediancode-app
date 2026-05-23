@@ -76,7 +76,7 @@ import {
   type ApiDetailStateConfig,
   type TagSection
 } from '$lib/stores/apiDetailState.svelte';
-import { apisStore, endpointsStore, getEndpointCountByTagName } from '$lib/stores/stores';
+import { apisStore, endpointsStore, fieldsStore, getEndpointCountByTagName, objectsStore } from '$lib/stores/stores';
 import { updateApiApi, deleteApiApi } from '$lib/api/apis';
 import { createEndpointApi, updateEndpointApi, deleteEndpointApi } from '$lib/api/endpoints';
 import { mapApiError } from '$lib/domain/errorMap';
@@ -141,6 +141,8 @@ beforeEach(() => {
   vi.clearAllMocks();
   apisStore.set([]);
   endpointsStore.set([]);
+  fieldsStore.set([]);
+  objectsStore.set([]);
 });
 
 // ---------------------------------------------------------------------------
@@ -779,20 +781,7 @@ describe('apiDetailState - Endpoint Editing Helpers', () => {
   });
   afterEach(() => cleanup?.());
 
-  it('should update query params object', () => {
-    ({ state, cleanup } = createTestState());
-    flushSync();
-
-    state.openEndpoint(state.endpoints[0]);
-    flushSync();
-
-    state.handleSelectQueryParamsObject('obj-1');
-    flushSync();
-
-    expect(state.editedEndpoint!.queryParamsObjectId).toBe('obj-1');
-  });
-
-  it('should update object', () => {
+  it('should update target object', () => {
     ({ state, cleanup } = createTestState());
     flushSync();
 
@@ -802,7 +791,7 @@ describe('apiDetailState - Endpoint Editing Helpers', () => {
     state.handleSelectObject('obj-2');
     flushSync();
 
-    expect(state.editedEndpoint!.objectId).toBe('obj-2');
+    expect(state.editedEndpoint!.targetObjectId).toBe('obj-2');
   });
 
   it('should toggle envelope', () => {
@@ -848,7 +837,7 @@ describe('apiDetailState - Endpoint Editing Helpers', () => {
 
     expect(state.editedEndpoint!.useEnvelope).toBe(true);
     expect(state.editedEndpoint!.responseShape).toBe('object');
-    expect(state.editedEndpoint!.objectId).toBeUndefined();
+    expect(state.editedEndpoint!.targetObjectId).toBeUndefined();
   });
 
   it('should handle tag select', () => {
@@ -906,8 +895,65 @@ describe('apiDetailState - Pagination Toggle', () => {
 
   beforeEach(() => {
     apisStore.set([makeApi({ id: 'api-1' })]);
+    fieldsStore.set([
+      {
+        id: 'field-price',
+        namespaceId: 'ns-1',
+        name: 'price',
+        type: 'float',
+        container: null,
+        constraints: [],
+        validators: [],
+        usedInApis: []
+      },
+      {
+        id: 'field-category',
+        namespaceId: 'ns-1',
+        name: 'category',
+        type: 'str',
+        container: null,
+        constraints: [],
+        validators: [],
+        usedInApis: []
+      }
+    ]);
+    objectsStore.set([
+      {
+        id: 'obj-items',
+        namespaceId: 'ns-1',
+        name: 'Item',
+        members: [
+          {
+            id: 'member-price',
+            memberType: 'field',
+            name: 'price',
+            fieldId: 'field-price',
+            role: 'writable',
+            isNullable: false
+          },
+          {
+            id: 'member-category',
+            memberType: 'field',
+            name: 'category',
+            fieldId: 'field-category',
+            role: 'writable',
+            isNullable: false
+          }
+        ],
+        derivedRelationships: [],
+        validators: [],
+        usedInApis: []
+      }
+    ]);
     endpointsStore.set([
-      makeEndpoint({ id: 'ep-1', apiId: 'api-1', method: 'GET', path: '/items', responseShape: 'list' })
+      makeEndpoint({
+        id: 'ep-1',
+        apiId: 'api-1',
+        method: 'GET',
+        path: '/items',
+        responseShape: 'list',
+        targetObjectId: 'obj-items'
+      })
     ]);
     flushSync();
   });
@@ -1103,30 +1149,90 @@ describe('apiDetailState - Query Param from Field', () => {
 
   beforeEach(() => {
     apisStore.set([makeApi({ id: 'api-1' })]);
+    fieldsStore.set([
+      {
+        id: 'field-price',
+        namespaceId: 'ns-1',
+        name: 'price',
+        type: 'float',
+        container: null,
+        constraints: [],
+        validators: [],
+        usedInApis: []
+      },
+      {
+        id: 'field-category',
+        namespaceId: 'ns-1',
+        name: 'category',
+        type: 'str',
+        container: null,
+        constraints: [],
+        validators: [],
+        usedInApis: []
+      }
+    ]);
+    objectsStore.set([
+      {
+        id: 'obj-items',
+        namespaceId: 'ns-1',
+        name: 'Item',
+        members: [
+          {
+            id: 'member-price',
+            memberType: 'field',
+            name: 'price',
+            fieldId: 'field-price',
+            role: 'writable',
+            isNullable: false
+          },
+          {
+            id: 'member-category',
+            memberType: 'field',
+            name: 'category',
+            fieldId: 'field-category',
+            role: 'writable',
+            isNullable: false
+          }
+        ],
+        derivedRelationships: [],
+        validators: [],
+        usedInApis: []
+      }
+    ]);
     endpointsStore.set([
-      makeEndpoint({ id: 'ep-1', apiId: 'api-1', method: 'GET', path: '/items', responseShape: 'list' })
+      makeEndpoint({
+        id: 'ep-1',
+        apiId: 'api-1',
+        method: 'GET',
+        path: '/items',
+        responseShape: 'list',
+        targetObjectId: 'obj-items'
+      })
     ]);
     flushSync();
   });
   afterEach(() => cleanup?.());
 
-  it('should add query param with name and field pre-populated from field name', () => {
+  it('should add query param with name and Field Member pre-populated', () => {
     ({ state, cleanup } = createTestState());
     flushSync();
 
     state.openEndpoint(state.endpoints[0]);
     flushSync();
+    state.handleSelectObject('obj-items');
+    flushSync();
 
     expect(state.editedEndpoint!.queryParams).toEqual([]);
 
-    state.handleAddQueryParamFromField('price');
+    state.handleAddQueryParamFromField('member-price');
     flushSync();
 
     expect(state.editedEndpoint!.queryParams).toHaveLength(1);
     expect(state.editedEndpoint!.queryParams[0]).toEqual({
       name: 'price',
-      field: 'price',
-      operator: 'eq'
+      fieldMemberId: 'member-price',
+      operator: 'eq',
+      required: false
     });
   });
 
@@ -1136,14 +1242,16 @@ describe('apiDetailState - Query Param from Field', () => {
 
     state.openEndpoint(state.endpoints[0]);
     flushSync();
-
-    state.handleAddQueryParamFromField('price');
+    state.handleSelectObject('obj-items');
     flushSync();
-    state.handleAddQueryParamFromField('category');
+
+    state.handleAddQueryParamFromField('member-price');
+    flushSync();
+    state.handleAddQueryParamFromField('member-category');
     flushSync();
 
     expect(state.editedEndpoint!.queryParams).toHaveLength(2);
     expect(state.editedEndpoint!.queryParams[1].name).toBe('category');
-    expect(state.editedEndpoint!.queryParams[1].field).toBe('category');
+    expect(state.editedEndpoint!.queryParams[1].fieldMemberId).toBe('member-category');
   });
 });

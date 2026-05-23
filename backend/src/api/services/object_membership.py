@@ -16,14 +16,14 @@ from api.models.database import (
     ObjectDefinition,
     TypeModel,
 )
-from api.models.members import ObjectMember, RelationshipMember, ScalarMember
+from api.models.members import FieldMember, ObjectMember, RelationshipMember
 from api.schemas.members import (
     DerivedRelationshipResponse,
+    FieldMemberInput,
+    FieldMemberResponse,
     MemberResponse,
     RelationshipMemberInput,
     RelationshipMemberResponse,
-    ScalarMemberInput,
-    ScalarMemberResponse,
 )
 from api.schemas.object import ModelValidatorInput, ModelValidatorResponse
 from api_craft.models.enums import RelationshipKind
@@ -64,7 +64,7 @@ class ObjectMembership:
 
     async def validate_members(
         self,
-        members: list[ScalarMemberInput | RelationshipMemberInput],
+        members: list[FieldMemberInput | RelationshipMemberInput],
         object_id: UUID,
     ) -> None:
         """Validate Object Members before persisting.
@@ -73,13 +73,13 @@ class ObjectMembership:
         :param object_id: The owning Object ID.
         :raises HTTPException: On validation failure.
         """
-        scalars = [m for m in members if isinstance(m, ScalarMemberInput)]
+        scalars = [m for m in members if isinstance(m, FieldMemberInput)]
         relationships = [m for m in members if isinstance(m, RelationshipMemberInput)]
 
         names = [m.name for m in members]
         if len(names) != len(set(names)):
             raise HTTPException(
-                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
                 detail="Duplicate member names are not allowed.",
             )
 
@@ -93,11 +93,11 @@ class ObjectMembership:
                 continue
             existing = await self.db.get(ObjectMember, member.id)
             expected_type = (
-                "scalar" if isinstance(member, ScalarMemberInput) else "relationship"
+                "field" if isinstance(member, FieldMemberInput) else "relationship"
             )
             if existing and existing.member_type != expected_type:
                 raise HTTPException(
-                    status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                    status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
                     detail=(
                         f"Cannot change member type for id '{member.id}': "
                         f"was '{existing.member_type}', got '{expected_type}'."
@@ -107,7 +107,7 @@ class ObjectMembership:
     async def set_members(
         self,
         obj: ObjectDefinition,
-        members: list[ScalarMemberInput | RelationshipMemberInput],
+        members: list[FieldMemberInput | RelationshipMemberInput],
     ) -> None:
         """Create Object Members for a new Object.
 
@@ -121,7 +121,7 @@ class ObjectMembership:
     async def reconcile_members(
         self,
         obj: ObjectDefinition,
-        members: list[ScalarMemberInput | RelationshipMemberInput],
+        members: list[FieldMemberInput | RelationshipMemberInput],
     ) -> None:
         """Reconcile Object Members by ID.
 
@@ -164,13 +164,13 @@ class ObjectMembership:
 
             stored.name = member.name
             stored.position = position
-            if isinstance(member, ScalarMemberInput):
-                if not isinstance(stored, ScalarMember):
+            if isinstance(member, FieldMemberInput):
+                if not isinstance(stored, FieldMember):
                     raise HTTPException(
-                        status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                        status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
                         detail=(
                             f"Cannot change member type for id '{member.id}': "
-                            "was 'relationship', got 'scalar'."
+                            "was 'relationship', got 'field'."
                         ),
                     )
                 stored.field_id = member.field_id
@@ -181,10 +181,10 @@ class ObjectMembership:
             else:
                 if not isinstance(stored, RelationshipMember):
                     raise HTTPException(
-                        status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                        status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
                         detail=(
                             f"Cannot change member type for id '{member.id}': "
-                            "was 'scalar', got 'relationship'."
+                            "was 'field', got 'relationship'."
                         ),
                     )
                 stored.target_object_id = member.target_object_id
@@ -299,11 +299,11 @@ class ObjectMembership:
         """
         responses: list[MemberResponse] = []
         for member in sorted(obj.members, key=lambda item: item.position):
-            if isinstance(member, ScalarMember):
+            if isinstance(member, FieldMember):
                 responses.append(
-                    ScalarMemberResponse(
+                    FieldMemberResponse(
                         id=member.id,
-                        memberType="scalar",
+                        memberType="field",
                         name=member.name,
                         fieldId=member.field_id,
                         role=member.role,
@@ -356,13 +356,13 @@ class ObjectMembership:
         """
         if rel.kind == "many_to_many" and rel.required:
             raise HTTPException(
-                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
                 detail="many_to_many relationships cannot be required.",
             )
 
         if rel.target_object_id == object_id and rel.inverse_name == rel.name:
             raise HTTPException(
-                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
                 detail=(
                     f"Self-referential relationship '{rel.name}' "
                     f"must have a different inverse_name."
@@ -384,7 +384,7 @@ class ObjectMembership:
         result = await self.db.execute(existing_inverse_query)
         if (result.scalar() or 0) > 0:
             raise HTTPException(
-                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
                 detail=(
                     f"inverse_name '{rel.inverse_name}' already exists "
                     f"on target object '{rel.target_object_id}'."
@@ -402,7 +402,7 @@ class ObjectMembership:
         result = await self.db.execute(name_collision_query)
         if (result.scalar() or 0) > 0:
             raise HTTPException(
-                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
                 detail=(
                     f"inverse_name '{rel.inverse_name}' collides with an existing "
                     f"member name on target object '{rel.target_object_id}'."
@@ -424,17 +424,15 @@ class ObjectMembership:
         result = await self.db.execute(incoming_inverse_query)
         if (result.scalar() or 0) > 0:
             raise HTTPException(
-                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
                 detail=(
                     f"Member name '{rel.name}' collides with an incoming "
                     f"inverse_name targeting this object."
                 ),
             )
 
-    async def _validate_role_field_types(
-        self, scalars: list[ScalarMemberInput]
-    ) -> None:
-        """Validate constrained scalar member roles against field types.
+    async def _validate_role_field_types(self, scalars: list[FieldMemberInput]) -> None:
+        """Validate constrained field member roles against field types.
 
         :param scalars: Scalar member inputs.
         :raises HTTPException: If role and field type are incompatible.
@@ -447,7 +445,7 @@ class ObjectMembership:
         pk_count = sum(1 for scalar in scalars if scalar.role == "pk")
         if pk_count > 1:
             raise HTTPException(
-                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
                 detail="An object may have at most one primary key field.",
             )
 
@@ -473,7 +471,7 @@ class ObjectMembership:
                 base_type = field_type_map.get(field_id)
                 if base_type and base_type not in allowed:
                     raise HTTPException(
-                        status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                        status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
                         detail=(
                             f"Field type '{base_type}' is not compatible with "
                             f"role '{role}'. Allowed types: "
@@ -484,7 +482,7 @@ class ObjectMembership:
     def _create_member(
         self,
         object_id: UUID,
-        member: ScalarMemberInput | RelationshipMemberInput,
+        member: FieldMemberInput | RelationshipMemberInput,
         position: int,
     ) -> None:
         """Create one Object Member row.
@@ -494,9 +492,9 @@ class ObjectMembership:
         :param position: Position index.
         """
         row: ObjectMember
-        if isinstance(member, ScalarMemberInput):
+        if isinstance(member, FieldMemberInput):
             is_nullable, default_value = self._scalar_storage_values(member)
-            row = ScalarMember(
+            row = FieldMember(
                 object_id=object_id,
                 name=member.name,
                 position=position,
@@ -518,9 +516,9 @@ class ObjectMembership:
         self.db.add(row)
 
     def _scalar_storage_values(
-        self, member: ScalarMemberInput
+        self, member: FieldMemberInput
     ) -> tuple[bool, str | None]:
-        """Return normalized persistence values for a Scalar Member.
+        """Return normalized persistence values for a Field Member.
 
         :param member: Scalar member input.
         :returns: Tuple of ``is_nullable`` and ``default_value``.

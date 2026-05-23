@@ -57,7 +57,7 @@ describe('objectsConfig.toUpdatePayload', () => {
 		const item = makeObject({
 			members: [
 				{
-					memberType: 'scalar',
+					memberType: 'field',
 					id: backendId,
 					name: 'existing',
 					fieldId: 'f-1',
@@ -65,7 +65,7 @@ describe('objectsConfig.toUpdatePayload', () => {
 					isNullable: false
 				},
 				{
-					memberType: 'scalar',
+					memberType: 'field',
 					id: tmpId,
 					name: 'fresh',
 					fieldId: 'f-2',
@@ -90,7 +90,7 @@ describe('objectsConfig.toUpdatePayload', () => {
 		const item = makeObject({
 			members: [
 				{
-					memberType: 'scalar',
+					memberType: 'field',
 					id: newTempMemberId(),
 					name: 'a',
 					fieldId: 'f-1',
@@ -125,7 +125,7 @@ describe('objectsConfig.toUpdatePayload', () => {
 		];
 		const item = makeObject({
 			members: ids.map((id) => ({
-				memberType: 'scalar' as const,
+				memberType: 'field' as const,
 				id,
 				name: `m-${id.slice(0, 4)}`,
 				fieldId: 'f-x',
@@ -149,7 +149,7 @@ describe('objectsConfig.toCreatePayload', () => {
 		const item = makeObject({
 			members: [
 				{
-					memberType: 'scalar',
+					memberType: 'field',
 					id: '550e8400-e29b-41d4-a716-446655440000',
 					name: 'stowaway-backend-id',
 					fieldId: 'f-1',
@@ -157,7 +157,7 @@ describe('objectsConfig.toCreatePayload', () => {
 					isNullable: false
 				},
 				{
-					memberType: 'scalar',
+					memberType: 'field',
 					id: newTempMemberId(),
 					name: 'tmp',
 					fieldId: 'f-2',

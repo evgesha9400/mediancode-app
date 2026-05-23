@@ -22,7 +22,7 @@ These items were flagged during review and should be addressed during implementa
 
 1. **Temp ID → save flow ownership:** `toApiMembers()` should live in the form component (or a shared helper called by the form). The store's `handleSave`/`handleCreate` receives already-sanitized members from the form. The form owns temp IDs; the store never sees them.
 2. **`DerivedRelationship.sourceObjectId`:** The backend must provide `sourceObjectId: string` in the derived relationship response. If missing from the backend API, add it — the frontend needs it for navigation.
-3. **Validator field options:** `ObjectFormContent.svelte` currently derives validator field options from `editedItem.fields`. During the rewrite, update this to derive from scalar members: `editedItem.members.filter(m => m.memberType === 'scalar')`.
+3. **Validator field options:** `ObjectFormContent.svelte` currently derives validator field options from `editedItem.fields`. During the rewrite, update this to derive from field members: `editedItem.members.filter(m => m.memberType === 'field')`.
 4. **Test coverage:** Phase 4 should include behavior tests for mixed-member editing (add scalar, add relationship, reorder, delete) and derived relationship display for all three kinds — not just type-shape fixture updates.
 
 ---
@@ -97,7 +97,7 @@ When a scalar member is added with a field selector, the member's `name` is popu
 
 ### D5: Object list/count UIs
 
-`object.fields.length` is used in multiple places to show a count pill. Decision: use `members.length` (total members, scalar + relationship). Update `fieldCount` in the store's `deriveExtra` to use `obj.members.length` and rename to `memberCount`. Rename the table column header from "Fields" to "Members".
+`object.fields.length` is used in multiple places to show a count pill. Decision: use `members.length` (total members, field + relationship). Update `fieldCount` in the store's `deriveExtra` to use `obj.members.length` and rename to `memberCount`. Rename the table column header from "Fields" to "Members".
 
 ### D6: Self-referential relationships must be allowed
 
@@ -142,8 +142,8 @@ Add the following types:
 ```typescript
 export type RelationshipKind = 'one_to_one' | 'one_to_many' | 'many_to_many';
 
-export type ScalarMember = {
-  memberType: 'scalar';
+export type FieldMember = {
+  memberType: 'field';
   id?: string;
   name: string;
   fieldId: string;
@@ -162,7 +162,7 @@ export type RelationshipMember = {
   required: boolean;
 };
 
-export type ObjectMember = ScalarMember | RelationshipMember;
+export type ObjectMember = FieldMember | RelationshipMember;
 
 export type DerivedRelationship = {
   name: string;
@@ -209,8 +209,8 @@ Remove these types entirely:
 
 Remove `ObjectFieldReferenceResponse`, `ObjectRelationshipResponse`, `GraphMutationResponse`. Add:
 ```typescript
-interface ScalarMemberResponse {
-  memberType: 'scalar';
+interface FieldMemberResponse {
+  memberType: 'field';
   id: string;
   name: string;
   fieldId: string;
@@ -229,7 +229,7 @@ interface RelationshipMemberResponse {
   required: boolean;
 }
 
-type MemberResponse = ScalarMemberResponse | RelationshipMemberResponse;
+type MemberResponse = FieldMemberResponse | RelationshipMemberResponse;
 
 interface DerivedRelationshipResponse {
   name: string;
@@ -249,7 +249,7 @@ Update `ObjectResponse` to use `members: MemberResponse[]` and `derivedRelations
 - [ ] **Step 6: Replace response transformers**
 
 Remove `transformFieldReference()`, `transformRelationship()`, `transformGraphMutation()`. Add:
-- `transformMember(response: MemberResponse): ObjectMember` -- dispatches on `memberType` to produce `ScalarMember` or `RelationshipMember` with correct type casts (`role as FieldRole`, `kind as RelationshipKind`)
+- `transformMember(response: MemberResponse): ObjectMember` -- dispatches on `memberType` to produce `FieldMember` or `RelationshipMember` with correct type casts (`role as FieldRole`, `kind as RelationshipKind`)
 - `transformDerivedRelationship(response: DerivedRelationshipResponse): DerivedRelationship` -- maps response to domain type
 
 Update `transformObject()` to use the new transformers:
@@ -305,7 +305,7 @@ feat(types/api): replace field/relationship model with unified members
 
 - Remove ObjectFieldReference, ObjectRelationship, Cardinality, GraphMutationResult
 - Remove fk from FieldRole, FIELD_ROLES, ROLE_LABELS, ROLE_TOOLTIPS, ROLE_TYPE_CONSTRAINTS
-- Add ScalarMember, RelationshipMember, ObjectMember, DerivedRelationship, RelationshipKind
+- Add FieldMember, RelationshipMember, ObjectMember, DerivedRelationship, RelationshipKind
 - Replace ObjectDefinition: members + derivedRelationships replace fields + relationships
 - Rewrite API transformers for member model
 - Delete createRelationshipApi, deleteRelationshipApi, transformGraphMutation
@@ -420,7 +420,7 @@ function toUpdatePayload(item: ObjectDefinition): { ok: true; data: UpdateObject
 Update `validate()` to iterate `item.members` (filtering for scalars) instead of `item.fields`:
 ```typescript
 for (const member of item.members) {
-  if (member.memberType !== 'scalar') continue;
+  if (member.memberType !== 'field') continue;
   const field = getFieldById(member.fieldId);
   if (!field) continue;
 
@@ -510,7 +510,7 @@ function toApiMembers(items: DndItem[]): (ObjectMember | Omit<ObjectMember, 'id'
 
 Remove `addField`/`removeField`/`addRelationship`/`removeRelationship` and replace with:
 
-- `addScalarMember(fieldId: string)`: lookup field by ID, create a scalar member with `name` populated from the field's name (D4), `role: 'writable'`, `isNullable: false`, assign `id = crypto.randomUUID()`.
+- `addFieldMember(fieldId: string)`: lookup field by ID, create a scalar member with `name` populated from the field's name (D4), `role: 'writable'`, `isNullable: false`, assign `id = crypto.randomUUID()`.
 - `addRelationshipMember(targetObjectId: string)`: lookup target object, create a relationship member with `name` as lowercase plural of target name, `kind: 'one_to_many'`, `inverseName` as lowercase singular of source object name, `required: true`, assign `id = crypto.randomUUID()`.
 - `removeMember(id: string)`: remove by `id` from DnD items.
 - `updateMember(id: string, updates: Partial<ObjectMember>)`: update by `id`. When `kind` changes to `many_to_many`, force `required = false` (D2).
@@ -534,7 +534,7 @@ Replace `selectedFieldIds` to track scalar member `fieldId`s:
 ```typescript
 let selectedFieldIds = $derived(
   editedItem.members
-    .filter(m => m.memberType === 'scalar')
+    .filter(m => m.memberType === 'field')
     .map(m => m.fieldId)
 );
 ```
@@ -547,7 +547,7 @@ Delete `import { getFkHint } from '$lib/domain/relationships'`.
 
 Replace the "Fields" section with a unified "Members" section. The section iterates all DnD items and renders based on `memberType`:
 
-**Scalar row** (`memberType === 'scalar'`):
+**Scalar row** (`memberType === 'field'`):
 - Field name (from the field lookup by `member.fieldId`) -- displayed as read-only text
 - Member name input (editable, defaults to field name per D4)
 - Role dropdown (using `getAvailableRoles` -- no FK option since it no longer exists)
@@ -634,7 +634,7 @@ Use SvelteKit's `goto()` or dispatch a custom event to navigate to `/objects?hig
 
 - [ ] **Step 25: Update type imports**
 
-Replace `Cardinality, ObjectRelationship, ObjectFieldReference` imports with `RelationshipKind, ScalarMember, RelationshipMember, ObjectMember, DerivedRelationship`.
+Replace `Cardinality, ObjectRelationship, ObjectFieldReference` imports with `RelationshipKind, FieldMember, RelationshipMember, ObjectMember, DerivedRelationship`.
 
 - [ ] **Step 26: Commit**
 
@@ -672,23 +672,23 @@ In `src/routes/(dashboard)/objects/+page.svelte`:
 - Replace `object.fields.length` (line 231) with `object.members.length`
 - Update the label text from "fields" to "members"
 - Update the `ObjectWithCounts` local type annotation if present: `fieldCount` to `memberCount`
-- In the inline object creation (line 144), replace `fields: [...]` with `members: [{ memberType: 'scalar' as const, name: field.name, fieldId: field.id, role: 'writable' as const, isNullable: false }]` and add `derivedRelationships: []`
+- In the inline object creation (line 144), replace `fields: [...]` with `members: [{ memberType: 'field' as const, name: field.name, fieldId: field.id, role: 'writable' as const, isNullable: false }]` and add `derivedRelationships: []`
 - Remove `relationships: []` if present in the inline creation
 
 - [ ] **Step 2: Update APIs page**
 
 In `src/routes/(dashboard)/apis/[id]/+page.svelte`:
-- Replace `obj.fields` iteration (line 58) with `obj.members.filter(m => m.memberType === 'scalar')`
+- Replace `obj.fields` iteration (line 58) with `obj.members.filter(m => m.memberType === 'field')`
 - Replace `editedNewObject.fields` (line 148) with `members`
 - Replace `fields: []` and `relationships: []` (lines 124-125) with `members: []` and `derivedRelationships: []`
-- Replace field-addition logic (line 265) to add scalar members instead of field refs
+- Replace field-addition logic (line 265) to add field members instead of field refs
 
 - [ ] **Step 3: Update `paramInference.ts`**
 
-`resolveTargetFields()` currently iterates `obj.fields`. Update to filter `obj.members` for scalar members:
+`resolveTargetFields()` currently iterates `obj.fields`. Update to filter `obj.members` for field members:
 ```typescript
 for (const member of obj.members) {
-  if (member.memberType !== 'scalar') continue;
+  if (member.memberType !== 'field') continue;
   const field = fields.find(f => f.id === member.fieldId);
   if (!field) continue;
   result.push({
@@ -707,7 +707,7 @@ Replace `selectedObject.fields.length` with `selectedObject.members.length` (per
 
 - [ ] **Step 5: Update `ResponsePreview.svelte`**
 
-Replace `selectedObject.fields.length` with `selectedObject.members.length`. Replace `selectedObject.fields` iteration with `selectedObject.members.filter(m => m.memberType === 'scalar')` since only scalar members have field references for the preview.
+Replace `selectedObject.fields.length` with `selectedObject.members.length`. Replace `selectedObject.fields` iteration with `selectedObject.members.filter(m => m.memberType === 'field')` since only field members have field references for the preview.
 
 - [ ] **Step 6: Update examples utility**
 
@@ -721,8 +721,8 @@ function getTargetPkType(targetObjectId: string): string {
   if (!targetObj) return 'uuid';
 
   const pkMember = targetObj.members.find(
-    m => m.memberType === 'scalar' && m.role === 'pk'
-  ) as ScalarMember | undefined;
+    m => m.memberType === 'field' && m.role === 'pk'
+  ) as FieldMember | undefined;
   if (!pkMember) return 'uuid';
 
   const pkField = getFieldById(pkMember.fieldId);
@@ -734,21 +734,21 @@ function getTargetPkType(targetObjectId: string): string {
 Replace `objectDef.fields.forEach(fieldRef => ...)` with scalar member iteration:
 ```typescript
 objectDef.members
-  .filter(m => m.memberType === 'scalar')
+  .filter(m => m.memberType === 'field')
   .forEach(member => {
-    const field = getFieldById((member as ScalarMember).fieldId);
+    const field = getFieldById((member as FieldMember).fieldId);
     if (field) obj[member.name] = getExampleValueForType(field.type);
   });
 ```
 
 **6c: Update `buildRequestBodyFromObjectId`:**
-Replace `objectDef.fields.filter(...)` with scalar members filtered by writable roles:
+Replace `objectDef.fields.filter(...)` with field members filtered by writable roles:
 ```typescript
 objectDef.members
-  .filter(m => m.memberType === 'scalar')
-  .filter(m => (m as ScalarMember).role === 'writable' || (m as ScalarMember).role === 'write_only')
+  .filter(m => m.memberType === 'field')
+  .filter(m => (m as FieldMember).role === 'writable' || (m as FieldMember).role === 'write_only')
   .forEach(member => {
-    const field = getFieldById((member as ScalarMember).fieldId);
+    const field = getFieldById((member as FieldMember).fieldId);
     if (field) obj[member.name] = getExampleValueForType(field.type);
   });
 ```
@@ -763,13 +763,13 @@ for (const dr of objectDef.derivedRelationships) {
 ```
 
 **6d: Update `buildResponseBodyFromObjectId`:**
-Same two changes: use scalar members for field iteration, and replace legacy FK injection with derived-relationship-based computation:
+Same two changes: use field members for field iteration, and replace legacy FK injection with derived-relationship-based computation:
 ```typescript
 objectDef.members
-  .filter(m => m.memberType === 'scalar')
-  .filter(m => (m as ScalarMember).role !== 'write_only')
+  .filter(m => m.memberType === 'field')
+  .filter(m => (m as FieldMember).role !== 'write_only')
   .forEach(member => {
-    const field = getFieldById((member as ScalarMember).fieldId);
+    const field = getFieldById((member as FieldMember).fieldId);
     if (field) obj[member.name] = getExampleValueForType(field.type);
   });
 
@@ -808,10 +808,10 @@ Fix any remaining type errors.
 feat(routes/utils): update all consumers for unified members model
 
 - Objects page shows members.length, creates objects with members array
-- APIs page creates objects with members, iterates scalar members
-- paramInference uses member.name and filters scalar members
+- APIs page creates objects with members, iterates field members
+- paramInference uses member.name and filters field members
 - ObjectSelectorDropdown and ResponsePreview use members
-- Examples utility uses scalar members, replaces FK injection with derivedRelationships
+- Examples utility uses field members, replaces FK injection with derivedRelationships
 - Remove all stale imports of deleted types and modules
 ```
 
@@ -862,7 +862,7 @@ Module under test is deleted.
 
 - Replace fixture objects to use `members` array instead of `fields`/`relationships`
 - Remove the FK test object (`fkTestObject`) with `role: 'fk'`
-- Update tests for `buildRequestBodyFromObjectId` and `buildResponseBodyFromObjectId` to verify scalar members are used
+- Update tests for `buildRequestBodyFromObjectId` and `buildResponseBodyFromObjectId` to verify field members are used
 - Add test: relationship members do not produce direct fields in request/response previews
 - Add test: `derivedRelationships` with `impliesFk` produce FK columns in request/response previews
 
@@ -877,7 +877,7 @@ Module under test is deleted.
 
 - Remove mocks for `createRelationshipApi` and `deleteRelationshipApi`
 - Update test fixtures to use `members` instead of `fields`/`relationships`
-- Add test: create object with mixed scalar + relationship members sends single API call with members array
+- Add test: create object with mixed field + relationship members sends single API call with members array
 - Add test: update object sends members with IDs for reconcile-by-ID
 - Add test: derived relationships are present on loaded objects
 
@@ -895,9 +895,9 @@ Module under test is deleted.
     {
       id: 'obj-1', namespaceId: 'ns', name: 'Product',
       members: [
-        { memberType: 'scalar', name: 'id', fieldId: 'f-1', role: 'pk', isNullable: false },
-        { memberType: 'scalar', name: 'price', fieldId: 'f-2', role: 'writable', isNullable: false },
-        { memberType: 'scalar', name: 'name', fieldId: 'f-3', role: 'writable', isNullable: true }
+        { memberType: 'field', name: 'id', fieldId: 'f-1', role: 'pk', isNullable: false },
+        { memberType: 'field', name: 'price', fieldId: 'f-2', role: 'writable', isNullable: false },
+        { memberType: 'field', name: 'name', fieldId: 'f-3', role: 'writable', isNullable: true }
       ],
       derivedRelationships: [], validators: [], usedInApis: []
     }
@@ -922,7 +922,7 @@ Module under test is deleted.
 - [ ] **Step 11: Update `tests/fixtures/seedData.ts`**
 
 - Update `initialObjects` fixtures: replace `fields: [...]` and `relationships: []` with `members: [...]` and `derivedRelationships: []`
-- Each field ref becomes a `ScalarMember`: `{ memberType: 'scalar', name: '<field_name>', fieldId: '...', role: '...', isNullable: false }`
+- Each field ref becomes a `FieldMember`: `{ memberType: 'field', name: '<field_name>', fieldId: '...', role: '...', isNullable: false }`
 - Update `cloneObjects` to clone `members` and `derivedRelationships` instead of `fields` and `relationships`
 - Update the `ObjectDefinition` import if needed
 
@@ -931,7 +931,7 @@ Module under test is deleted.
 - [ ] **Step 12: Update `tests/page-objects/ObjectsPage.ts`**
 
 - Rename `fieldsColumnHeader` to `membersColumnHeader`
-- Rename `addField` to `addScalarMember` (or keep as `addField` with updated implementation)
+- Rename `addField` to `addFieldMember` (or keep as `addField` with updated implementation)
 - Rename `getFieldCount` to `getMemberCount`
 - Rename `getFieldNames` to `getMemberNames`
 - Update locators to match new UI text ("Members" instead of "Fields" in column headers)
@@ -978,7 +978,7 @@ test(frontend): update all tests for unified member model
 
 - Delete reconciler and relationships test files
 - Update fieldRoles tests (remove fk)
-- Update examples tests for scalar members and derivedRelationship FK injection
+- Update examples tests for field members and derivedRelationship FK injection
 - Update API and store tests for members shape
 - Update objects store tests (makeObject helper)
 - Update paramInference tests (resolveTargetFields fixtures, member.name)

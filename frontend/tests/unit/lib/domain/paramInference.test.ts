@@ -55,46 +55,54 @@ describe('getCompatibleOperators', () => {
 });
 
 describe('suggestFieldAndOperator', () => {
-  const fieldNames = ['price', 'quantity', 'category', 'name', 'created_at', 'id'];
+  const targetFields = [
+    { fieldMemberId: 'fm-price', name: 'price', type: 'float', isPk: false },
+    { fieldMemberId: 'fm-quantity', name: 'quantity', type: 'int', isPk: false },
+    { fieldMemberId: 'fm-category', name: 'category', type: 'str', isPk: false },
+    { fieldMemberId: 'fm-name', name: 'name', type: 'str', isPk: false },
+    { fieldMemberId: 'fm-created-at', name: 'created_at', type: 'datetime', isPk: false },
+    { fieldMemberId: 'fm-id', name: 'id', type: 'uuid', isPk: true }
+  ];
 
-  it('suggests field: price, operator: gte for "min_price"', () => {
-    const result = suggestFieldAndOperator('min_price', fieldNames);
-    expect(result).toEqual({ field: 'price', operator: 'gte' });
+  it('suggests Field Member price, operator gte for "min_price"', () => {
+    const result = suggestFieldAndOperator('min_price', targetFields);
+    expect(result).toEqual({ fieldMemberId: 'fm-price', operator: 'gte' });
   });
 
-  it('suggests field: quantity, operator: lte for "max_quantity"', () => {
-    const result = suggestFieldAndOperator('max_quantity', fieldNames);
-    expect(result).toEqual({ field: 'quantity', operator: 'lte' });
+  it('suggests Field Member quantity, operator lte for "max_quantity"', () => {
+    const result = suggestFieldAndOperator('max_quantity', targetFields);
+    expect(result).toEqual({ fieldMemberId: 'fm-quantity', operator: 'lte' });
   });
 
-  it('suggests field: category, operator: eq for "category"', () => {
-    const result = suggestFieldAndOperator('category', fieldNames);
-    expect(result).toEqual({ field: 'category', operator: 'eq' });
+  it('suggests Field Member category, operator eq for "category"', () => {
+    const result = suggestFieldAndOperator('category', targetFields);
+    expect(result).toEqual({ fieldMemberId: 'fm-category', operator: 'eq' });
   });
 
   it('returns null when no field name matches', () => {
-    const result = suggestFieldAndOperator('foobar', fieldNames);
+    const result = suggestFieldAndOperator('foobar', targetFields);
     expect(result).toBeNull();
   });
 
   it('returns null for empty param name', () => {
-    const result = suggestFieldAndOperator('', fieldNames);
+    const result = suggestFieldAndOperator('', targetFields);
     expect(result).toBeNull();
   });
 
-  it('suggests field: created_at, operator: gte for "after_created_at"', () => {
-    const result = suggestFieldAndOperator('after_created_at', fieldNames);
-    expect(result).toEqual({ field: 'created_at', operator: 'gte' });
+  it('suggests Field Member created_at, operator gte for "after_created_at"', () => {
+    const result = suggestFieldAndOperator('after_created_at', targetFields);
+    expect(result).toEqual({ fieldMemberId: 'fm-created-at', operator: 'gte' });
   });
 
-  it('suggests field: created_at, operator: lte for "before_created_at"', () => {
-    const result = suggestFieldAndOperator('before_created_at', fieldNames);
-    expect(result).toEqual({ field: 'created_at', operator: 'lte' });
+  it('suggests Field Member created_at, operator lte for "before_created_at"', () => {
+    const result = suggestFieldAndOperator('before_created_at', targetFields);
+    expect(result).toEqual({ fieldMemberId: 'fm-created-at', operator: 'lte' });
   });
 });
 
 // Helper to build validation input concisely
 interface TargetField {
+  fieldMemberId: string;
   name: string;
   type: string;
   isPk: boolean;
@@ -102,24 +110,24 @@ interface TargetField {
 
 function validate(opts: {
   responseShape: ResponseShape;
-  objectId?: string;
+  targetObjectId?: string;
   targetFields?: TargetField[];
-  pathParams?: { name: string; field: string }[];
-  queryParams?: { name: string; field: string; operator: string }[];
+  pathParams?: { name: string; fieldMemberId: string }[];
+  queryParams?: { name: string; fieldMemberId: string; operator: string; required?: boolean }[];
 }) {
   return validateEndpointParams({
     responseShape: opts.responseShape,
-    objectId: opts.objectId,
+    targetObjectId: opts.targetObjectId,
     targetFields: opts.targetFields ?? [],
     pathParams: (opts.pathParams ?? []).map(p => ({
       name: p.name,
-      fieldId: '',
-      field: p.field
+      fieldMemberId: p.fieldMemberId
     })),
     queryParams: (opts.queryParams ?? []).map(q => ({
       name: q.name,
-      field: q.field,
-      operator: q.operator as any
+      fieldMemberId: q.fieldMemberId,
+      operator: q.operator as any,
+      required: q.required ?? false
     }))
   });
 }
@@ -127,20 +135,20 @@ function validate(opts: {
 describe('validateEndpointParams', () => {
   // Rule 1: Target object is known
   describe('Rule 1: target is known', () => {
-    it('passes for detail endpoint with objectId (target inferred)', () => {
+    it('passes for detail endpoint with targetObjectId', () => {
       const errors = validate({
         responseShape: 'object',
-        objectId: 'obj-1',
-        targetFields: [{ name: 'id', type: 'uuid', isPk: true }],
-        pathParams: [{ name: 'id', field: 'id' }]
+        targetObjectId: 'obj-1',
+        targetFields: [{ fieldMemberId: 'fm-id', name: 'id', type: 'uuid', isPk: true }],
+        pathParams: [{ name: 'id', fieldMemberId: 'fm-id' }]
       });
       expect(errors).toEqual([]);
     });
 
-    it('fails for list endpoint without objectId', () => {
+    it('fails for list endpoint without targetObjectId', () => {
       const errors = validate({
         responseShape: 'list',
-        objectId: undefined,
+        targetObjectId: undefined,
         targetFields: []
       });
       expect(errors).toContainEqual(
@@ -154,9 +162,9 @@ describe('validateEndpointParams', () => {
     it('fails when path param field does not exist on target', () => {
       const errors = validate({
         responseShape: 'object',
-        objectId: 'obj-1',
-        targetFields: [{ name: 'id', type: 'uuid', isPk: true }],
-        pathParams: [{ name: 'store_id', field: 'store_id' }]
+        targetObjectId: 'obj-1',
+        targetFields: [{ fieldMemberId: 'fm-id', name: 'id', type: 'uuid', isPk: true }],
+        pathParams: [{ name: 'store_id', fieldMemberId: 'fm-store-id' }]
       });
       expect(errors).toContainEqual(
         expect.objectContaining({ rule: 2, param: 'store_id' })
@@ -166,21 +174,21 @@ describe('validateEndpointParams', () => {
     it('fails when query param field does not exist on target', () => {
       const errors = validate({
         responseShape: 'list',
-        objectId: 'obj-1',
-        targetFields: [{ name: 'price', type: 'float', isPk: false }],
-        queryParams: [{ name: 'category', field: 'nonexistent', operator: 'eq' }]
+        targetObjectId: 'obj-1',
+        targetFields: [{ fieldMemberId: 'fm-price', name: 'price', type: 'float', isPk: false }],
+        queryParams: [{ name: 'category', fieldMemberId: 'fm-category', operator: 'eq' }]
       });
       expect(errors).toContainEqual(
         expect.objectContaining({ rule: 2, param: 'category' })
       );
     });
 
-    it('skips validation for query params with empty field (no field mapped)', () => {
+    it('skips target membership validation for query params with no Field Member selected', () => {
       const errors = validate({
         responseShape: 'list',
-        objectId: 'obj-1',
-        targetFields: [{ name: 'id', type: 'uuid', isPk: true }],
-        queryParams: [{ name: 'limit', field: '', operator: 'eq' }]
+        targetObjectId: 'obj-1',
+        targetFields: [{ fieldMemberId: 'fm-id', name: 'id', type: 'uuid', isPk: true }],
+        queryParams: [{ name: 'limit', fieldMemberId: '', operator: 'eq' }]
       });
       const rule2Errors = errors.filter(e => e.rule === 2);
       expect(rule2Errors).toEqual([]);
@@ -192,14 +200,14 @@ describe('validateEndpointParams', () => {
     it('passes when last path param maps to PK', () => {
       const errors = validate({
         responseShape: 'object',
-        objectId: 'obj-1',
+        targetObjectId: 'obj-1',
         targetFields: [
-          { name: 'store_id', type: 'uuid', isPk: false },
-          { name: 'id', type: 'uuid', isPk: true }
+          { fieldMemberId: 'fm-store-id', name: 'store_id', type: 'uuid', isPk: false },
+          { fieldMemberId: 'fm-id', name: 'id', type: 'uuid', isPk: true }
         ],
         pathParams: [
-          { name: 'store_id', field: 'store_id' },
-          { name: 'item_id', field: 'id' }
+          { name: 'store_id', fieldMemberId: 'fm-store-id' },
+          { name: 'item_id', fieldMemberId: 'fm-id' }
         ]
       });
       const rule3 = errors.filter(e => e.rule === 3);
@@ -209,12 +217,12 @@ describe('validateEndpointParams', () => {
     it('fails when last path param does not map to PK', () => {
       const errors = validate({
         responseShape: 'object',
-        objectId: 'obj-1',
+        targetObjectId: 'obj-1',
         targetFields: [
-          { name: 'store_id', type: 'uuid', isPk: false },
-          { name: 'id', type: 'uuid', isPk: true }
+          { fieldMemberId: 'fm-store-id', name: 'store_id', type: 'uuid', isPk: false },
+          { fieldMemberId: 'fm-id', name: 'id', type: 'uuid', isPk: true }
         ],
-        pathParams: [{ name: 'store_id', field: 'store_id' }]
+        pathParams: [{ name: 'store_id', fieldMemberId: 'fm-store-id' }]
       });
       expect(errors).toContainEqual(
         expect.objectContaining({ rule: 3 })
@@ -227,26 +235,27 @@ describe('validateEndpointParams', () => {
     it('fails when detail endpoint has query params with field references', () => {
       const errors = validate({
         responseShape: 'object',
-        objectId: 'obj-1',
-        targetFields: [{ name: 'id', type: 'uuid', isPk: true }],
-        pathParams: [{ name: 'id', field: 'id' }],
-        queryParams: [{ name: 'q', field: 'id', operator: 'eq' }]
+        targetObjectId: 'obj-1',
+        targetFields: [{ fieldMemberId: 'fm-id', name: 'id', type: 'uuid', isPk: true }],
+        pathParams: [{ name: 'id', fieldMemberId: 'fm-id' }],
+        queryParams: [{ name: 'q', fieldMemberId: 'fm-id', operator: 'eq' }]
       });
       expect(errors).toContainEqual(
         expect.objectContaining({ rule: 4 })
       );
     });
 
-    it('passes when detail endpoint has legacy query params without field', () => {
+    it('fails when detail endpoint has any query params', () => {
       const errors = validate({
         responseShape: 'object',
-        objectId: 'obj-1',
-        targetFields: [{ name: 'id', type: 'uuid', isPk: true }],
-        pathParams: [{ name: 'id', field: 'id' }],
-        queryParams: [{ name: 'include', field: '', operator: 'eq' }]
+        targetObjectId: 'obj-1',
+        targetFields: [{ fieldMemberId: 'fm-id', name: 'id', type: 'uuid', isPk: true }],
+        pathParams: [{ name: 'id', fieldMemberId: 'fm-id' }],
+        queryParams: [{ name: 'include', fieldMemberId: '', operator: 'eq' }]
       });
-      const rule4 = errors.filter(e => e.rule === 4);
-      expect(rule4).toEqual([]);
+      expect(errors).toContainEqual(
+        expect.objectContaining({ rule: 4 })
+      );
     });
   });
 
@@ -255,12 +264,12 @@ describe('validateEndpointParams', () => {
     it('fails when list endpoint has path param mapped to PK', () => {
       const errors = validate({
         responseShape: 'list',
-        objectId: 'obj-1',
+        targetObjectId: 'obj-1',
         targetFields: [
-          { name: 'id', type: 'uuid', isPk: true },
-          { name: 'price', type: 'float', isPk: false }
+          { fieldMemberId: 'fm-id', name: 'id', type: 'uuid', isPk: true },
+          { fieldMemberId: 'fm-price', name: 'price', type: 'float', isPk: false }
         ],
-        pathParams: [{ name: 'product_id', field: 'id' }]
+        pathParams: [{ name: 'product_id', fieldMemberId: 'fm-id' }]
       });
       expect(errors).toContainEqual(
         expect.objectContaining({ rule: 5 })
@@ -273,9 +282,9 @@ describe('validateEndpointParams', () => {
     it('fails when using gte on str field', () => {
       const errors = validate({
         responseShape: 'list',
-        objectId: 'obj-1',
-        targetFields: [{ name: 'name', type: 'str', isPk: false }],
-        queryParams: [{ name: 'min_name', field: 'name', operator: 'gte' }]
+        targetObjectId: 'obj-1',
+        targetFields: [{ fieldMemberId: 'fm-name', name: 'name', type: 'str', isPk: false }],
+        queryParams: [{ name: 'min_name', fieldMemberId: 'fm-name', operator: 'gte' }]
       });
       expect(errors).toContainEqual(
         expect.objectContaining({ rule: 6, param: 'min_name' })
@@ -285,9 +294,9 @@ describe('validateEndpointParams', () => {
     it('passes when using ilike on str field', () => {
       const errors = validate({
         responseShape: 'list',
-        objectId: 'obj-1',
-        targetFields: [{ name: 'name', type: 'str', isPk: false }],
-        queryParams: [{ name: 'search', field: 'name', operator: 'ilike' }]
+        targetObjectId: 'obj-1',
+        targetFields: [{ fieldMemberId: 'fm-name', name: 'name', type: 'str', isPk: false }],
+        queryParams: [{ name: 'search', fieldMemberId: 'fm-name', operator: 'ilike' }]
       });
       const rule6 = errors.filter(e => e.rule === 6);
       expect(rule6).toEqual([]);
@@ -296,9 +305,9 @@ describe('validateEndpointParams', () => {
     it('fails when using like on int field', () => {
       const errors = validate({
         responseShape: 'list',
-        objectId: 'obj-1',
-        targetFields: [{ name: 'count', type: 'int', isPk: false }],
-        queryParams: [{ name: 'count_like', field: 'count', operator: 'like' }]
+        targetObjectId: 'obj-1',
+        targetFields: [{ fieldMemberId: 'fm-count', name: 'count', type: 'int', isPk: false }],
+        queryParams: [{ name: 'count_like', fieldMemberId: 'fm-count', operator: 'like' }]
       });
       expect(errors).toContainEqual(
         expect.objectContaining({ rule: 6, param: 'count_like' })
@@ -318,9 +327,9 @@ describe('resolveTargetFields', () => {
     {
       id: 'obj-1', namespaceId: 'ns', name: 'Product',
       members: [
-        { memberType: 'scalar', name: 'id', fieldId: 'f-1', role: 'pk', isNullable: false },
-        { memberType: 'scalar', name: 'price', fieldId: 'f-2', role: 'writable', isNullable: false },
-        { memberType: 'scalar', name: 'name', fieldId: 'f-3', role: 'writable', isNullable: true }
+        { memberType: 'field', id: 'fm-id', name: 'id', fieldId: 'f-1', role: 'pk', isNullable: false },
+        { memberType: 'field', id: 'fm-price', name: 'price', fieldId: 'f-2', role: 'writable', isNullable: false },
+        { memberType: 'field', id: 'fm-name', name: 'name', fieldId: 'f-3', role: 'writable', isNullable: true }
       ],
       derivedRelationships: [], validators: [], usedInApis: []
     }
@@ -329,9 +338,9 @@ describe('resolveTargetFields', () => {
   it('resolves fields from target object using member.name', () => {
     const result = resolveTargetFields('obj-1', objects, fields);
     expect(result).toEqual([
-      { name: 'id', type: 'uuid', isPk: true },
-      { name: 'price', type: 'float', isPk: false },
-      { name: 'name', type: 'str', isPk: false }
+      { fieldMemberId: 'fm-id', name: 'id', type: 'uuid', isPk: true },
+      { fieldMemberId: 'fm-price', name: 'price', type: 'float', isPk: false },
+      { fieldMemberId: 'fm-name', name: 'name', type: 'str', isPk: false }
     ]);
   });
 
@@ -345,28 +354,28 @@ describe('resolveTargetFields', () => {
       {
         id: 'obj-2', namespaceId: 'ns', name: 'Sparse',
         members: [
-          { memberType: 'scalar', name: 'id', fieldId: 'f-1', role: 'pk', isNullable: false },
-          { memberType: 'scalar', name: 'missing_field', fieldId: 'f-missing', role: 'writable', isNullable: false }
+          { memberType: 'field', id: 'fm-id', name: 'id', fieldId: 'f-1', role: 'pk', isNullable: false },
+          { memberType: 'field', id: 'fm-missing', name: 'missing_field', fieldId: 'f-missing', role: 'writable', isNullable: false }
         ],
         derivedRelationships: [], validators: [], usedInApis: []
       }
     ];
     const result = resolveTargetFields('obj-2', sparseObjects, fields);
-    expect(result).toEqual([{ name: 'id', type: 'uuid', isPk: true }]);
+    expect(result).toEqual([{ fieldMemberId: 'fm-id', name: 'id', type: 'uuid', isPk: true }]);
   });
 
-  it('skips relationship members (only resolves scalar members)', () => {
+  it('skips relationship members (only resolves field members)', () => {
     const mixedObjects: ObjectDefinition[] = [
       {
         id: 'obj-3', namespaceId: 'ns', name: 'Mixed',
         members: [
-          { memberType: 'scalar', name: 'id', fieldId: 'f-1', role: 'pk', isNullable: false },
+          { memberType: 'field', id: 'fm-id', name: 'id', fieldId: 'f-1', role: 'pk', isNullable: false },
           { memberType: 'relationship', name: 'orders', targetObjectId: 'o-2', kind: 'one_to_many', inverseName: 'product', required: true }
         ],
         derivedRelationships: [], validators: [], usedInApis: []
       }
     ];
     const result = resolveTargetFields('obj-3', mixedObjects, fields);
-    expect(result).toEqual([{ name: 'id', type: 'uuid', isPk: true }]);
+    expect(result).toEqual([{ fieldMemberId: 'fm-id', name: 'id', type: 'uuid', isPk: true }]);
   });
 });

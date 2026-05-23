@@ -30,10 +30,10 @@ const roleTestObject: ObjectDefinition = {
 	namespaceId: 'ns-1',
 	name: 'TestObj',
 	members: [
-		{ memberType: 'scalar', name: 'id', fieldId: testFieldId('id'), role: 'pk', isNullable: false },
-		{ memberType: 'scalar', name: 'name', fieldId: testFieldId('name'), role: 'writable', isNullable: false },
-		{ memberType: 'scalar', name: 'password', fieldId: testFieldId('password'), role: 'write_only', isNullable: false },
-		{ memberType: 'scalar', name: 'created_at', fieldId: testFieldId('created_at'), role: 'read_only', isNullable: false },
+		{ memberType: 'field', name: 'id', fieldId: testFieldId('id'), role: 'pk', isNullable: false },
+		{ memberType: 'field', name: 'name', fieldId: testFieldId('name'), role: 'writable', isNullable: false },
+		{ memberType: 'field', name: 'password', fieldId: testFieldId('password'), role: 'write_only', isNullable: false },
+		{ memberType: 'field', name: 'created_at', fieldId: testFieldId('created_at'), role: 'read_only', isNullable: false },
 	],
 	derivedRelationships: [],
 	validators: [],
@@ -47,8 +47,8 @@ const relTestObject: ObjectDefinition = {
 	namespaceId: 'ns-1',
 	name: 'RelTestObj',
 	members: [
-		{ memberType: 'scalar', name: 'id', fieldId: testFieldId('id'), role: 'pk', isNullable: false },
-		{ memberType: 'scalar', name: 'name', fieldId: testFieldId('name'), role: 'writable', isNullable: false },
+		{ memberType: 'field', name: 'id', fieldId: testFieldId('id'), role: 'pk', isNullable: false },
+		{ memberType: 'field', name: 'name', fieldId: testFieldId('name'), role: 'writable', isNullable: false },
 		{ memberType: 'relationship', name: 'orders', targetObjectId: 'some-obj', kind: 'one_to_many', inverseName: 'parent', required: true },
 	],
 	derivedRelationships: [
@@ -144,11 +144,11 @@ describe('examples - buildObjectFromObjectId', () => {
 		expect(Object.keys(obj).length).toBeGreaterThan(0);
 	});
 
-	it('should return empty object for undefined objectId', () => {
+	it('should return empty object for undefined object definition ID', () => {
 		expect(buildObjectFromObjectId(undefined)).toEqual({});
 	});
 
-	it('should return empty object for non-existent objectId', () => {
+	it('should return empty object for non-existent object definition ID', () => {
 		expect(buildObjectFromObjectId('non-existent')).toEqual({});
 	});
 });
@@ -166,7 +166,7 @@ describe('examples - buildRequestPreviewFromObject', () => {
 		expect(parsed).toHaveProperty('email');
 	});
 
-	it('should return empty object JSON for undefined objectId', () => {
+	it('should return empty object JSON for undefined object definition ID', () => {
 		const preview = buildRequestPreviewFromObject(undefined);
 
 		expect(JSON.parse(preview)).toEqual({});
@@ -245,7 +245,7 @@ describe('examples - buildRequestBodyFromObjectId (role filtering)', () => {
 		expect(obj).toHaveProperty('name');
 	});
 
-	it('should return empty object for undefined objectId', () => {
+	it('should return empty object for undefined object definition ID', () => {
 		expect(buildRequestBodyFromObjectId(undefined)).toEqual({});
 	});
 });
@@ -276,7 +276,7 @@ describe('examples - buildResponseBodyFromObjectId (role filtering)', () => {
 		expect(obj).toHaveProperty('name');
 	});
 
-	it('should return empty object for undefined objectId', () => {
+	it('should return empty object for undefined object definition ID', () => {
 		expect(buildResponseBodyFromObjectId(undefined)).toEqual({});
 	});
 });
@@ -291,7 +291,7 @@ describe('examples - relationship members and derived relationships in previews'
 		const obj = buildRequestBodyFromObjectId(REL_TEST_OBJECT_ID);
 		// 'orders' is a relationship member -- it should not appear as a field
 		expect(obj).not.toHaveProperty('orders');
-		// scalar members should still appear
+		// field members should still appear
 		expect(obj).toHaveProperty('name');
 	});
 

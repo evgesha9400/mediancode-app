@@ -1,14 +1,9 @@
 // tests/unit/lib/domain/endpointReducer.test.ts
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 
 // ---------------------------------------------------------------------------
 // Mocks
 // ---------------------------------------------------------------------------
-
-vi.mock('$lib/stores/stores', () => {
-  const { writable } = require('svelte/store');
-  return { fieldsStore: writable([]) };
-});
 
 vi.mock('$lib/utils/ids', () => ({
   generateId: vi.fn(() => 'new-endpoint-id'),
@@ -22,11 +17,9 @@ vi.mock('$lib/utils/ids', () => ({
 import {
   reconcilePathParams,
   normalizeEndpoint,
-  hydratePathParamsForEndpoint,
   buildDuplicateEndpoint
 } from '$lib/domain/endpointReducer';
-import { fieldsStore } from '$lib/stores/stores';
-import type { ApiEndpoint, Field, ObjectDefinition } from '$lib/types';
+import type { ApiEndpoint } from '$lib/types';
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -53,19 +46,15 @@ function makeEndpoint(overrides: Partial<ApiEndpoint> = {}): ApiEndpoint {
 // ---------------------------------------------------------------------------
 
 describe('reconcilePathParams', () => {
-  beforeEach(() => {
-    fieldsStore.set([]);
-  });
-
   it('extracts parameter names from path', () => {
     const result = reconcilePathParams('/users/{user_id}', []);
-    expect(result.pathParams).toEqual([{ name: 'user_id', fieldId: '', field: '' }]);
+    expect(result.pathParams).toEqual([{ name: 'user_id', fieldMemberId: '' }]);
   });
 
   it('preserves existing parameter definitions', () => {
-    const existing = [{ name: 'user_id', fieldId: 'field-1', field: 'user_id' }];
+    const existing = [{ name: 'user_id', fieldMemberId: 'member-1' }];
     const result = reconcilePathParams('/users/{user_id}', existing);
-    expect(result.pathParams).toEqual([{ name: 'user_id', fieldId: 'field-1', field: 'user_id' }]);
+    expect(result.pathParams).toEqual([{ name: 'user_id', fieldMemberId: 'member-1' }]);
   });
 
   it('adds leading slash if missing', () => {
@@ -76,15 +65,6 @@ describe('reconcilePathParams', () => {
   it('keeps existing leading slash', () => {
     const result = reconcilePathParams('/items/{id}', []);
     expect(result.path).toBe('/items/{id}');
-  });
-
-  it('matches field by name for new params', () => {
-    fieldsStore.set([
-      { id: 'f-1', name: 'user_id', namespaceId: 'ns', type: 'uuid', description: '', defaultValue: '', constraints: [], validators: [], usedInApis: [] }
-    ] as any);
-
-    const result = reconcilePathParams('/users/{user_id}', []);
-    expect(result.pathParams[0].fieldId).toBe('f-1');
   });
 
   it('returns empty pathParams when path has no parameters', () => {
@@ -119,68 +99,6 @@ describe('normalizeEndpoint', () => {
   });
 });
 
-describe('hydratePathParamsForEndpoint', () => {
-  const fields: Field[] = [
-    {
-      id: 'f-track',
-      namespaceId: 'ns',
-      name: 'tracking_id',
-      type: 'uuid',
-      container: null,
-      constraints: [],
-      validators: [],
-      usedInApis: []
-    }
-  ];
-
-  const objects: ObjectDefinition[] = [
-    {
-      id: 'obj-prod',
-      namespaceId: 'ns',
-      name: 'Product',
-      members: [
-        {
-          memberType: 'scalar',
-          name: 'tracking_id',
-          fieldId: 'f-track',
-          role: 'pk',
-          isNullable: false
-        }
-      ],
-      derivedRelationships: [],
-      validators: [],
-      usedInApis: []
-    }
-  ];
-
-  it('fills field from object member when API omits field name', () => {
-    const ep = makeEndpoint({
-      objectId: 'obj-prod',
-      pathParams: [{ name: 'tracking_id', fieldId: 'f-track', field: '' }]
-    });
-    const out = hydratePathParamsForEndpoint(ep, objects, fields);
-    expect(out.pathParams[0].field).toBe('tracking_id');
-  });
-
-  it('falls back to global field catalog when objectId is missing', () => {
-    const ep = makeEndpoint({
-      objectId: undefined,
-      pathParams: [{ name: 'tracking_id', fieldId: 'f-track', field: '' }]
-    });
-    const out = hydratePathParamsForEndpoint(ep, objects, fields);
-    expect(out.pathParams[0].field).toBe('tracking_id');
-  });
-
-  it('does not overwrite an existing non-empty field', () => {
-    const ep = makeEndpoint({
-      objectId: 'obj-prod',
-      pathParams: [{ name: 'tid', fieldId: 'f-track', field: 'custom_member' }]
-    });
-    const out = hydratePathParamsForEndpoint(ep, objects, fields);
-    expect(out.pathParams[0].field).toBe('custom_member');
-  });
-});
-
 describe('buildDuplicateEndpoint', () => {
   it('returns a new endpoint with a fresh ID', () => {
     const original = makeEndpoint({ id: 'ep-original' });
@@ -202,16 +120,16 @@ describe('buildDuplicateEndpoint', () => {
 
   it('deep copies pathParams', () => {
     const original = makeEndpoint({
-      pathParams: [{ name: 'id', fieldId: 'f-1', field: 'id' }]
+      pathParams: [{ name: 'id', fieldMemberId: 'fm-1' }]
     });
     const dup = buildDuplicateEndpoint(original);
-    expect(dup.pathParams).toEqual([{ name: 'id', fieldId: 'f-1', field: 'id' }]);
+    expect(dup.pathParams).toEqual([{ name: 'id', fieldMemberId: 'fm-1' }]);
     expect(dup.pathParams[0]).not.toBe(original.pathParams[0]);
   });
 
   it('deep copies queryParams', () => {
     const original = makeEndpoint({
-      queryParams: [{ name: 'min_price', field: 'price', operator: 'gte' as any }]
+      queryParams: [{ name: 'min_price', fieldMemberId: 'fm-price', operator: 'gte' as any, required: false }]
     });
     const dup = buildDuplicateEndpoint(original);
     expect(dup.queryParams).toEqual(original.queryParams);

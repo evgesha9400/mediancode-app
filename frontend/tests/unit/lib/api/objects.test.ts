@@ -22,8 +22,8 @@ const MOCK_OBJECT_RESPONSE = {
   name: 'User',
   description: 'User model',
   members: [
-    { memberType: 'scalar', id: 'm-1', name: 'email', fieldId: 'f-1', role: 'writable', isNullable: false, defaultValue: null },
-    { memberType: 'scalar', id: 'm-2', name: 'username', fieldId: 'f-2', role: 'writable', isNullable: true, defaultValue: null }
+    { memberType: 'field', id: 'm-1', name: 'email', fieldId: 'f-1', role: 'writable', isNullable: false, defaultValue: null },
+    { memberType: 'field', id: 'm-2', name: 'username', fieldId: 'f-2', role: 'writable', isNullable: true, defaultValue: null }
   ],
   derivedRelationships: [],
   validators: [],
@@ -99,7 +99,7 @@ describe('Objects API Service', () => {
       const result = await createObjectApi({
         namespaceId: 'ns-1',
         name: 'User',
-        members: [{ memberType: 'scalar' as const, name: 'email', fieldId: 'f-1', role: 'writable' as const, isNullable: false }]
+        members: [{ memberType: 'field' as const, name: 'email', fieldId: 'f-1', role: 'writable' as const, isNullable: false }]
       });
 
       expect(apiPost).toHaveBeenCalledWith('/objects', expect.any(Object));
@@ -129,14 +129,14 @@ describe('Objects API Service', () => {
   });
 
   describe('transformMember', () => {
-    it('should transform scalar members correctly', async () => {
+    it('should transform field members correctly', async () => {
       (apiGet as any).mockResolvedValue([MOCK_OBJECT_RESPONSE]);
 
       const result = await listObjects();
       const member = result[0].members[0];
 
-      expect(member.memberType).toBe('scalar');
-      if (member.memberType === 'scalar') {
+      expect(member.memberType).toBe('field');
+      if (member.memberType === 'field') {
         expect(member.id).toBe('m-1');
         expect(member.name).toBe('email');
         expect(member.fieldId).toBe('f-1');

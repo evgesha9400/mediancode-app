@@ -99,7 +99,7 @@
         members: [
           ...workflow.editedItem.members,
           {
-            memberType: 'scalar',
+            memberType: 'field',
             id: newTempMemberId(),
             name: field.name,
             fieldId: field.id,

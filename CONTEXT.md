@@ -28,21 +28,25 @@ _Avoid_: Hard-coded backend stack, template variant
 The generator step that turns API endpoints into prepared FastAPI view metadata, including request/response schema selection, target Object inference, path/query parameter typing, placeholder response decisions, ORM-backed filtering, pagination, signatures, and view imports.
 _Avoid_: Endpoint helper soup, template conditionals
 
+**Endpoint Query Semantics**:
+Endpoint-owned filter and pagination facts. Includes query parameter name, target Field Member, filter operator, requiredness, and endpoint-level pagination. Path parameters and query parameters should reference target Field Members rather than reusable Field definitions or query Objects. Query filters default to optional from the client perspective; required query filters are explicit Endpoint Query Semantics.
+_Avoid_: Query Object, reusable filter Object, Field-only parameter references
+
 **Object**:
 A named model definition that can be used as an endpoint request, response, or query parameter object. An Object has zero or more Object Members.
 _Avoid_: Model, resource, table
 
 **Object Membership**:
-The lifecycle and rules for the members belonging to an Object, including scalar members, relationship members, ordering, reconcile-by-ID, role/default rules, and derived relationships.
+The lifecycle and rules for the members belonging to an Object, including Field Members, Relationship Members, ordering, reconcile-by-ID, role/default rules, and derived relationships.
 _Avoid_: Field list, object schema internals
 
 **Object Member**:
-An ordered member of an Object. An Object Member is either a Scalar Member or a Relationship Member.
+An ordered member of an Object. An Object Member is either a Field Member or a Relationship Member.
 _Avoid_: Property, attribute
 
-**Scalar Member**:
+**Field Member**:
 An Object Member backed by a Field. It carries the field role, nullability, and default value used during generation.
-_Avoid_: Field
+_Avoid_: Bare field, property
 
 **Relationship Member**:
 An Object Member that points from one Object to another Object. It authors the relationship on the source Object and produces a derived relationship on the target Object.
@@ -53,7 +57,7 @@ The rules that turn an authored Relationship Member into portable derived relati
 _Avoid_: Relationship helper logic, ORM relationship internals
 
 **Field**:
-A reusable scalar definition that provides the generated Python type, constraints, validators, and description for Scalar Members and endpoint parameters.
+A reusable scalar definition that provides the generated Python type, constraints, validators, and description for Field Members and endpoint parameters.
 _Avoid_: Object member
 
 **Namespace**:
@@ -68,7 +72,7 @@ _Avoid_: Lookup tables
 
 Developer: "Why is this not just part of Object?"
 
-Domain expert: "Object is the named model definition. Object Membership is the rules for the ordered members inside it, especially when updates reconcile existing Scalar Members and Relationship Members by ID."
+Domain expert: "Object is the named model definition. Object Membership is the rules for the ordered members inside it, especially when updates reconcile existing Field Members and Relationship Members by ID."
 
 Developer: "Where does the inverse relationship come from?"
 
@@ -81,6 +85,10 @@ Domain expert: "No. FastAPI is the first API Implementation. The architecture sh
 Developer: "Should persisted API rows be passed straight into the FastAPI generator?"
 
 Domain expert: "No. Persisted rows are first assembled into an API Design Snapshot, then the current FastAPI Generation Target translates that snapshot into its concrete input model."
+
+Developer: "Should Endpoint filters be represented by reusable Objects?"
+
+Domain expert: "No. Endpoint Query Semantics live on the Endpoint. Reuse should be introduced only if multiple Endpoints need one shared filter definition that changes together, and that should be recorded as a new architecture decision."
 
 Developer: "Why do Object responses and generated SQLAlchemy models both calculate relationship facts?"
 

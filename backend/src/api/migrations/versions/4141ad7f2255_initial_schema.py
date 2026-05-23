@@ -486,21 +486,14 @@ def upgrade() -> None:
         sa.Column("path", sa.Text(), nullable=False),
         sa.Column("description", sa.Text(), nullable=False),
         sa.Column("tag_name", sa.Text(), nullable=True),
-        sa.Column(
-            "path_params",
-            postgresql.JSONB(astext_type=sa.Text()),
-            nullable=False,
-            server_default="[]",
-        ),
-        sa.Column(
-            "query_params_object_id", postgresql.UUID(as_uuid=True), nullable=True
-        ),
-        sa.Column("object_id", postgresql.UUID(as_uuid=True), nullable=True),
+        sa.Column("target_object_id", postgresql.UUID(as_uuid=True), nullable=False),
+        sa.Column("pagination", sa.Boolean(), nullable=False, server_default="false"),
         sa.Column("use_envelope", sa.Boolean(), nullable=False),
         sa.Column("response_shape", sa.Text(), nullable=False),
         sa.ForeignKeyConstraint(["api_id"], ["apis.id"], ondelete="CASCADE"),
-        sa.ForeignKeyConstraint(["query_params_object_id"], ["objects.id"]),
-        sa.ForeignKeyConstraint(["object_id"], ["objects.id"], ondelete="SET NULL"),
+        sa.ForeignKeyConstraint(
+            ["target_object_id"], ["objects.id"], ondelete="RESTRICT"
+        ),
         sa.PrimaryKeyConstraint("id"),
         sa.CheckConstraint(
             check_constraint_sql("method", HttpMethod),

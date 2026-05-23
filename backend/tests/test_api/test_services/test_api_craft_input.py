@@ -8,10 +8,10 @@ from api.services.api_craft_input import build_input_api_from_snapshot
 from api.services.api_design_snapshot import (
     APIDesignEndpoint,
     APIDesignFieldConstraint,
+    APIDesignFieldMember,
     APIDesignFieldValidator,
     APIDesignObject,
     APIDesignPathParam,
-    APIDesignScalarMember,
     APIDesignSnapshot,
 )
 
@@ -22,8 +22,8 @@ def test_build_input_api_from_snapshot_maps_current_target_models():
         id=uuid4(),
         name="Item",
         description="Item object",
-        scalar_members=[
-            APIDesignScalarMember(
+        field_members=[
+            APIDesignFieldMember(
                 member_name="identifier",
                 field_name="id",
                 field_type="uuid.UUID",
@@ -33,7 +33,7 @@ def test_build_input_api_from_snapshot_maps_current_target_models():
                 role="pk",
                 default_value=None,
             ),
-            APIDesignScalarMember(
+            APIDesignFieldMember(
                 member_name="display_title",
                 field_name="title",
                 field_type="str",
@@ -73,15 +73,17 @@ def test_build_input_api_from_snapshot_maps_current_target_models():
                 path_params=[
                     APIDesignPathParam(
                         name="item_id",
+                        field_member_name="identifier",
                         type="uuid.UUID",
                         description="Item ID",
                     )
                 ],
                 query_params=[],
-                object_name="Item",
+                target_object_name="Item",
                 description="Get item",
                 use_envelope=True,
                 response_shape="object",
+                pagination=False,
             )
         ],
         tag_names=["Items"],
@@ -98,13 +100,15 @@ def test_build_input_api_from_snapshot_maps_current_target_models():
     assert input_api.name == "ShopApi"
     assert input_api.config.database.enabled is True
     assert input_api.config.response_placeholders is False
-    assert id_field.name == "id"
+    assert id_field.name == "identifier"
     assert id_field.pk is True
-    assert title_field.name == "title"
+    assert title_field.name == "display_title"
     assert title_field.default is not None
     assert title_field.default.kind == "literal"
     assert title_field.validators[0].params == {"value": 40}
-    assert title_field.field_validators[0].function_name == "append_suffix_title"
+    assert (
+        title_field.field_validators[0].function_name == "append_suffix_display_title"
+    )
     assert title_field.field_validators[0].function_body == "return value + '!'"
     assert input_api.endpoints[0].name == "GetItemsByItemId"
     assert input_api.endpoints[0].path_params[0].type == "uuid.UUID"

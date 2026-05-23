@@ -40,9 +40,7 @@ class TypeService(BaseService[TypeModel]):
         result = await self.db.execute(query)
         return list(result.scalars().all())
 
-    async def get_by_id_for_user(
-        self, type_id: str, user_id: UUID
-    ) -> TypeModel | None:
+    async def get_by_id_for_user(self, type_id: str, user_id: UUID) -> TypeModel | None:
         """Get a type if owned by the user.
 
         System namespace types (``user_id IS NULL``) are excluded, so this

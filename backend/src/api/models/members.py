@@ -3,7 +3,7 @@
 
 Three tables implement a joined-table-inheritance hierarchy:
 - ``object_members`` — base identity/ordering for every member
-- ``scalar_members`` — child table for field-backed members
+- ``field_members`` — child table for field-backed members
 - ``relationship_members`` — child table for relationship members
 """
 
@@ -38,7 +38,7 @@ class ObjectMember(Base):
     :ivar object_id: Reference to the owning object.
     :ivar name: Member name (unique per object).
     :ivar position: Display/ordering position within the object.
-    :ivar member_type: Discriminator (``'scalar'`` or ``'relationship'``).
+    :ivar member_type: Discriminator (``'field'`` or ``'relationship'``).
     """
 
     __tablename__ = "object_members"
@@ -78,7 +78,7 @@ class ObjectMember(Base):
     }
 
 
-class ScalarMember(ObjectMember):
+class FieldMember(ObjectMember):
     """Child table for scalar (field-backed) members.
 
     :ivar id: Shared PK with ``object_members``.
@@ -88,7 +88,7 @@ class ScalarMember(ObjectMember):
     :ivar default_value: Optional literal default value.
     """
 
-    __tablename__ = "scalar_members"
+    __tablename__ = "field_members"
 
     id: Mapped[UUID] = mapped_column(
         PgUUID(as_uuid=True),
@@ -107,7 +107,7 @@ class ScalarMember(ObjectMember):
         "FieldModel", foreign_keys=[field_id]
     )
 
-    __mapper_args__ = {"polymorphic_identity": "scalar"}
+    __mapper_args__ = {"polymorphic_identity": "field"}
 
 
 class RelationshipMember(ObjectMember):

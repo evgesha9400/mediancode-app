@@ -79,7 +79,7 @@ class TestObjectMemberReconcile:
                 "description": "",
                 "members": [
                     {
-                        "memberType": "scalar",
+                        "memberType": "field",
                         "name": "title",
                         "fieldId": cls.str_field_id,
                         "role": "writable",
@@ -105,7 +105,7 @@ class TestObjectMemberReconcile:
                 "description": "",
                 "members": [
                     {
-                        "memberType": "scalar",
+                        "memberType": "field",
                         "name": "title",
                         "fieldId": cls.str_field_id,
                         "role": "writable",
@@ -131,7 +131,7 @@ class TestObjectMemberReconcile:
             json={
                 "members": [
                     {
-                        "memberType": "scalar",
+                        "memberType": "field",
                         "id": UNKNOWN_MEMBER_ID,
                         "name": "title",
                         "fieldId": cls.str_field_id,
@@ -154,7 +154,7 @@ class TestObjectMemberReconcile:
             json={
                 "members": [
                     {
-                        "memberType": "scalar",
+                        "memberType": "field",
                         "id": cls.obj_b_member_id,
                         "name": "title",
                         "fieldId": cls.str_field_id,
@@ -179,7 +179,7 @@ class TestObjectMemberReconcile:
             json={
                 "members": [
                     {
-                        "memberType": "scalar",
+                        "memberType": "field",
                         "id": cls.obj_a_member_id,
                         "name": "renamed_title",
                         "fieldId": cls.str_field_id,
@@ -187,7 +187,7 @@ class TestObjectMemberReconcile:
                         "isNullable": True,
                     },
                     {
-                        "memberType": "scalar",
+                        "memberType": "field",
                         "name": "fresh_title",
                         "fieldId": cls.str_field_id,
                         "role": "writable",

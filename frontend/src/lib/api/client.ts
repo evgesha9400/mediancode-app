@@ -300,9 +300,17 @@ export async function apiPostBlob(endpoint: string, body?: unknown, options?: Om
 
 	const disposition = response.headers.get('Content-Disposition');
 	const filenameMatch = disposition?.match(/filename="(.+?)"/);
+	const contentType = response.headers.get('Content-Type') ?? undefined;
+	const arrayBuffer = await response.arrayBuffer();
+	const blob = new Blob([arrayBuffer], { type: contentType });
+	if (typeof blob.arrayBuffer !== 'function') {
+		Object.defineProperty(blob, 'arrayBuffer', {
+			value: async () => arrayBuffer
+		});
+	}
 
 	return {
-		blob: await response.blob(),
+		blob,
 		filename: filenameMatch?.[1] ?? null
 	};
 }

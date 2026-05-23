@@ -15,8 +15,8 @@ from api.models.database import (
 from api.schemas.api import GenerateOptions
 from api.services.api_design_snapshot import (
     APIDesignEndpoint,
+    APIDesignFieldMember,
     APIDesignObject,
-    APIDesignScalarMember,
     APIDesignSnapshot,
     build_api_design_snapshot,
 )
@@ -83,18 +83,16 @@ def build_input_api_from_snapshot(
         fields: list[InputField] = []
         input_relationships: list[InputRelationship] = []
 
-        for scalar_member in obj.scalar_members:
-            pk, exposure, default = _derive_input_field_props(scalar_member)
+        for field_member in obj.field_members:
+            pk, exposure, default = _derive_input_field_props(field_member)
             input_field = InputField(
-                name=SnakeCaseName(scalar_member.field_name),
-                type=_build_field_type(
-                    scalar_member.field_type, scalar_member.container
-                ),
-                nullable=scalar_member.nullable,
-                description=scalar_member.description,
+                name=SnakeCaseName(field_member.member_name),
+                type=_build_field_type(field_member.field_type, field_member.container),
+                nullable=field_member.nullable,
+                description=field_member.description,
                 default=default,
-                validators=_build_field_validators(scalar_member),
-                field_validators=_build_resolved_field_validators(scalar_member),
+                validators=_build_field_validators(field_member),
+                field_validators=_build_resolved_field_validators(field_member),
                 pk=pk,
                 exposure=exposure,
             )
@@ -125,7 +123,7 @@ def build_input_api_from_snapshot(
 
     input_endpoints: list[InputEndpoint] = []
     for endpoint in snapshot.endpoints:
-        object_name = endpoint.object_name
+        object_name = endpoint.target_object_name
         method = endpoint.method.upper()
         request_name = object_name if method in ("POST", "PUT", "PATCH") else None
         response_name = None if method == "DELETE" else object_name
@@ -146,6 +144,7 @@ def build_input_api_from_snapshot(
                 use_envelope=endpoint.use_envelope,
                 response_shape=cast(ResponseShape, endpoint.response_shape),
                 target=object_name,
+                pagination=endpoint.pagination,
             )
         )
 
@@ -190,11 +189,11 @@ _ROLE_IS_PK = {"pk"}
 
 
 def _derive_input_field_props(
-    member: APIDesignScalarMember,
+    member: APIDesignFieldMember,
 ) -> tuple[bool, FieldExposure, FieldDefault | None]:
-    """Derive InputField properties from a scalar member.
+    """Derive InputField properties from a field member.
 
-    :param member: API Design Snapshot scalar member.
+    :param member: API Design Snapshot field member.
     :returns: Tuple of (pk, exposure, default).
     """
     pk = member.role in _ROLE_IS_PK
@@ -228,6 +227,7 @@ def _build_path_params(
             name=SnakeCaseName(param.name),
             type=param.type,
             description=param.description,
+            field=param.field_member_name,
         )
         for param in endpoint.path_params
     ]
@@ -246,8 +246,10 @@ def _build_query_params(endpoint: APIDesignEndpoint) -> list[InputQueryParam] | 
         InputQueryParam(
             name=SnakeCaseName(param.name),
             type=param.type,
-            optional=param.optional,
+            required=param.required,
             description=param.description,
+            field=param.field_member_name,
+            operator=param.operator,
         )
         for param in endpoint.query_params
     ]
@@ -290,11 +292,11 @@ def _build_endpoint_name(method: str, path: str) -> str:
 
 
 def _build_field_validators(
-    member: APIDesignScalarMember,
+    member: APIDesignFieldMember,
 ) -> list[InputValidator]:
     """Convert field constraints to api_craft validators.
 
-    :param member: API Design Snapshot scalar member.
+    :param member: API Design Snapshot field member.
     :returns: Input validators for Field() parameters.
     """
     validators = []
@@ -331,11 +333,11 @@ def _parse_constraint_value(value: str | None, parameter_types: list[str]) -> ob
 
 
 def _build_resolved_field_validators(
-    member: APIDesignScalarMember,
+    member: APIDesignFieldMember,
 ) -> list[InputResolvedFieldValidator]:
     """Resolve applied field validators to api_craft function definitions.
 
-    :param member: API Design Snapshot scalar member.
+    :param member: API Design Snapshot field member.
     :returns: Resolved field validator dictionaries for api_craft input.
     """
     resolved = []
@@ -343,7 +345,7 @@ def _build_resolved_field_validators(
         function_body = _render_template(validator.body_template, validator.parameters)
         function_name = (
             f"{validator.name.lower().replace(' ', '_').replace('&', 'and')}"
-            f"_{member.field_name}"
+            f"_{member.member_name}"
         )
         resolved.append(
             InputResolvedFieldValidator(

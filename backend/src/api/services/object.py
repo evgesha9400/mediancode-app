@@ -4,7 +4,7 @@
 from uuid import UUID
 
 from fastapi import HTTPException, status
-from sqlalchemy import func, or_, select
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectin_polymorphic, selectinload
 
@@ -14,7 +14,7 @@ from api.models.database import (
     Namespace,
     ObjectDefinition,
 )
-from api.models.members import ObjectMember, RelationshipMember, ScalarMember
+from api.models.members import FieldMember, ObjectMember, RelationshipMember
 from api.schemas.object import ObjectCreate, ObjectResponse, ObjectUpdate
 from api.services.base import BaseService
 from api.services.object_membership import ObjectMembership
@@ -41,8 +41,8 @@ class ObjectService(BaseService[ObjectDefinition]):
         """Standard eager-load options for object queries."""
         return [
             selectinload(ObjectDefinition.members).options(
-                selectin_polymorphic(ObjectMember, [ScalarMember, RelationshipMember]),
-                selectinload(ScalarMember.field),
+                selectin_polymorphic(ObjectMember, [FieldMember, RelationshipMember]),
+                selectinload(FieldMember.field),
             ),
             selectinload(ObjectDefinition.validators).selectinload(
                 AppliedModelValidatorModel.template
@@ -189,12 +189,7 @@ class ObjectService(BaseService[ObjectDefinition]):
         """
         query = (
             select(ApiEndpoint.api_id)
-            .where(
-                or_(
-                    ApiEndpoint.query_params_object_id == object_id,
-                    ApiEndpoint.object_id == object_id,
-                )
-            )
+            .where(ApiEndpoint.target_object_id == object_id)
             .distinct()
         )
         result = await self.db.execute(query)
@@ -209,12 +204,7 @@ class ObjectService(BaseService[ObjectDefinition]):
         count_query = (
             select(func.count())
             .select_from(ApiEndpoint)
-            .where(
-                or_(
-                    ApiEndpoint.query_params_object_id == object_id,
-                    ApiEndpoint.object_id == object_id,
-                )
-            )
+            .where(ApiEndpoint.target_object_id == object_id)
         )
         result = await self.db.execute(count_query)
         return result.scalar() or 0

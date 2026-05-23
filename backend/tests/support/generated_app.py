@@ -19,6 +19,7 @@ import yaml
 
 from api_craft.main import APIGenerator
 from api_craft.models.input import InputAPI
+from support.event_loop import run_async
 
 SPECS_PATH = Path(__file__).resolve().parent.parent / "specs"
 
@@ -84,8 +85,6 @@ def load_app(src_path: Path):
     :param src_path: Path to the ``src/`` directory of a generated project.
     :returns: The FastAPI ``app`` instance.
     """
-    import asyncio
-
     prefix = f"_gen_{uuid.uuid4().hex[:8]}"
     sys.path.insert(0, str(src_path))
 
@@ -115,7 +114,7 @@ def load_app(src_path: Path):
                 async with async_engine.begin() as conn:
                     await conn.run_sync(orm_mod.Base.metadata.create_all)
 
-            asyncio.get_event_loop().run_until_complete(_create_tables())
+            run_async(_create_tables())
 
         module_files = [
             "orm_models",

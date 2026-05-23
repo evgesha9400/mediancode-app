@@ -4,7 +4,7 @@
 from uuid import UUID
 
 from fastapi import HTTPException, status
-from sqlalchemy import delete, func, or_, select
+from sqlalchemy import delete, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
@@ -16,7 +16,7 @@ from api.models.database import (
     FieldValidatorTemplateModel,
     Namespace,
 )
-from api.models.members import ScalarMember
+from api.models.members import FieldMember
 from api.schemas.field import (
     FieldConstraintValueInput,
     FieldConstraintValueResponse,
@@ -206,8 +206,8 @@ class FieldService(BaseService[FieldModel]):
         """
         count_query = (
             select(func.count())
-            .select_from(ScalarMember)
-            .where(ScalarMember.field_id == field.id)
+            .select_from(FieldMember)
+            .where(FieldMember.field_id == field.id)
         )
         result = await self.db.execute(count_query)
         usage_count = result.scalar() or 0
@@ -262,18 +262,13 @@ class FieldService(BaseService[FieldModel]):
         :returns: List of API IDs.
         """
         objects_subquery = (
-            select(ScalarMember.object_id)
-            .where(ScalarMember.field_id == field_id)
+            select(FieldMember.object_id)
+            .where(FieldMember.field_id == field_id)
             .subquery()
         )
         query = (
             select(ApiEndpoint.api_id)
-            .where(
-                or_(
-                    ApiEndpoint.query_params_object_id.in_(select(objects_subquery)),
-                    ApiEndpoint.object_id.in_(select(objects_subquery)),
-                )
-            )
+            .where(ApiEndpoint.target_object_id.in_(select(objects_subquery)))
             .distinct()
         )
         result = await self.db.execute(query)

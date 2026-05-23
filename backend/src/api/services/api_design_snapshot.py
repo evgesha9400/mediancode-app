@@ -11,16 +11,16 @@ from api.models.database import (
     FieldModel,
     ObjectDefinition,
 )
-from api.models.members import RelationshipMember, ScalarMember
+from api.models.members import FieldMember, RelationshipMember
 from api.schemas.literals import (
     Container,
     FieldRole,
+    FilterOperator,
     HttpMethod,
     RelationshipKind,
     ResponseShape,
     ValidatorMode,
 )
-from api.services.path_params import get_path_param_field_id
 
 
 @dataclass(frozen=True)
@@ -72,16 +72,16 @@ class APIDesignModelValidator:
 
 
 @dataclass(frozen=True)
-class APIDesignScalarMember:
-    """Portable scalar Object Member facts.
+class APIDesignFieldMember:
+    """Portable Field Member facts.
 
-    :ivar member_name: Scalar Member name on the Object.
-    :ivar field_name: Referenced Field name used by current generation.
+    :ivar member_name: Field Member name on the Object.
+    :ivar field_name: Referenced Field name.
     :ivar field_type: Referenced Field type.
     :ivar container: Optional Field container.
-    :ivar nullable: Whether the Scalar Member is nullable.
+    :ivar nullable: Whether the Field Member is nullable.
     :ivar description: Referenced Field description.
-    :ivar role: Scalar Member role.
+    :ivar role: Field Member role.
     :ivar default_value: Persisted literal default value.
     :ivar constraints: Referenced Field constraints.
     :ivar field_validators: Referenced Field validators.
@@ -124,15 +124,15 @@ class APIDesignObject:
     :ivar id: Object identifier.
     :ivar name: Object name.
     :ivar description: Object description.
-    :ivar scalar_members: Scalar Object Members.
-    :ivar relationship_members: Relationship Object Members.
+    :ivar field_members: Field Members.
+    :ivar relationship_members: Relationship Members.
     :ivar model_validators: Object-level validator applications.
     """
 
     id: UUID
     name: str
     description: str | None
-    scalar_members: list[APIDesignScalarMember] = field(default_factory=list)
+    field_members: list[APIDesignFieldMember] = field(default_factory=list)
     relationship_members: list[APIDesignRelationshipMember] = field(
         default_factory=list
     )
@@ -144,11 +144,13 @@ class APIDesignPathParam:
     """Portable endpoint path parameter facts.
 
     :ivar name: Path parameter name.
+    :ivar field_member_name: Target Field Member name.
     :ivar type: Parameter type.
     :ivar description: Parameter description.
     """
 
     name: str
+    field_member_name: str
     type: str
     description: str
 
@@ -158,15 +160,19 @@ class APIDesignQueryParam:
     """Portable endpoint query parameter facts.
 
     :ivar name: Query parameter name.
+    :ivar field_member_name: Target Field Member name.
     :ivar type: Parameter type.
-    :ivar optional: Whether the query parameter is optional.
     :ivar description: Query parameter description.
+    :ivar operator: Query filter operator.
+    :ivar required: Whether clients must provide this query parameter.
     """
 
     name: str
+    field_member_name: str
     type: str
-    optional: bool
     description: str | None
+    operator: FilterOperator
+    required: bool
 
 
 @dataclass(frozen=True)
@@ -178,10 +184,11 @@ class APIDesignEndpoint:
     :ivar tag_name: Optional tag name.
     :ivar path_params: Resolved path parameters.
     :ivar query_params: Resolved query parameters.
-    :ivar object_name: Referenced Object name.
+    :ivar target_object_name: Referenced target Object name.
     :ivar description: Endpoint description.
     :ivar use_envelope: Whether responses use the standard envelope.
     :ivar response_shape: Endpoint response shape.
+    :ivar pagination: Whether generated list endpoints include pagination.
     """
 
     method: HttpMethod
@@ -189,10 +196,11 @@ class APIDesignEndpoint:
     tag_name: str | None
     path_params: list[APIDesignPathParam]
     query_params: list[APIDesignQueryParam]
-    object_name: str | None
+    target_object_name: str
     description: str | None
     use_envelope: bool
     response_shape: ResponseShape
+    pagination: bool
 
 
 @dataclass(frozen=True)
@@ -257,16 +265,16 @@ def _build_object_snapshot(
     :param fields_map: Map of field ID to FieldModel.
     :returns: Portable Object facts.
     """
-    scalar_members: list[APIDesignScalarMember] = []
+    field_members: list[APIDesignFieldMember] = []
     relationship_members: list[APIDesignRelationshipMember] = []
 
     for member in sorted(obj.members, key=lambda x: x.position):
-        if isinstance(member, ScalarMember):
-            field_model = fields_map.get(member.field_id)
-            if field_model:
-                scalar_members.append(
-                    _build_scalar_member_snapshot(member, field_model)
+        if isinstance(member, FieldMember):
+            field_members.append(
+                _build_field_member_snapshot(
+                    member, _field_for_member(member, fields_map)
                 )
+            )
         elif isinstance(member, RelationshipMember):
             target_obj = objects_map.get(member.target_object_id)
             target_name = target_obj.name if target_obj else "Unknown"
@@ -284,7 +292,7 @@ def _build_object_snapshot(
         id=obj.id,
         name=obj.name,
         description=obj.description,
-        scalar_members=scalar_members,
+        field_members=field_members,
         relationship_members=relationship_members,
         model_validators=[
             _build_model_validator_snapshot(validator)
@@ -293,17 +301,17 @@ def _build_object_snapshot(
     )
 
 
-def _build_scalar_member_snapshot(
-    member: ScalarMember,
+def _build_field_member_snapshot(
+    member: FieldMember,
     field_model: FieldModel,
-) -> APIDesignScalarMember:
-    """Build one Scalar Member snapshot.
+) -> APIDesignFieldMember:
+    """Build one Field Member snapshot.
 
-    :param member: Persisted Scalar Member.
+    :param member: Persisted Field Member.
     :param field_model: Referenced Field model.
-    :returns: Portable Scalar Member facts.
+    :returns: Portable Field Member facts.
     """
-    return APIDesignScalarMember(
+    return APIDesignFieldMember(
         member_name=member.name,
         field_name=field_model.name,
         field_type=field_model.field_type.python_type,
@@ -374,41 +382,42 @@ def _build_endpoint_snapshot(
         method=cast(HttpMethod, endpoint.method),
         path=endpoint.path,
         tag_name=endpoint.tag_name,
-        path_params=_build_path_params(endpoint, fields_map),
+        path_params=_build_path_params(endpoint, objects_map, fields_map),
         query_params=_build_query_params(endpoint, objects_map, fields_map),
-        object_name=_object_name(endpoint.object_id, objects_map),
+        target_object_name=_target_object(endpoint, objects_map).name,
         description=endpoint.description,
         use_envelope=endpoint.use_envelope,
         response_shape=cast(ResponseShape, endpoint.response_shape),
+        pagination=endpoint.pagination,
     )
 
 
 def _build_path_params(
     endpoint: ApiEndpoint,
+    objects_map: dict[UUID, ObjectDefinition],
     fields_map: dict[UUID, FieldModel],
 ) -> list[APIDesignPathParam]:
-    """Build path parameters from endpoint JSONB data.
+    """Build path parameters from endpoint-owned parameter rows.
 
     :param endpoint: Persisted Endpoint.
+    :param objects_map: Map of object ID to ObjectDefinition.
     :param fields_map: Map of field ID to FieldModel.
     :returns: Portable path parameter facts.
     """
     if not endpoint.path_params:
         return []
 
+    target_object = _target_object(endpoint, objects_map)
     path_params: list[APIDesignPathParam] = []
-    for param in endpoint.path_params:
-        if not isinstance(param, dict):
-            continue
-        field_id = get_path_param_field_id(param)
-        field_model = fields_map.get(field_id) if field_id else None
-        field_type = _build_field_type(field_model) if field_model else "str"
-        description = field_model.description or "" if field_model else ""
+    for param in sorted(endpoint.path_params, key=lambda x: x.position):
+        field_member = _target_field_member(target_object, param.field_member_id)
+        field_model = _field_for_member(field_member, fields_map)
         path_params.append(
             APIDesignPathParam(
-                name=str(param["name"]),
-                type=field_type,
-                description=description,
+                name=param.name,
+                field_member_name=field_member.name,
+                type=_build_field_type(field_model),
+                description=field_model.description or "",
             )
         )
     return path_params
@@ -419,52 +428,92 @@ def _build_query_params(
     objects_map: dict[UUID, ObjectDefinition],
     fields_map: dict[UUID, FieldModel],
 ) -> list[APIDesignQueryParam]:
-    """Build query parameters from the endpoint query Object reference.
+    """Build query parameters from endpoint-owned parameter rows.
 
     :param endpoint: Persisted Endpoint.
     :param objects_map: Map of object ID to ObjectDefinition.
     :param fields_map: Map of field ID to FieldModel.
     :returns: Portable query parameter facts.
     """
-    if not endpoint.query_params_object_id:
+    if not endpoint.query_params:
         return []
 
-    query_obj = objects_map.get(endpoint.query_params_object_id)
-    if not query_obj:
-        return []
-
+    target_object = _target_object(endpoint, objects_map)
     query_params: list[APIDesignQueryParam] = []
-    for member in sorted(query_obj.members, key=lambda x: x.position):
-        if isinstance(member, ScalarMember):
-            field_model = fields_map.get(member.field_id)
-            if field_model:
-                query_params.append(
-                    APIDesignQueryParam(
-                        name=field_model.name,
-                        type=_build_field_type(field_model),
-                        optional=member.is_nullable,
-                        description=field_model.description,
-                    )
-                )
+    for param in sorted(endpoint.query_params, key=lambda x: x.position):
+        field_member = _target_field_member(target_object, param.field_member_id)
+        field_model = _field_for_member(field_member, fields_map)
+        query_params.append(
+            APIDesignQueryParam(
+                name=param.name,
+                field_member_name=field_member.name,
+                type=_build_field_type(field_model),
+                description=field_model.description,
+                operator=cast(FilterOperator, param.operator),
+                required=param.required,
+            )
+        )
     return query_params
 
 
-def _object_name(
-    object_id: UUID | None,
+def _target_object(
+    endpoint: ApiEndpoint,
     objects_map: dict[UUID, ObjectDefinition],
-) -> str | None:
-    """Return an object name for an optional endpoint object reference.
+) -> ObjectDefinition:
+    """Return the target Object referenced by an Endpoint.
 
-    :param object_id: Optional object ID referenced by an endpoint.
+    :param endpoint: Persisted Endpoint.
     :param objects_map: Map of object ID to ObjectDefinition.
-    :returns: Object name, or None when no matching object exists.
+    :returns: Target Object.
+    :raises ValueError: If the target Object is missing.
     """
-    if not object_id:
-        return None
-    obj = objects_map.get(object_id)
-    if not obj:
-        return None
-    return obj.name
+    target_object = objects_map.get(endpoint.target_object_id)
+    if target_object is None:
+        raise ValueError(
+            f"Endpoint '{endpoint.path}' references unknown target Object "
+            f"'{endpoint.target_object_id}'"
+        )
+    return target_object
+
+
+def _target_field_member(
+    target_object: ObjectDefinition,
+    field_member_id: UUID,
+) -> FieldMember:
+    """Return a target Object Field Member or raise.
+
+    :param target_object: Endpoint target Object.
+    :param field_member_id: Field Member ID referenced by an endpoint parameter.
+    :returns: Field Member.
+    :raises ValueError: If the Field Member is missing from the target Object.
+    """
+    for member in target_object.members:
+        if isinstance(member, FieldMember) and member.id == field_member_id:
+            return member
+    raise ValueError(
+        f"Endpoint parameter references Field Member '{field_member_id}' "
+        f"outside target Object '{target_object.name}'"
+    )
+
+
+def _field_for_member(
+    field_member: FieldMember,
+    fields_map: dict[UUID, FieldModel],
+) -> FieldModel:
+    """Return the Field referenced by a Field Member or raise.
+
+    :param field_member: Field Member.
+    :param fields_map: Map of field ID to FieldModel.
+    :returns: Referenced Field.
+    :raises ValueError: If the Field is missing.
+    """
+    field_model = fields_map.get(field_member.field_id)
+    if field_model is None:
+        raise ValueError(
+            f"Field Member '{field_member.name}' references unknown Field "
+            f"'{field_member.field_id}'"
+        )
+    return field_model
 
 
 def _build_field_type(field_model: FieldModel) -> str:

@@ -66,7 +66,7 @@ export function createObjectsContract(deps: {
 			}
 
 			for (const member of item.members) {
-				if (member.memberType !== 'scalar') continue;
+				if (member.memberType !== 'field') continue;
 				const field = getFieldById(member.fieldId);
 				if (!field) continue;
 

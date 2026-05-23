@@ -8,7 +8,7 @@
     validationErrors?: ValidationError[];
     onUpdate: (updates: Partial<QueryParam>) => void;
     onRemove: () => void;
-    onSuggest?: (suggestion: { field: string; operator: FilterOperator }) => void;
+    onSuggest?: (suggestion: { fieldMemberId: string; operator: FilterOperator }) => void;
   }
 </script>
 
@@ -23,7 +23,7 @@
   let { param, targetFields, validationErrors = [], onUpdate, onRemove, onSuggest }: Props = $props();
 
   // Available operators filtered by the selected field's type
-  const selectedField = $derived(targetFields.find(f => f.name === param.field));
+  const selectedField = $derived(targetFields.find(f => f.fieldMemberId === param.fieldMemberId));
   const availableOperators = $derived(
     selectedField ? getCompatibleOperators(selectedField.type) : FILTER_OPERATORS
   );
@@ -44,8 +44,7 @@
 
     // Only suggest once per unique name
     if (name && name !== lastSuggestedName) {
-      const fieldNames = targetFields.map(f => f.name);
-      const suggestion = suggestFieldAndOperator(name, fieldNames);
+      const suggestion = suggestFieldAndOperator(name, targetFields);
       if (suggestion) {
         lastSuggestedName = name;
         onSuggest?.(suggestion);
@@ -82,8 +81,8 @@
     <div class="w-1/2 min-w-0">
       <div class={objectSelectorDisplayRow}>
         <div class="flex items-center gap-1.5">
-          {#if param.field}
-            <span class="font-mono text-sm">{param.field}</span>
+          {#if selectedField}
+            <span class="font-mono text-sm">{selectedField.name}</span>
             {#if derivedType}
               <span class={listMetaBadge}>{derivedType}</span>
             {/if}

@@ -61,6 +61,8 @@ class _FieldService(FieldService):
 
 def test_endpoint_to_response_maps_path_params():
     """Build endpoint responses inside EndpointService."""
+    target_object_id = uuid4()
+    field_member_id = uuid4()
     endpoint = SimpleNamespace(
         id=uuid4(),
         api_id=uuid4(),
@@ -68,9 +70,10 @@ def test_endpoint_to_response_maps_path_params():
         path="/users/{user_id}",
         description="Get user",
         tag_name="Users",
-        path_params=[{"name": "user_id", "fieldId": uuid4()}],
-        query_params_object_id=uuid4(),
-        object_id=uuid4(),
+        target_object_id=target_object_id,
+        path_params=[SimpleNamespace(name="user_id", field_member_id=field_member_id)],
+        query_params=[],
+        pagination=False,
         use_envelope=True,
         response_shape="object",
     )
@@ -79,9 +82,9 @@ def test_endpoint_to_response_maps_path_params():
 
     assert response.id == endpoint.id
     assert response.api_id == endpoint.api_id
+    assert response.target_object_id == target_object_id
     assert response.path_params[0].name == "user_id"
-    assert response.path_params[0].field_id == endpoint.path_params[0]["fieldId"]
-    assert response.query_params_object_id == endpoint.query_params_object_id
+    assert response.path_params[0].field_member_id == field_member_id
 
 
 @pytest.mark.asyncio
@@ -130,7 +133,9 @@ def test_type_to_response_maps_field_counts():
         parent_type_id=uuid4(),
     )
 
-    response = TypeService(_DbSession()).to_response(type_model, {str(type_model.id): 3})
+    response = TypeService(_DbSession()).to_response(
+        type_model, {str(type_model.id): 3}
+    )
 
     assert response.id == type_model.id
     assert response.namespace_id == type_model.namespace_id

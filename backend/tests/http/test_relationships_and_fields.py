@@ -72,7 +72,7 @@ class TestRelationshipMembers:
             assert resp.status_code == 201
             cls.field_ids[name] = resp.json()["id"]
 
-        # Create objects with scalar members only first
+        # Create objects with field members only first
         for obj_name, pk_field, data_field in [
             ("User", "user_id", "username"),
             ("Post", "post_id", "title"),
@@ -85,13 +85,13 @@ class TestRelationshipMembers:
                     "name": obj_name,
                     "members": [
                         {
-                            "memberType": "scalar",
+                            "memberType": "field",
                             "name": pk_field,
                             "fieldId": cls.field_ids[pk_field],
                             "role": "pk",
                         },
                         {
-                            "memberType": "scalar",
+                            "memberType": "field",
                             "name": data_field,
                             "fieldId": cls.field_ids[data_field],
                         },
@@ -209,7 +209,7 @@ class TestRelationshipMembers:
         assert len(original_members) == 3  # 2 scalar + 1 relationship
 
         # Keep only the first two (scalar) members, drop the relationship
-        kept_members = [m for m in original_members if m["memberType"] == "scalar"]
+        kept_members = [m for m in original_members if m["memberType"] == "field"]
         resp = await client.put(
             f"/objects/{cls.user_obj_id}",
             json={"members": kept_members},
@@ -217,7 +217,7 @@ class TestRelationshipMembers:
         assert resp.status_code == 200
         updated = resp.json()
         assert len(updated["members"]) == 2
-        assert all(m["memberType"] == "scalar" for m in updated["members"])
+        assert all(m["memberType"] == "field" for m in updated["members"])
 
         # Verify derived relationship removed from Post
         resp = await client.get(f"/objects/{cls.post_obj_id}")
@@ -304,21 +304,21 @@ class TestFieldRolesAndDefaults:
                 "description": "Test object with role flags",
                 "members": [
                     {
-                        "memberType": "scalar",
+                        "memberType": "field",
                         "name": "email",
                         "fieldId": cls.field_ids["email"],
                         "isNullable": False,
                         "role": "writable",
                     },
                     {
-                        "memberType": "scalar",
+                        "memberType": "field",
                         "name": "password",
                         "fieldId": cls.field_ids["password"],
                         "isNullable": False,
                         "role": "write_only",
                     },
                     {
-                        "memberType": "scalar",
+                        "memberType": "field",
                         "name": "created_at",
                         "fieldId": cls.field_ids["created_at"],
                         "isNullable": False,
@@ -358,7 +358,7 @@ class TestFieldRolesAndDefaults:
             json={
                 "members": [
                     {
-                        "memberType": "scalar",
+                        "memberType": "field",
                         "name": "created_at",
                         "fieldId": cls.field_ids["created_at"],
                         "role": "created_timestamp",
@@ -382,7 +382,7 @@ class TestFieldRolesAndDefaults:
             json={
                 "members": [
                     {
-                        "memberType": "scalar",
+                        "memberType": "field",
                         "name": "sort_order",
                         "fieldId": cls.field_ids["sort_order"],
                         "isNullable": False,

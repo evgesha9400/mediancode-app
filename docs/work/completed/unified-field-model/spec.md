@@ -205,7 +205,7 @@ identity/ordering, with child tables for type-specific attributes.
 ### Tables to drop
 
 - `object_relationships` — entirely
-- `fields_on_objects` — replaced by `object_members` + `scalar_members`
+- `fields_on_objects` — replaced by `object_members` + `field_members`
 - All `FieldModel` rows that were auto-created with role `fk`
 
 ### Tables unchanged
@@ -222,7 +222,7 @@ CREATE TABLE object_members (
     object_id   UUID NOT NULL REFERENCES objects(id) ON DELETE CASCADE,
     name        TEXT NOT NULL,
     position    INTEGER NOT NULL,
-    member_type TEXT NOT NULL CHECK (member_type IN ('scalar', 'relationship')),
+    member_type TEXT NOT NULL CHECK (member_type IN ('field', 'relationship')),
 
     UNIQUE (object_id, name),
     UNIQUE (object_id, position) DEFERRABLE INITIALLY DEFERRED
@@ -232,10 +232,10 @@ CREATE INDEX ix_object_members_object_position
     ON object_members (object_id, position);
 ```
 
-### New: `scalar_members` (child table)
+### New: `field_members` (child table)
 
 ```sql
-CREATE TABLE scalar_members (
+CREATE TABLE field_members (
     id              UUID PRIMARY KEY REFERENCES object_members(id) ON DELETE CASCADE,
     field_id        UUID NOT NULL REFERENCES fields(id),
     role            TEXT NOT NULL CHECK (role IN (
@@ -292,8 +292,8 @@ class ObjectMember(Base):
         "polymorphic_on": member_type,
     }
 
-class ScalarMember(ObjectMember):
-    __tablename__ = "scalar_members"
+class FieldMember(ObjectMember):
+    __tablename__ = "field_members"
     id            = mapped_column(UUID, ForeignKey("object_members.id", ondelete="CASCADE"), primary_key=True)
     field_id      = mapped_column(UUID, ForeignKey("fields.id"))
     role          = mapped_column(Text, nullable=False)
@@ -345,7 +345,7 @@ separate `relation_key`.
 
 **`GenerationService._convert_to_input_api`** — simplifies:
 - One loop over `object.members` instead of separate field + relationship loops
-- `ScalarMember` → `InputField`
+- `FieldMember` → `InputField`
 - `RelationshipMember` → `InputRelationship`
 - No FK fields to skip or filter. No dedup needed.
 
@@ -361,8 +361,8 @@ scans all relationship members across all objects, returns those whose
 {
   "name": "Order",
   "members": [
-    {"memberType": "scalar", "name": "id", "fieldId": "...", "role": "pk"},
-    {"memberType": "scalar", "name": "total", "fieldId": "...", "role": "writable"},
+    {"memberType": "field", "name": "id", "fieldId": "...", "role": "pk"},
+    {"memberType": "field", "name": "total", "fieldId": "...", "role": "writable"},
     {"memberType": "relationship", "name": "line_items", "targetObjectId": "...",
      "kind": "one_to_many", "inverseName": "order"}
   ],
@@ -383,8 +383,8 @@ relationships computed from other objects' relationship members.
   "id": "...",
   "name": "Order",
   "members": [
-    {"memberType": "scalar", "id": "m5", "name": "id", "role": "pk", "fieldId": "..."},
-    {"memberType": "scalar", "id": "m6", "name": "total", "role": "writable", "fieldId": "..."},
+    {"memberType": "field", "id": "m5", "name": "id", "role": "pk", "fieldId": "..."},
+    {"memberType": "field", "id": "m6", "name": "total", "role": "writable", "fieldId": "..."},
     {"memberType": "relationship", "id": "m7", "name": "line_items",
      "targetObjectId": "...", "kind": "one_to_many", "inverseName": "order",
      "required": true}
@@ -498,7 +498,7 @@ objects:
         inverse_name: customer
 ```
 
-The `InputAPI` loader maps `fields` → scalar members, `relationships` →
+The `InputAPI` loader maps `fields` → field members, `relationships` →
 relationship members, concatenated in that order.
 
 ---
@@ -513,8 +513,8 @@ type FieldRole = 'pk' | 'writable' | 'write_only' | 'read_only'
 
 type RelationshipKind = 'one_to_one' | 'one_to_many' | 'many_to_many';
 
-type ScalarMember = {
-  memberType: 'scalar';
+type FieldMember = {
+  memberType: 'field';
   id?: string;
   name: string;
   fieldId: string;
@@ -533,7 +533,7 @@ type RelationshipMember = {
   required: boolean;
 };
 
-type ObjectMember = ScalarMember | RelationshipMember;
+type ObjectMember = FieldMember | RelationshipMember;
 
 type DerivedRelationship = {
   name: string;
@@ -611,7 +611,7 @@ Update sends member `id`s for existing members (reconcile-by-ID).
 
 ### Backend — new tests
 
-- **CTI model**: mixed scalar + relationship members, correct child table rows,
+- **CTI model**: mixed field + relationship members, correct child table rows,
   unified ordering, cascade delete.
 - **Derived inverses**: create `one_to_many`, query target, verify
   `derived_relationships` with correct shape per kind.
@@ -670,8 +670,8 @@ Update sends member `id`s for existing members (reconcile-by-ID).
 
 Alembic migration to:
 
-1. Create `object_members`, `scalar_members`, `relationship_members` tables.
-2. Migrate `fields_on_objects` → `object_members` + `scalar_members`:
+1. Create `object_members`, `field_members`, `relationship_members` tables.
+2. Migrate `fields_on_objects` → `object_members` + `field_members`:
    - Skip `role='fk'` rows (these are derived artifacts).
    - Position: preserve existing `position` values from `fields_on_objects`.
 3. Migrate `object_relationships` → `object_members` + `relationship_members`:
@@ -701,7 +701,7 @@ Alembic migration to:
    exactly one child row in the correct child table.
 6. Follow-up migration (separate, after verification): drop `_old` tables and
    delete orphaned `FieldModel` rows that were only used as FK fields (identified
-   by having no remaining `scalar_members` references).
+   by having no remaining `field_members` references).
 
 ### Rollback strategy
 

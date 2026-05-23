@@ -1,6 +1,6 @@
 """Unified field model
 
-Create CTI tables (object_members, scalar_members, relationship_members),
+Create CTI tables (object_members, field_members, relationship_members),
 migrate data from fields_on_objects and object_relationships, then rename
 old tables to *_old.
 
@@ -16,7 +16,11 @@ from alembic import op
 import sqlalchemy as sa
 from sqlalchemy.dialects import postgresql
 
-from api_craft.models.enums import RelationshipKind, check_constraint_sql
+from api_craft.models.enums import (
+    FilterOperator,
+    RelationshipKind,
+    check_constraint_sql,
+)
 
 logger = logging.getLogger("alembic.runtime.migration")
 
@@ -60,7 +64,7 @@ def upgrade() -> None:
             initially="DEFERRED",
         ),
         sa.CheckConstraint(
-            "member_type IN ('scalar', 'relationship')",
+            "member_type IN ('field', 'relationship')",
             name="ck_object_members_member_type",
         ),
     )
@@ -72,7 +76,7 @@ def upgrade() -> None:
     )
 
     op.create_table(
-        "scalar_members",
+        "field_members",
         sa.Column(
             "id",
             postgresql.UUID(as_uuid=True),
@@ -90,11 +94,11 @@ def upgrade() -> None:
         sa.ForeignKeyConstraint(["id"], ["object_members.id"], ondelete="CASCADE"),
         sa.ForeignKeyConstraint(["field_id"], ["fields.id"]),
         sa.PrimaryKeyConstraint("id"),
-        sa.CheckConstraint(_FIELD_ROLE_SQL, name="ck_scalar_members_role"),
+        sa.CheckConstraint(_FIELD_ROLE_SQL, name="ck_field_members_role"),
     )
     op.create_index(
-        "ix_scalar_members_field_id",
-        "scalar_members",
+        "ix_field_members_field_id",
+        "field_members",
         ["field_id"],
         unique=False,
     )
@@ -138,8 +142,100 @@ def upgrade() -> None:
         unique=True,
     )
 
+    op.create_table(
+        "endpoint_path_params",
+        sa.Column(
+            "id",
+            postgresql.UUID(as_uuid=True),
+            nullable=False,
+            server_default=sa.text("gen_random_uuid()"),
+        ),
+        sa.Column("endpoint_id", postgresql.UUID(as_uuid=True), nullable=False),
+        sa.Column("position", sa.Integer(), nullable=False),
+        sa.Column("name", sa.Text(), nullable=False),
+        sa.Column("field_member_id", postgresql.UUID(as_uuid=True), nullable=False),
+        sa.ForeignKeyConstraint(
+            ["endpoint_id"], ["api_endpoints.id"], ondelete="CASCADE"
+        ),
+        sa.ForeignKeyConstraint(
+            ["field_member_id"], ["field_members.id"], ondelete="RESTRICT"
+        ),
+        sa.PrimaryKeyConstraint("id"),
+        sa.UniqueConstraint(
+            "endpoint_id",
+            "position",
+            name="uq_endpoint_path_params_endpoint_position",
+        ),
+        sa.UniqueConstraint(
+            "endpoint_id",
+            "name",
+            name="uq_endpoint_path_params_endpoint_name",
+        ),
+    )
+    op.create_index(
+        "ix_endpoint_path_params_endpoint_id",
+        "endpoint_path_params",
+        ["endpoint_id"],
+        unique=False,
+    )
+    op.create_index(
+        "ix_endpoint_path_params_field_member_id",
+        "endpoint_path_params",
+        ["field_member_id"],
+        unique=False,
+    )
+
+    op.create_table(
+        "endpoint_query_params",
+        sa.Column(
+            "id",
+            postgresql.UUID(as_uuid=True),
+            nullable=False,
+            server_default=sa.text("gen_random_uuid()"),
+        ),
+        sa.Column("endpoint_id", postgresql.UUID(as_uuid=True), nullable=False),
+        sa.Column("position", sa.Integer(), nullable=False),
+        sa.Column("name", sa.Text(), nullable=False),
+        sa.Column("field_member_id", postgresql.UUID(as_uuid=True), nullable=False),
+        sa.Column("operator", sa.Text(), nullable=False),
+        sa.Column("required", sa.Boolean(), nullable=False, server_default="false"),
+        sa.ForeignKeyConstraint(
+            ["endpoint_id"], ["api_endpoints.id"], ondelete="CASCADE"
+        ),
+        sa.ForeignKeyConstraint(
+            ["field_member_id"], ["field_members.id"], ondelete="RESTRICT"
+        ),
+        sa.PrimaryKeyConstraint("id"),
+        sa.CheckConstraint(
+            check_constraint_sql("operator", FilterOperator),
+            name="ck_endpoint_query_params_operator",
+        ),
+        sa.UniqueConstraint(
+            "endpoint_id",
+            "position",
+            name="uq_endpoint_query_params_endpoint_position",
+        ),
+        sa.UniqueConstraint(
+            "endpoint_id",
+            "name",
+            name="uq_endpoint_query_params_endpoint_name",
+        ),
+    )
+    op.create_index(
+        "ix_endpoint_query_params_endpoint_id",
+        "endpoint_query_params",
+        ["endpoint_id"],
+        unique=False,
+    )
+    op.create_index(
+        "ix_endpoint_query_params_field_member_id",
+        "endpoint_query_params",
+        ["field_member_id"],
+        unique=False,
+    )
+
     # ------------------------------------------------------------------
-    # 2. Migrate scalar data: fields_on_objects -> object_members + scalar_members
+    # 2. Migrate scalar data: fields_on_objects -> object_members + field_members
     # ------------------------------------------------------------------
     conn = op.get_bind()
 
@@ -167,7 +263,7 @@ def upgrade() -> None:
         conn.execute(
             sa.text(
                 "INSERT INTO object_members (id, object_id, name, position, member_type) "
-                "VALUES (:id, :object_id, :name, :position, 'scalar')"
+                "VALUES (:id, :object_id, :name, :position, 'field')"
             ),
             {
                 "id": foa_id,
@@ -180,7 +276,7 @@ def upgrade() -> None:
         # Insert child scalar_member row
         conn.execute(
             sa.text(
-                "INSERT INTO scalar_members (id, field_id, role, is_nullable, default_value) "
+                "INSERT INTO field_members (id, field_id, role, is_nullable, default_value) "
                 "VALUES (:id, :field_id, :role, :is_nullable, :default_value)"
             ),
             {
@@ -192,7 +288,7 @@ def upgrade() -> None:
             },
         )
 
-    logger.info("Migrated %d scalar members from fields_on_objects", len(foa_rows))
+    logger.info("Migrated %d field members from fields_on_objects", len(foa_rows))
 
     # ------------------------------------------------------------------
     # 3. Migrate relationship data: object_relationships -> object_members
@@ -376,7 +472,7 @@ def upgrade() -> None:
             )
             continue
 
-        # Compute position: start after the last scalar member
+        # Compute position: start after the last field member
         obj_key = str(new_object_id)
         current_max = max_positions.get(obj_key, -1)
         new_position = current_max + 1
@@ -424,7 +520,7 @@ def upgrade() -> None:
         conn.execute(sa.text("SELECT count(*) FROM object_members")).scalar() or 0
     )
     total_scalars = (
-        conn.execute(sa.text("SELECT count(*) FROM scalar_members")).scalar() or 0
+        conn.execute(sa.text("SELECT count(*) FROM field_members")).scalar() or 0
     )
     total_rels = (
         conn.execute(sa.text("SELECT count(*) FROM relationship_members")).scalar() or 0
@@ -433,14 +529,14 @@ def upgrade() -> None:
     if total_members != total_scalars + total_rels:
         raise RuntimeError(
             f"Integrity check failed: object_members={total_members}, "
-            f"scalar_members={total_scalars}, relationship_members={total_rels}. "
+            f"field_members={total_scalars}, relationship_members={total_rels}. "
             f"Expected {total_members} == {total_scalars} + {total_rels}."
         )
 
     # Check no orphaned child rows
     orphan_scalars = conn.execute(
         sa.text(
-            "SELECT count(*) FROM scalar_members s "
+            "SELECT count(*) FROM field_members s "
             "LEFT JOIN object_members m ON s.id = m.id "
             "WHERE m.id IS NULL"
         )
@@ -479,6 +575,26 @@ def downgrade() -> None:
 
     # Drop new tables in reverse dependency order
     op.drop_index(
+        "ix_endpoint_query_params_field_member_id",
+        table_name="endpoint_query_params",
+    )
+    op.drop_index(
+        "ix_endpoint_query_params_endpoint_id",
+        table_name="endpoint_query_params",
+    )
+    op.drop_table("endpoint_query_params")
+
+    op.drop_index(
+        "ix_endpoint_path_params_field_member_id",
+        table_name="endpoint_path_params",
+    )
+    op.drop_index(
+        "ix_endpoint_path_params_endpoint_id",
+        table_name="endpoint_path_params",
+    )
+    op.drop_table("endpoint_path_params")
+
+    op.drop_index(
         "ix_relationship_members_inverse_unique",
         table_name="relationship_members",
     )
@@ -488,8 +604,8 @@ def downgrade() -> None:
     )
     op.drop_table("relationship_members")
 
-    op.drop_index("ix_scalar_members_field_id", table_name="scalar_members")
-    op.drop_table("scalar_members")
+    op.drop_index("ix_field_members_field_id", table_name="field_members")
+    op.drop_table("field_members")
 
     op.drop_index("ix_object_members_object_id", table_name="object_members")
     op.drop_table("object_members")
