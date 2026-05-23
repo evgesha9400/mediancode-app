@@ -1,21 +1,25 @@
 # src/api/services/api_craft_input.py
-"""Adapter from database API entities to api_craft input models."""
+"""Adapter from API Design Snapshot facts to api_craft input models."""
 
 import re
-from typing import cast
+from typing import Any, cast
 from uuid import UUID
 
 from jinja2 import Environment
 
 from api.models.database import (
-    ApiEndpoint,
     ApiModel,
     FieldModel,
     ObjectDefinition,
 )
-from api.models.members import RelationshipMember, ScalarMember
 from api.schemas.api import GenerateOptions
-from api.services.path_params import get_path_param_field_id
+from api.services.api_design_snapshot import (
+    APIDesignEndpoint,
+    APIDesignObject,
+    APIDesignScalarMember,
+    APIDesignSnapshot,
+    build_api_design_snapshot,
+)
 from api_craft.models.enums import (
     CdkCompute,
     FieldExposure,
@@ -52,7 +56,7 @@ def build_input_api(
     fields_map: dict[UUID, FieldModel],
     options: GenerateOptions,
 ) -> InputAPI:
-    """Build the api_craft input model from loaded database entities.
+    """Build the api_craft input model from loaded persisted entities.
 
     :param api: The API model.
     :param objects_map: Map of object ID to ObjectDefinition.
@@ -60,65 +64,68 @@ def build_input_api(
     :param options: Generation options.
     :returns: InputAPI for code generation.
     """
+    snapshot = build_api_design_snapshot(api, objects_map, fields_map)
+    return build_input_api_from_snapshot(snapshot, options)
+
+
+def build_input_api_from_snapshot(
+    snapshot: APIDesignSnapshot,
+    options: GenerateOptions,
+) -> InputAPI:
+    """Build the current api_craft input model from an API Design Snapshot.
+
+    :param snapshot: Portable API Design Snapshot.
+    :param options: Generation options for the current FastAPI target.
+    :returns: InputAPI for code generation.
+    """
     input_objects: list[InputModel] = []
-    for obj in objects_map.values():
+    for obj in snapshot.objects:
         fields: list[InputField] = []
         input_relationships: list[InputRelationship] = []
 
-        for member in sorted(obj.members, key=lambda x: x.position):
-            if isinstance(member, ScalarMember):
-                field = fields_map.get(member.field_id)
-                if field:
-                    pk, exposure, default = _derive_input_field_props(member)
-                    input_field = InputField(
-                        name=SnakeCaseName(_scalar_member_field_name(field)),
-                        type=_build_field_type(
-                            field.field_type.python_type, field.container
-                        ),
-                        nullable=member.is_nullable,
-                        description=field.description,
-                        default=default,
-                        validators=_build_field_validators(field),
-                        field_validators=[
-                            InputResolvedFieldValidator(**rv)
-                            for rv in _build_resolved_field_validators(field)
-                        ],
-                        pk=pk,
-                        exposure=exposure,
-                    )
-                    fields.append(input_field)
-            elif isinstance(member, RelationshipMember):
-                target_obj = objects_map.get(member.target_object_id)
-                target_name = target_obj.name if target_obj else "Unknown"
-                input_relationships.append(
-                    InputRelationship(
-                        name=member.name,
-                        target_model=target_name,
-                        kind=cast(RelationshipKind, member.kind),
-                        inverse_name=member.inverse_name,
-                        required=member.required,
-                    )
+        for scalar_member in obj.scalar_members:
+            pk, exposure, default = _derive_input_field_props(scalar_member)
+            input_field = InputField(
+                name=SnakeCaseName(scalar_member.field_name),
+                type=_build_field_type(
+                    scalar_member.field_type, scalar_member.container
+                ),
+                nullable=scalar_member.nullable,
+                description=scalar_member.description,
+                default=default,
+                validators=_build_field_validators(scalar_member),
+                field_validators=_build_resolved_field_validators(scalar_member),
+                pk=pk,
+                exposure=exposure,
+            )
+            fields.append(input_field)
+
+        for relationship_member in obj.relationship_members:
+            input_relationships.append(
+                InputRelationship(
+                    name=relationship_member.name,
+                    target_model=relationship_member.target_object_name,
+                    kind=cast(RelationshipKind, relationship_member.kind),
+                    inverse_name=relationship_member.inverse_name,
+                    required=relationship_member.required,
                 )
+            )
 
         input_objects.append(
             InputModel(
                 name=PascalCaseName(obj.name),
                 fields=fields,
                 description=obj.description,
-                model_validators=[
-                    InputResolvedModelValidator(**rv)
-                    for rv in _build_resolved_model_validators(obj)
-                ],
+                model_validators=_build_resolved_model_validators(obj),
                 relationships=input_relationships,
             )
         )
 
-    tag_names = {ep.tag_name for ep in api.endpoints if ep.tag_name}
-    input_tags = [InputTag(name=name, description="") for name in sorted(tag_names)]
+    input_tags = [InputTag(name=name, description="") for name in snapshot.tag_names]
 
     input_endpoints: list[InputEndpoint] = []
-    for endpoint in api.endpoints:
-        object_name = _object_name(endpoint.object_id, objects_map)
+    for endpoint in snapshot.endpoints:
+        object_name = endpoint.object_name
         method = endpoint.method.upper()
         request_name = object_name if method in ("POST", "PUT", "PATCH") else None
         response_name = None if method == "DELETE" else object_name
@@ -133,8 +140,8 @@ def build_input_api(
                 tag=endpoint.tag_name,
                 request=request_name,
                 response=response_name,
-                query_params=_build_query_params(endpoint, objects_map, fields_map),
-                path_params=_build_path_params(endpoint, fields_map),
+                query_params=_build_query_params(endpoint),
+                path_params=_build_path_params(endpoint),
                 description=endpoint.description,
                 use_envelope=endpoint.use_envelope,
                 response_shape=cast(ResponseShape, endpoint.response_shape),
@@ -143,10 +150,10 @@ def build_input_api(
         )
 
     return InputAPI(
-        name=PascalCaseName(api.title),
-        version=api.version,
+        name=PascalCaseName(snapshot.name),
+        version=snapshot.version,
         author="Median Code",
-        description=api.description or "API Generated by Median Code",
+        description=snapshot.description,
         objects=input_objects,
         endpoints=input_endpoints,
         tags=input_tags,
@@ -183,11 +190,11 @@ _ROLE_IS_PK = {"pk"}
 
 
 def _derive_input_field_props(
-    member: ScalarMember,
+    member: APIDesignScalarMember,
 ) -> tuple[bool, FieldExposure, FieldDefault | None]:
     """Derive InputField properties from a scalar member.
 
-    :param member: A ScalarMember record.
+    :param member: API Design Snapshot scalar member.
     :returns: Tuple of (pk, exposure, default).
     """
     pk = member.role in _ROLE_IS_PK
@@ -205,100 +212,45 @@ def _derive_input_field_props(
     return pk, exposure, default
 
 
-def _scalar_member_field_name(field: FieldModel) -> str:
-    """Return the scalar field name used in generated api_craft input.
-
-    Current behavior uses FieldModel.name, not ScalarMember.name. Preserve that
-    policy until the product naming decision is made explicitly.
-
-    :param field: The field model referenced by the scalar member.
-    :returns: Field name for InputField/InputQueryParam.
-    """
-    return field.name
-
-
 def _build_path_params(
-    endpoint: ApiEndpoint,
-    fields_map: dict[UUID, FieldModel],
+    endpoint: APIDesignEndpoint,
 ) -> list[InputPathParam] | None:
-    """Build api_craft path parameters from endpoint JSONB data.
+    """Build api_craft path parameters from snapshot facts.
 
-    :param endpoint: Endpoint model with path_params JSONB data.
-    :param fields_map: Map of field ID to FieldModel.
+    :param endpoint: API Design Snapshot endpoint.
     :returns: List of InputPathParam objects, or None when absent.
     """
     if not endpoint.path_params:
         return None
 
-    path_params: list[InputPathParam] = []
-    for param in endpoint.path_params:
-        if not isinstance(param, dict):
-            continue
-        field_id = get_path_param_field_id(param)
-        field = fields_map.get(field_id) if field_id else None
-        field_type = _build_field_type(field.field_type.python_type) if field else "str"
-        description = field.description or "" if field else ""
-        path_params.append(
-            InputPathParam(
-                name=SnakeCaseName(str(param["name"])),
-                type=field_type,
-                description=description,
-            )
+    return [
+        InputPathParam(
+            name=SnakeCaseName(param.name),
+            type=param.type,
+            description=param.description,
         )
-    return path_params
+        for param in endpoint.path_params
+    ]
 
 
-def _build_query_params(
-    endpoint: ApiEndpoint,
-    objects_map: dict[UUID, ObjectDefinition],
-    fields_map: dict[UUID, FieldModel],
-) -> list[InputQueryParam] | None:
-    """Build api_craft query parameters from the endpoint query object.
+def _build_query_params(endpoint: APIDesignEndpoint) -> list[InputQueryParam] | None:
+    """Build api_craft query parameters from snapshot facts.
 
-    :param endpoint: Endpoint model with optional query object reference.
-    :param objects_map: Map of object ID to ObjectDefinition.
-    :param fields_map: Map of field ID to FieldModel.
+    :param endpoint: API Design Snapshot endpoint.
     :returns: List of InputQueryParam objects, or None when absent.
     """
-    if not endpoint.query_params_object_id:
+    if not endpoint.query_params:
         return None
 
-    query_obj = objects_map.get(endpoint.query_params_object_id)
-    if not query_obj:
-        return None
-
-    query_params: list[InputQueryParam] = []
-    for member in sorted(query_obj.members, key=lambda x: x.position):
-        if isinstance(member, ScalarMember):
-            field = fields_map.get(member.field_id)
-            if field:
-                query_params.append(
-                    InputQueryParam(
-                        name=SnakeCaseName(_scalar_member_field_name(field)),
-                        type=_build_field_type(field.field_type.python_type),
-                        optional=member.is_nullable,
-                        description=field.description,
-                    )
-                )
-    return query_params
-
-
-def _object_name(
-    object_id: UUID | None,
-    objects_map: dict[UUID, ObjectDefinition],
-) -> str | None:
-    """Return an object name for an optional endpoint object reference.
-
-    :param object_id: Optional object ID referenced by an endpoint.
-    :param objects_map: Map of object ID to ObjectDefinition.
-    :returns: Object name, or None when no matching object exists.
-    """
-    if not object_id:
-        return None
-    obj = objects_map.get(object_id)
-    if not obj:
-        return None
-    return obj.name
+    return [
+        InputQueryParam(
+            name=SnakeCaseName(param.name),
+            type=param.type,
+            optional=param.optional,
+            description=param.description,
+        )
+        for param in endpoint.query_params
+    ]
 
 
 def _build_field_type(python_type: str, container: str | None = None) -> str:
@@ -337,22 +289,22 @@ def _build_endpoint_name(method: str, path: str) -> str:
     return f"{method_prefix}Root"
 
 
-def _build_field_validators(field: FieldModel) -> list[InputValidator]:
+def _build_field_validators(
+    member: APIDesignScalarMember,
+) -> list[InputValidator]:
     """Convert field constraints to api_craft validators.
 
-    :param field: Field model with constraint values loaded.
+    :param member: API Design Snapshot scalar member.
     :returns: Input validators for Field() parameters.
     """
     validators = []
-    for constraint_value in field.constraint_values:
+    for constraint in member.constraints:
         parsed = _parse_constraint_value(
-            constraint_value.value,
-            constraint_value.constraint.parameter_types,
+            constraint.value,
+            constraint.parameter_types,
         )
         params = {"value": parsed} if parsed is not None else None
-        validators.append(
-            InputValidator(name=constraint_value.constraint.name, params=params)
-        )
+        validators.append(InputValidator(name=constraint.name, params=params))
     return validators
 
 
@@ -378,56 +330,57 @@ def _parse_constraint_value(value: str | None, parameter_types: list[str]) -> ob
     return value
 
 
-def _build_resolved_field_validators(field: FieldModel) -> list[dict]:
-    """Resolve applied field validators to function definitions.
+def _build_resolved_field_validators(
+    member: APIDesignScalarMember,
+) -> list[InputResolvedFieldValidator]:
+    """Resolve applied field validators to api_craft function definitions.
 
-    :param field: Field model with validators and templates loaded.
+    :param member: API Design Snapshot scalar member.
     :returns: Resolved field validator dictionaries for api_craft input.
     """
     resolved = []
-    for validator in sorted(field.validators, key=lambda x: x.position):
-        template = validator.template
-        context = validator.parameters or {}
-        function_body = _render_template(template.body_template, context)
+    for validator in member.field_validators:
+        function_body = _render_template(validator.body_template, validator.parameters)
         function_name = (
-            f"{template.name.lower().replace(' ', '_').replace('&', 'and')}"
-            f"_{field.name}"
+            f"{validator.name.lower().replace(' ', '_').replace('&', 'and')}"
+            f"_{member.field_name}"
         )
         resolved.append(
-            {
-                "function_name": function_name,
-                "mode": template.mode,
-                "function_body": function_body,
-            }
+            InputResolvedFieldValidator(
+                function_name=function_name,
+                mode=validator.mode,
+                function_body=function_body,
+            )
         )
     return resolved
 
 
-def _build_resolved_model_validators(obj: ObjectDefinition) -> list[dict]:
-    """Resolve applied model validators to function definitions.
+def _build_resolved_model_validators(
+    obj: APIDesignObject,
+) -> list[InputResolvedModelValidator]:
+    """Resolve applied model validators to api_craft function definitions.
 
-    :param obj: Object model with validators and templates loaded.
+    :param obj: API Design Snapshot Object.
     :returns: Resolved model validator dictionaries for api_craft input.
     """
     resolved = []
-    for validator in sorted(obj.validators, key=lambda x: x.position):
-        template = validator.template
-        context = {**(validator.parameters or {}), **validator.field_mappings}
-        function_body = _render_template(template.body_template, context)
+    for validator in obj.model_validators:
+        context = {**validator.parameters, **validator.field_mappings}
+        function_body = _render_template(validator.body_template, context)
         function_name = (
-            f"validate_{template.name.lower().replace(' ', '_').replace('&', 'and')}"
+            f"validate_{validator.name.lower().replace(' ', '_').replace('&', 'and')}"
         )
         resolved.append(
-            {
-                "function_name": function_name,
-                "mode": template.mode,
-                "function_body": function_body,
-            }
+            InputResolvedModelValidator(
+                function_name=function_name,
+                mode=validator.mode,
+                function_body=function_body,
+            )
         )
     return resolved
 
 
-def _render_template(body_template: str, context: dict[str, str]) -> str:
+def _render_template(body_template: str, context: dict[str, Any]) -> str:
     """Render a Jinja2 body template with the given context.
 
     :param body_template: Jinja2 template string.

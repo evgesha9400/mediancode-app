@@ -1,0 +1,110 @@
+# tests/test_api/test_services/test_api_craft_input.py
+"""Tests for api_craft input adapter."""
+
+from uuid import uuid4
+
+from api.schemas.api import GenerateOptions
+from api.services.api_craft_input import build_input_api_from_snapshot
+from api.services.api_design_snapshot import (
+    APIDesignEndpoint,
+    APIDesignFieldConstraint,
+    APIDesignFieldValidator,
+    APIDesignObject,
+    APIDesignPathParam,
+    APIDesignScalarMember,
+    APIDesignSnapshot,
+)
+
+
+def test_build_input_api_from_snapshot_maps_current_target_models():
+    """Map portable snapshot facts into current api_craft input models."""
+    item = APIDesignObject(
+        id=uuid4(),
+        name="Item",
+        description="Item object",
+        scalar_members=[
+            APIDesignScalarMember(
+                member_name="identifier",
+                field_name="id",
+                field_type="uuid.UUID",
+                container=None,
+                nullable=False,
+                description="Item ID",
+                role="pk",
+                default_value=None,
+            ),
+            APIDesignScalarMember(
+                member_name="display_title",
+                field_name="title",
+                field_type="str",
+                container=None,
+                nullable=False,
+                description="Item title",
+                role="writable",
+                default_value="Untitled",
+                constraints=[
+                    APIDesignFieldConstraint(
+                        name="max_length",
+                        value="40",
+                        parameter_types=["int"],
+                    )
+                ],
+                field_validators=[
+                    APIDesignFieldValidator(
+                        name="Append Suffix",
+                        mode="after",
+                        body_template="return value + '{{ suffix }}'",
+                        parameters={"suffix": "!"},
+                    )
+                ],
+            ),
+        ],
+    )
+    snapshot = APIDesignSnapshot(
+        name="ShopApi",
+        version="1.0.0",
+        description="Shop",
+        objects=[item],
+        endpoints=[
+            APIDesignEndpoint(
+                method="GET",
+                path="/items/{item_id}",
+                tag_name="Items",
+                path_params=[
+                    APIDesignPathParam(
+                        name="item_id",
+                        type="uuid.UUID",
+                        description="Item ID",
+                    )
+                ],
+                query_params=[],
+                object_name="Item",
+                description="Get item",
+                use_envelope=True,
+                response_shape="object",
+            )
+        ],
+        tag_names=["Items"],
+    )
+
+    input_api = build_input_api_from_snapshot(
+        snapshot,
+        GenerateOptions(database_enabled=True, response_placeholders=False),
+    )
+
+    item_model = input_api.objects[0]
+    id_field = item_model.fields[0]
+    title_field = item_model.fields[1]
+    assert input_api.name == "ShopApi"
+    assert input_api.config.database.enabled is True
+    assert input_api.config.response_placeholders is False
+    assert id_field.name == "id"
+    assert id_field.pk is True
+    assert title_field.name == "title"
+    assert title_field.default is not None
+    assert title_field.default.kind == "literal"
+    assert title_field.validators[0].params == {"value": 40}
+    assert title_field.field_validators[0].function_name == "append_suffix_title"
+    assert title_field.field_validators[0].function_body == "return value + '!'"
+    assert input_api.endpoints[0].name == "GetItemsByItemId"
+    assert input_api.endpoints[0].path_params[0].type == "uuid.UUID"

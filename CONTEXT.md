@@ -12,6 +12,10 @@ _Avoid_: App, project, spec
 A concrete generated implementation of an API for a chosen framework, language, database, deploy provider, and test strategy.
 _Avoid_: FastAPI-only output, generated app
 
+**API Design Snapshot**:
+A portable, target-neutral view of persisted API data assembled from API, Object, Field, Object Member, Endpoint, and Catalog records before any Generation Target translates it into concrete implementation input.
+_Avoid_: api_craft input, SQLAlchemy row bundle, FastAPI spec
+
 **Generated FastAPI Project Plan**:
 The filesystem plan created after an API has rendered components and before those components are written. It decides generated FastAPI project directories, file destinations, Alembic support files, and static CDK template copies.
 _Avoid_: Rendered component map, writer internals
@@ -73,6 +77,10 @@ Domain expert: "A Relationship Member authored on the source Object creates a de
 Developer: "Is Mediancode only generating FastAPI projects?"
 
 Domain expert: "No. FastAPI is the first API Implementation. The architecture should support substitutable Generation Targets for deploy artifacts, databases, test modules, frameworks, and languages."
+
+Developer: "Should persisted API rows be passed straight into the FastAPI generator?"
+
+Domain expert: "No. Persisted rows are first assembled into an API Design Snapshot, then the current FastAPI Generation Target translates that snapshot into its concrete input model."
 
 Developer: "Why do Object responses and generated SQLAlchemy models both calculate relationship facts?"
 
