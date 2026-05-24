@@ -12,7 +12,7 @@
  */
 
 import { fromStore, get } from 'svelte/store';
-import type { Api, ApiEndpoint, QueryParam, ResponseShape } from '$lib/types';
+import type { Api, ApiEndpoint, HttpMethod, QueryParam, ResponseShape } from '$lib/types';
 import {
 	apisStore,
 	endpointsStore,
@@ -24,14 +24,22 @@ import {
 import { showToast } from './toasts';
 import { deepClone } from '$lib/utils/ids';
 import { mapApiError } from '$lib/domain/errorMap';
-import { reconcilePathParams } from '$lib/domain/endpointReducer';
 import {
-	validateEndpointParams,
 	resolveTargetFields,
 	type ValidationError,
 	type TargetField
 } from '$lib/domain/paramInference';
-import { isValidSnakeCaseName } from '$lib/utils/validation';
+import {
+	formatEndpointBlockReasons,
+	getEndpointIssues,
+	getEndpointResponseShapeLockedReason,
+	getEndpointValidationErrors,
+	isEndpointResponseShapeLocked,
+	prepareEndpointCommand,
+	transitionEndpointDraft,
+	type EndpointIssue,
+	type EndpointSemanticsContext
+} from '$lib/domain/endpointQuerySemantics';
 import { createApisContract } from './apisConfig.svelte';
 import {
 	applyEndpointUpdate,
@@ -113,6 +121,9 @@ export interface ApiDetailState {
 	// Derived state
 	readonly hasEndpointChanges: boolean;
 	readonly pathError: string;
+	readonly endpointCommandBlocked: boolean;
+	readonly endpointCommandBlockers: EndpointIssue[];
+	readonly endpointCommandBlockTooltip: string;
 
 	// Loading state for async operations
 	readonly isSaving: boolean;
@@ -136,6 +147,7 @@ export interface ApiDetailState {
 	handleUndoEndpoint: () => void;
 
 	// Endpoint editing actions
+	handleMethodSelect: (method: HttpMethod) => void;
 	handlePathChange: (newPath: string) => void;
 	handlePathParamUpdate: (paramName: string, fieldMemberId: string) => void;
 	handlePathParamFieldSelect: (paramName: string, fieldMemberId: string) => void;
@@ -405,7 +417,6 @@ export function createApiDetailState(config: ApiDetailStateConfig): ApiDetailSta
 
 	// Loading state
 	let isSaving = $state(false);
-	let pathError = $state('');
 
 	let createEndpointDefaults = $derived(createEndpointDraft(apiId));
 
@@ -419,16 +430,17 @@ export function createApiDetailState(config: ApiDetailStateConfig): ApiDetailSta
 		return resolveTargetFields(editedEndpoint.targetObjectId, allObjects, allFields);
 	});
 
-	// Live validation errors
-	let validationErrors = $derived.by((): ValidationError[] => {
+	let endpointIssues = $derived.by((): EndpointIssue[] => {
 		if (!editedEndpoint) return [];
-		return validateEndpointParams({
-			responseShape: editedEndpoint.responseShape,
-			targetObjectId: editedEndpoint.targetObjectId,
-			targetFields,
-			pathParams: editedEndpoint.pathParams,
-			queryParams: editedEndpoint.queryParams ?? []
-		});
+		return getEndpointIssues(editedEndpoint, currentEndpointContext());
+	});
+
+	// Live validation errors
+	let validationErrors = $derived(getEndpointValidationErrors(endpointIssues));
+
+	let pathError = $derived.by(() => {
+		const pathIssue = endpointIssues.find(issue => issue.code === 'path_param_name_invalid');
+		return pathIssue?.message ?? '';
 	});
 
 	// Derived: Track if there are unsaved endpoint changes
@@ -449,6 +461,28 @@ export function createApiDetailState(config: ApiDetailStateConfig): ApiDetailSta
 		if (!selectedEndpoint) return false;
 		return JSON.stringify(editedEndpoint) !== JSON.stringify(selectedEndpoint);
 	});
+
+	let endpointCommandBlockers = $derived.by((): EndpointIssue[] => {
+		if (!editedEndpoint) return [];
+		const outcome = prepareEndpointCommand(editedEndpoint, currentEndpointContext());
+		return outcome.status === 'blocked' ? outcome.reasons : [];
+	});
+
+	let endpointCommandBlocked = $derived(endpointCommandBlockers.length > 0);
+
+	let endpointCommandBlockTooltip = $derived.by(() => {
+		if (!hasEndpointChanges || endpointCommandBlockers.length === 0) return '';
+		return formatEndpointBlockReasons(endpointCommandBlockers);
+	});
+
+	function currentEndpointContext(): EndpointSemanticsContext {
+		return { targetFields };
+	}
+
+	function resolveTargetFieldsFor(targetObjectId: string | undefined): TargetField[] {
+		if (!targetObjectId) return [];
+		return resolveTargetFields(targetObjectId, allObjects, allFields);
+	}
 
 	// ============================================================================
 	// Tag Operations
@@ -481,11 +515,12 @@ export function createApiDetailState(config: ApiDetailStateConfig): ApiDetailSta
 
 	async function handleCreateEndpoint(): Promise<void> {
 		if (!editedEndpoint) return;
-		if (pathError) return;
+		const command = prepareEndpointCommand(editedEndpoint, currentEndpointContext());
+		if (command.status === 'blocked') return;
 
 		isSaving = true;
 		try {
-			const endpoint = await endpointApi.create(toCreateEndpointPayload(editedEndpoint));
+			const endpoint = await endpointApi.create(toCreateEndpointPayload(command.endpoint));
 			const hydrated = hydrateStoredEndpoint(endpoint);
 			endpointsStore.update(eps => [...eps, hydrated]);
 			showToast('Endpoint created successfully', 'success');
@@ -560,13 +595,11 @@ export function createApiDetailState(config: ApiDetailStateConfig): ApiDetailSta
 		endpointDrawerOpen = true;
 		tagInputValue = hydrated.tagName ?? '';
 		tagDropdownOpen = false;
-		pathError = '';
 	}
 
 	function closeEndpointDrawer(): void {
 		endpointDrawerOpen = false;
 		showEndpointDeleteConfirm = false;
-		pathError = '';
 		setTimeout(() => {
 			selectedEndpoint = null;
 			editedEndpoint = null;
@@ -575,18 +608,19 @@ export function createApiDetailState(config: ApiDetailStateConfig): ApiDetailSta
 
 	async function handleSaveEndpoint(): Promise<boolean> {
 		if (!editedEndpoint || !selectedEndpoint) return false;
-		if (pathError) return false;
+		const command = prepareEndpointCommand(editedEndpoint, currentEndpointContext());
+		if (command.status === 'blocked') return false;
 
-		const payload = toUpdateEndpointPayload(editedEndpoint);
+		const payload = toUpdateEndpointPayload(command.endpoint);
 
 		isSaving = true;
 		const previousEndpoints = get(endpointsStore);
 		endpointsStore.update(eps =>
-			eps.map(e => (e.id === editedEndpoint!.id ? applyEndpointUpdate(e, payload) : e))
+			eps.map(e => (e.id === command.endpoint.id ? applyEndpointUpdate(e, payload) : e))
 		);
 
 		try {
-			const endpoint = await endpointApi.update(editedEndpoint.id, payload);
+			const endpoint = await endpointApi.update(command.endpoint.id, payload);
 			const hydrated = hydrateStoredEndpoint(endpoint);
 			endpointsStore.update(eps => eps.map(e => (e.id === hydrated.id ? hydrated : e)));
 			selectedEndpoint = hydrated;
@@ -607,97 +641,50 @@ export function createApiDetailState(config: ApiDetailStateConfig): ApiDetailSta
 		if (!selectedEndpoint) return;
 		editedEndpoint = deepClone(selectedEndpoint);
 		tagInputValue = editedEndpoint?.tagName ?? '';
-		pathError = '';
 	}
 
 	// ============================================================================
 	// Detail Path Detection
 	// ============================================================================
 
-	/** Regex: path ends with a {param} segment, indicating a detail endpoint */
-	const DETAIL_PATH_RE = /\{[^}]+\}$/;
-
-	// Derived: true when the current path ends with {param}
-	let isDetailPath = $derived(
-		editedEndpoint ? DETAIL_PATH_RE.test(editedEndpoint.path) : false
-	);
-
-	// Derived: true when method is not GET (only GET supports list responses)
-	let isNonGetMethod = $derived(
-		editedEndpoint ? editedEndpoint.method !== 'GET' : false
-	);
-
 	// Derived: whether response shape toggle should be locked to "object"
-	let responseShapeLocked = $derived(isDetailPath || isNonGetMethod);
+	let responseShapeLocked = $derived(isEndpointResponseShapeLocked(editedEndpoint));
 
-	let responseShapeLockedReason = $derived.by(() => {
-		if (isDetailPath) return 'Detail endpoints always return a single object';
-		if (isNonGetMethod) return 'Only GET endpoints can return a list';
-		return '';
-	});
-
-	// Auto-set response shape to 'object' when method changes to non-GET
-	$effect(() => {
-		if (isNonGetMethod && editedEndpoint && editedEndpoint.responseShape !== 'object') {
-			editedEndpoint = { ...editedEndpoint, responseShape: 'object' };
-		}
-	});
+	let responseShapeLockedReason = $derived(getEndpointResponseShapeLockedReason(editedEndpoint));
 
 	// ============================================================================
 	// Endpoint Editing Operations
 	// ============================================================================
 
+	function handleMethodSelect(method: HttpMethod): void {
+		if (!editedEndpoint) return;
+		editedEndpoint = transitionEndpointDraft(
+			editedEndpoint,
+			{ type: 'methodChanged', method },
+			currentEndpointContext()
+		);
+	}
+
 	function handlePathChange(newPath: string): void {
 		if (!editedEndpoint) return;
-		const { path, pathParams } = reconcilePathParams(newPath, editedEndpoint.pathParams);
-
-		// Auto-link new (unlinked) path params by name match against the target object
-		const autoLinkedParams = pathParams.map(p => {
-			if (p.fieldMemberId) return p;
-			const match = targetFields.find(f => f.name.toLowerCase() === p.name.toLowerCase());
-			return match ? { ...p, fieldMemberId: match.fieldMemberId } : p;
-		});
-
-		// Detail path: auto-link last path param to PK field if unlinked
-		const isDetail = DETAIL_PATH_RE.test(path);
-		if (isDetail && autoLinkedParams.length > 0) {
-			const lastIdx = autoLinkedParams.length - 1;
-			const lastParam = autoLinkedParams[lastIdx];
-			if (!lastParam.fieldMemberId) {
-				const pkField = targetFields.find(f => f.isPk);
-				if (pkField) {
-					autoLinkedParams[lastIdx] = { ...lastParam, fieldMemberId: pkField.fieldMemberId };
-				}
-			}
-		}
-
-		// Auto-set response shape: detail paths always return a single object
-		const autoResponseShape = isDetail ? 'object' as const : editedEndpoint.responseShape;
-
-		editedEndpoint = { ...editedEndpoint, path, pathParams: autoLinkedParams, responseShape: autoResponseShape };
-
-		const invalidParam = autoLinkedParams.find(p => p.name && !isValidSnakeCaseName(p.name));
-		pathError = invalidParam
-			? `Path parameter '${invalidParam.name}' must be snake_case (e.g. user_id)`
-			: '';
+		editedEndpoint = transitionEndpointDraft(
+			editedEndpoint,
+			{ type: 'pathChanged', path: newPath },
+			currentEndpointContext()
+		);
 	}
 
 	function handlePathParamUpdate(paramName: string, fieldMemberId: string): void {
 		if (!editedEndpoint) return;
-		const updatedParams = editedEndpoint.pathParams.map(p =>
-			p.name === paramName ? { ...p, fieldMemberId } : p
+		editedEndpoint = transitionEndpointDraft(
+			editedEndpoint,
+			{ type: 'pathParamFieldSelected', paramName, fieldMemberId },
+			currentEndpointContext()
 		);
-		editedEndpoint = { ...editedEndpoint, pathParams: updatedParams };
 	}
 
 	function handlePathParamFieldSelect(paramName: string, fieldMemberId: string): void {
-		const ep = editedEndpoint;
-		if (!ep) return;
-		const updatedParams = ep.pathParams.map(p => {
-			if (p.name !== paramName) return p;
-			return { ...p, fieldMemberId };
-		});
-		editedEndpoint = { ...ep, pathParams: updatedParams };
+		handlePathParamUpdate(paramName, fieldMemberId);
 	}
 
 	// ============================================================================
@@ -706,35 +693,29 @@ export function createApiDetailState(config: ApiDetailStateConfig): ApiDetailSta
 
 	function handleAddQueryParamFromField(fieldMemberId: string): void {
 		if (!editedEndpoint) return;
-		const resolvedTargetFields = editedEndpoint.targetObjectId
-			? resolveTargetFields(editedEndpoint.targetObjectId, allObjects, allFields)
-			: targetFields;
-		const targetField = resolvedTargetFields.find(f => f.fieldMemberId === fieldMemberId);
-		if (!targetField) return;
-		const newParam: QueryParam = {
-			name: targetField.name,
-			fieldMemberId,
-			operator: 'eq',
-			required: false
-		};
-		editedEndpoint = {
-			...editedEndpoint,
-			queryParams: [...(editedEndpoint.queryParams ?? []), newParam]
-		};
+		editedEndpoint = transitionEndpointDraft(
+			editedEndpoint,
+			{ type: 'queryParamAddedFromField', fieldMemberId },
+			currentEndpointContext()
+		);
 	}
 
 	function handleUpdateQueryParam(index: number, updates: Partial<QueryParam>): void {
 		if (!editedEndpoint) return;
-		const qps = [...(editedEndpoint.queryParams ?? [])];
-		qps[index] = { ...qps[index], ...updates };
-		editedEndpoint = { ...editedEndpoint, queryParams: qps };
+		editedEndpoint = transitionEndpointDraft(
+			editedEndpoint,
+			{ type: 'queryParamUpdated', index, updates },
+			currentEndpointContext()
+		);
 	}
 
 	function handleRemoveQueryParam(index: number): void {
 		if (!editedEndpoint) return;
-		const qps = [...(editedEndpoint.queryParams ?? [])];
-		qps.splice(index, 1);
-		editedEndpoint = { ...editedEndpoint, queryParams: qps };
+		editedEndpoint = transitionEndpointDraft(
+			editedEndpoint,
+			{ type: 'queryParamRemoved', index },
+			currentEndpointContext()
+		);
 	}
 
 	// ============================================================================
@@ -743,10 +724,11 @@ export function createApiDetailState(config: ApiDetailStateConfig): ApiDetailSta
 
 	function handleTogglePagination(): void {
 		if (!editedEndpoint) return;
-		editedEndpoint = {
-			...editedEndpoint,
-			pagination: !(editedEndpoint.pagination ?? false)
-		};
+		editedEndpoint = transitionEndpointDraft(
+			editedEndpoint,
+			{ type: 'paginationToggled' },
+			currentEndpointContext()
+		);
 	}
 
 	// ============================================================================
@@ -755,48 +737,24 @@ export function createApiDetailState(config: ApiDetailStateConfig): ApiDetailSta
 
 	function handleSelectObject(targetObjectId: string | undefined): void {
 		if (!editedEndpoint) return;
-
-		// Resolve field names on the new object for auto-linking
-		const newTargetFields = targetObjectId
-			? resolveTargetFields(targetObjectId, allObjects, allFields)
-			: [];
-
-		// Auto-link path params by case-insensitive name match; clear if no match
-		const autoLinkedParams = editedEndpoint.pathParams.map(p => {
-			const match = newTargetFields.find(f => f.name.toLowerCase() === p.name.toLowerCase());
-			return { ...p, fieldMemberId: match ? match.fieldMemberId : '' };
-		});
-
-		// Detail path: auto-link last path param to PK field if still unlinked
-		const isDetail = DETAIL_PATH_RE.test(editedEndpoint.path);
-		if (isDetail && autoLinkedParams.length > 0) {
-			const lastIdx = autoLinkedParams.length - 1;
-			const lastParam = autoLinkedParams[lastIdx];
-			if (!lastParam.fieldMemberId) {
-				const pkField = newTargetFields.find(f => f.isPk);
-				if (pkField) {
-					autoLinkedParams[lastIdx] = { ...lastParam, fieldMemberId: pkField.fieldMemberId };
-				}
-			}
-		}
-
-		const hydrated = hydrateStoredEndpoint({
-			...editedEndpoint,
-			targetObjectId,
-			pathParams: autoLinkedParams
-		});
-
-		editedEndpoint = {
-			...hydrated,
-			// Clear query params and pagination when object changes
-			queryParams: [],
-			pagination: false
-		};
+		editedEndpoint = hydrateStoredEndpoint(transitionEndpointDraft(
+			editedEndpoint,
+			{
+				type: 'targetObjectSelected',
+				targetObjectId,
+				targetFields: resolveTargetFieldsFor(targetObjectId)
+			},
+			currentEndpointContext()
+		));
 	}
 
 	function handleEnvelopeToggle(enabled: boolean): void {
 		if (!editedEndpoint) return;
-		editedEndpoint = { ...editedEndpoint, useEnvelope: enabled };
+		editedEndpoint = transitionEndpointDraft(
+			editedEndpoint,
+			{ type: 'envelopeToggled', enabled },
+			currentEndpointContext()
+		);
 	}
 
 	// ============================================================================
@@ -805,19 +763,20 @@ export function createApiDetailState(config: ApiDetailStateConfig): ApiDetailSta
 
 	function handleSetResponseShape(shape: ResponseShape): void {
 		if (!editedEndpoint) return;
-		// Locked to 'object' for detail paths and non-GET methods
-		if (responseShapeLocked) return;
-		editedEndpoint = { ...editedEndpoint, responseShape: shape };
+		editedEndpoint = transitionEndpointDraft(
+			editedEndpoint,
+			{ type: 'responseShapeSet', shape },
+			currentEndpointContext()
+		);
 	}
 
 	function handleResetResponseDefaults(): void {
 		if (!editedEndpoint) return;
-		editedEndpoint = {
-			...editedEndpoint,
-			useEnvelope: true,
-			responseShape: 'object',
-			targetObjectId: undefined
-		};
+		editedEndpoint = transitionEndpointDraft(
+			editedEndpoint,
+			{ type: 'responseDefaultsReset' },
+			currentEndpointContext()
+		);
 	}
 
 	// ============================================================================
@@ -869,6 +828,9 @@ export function createApiDetailState(config: ApiDetailStateConfig): ApiDetailSta
 		get hasEndpointChanges() { return hasEndpointChanges; },
 		get isSaving() { return isSaving; },
 		get pathError() { return pathError; },
+		get endpointCommandBlocked() { return endpointCommandBlocked; },
+		get endpointCommandBlockers() { return endpointCommandBlockers; },
+		get endpointCommandBlockTooltip() { return endpointCommandBlockTooltip; },
 
 		// Tag actions
 		handleTagSelect,
@@ -889,6 +851,7 @@ export function createApiDetailState(config: ApiDetailStateConfig): ApiDetailSta
 		handleUndoEndpoint,
 
 		// Endpoint editing actions
+		handleMethodSelect,
 		handlePathChange,
 		handlePathParamUpdate,
 		handlePathParamFieldSelect,

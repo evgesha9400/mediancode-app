@@ -56,7 +56,7 @@
 <div class="border-b border-edge last:border-b-0">
   <div class="flex items-center gap-2 py-1.5">
     <!-- Name input -->
-    <div class="w-1/4 shrink-0">
+    <div class="w-1/5 shrink-0">
       <input
         type="text"
         value={param.name}
@@ -67,7 +67,7 @@
     </div>
 
     <!-- Operator dropdown -->
-    <div class="w-1/4 shrink-0">
+    <div class="w-1/5 shrink-0">
       <GlassSelectDropdown
         value={param.operator}
         options={availableOperators.map((op) => ({ value: op, label: op }))}
@@ -77,8 +77,24 @@
       />
     </div>
 
+    <!-- Required toggle -->
+    <div class="w-20 shrink-0">
+      <button
+        type="button"
+        aria-pressed={param.required}
+        aria-label={param.required ? 'Required query parameter' : 'Optional query parameter'}
+        title={param.required ? 'Make optional' : 'Make required'}
+        onclick={() => onUpdate({ required: !param.required })}
+        class="h-[34px] w-full rounded-xl border text-xs transition-colors {param.required
+          ? 'border-amber-400/60 bg-amber-500/10 text-amber-300'
+          : 'border-edge/80 bg-surface-raised text-fg-muted hover:text-fg-secondary'}"
+      >
+        <i class="fa-solid {param.required ? 'fa-lock' : 'fa-lock-open'}" aria-hidden="true"></i>
+      </button>
+    </div>
+
     <!-- Field display with type chip and delete inside (matches path param pattern) -->
-    <div class="w-1/2 min-w-0">
+    <div class="flex-1 min-w-0">
       <div class={objectSelectorDisplayRow}>
         <div class="flex items-center gap-1.5">
           {#if selectedField}

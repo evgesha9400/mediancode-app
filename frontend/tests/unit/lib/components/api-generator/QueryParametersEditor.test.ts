@@ -20,6 +20,7 @@ describe('QueryParametersEditor Component', () => {
 				responseShape: 'list',
 				pagination: false,
 				validationErrors: [],
+				blockIssues: [],
 				onAddFromField: () => {},
 				onUpdate: () => {},
 				onRemove: () => {},

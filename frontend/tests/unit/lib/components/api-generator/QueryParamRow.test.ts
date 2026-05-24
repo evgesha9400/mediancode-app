@@ -64,6 +64,9 @@ describe('QueryParamRow Component', () => {
 
 			props.onUpdate({ fieldMemberId: 'fm-price', operator: 'gte' });
 			expect(receivedUpdates).toEqual({ fieldMemberId: 'fm-price', operator: 'gte' });
+
+			props.onUpdate({ required: true });
+			expect(receivedUpdates).toEqual({ required: true });
 		});
 
 		it('QueryParamRowProps onRemove is callable', () => {

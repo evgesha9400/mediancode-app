@@ -527,9 +527,7 @@
                   options={HTTP_METHOD_SELECT_OPTIONS}
                   ariaLabel="HTTP method"
                   mono
-                  onSelect={(m) => {
-                    if (apiState.editedEndpoint) apiState.editedEndpoint.method = m as HttpMethod;
-                  }}
+                  onSelect={(m) => apiState.handleMethodSelect(m as HttpMethod)}
                 />
               </div>
               <div class="endpoint-path-input {defaultValueComboShell}">
@@ -599,6 +597,7 @@
             responseShape={apiState.editedEndpoint.responseShape}
             pagination={apiState.editedEndpoint.pagination ?? false}
             validationErrors={apiState.validationErrors}
+            blockIssues={apiState.endpointCommandBlockers}
             onAddFromField={apiState.handleAddQueryParamFromField}
             onUpdate={apiState.handleUpdateQueryParam}
             onRemove={apiState.handleRemoveQueryParam}
@@ -634,7 +633,9 @@
               type="button"
               onclick={apiState.handleCreateEndpoint}
               disabled={!apiState.hasEndpointChanges || apiState.isSaving}
-              class="{drawerFooterSegmentBtn} {apiState.hasEndpointChanges && !apiState.isSaving
+              aria-disabled={apiState.endpointCommandBlocked}
+              title={apiState.endpointCommandBlockTooltip || undefined}
+              class="{drawerFooterSegmentBtn} {apiState.hasEndpointChanges && !apiState.endpointCommandBlocked && !apiState.isSaving
                 ? drawerFooterBtnPrimaryEnabled
                 : drawerFooterBtnPrimaryDisabledSegment}"
             >
@@ -685,7 +686,9 @@
               type="button"
               onclick={apiState.handleSaveEndpoint}
               disabled={!apiState.hasEndpointChanges || apiState.isSaving}
-              class="{drawerFooterSegmentBtn} {apiState.hasEndpointChanges && !apiState.isSaving
+              aria-disabled={apiState.endpointCommandBlocked}
+              title={apiState.endpointCommandBlockTooltip || undefined}
+              class="{drawerFooterSegmentBtn} {apiState.hasEndpointChanges && !apiState.endpointCommandBlocked && !apiState.isSaving
                 ? drawerFooterBtnPrimaryEnabled
                 : drawerFooterBtnPrimaryDisabledSegment}"
             >

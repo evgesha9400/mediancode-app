@@ -133,6 +133,41 @@ function createTestState(overrides: Partial<ApiDetailStateConfig> = {}): {
   return { state, cleanup };
 }
 
+function setBasicTargetObjectFixture(): void {
+  fieldsStore.set([
+    {
+      id: 'field-id',
+      namespaceId: 'ns-1',
+      name: 'id',
+      type: 'uuid',
+      container: null,
+      constraints: [],
+      validators: [],
+      usedInApis: []
+    }
+  ]);
+  objectsStore.set([
+    {
+      id: 'obj-users',
+      namespaceId: 'ns-1',
+      name: 'User',
+      members: [
+        {
+          id: 'member-id',
+          memberType: 'field',
+          name: 'id',
+          fieldId: 'field-id',
+          role: 'pk',
+          isNullable: false
+        }
+      ],
+      derivedRelationships: [],
+      validators: [],
+      usedInApis: []
+    }
+  ]);
+}
+
 // ---------------------------------------------------------------------------
 // Setup
 // ---------------------------------------------------------------------------
@@ -632,8 +667,9 @@ describe('apiDetailState - Endpoint CRUD', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     apisStore.set([makeApi({ id: 'api-1' })]);
+    setBasicTargetObjectFixture();
     endpointsStore.set([
-      makeEndpoint({ id: 'ep-1', apiId: 'api-1', method: 'GET', path: '/users' })
+      makeEndpoint({ id: 'ep-1', apiId: 'api-1', method: 'GET', path: '/users', targetObjectId: 'obj-users' })
     ]);
     flushSync();
   });
@@ -666,6 +702,8 @@ describe('apiDetailState - Endpoint CRUD', () => {
 
     state.handleAddEndpoint();
     flushSync();
+    state.handleSelectObject('obj-users');
+    flushSync();
     state.editedEndpoint = { ...state.editedEndpoint!, path: '/items' };
     flushSync();
 
@@ -689,10 +727,29 @@ describe('apiDetailState - Endpoint CRUD', () => {
 
     state.handleAddEndpoint();
     flushSync();
+    state.handleSelectObject('obj-users');
+    flushSync();
 
     await state.handleCreateEndpoint();
 
     expect(showToast).toHaveBeenCalledWith('Failed to create endpoint', 'error');
+  });
+
+  it('should block invalid endpoint create without toast', async () => {
+    ({ state, cleanup } = createTestState());
+    flushSync();
+
+    state.handleAddEndpoint();
+    flushSync();
+    state.editedEndpoint = { ...state.editedEndpoint!, path: '/items' };
+    flushSync();
+
+    await state.handleCreateEndpoint();
+
+    expect(state.endpointCommandBlocked).toBe(true);
+    expect(state.endpointCommandBlockTooltip).toContain('Target object');
+    expect(createEndpointApi).not.toHaveBeenCalled();
+    expect(showToast).not.toHaveBeenCalled();
   });
 
   it('should save endpoint via updateEndpointApi', async () => {
@@ -1030,6 +1087,8 @@ describe('apiDetailState - Pagination Toggle', () => {
 
     state.handleAddEndpoint();
     flushSync();
+    state.handleSelectObject('obj-items');
+    state.handleSetResponseShape('list');
     state.editedEndpoint = { ...state.editedEndpoint!, path: '/items', pagination: true };
     flushSync();
 

@@ -102,12 +102,21 @@ export interface TargetField {
  * Input for endpoint param validation.
  */
 export interface ValidationInput {
+	method?: string;
 	responseShape: ResponseShape;
 	targetObjectId?: string;
 	targetFields: TargetField[];
 	pathParams: PathParam[];
 	queryParams: QueryParam[];
+	pagination?: boolean;
 }
+
+export type ValidationLocation =
+	| { kind: 'targetObject'; field: 'targetObjectId' }
+	| { kind: 'pathParam'; name: string; field: 'name' | 'fieldMemberId' }
+	| { kind: 'queryParam'; index: number; field: 'name' | 'fieldMemberId' | 'operator' | 'required' }
+	| { kind: 'responseShape'; field: 'shape' }
+	| { kind: 'pagination'; field: 'enabled' };
 
 /**
  * A single validation error with a rule number and human-readable message.
@@ -116,6 +125,7 @@ export interface ValidationError {
 	rule: number;
 	message: string;
 	param?: string; // the parameter name that triggered the error, if applicable
+	location?: ValidationLocation;
 }
 
 /**
@@ -141,7 +151,8 @@ export function validateEndpointParams(input: ValidationInput): ValidationError[
 			rule: 1,
 			message: isList
 				? 'List endpoints require a target object'
-				: 'Target object could not be determined'
+				: 'Target object could not be determined',
+			location: { kind: 'targetObject', field: 'targetObjectId' }
 		});
 		// Cannot validate further without a target
 		return errors;
@@ -155,17 +166,19 @@ export function validateEndpointParams(input: ValidationInput): ValidationError[
 			errors.push({
 				rule: 2,
 				message: `Path parameter "${pp.name}" is not linked to a target Field Member`,
-				param: pp.name
+				param: pp.name,
+				location: { kind: 'pathParam', name: pp.name, field: 'fieldMemberId' }
 			});
 		}
 	}
 
-	for (const qp of queryParams) {
+	for (const [index, qp] of queryParams.entries()) {
 		if (qp.fieldMemberId && !fieldMemberIds.has(qp.fieldMemberId)) {
 			errors.push({
 				rule: 2,
 				message: `Query parameter "${qp.name}" is not linked to a target Field Member`,
-				param: qp.name
+				param: qp.name,
+				location: { kind: 'queryParam', index, field: 'fieldMemberId' }
 			});
 		}
 	}
@@ -178,7 +191,8 @@ export function validateEndpointParams(input: ValidationInput): ValidationError[
 			errors.push({
 				rule: 3,
 				message: "Detail endpoint's identifying param must map to the primary key",
-				param: lastParam.name
+				param: lastParam.name,
+				location: { kind: 'pathParam', name: lastParam.name, field: 'fieldMemberId' }
 			});
 		}
 	}
@@ -187,7 +201,8 @@ export function validateEndpointParams(input: ValidationInput): ValidationError[
 	if (isDetail && queryParams.length > 0) {
 		errors.push({
 			rule: 4,
-			message: 'Detail endpoints cannot have query parameters with field references'
+			message: 'Detail endpoints cannot have query parameters with field references',
+			location: { kind: 'responseShape', field: 'shape' }
 		});
 	}
 
@@ -200,14 +215,15 @@ export function validateEndpointParams(input: ValidationInput): ValidationError[
 				errors.push({
 					rule: 5,
 					message: `Path param "${pp.name}" maps to PK field "${linkedField.name}" -- use a detail endpoint instead`,
-					param: pp.name
+					param: pp.name,
+					location: { kind: 'pathParam', name: pp.name, field: 'fieldMemberId' }
 				});
 			}
 		}
 	}
 
 	// Rule 6: Operator compatible with field type
-	for (const qp of queryParams) {
+	for (const [index, qp] of queryParams.entries()) {
 		const field = targetFields.find(f => f.fieldMemberId === qp.fieldMemberId);
 		if (!field) continue; // already caught by rule 2
 		const compatible = getCompatibleOperators(field.type);
@@ -215,7 +231,8 @@ export function validateEndpointParams(input: ValidationInput): ValidationError[
 			errors.push({
 				rule: 6,
 				message: `Operator "${qp.operator}" is not valid for field type "${field.type}"`,
-				param: qp.name
+				param: qp.name,
+				location: { kind: 'queryParam', index, field: 'operator' }
 			});
 		}
 	}
