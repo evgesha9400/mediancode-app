@@ -222,5 +222,5 @@ async def test_derived_relationships_describes_many_to_many():
     assert result[0].source_field == "tags"
     assert result[0].kind == "many_to_many"
     assert result[0].side == "many"
-    assert result[0].implies_fk is None
-    assert result[0].junction_table == "blog_posts_tags"
+    assert not hasattr(result[0], "implies_fk")
+    assert not hasattr(result[0], "junction_table")

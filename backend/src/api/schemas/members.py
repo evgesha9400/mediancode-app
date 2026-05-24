@@ -45,7 +45,7 @@ class RelationshipMemberInput(BaseModel):
     :ivar target_object_id: Reference to the target object.
     :ivar kind: Relationship kind.
     :ivar inverse_name: Name for the derived reverse field on the target.
-    :ivar required: Whether the derived FK column is NOT NULL.
+    :ivar required: Whether the target relationship is required.
     """
 
     id: UUID | None = None
@@ -102,7 +102,7 @@ class RelationshipMemberResponse(BaseModel):
     :ivar target_object_id: Reference to the target object.
     :ivar kind: Relationship kind.
     :ivar inverse_name: Derived reverse field name.
-    :ivar required: Whether the FK column is NOT NULL.
+    :ivar required: Whether the target relationship is required.
     """
 
     id: UUID
@@ -131,9 +131,7 @@ class DerivedRelationshipResponse(BaseModel):
     :ivar source_field: Authored relationship field name on the source.
     :ivar kind: Relationship kind.
     :ivar side: Which side of the relationship this object is on.
-    :ivar implies_fk: Derived FK column name, or null for many_to_many.
-    :ivar junction_table: Junction table name for many_to_many relationships.
-    :ivar required: Whether the derived FK column is NOT NULL.
+    :ivar required: Whether the target-side relationship is required.
     """
 
     name: str
@@ -142,8 +140,6 @@ class DerivedRelationshipResponse(BaseModel):
     source_field: str = Field(..., alias="sourceField")
     kind: str
     side: str
-    implies_fk: str | None = Field(default=None, alias="impliesFk")
-    junction_table: str | None = Field(default=None, alias="junctionTable")
     required: bool = True
 
     model_config = ConfigDict(populate_by_name=True)

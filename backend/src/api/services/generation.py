@@ -73,9 +73,8 @@ async def _fetch_objects(
 ) -> dict[UUID, ObjectDefinition]:
     """Fetch ALL objects in the user's namespace for full-graph FK derivation.
 
-    All objects are needed (not just endpoint-selected) because any object
-    may have a relationship whose target is an endpoint-selected object,
-    and that relationship determines FK columns on the target.
+    All objects are needed (not just endpoint-selected) because any Object
+    may have a Relationship Member whose target is endpoint-selected.
 
     :param api: The API model.
     :param db: Database session.

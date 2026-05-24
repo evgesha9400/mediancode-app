@@ -40,8 +40,6 @@ interface DerivedRelationshipResponse {
 	sourceField: string;
 	kind: string;
 	side: string;
-	impliesFk: string | null;
-	junctionTable?: string;
 	required: boolean;
 }
 
@@ -110,8 +108,6 @@ function transformDerivedRelationship(response: DerivedRelationshipResponse): De
 		sourceField: response.sourceField,
 		kind: response.kind as RelationshipKind,
 		side: response.side as 'one' | 'many' | 'target',
-		impliesFk: response.impliesFk,
-		junctionTable: response.junctionTable,
 		required: response.required,
 	};
 }

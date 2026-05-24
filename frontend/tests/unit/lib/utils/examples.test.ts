@@ -59,7 +59,6 @@ const relTestObject: ObjectDefinition = {
 			sourceField: 'orders',
 			kind: 'one_to_many',
 			side: 'many',
-			impliesFk: 'customer_id',
 			required: true
 		}
 	],
@@ -295,13 +294,13 @@ describe('examples - relationship members and derived relationships in previews'
 		expect(obj).toHaveProperty('name');
 	});
 
-	it('should produce FK columns from derivedRelationships with impliesFk', () => {
+	it('should not produce target-specific FK columns from derivedRelationships', () => {
 		const obj = buildRequestBodyFromObjectId(REL_TEST_OBJECT_ID);
-		expect(obj).toHaveProperty('customer_id');
+		expect(obj).not.toHaveProperty('customer_id');
 	});
 
-	it('should produce FK columns in response preview from derivedRelationships', () => {
+	it('should keep response preview target-neutral for derivedRelationships', () => {
 		const obj = buildResponseBodyFromObjectId(REL_TEST_OBJECT_ID);
-		expect(obj).toHaveProperty('customer_id');
+		expect(obj).not.toHaveProperty('customer_id');
 	});
 });

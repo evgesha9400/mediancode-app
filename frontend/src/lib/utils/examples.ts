@@ -7,23 +7,6 @@ import type { ResponseShape, FieldMember } from '$lib/types';
 import { getFieldById, getObjectById } from '$lib/stores/stores';
 
 /**
- * Get the PK field type of a target object for FK type derivation.
- * Falls back to 'uuid' if the target or its PK field cannot be found.
- */
-function getTargetPkType(targetObjectId: string): string {
-	const targetObj = getObjectById(targetObjectId);
-	if (!targetObj) return 'uuid';
-
-	const pkMember = targetObj.members.find(
-		m => m.memberType === 'field' && m.role === 'pk'
-	) as FieldMember | undefined;
-	if (!pkMember) return 'uuid';
-
-	const pkField = getFieldById(pkMember.fieldId);
-	return pkField?.type ?? 'uuid';
-}
-
-/**
  * Get an example value for a given field type
  *
  * @param type - The field type (e.g., 'str', 'int', 'float', 'bool', 'uuid', 'datetime', etc.)
@@ -76,7 +59,6 @@ export function buildObjectFromObjectId(objectDefinitionId: string | undefined, 
 /**
  * Build request body preview object, filtering by role.
  * Excludes PK, read-only, and auto-generated fields.
- * Includes FK columns implied by derived relationships.
  */
 export function buildRequestBodyFromObjectId(objectDefinitionId: string | undefined, objects?: any[]): Record<string, any> {
 	if (!objectDefinitionId) return {};
@@ -92,20 +74,12 @@ export function buildRequestBodyFromObjectId(objectDefinitionId: string | undefi
 			if (field) obj[member.name] = getExampleValueForType(field.type);
 		});
 
-	// Add FK columns implied by derived relationships
-	for (const dr of objectDef.derivedRelationships) {
-		if (dr.impliesFk && !(dr.impliesFk in obj)) {
-			obj[dr.impliesFk] = getExampleValueForType(getTargetPkType(dr.sourceObjectId));
-		}
-	}
-
 	return obj;
 }
 
 /**
  * Build response body preview object, filtering by role.
  * Excludes write-only fields (everything else appears in responses).
- * Includes FK columns implied by derived relationships.
  */
 export function buildResponseBodyFromObjectId(objectDefinitionId: string | undefined, objects?: any[]): Record<string, any> {
 	if (!objectDefinitionId) return {};
@@ -120,13 +94,6 @@ export function buildResponseBodyFromObjectId(objectDefinitionId: string | undef
 			const field = getFieldById((member as FieldMember).fieldId);
 			if (field) obj[member.name] = getExampleValueForType(field.type);
 		});
-
-	// Add FK columns implied by derived relationships
-	for (const dr of objectDef.derivedRelationships) {
-		if (dr.impliesFk && !(dr.impliesFk in obj)) {
-			obj[dr.impliesFk] = getExampleValueForType(getTargetPkType(dr.sourceObjectId));
-		}
-	}
 
 	return obj;
 }

@@ -29,10 +29,6 @@ from api.schemas.object import ModelValidatorInput, ModelValidatorResponse
 from api_craft.models.enums import RelationshipKind
 from api_craft.models.validation_catalog import ALLOWED_PK_TYPES
 from api_craft.relationship_derivation import derive_relationship
-from api_craft.sqlalchemy_relationships import (
-    association_table_name,
-    foreign_key_field_name,
-)
 
 
 class ObjectMembership:
@@ -284,8 +280,6 @@ class ObjectMembership:
                     sourceField=derivation.source_member_name,
                     kind=derivation.kind,
                     side=derivation.target_object_side,
-                    impliesFk=foreign_key_field_name(derivation),
-                    junctionTable=association_table_name(derivation),
                     required=rel.required,
                 )
             )

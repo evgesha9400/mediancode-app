@@ -267,8 +267,6 @@ export type DerivedRelationship = {
   sourceField: string;
   kind: RelationshipKind;
   side: 'one' | 'many' | 'target';
-  impliesFk: string | null;
-  junctionTable?: string;
   required: boolean;
 };
 

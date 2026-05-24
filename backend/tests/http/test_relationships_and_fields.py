@@ -157,7 +157,8 @@ class TestRelationshipMembers:
         assert derived["sourceField"] == "posts"
         assert derived["kind"] == "one_to_many"
         assert derived["side"] == "many"
-        assert derived["impliesFk"] == "author_id"
+        assert "impliesFk" not in derived
+        assert "junctionTable" not in derived
         assert derived["required"] is True
 
     async def test_many_to_many_via_update(self, client: AsyncClient):
@@ -195,8 +196,8 @@ class TestRelationshipMembers:
         ]
         assert len(m2m_derived) == 1
         assert m2m_derived[0]["name"] == "posts"
-        assert m2m_derived[0]["impliesFk"] is None
-        assert m2m_derived[0]["junctionTable"] is not None
+        assert "impliesFk" not in m2m_derived[0]
+        assert "junctionTable" not in m2m_derived[0]
 
     async def test_reconcile_by_id_preserves_members(self, client: AsyncClient):
         """PUT with member IDs updates in place, new members inserted, missing deleted."""

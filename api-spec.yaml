@@ -1450,16 +1450,6 @@ components:
         side:
           type: string
           title: Side
-        impliesFk:
-          anyOf:
-          - type: string
-          - type: 'null'
-          title: Impliesfk
-        junctionTable:
-          anyOf:
-          - type: string
-          - type: 'null'
-          title: Junctiontable
         required:
           type: boolean
           title: Required
@@ -1489,11 +1479,7 @@ components:
 
         :ivar side: Which side of the relationship this object is on.
 
-        :ivar implies_fk: Derived FK column name, or null for many_to_many.
-
-        :ivar junction_table: Junction table name for many_to_many relationships.
-
-        :ivar required: Whether the derived FK column is NOT NULL.'
+        :ivar required: Whether the target-side relationship is required.'
     FieldConstraintResponse:
       properties:
         id:
@@ -2650,7 +2636,7 @@ components:
 
         :ivar inverse_name: Name for the derived reverse field on the target.
 
-        :ivar required: Whether the derived FK column is NOT NULL.'
+        :ivar required: Whether the target relationship is required.'
     RelationshipMemberResponse:
       properties:
         id:
@@ -2702,7 +2688,7 @@ components:
 
         :ivar inverse_name: Derived reverse field name.
 
-        :ivar required: Whether the FK column is NOT NULL.'
+        :ivar required: Whether the target relationship is required.'
     TypeResponse:
       properties:
         id:

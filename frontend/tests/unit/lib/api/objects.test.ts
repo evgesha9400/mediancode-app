@@ -190,7 +190,6 @@ describe('Objects API Service', () => {
             sourceField: 'orders',
             kind: 'one_to_many',
             side: 'many',
-            impliesFk: 'customer_id',
             required: true
           }
         ]
@@ -205,10 +204,9 @@ describe('Objects API Service', () => {
       expect(dr.sourceObject).toBe('Customer');
       expect(dr.kind).toBe('one_to_many');
       expect(dr.side).toBe('many');
-      expect(dr.impliesFk).toBe('customer_id');
     });
 
-    it('should transform many_to_many derived relationship with junction table', async () => {
+    it('should transform many_to_many derived relationship', async () => {
       const responseWithM2M = {
         ...MOCK_OBJECT_RESPONSE,
         derivedRelationships: [
@@ -219,8 +217,6 @@ describe('Objects API Service', () => {
             sourceField: 'tags',
             kind: 'many_to_many',
             side: 'many',
-            impliesFk: null,
-            junctionTable: 'posts_tags',
             required: false
           }
         ]
@@ -231,8 +227,6 @@ describe('Objects API Service', () => {
       const dr = result[0].derivedRelationships[0];
 
       expect(dr.kind).toBe('many_to_many');
-      expect(dr.impliesFk).toBeNull();
-      expect(dr.junctionTable).toBe('posts_tags');
       expect(dr.required).toBe(false);
     });
 
@@ -247,7 +241,6 @@ describe('Objects API Service', () => {
             sourceField: 'profile',
             kind: 'one_to_one',
             side: 'target',
-            impliesFk: 'user_id',
             required: true
           }
         ]
@@ -259,7 +252,6 @@ describe('Objects API Service', () => {
 
       expect(dr.kind).toBe('one_to_one');
       expect(dr.side).toBe('target');
-      expect(dr.impliesFk).toBe('user_id');
     });
   });
 });

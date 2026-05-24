@@ -125,7 +125,7 @@ class InputRelationship(BaseModel):
     :ivar target_model: PascalCase name of the target object.
     :ivar kind: Relationship kind (one_to_one, one_to_many, many_to_many).
     :ivar inverse_name: Name for the derived reverse field on the target.
-    :ivar required: Whether the derived FK column is NOT NULL.
+    :ivar required: Whether the target relationship is required.
     """
 
     name: str

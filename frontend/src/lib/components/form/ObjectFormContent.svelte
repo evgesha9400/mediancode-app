@@ -645,7 +645,7 @@
                       <button
                         type="button"
                         onclick={() => updateRelationshipField(item.id, { required: !item.required })}
-                        title="Whether the FK column is NOT NULL"
+                        title="Whether the target relationship is required"
                         class={`text-xs px-2 py-0.5 rounded-lg border transition-colors shrink-0 ${item.required ? compactMonoToggleOn : compactMonoToggleOff}`}
                       >
                         required
@@ -692,11 +692,6 @@
             <span class="text-xs text-fg-muted bg-surface-overlay px-2 py-0.5 rounded">
               {dr.kind.replace(/_/g, ' ')}
             </span>
-            {#if dr.impliesFk}
-              <span class="text-xs text-fg-dimmed">implies {dr.impliesFk}</span>
-            {:else if dr.junctionTable}
-              <span class="text-xs text-fg-dimmed">via {dr.junctionTable}</span>
-            {/if}
           </div>
         {/each}
       </div>

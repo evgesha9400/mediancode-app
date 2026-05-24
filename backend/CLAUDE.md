@@ -26,6 +26,9 @@ poetry install
 make test
 # Or: poetry run pytest tests/ -v
 
+# Run all tests with the local Docker PostgreSQL database
+DATABASE_URL=postgresql+asyncpg://postgres:postgres@localhost:5433/median_code poetry run pytest tests/ -v
+
 # Run a single test
 poetry run pytest tests/codegen/test_input_and_transform.py::TestNameTypes -v
 
@@ -34,6 +37,18 @@ poetry run black src/
 
 # Clean caches and test output
 make clean
+```
+
+## Test Database
+
+The backend PostgreSQL test database runs in Docker. Do not treat PostgreSQL
+skips as a completed full pytest run. If DB-backed tests skip, start or inspect
+the Docker database and rerun the tests with the Docker database URL.
+
+Current local Docker database:
+
+```bash
+DATABASE_URL=postgresql+asyncpg://postgres:postgres@localhost:5433/median_code poetry run pytest tests/ -v
 ```
 
 ## api_craft Architecture
