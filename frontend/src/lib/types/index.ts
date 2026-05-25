@@ -175,7 +175,7 @@ export interface ApiEndpoint {
   useEnvelope: boolean;
   // Response shape configuration (object or list of objects only)
   responseShape: ResponseShape;
-  pagination?: boolean;                // When true, auto-injects limit/offset params (list endpoints only)
+  pagination?: boolean;                // When true, auto-injects limit/offset params for queryable endpoints
   expanded?: boolean;
 }
 

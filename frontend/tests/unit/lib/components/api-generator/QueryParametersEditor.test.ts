@@ -17,7 +17,7 @@ describe('QueryParametersEditor Component', () => {
 			const props: QueryParametersEditorProps = {
 				queryParams: [],
 				targetFields: [],
-				responseShape: 'list',
+				policy: { queryParams: 'editable', pagination: 'editable', responseShape: 'locked' },
 				pagination: false,
 				validationErrors: [],
 				blockIssues: [],
@@ -28,7 +28,7 @@ describe('QueryParametersEditor Component', () => {
 			};
 
 			expect(props.queryParams).toEqual([]);
-			expect(props.responseShape).toBe('list');
+			expect(props.policy.queryParams).toBe('editable');
 			expect(props.pagination).toBe(false);
 			expect(typeof props.onAddFromField).toBe('function');
 			expect(typeof props.onTogglePagination).toBe('function');
@@ -42,7 +42,7 @@ describe('QueryParametersEditor Component', () => {
 				targetFields: [
 					{ fieldMemberId: 'fm-price', name: 'price', type: 'float', isPk: false }
 				],
-				responseShape: 'list',
+				policy: { queryParams: 'editable', pagination: 'editable', responseShape: 'locked' },
 				pagination: true,
 				validationErrors: [],
 				onAddFromField: () => {},
@@ -65,7 +65,7 @@ describe('QueryParametersEditor Component', () => {
 			const props: QueryParametersEditorProps = {
 				queryParams: [],
 				targetFields: [],
-				responseShape: 'list',
+				policy: { queryParams: 'editable', pagination: 'editable', responseShape: 'locked' },
 				pagination: false,
 				validationErrors: [],
 				onAddFromField: (fieldMemberId) => { addFieldMemberId = fieldMemberId; },
@@ -98,7 +98,7 @@ describe('QueryParametersEditor Component', () => {
 			const props: QueryParametersEditorProps = {
 				queryParams: [],
 				targetFields: [],
-				responseShape: 'list',
+				policy: { queryParams: 'editable', pagination: 'editable', responseShape: 'locked' },
 				pagination: false,
 				validationErrors: [],
 				onAddFromField: () => {},

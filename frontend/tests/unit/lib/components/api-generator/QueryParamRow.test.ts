@@ -85,34 +85,6 @@ describe('QueryParamRow Component', () => {
 			expect(removeCalled).toBe(true);
 		});
 
-		it('QueryParamRowProps onSuggest is optional', () => {
-			const propsWithout: QueryParamRowProps = {
-				param: { name: '', fieldMemberId: '', operator: 'eq', required: false },
-				targetFields: [],
-				onUpdate: () => {},
-				onRemove: () => {}
-			};
-
-			expect(propsWithout.onSuggest).toBeUndefined();
-		});
-
-		it('QueryParamRowProps onSuggest receives Field Member and operator suggestion', () => {
-			let suggestion: { fieldMemberId: string; operator: string } | undefined;
-
-			const props: QueryParamRowProps = {
-				param: { name: '', fieldMemberId: '', operator: 'eq', required: false },
-				targetFields: [],
-				onUpdate: () => {},
-				onRemove: () => {},
-				onSuggest: (s) => {
-					suggestion = s;
-				}
-			};
-
-			props.onSuggest!({ fieldMemberId: 'fm-price', operator: 'gte' });
-			expect(suggestion).toEqual({ fieldMemberId: 'fm-price', operator: 'gte' });
-		});
-
 		it('QueryParamRowProps param supports all filter operator values', () => {
 			const operators = ['eq', 'gte', 'lte', 'gt', 'lt', 'like', 'ilike', 'in'] as const;
 

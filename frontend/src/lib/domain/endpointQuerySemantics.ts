@@ -21,10 +21,36 @@ type EndpointTransitionEvent =
 	| { type: 'responseShapeSet'; shape: ResponseShape }
 	| { type: 'responseDefaultsReset' };
 
+export type EndpointQueryAvailability = 'available' | 'notApplicable' | 'unresolved';
+export type EndpointQueryEditPolicy = 'editable' | 'hidden' | 'blocked';
+export type EndpointResponseShapePolicy = 'editable' | 'locked';
+
+export interface EndpointQuerySemanticsPolicy {
+	queryParams: EndpointQueryEditPolicy;
+	pagination: EndpointQueryEditPolicy;
+	responseShape: EndpointResponseShapePolicy;
+}
+
+export interface EndpointQuerySuggestion {
+	type: 'linkPathParam';
+	paramName: string;
+	fieldMemberId: string;
+	label: string;
+}
+
+export interface EndpointQuerySemanticsResolution {
+	endpoint: ApiEndpoint;
+	availability: EndpointQueryAvailability;
+	issues: EndpointIssue[];
+	suggestions: EndpointQuerySuggestion[];
+	policy: EndpointQuerySemanticsPolicy;
+}
+
 export type EndpointIssueLocation =
 	| ValidationLocation
 	| { kind: 'path'; field: 'path' }
 	| { kind: 'method'; field: 'method' }
+	| { kind: 'responseShape'; field: 'shape' }
 	| { kind: 'pagination'; field: 'enabled' }
 	| { kind: 'command' };
 
@@ -37,24 +63,97 @@ export interface EndpointIssue {
 
 export interface EndpointSemanticsContext {
 	targetFields: TargetField[];
+	targetObjectName?: string;
 }
 
 export type EndpointCommandOutcome =
 	| { status: 'ready'; endpoint: ApiEndpoint }
 	| { status: 'blocked'; reasons: EndpointIssue[] };
 
-const DETAIL_PATH_RE = /\{[^}]+\}$/;
+const AVAILABLE_POLICY: EndpointQuerySemanticsPolicy = {
+	queryParams: 'editable',
+	pagination: 'editable',
+	responseShape: 'locked'
+};
 
-export function isEndpointResponseShapeLocked(endpoint: ApiEndpoint | null): boolean {
-	if (!endpoint) return false;
-	return isDetailPath(endpoint.path) || endpoint.method !== 'GET';
-}
+const NOT_APPLICABLE_POLICY: EndpointQuerySemanticsPolicy = {
+	queryParams: 'hidden',
+	pagination: 'hidden',
+	responseShape: 'locked'
+};
 
-export function getEndpointResponseShapeLockedReason(endpoint: ApiEndpoint | null): string {
-	if (!endpoint) return '';
-	if (isDetailPath(endpoint.path)) return 'Detail endpoints always return a single object';
-	if (endpoint.method !== 'GET') return 'Only GET endpoints can return a list';
-	return '';
+const UNRESOLVED_POLICY: EndpointQuerySemanticsPolicy = {
+	queryParams: 'blocked',
+	pagination: 'blocked',
+	responseShape: 'editable'
+};
+
+export function resolveEndpointQuerySemantics(
+	endpoint: ApiEndpoint,
+	context: EndpointSemanticsContext
+): EndpointQuerySemanticsResolution {
+	const pathNameIssues = getPathNameIssues(endpoint);
+	const suggestions = getPathParamSuggestions(
+		endpoint.pathParams,
+		context.targetFields,
+		context.targetObjectName
+	);
+
+	if (endpoint.method !== 'GET') {
+		const sanitizedEndpoint = sanitizeNotApplicableEndpoint(endpoint);
+		return {
+			endpoint: sanitizedEndpoint,
+			availability: 'notApplicable',
+			issues: [
+				...pathNameIssues,
+				...getTargetAndPathIssues(sanitizedEndpoint, context)
+			],
+			suggestions,
+			policy: NOT_APPLICABLE_POLICY
+		};
+	}
+
+	const targetAndPathIssues = getTargetAndPathIssues(endpoint, context);
+	const primaryFieldIssue = getPrimaryFieldIssue(endpoint, context.targetFields);
+	const availabilityIssues = [
+		...pathNameIssues,
+		...targetAndPathIssues,
+		...(primaryFieldIssue ? [primaryFieldIssue] : [])
+	];
+
+	if (targetAndPathIssues.length > 0 || primaryFieldIssue) {
+		return {
+			endpoint,
+			availability: 'unresolved',
+			issues: availabilityIssues,
+			suggestions,
+			policy: UNRESOLVED_POLICY
+		};
+	}
+
+	const primaryField = context.targetFields.find(field => field.isPk);
+	const finalPathParam = endpoint.pathParams[endpoint.pathParams.length - 1];
+	if (finalPathParam && finalPathParam.fieldMemberId === primaryField?.fieldMemberId) {
+		return {
+			endpoint: sanitizeNotApplicableEndpoint(endpoint),
+			availability: 'notApplicable',
+			issues: pathNameIssues,
+			suggestions,
+			policy: NOT_APPLICABLE_POLICY
+		};
+	}
+
+	const sanitizedEndpoint = sanitizeAvailableEndpoint(endpoint);
+	return {
+		endpoint: sanitizedEndpoint,
+		availability: 'available',
+		issues: [
+			...pathNameIssues,
+			...getQueryIssues(sanitizedEndpoint, context)
+		],
+		suggestions,
+		policy: AVAILABLE_POLICY
+	};
 }
 
 export function transitionEndpointDraft(
@@ -62,30 +161,51 @@ export function transitionEndpointDraft(
 	event: EndpointTransitionEvent,
 	context: EndpointSemanticsContext
 ): ApiEndpoint {
+	const currentResolution = resolveEndpointQuerySemantics(endpoint, context);
+
 	switch (event.type) {
 		case 'methodChanged':
-			return transitionMethod(endpoint, event.method);
+			return resolveEndpointQuerySemantics({ ...endpoint, method: event.method }, context).endpoint;
 		case 'pathChanged':
-			return transitionPath(endpoint, event.path, context.targetFields);
+			return resolveEndpointQuerySemantics(transitionPath(endpoint, event.path), context).endpoint;
 		case 'pathParamFieldSelected':
-			return updatePathParamField(endpoint, event.paramName, event.fieldMemberId);
+			return resolveEndpointQuerySemantics(
+				updatePathParamField(endpoint, event.paramName, event.fieldMemberId),
+				context
+			).endpoint;
 		case 'queryParamAddedFromField':
-			return addQueryParamFromField(endpoint, event.fieldMemberId, context.targetFields);
+			if (currentResolution.policy.queryParams !== 'editable') return currentResolution.endpoint;
+			return resolveEndpointQuerySemantics(
+				addQueryParamFromField(endpoint, event.fieldMemberId, context.targetFields),
+				context
+			).endpoint;
 		case 'queryParamUpdated':
-			return updateQueryParam(endpoint, event.index, event.updates);
+			if (currentResolution.policy.queryParams !== 'editable') return currentResolution.endpoint;
+			return resolveEndpointQuerySemantics(updateQueryParam(endpoint, event.index, event.updates), context).endpoint;
 		case 'queryParamRemoved':
-			return removeQueryParam(endpoint, event.index);
+			if (currentResolution.policy.queryParams === 'hidden') return currentResolution.endpoint;
+			return resolveEndpointQuerySemantics(removeQueryParam(endpoint, event.index), context).endpoint;
 		case 'paginationToggled':
-			return { ...endpoint, pagination: !(endpoint.pagination ?? false) };
+			if (currentResolution.policy.pagination !== 'editable') return currentResolution.endpoint;
+			return resolveEndpointQuerySemantics(
+				{ ...endpoint, pagination: !(endpoint.pagination ?? false) },
+				context
+			).endpoint;
 		case 'targetObjectSelected':
-			return selectTargetObject(endpoint, event.targetObjectId, event.targetFields);
+			return resolveEndpointQuerySemantics(
+				selectTargetObject(endpoint, event.targetObjectId),
+				{ targetFields: event.targetFields }
+			).endpoint;
 		case 'envelopeToggled':
-			return { ...endpoint, useEnvelope: event.enabled };
+			return resolveEndpointQuerySemantics({ ...endpoint, useEnvelope: event.enabled }, context).endpoint;
 		case 'responseShapeSet':
-			if (isEndpointResponseShapeLocked(endpoint)) return endpoint;
-			return { ...endpoint, responseShape: event.shape };
+			if (currentResolution.policy.responseShape !== 'editable') return currentResolution.endpoint;
+			return resolveEndpointQuerySemantics({ ...endpoint, responseShape: event.shape }, context).endpoint;
 		case 'responseDefaultsReset':
-			return { ...endpoint, useEnvelope: true, responseShape: 'object', targetObjectId: undefined };
+			return resolveEndpointQuerySemantics(
+				{ ...endpoint, useEnvelope: true, responseShape: 'object', targetObjectId: undefined },
+				{ targetFields: [] }
+			).endpoint;
 	}
 }
 
@@ -93,21 +213,7 @@ export function getEndpointIssues(
 	endpoint: ApiEndpoint,
 	context: EndpointSemanticsContext
 ): EndpointIssue[] {
-	const validationErrors = validateEndpointParams({
-		method: endpoint.method,
-		responseShape: endpoint.responseShape,
-		targetObjectId: endpoint.targetObjectId,
-		targetFields: context.targetFields,
-		pathParams: endpoint.pathParams,
-		queryParams: endpoint.queryParams ?? [],
-		pagination: endpoint.pagination ?? false
-	}).filter(error => !(endpoint.method === 'DELETE' && error.rule === 4));
-
-	return [
-		...getPathNameIssues(endpoint),
-		...validationErrors.map(validationErrorToIssue),
-		...getMethodIssues(endpoint)
-	];
+	return resolveEndpointQuerySemantics(endpoint, context).issues;
 }
 
 export function getEndpointValidationErrors(issues: EndpointIssue[]): ValidationError[] {
@@ -120,32 +226,18 @@ export function prepareEndpointCommand(
 	endpoint: ApiEndpoint,
 	context: EndpointSemanticsContext
 ): EndpointCommandOutcome {
-	const reasons = getEndpointIssues(endpoint, context);
-	if (reasons.length > 0) return { status: 'blocked', reasons };
-	return { status: 'ready', endpoint };
+	const resolution = resolveEndpointQuerySemantics(endpoint, context);
+	if (resolution.issues.length > 0) return { status: 'blocked', reasons: resolution.issues };
+	return { status: 'ready', endpoint: resolution.endpoint };
 }
 
 export function formatEndpointBlockReasons(reasons: EndpointIssue[]): string {
 	return reasons.map(reason => reason.message).join('\n');
 }
 
-function transitionMethod(endpoint: ApiEndpoint, method: HttpMethod): ApiEndpoint {
-	return {
-		...endpoint,
-		method,
-		responseShape: method === 'GET' ? endpoint.responseShape : 'object'
-	};
-}
-
-function transitionPath(endpoint: ApiEndpoint, path: string, targetFields: TargetField[]): ApiEndpoint {
+function transitionPath(endpoint: ApiEndpoint, path: string): ApiEndpoint {
 	const reconciled = reconcilePathParams(path, endpoint.pathParams);
-	const detailPath = isDetailPath(reconciled.path);
-	const autoLinkedParams = autoLinkPathParams(reconciled.pathParams, targetFields, {
-		linkDetailPk: detailPath
-	});
-	const responseShape = detailPath ? 'object' : endpoint.responseShape;
-
-	return { ...endpoint, path: reconciled.path, pathParams: autoLinkedParams, responseShape };
+	return { ...endpoint, path: reconciled.path, pathParams: reconciled.pathParams };
 }
 
 function updatePathParamField(
@@ -202,48 +294,85 @@ function removeQueryParam(endpoint: ApiEndpoint, index: number): ApiEndpoint {
 
 function selectTargetObject(
 	endpoint: ApiEndpoint,
-	targetObjectId: string | undefined,
-	targetFields: TargetField[]
+	targetObjectId: string | undefined
 ): ApiEndpoint {
-	const pathParams = autoLinkPathParams(endpoint.pathParams, targetFields, {
-		clearUnmatched: true,
-		linkDetailPk: isDetailPath(endpoint.path)
-	});
-
 	return {
 		...endpoint,
 		targetObjectId,
-		pathParams,
 		queryParams: [],
 		pagination: false
 	};
 }
 
-function autoLinkPathParams(
-	pathParams: ApiEndpoint['pathParams'],
-	targetFields: TargetField[],
-	options: { clearUnmatched?: boolean; linkDetailPk?: boolean } = {}
-): ApiEndpoint['pathParams'] {
-	const { clearUnmatched = false, linkDetailPk = false } = options;
-	const linkedParams = pathParams.map(param => {
-		if (param.fieldMemberId && !clearUnmatched) return param;
-		const match = targetFields.find(field => field.name.toLowerCase() === param.name.toLowerCase());
-		return { ...param, fieldMemberId: match ? match.fieldMemberId : clearUnmatched ? '' : param.fieldMemberId };
-	});
+function sanitizeAvailableEndpoint(endpoint: ApiEndpoint): ApiEndpoint {
+	return {
+		...endpoint,
+		responseShape: 'list',
+		pagination: endpoint.pagination ?? false,
+		queryParams: (endpoint.queryParams ?? []).map(param => ({
+			...param,
+			required: param.required ?? false
+		}))
+	};
+}
 
-	if (linkedParams.length === 0) return linkedParams;
-	if (!linkDetailPk) return linkedParams;
+function sanitizeNotApplicableEndpoint(endpoint: ApiEndpoint): ApiEndpoint {
+	return {
+		...endpoint,
+		responseShape: 'object',
+		queryParams: [],
+		pagination: false
+	};
+}
 
-	const lastIndex = linkedParams.length - 1;
-	const lastParam = linkedParams[lastIndex];
-	if (lastParam.fieldMemberId) return linkedParams;
+function getTargetAndPathIssues(
+	endpoint: ApiEndpoint,
+	context: EndpointSemanticsContext
+): EndpointIssue[] {
+	return validateEndpointParams({
+		targetObjectId: endpoint.targetObjectId,
+		targetFields: context.targetFields,
+		pathParams: endpoint.pathParams,
+		queryParams: []
+	}).map(validationErrorToIssue);
+}
 
-	const pkField = targetFields.find(field => field.isPk);
-	if (!pkField) return linkedParams;
+function getQueryIssues(
+	endpoint: ApiEndpoint,
+	context: EndpointSemanticsContext
+): EndpointIssue[] {
+	return validateEndpointParams({
+		targetObjectId: endpoint.targetObjectId,
+		targetFields: context.targetFields,
+		pathParams: endpoint.pathParams,
+		queryParams: endpoint.queryParams ?? []
+	})
+		.filter(error => error.location?.kind === 'queryParam')
+		.map(validationErrorToIssue);
+}
 
-	return linkedParams.map((param, index) =>
-		index === lastIndex ? { ...param, fieldMemberId: pkField.fieldMemberId } : param
-	);
+function getPrimaryFieldIssue(
+	endpoint: ApiEndpoint,
+	targetFields: TargetField[]
+): EndpointIssue | null {
+	if (!endpoint.targetObjectId) return null;
+
+	const primaryFields = targetFields.filter(field => field.isPk);
+	if (targetFields.length === 0) {
+		return {
+			code: 'target_field_members_unresolved',
+			message: 'Target object Field Members could not be resolved',
+			location: { kind: 'targetObject', field: 'targetObjectId' }
+		};
+	}
+	if (primaryFields.length !== 1) {
+		return {
+			code: 'target_primary_field_unresolved',
+			message: 'Target object must have exactly one primary Field Member',
+			location: { kind: 'targetObject', field: 'targetObjectId' }
+		};
+	}
+	return null;
 }
 
 function getPathNameIssues(endpoint: ApiEndpoint): EndpointIssue[] {
@@ -256,42 +385,30 @@ function getPathNameIssues(endpoint: ApiEndpoint): EndpointIssue[] {
 		}));
 }
 
-function getMethodIssues(endpoint: ApiEndpoint): EndpointIssue[] {
-	const issues: EndpointIssue[] = [];
+function getPathParamSuggestions(
+	pathParams: ApiEndpoint['pathParams'],
+	targetFields: TargetField[],
+	targetObjectName?: string
+): EndpointQuerySuggestion[] {
+	return pathParams.flatMap(param => {
+		const selectedField = targetFields.find(field => field.fieldMemberId === param.fieldMemberId);
+		if (selectedField) return [];
 
-	if (endpoint.method !== 'GET' && endpoint.responseShape === 'list') {
-		issues.push({
-			code: 'non_get_list_response',
-			message: 'Only GET endpoints can return a list',
-			location: { kind: 'responseShape', field: 'shape' }
-		});
-	}
+		const matchingField = targetFields.find(
+			field => field.name.toLowerCase() === param.name.toLowerCase()
+		);
+		if (!matchingField) return [];
 
-	if (endpoint.responseShape === 'object' && (endpoint.pagination ?? false)) {
-		issues.push({
-			code: 'object_pagination',
-			message: 'Pagination is only available for list endpoints',
-			location: { kind: 'pagination', field: 'enabled' }
-		});
-	}
-
-	if (endpoint.method === 'DELETE' && (endpoint.queryParams ?? []).length > 0) {
-		issues.push({
-			code: 'delete_query_params',
-			message: 'DELETE endpoints cannot have query parameters',
-			location: { kind: 'command' }
-		});
-	}
-
-	if (endpoint.method === 'DELETE' && (endpoint.pagination ?? false)) {
-		issues.push({
-			code: 'delete_pagination',
-			message: 'DELETE endpoints cannot have pagination',
-			location: { kind: 'pagination', field: 'enabled' }
-		});
-	}
-
-	return issues;
+		const labelTarget = targetObjectName
+			? `${targetObjectName}.${matchingField.name}`
+			: matchingField.name;
+		return [{
+			type: 'linkPathParam',
+			paramName: param.name,
+			fieldMemberId: matchingField.fieldMemberId,
+			label: `Link ${param.name} to ${labelTarget}`
+		}];
+	});
 }
 
 function validationErrorToIssue(error: ValidationError): EndpointIssue {
@@ -301,8 +418,4 @@ function validationErrorToIssue(error: ValidationError): EndpointIssue {
 		location: error.location ?? { kind: 'command' },
 		validationError: error
 	};
-}
-
-function isDetailPath(path: string): boolean {
-	return DETAIL_PATH_RE.test(path);
 }

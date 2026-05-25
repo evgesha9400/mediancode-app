@@ -51,7 +51,13 @@ vi.mock('$lib/domain/errorMap', () => ({
 
 vi.mock('$lib/domain/endpointReducer', () => ({
   reconcilePathParams: vi.fn((path: string, params: any[]) => ({ path, pathParams: params })),
-  normalizeEndpoint: vi.fn((ep: ApiEndpoint) => ({ ...ep, responseShape: ep.responseShape ?? 'object' })),
+  normalizeEndpoint: vi.fn((ep: ApiEndpoint) => ({
+    ...ep,
+    responseShape: ep.responseShape ?? 'object',
+    pagination: ep.pagination ?? false,
+    queryParams: (ep.queryParams ?? []).map((q) => ({ ...q, required: q.required ?? false })),
+    pathParams: ep.pathParams.map((p) => ({ ...p, fieldMemberId: p.fieldMemberId ?? '' }))
+  })),
   hydratePathParamsForEndpoint: vi.fn((ep: ApiEndpoint) => ep),
   buildDuplicateEndpoint: vi.fn((ep: ApiEndpoint) => ({
     ...ep,
@@ -954,6 +960,16 @@ describe('apiDetailState - Pagination Toggle', () => {
     apisStore.set([makeApi({ id: 'api-1' })]);
     fieldsStore.set([
       {
+        id: 'field-id',
+        namespaceId: 'ns-1',
+        name: 'id',
+        type: 'uuid',
+        container: null,
+        constraints: [],
+        validators: [],
+        usedInApis: []
+      },
+      {
         id: 'field-price',
         namespaceId: 'ns-1',
         name: 'price',
@@ -980,6 +996,14 @@ describe('apiDetailState - Pagination Toggle', () => {
         namespaceId: 'ns-1',
         name: 'Item',
         members: [
+          {
+            id: 'member-id',
+            memberType: 'field',
+            name: 'id',
+            fieldId: 'field-id',
+            role: 'pk',
+            isNullable: false
+          },
           {
             id: 'member-price',
             memberType: 'field',
@@ -1033,7 +1057,15 @@ describe('apiDetailState - Pagination Toggle', () => {
 
   it('should toggle pagination from true to false', () => {
     endpointsStore.set([
-      makeEndpoint({ id: 'ep-1', apiId: 'api-1', method: 'GET', path: '/items', responseShape: 'list', pagination: true })
+      makeEndpoint({
+        id: 'ep-1',
+        apiId: 'api-1',
+        method: 'GET',
+        path: '/items',
+        responseShape: 'list',
+        pagination: true,
+        targetObjectId: 'obj-items'
+      })
     ]);
     flushSync();
 
@@ -1135,22 +1167,30 @@ describe('apiDetailState - Pagination Toggle', () => {
   });
 });
 
-describe('apiDetailState - Detail Path Detection', () => {
+describe('apiDetailState - Endpoint Query Availability', () => {
   let state: ApiDetailState;
   let cleanup: () => void;
 
   beforeEach(() => {
     apisStore.set([makeApi({ id: 'api-1' })]);
+    setBasicTargetObjectFixture();
     endpointsStore.set([
-      makeEndpoint({ id: 'ep-1', apiId: 'api-1', method: 'GET', path: '/users' })
+      makeEndpoint({ id: 'ep-1', apiId: 'api-1', method: 'GET', path: '/users', targetObjectId: 'obj-users' })
     ]);
     flushSync();
   });
   afterEach(() => cleanup?.());
 
-  it('should detect detail path ending with {param}', () => {
+  it('should mark explicit primary-key paths not applicable', () => {
     endpointsStore.set([
-      makeEndpoint({ id: 'ep-1', apiId: 'api-1', method: 'GET', path: '/users/{user_id}' })
+      makeEndpoint({
+        id: 'ep-1',
+        apiId: 'api-1',
+        method: 'GET',
+        path: '/users/{id}',
+        targetObjectId: 'obj-users',
+        pathParams: [{ name: 'id', fieldMemberId: 'member-id' }]
+      })
     ]);
     flushSync();
 
@@ -1160,22 +1200,32 @@ describe('apiDetailState - Detail Path Detection', () => {
     state.openEndpoint(state.endpoints[0]);
     flushSync();
 
-    expect(state.responseShapeLocked).toBe(true);
+    expect(state.endpointQueryResolution?.availability).toBe('notApplicable');
+    expect(state.endpointQueryResolution?.policy.responseShape).toBe('locked');
   });
 
-  it('should not detect detail path for list endpoints', () => {
+  it('should mark collection endpoints available', () => {
     ({ state, cleanup } = createTestState());
     flushSync();
 
     state.openEndpoint(state.endpoints[0]);
     flushSync();
 
-    expect(state.responseShapeLocked).toBe(false);
+    expect(state.endpointQueryResolution?.availability).toBe('available');
+    expect(state.endpointQueryResolution?.policy.queryParams).toBe('editable');
   });
 
-  it('should block handleSetResponseShape when path is a detail path', () => {
+  it('should block handleSetResponseShape when availability locks the response shape', () => {
     endpointsStore.set([
-      makeEndpoint({ id: 'ep-1', apiId: 'api-1', method: 'GET', path: '/users/{user_id}', responseShape: 'object' })
+      makeEndpoint({
+        id: 'ep-1',
+        apiId: 'api-1',
+        method: 'GET',
+        path: '/users/{id}',
+        targetObjectId: 'obj-users',
+        pathParams: [{ name: 'id', fieldMemberId: 'member-id' }],
+        responseShape: 'object'
+      })
     ]);
     flushSync();
 
@@ -1185,20 +1235,19 @@ describe('apiDetailState - Detail Path Detection', () => {
     state.openEndpoint(state.endpoints[0]);
     flushSync();
 
-    expect(state.responseShapeLocked).toBe(true);
+    expect(state.endpointQueryResolution?.policy.responseShape).toBe('locked');
 
     state.handleSetResponseShape('list');
     flushSync();
 
-    // Should remain 'object' because detail path locks the toggle
     expect(state.editedEndpoint!.responseShape).toBe('object');
   });
 
-  it('should be false when no endpoint is open', () => {
+  it('should be null when no endpoint is open', () => {
     ({ state, cleanup } = createTestState());
     flushSync();
 
-    expect(state.responseShapeLocked).toBe(false);
+    expect(state.endpointQueryResolution).toBeNull();
   });
 });
 
@@ -1209,6 +1258,16 @@ describe('apiDetailState - Query Param from Field', () => {
   beforeEach(() => {
     apisStore.set([makeApi({ id: 'api-1' })]);
     fieldsStore.set([
+      {
+        id: 'field-id',
+        namespaceId: 'ns-1',
+        name: 'id',
+        type: 'uuid',
+        container: null,
+        constraints: [],
+        validators: [],
+        usedInApis: []
+      },
       {
         id: 'field-price',
         namespaceId: 'ns-1',
@@ -1236,6 +1295,14 @@ describe('apiDetailState - Query Param from Field', () => {
         namespaceId: 'ns-1',
         name: 'Item',
         members: [
+          {
+            id: 'member-id',
+            memberType: 'field',
+            name: 'id',
+            fieldId: 'field-id',
+            role: 'pk',
+            isNullable: false
+          },
           {
             id: 'member-price',
             memberType: 'field',

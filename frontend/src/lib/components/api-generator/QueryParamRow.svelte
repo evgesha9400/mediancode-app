@@ -8,19 +8,18 @@
     validationErrors?: ValidationError[];
     onUpdate: (updates: Partial<QueryParam>) => void;
     onRemove: () => void;
-    onSuggest?: (suggestion: { fieldMemberId: string; operator: FilterOperator }) => void;
   }
 </script>
 
 <script lang="ts">
-  import { getCompatibleOperators, suggestFieldAndOperator } from '$lib/domain/paramInference';
+  import { getCompatibleOperators } from '$lib/domain/paramInference';
   import { FILTER_OPERATORS } from '$lib/types';
   import { GlassSelectDropdown } from '$lib/components/form';
   import { apiGeneratorRowInputMono, listMetaBadge, objectSelectorDisplayRow } from '$lib/ui/classes';
 
   interface Props extends QueryParamRowProps {}
 
-  let { param, targetFields, validationErrors = [], onUpdate, onRemove, onSuggest }: Props = $props();
+  let { param, targetFields, validationErrors = [], onUpdate, onRemove }: Props = $props();
 
   // Available operators filtered by the selected field's type
   const selectedField = $derived(targetFields.find(f => f.fieldMemberId === param.fieldMemberId));
@@ -35,21 +34,9 @@
     return selectedField.type;
   });
 
-  // Auto-suggest when name changes
-  let lastSuggestedName = $state('');
-
   function handleNameInput(e: Event): void {
     const name = (e.target as HTMLInputElement).value;
     onUpdate({ name });
-
-    // Only suggest once per unique name
-    if (name && name !== lastSuggestedName) {
-      const suggestion = suggestFieldAndOperator(name, targetFields);
-      if (suggestion) {
-        lastSuggestedName = name;
-        onSuggest?.(suggestion);
-      }
-    }
   }
 </script>
 

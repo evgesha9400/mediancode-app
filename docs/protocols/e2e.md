@@ -4,6 +4,8 @@
 
 Verification flow for changes that affect both `backend/` and `frontend/`.
 
+Frontend-impacting work must not be handed off without a Playwright E2E command attempt. If local credentials or external services block execution, record the command, the failure, and the exact missing requirements. Do not replace E2E with unit tests, type checks, or unstated assumptions.
+
 ## Ownership
 
 - Frontend browser automation: `frontend/tests/`
@@ -60,4 +62,4 @@ For a change that spans backend and frontend, capture at least:
 - Frontend typecheck result
 - Frontend smoke or CRUD E2E result, depending on impact
 
-If a step is intentionally skipped, record why in the PR notes.
+If a frontend E2E step is blocked by missing credentials or services, record the attempted command and the exact blocker in the PR notes. Do not silently skip it.

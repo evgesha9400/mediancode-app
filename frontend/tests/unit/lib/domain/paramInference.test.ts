@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { getCompatibleOperators, suggestFieldAndOperator, validateEndpointParams, resolveTargetFields } from '$lib/domain/paramInference';
-import type { ResponseShape, PathParam, QueryParam, ObjectDefinition, Field } from '$lib/types';
+import type { ObjectDefinition, Field } from '$lib/types';
 
 describe('getCompatibleOperators', () => {
   it('returns all operators for "all" types like str', () => {
@@ -100,7 +100,6 @@ describe('suggestFieldAndOperator', () => {
   });
 });
 
-// Helper to build validation input concisely
 interface TargetField {
   fieldMemberId: string;
   name: string;
@@ -109,14 +108,12 @@ interface TargetField {
 }
 
 function validate(opts: {
-  responseShape: ResponseShape;
   targetObjectId?: string;
   targetFields?: TargetField[];
   pathParams?: { name: string; fieldMemberId: string }[];
   queryParams?: { name: string; fieldMemberId: string; operator: string; required?: boolean }[];
 }) {
   return validateEndpointParams({
-    responseShape: opts.responseShape,
     targetObjectId: opts.targetObjectId,
     targetFields: opts.targetFields ?? [],
     pathParams: (opts.pathParams ?? []).map(p => ({
@@ -133,11 +130,9 @@ function validate(opts: {
 }
 
 describe('validateEndpointParams', () => {
-  // Rule 1: Target object is known
   describe('Rule 1: target is known', () => {
-    it('passes for detail endpoint with targetObjectId', () => {
+    it('passes when targetObjectId is set', () => {
       const errors = validate({
-        responseShape: 'object',
         targetObjectId: 'obj-1',
         targetFields: [{ fieldMemberId: 'fm-id', name: 'id', type: 'uuid', isPk: true }],
         pathParams: [{ name: 'id', fieldMemberId: 'fm-id' }]
@@ -145,9 +140,8 @@ describe('validateEndpointParams', () => {
       expect(errors).toEqual([]);
     });
 
-    it('fails for list endpoint without targetObjectId', () => {
+    it('fails without targetObjectId', () => {
       const errors = validate({
-        responseShape: 'list',
         targetObjectId: undefined,
         targetFields: []
       });
@@ -157,11 +151,20 @@ describe('validateEndpointParams', () => {
     });
   });
 
-  // Rule 2: Every param field exists on target
-  describe('Rule 2: field exists on target', () => {
+  describe('Rule 2: params link to target Field Members', () => {
+    it('fails when a path param has no Field Member link', () => {
+      const errors = validate({
+        targetObjectId: 'obj-1',
+        targetFields: [{ fieldMemberId: 'fm-id', name: 'id', type: 'uuid', isPk: true }],
+        pathParams: [{ name: 'id', fieldMemberId: '' }]
+      });
+      expect(errors).toContainEqual(
+        expect.objectContaining({ rule: 2, param: 'id' })
+      );
+    });
+
     it('fails when path param field does not exist on target', () => {
       const errors = validate({
-        responseShape: 'object',
         targetObjectId: 'obj-1',
         targetFields: [{ fieldMemberId: 'fm-id', name: 'id', type: 'uuid', isPk: true }],
         pathParams: [{ name: 'store_id', fieldMemberId: 'fm-store-id' }]
@@ -173,7 +176,6 @@ describe('validateEndpointParams', () => {
 
     it('fails when query param field does not exist on target', () => {
       const errors = validate({
-        responseShape: 'list',
         targetObjectId: 'obj-1',
         targetFields: [{ fieldMemberId: 'fm-price', name: 'price', type: 'float', isPk: false }],
         queryParams: [{ name: 'category', fieldMemberId: 'fm-category', operator: 'eq' }]
@@ -183,105 +185,21 @@ describe('validateEndpointParams', () => {
       );
     });
 
-    it('skips target membership validation for query params with no Field Member selected', () => {
+    it('fails when query params have no Field Member selected', () => {
       const errors = validate({
-        responseShape: 'list',
         targetObjectId: 'obj-1',
         targetFields: [{ fieldMemberId: 'fm-id', name: 'id', type: 'uuid', isPk: true }],
         queryParams: [{ name: 'limit', fieldMemberId: '', operator: 'eq' }]
       });
-      const rule2Errors = errors.filter(e => e.rule === 2);
-      expect(rule2Errors).toEqual([]);
-    });
-  });
-
-  // Rule 3: Detail endpoint last path param = PK
-  describe('Rule 3: detail last param is PK', () => {
-    it('passes when last path param maps to PK', () => {
-      const errors = validate({
-        responseShape: 'object',
-        targetObjectId: 'obj-1',
-        targetFields: [
-          { fieldMemberId: 'fm-store-id', name: 'store_id', type: 'uuid', isPk: false },
-          { fieldMemberId: 'fm-id', name: 'id', type: 'uuid', isPk: true }
-        ],
-        pathParams: [
-          { name: 'store_id', fieldMemberId: 'fm-store-id' },
-          { name: 'item_id', fieldMemberId: 'fm-id' }
-        ]
-      });
-      const rule3 = errors.filter(e => e.rule === 3);
-      expect(rule3).toEqual([]);
-    });
-
-    it('fails when last path param does not map to PK', () => {
-      const errors = validate({
-        responseShape: 'object',
-        targetObjectId: 'obj-1',
-        targetFields: [
-          { fieldMemberId: 'fm-store-id', name: 'store_id', type: 'uuid', isPk: false },
-          { fieldMemberId: 'fm-id', name: 'id', type: 'uuid', isPk: true }
-        ],
-        pathParams: [{ name: 'store_id', fieldMemberId: 'fm-store-id' }]
-      });
       expect(errors).toContainEqual(
-        expect.objectContaining({ rule: 3 })
+        expect.objectContaining({ rule: 2, param: 'limit' })
       );
     });
   });
 
-  // Rule 4: Detail endpoint no field-mapped query params
-  describe('Rule 4: detail has no field-mapped query params', () => {
-    it('fails when detail endpoint has query params with field references', () => {
-      const errors = validate({
-        responseShape: 'object',
-        targetObjectId: 'obj-1',
-        targetFields: [{ fieldMemberId: 'fm-id', name: 'id', type: 'uuid', isPk: true }],
-        pathParams: [{ name: 'id', fieldMemberId: 'fm-id' }],
-        queryParams: [{ name: 'q', fieldMemberId: 'fm-id', operator: 'eq' }]
-      });
-      expect(errors).toContainEqual(
-        expect.objectContaining({ rule: 4 })
-      );
-    });
-
-    it('fails when detail endpoint has any query params', () => {
-      const errors = validate({
-        responseShape: 'object',
-        targetObjectId: 'obj-1',
-        targetFields: [{ fieldMemberId: 'fm-id', name: 'id', type: 'uuid', isPk: true }],
-        pathParams: [{ name: 'id', fieldMemberId: 'fm-id' }],
-        queryParams: [{ name: 'include', fieldMemberId: '', operator: 'eq' }]
-      });
-      expect(errors).toContainEqual(
-        expect.objectContaining({ rule: 4 })
-      );
-    });
-  });
-
-  // Rule 5: List endpoint no path param = PK
-  describe('Rule 5: list path param not PK', () => {
-    it('fails when list endpoint has path param mapped to PK', () => {
-      const errors = validate({
-        responseShape: 'list',
-        targetObjectId: 'obj-1',
-        targetFields: [
-          { fieldMemberId: 'fm-id', name: 'id', type: 'uuid', isPk: true },
-          { fieldMemberId: 'fm-price', name: 'price', type: 'float', isPk: false }
-        ],
-        pathParams: [{ name: 'product_id', fieldMemberId: 'fm-id' }]
-      });
-      expect(errors).toContainEqual(
-        expect.objectContaining({ rule: 5 })
-      );
-    });
-  });
-
-  // Rule 6: Operator compatible with field type
   describe('Rule 6: operator-type compatibility', () => {
     it('fails when using gte on str field', () => {
       const errors = validate({
-        responseShape: 'list',
         targetObjectId: 'obj-1',
         targetFields: [{ fieldMemberId: 'fm-name', name: 'name', type: 'str', isPk: false }],
         queryParams: [{ name: 'min_name', fieldMemberId: 'fm-name', operator: 'gte' }]
@@ -293,7 +211,6 @@ describe('validateEndpointParams', () => {
 
     it('passes when using ilike on str field', () => {
       const errors = validate({
-        responseShape: 'list',
         targetObjectId: 'obj-1',
         targetFields: [{ fieldMemberId: 'fm-name', name: 'name', type: 'str', isPk: false }],
         queryParams: [{ name: 'search', fieldMemberId: 'fm-name', operator: 'ilike' }]
@@ -304,7 +221,6 @@ describe('validateEndpointParams', () => {
 
     it('fails when using like on int field', () => {
       const errors = validate({
-        responseShape: 'list',
         targetObjectId: 'obj-1',
         targetFields: [{ fieldMemberId: 'fm-count', name: 'count', type: 'int', isPk: false }],
         queryParams: [{ name: 'count_like', fieldMemberId: 'fm-count', operator: 'like' }]

@@ -31,13 +31,12 @@ import {
 } from '$lib/domain/paramInference';
 import {
 	formatEndpointBlockReasons,
-	getEndpointIssues,
-	getEndpointResponseShapeLockedReason,
 	getEndpointValidationErrors,
-	isEndpointResponseShapeLocked,
 	prepareEndpointCommand,
+	resolveEndpointQuerySemantics,
 	transitionEndpointDraft,
 	type EndpointIssue,
+	type EndpointQuerySemanticsResolution,
 	type EndpointSemanticsContext
 } from '$lib/domain/endpointQuerySemantics';
 import { createApisContract } from './apisConfig.svelte';
@@ -169,9 +168,7 @@ export interface ApiDetailState {
 	handleEnvelopeToggle: (enabled: boolean) => void;
 
 	// Response shape configuration
-	/** Whether the path ends with {param}, indicating a detail endpoint */
-	readonly responseShapeLocked: boolean;
-	readonly responseShapeLockedReason: string;
+	readonly endpointQueryResolution: EndpointQuerySemanticsResolution | null;
 	handleSetResponseShape: (shape: ResponseShape) => void;
 	handleResetResponseDefaults: () => void;
 
@@ -430,10 +427,12 @@ export function createApiDetailState(config: ApiDetailStateConfig): ApiDetailSta
 		return resolveTargetFields(editedEndpoint.targetObjectId, allObjects, allFields);
 	});
 
-	let endpointIssues = $derived.by((): EndpointIssue[] => {
-		if (!editedEndpoint) return [];
-		return getEndpointIssues(editedEndpoint, currentEndpointContext());
+	let endpointQueryResolution = $derived.by((): EndpointQuerySemanticsResolution | null => {
+		if (!editedEndpoint) return null;
+		return resolveEndpointQuerySemantics(editedEndpoint, currentEndpointContext());
 	});
+
+	let endpointIssues = $derived(endpointQueryResolution?.issues ?? []);
 
 	// Live validation errors
 	let validationErrors = $derived(getEndpointValidationErrors(endpointIssues));
@@ -476,12 +475,22 @@ export function createApiDetailState(config: ApiDetailStateConfig): ApiDetailSta
 	});
 
 	function currentEndpointContext(): EndpointSemanticsContext {
-		return { targetFields };
+		return {
+			targetFields,
+			targetObjectName: allObjects.find(object => object.id === editedEndpoint?.targetObjectId)?.name
+		};
 	}
 
 	function resolveTargetFieldsFor(targetObjectId: string | undefined): TargetField[] {
 		if (!targetObjectId) return [];
 		return resolveTargetFields(targetObjectId, allObjects, allFields);
+	}
+
+	function resolveEndpointDraft(endpoint: ApiEndpoint): ApiEndpoint {
+		return resolveEndpointQuerySemantics(endpoint, {
+			targetFields: resolveTargetFieldsFor(endpoint.targetObjectId),
+			targetObjectName: allObjects.find(object => object.id === endpoint.targetObjectId)?.name
+		}).endpoint;
 	}
 
 	// ============================================================================
@@ -591,7 +600,7 @@ export function createApiDetailState(config: ApiDetailStateConfig): ApiDetailSta
 		closeEditDrawer();
 		const hydrated = hydrateStoredEndpoint(endpoint);
 		selectedEndpoint = hydrated;
-		editedEndpoint = deepClone(hydrated);
+		editedEndpoint = resolveEndpointDraft(deepClone(hydrated));
 		endpointDrawerOpen = true;
 		tagInputValue = hydrated.tagName ?? '';
 		tagDropdownOpen = false;
@@ -642,15 +651,6 @@ export function createApiDetailState(config: ApiDetailStateConfig): ApiDetailSta
 		editedEndpoint = deepClone(selectedEndpoint);
 		tagInputValue = editedEndpoint?.tagName ?? '';
 	}
-
-	// ============================================================================
-	// Detail Path Detection
-	// ============================================================================
-
-	// Derived: whether response shape toggle should be locked to "object"
-	let responseShapeLocked = $derived(isEndpointResponseShapeLocked(editedEndpoint));
-
-	let responseShapeLockedReason = $derived(getEndpointResponseShapeLockedReason(editedEndpoint));
 
 	// ============================================================================
 	// Endpoint Editing Operations
@@ -870,8 +870,7 @@ export function createApiDetailState(config: ApiDetailStateConfig): ApiDetailSta
 
 		handleSelectObject,
 		handleEnvelopeToggle,
-		get responseShapeLocked() { return responseShapeLocked; },
-		get responseShapeLockedReason() { return responseShapeLockedReason; },
+		get endpointQueryResolution() { return endpointQueryResolution; },
 		handleSetResponseShape,
 		handleResetResponseDefaults,
 

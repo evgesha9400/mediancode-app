@@ -1,4 +1,5 @@
 <script module lang="ts">
+  import type { EndpointQuerySuggestion } from '$lib/domain/endpointQuerySemantics';
   import type { TargetField, ValidationError } from '$lib/domain/paramInference';
 
   export interface ParameterEditorProps {
@@ -6,6 +7,7 @@
     fieldMemberId: string;
     targetFields: TargetField[];
     validationErrors?: ValidationError[];
+    suggestions?: EndpointQuerySuggestion[];
     onFieldSelect: (fieldMemberId: string) => void;
   }
 </script>
@@ -27,6 +29,7 @@
     fieldMemberId,
     targetFields,
     validationErrors = [],
+    suggestions = [],
     onFieldSelect
   }: Props = $props();
 
@@ -48,6 +51,7 @@
 
   // Errors specific to this parameter
   const paramErrors = $derived(validationErrors.filter(e => e.param === paramName));
+  const paramSuggestions = $derived(suggestions.filter(suggestion => suggestion.paramName === paramName));
 
   function handleFieldSelect(selectedId: string): void {
     onFieldSelect(selectedId);
@@ -119,5 +123,19 @@
         {error.message}
       </p>
     {/each}
+  {/if}
+  {#if paramSuggestions.length > 0}
+    <div class="pb-1.5 pl-1 flex flex-wrap gap-1.5">
+      {#each paramSuggestions as suggestion}
+        <button
+          type="button"
+          onclick={() => onFieldSelect(suggestion.fieldMemberId)}
+          class="text-xs text-fg-secondary hover:text-fg-primary border border-edge/80 rounded-lg px-2 py-1 bg-surface-raised hover:bg-surface transition-colors"
+        >
+          <i class="fa-solid fa-link text-[10px] mr-1"></i>
+          {suggestion.label}
+        </button>
+      {/each}
+    </div>
   {/if}
 </div>

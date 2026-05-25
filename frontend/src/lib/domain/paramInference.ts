@@ -1,9 +1,9 @@
 // src/lib/domain/paramInference.ts
 //
 // Pure functions for parameter inference: operator compatibility,
-// auto-suggestions, and validation rules 1-7 from the design spec.
+// auto-suggestions, and Field Member reference validation.
 
-import type { FilterOperator, PathParam, QueryParam, ResponseShape, ObjectDefinition, Field } from '$lib/types';
+import type { FilterOperator, PathParam, QueryParam, ObjectDefinition, Field } from '$lib/types';
 import {
 	FILTER_OPERATORS,
 	COMPARABLE_TYPES,
@@ -103,7 +103,6 @@ export interface TargetField {
  */
 export interface ValidationInput {
 	method?: string;
-	responseShape: ResponseShape;
 	targetObjectId?: string;
 	targetFields: TargetField[];
 	pathParams: PathParam[];
@@ -114,9 +113,7 @@ export interface ValidationInput {
 export type ValidationLocation =
 	| { kind: 'targetObject'; field: 'targetObjectId' }
 	| { kind: 'pathParam'; name: string; field: 'name' | 'fieldMemberId' }
-	| { kind: 'queryParam'; index: number; field: 'name' | 'fieldMemberId' | 'operator' | 'required' }
-	| { kind: 'responseShape'; field: 'shape' }
-	| { kind: 'pagination'; field: 'enabled' };
+	| { kind: 'queryParam'; index: number; field: 'name' | 'fieldMemberId' | 'operator' | 'required' };
 
 /**
  * A single validation error with a rule number and human-readable message.
@@ -129,29 +126,23 @@ export interface ValidationError {
 }
 
 /**
- * Validate an endpoint's parameter configuration against all 7 rules.
- * Returns an empty array when everything is valid.
+ * Validate endpoint parameters against the selected target Object's Field Members.
+ * Endpoint Query Semantics owns availability and response shape constraints.
  */
 export function validateEndpointParams(input: ValidationInput): ValidationError[] {
 	const errors: ValidationError[] = [];
 	const {
-		responseShape,
 		targetObjectId,
 		targetFields,
 		pathParams,
 		queryParams
 	} = input;
 
-	const isDetail = responseShape === 'object';
-	const isList = responseShape === 'list';
-
 	// Rule 1: Target is known when targetObjectId is set.
 	if (!targetObjectId) {
 		errors.push({
 			rule: 1,
-			message: isList
-				? 'List endpoints require a target object'
-				: 'Target object could not be determined',
+			message: 'Target object could not be determined',
 			location: { kind: 'targetObject', field: 'targetObjectId' }
 		});
 		// Cannot validate further without a target
@@ -162,7 +153,14 @@ export function validateEndpointParams(input: ValidationInput): ValidationError[
 	const fieldMemberIds = new Set(targetFields.map(f => f.fieldMemberId));
 
 	for (const pp of pathParams) {
-		if (pp.fieldMemberId && !fieldMemberIds.has(pp.fieldMemberId)) {
+		if (!pp.fieldMemberId) {
+			errors.push({
+				rule: 2,
+				message: `Path parameter "${pp.name}" must be linked to a target Field Member`,
+				param: pp.name,
+				location: { kind: 'pathParam', name: pp.name, field: 'fieldMemberId' }
+			});
+		} else if (!fieldMemberIds.has(pp.fieldMemberId)) {
 			errors.push({
 				rule: 2,
 				message: `Path parameter "${pp.name}" is not linked to a target Field Member`,
@@ -173,52 +171,20 @@ export function validateEndpointParams(input: ValidationInput): ValidationError[
 	}
 
 	for (const [index, qp] of queryParams.entries()) {
-		if (qp.fieldMemberId && !fieldMemberIds.has(qp.fieldMemberId)) {
+		if (!qp.fieldMemberId) {
+			errors.push({
+				rule: 2,
+				message: `Query parameter "${qp.name}" must be linked to a target Field Member`,
+				param: qp.name,
+				location: { kind: 'queryParam', index, field: 'fieldMemberId' }
+			});
+		} else if (!fieldMemberIds.has(qp.fieldMemberId)) {
 			errors.push({
 				rule: 2,
 				message: `Query parameter "${qp.name}" is not linked to a target Field Member`,
 				param: qp.name,
 				location: { kind: 'queryParam', index, field: 'fieldMemberId' }
 			});
-		}
-	}
-
-	// Rule 3: Detail endpoint -- last path param maps to PK
-	if (isDetail && pathParams.length > 0) {
-		const lastParam = pathParams[pathParams.length - 1];
-		const lastField = targetFields.find(f => f.fieldMemberId === lastParam.fieldMemberId);
-		if (!lastField || !lastField.isPk) {
-			errors.push({
-				rule: 3,
-				message: "Detail endpoint's identifying param must map to the primary key",
-				param: lastParam.name,
-				location: { kind: 'pathParam', name: lastParam.name, field: 'fieldMemberId' }
-			});
-		}
-	}
-
-	// Rule 4: Detail endpoint -- no query params
-	if (isDetail && queryParams.length > 0) {
-		errors.push({
-			rule: 4,
-			message: 'Detail endpoints cannot have query parameters with field references',
-			location: { kind: 'responseShape', field: 'shape' }
-		});
-	}
-
-	// Rule 5: List endpoint -- no path param maps to PK
-	if (isList) {
-		const pkFieldNames = new Set(targetFields.filter(f => f.isPk).map(f => f.name));
-		for (const pp of pathParams) {
-			const linkedField = targetFields.find(f => f.fieldMemberId === pp.fieldMemberId);
-			if (linkedField && pkFieldNames.has(linkedField.name)) {
-				errors.push({
-					rule: 5,
-					message: `Path param "${pp.name}" maps to PK field "${linkedField.name}" -- use a detail endpoint instead`,
-					param: pp.name,
-					location: { kind: 'pathParam', name: pp.name, field: 'fieldMemberId' }
-				});
-			}
 		}
 	}
 

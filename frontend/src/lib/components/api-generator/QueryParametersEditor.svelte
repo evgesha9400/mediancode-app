@@ -1,12 +1,12 @@
 <script module lang="ts">
-  import type { QueryParam, ResponseShape } from '$lib/types';
-  import type { EndpointIssue } from '$lib/domain/endpointQuerySemantics';
+  import type { QueryParam } from '$lib/types';
+  import type { EndpointIssue, EndpointQuerySemanticsPolicy } from '$lib/domain/endpointQuerySemantics';
   import type { TargetField, ValidationError } from '$lib/domain/paramInference';
 
   export interface QueryParametersEditorProps {
     queryParams: QueryParam[];
     targetFields: TargetField[];
-    responseShape: ResponseShape;
+    policy: EndpointQuerySemanticsPolicy;
     pagination: boolean;
     validationErrors: ValidationError[];
     blockIssues?: EndpointIssue[];
@@ -36,7 +36,7 @@
   let {
     queryParams,
     targetFields,
-    responseShape,
+    policy,
     pagination,
     validationErrors,
     blockIssues = [],
@@ -46,7 +46,10 @@
     onTogglePagination
   }: Props = $props();
 
-  const isDetail = $derived(responseShape === 'object');
+  const queryParamsEditable = $derived(policy.queryParams === 'editable');
+  const queryParamsHidden = $derived(policy.queryParams === 'hidden');
+  const queryParamsBlocked = $derived(policy.queryParams === 'blocked');
+  const paginationEditable = $derived(policy.pagination === 'editable');
 
   // Filter validation errors for query params
   const queryErrors = $derived(validationErrors.filter(e =>
@@ -64,7 +67,10 @@
 
   const generalQueryMessages = $derived([
     ...generalQueryErrors.map(error => error.message),
-    ...queryBlockIssues.map(issue => issue.message)
+    ...queryBlockIssues.map(issue => issue.message),
+    ...(queryParamsBlocked && queryBlockIssues.length === 0 && generalQueryErrors.length === 0
+      ? ['Resolve endpoint query availability before editing query parameters']
+      : [])
   ]);
 
   // Get errors for a specific query param by name
@@ -77,7 +83,7 @@
   }
 
   // Whether we have any rows to show (query params or pagination)
-  const hasRows = $derived(queryParams.length > 0 || pagination);
+  const hasRows = $derived(!queryParamsHidden && (queryParams.length > 0 || pagination));
 
   const linkedFieldMemberIds = $derived(queryParams.map(qp => qp.fieldMemberId).filter(Boolean));
 
@@ -90,14 +96,14 @@
   );
 </script>
 
-{#if !isDetail || generalQueryMessages.length > 0}
+{#if !queryParamsHidden || generalQueryMessages.length > 0}
   <div>
     <div class="flex items-center justify-between mb-2">
       <h3 class="text-sm text-fg-secondary flex items-center font-medium">
         <i class="fa-solid fa-filter mr-2"></i>
         Query Parameters
       </h3>
-      {#if !isDetail}
+      {#if paginationEditable}
         <div class="flex items-center gap-2">
           <button
             type="button"
@@ -112,7 +118,7 @@
       {/if}
     </div>
 
-    {#if !isDetail && hasRows}
+    {#if hasRows}
       <div class="px-3 py-2 {surfaceInsideFrostedPanel} mb-2">
         <!-- Column headers -->
         <div class="flex items-center gap-2 py-1 border-b border-edge text-[10px] text-fg-dimmed uppercase tracking-wider">
@@ -130,7 +136,6 @@
             validationErrors={errorsForParam(i, param.name)}
             onUpdate={(updates) => onUpdate(i, updates)}
             onRemove={() => onRemove(i)}
-            onSuggest={(suggestion) => onUpdate(i, { fieldMemberId: suggestion.fieldMemberId, operator: suggestion.operator })}
           />
         {/each}
 
@@ -191,14 +196,14 @@
     {/if}
 
     <!-- Field selector dropdown to add query params -->
-    {#if !isDetail && targetFieldOptions.length > 0}
+    {#if queryParamsEditable && targetFieldOptions.length > 0}
       <FieldSelectorDropdown
         availableFields={targetFieldOptions}
         selectedFieldIds={linkedFieldMemberIds}
         onSelect={onAddFromField}
         placeholder="Add query parameter from Field Member..."
       />
-    {:else if !isDetail && queryParams.length === 0 && !pagination}
+    {:else if queryParamsEditable && queryParams.length === 0 && !pagination}
       <div class="px-3 py-2 {surfaceInsideFrostedPanel}">
         <p class="text-xs text-fg-muted">No query parameters. Select an object to add Field Member filters.</p>
       </div>

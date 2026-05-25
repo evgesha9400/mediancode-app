@@ -1,13 +1,13 @@
 <script module lang="ts">
   import type { ResponseShape } from '$lib/types';
+  import type { EndpointResponseShapePolicy } from '$lib/domain/endpointQuerySemantics';
   import type { ValidationError } from '$lib/domain/paramInference';
 
   export interface ObjectSelectorProps {
     endpointNamespaceId: string;
     selectedObjectId?: string;
     responseShape: ResponseShape;
-    /** Whether the response shape toggle is locked (e.g. detail endpoint detected) */
-    responseShapeLocked?: boolean;
+    responseShapePolicy?: EndpointResponseShapePolicy;
     /** Tooltip text shown when the toggle is locked */
     responseShapeLockedReason?: string;
     /** Validation errors to display inline (e.g. rule 1 — no target object) */
@@ -40,7 +40,7 @@
     endpointNamespaceId,
     selectedObjectId,
     responseShape,
-    responseShapeLocked = false,
+    responseShapePolicy = 'editable',
     responseShapeLockedReason = '',
     validationErrors = [],
     onSelectObject,
@@ -50,6 +50,7 @@
 
   // Filter objects to only show those in the endpoint's namespace
   const namespacedObjects = $derived($objectsStore.filter(obj => obj.namespaceId === endpointNamespaceId));
+  const responseShapeLocked = $derived(responseShapePolicy === 'locked');
 </script>
 
 <div>

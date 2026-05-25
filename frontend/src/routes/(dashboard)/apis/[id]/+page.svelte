@@ -26,6 +26,7 @@
   import { HTTP_METHOD_SELECT_OPTIONS } from '$lib/types';
   import type { HttpMethod } from '$lib/types';
   import { createApiDetailState } from '$lib/stores/apiDetailState.svelte';
+  import type { EndpointQuerySemanticsPolicy } from '$lib/domain/endpointQuerySemantics';
   import {
     getApiById,
     namespacesStore,
@@ -81,6 +82,22 @@
   const apiState = createApiDetailState({
     apiId: untrack(() => apiId),
     onNavigateBack: () => goto('/apis')
+  });
+  const blockedEndpointQueryPolicy: EndpointQuerySemanticsPolicy = {
+    queryParams: 'blocked',
+    pagination: 'blocked',
+    responseShape: 'editable'
+  };
+  const endpointQueryPolicy: EndpointQuerySemanticsPolicy = $derived(
+    apiState.endpointQueryResolution?.policy ?? blockedEndpointQueryPolicy
+  );
+  const endpointQuerySuggestions = $derived(apiState.endpointQueryResolution?.suggestions ?? []);
+  const responseShapeLockedReason = $derived.by(() => {
+    const resolution = apiState.endpointQueryResolution;
+    if (!resolution || resolution.policy.responseShape !== 'locked') return '';
+    if (resolution.availability === 'available') return 'Queryable endpoints return a list';
+    if (apiState.editedEndpoint?.method !== 'GET') return 'Only GET endpoints can return a list';
+    return 'Primary-key endpoints return a single object';
   });
 
   // Fields filtered by API namespace for nested object editing
@@ -551,8 +568,8 @@
             endpointNamespaceId={apiState.apiNamespaceId}
             selectedObjectId={apiState.editedEndpoint.targetObjectId}
             responseShape={apiState.editedEndpoint.responseShape}
-            responseShapeLocked={apiState.responseShapeLocked}
-            responseShapeLockedReason={apiState.responseShapeLockedReason}
+            responseShapePolicy={endpointQueryPolicy.responseShape}
+            responseShapeLockedReason={responseShapeLockedReason}
             validationErrors={apiState.validationErrors.filter(e => e.rule === 1)}
             onSelectObject={apiState.handleSelectObject}
             onSetResponseShape={apiState.handleSetResponseShape}
@@ -581,7 +598,8 @@
                     paramName={param.name}
                     fieldMemberId={param.fieldMemberId}
                     targetFields={apiState.targetFields}
-                    validationErrors={apiState.validationErrors.filter(e => (e.rule === 2 || e.rule === 3 || e.rule === 5) && e.param === param.name)}
+                    validationErrors={apiState.validationErrors.filter(e => e.location?.kind === 'pathParam' && e.param === param.name)}
+                    suggestions={endpointQuerySuggestions}
                     onFieldSelect={(fieldMemberId) =>
                       apiState.handlePathParamFieldSelect(param.name, fieldMemberId)}
                   />
@@ -590,11 +608,11 @@
             {/if}
           </div>
 
-          <!-- Query Parameters (only visible for list endpoints) -->
+          <!-- Query Parameters -->
           <QueryParametersEditor
             queryParams={apiState.editedEndpoint.queryParams ?? []}
             targetFields={apiState.targetFields}
-            responseShape={apiState.editedEndpoint.responseShape}
+            policy={endpointQueryPolicy}
             pagination={apiState.editedEndpoint.pagination ?? false}
             validationErrors={apiState.validationErrors}
             blockIssues={apiState.endpointCommandBlockers}
