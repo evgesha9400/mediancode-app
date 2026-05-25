@@ -24,20 +24,19 @@ import {
 import { showToast } from './toasts';
 import { deepClone } from '$lib/utils/ids';
 import { mapApiError } from '$lib/domain/errorMap';
-import {
-	resolveTargetFields,
-	type ValidationError,
-	type TargetField
-} from '$lib/domain/paramInference';
+import type { ValidationError } from '$lib/domain/paramInference';
 import {
 	formatEndpointBlockReasons,
 	getEndpointValidationErrors,
-	prepareEndpointCommand,
-	resolveEndpointQuerySemantics,
+	getEndpointQueryDraft,
+	getEndpointTarget,
+	prepareEndpointDuplicate,
+	prepareEndpointSave,
 	transitionEndpointDraft,
 	type EndpointIssue,
-	type EndpointQuerySemanticsResolution,
-	type EndpointSemanticsContext
+	type EndpointQueryDraft,
+	type EndpointTarget,
+	type EndpointTargetFieldMember
 } from '$lib/domain/endpointQuerySemantics';
 import { createApisContract } from './apisConfig.svelte';
 import {
@@ -46,7 +45,6 @@ import {
 	endpointApi,
 	hydrateStoredEndpoint,
 	toCreateEndpointPayload,
-	toDuplicateEndpointPayload,
 	toUpdateEndpointPayload
 } from './endpointsConfig.svelte';
 
@@ -152,7 +150,7 @@ export interface ApiDetailState {
 	handlePathParamFieldSelect: (paramName: string, fieldMemberId: string) => void;
 
 	// Target object fields
-	readonly targetFields: TargetField[];
+	readonly endpointTargetFieldMembers: EndpointTargetFieldMember[];
 	readonly validationErrors: ValidationError[];
 
 	// Query param CRUD
@@ -168,7 +166,7 @@ export interface ApiDetailState {
 	handleEnvelopeToggle: (enabled: boolean) => void;
 
 	// Response shape configuration
-	readonly endpointQueryResolution: EndpointQuerySemanticsResolution | null;
+	readonly endpointQueryDraft: EndpointQueryDraft | null;
 	handleSetResponseShape: (shape: ResponseShape) => void;
 	handleResetResponseDefaults: () => void;
 
@@ -421,18 +419,22 @@ export function createApiDetailState(config: ApiDetailStateConfig): ApiDetailSta
 	// Target Object and Validation (param inference)
 	// ============================================================================
 
-	// Fields on the target object (for populating dropdowns)
-	let targetFields = $derived.by((): TargetField[] => {
-		if (!editedEndpoint?.targetObjectId) return [];
-		return resolveTargetFields(editedEndpoint.targetObjectId, allObjects, allFields);
+	let endpointTarget = $derived.by((): EndpointTarget => {
+		if (!editedEndpoint) {
+			return { status: 'missing', objectId: undefined, fieldMembers: [] };
+		}
+		return getEndpointTarget(editedEndpoint, allObjects, allFields);
 	});
 
-	let endpointQueryResolution = $derived.by((): EndpointQuerySemanticsResolution | null => {
+	// Field Members on the Endpoint Target (for populating dropdowns)
+	let endpointTargetFieldMembers = $derived(endpointTarget.fieldMembers);
+
+	let endpointQueryDraft = $derived.by((): EndpointQueryDraft | null => {
 		if (!editedEndpoint) return null;
-		return resolveEndpointQuerySemantics(editedEndpoint, currentEndpointContext());
+		return getEndpointQueryDraft(editedEndpoint, currentEndpointTarget());
 	});
 
-	let endpointIssues = $derived(endpointQueryResolution?.issues ?? []);
+	let endpointIssues = $derived(endpointQueryDraft?.issues ?? []);
 
 	// Live validation errors
 	let validationErrors = $derived(getEndpointValidationErrors(endpointIssues));
@@ -463,7 +465,7 @@ export function createApiDetailState(config: ApiDetailStateConfig): ApiDetailSta
 
 	let endpointCommandBlockers = $derived.by((): EndpointIssue[] => {
 		if (!editedEndpoint) return [];
-		const outcome = prepareEndpointCommand(editedEndpoint, currentEndpointContext());
+		const outcome = prepareEndpointSave(editedEndpoint, currentEndpointTarget());
 		return outcome.status === 'blocked' ? outcome.reasons : [];
 	});
 
@@ -474,23 +476,15 @@ export function createApiDetailState(config: ApiDetailStateConfig): ApiDetailSta
 		return formatEndpointBlockReasons(endpointCommandBlockers);
 	});
 
-	function currentEndpointContext(): EndpointSemanticsContext {
-		return {
-			targetFields,
-			targetObjectName: allObjects.find(object => object.id === editedEndpoint?.targetObjectId)?.name
-		};
+	function currentEndpointTarget(): EndpointTarget {
+		return endpointTarget;
 	}
 
-	function resolveTargetFieldsFor(targetObjectId: string | undefined): TargetField[] {
-		if (!targetObjectId) return [];
-		return resolveTargetFields(targetObjectId, allObjects, allFields);
-	}
-
-	function resolveEndpointDraft(endpoint: ApiEndpoint): ApiEndpoint {
-		return resolveEndpointQuerySemantics(endpoint, {
-			targetFields: resolveTargetFieldsFor(endpoint.targetObjectId),
-			targetObjectName: allObjects.find(object => object.id === endpoint.targetObjectId)?.name
-		}).endpoint;
+	function getEndpointDraftForEditor(endpoint: ApiEndpoint): ApiEndpoint {
+		return getEndpointQueryDraft(
+			endpoint,
+			getEndpointTarget(endpoint, allObjects, allFields)
+		).endpoint;
 	}
 
 	// ============================================================================
@@ -524,7 +518,7 @@ export function createApiDetailState(config: ApiDetailStateConfig): ApiDetailSta
 
 	async function handleCreateEndpoint(): Promise<void> {
 		if (!editedEndpoint) return;
-		const command = prepareEndpointCommand(editedEndpoint, currentEndpointContext());
+		const command = prepareEndpointSave(editedEndpoint, currentEndpointTarget());
 		if (command.status === 'blocked') return;
 
 		isSaving = true;
@@ -579,9 +573,18 @@ export function createApiDetailState(config: ApiDetailStateConfig): ApiDetailSta
 			return;
 		}
 
+		const command = prepareEndpointDuplicate(
+			original,
+			getEndpointTarget(original, allObjects, allFields)
+		);
+		if (command.status === 'blocked') {
+			showToast(formatEndpointBlockReasons(command.reasons), 'error');
+			return;
+		}
+
 		isSaving = true;
 		try {
-			const endpoint = await endpointApi.create(toDuplicateEndpointPayload(original));
+			const endpoint = await endpointApi.create(toCreateEndpointPayload(command.endpoint));
 			const hydrated = hydrateStoredEndpoint(endpoint);
 			endpointsStore.update(eps => [...eps, hydrated]);
 			showToast(MESSAGES.ENDPOINT_DUPLICATED, 'success');
@@ -600,7 +603,7 @@ export function createApiDetailState(config: ApiDetailStateConfig): ApiDetailSta
 		closeEditDrawer();
 		const hydrated = hydrateStoredEndpoint(endpoint);
 		selectedEndpoint = hydrated;
-		editedEndpoint = resolveEndpointDraft(deepClone(hydrated));
+		editedEndpoint = getEndpointDraftForEditor(deepClone(hydrated));
 		endpointDrawerOpen = true;
 		tagInputValue = hydrated.tagName ?? '';
 		tagDropdownOpen = false;
@@ -617,7 +620,7 @@ export function createApiDetailState(config: ApiDetailStateConfig): ApiDetailSta
 
 	async function handleSaveEndpoint(): Promise<boolean> {
 		if (!editedEndpoint || !selectedEndpoint) return false;
-		const command = prepareEndpointCommand(editedEndpoint, currentEndpointContext());
+		const command = prepareEndpointSave(editedEndpoint, currentEndpointTarget());
 		if (command.status === 'blocked') return false;
 
 		const payload = toUpdateEndpointPayload(command.endpoint);
@@ -661,7 +664,7 @@ export function createApiDetailState(config: ApiDetailStateConfig): ApiDetailSta
 		editedEndpoint = transitionEndpointDraft(
 			editedEndpoint,
 			{ type: 'methodChanged', method },
-			currentEndpointContext()
+			currentEndpointTarget()
 		);
 	}
 
@@ -670,7 +673,7 @@ export function createApiDetailState(config: ApiDetailStateConfig): ApiDetailSta
 		editedEndpoint = transitionEndpointDraft(
 			editedEndpoint,
 			{ type: 'pathChanged', path: newPath },
-			currentEndpointContext()
+			currentEndpointTarget()
 		);
 	}
 
@@ -679,7 +682,7 @@ export function createApiDetailState(config: ApiDetailStateConfig): ApiDetailSta
 		editedEndpoint = transitionEndpointDraft(
 			editedEndpoint,
 			{ type: 'pathParamFieldSelected', paramName, fieldMemberId },
-			currentEndpointContext()
+			currentEndpointTarget()
 		);
 	}
 
@@ -696,7 +699,7 @@ export function createApiDetailState(config: ApiDetailStateConfig): ApiDetailSta
 		editedEndpoint = transitionEndpointDraft(
 			editedEndpoint,
 			{ type: 'queryParamAddedFromField', fieldMemberId },
-			currentEndpointContext()
+			currentEndpointTarget()
 		);
 	}
 
@@ -705,7 +708,7 @@ export function createApiDetailState(config: ApiDetailStateConfig): ApiDetailSta
 		editedEndpoint = transitionEndpointDraft(
 			editedEndpoint,
 			{ type: 'queryParamUpdated', index, updates },
-			currentEndpointContext()
+			currentEndpointTarget()
 		);
 	}
 
@@ -714,7 +717,7 @@ export function createApiDetailState(config: ApiDetailStateConfig): ApiDetailSta
 		editedEndpoint = transitionEndpointDraft(
 			editedEndpoint,
 			{ type: 'queryParamRemoved', index },
-			currentEndpointContext()
+			currentEndpointTarget()
 		);
 	}
 
@@ -727,7 +730,7 @@ export function createApiDetailState(config: ApiDetailStateConfig): ApiDetailSta
 		editedEndpoint = transitionEndpointDraft(
 			editedEndpoint,
 			{ type: 'paginationToggled' },
-			currentEndpointContext()
+			currentEndpointTarget()
 		);
 	}
 
@@ -742,9 +745,9 @@ export function createApiDetailState(config: ApiDetailStateConfig): ApiDetailSta
 			{
 				type: 'targetObjectSelected',
 				targetObjectId,
-				targetFields: resolveTargetFieldsFor(targetObjectId)
+				endpointTarget: getEndpointTarget({ targetObjectId }, allObjects, allFields)
 			},
-			currentEndpointContext()
+			currentEndpointTarget()
 		));
 	}
 
@@ -753,7 +756,7 @@ export function createApiDetailState(config: ApiDetailStateConfig): ApiDetailSta
 		editedEndpoint = transitionEndpointDraft(
 			editedEndpoint,
 			{ type: 'envelopeToggled', enabled },
-			currentEndpointContext()
+			currentEndpointTarget()
 		);
 	}
 
@@ -766,7 +769,7 @@ export function createApiDetailState(config: ApiDetailStateConfig): ApiDetailSta
 		editedEndpoint = transitionEndpointDraft(
 			editedEndpoint,
 			{ type: 'responseShapeSet', shape },
-			currentEndpointContext()
+			currentEndpointTarget()
 		);
 	}
 
@@ -775,7 +778,7 @@ export function createApiDetailState(config: ApiDetailStateConfig): ApiDetailSta
 		editedEndpoint = transitionEndpointDraft(
 			editedEndpoint,
 			{ type: 'responseDefaultsReset' },
-			currentEndpointContext()
+			currentEndpointTarget()
 		);
 	}
 
@@ -857,7 +860,7 @@ export function createApiDetailState(config: ApiDetailStateConfig): ApiDetailSta
 		handlePathParamFieldSelect,
 
 		// Target object and validation
-		get targetFields() { return targetFields; },
+		get endpointTargetFieldMembers() { return endpointTargetFieldMembers; },
 		get validationErrors() { return validationErrors; },
 
 		// Query param CRUD
@@ -870,7 +873,7 @@ export function createApiDetailState(config: ApiDetailStateConfig): ApiDetailSta
 
 		handleSelectObject,
 		handleEnvelopeToggle,
-		get endpointQueryResolution() { return endpointQueryResolution; },
+		get endpointQueryDraft() { return endpointQueryDraft; },
 		handleSetResponseShape,
 		handleResetResponseDefaults,
 

@@ -17,7 +17,12 @@ describe('QueryParametersEditor Component', () => {
 			const props: QueryParametersEditorProps = {
 				queryParams: [],
 				targetFields: [],
-				policy: { queryParams: 'editable', pagination: 'editable', responseShape: 'locked' },
+				controls: {
+					queryParameters: { mode: 'editable' },
+					pagination: { mode: 'editable' },
+					responseShape: { mode: 'locked', value: 'list', reason: 'Queryable endpoints return a list' },
+					responsePreview: { requestBodyVisible: false, responseBodyVisible: true, emptyMessage: '', targetNote: '' }
+				},
 				pagination: false,
 				validationErrors: [],
 				blockIssues: [],
@@ -28,7 +33,7 @@ describe('QueryParametersEditor Component', () => {
 			};
 
 			expect(props.queryParams).toEqual([]);
-			expect(props.policy.queryParams).toBe('editable');
+			expect(props.controls.queryParameters.mode).toBe('editable');
 			expect(props.pagination).toBe(false);
 			expect(typeof props.onAddFromField).toBe('function');
 			expect(typeof props.onTogglePagination).toBe('function');
@@ -40,9 +45,14 @@ describe('QueryParametersEditor Component', () => {
 					{ name: 'min_price', fieldMemberId: 'fm-price', operator: 'gte', required: false }
 				],
 				targetFields: [
-					{ fieldMemberId: 'fm-price', name: 'price', type: 'float', isPk: false }
+					{ id: 'fm-price', name: 'price', type: 'float', isPrimary: false }
 				],
-				policy: { queryParams: 'editable', pagination: 'editable', responseShape: 'locked' },
+				controls: {
+					queryParameters: { mode: 'editable' },
+					pagination: { mode: 'editable' },
+					responseShape: { mode: 'locked', value: 'list', reason: 'Queryable endpoints return a list' },
+					responsePreview: { requestBodyVisible: false, responseBodyVisible: true, emptyMessage: '', targetNote: '' }
+				},
 				pagination: true,
 				validationErrors: [],
 				onAddFromField: () => {},
@@ -65,7 +75,12 @@ describe('QueryParametersEditor Component', () => {
 			const props: QueryParametersEditorProps = {
 				queryParams: [],
 				targetFields: [],
-				policy: { queryParams: 'editable', pagination: 'editable', responseShape: 'locked' },
+				controls: {
+					queryParameters: { mode: 'editable' },
+					pagination: { mode: 'editable' },
+					responseShape: { mode: 'locked', value: 'list', reason: 'Queryable endpoints return a list' },
+					responsePreview: { requestBodyVisible: false, responseBodyVisible: true, emptyMessage: '', targetNote: '' }
+				},
 				pagination: false,
 				validationErrors: [],
 				onAddFromField: (fieldMemberId) => { addFieldMemberId = fieldMemberId; },
@@ -98,7 +113,12 @@ describe('QueryParametersEditor Component', () => {
 			const props: QueryParametersEditorProps = {
 				queryParams: [],
 				targetFields: [],
-				policy: { queryParams: 'editable', pagination: 'editable', responseShape: 'locked' },
+				controls: {
+					queryParameters: { mode: 'editable' },
+					pagination: { mode: 'editable' },
+					responseShape: { mode: 'locked', value: 'list', reason: 'Queryable endpoints return a list' },
+					responsePreview: { requestBodyVisible: false, responseBodyVisible: true, emptyMessage: '', targetNote: '' }
+				},
 				pagination: false,
 				validationErrors: [],
 				onAddFromField: () => {},

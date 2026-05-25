@@ -2,19 +2,33 @@ import { describe, expect, it } from 'vitest';
 import type { ApiEndpoint } from '$lib/types';
 import {
 	formatEndpointBlockReasons,
-	getEndpointIssues,
-	prepareEndpointCommand,
-	resolveEndpointQuerySemantics,
-	transitionEndpointDraft
+	getEndpointQueryAvailability,
+	getEndpointQueryControls,
+	getEndpointQueryDraft,
+	getEndpointQueryIssues,
+	prepareEndpointDuplicate,
+	prepareEndpointSave,
+	transitionEndpointDraft,
+	type EndpointTarget
 } from '$lib/domain/endpointQuerySemantics';
-import type { TargetField } from '$lib/domain/paramInference';
 
-const targetFields: TargetField[] = [
-	{ fieldMemberId: 'member-id', name: 'id', type: 'uuid', isPk: true },
-	{ fieldMemberId: 'member-store-id', name: 'store_id', type: 'uuid', isPk: false },
-	{ fieldMemberId: 'member-status', name: 'status', type: 'str', isPk: false },
-	{ fieldMemberId: 'member-price', name: 'price', type: 'float', isPk: false }
-];
+const endpointTarget: EndpointTarget = {
+	status: 'found',
+	objectId: 'obj-1',
+	objectName: 'Product',
+	fieldMembers: [
+		{ id: 'member-id', name: 'id', type: 'uuid', isPrimary: true },
+		{ id: 'member-store-id', name: 'store_id', type: 'uuid', isPrimary: false },
+		{ id: 'member-status', name: 'status', type: 'str', isPrimary: false },
+		{ id: 'member-price', name: 'price', type: 'float', isPrimary: false }
+	]
+};
+
+const missingEndpointTarget: EndpointTarget = {
+	status: 'missing',
+	objectId: undefined,
+	fieldMembers: []
+};
 
 function makeEndpoint(overrides: Partial<ApiEndpoint> = {}): ApiEndpoint {
 	return {
@@ -34,21 +48,23 @@ function makeEndpoint(overrides: Partial<ApiEndpoint> = {}): ApiEndpoint {
 	};
 }
 
-describe('resolveEndpointQuerySemantics', () => {
+describe('getEndpointQueryDraft', () => {
 	it('marks GET collection endpoints available when a target Object is selected and no path params exist', () => {
-		const resolution = resolveEndpointQuerySemantics(
+		const draft = getEndpointQueryDraft(
 			makeEndpoint({ responseShape: 'object' }),
-			{ targetFields }
+			endpointTarget
 		);
 
-		expect(resolution.availability).toBe('available');
-		expect(resolution.endpoint.responseShape).toBe('list');
-		expect(resolution.policy).toEqual({
-			queryParams: 'editable',
-			pagination: 'editable',
-			responseShape: 'locked'
+		expect(draft.availability).toBe('available');
+		expect(draft.endpoint.responseShape).toBe('list');
+		expect(draft.controls.queryParameters.mode).toBe('editable');
+		expect(draft.controls.pagination.mode).toBe('editable');
+		expect(draft.controls.responseShape).toEqual({
+			mode: 'locked',
+			value: 'list',
+			reason: 'Queryable endpoints return a list'
 		});
-		expect(resolution.issues).toEqual([]);
+		expect(draft.issues).toEqual([]);
 	});
 
 	it('keeps nested collection endpoints unresolved until path params are explicitly linked', () => {
@@ -57,50 +73,50 @@ describe('resolveEndpointQuerySemantics', () => {
 			pathParams: [{ name: 'store_id', fieldMemberId: '' }]
 		});
 
-		const resolution = resolveEndpointQuerySemantics(endpoint, { targetFields });
+		const draft = getEndpointQueryDraft(endpoint, endpointTarget);
 
-		expect(resolution.availability).toBe('unresolved');
-		expect(resolution.endpoint.pathParams).toEqual([{ name: 'store_id', fieldMemberId: '' }]);
-		expect(resolution.policy.queryParams).toBe('blocked');
-		expect(resolution.suggestions).toEqual([
+		expect(draft.availability).toBe('unresolved');
+		expect(draft.endpoint.pathParams).toEqual([{ name: 'store_id', fieldMemberId: '' }]);
+		expect(draft.controls.queryParameters.mode).toBe('blocked');
+		expect(draft.suggestions).toEqual([
 			{
 				type: 'linkPathParam',
 				paramName: 'store_id',
 				fieldMemberId: 'member-store-id',
-				label: 'Link store_id to store_id'
+				label: 'Link store_id to Product.store_id'
 			}
 		]);
 	});
 
-	it('marks nested collection endpoints available after explicit non-PK path links', () => {
-		const resolution = resolveEndpointQuerySemantics(
+	it('marks nested collection endpoints available after explicit non-primary path links', () => {
+		const draft = getEndpointQueryDraft(
 			makeEndpoint({
 				path: '/stores/{store_id}/products',
 				pathParams: [{ name: 'store_id', fieldMemberId: 'member-store-id' }]
 			}),
-			{ targetFields }
+			endpointTarget
 		);
 
-		expect(resolution.availability).toBe('available');
-		expect(resolution.endpoint.responseShape).toBe('list');
-		expect(resolution.policy.queryParams).toBe('editable');
+		expect(draft.availability).toBe('available');
+		expect(draft.endpoint.responseShape).toBe('list');
+		expect(draft.controls.queryParameters.mode).toBe('editable');
 	});
 
 	it('keeps target primary-key paths unresolved until the final path param is explicitly linked', () => {
-		const resolution = resolveEndpointQuerySemantics(
+		const draft = getEndpointQueryDraft(
 			makeEndpoint({
 				path: '/products/{id}',
 				pathParams: [{ name: 'id', fieldMemberId: '' }],
 				queryParams: [{ name: 'status', fieldMemberId: 'member-status', operator: 'eq', required: false }],
 				pagination: true
 			}),
-			{ targetFields }
+			endpointTarget
 		);
 
-		expect(resolution.availability).toBe('unresolved');
-		expect(resolution.endpoint.queryParams).toHaveLength(1);
-		expect(resolution.endpoint.pagination).toBe(true);
-		expect(resolution.suggestions[0]).toEqual(
+		expect(draft.availability).toBe('unresolved');
+		expect(draft.endpoint.queryParams).toHaveLength(1);
+		expect(draft.endpoint.pagination).toBe(true);
+		expect(draft.suggestions[0]).toEqual(
 			expect.objectContaining({
 				type: 'linkPathParam',
 				paramName: 'id',
@@ -109,8 +125,8 @@ describe('resolveEndpointQuerySemantics', () => {
 		);
 	});
 
-	it('marks target primary-key paths not applicable after explicit final PK links and clears query facts', () => {
-		const resolution = resolveEndpointQuerySemantics(
+	it('marks target primary-key paths not applicable after explicit final primary Field Member links and clears query facts', () => {
+		const draft = getEndpointQueryDraft(
 			makeEndpoint({
 				path: '/products/{id}',
 				pathParams: [{ name: 'id', fieldMemberId: 'member-id' }],
@@ -118,52 +134,54 @@ describe('resolveEndpointQuerySemantics', () => {
 				queryParams: [{ name: 'status', fieldMemberId: 'member-status', operator: 'eq', required: false }],
 				pagination: true
 			}),
-			{ targetFields }
+			endpointTarget
 		);
 
-		expect(resolution.availability).toBe('notApplicable');
-		expect(resolution.endpoint.queryParams).toEqual([]);
-		expect(resolution.endpoint.pagination).toBe(false);
-		expect(resolution.endpoint.responseShape).toBe('object');
-		expect(resolution.policy).toEqual({
-			queryParams: 'hidden',
-			pagination: 'hidden',
-			responseShape: 'locked'
+		expect(draft.availability).toBe('notApplicable');
+		expect(draft.endpoint.queryParams).toEqual([]);
+		expect(draft.endpoint.pagination).toBe(false);
+		expect(draft.endpoint.responseShape).toBe('object');
+		expect(draft.controls.queryParameters.mode).toBe('hidden');
+		expect(draft.controls.pagination.mode).toBe('hidden');
+		expect(draft.controls.responseShape).toEqual({
+			mode: 'locked',
+			value: 'object',
+			reason: 'Primary-key endpoints return a single object'
 		});
 	});
 
 	it.each(['POST', 'PUT', 'PATCH', 'DELETE'] as const)(
 		'marks %s endpoints not applicable and clears query facts',
 		(method) => {
-			const resolution = resolveEndpointQuerySemantics(
+			const draft = getEndpointQueryDraft(
 				makeEndpoint({
 					method,
 					responseShape: 'list',
 					queryParams: [{ name: 'status', fieldMemberId: 'member-status', operator: 'eq', required: false }],
 					pagination: true
 				}),
-				{ targetFields }
+				endpointTarget
 			);
 
-			expect(resolution.availability).toBe('notApplicable');
-			expect(resolution.endpoint.responseShape).toBe('object');
-			expect(resolution.endpoint.queryParams).toEqual([]);
-			expect(resolution.endpoint.pagination).toBe(false);
+			expect(draft.availability).toBe('notApplicable');
+			expect(draft.endpoint.responseShape).toBe('object');
+			expect(draft.endpoint.queryParams).toEqual([]);
+			expect(draft.endpoint.pagination).toBe(false);
 		}
 	);
 
 	it('does not use persisted response shape as the availability classifier', () => {
-		const collection = resolveEndpointQuerySemantics(
+		const collection = getEndpointQueryDraft(
 			makeEndpoint({ responseShape: 'object' }),
-			{ targetFields }
+			endpointTarget
 		);
-		const detail = resolveEndpointQuerySemantics(
+		const detail = getEndpointQueryDraft(
 			makeEndpoint({
 				path: '/products/{id}',
 				pathParams: [{ name: 'id', fieldMemberId: 'member-id' }],
 				responseShape: 'list'
 			}),
-			{ targetFields }
+			endpointTarget
 		);
 
 		expect(collection.availability).toBe('available');
@@ -173,15 +191,15 @@ describe('resolveEndpointQuerySemantics', () => {
 	});
 
 	it('reports incompatible query operators while availability remains available', () => {
-		const resolution = resolveEndpointQuerySemantics(
+		const draft = getEndpointQueryDraft(
 			makeEndpoint({
 				queryParams: [{ name: 'price_like', fieldMemberId: 'member-price', operator: 'like', required: false }]
 			}),
-			{ targetFields }
+			endpointTarget
 		);
 
-		expect(resolution.availability).toBe('available');
-		expect(resolution.issues).toContainEqual(
+		expect(draft.availability).toBe('available');
+		expect(draft.issues).toContainEqual(
 			expect.objectContaining({
 				code: 'endpoint_rule_6',
 				location: { kind: 'queryParam', index: 0, field: 'operator' }
@@ -190,12 +208,33 @@ describe('resolveEndpointQuerySemantics', () => {
 	});
 });
 
+describe('getEndpointQueryAvailability', () => {
+	it('answers whether this Endpoint can have query parameters', () => {
+		expect(getEndpointQueryAvailability(makeEndpoint(), endpointTarget)).toBe('available');
+		expect(getEndpointQueryAvailability(makeEndpoint({ method: 'POST' }), endpointTarget)).toBe('notApplicable');
+		expect(getEndpointQueryAvailability(makeEndpoint({ targetObjectId: undefined }), missingEndpointTarget)).toBe('unresolved');
+	});
+});
+
+describe('getEndpointQueryControls', () => {
+	it('owns response preview applicability instead of leaving it to UI modules', () => {
+		const postControls = getEndpointQueryControls(makeEndpoint({ method: 'POST' }), endpointTarget);
+		const deleteControls = getEndpointQueryControls(makeEndpoint({ method: 'DELETE' }), endpointTarget);
+
+		expect(postControls.responsePreview.requestBodyVisible).toBe(true);
+		expect(postControls.responsePreview.responseBodyVisible).toBe(true);
+		expect(deleteControls.responsePreview.requestBodyVisible).toBe(false);
+		expect(deleteControls.responsePreview.responseBodyVisible).toBe(false);
+		expect(deleteControls.responsePreview.emptyMessage).toContain('204 No Content');
+	});
+});
+
 describe('transitionEndpointDraft', () => {
 	it('normalizes paths and extracts path params without name-based Field Member mutation', () => {
 		const result = transitionEndpointDraft(
 			makeEndpoint(),
 			{ type: 'pathChanged', path: 'stores/{store_id}/products' },
-			{ targetFields }
+			endpointTarget
 		);
 
 		expect(result.path).toBe('/stores/{store_id}/products');
@@ -209,7 +248,7 @@ describe('transitionEndpointDraft', () => {
 				pagination: true
 			}),
 			{ type: 'methodChanged', method: 'POST' },
-			{ targetFields }
+			endpointTarget
 		);
 
 		expect(result.method).toBe('POST');
@@ -222,7 +261,7 @@ describe('transitionEndpointDraft', () => {
 		const result = transitionEndpointDraft(
 			makeEndpoint(),
 			{ type: 'queryParamAddedFromField', fieldMemberId: 'member-price' },
-			{ targetFields }
+			endpointTarget
 		);
 
 		expect(result.queryParams).toEqual([
@@ -231,11 +270,11 @@ describe('transitionEndpointDraft', () => {
 	});
 });
 
-describe('prepareEndpointCommand', () => {
-	it('blocks commands when availability is unresolved', () => {
-		const outcome = prepareEndpointCommand(
+describe('prepareEndpointSave', () => {
+	it('blocks saves when availability is unresolved', () => {
+		const outcome = prepareEndpointSave(
 			makeEndpoint({ targetObjectId: undefined }),
-			{ targetFields: [] }
+			missingEndpointTarget
 		);
 
 		expect(outcome.status).toBe('blocked');
@@ -248,12 +287,12 @@ describe('prepareEndpointCommand', () => {
 		);
 	});
 
-	it('blocks commands when a query operator is incompatible with its Field Member type', () => {
-		const outcome = prepareEndpointCommand(
+	it('blocks saves when a query operator is incompatible with its Field Member type', () => {
+		const outcome = prepareEndpointSave(
 			makeEndpoint({
 				queryParams: [{ name: 'price_like', fieldMemberId: 'member-price', operator: 'like', required: false }]
 			}),
-			{ targetFields }
+			endpointTarget
 		);
 
 		expect(outcome.status).toBe('blocked');
@@ -262,12 +301,12 @@ describe('prepareEndpointCommand', () => {
 	});
 
 	it('returns a sanitized ready endpoint when no blockers exist', () => {
-		const outcome = prepareEndpointCommand(
+		const outcome = prepareEndpointSave(
 			makeEndpoint({
 				responseShape: 'object',
 				queryParams: [{ name: 'min_price', fieldMemberId: 'member-price', operator: 'gte', required: true }]
 			}),
-			{ targetFields }
+			endpointTarget
 		);
 
 		expect(outcome).toEqual({
@@ -280,14 +319,37 @@ describe('prepareEndpointCommand', () => {
 	});
 });
 
-describe('getEndpointIssues', () => {
+describe('prepareEndpointDuplicate', () => {
+	it('duplicates through the same query checks as save', () => {
+		const outcome = prepareEndpointDuplicate(
+			makeEndpoint({ path: '/products', responseShape: 'object' }),
+			endpointTarget
+		);
+
+		expect(outcome.status).toBe('ready');
+		if (outcome.status !== 'ready') return;
+		expect(outcome.endpoint.path).toBe('/products-copy');
+		expect(outcome.endpoint.responseShape).toBe('list');
+	});
+
+	it('blocks duplicate when the copied Endpoint would have unresolved Endpoint Query Semantics', () => {
+		const outcome = prepareEndpointDuplicate(
+			makeEndpoint({ targetObjectId: undefined }),
+			missingEndpointTarget
+		);
+
+		expect(outcome.status).toBe('blocked');
+	});
+});
+
+describe('getEndpointQueryIssues', () => {
 	it('reports snake_case path parameter issues at the path param name location', () => {
-		const issues = getEndpointIssues(
+		const issues = getEndpointQueryIssues(
 			makeEndpoint({
 				path: '/products/{ProductId}',
 				pathParams: [{ name: 'ProductId', fieldMemberId: 'member-id' }]
 			}),
-			{ targetFields }
+			endpointTarget
 		);
 
 		expect(issues).toContainEqual(

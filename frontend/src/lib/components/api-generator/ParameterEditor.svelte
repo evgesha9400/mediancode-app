@@ -1,11 +1,11 @@
 <script module lang="ts">
-  import type { EndpointQuerySuggestion } from '$lib/domain/endpointQuerySemantics';
-  import type { TargetField, ValidationError } from '$lib/domain/paramInference';
+  import type { EndpointQuerySuggestion, EndpointTargetFieldMember } from '$lib/domain/endpointQuerySemantics';
+  import type { ValidationError } from '$lib/domain/paramInference';
 
   export interface ParameterEditorProps {
     paramName: string;
     fieldMemberId: string;
-    targetFields: TargetField[];
+    targetFields: EndpointTargetFieldMember[];
     validationErrors?: ValidationError[];
     suggestions?: EndpointQuerySuggestion[];
     onFieldSelect: (fieldMemberId: string) => void;
@@ -34,7 +34,7 @@
   }: Props = $props();
 
   // Find the currently selected field
-  const selectedField = $derived(targetFields.find(f => f.fieldMemberId === fieldMemberId));
+  const selectedField = $derived(targetFields.find(f => f.id === fieldMemberId));
 
   // Derived type (read-only display)
   const derivedType = $derived(selectedField?.type ?? '');
@@ -43,7 +43,7 @@
 
   const targetFieldOptions = $derived.by((): FieldSelectorOption[] =>
     targetFields.map(field => ({
-      id: field.fieldMemberId,
+      id: field.id,
       name: field.name,
       type: field.type
     }))
@@ -82,7 +82,7 @@
             {#if derivedType}
               <span class={`${listMetaBadge} px-1.5 text-[11px]`}>{derivedType}</span>
             {/if}
-            {#if selectedField?.isPk}
+            {#if selectedField?.isPrimary}
               <span class={`text-[10px] px-1.5 rounded-lg uppercase font-bold ${themeAccentBadge}`}>PK</span>
             {/if}
           </div>

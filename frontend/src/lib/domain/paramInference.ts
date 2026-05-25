@@ -3,7 +3,7 @@
 // Pure functions for parameter inference: operator compatibility,
 // auto-suggestions, and Field Member reference validation.
 
-import type { FilterOperator, PathParam, QueryParam, ObjectDefinition, Field } from '$lib/types';
+import type { FilterOperator, PathParam, QueryParam } from '$lib/types';
 import {
 	FILTER_OPERATORS,
 	COMPARABLE_TYPES,
@@ -60,7 +60,7 @@ export function getCompatibleOperators(fieldTypeName: string): FilterOperator[] 
  */
 export function suggestFieldAndOperator(
 	paramName: string,
-	targetFields: TargetField[]
+	targetFields: EndpointTargetFieldMember[]
 ): ParamSuggestion | null {
 	if (!paramName) return null;
 
@@ -70,7 +70,7 @@ export function suggestFieldAndOperator(
 			const candidate = paramName.slice(rule.prefix.length);
 			const field = targetFields.find(f => f.name === candidate);
 			if (field) {
-				return { fieldMemberId: field.fieldMemberId, operator: rule.operator };
+				return { fieldMemberId: field.id, operator: rule.operator };
 			}
 		}
 	}
@@ -78,7 +78,7 @@ export function suggestFieldAndOperator(
 	// Exact match (category -> category Field Member, operator: eq)
 	const field = targetFields.find(f => f.name === paramName);
 	if (field) {
-		return { fieldMemberId: field.fieldMemberId, operator: 'eq' };
+		return { fieldMemberId: field.id, operator: 'eq' };
 	}
 
 	return null;
@@ -89,13 +89,13 @@ export function suggestFieldAndOperator(
 // ============================================================================
 
 /**
- * A field on the resolved target object, as seen by validation.
+ * A Field Member on the Endpoint Target, as seen by validation.
  */
-export interface TargetField {
-	fieldMemberId: string;
+export interface EndpointTargetFieldMember {
+	id: string;
 	name: string;
 	type: string;
-	isPk: boolean;
+	isPrimary: boolean;
 }
 
 /**
@@ -104,7 +104,7 @@ export interface TargetField {
 export interface ValidationInput {
 	method?: string;
 	targetObjectId?: string;
-	targetFields: TargetField[];
+	targetFields: EndpointTargetFieldMember[];
 	pathParams: PathParam[];
 	queryParams: QueryParam[];
 	pagination?: boolean;
@@ -150,7 +150,7 @@ export function validateEndpointParams(input: ValidationInput): ValidationError[
 	}
 
 	// Rule 2: Every param field exists on target
-	const fieldMemberIds = new Set(targetFields.map(f => f.fieldMemberId));
+	const fieldMemberIds = new Set(targetFields.map(f => f.id));
 
 	for (const pp of pathParams) {
 		if (!pp.fieldMemberId) {
@@ -190,7 +190,7 @@ export function validateEndpointParams(input: ValidationInput): ValidationError[
 
 	// Rule 6: Operator compatible with field type
 	for (const [index, qp] of queryParams.entries()) {
-		const field = targetFields.find(f => f.fieldMemberId === qp.fieldMemberId);
+		const field = targetFields.find(f => f.id === qp.fieldMemberId);
 		if (!field) continue; // already caught by rule 2
 		const compatible = getCompatibleOperators(field.type);
 		if (!compatible.includes(qp.operator)) {
@@ -206,35 +206,4 @@ export function validateEndpointParams(input: ValidationInput): ValidationError[
 	// Rule 7 is auto-enforced: param type is derived from field type, never user-editable
 
 	return errors;
-}
-
-// ============================================================================
-// Store-to-Domain Bridge
-// ============================================================================
-
-/**
- * Resolve a target object ID into a flat array of TargetField objects.
- * This bridges the store data (objects + fields) to the pure validation input.
- */
-export function resolveTargetFields(
-	targetObjectId: string,
-	objects: ObjectDefinition[],
-	fields: Field[]
-): TargetField[] {
-	const obj = objects.find(o => o.id === targetObjectId);
-	if (!obj) return [];
-
-	const result: TargetField[] = [];
-	for (const member of obj.members) {
-		if (member.memberType !== 'field') continue;
-		const field = fields.find(f => f.id === member.fieldId);
-		if (!field) continue;
-		result.push({
-			name: member.name,
-			fieldMemberId: member.id ?? '',
-			type: field.type,
-			isPk: member.role === 'pk'
-		});
-	}
-	return result;
 }

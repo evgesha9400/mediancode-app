@@ -16,11 +16,16 @@ describe('ResponsePreview Component', () => {
 		it('ResponsePreviewProps interface accepts all required properties', () => {
 			const props: ResponsePreviewProps = {
 				responseShape: 'object',
-				method: 'GET'
+				previewControl: {
+					requestBodyVisible: false,
+					responseBodyVisible: true,
+					emptyMessage: '',
+					targetNote: ''
+				}
 			};
 
 			expect(props.responseShape).toBe('object');
-			expect(props.method).toBe('GET');
+			expect(props.previewControl.responseBodyVisible).toBe(true);
 			expect(props.selectedObjectId).toBeUndefined();
 		});
 
@@ -28,37 +33,54 @@ describe('ResponsePreview Component', () => {
 			const props: ResponsePreviewProps = {
 				selectedObjectId: 'obj-1',
 				responseShape: 'list',
-				method: 'POST'
+				previewControl: {
+					requestBodyVisible: true,
+					responseBodyVisible: true,
+					emptyMessage: '',
+					targetNote: ''
+				}
 			};
 
 			expect(props.selectedObjectId).toBe('obj-1');
 			expect(props.responseShape).toBe('list');
-			expect(props.method).toBe('POST');
+			expect(props.previewControl.requestBodyVisible).toBe(true);
 		});
 
 		it('ResponsePreviewProps supports both response shapes', () => {
 			const objectProps: ResponsePreviewProps = {
 				responseShape: 'object',
-				method: 'GET'
+				previewControl: {
+					requestBodyVisible: false,
+					responseBodyVisible: true,
+					emptyMessage: '',
+					targetNote: ''
+				}
 			};
 			const listProps: ResponsePreviewProps = {
 				responseShape: 'list',
-				method: 'GET'
+				previewControl: {
+					requestBodyVisible: false,
+					responseBodyVisible: true,
+					emptyMessage: '',
+					targetNote: ''
+				}
 			};
 
 			expect(objectProps.responseShape).toBe('object');
 			expect(listProps.responseShape).toBe('list');
 		});
 
-		it('ResponsePreviewProps supports all HTTP methods', () => {
-			const methods = ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'] as const;
-			for (const method of methods) {
-				const props: ResponsePreviewProps = {
-					responseShape: 'object',
-					method
-				};
-				expect(props.method).toBe(method);
-			}
+		it('ResponsePreviewProps receives preview applicability from Endpoint Query controls', () => {
+			const props: ResponsePreviewProps = {
+				responseShape: 'object',
+				previewControl: {
+					requestBodyVisible: false,
+					responseBodyVisible: false,
+					emptyMessage: 'DELETE returns 204 No Content with no response body.',
+					targetNote: 'For DELETE, this object defines path parameter types.'
+				}
+			};
+			expect(props.previewControl.emptyMessage).toContain('204 No Content');
 		});
 	});
 
@@ -71,7 +93,12 @@ describe('ResponsePreview Component', () => {
 		it('ResponsePreviewProps type exports correctly from barrel export', () => {
 			const props: ResponsePreviewProps = {
 				responseShape: 'object',
-				method: 'GET'
+				previewControl: {
+					requestBodyVisible: false,
+					responseBodyVisible: true,
+					emptyMessage: '',
+					targetNote: ''
+				}
 			};
 
 			expect(props).toBeDefined();

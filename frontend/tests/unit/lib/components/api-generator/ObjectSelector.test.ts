@@ -32,8 +32,11 @@ describe('ObjectSelector Component', () => {
 				endpointNamespaceId: 'ns-1',
 				selectedObjectId: 'obj-1',
 				responseShape: 'list',
-				responseShapePolicy: 'locked',
-				responseShapeLockedReason: 'Detail endpoints return a single object',
+				responseShapeControl: {
+					mode: 'locked',
+					value: 'object',
+					reason: 'Detail endpoints return a single object'
+				},
 				onSelectObject: () => {},
 				onSetResponseShape: () => {},
 				onCreateNewObject: () => {}
@@ -41,8 +44,8 @@ describe('ObjectSelector Component', () => {
 
 			expect(props.selectedObjectId).toBe('obj-1');
 			expect(props.responseShape).toBe('list');
-			expect(props.responseShapePolicy).toBe('locked');
-			expect(props.responseShapeLockedReason).toBe('Detail endpoints return a single object');
+			expect(props.responseShapeControl?.mode).toBe('locked');
+			expect(props.responseShapeControl?.reason).toBe('Detail endpoints return a single object');
 			expect(typeof props.onCreateNewObject).toBe('function');
 		});
 

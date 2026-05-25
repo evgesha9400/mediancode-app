@@ -1200,8 +1200,8 @@ describe('apiDetailState - Endpoint Query Availability', () => {
     state.openEndpoint(state.endpoints[0]);
     flushSync();
 
-    expect(state.endpointQueryResolution?.availability).toBe('notApplicable');
-    expect(state.endpointQueryResolution?.policy.responseShape).toBe('locked');
+    expect(state.endpointQueryDraft?.availability).toBe('notApplicable');
+    expect(state.endpointQueryDraft?.controls.responseShape.mode).toBe('locked');
   });
 
   it('should mark collection endpoints available', () => {
@@ -1211,8 +1211,8 @@ describe('apiDetailState - Endpoint Query Availability', () => {
     state.openEndpoint(state.endpoints[0]);
     flushSync();
 
-    expect(state.endpointQueryResolution?.availability).toBe('available');
-    expect(state.endpointQueryResolution?.policy.queryParams).toBe('editable');
+    expect(state.endpointQueryDraft?.availability).toBe('available');
+    expect(state.endpointQueryDraft?.controls.queryParameters.mode).toBe('editable');
   });
 
   it('should block handleSetResponseShape when availability locks the response shape', () => {
@@ -1235,7 +1235,7 @@ describe('apiDetailState - Endpoint Query Availability', () => {
     state.openEndpoint(state.endpoints[0]);
     flushSync();
 
-    expect(state.endpointQueryResolution?.policy.responseShape).toBe('locked');
+    expect(state.endpointQueryDraft?.controls.responseShape.mode).toBe('locked');
 
     state.handleSetResponseShape('list');
     flushSync();
@@ -1247,7 +1247,7 @@ describe('apiDetailState - Endpoint Query Availability', () => {
     ({ state, cleanup } = createTestState());
     flushSync();
 
-    expect(state.endpointQueryResolution).toBeNull();
+    expect(state.endpointQueryDraft).toBeNull();
   });
 });
 

@@ -10,10 +10,7 @@ import {
 	type CreateEndpointRequest,
 	type UpdateEndpointRequest
 } from '$lib/api/endpoints';
-import {
-	buildDuplicateEndpoint,
-	normalizeEndpoint
-} from '$lib/domain/endpointReducer';
+import { normalizeEndpoint } from '$lib/domain/endpointReducer';
 
 export const endpointApi = {
 	create: createEndpointApi,
@@ -91,8 +88,4 @@ export function applyEndpointUpdate(
 			: endpoint.queryParams,
 		tagName: payload.tagName === null ? undefined : payload.tagName
 	});
-}
-
-export function toDuplicateEndpointPayload(endpoint: ApiEndpoint): CreateEndpointRequest {
-	return toCreateEndpointPayload(buildDuplicateEndpoint(endpoint));
 }

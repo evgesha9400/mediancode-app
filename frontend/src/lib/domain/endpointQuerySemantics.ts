@@ -1,12 +1,17 @@
 import type { ApiEndpoint, HttpMethod, QueryParam, ResponseShape } from '$lib/types';
 import { isValidSnakeCaseName } from '$lib/utils/validation';
-import { reconcilePathParams } from './endpointReducer';
+import { buildDuplicateEndpoint, reconcilePathParams } from './endpointReducer';
+import type { EndpointTarget } from './endpointTarget';
 import {
 	validateEndpointParams,
-	type TargetField,
+	type EndpointTargetFieldMember,
 	type ValidationError,
 	type ValidationLocation
 } from './paramInference';
+
+export type { EndpointTarget } from './endpointTarget';
+export type { EndpointTargetFieldMember } from './paramInference';
+export { getEndpointTarget } from './endpointTarget';
 
 type EndpointTransitionEvent =
 	| { type: 'methodChanged'; method: HttpMethod }
@@ -16,19 +21,33 @@ type EndpointTransitionEvent =
 	| { type: 'queryParamUpdated'; index: number; updates: Partial<QueryParam> }
 	| { type: 'queryParamRemoved'; index: number }
 	| { type: 'paginationToggled' }
-	| { type: 'targetObjectSelected'; targetObjectId: string | undefined; targetFields: TargetField[] }
+	| { type: 'targetObjectSelected'; targetObjectId: string | undefined; endpointTarget: EndpointTarget }
 	| { type: 'envelopeToggled'; enabled: boolean }
 	| { type: 'responseShapeSet'; shape: ResponseShape }
 	| { type: 'responseDefaultsReset' };
 
 export type EndpointQueryAvailability = 'available' | 'notApplicable' | 'unresolved';
-export type EndpointQueryEditPolicy = 'editable' | 'hidden' | 'blocked';
-export type EndpointResponseShapePolicy = 'editable' | 'locked';
+export type EndpointQueryControlMode = 'editable' | 'hidden' | 'blocked';
+export type EndpointResponseShapeControlMode = 'editable' | 'locked';
 
-export interface EndpointQuerySemanticsPolicy {
-	queryParams: EndpointQueryEditPolicy;
-	pagination: EndpointQueryEditPolicy;
-	responseShape: EndpointResponseShapePolicy;
+export interface EndpointQueryControls {
+	queryParameters: {
+		mode: EndpointQueryControlMode;
+	};
+	pagination: {
+		mode: EndpointQueryControlMode;
+	};
+	responseShape: {
+		mode: EndpointResponseShapeControlMode;
+		value: ResponseShape;
+		reason: string;
+	};
+	responsePreview: {
+		requestBodyVisible: boolean;
+		responseBodyVisible: boolean;
+		emptyMessage: string;
+		targetNote: string;
+	};
 }
 
 export interface EndpointQuerySuggestion {
@@ -38,12 +57,12 @@ export interface EndpointQuerySuggestion {
 	label: string;
 }
 
-export interface EndpointQuerySemanticsResolution {
+export interface EndpointQueryDraft {
 	endpoint: ApiEndpoint;
 	availability: EndpointQueryAvailability;
 	issues: EndpointIssue[];
 	suggestions: EndpointQuerySuggestion[];
-	policy: EndpointQuerySemanticsPolicy;
+	controls: EndpointQueryControls;
 }
 
 export type EndpointIssueLocation =
@@ -61,159 +80,172 @@ export interface EndpointIssue {
 	validationError?: ValidationError;
 }
 
-export interface EndpointSemanticsContext {
-	targetFields: TargetField[];
-	targetObjectName?: string;
-}
-
-export type EndpointCommandOutcome =
+export type EndpointSavePreparation =
 	| { status: 'ready'; endpoint: ApiEndpoint }
 	| { status: 'blocked'; reasons: EndpointIssue[] };
 
-const AVAILABLE_POLICY: EndpointQuerySemanticsPolicy = {
-	queryParams: 'editable',
-	pagination: 'editable',
-	responseShape: 'locked'
-};
+export type EndpointDuplicatePreparation = EndpointSavePreparation;
 
-const NOT_APPLICABLE_POLICY: EndpointQuerySemanticsPolicy = {
-	queryParams: 'hidden',
-	pagination: 'hidden',
-	responseShape: 'locked'
-};
-
-const UNRESOLVED_POLICY: EndpointQuerySemanticsPolicy = {
-	queryParams: 'blocked',
-	pagination: 'blocked',
-	responseShape: 'editable'
-};
-
-export function resolveEndpointQuerySemantics(
+// Caller question: What Endpoint draft should the editor use after applying query rules?
+export function getEndpointQueryDraft(
 	endpoint: ApiEndpoint,
-	context: EndpointSemanticsContext
-): EndpointQuerySemanticsResolution {
+	endpointTarget: EndpointTarget
+): EndpointQueryDraft {
+	const sanitizedEndpoint = getSanitizedEndpointQueryDraft(endpoint, endpointTarget);
+	return {
+		endpoint: sanitizedEndpoint,
+		availability: getEndpointQueryAvailability(endpoint, endpointTarget),
+		issues: getEndpointQueryIssues(endpoint, endpointTarget),
+		suggestions: getPathParamSuggestions(endpoint.pathParams, endpointTarget),
+		controls: getEndpointQueryControls(endpoint, endpointTarget)
+	};
+}
+
+// Caller question: Can this Endpoint have query parameters?
+export function getEndpointQueryAvailability(
+	endpoint: ApiEndpoint,
+	endpointTarget: EndpointTarget
+): EndpointQueryAvailability {
+	if (endpoint.method !== 'GET') return 'notApplicable';
+
+	const targetAndPathIssues = getTargetAndPathIssues(endpoint, endpointTarget);
+	const primaryFieldIssue = getPrimaryFieldIssue(endpoint, endpointTarget);
+	if (targetAndPathIssues.length > 0 || primaryFieldIssue) return 'unresolved';
+
+	const primaryField = getPrimaryFieldMember(endpointTarget);
+	const finalPathParam = endpoint.pathParams[endpoint.pathParams.length - 1];
+	if (finalPathParam && finalPathParam.fieldMemberId === primaryField?.id) {
+		return 'notApplicable';
+	}
+
+	return 'available';
+}
+
+// Caller question: Which query controls should the Endpoint editor show?
+export function getEndpointQueryControls(
+	endpoint: ApiEndpoint,
+	endpointTarget: EndpointTarget
+): EndpointQueryControls {
+	const availability = getEndpointQueryAvailability(endpoint, endpointTarget);
+	const responseShapeValue = getEndpointResponseShapeValue(endpoint, availability);
+	const responseShapeMode: EndpointResponseShapeControlMode =
+		availability === 'unresolved' ? 'editable' : 'locked';
+
+	return {
+		queryParameters: {
+			mode: getQueryControlMode(availability)
+		},
+		pagination: {
+			mode: getQueryControlMode(availability)
+		},
+		responseShape: {
+			mode: responseShapeMode,
+			value: responseShapeValue,
+			reason: responseShapeMode === 'locked'
+				? getResponseShapeLockedReason(endpoint, availability, endpointTarget)
+				: ''
+		},
+		responsePreview: getEndpointResponsePreviewControl(endpoint)
+	};
+}
+
+// Caller question: What Endpoint draft should be displayed after applying query rules?
+export function getSanitizedEndpointQueryDraft(
+	endpoint: ApiEndpoint,
+	endpointTarget: EndpointTarget
+): ApiEndpoint {
+	const availability = getEndpointQueryAvailability(endpoint, endpointTarget);
+	if (availability === 'available') return sanitizeAvailableEndpoint(endpoint);
+	if (availability === 'notApplicable') return sanitizeNotApplicableEndpoint(endpoint);
+	return endpoint;
+}
+
+// Caller question: What query-related issues does this Endpoint have?
+export function getEndpointQueryIssues(
+	endpoint: ApiEndpoint,
+	endpointTarget: EndpointTarget
+): EndpointIssue[] {
 	const pathNameIssues = getPathNameIssues(endpoint);
-	const suggestions = getPathParamSuggestions(
-		endpoint.pathParams,
-		context.targetFields,
-		context.targetObjectName
-	);
+	const availability = getEndpointQueryAvailability(endpoint, endpointTarget);
 
 	if (endpoint.method !== 'GET') {
-		const sanitizedEndpoint = sanitizeNotApplicableEndpoint(endpoint);
-		return {
-			endpoint: sanitizedEndpoint,
-			availability: 'notApplicable',
-			issues: [
-				...pathNameIssues,
-				...getTargetAndPathIssues(sanitizedEndpoint, context)
-			],
-			suggestions,
-			policy: NOT_APPLICABLE_POLICY
-		};
+		return [
+			...pathNameIssues,
+			...getTargetAndPathIssues(sanitizeNotApplicableEndpoint(endpoint), endpointTarget)
+		];
 	}
 
-	const targetAndPathIssues = getTargetAndPathIssues(endpoint, context);
-	const primaryFieldIssue = getPrimaryFieldIssue(endpoint, context.targetFields);
-	const availabilityIssues = [
-		...pathNameIssues,
-		...targetAndPathIssues,
-		...(primaryFieldIssue ? [primaryFieldIssue] : [])
-	];
-
-	if (targetAndPathIssues.length > 0 || primaryFieldIssue) {
-		return {
-			endpoint,
-			availability: 'unresolved',
-			issues: availabilityIssues,
-			suggestions,
-			policy: UNRESOLVED_POLICY
-		};
+	if (availability === 'unresolved') {
+		const primaryFieldIssue = getPrimaryFieldIssue(endpoint, endpointTarget);
+		return [
+			...pathNameIssues,
+			...getTargetAndPathIssues(endpoint, endpointTarget),
+			...(primaryFieldIssue ? [primaryFieldIssue] : [])
+		];
 	}
 
-	const primaryField = context.targetFields.find(field => field.isPk);
-	const finalPathParam = endpoint.pathParams[endpoint.pathParams.length - 1];
-	if (finalPathParam && finalPathParam.fieldMemberId === primaryField?.fieldMemberId) {
-		return {
-			endpoint: sanitizeNotApplicableEndpoint(endpoint),
-			availability: 'notApplicable',
-			issues: pathNameIssues,
-			suggestions,
-			policy: NOT_APPLICABLE_POLICY
-		};
+	if (availability === 'notApplicable') {
+		return pathNameIssues;
 	}
 
 	const sanitizedEndpoint = sanitizeAvailableEndpoint(endpoint);
-	return {
-		endpoint: sanitizedEndpoint,
-		availability: 'available',
-		issues: [
-			...pathNameIssues,
-			...getQueryIssues(sanitizedEndpoint, context)
-		],
-		suggestions,
-		policy: AVAILABLE_POLICY
-	};
+	return [
+		...pathNameIssues,
+		...getQueryIssues(sanitizedEndpoint, endpointTarget)
+	];
 }
 
 export function transitionEndpointDraft(
 	endpoint: ApiEndpoint,
 	event: EndpointTransitionEvent,
-	context: EndpointSemanticsContext
+	endpointTarget: EndpointTarget
 ): ApiEndpoint {
-	const currentResolution = resolveEndpointQuerySemantics(endpoint, context);
+	const currentDraft = getEndpointQueryDraft(endpoint, endpointTarget);
 
 	switch (event.type) {
 		case 'methodChanged':
-			return resolveEndpointQuerySemantics({ ...endpoint, method: event.method }, context).endpoint;
+			return getSanitizedEndpointQueryDraft({ ...endpoint, method: event.method }, endpointTarget);
 		case 'pathChanged':
-			return resolveEndpointQuerySemantics(transitionPath(endpoint, event.path), context).endpoint;
+			return getSanitizedEndpointQueryDraft(transitionPath(endpoint, event.path), endpointTarget);
 		case 'pathParamFieldSelected':
-			return resolveEndpointQuerySemantics(
+			return getSanitizedEndpointQueryDraft(
 				updatePathParamField(endpoint, event.paramName, event.fieldMemberId),
-				context
-			).endpoint;
+				endpointTarget
+			);
 		case 'queryParamAddedFromField':
-			if (currentResolution.policy.queryParams !== 'editable') return currentResolution.endpoint;
-			return resolveEndpointQuerySemantics(
-				addQueryParamFromField(endpoint, event.fieldMemberId, context.targetFields),
-				context
-			).endpoint;
+			if (currentDraft.controls.queryParameters.mode !== 'editable') return currentDraft.endpoint;
+			return getSanitizedEndpointQueryDraft(
+				addQueryParamFromField(endpoint, event.fieldMemberId, endpointTarget.fieldMembers),
+				endpointTarget
+			);
 		case 'queryParamUpdated':
-			if (currentResolution.policy.queryParams !== 'editable') return currentResolution.endpoint;
-			return resolveEndpointQuerySemantics(updateQueryParam(endpoint, event.index, event.updates), context).endpoint;
+			if (currentDraft.controls.queryParameters.mode !== 'editable') return currentDraft.endpoint;
+			return getSanitizedEndpointQueryDraft(updateQueryParam(endpoint, event.index, event.updates), endpointTarget);
 		case 'queryParamRemoved':
-			if (currentResolution.policy.queryParams === 'hidden') return currentResolution.endpoint;
-			return resolveEndpointQuerySemantics(removeQueryParam(endpoint, event.index), context).endpoint;
+			if (currentDraft.controls.queryParameters.mode === 'hidden') return currentDraft.endpoint;
+			return getSanitizedEndpointQueryDraft(removeQueryParam(endpoint, event.index), endpointTarget);
 		case 'paginationToggled':
-			if (currentResolution.policy.pagination !== 'editable') return currentResolution.endpoint;
-			return resolveEndpointQuerySemantics(
+			if (currentDraft.controls.pagination.mode !== 'editable') return currentDraft.endpoint;
+			return getSanitizedEndpointQueryDraft(
 				{ ...endpoint, pagination: !(endpoint.pagination ?? false) },
-				context
-			).endpoint;
+				endpointTarget
+			);
 		case 'targetObjectSelected':
-			return resolveEndpointQuerySemantics(
+			return getSanitizedEndpointQueryDraft(
 				selectTargetObject(endpoint, event.targetObjectId),
-				{ targetFields: event.targetFields }
-			).endpoint;
+				event.endpointTarget
+			);
 		case 'envelopeToggled':
-			return resolveEndpointQuerySemantics({ ...endpoint, useEnvelope: event.enabled }, context).endpoint;
+			return getSanitizedEndpointQueryDraft({ ...endpoint, useEnvelope: event.enabled }, endpointTarget);
 		case 'responseShapeSet':
-			if (currentResolution.policy.responseShape !== 'editable') return currentResolution.endpoint;
-			return resolveEndpointQuerySemantics({ ...endpoint, responseShape: event.shape }, context).endpoint;
+			if (currentDraft.controls.responseShape.mode !== 'editable') return currentDraft.endpoint;
+			return getSanitizedEndpointQueryDraft({ ...endpoint, responseShape: event.shape }, endpointTarget);
 		case 'responseDefaultsReset':
-			return resolveEndpointQuerySemantics(
+			return getSanitizedEndpointQueryDraft(
 				{ ...endpoint, useEnvelope: true, responseShape: 'object', targetObjectId: undefined },
-				{ targetFields: [] }
-			).endpoint;
+				{ status: 'missing', objectId: undefined, fieldMembers: [] }
+			);
 	}
-}
-
-export function getEndpointIssues(
-	endpoint: ApiEndpoint,
-	context: EndpointSemanticsContext
-): EndpointIssue[] {
-	return resolveEndpointQuerySemantics(endpoint, context).issues;
 }
 
 export function getEndpointValidationErrors(issues: EndpointIssue[]): ValidationError[] {
@@ -222,13 +254,22 @@ export function getEndpointValidationErrors(issues: EndpointIssue[]): Validation
 		.filter((error): error is ValidationError => error !== undefined);
 }
 
-export function prepareEndpointCommand(
+// Caller question: Can this Endpoint be saved, and what sanitized Endpoint should be saved?
+export function prepareEndpointSave(
 	endpoint: ApiEndpoint,
-	context: EndpointSemanticsContext
-): EndpointCommandOutcome {
-	const resolution = resolveEndpointQuerySemantics(endpoint, context);
-	if (resolution.issues.length > 0) return { status: 'blocked', reasons: resolution.issues };
-	return { status: 'ready', endpoint: resolution.endpoint };
+	endpointTarget: EndpointTarget
+): EndpointSavePreparation {
+	const draft = getEndpointQueryDraft(endpoint, endpointTarget);
+	if (draft.issues.length > 0) return { status: 'blocked', reasons: draft.issues };
+	return { status: 'ready', endpoint: draft.endpoint };
+}
+
+// Caller question: Can this Endpoint be duplicated, and what Endpoint should be created?
+export function prepareEndpointDuplicate(
+	endpoint: ApiEndpoint,
+	endpointTarget: EndpointTarget
+): EndpointDuplicatePreparation {
+	return prepareEndpointSave(buildDuplicateEndpoint(endpoint), endpointTarget);
 }
 
 export function formatEndpointBlockReasons(reasons: EndpointIssue[]): string {
@@ -256,9 +297,9 @@ function updatePathParamField(
 function addQueryParamFromField(
 	endpoint: ApiEndpoint,
 	fieldMemberId: string,
-	targetFields: TargetField[]
+	fieldMembers: EndpointTargetFieldMember[]
 ): ApiEndpoint {
-	const targetField = targetFields.find(field => field.fieldMemberId === fieldMemberId);
+	const targetField = fieldMembers.find(field => field.id === fieldMemberId);
 	if (!targetField) return endpoint;
 
 	const newParam: QueryParam = {
@@ -325,13 +366,59 @@ function sanitizeNotApplicableEndpoint(endpoint: ApiEndpoint): ApiEndpoint {
 	};
 }
 
+function getQueryControlMode(availability: EndpointQueryAvailability): EndpointQueryControlMode {
+	if (availability === 'available') return 'editable';
+	if (availability === 'notApplicable') return 'hidden';
+	return 'blocked';
+}
+
+function getEndpointResponseShapeValue(
+	endpoint: ApiEndpoint,
+	availability: EndpointQueryAvailability
+): ResponseShape {
+	if (availability === 'available') return 'list';
+	if (availability === 'notApplicable') return 'object';
+	return endpoint.responseShape;
+}
+
+function getResponseShapeLockedReason(
+	endpoint: ApiEndpoint,
+	availability: EndpointQueryAvailability,
+	endpointTarget: EndpointTarget
+): string {
+	if (availability === 'available') return 'Queryable endpoints return a list';
+	if (endpoint.method !== 'GET') return 'Only GET endpoints can return a list';
+	if (isPrimaryFieldEndpoint(endpoint, endpointTarget)) {
+		return 'Primary-key endpoints return a single object';
+	}
+	return 'Query parameters are not applicable for this endpoint';
+}
+
+function getEndpointResponsePreviewControl(endpoint: ApiEndpoint): EndpointQueryControls['responsePreview'] {
+	const requestBodyVisible = ['POST', 'PUT', 'PATCH'].includes(endpoint.method);
+	const responseBodyVisible = endpoint.method !== 'DELETE';
+	const emptyMessage = responseBodyVisible
+		? ''
+		: 'DELETE returns 204 No Content with no response body.';
+	const targetNote = endpoint.method === 'DELETE'
+		? 'For DELETE, this object defines path parameter types and which entity is addressed - not a response body.'
+		: '';
+
+	return {
+		requestBodyVisible,
+		responseBodyVisible,
+		emptyMessage,
+		targetNote
+	};
+}
+
 function getTargetAndPathIssues(
 	endpoint: ApiEndpoint,
-	context: EndpointSemanticsContext
+	endpointTarget: EndpointTarget
 ): EndpointIssue[] {
 	return validateEndpointParams({
 		targetObjectId: endpoint.targetObjectId,
-		targetFields: context.targetFields,
+		targetFields: endpointTarget.fieldMembers,
 		pathParams: endpoint.pathParams,
 		queryParams: []
 	}).map(validationErrorToIssue);
@@ -339,11 +426,11 @@ function getTargetAndPathIssues(
 
 function getQueryIssues(
 	endpoint: ApiEndpoint,
-	context: EndpointSemanticsContext
+	endpointTarget: EndpointTarget
 ): EndpointIssue[] {
 	return validateEndpointParams({
 		targetObjectId: endpoint.targetObjectId,
-		targetFields: context.targetFields,
+		targetFields: endpointTarget.fieldMembers,
 		pathParams: endpoint.pathParams,
 		queryParams: endpoint.queryParams ?? []
 	})
@@ -353,12 +440,12 @@ function getQueryIssues(
 
 function getPrimaryFieldIssue(
 	endpoint: ApiEndpoint,
-	targetFields: TargetField[]
+	endpointTarget: EndpointTarget
 ): EndpointIssue | null {
 	if (!endpoint.targetObjectId) return null;
 
-	const primaryFields = targetFields.filter(field => field.isPk);
-	if (targetFields.length === 0) {
+	const primaryFields = endpointTarget.fieldMembers.filter(field => field.isPrimary);
+	if (endpointTarget.fieldMembers.length === 0) {
 		return {
 			code: 'target_field_members_unresolved',
 			message: 'Target object Field Members could not be resolved',
@@ -375,6 +462,16 @@ function getPrimaryFieldIssue(
 	return null;
 }
 
+function getPrimaryFieldMember(endpointTarget: EndpointTarget): EndpointTargetFieldMember | undefined {
+	return endpointTarget.fieldMembers.find(field => field.isPrimary);
+}
+
+function isPrimaryFieldEndpoint(endpoint: ApiEndpoint, endpointTarget: EndpointTarget): boolean {
+	const primaryField = getPrimaryFieldMember(endpointTarget);
+	const finalPathParam = endpoint.pathParams[endpoint.pathParams.length - 1];
+	return !!finalPathParam && finalPathParam.fieldMemberId === primaryField?.id;
+}
+
 function getPathNameIssues(endpoint: ApiEndpoint): EndpointIssue[] {
 	return endpoint.pathParams
 		.filter(param => param.name && !isValidSnakeCaseName(param.name))
@@ -387,25 +484,24 @@ function getPathNameIssues(endpoint: ApiEndpoint): EndpointIssue[] {
 
 function getPathParamSuggestions(
 	pathParams: ApiEndpoint['pathParams'],
-	targetFields: TargetField[],
-	targetObjectName?: string
+	endpointTarget: EndpointTarget
 ): EndpointQuerySuggestion[] {
 	return pathParams.flatMap(param => {
-		const selectedField = targetFields.find(field => field.fieldMemberId === param.fieldMemberId);
+		const selectedField = endpointTarget.fieldMembers.find(field => field.id === param.fieldMemberId);
 		if (selectedField) return [];
 
-		const matchingField = targetFields.find(
+		const matchingField = endpointTarget.fieldMembers.find(
 			field => field.name.toLowerCase() === param.name.toLowerCase()
 		);
 		if (!matchingField) return [];
 
-		const labelTarget = targetObjectName
-			? `${targetObjectName}.${matchingField.name}`
+		const labelTarget = endpointTarget.status === 'found'
+			? `${endpointTarget.objectName}.${matchingField.name}`
 			: matchingField.name;
 		return [{
 			type: 'linkPathParam',
 			paramName: param.name,
-			fieldMemberId: matchingField.fieldMemberId,
+			fieldMemberId: matchingField.id,
 			label: `Link ${param.name} to ${labelTarget}`
 		}];
 	});

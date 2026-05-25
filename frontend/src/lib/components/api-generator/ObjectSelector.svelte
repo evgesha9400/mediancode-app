@@ -1,15 +1,13 @@
 <script module lang="ts">
   import type { ResponseShape } from '$lib/types';
-  import type { EndpointResponseShapePolicy } from '$lib/domain/endpointQuerySemantics';
+  import type { EndpointQueryControls } from '$lib/domain/endpointQuerySemantics';
   import type { ValidationError } from '$lib/domain/paramInference';
 
   export interface ObjectSelectorProps {
     endpointNamespaceId: string;
     selectedObjectId?: string;
     responseShape: ResponseShape;
-    responseShapePolicy?: EndpointResponseShapePolicy;
-    /** Tooltip text shown when the toggle is locked */
-    responseShapeLockedReason?: string;
+    responseShapeControl?: EndpointQueryControls['responseShape'];
     /** Validation errors to display inline (e.g. rule 1 — no target object) */
     validationErrors?: ValidationError[];
     onSelectObject: (objectDefinitionId: string | undefined) => void;
@@ -40,8 +38,7 @@
     endpointNamespaceId,
     selectedObjectId,
     responseShape,
-    responseShapePolicy = 'editable',
-    responseShapeLockedReason = '',
+    responseShapeControl = { mode: 'editable', value: responseShape, reason: '' },
     validationErrors = [],
     onSelectObject,
     onSetResponseShape,
@@ -50,7 +47,10 @@
 
   // Filter objects to only show those in the endpoint's namespace
   const namespacedObjects = $derived($objectsStore.filter(obj => obj.namespaceId === endpointNamespaceId));
-  const responseShapeLocked = $derived(responseShapePolicy === 'locked');
+  const responseShapeLocked = $derived(responseShapeControl.mode === 'locked');
+  const displayedResponseShape = $derived(
+    responseShapeLocked ? responseShapeControl.value : responseShape
+  );
 </script>
 
 <div>
@@ -86,7 +86,7 @@
     <div>
       <p class="text-[10px] text-fg-dimmed uppercase tracking-wider mb-1">Response Shape</p>
       <Tooltip
-        text={responseShapeLocked ? responseShapeLockedReason : ''}
+        text={responseShapeLocked ? responseShapeControl.reason : ''}
         disabled={!responseShapeLocked}
         position="bottom"
       >
@@ -98,8 +98,8 @@
               onclick={() => onSetResponseShape(option.value)}
               class="{segmentPillBase} {responseShapeLocked
                 ? 'cursor-not-allowed opacity-50 ' +
-                  (responseShape === option.value ? segmentPillSelected : segmentPillUnselectedLocked)
-                : responseShape === option.value
+                  (displayedResponseShape === option.value ? segmentPillSelected : segmentPillUnselectedLocked)
+                : displayedResponseShape === option.value
                   ? segmentPillSelected
                   : segmentPillUnselected}"
             >

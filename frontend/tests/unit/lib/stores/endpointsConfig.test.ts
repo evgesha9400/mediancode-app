@@ -9,7 +9,6 @@ import {
 	createEndpointDraft,
 	hydrateStoredEndpoint,
 	toCreateEndpointPayload,
-	toDuplicateEndpointPayload,
 	toUpdateEndpointPayload
 } from '$lib/stores/endpointsConfig.svelte';
 
@@ -101,16 +100,4 @@ describe('endpointsConfig', () => {
 		expect(hydrated.queryParams[0].required).toBe(false);
 	});
 
-	it('builds duplicate create payload from an existing endpoint', () => {
-		const payload = toDuplicateEndpointPayload(
-			makeEndpoint({
-				path: '/users',
-				targetObjectId: 'obj-1',
-				queryParams: [{ name: 'status', fieldMemberId: 'member-2', operator: 'eq' as any, required: false }]
-			})
-		);
-
-		expect(payload.path).toBe('/users-copy');
-		expect(payload.queryParams).toEqual([{ name: 'status', fieldMemberId: 'member-2', operator: 'eq', required: false }]);
-	});
 });

@@ -496,7 +496,7 @@
                         - Backend zip generation: scalar model fields and query params derived from an object
                           still use Field.name today, so renaming here often does not change generated FastAPI
                           attribute / query names (relationship members do use member.name).
-                        - Frontend: e.g. resolveTargetFields (lib/domain/paramInference.ts) and examples.ts
+                        - Frontend: e.g. getEndpointTarget (lib/domain/endpointTarget.ts) and examples.ts
                           keys use member.name — diverges from codegen behavior above.
                         - Decide later: drive codegen from member.name for scalars (and align query-param
                           naming), or make Field.name the single source of truth and adjust UI copy / controls.

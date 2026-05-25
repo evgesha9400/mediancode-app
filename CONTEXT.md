@@ -31,12 +31,16 @@ _Avoid_: Endpoint helper soup, template conditionals
 **Endpoint Query Semantics**:
 Endpoint-owned filter and pagination facts for endpoints that expose a queryable collection of target Objects. Includes query parameter name, target Field Member, filter operator, requiredness, and endpoint-level pagination. Path parameters and query parameters should reference target Object Field Members rather than reusable Field definitions or query Objects.
 
+**Endpoint Target**:
+The selected Object for an Endpoint plus the Object's Field Members as the Endpoint can reference them. Endpoint Query Semantics uses the Endpoint Target to decide Endpoint Query Availability, validate path and query parameter Field Member links, identify the primary Field Member, and derive control state for query parameters, pagination, response shape, and response preview.
+_Avoid_: target context, semantics context, resolved object fields
+
 The resolved frontend concept is Endpoint Query Availability:
 - `available`: a GET endpoint with a selected target Object, every path parameter explicitly linked to a Field Member on that target Object, and no final path parameter linked to the target Object primary Field Member.
 - `notApplicable`: query filters and pagination do not apply, such as non-GET endpoints or a GET endpoint whose final path parameter is linked to the target Object primary Field Member.
 - `unresolved`: the frontend cannot safely decide because required target Object or Field Member facts are missing or invalid.
 
-Query filters default to optional from the client perspective; required query filters are explicit Endpoint Query Semantics. Endpoint transitions sanitize invalid query facts immediately once availability is known. Committed availability only trusts explicit Field Member links; name-based matching may produce suggestions but must not silently write Field Member links. Unresolved Endpoint Query Semantics produce issues, suggestions, and render policy instead of hidden blockers. The frontend should expose one deep module interface, such as `resolveEndpointQuerySemantics`, that returns the sanitized endpoint, availability, issues, suggestions, and render policy for query parameters, pagination, and response shape.
+Query filters default to optional from the client perspective; required query filters are explicit Endpoint Query Semantics. Endpoint transitions sanitize invalid query facts immediately once availability is known. Committed availability only trusts explicit Field Member links; name-based matching may produce suggestions but must not silently write Field Member links. Unresolved Endpoint Query Semantics produce issues, suggestions, and controls instead of hidden blockers. Endpoint Query Semantics owns every user-visible consequence of Endpoint Query Availability, including response shape lock reasons, response preview applicability, query parameter persistence, pagination persistence, and create/update/duplicate command sanitation. Duplicate Endpoint commands are blocked when the original Endpoint has unresolved Endpoint Query Semantics rather than copying invalid unresolved facts forward. The frontend should expose question-based functions such as `getEndpointTarget`, `getEndpointQueryAvailability`, `getEndpointQueryControls`, `getSanitizedEndpointQueryDraft`, `prepareEndpointSave`, and `prepareEndpointDuplicate` rather than one broad resolver.
 _Avoid_: Query Object, reusable filter Object, Field-only parameter references
 
 **Object**:

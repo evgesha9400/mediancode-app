@@ -1,12 +1,12 @@
 <script module lang="ts">
   import type { QueryParam } from '$lib/types';
-  import type { EndpointIssue, EndpointQuerySemanticsPolicy } from '$lib/domain/endpointQuerySemantics';
-  import type { TargetField, ValidationError } from '$lib/domain/paramInference';
+  import type { EndpointIssue, EndpointQueryControls, EndpointTargetFieldMember } from '$lib/domain/endpointQuerySemantics';
+  import type { ValidationError } from '$lib/domain/paramInference';
 
   export interface QueryParametersEditorProps {
     queryParams: QueryParam[];
-    targetFields: TargetField[];
-    policy: EndpointQuerySemanticsPolicy;
+    targetFields: EndpointTargetFieldMember[];
+    controls: EndpointQueryControls;
     pagination: boolean;
     validationErrors: ValidationError[];
     blockIssues?: EndpointIssue[];
@@ -36,7 +36,7 @@
   let {
     queryParams,
     targetFields,
-    policy,
+    controls,
     pagination,
     validationErrors,
     blockIssues = [],
@@ -46,10 +46,10 @@
     onTogglePagination
   }: Props = $props();
 
-  const queryParamsEditable = $derived(policy.queryParams === 'editable');
-  const queryParamsHidden = $derived(policy.queryParams === 'hidden');
-  const queryParamsBlocked = $derived(policy.queryParams === 'blocked');
-  const paginationEditable = $derived(policy.pagination === 'editable');
+  const queryParamsEditable = $derived(controls.queryParameters.mode === 'editable');
+  const queryParamsHidden = $derived(controls.queryParameters.mode === 'hidden');
+  const queryParamsBlocked = $derived(controls.queryParameters.mode === 'blocked');
+  const paginationEditable = $derived(controls.pagination.mode === 'editable');
 
   // Filter validation errors for query params
   const queryErrors = $derived(validationErrors.filter(e =>
@@ -89,7 +89,7 @@
 
   const targetFieldOptions = $derived.by((): FieldSelectorOption[] =>
     targetFields.map(field => ({
-      id: field.fieldMemberId,
+      id: field.id,
       name: field.name,
       type: field.type
     }))

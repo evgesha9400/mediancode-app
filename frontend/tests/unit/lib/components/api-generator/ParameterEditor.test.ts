@@ -32,15 +32,15 @@ describe('ParameterEditor Component', () => {
 				paramName: 'item_id',
 				fieldMemberId: 'fm-id',
 				targetFields: [
-					{ fieldMemberId: 'fm-id', name: 'id', type: 'uuid', isPk: true },
-					{ fieldMemberId: 'fm-store-id', name: 'store_id', type: 'uuid', isPk: false }
+					{ id: 'fm-id', name: 'id', type: 'uuid', isPrimary: true },
+					{ id: 'fm-store-id', name: 'store_id', type: 'uuid', isPrimary: false }
 				],
 				onFieldSelect: () => {}
 			};
 
 			expect(props.targetFields).toHaveLength(2);
 			expect(props.targetFields[0].name).toBe('id');
-			expect(props.targetFields[0].isPk).toBe(true);
+			expect(props.targetFields[0].isPrimary).toBe(true);
 		});
 
 		it('ParameterEditorProps onFieldSelect receives Field Member ID', () => {

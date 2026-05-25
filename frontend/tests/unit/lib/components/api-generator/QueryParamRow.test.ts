@@ -33,9 +33,9 @@ describe('QueryParamRow Component', () => {
 			const props: QueryParamRowProps = {
 				param: { name: 'store_id', fieldMemberId: 'fm-store-id', operator: 'eq', required: false },
 				targetFields: [
-					{ fieldMemberId: 'fm-id', name: 'id', type: 'uuid', isPk: true },
-					{ fieldMemberId: 'fm-store-id', name: 'store_id', type: 'uuid', isPk: false },
-					{ fieldMemberId: 'fm-price', name: 'price', type: 'float', isPk: false }
+					{ id: 'fm-id', name: 'id', type: 'uuid', isPrimary: true },
+					{ id: 'fm-store-id', name: 'store_id', type: 'uuid', isPrimary: false },
+					{ id: 'fm-price', name: 'price', type: 'float', isPrimary: false }
 				],
 				onUpdate: () => {},
 				onRemove: () => {}
@@ -43,7 +43,7 @@ describe('QueryParamRow Component', () => {
 
 			expect(props.targetFields).toHaveLength(3);
 			expect(props.targetFields[0].name).toBe('id');
-			expect(props.targetFields[0].isPk).toBe(true);
+			expect(props.targetFields[0].isPrimary).toBe(true);
 			expect(props.targetFields[2].type).toBe('float');
 		});
 

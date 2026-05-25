@@ -1,10 +1,11 @@
 <script module lang="ts">
-  import type { HttpMethod, ResponseShape } from '$lib/types';
+  import type { ResponseShape } from '$lib/types';
+  import type { EndpointQueryControls } from '$lib/domain/endpointQuerySemantics';
 
   export interface ResponsePreviewProps {
     selectedObjectId?: string;
     responseShape: ResponseShape;
-    method: HttpMethod;
+    previewControl: EndpointQueryControls['responsePreview'];
   }
 </script>
 
@@ -16,13 +17,7 @@
 
   interface Props extends ResponsePreviewProps {}
 
-  let { selectedObjectId, responseShape, method }: Props = $props();
-
-  // Methods that include a request body (POST, PUT, PATCH)
-  const hasRequestBody = $derived(['POST', 'PUT', 'PATCH'].includes(method));
-
-  // DELETE returns 204 No Content — no response body
-  const hasResponseBody = $derived(method !== 'DELETE');
+  let { selectedObjectId, responseShape, previewControl }: Props = $props();
 
   // Build preview JSON using shared utilities (appears flag filters fields automatically)
   // Response preview always shows without envelope wrapping (envelope is always enabled on the endpoint)
@@ -37,7 +32,7 @@
   );
 
   // Use two-column grid only when both request and response are shown
-  const showTwoColumns = $derived(hasRequestBody && hasResponseBody);
+  const showTwoColumns = $derived(previewControl.requestBodyVisible && previewControl.responseBodyVisible);
 </script>
 
 <div class="space-y-4">
@@ -86,10 +81,9 @@
         {/each}
       </div>
 
-      {#if method === 'DELETE'}
+      {#if previewControl.targetNote}
         <p class="text-xs text-fg-dimmed mt-2 border-t border-edge/80 pt-2">
-          For DELETE, this object defines path parameter types and which entity is addressed — not a
-          response body.
+          {previewControl.targetNote}
         </p>
       {/if}
     </div>
@@ -100,9 +94,9 @@
   {/if}
 
   <!-- Request & Response JSON Previews -->
-  {#if hasRequestBody || hasResponseBody}
+  {#if previewControl.requestBodyVisible || previewControl.responseBodyVisible}
     <div class={showTwoColumns ? 'response-preview-grid' : ''}>
-      {#if hasRequestBody}
+      {#if previewControl.requestBodyVisible}
         <!-- Request column -->
         <div class="space-y-2">
           <h4 class="text-xs text-fg-muted flex items-center font-medium uppercase tracking-wider">
@@ -115,7 +109,7 @@
         </div>
       {/if}
 
-      {#if hasResponseBody}
+      {#if previewControl.responseBodyVisible}
         <!-- Response column -->
         <div class="space-y-2">
           <h4 class="text-xs text-fg-muted flex items-center font-medium uppercase tracking-wider">
@@ -129,9 +123,8 @@
       {/if}
     </div>
   {:else}
-    <!-- DELETE: no request or response body -->
     <div class="p-3 {surfaceInsideFrostedPanel}">
-      <p class="text-sm text-fg-muted">DELETE returns <code class="bg-surface-raised px-1 rounded-lg">204 No Content</code> with no response body.</p>
+      <p class="text-sm text-fg-muted">{previewControl.emptyMessage}</p>
     </div>
   {/if}
 </div>

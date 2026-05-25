@@ -26,7 +26,7 @@
   import { HTTP_METHOD_SELECT_OPTIONS } from '$lib/types';
   import type { HttpMethod } from '$lib/types';
   import { createApiDetailState } from '$lib/stores/apiDetailState.svelte';
-  import type { EndpointQuerySemanticsPolicy } from '$lib/domain/endpointQuerySemantics';
+  import type { EndpointQueryControls } from '$lib/domain/endpointQuerySemantics';
   import {
     getApiById,
     namespacesStore,
@@ -83,22 +83,21 @@
     apiId: untrack(() => apiId),
     onNavigateBack: () => goto('/apis')
   });
-  const blockedEndpointQueryPolicy: EndpointQuerySemanticsPolicy = {
-    queryParams: 'blocked',
-    pagination: 'blocked',
-    responseShape: 'editable'
+  const blockedEndpointQueryControls: EndpointQueryControls = {
+    queryParameters: { mode: 'blocked' },
+    pagination: { mode: 'blocked' },
+    responseShape: { mode: 'editable', value: 'object', reason: '' },
+    responsePreview: {
+      requestBodyVisible: false,
+      responseBodyVisible: true,
+      emptyMessage: '',
+      targetNote: ''
+    }
   };
-  const endpointQueryPolicy: EndpointQuerySemanticsPolicy = $derived(
-    apiState.endpointQueryResolution?.policy ?? blockedEndpointQueryPolicy
+  const endpointQueryControls: EndpointQueryControls = $derived(
+    apiState.endpointQueryDraft?.controls ?? blockedEndpointQueryControls
   );
-  const endpointQuerySuggestions = $derived(apiState.endpointQueryResolution?.suggestions ?? []);
-  const responseShapeLockedReason = $derived.by(() => {
-    const resolution = apiState.endpointQueryResolution;
-    if (!resolution || resolution.policy.responseShape !== 'locked') return '';
-    if (resolution.availability === 'available') return 'Queryable endpoints return a list';
-    if (apiState.editedEndpoint?.method !== 'GET') return 'Only GET endpoints can return a list';
-    return 'Primary-key endpoints return a single object';
-  });
+  const endpointQuerySuggestions = $derived(apiState.endpointQueryDraft?.suggestions ?? []);
 
   // Fields filtered by API namespace for nested object editing
   const availableFields = $derived(
@@ -568,8 +567,7 @@
             endpointNamespaceId={apiState.apiNamespaceId}
             selectedObjectId={apiState.editedEndpoint.targetObjectId}
             responseShape={apiState.editedEndpoint.responseShape}
-            responseShapePolicy={endpointQueryPolicy.responseShape}
-            responseShapeLockedReason={responseShapeLockedReason}
+            responseShapeControl={endpointQueryControls.responseShape}
             validationErrors={apiState.validationErrors.filter(e => e.rule === 1)}
             onSelectObject={apiState.handleSelectObject}
             onSetResponseShape={apiState.handleSetResponseShape}
@@ -597,7 +595,7 @@
                   <ParameterEditor
                     paramName={param.name}
                     fieldMemberId={param.fieldMemberId}
-                    targetFields={apiState.targetFields}
+                    targetFields={apiState.endpointTargetFieldMembers}
                     validationErrors={apiState.validationErrors.filter(e => e.location?.kind === 'pathParam' && e.param === param.name)}
                     suggestions={endpointQuerySuggestions}
                     onFieldSelect={(fieldMemberId) =>
@@ -611,8 +609,8 @@
           <!-- Query Parameters -->
           <QueryParametersEditor
             queryParams={apiState.editedEndpoint.queryParams ?? []}
-            targetFields={apiState.targetFields}
-            policy={endpointQueryPolicy}
+            targetFields={apiState.endpointTargetFieldMembers}
+            controls={endpointQueryControls}
             pagination={apiState.editedEndpoint.pagination ?? false}
             validationErrors={apiState.validationErrors}
             blockIssues={apiState.endpointCommandBlockers}
@@ -626,7 +624,7 @@
           <ResponsePreview
             selectedObjectId={apiState.editedEndpoint.targetObjectId}
             responseShape={apiState.editedEndpoint.responseShape}
-            method={apiState.editedEndpoint.method}
+            previewControl={endpointQueryControls.responsePreview}
           />
 
         </div>

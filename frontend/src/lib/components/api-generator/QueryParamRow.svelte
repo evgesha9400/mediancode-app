@@ -1,10 +1,11 @@
 <script module lang="ts">
   import type { QueryParam, FilterOperator } from '$lib/types';
-  import type { TargetField, ValidationError } from '$lib/domain/paramInference';
+  import type { EndpointTargetFieldMember } from '$lib/domain/endpointQuerySemantics';
+  import type { ValidationError } from '$lib/domain/paramInference';
 
   export interface QueryParamRowProps {
     param: QueryParam;
-    targetFields: TargetField[];
+    targetFields: EndpointTargetFieldMember[];
     validationErrors?: ValidationError[];
     onUpdate: (updates: Partial<QueryParam>) => void;
     onRemove: () => void;
@@ -22,7 +23,7 @@
   let { param, targetFields, validationErrors = [], onUpdate, onRemove }: Props = $props();
 
   // Available operators filtered by the selected field's type
-  const selectedField = $derived(targetFields.find(f => f.fieldMemberId === param.fieldMemberId));
+  const selectedField = $derived(targetFields.find(f => f.id === param.fieldMemberId));
   const availableOperators = $derived(
     selectedField ? getCompatibleOperators(selectedField.type) : FILTER_OPERATORS
   );
