@@ -17,7 +17,7 @@ import { E2EApiClient } from '../../helpers';
 
 const HELPER_FIELD = {
 	name: 'e2e_obj_helper_field',
-	type: 'str',
+	type: 'uuid',
 	description: 'Helper field for object CRUD test'
 };
 
@@ -74,7 +74,8 @@ test('Object lifecycle: create, add field, update, delete', async ({ page }) => 
 	// --- Create object A ---
 	await objects.createNewObject({
 		name: OBJ_A.name,
-		description: OBJ_A.description
+		description: OBJ_A.description,
+		fields: [HELPER_FIELD.name]
 	});
 
 	// Verify object appears in list
@@ -88,10 +89,9 @@ test('Object lifecycle: create, add field, update, delete', async ({ page }) => 
 
 	// --- Add fields to object ---
 	const initialFieldCount = await objects.getFieldCount();
-	await objects.addField(HELPER_FIELD.name);
 	await objects.addField(HELPER_FIELD_2.name);
 	const newFieldCount = await objects.getFieldCount();
-	expect(newFieldCount).toBe(initialFieldCount + 2);
+	expect(newFieldCount).toBe(initialFieldCount + 1);
 
 	// --- Reorder fields via drag-and-drop ---
 	const namesBefore = await objects.getFieldNames();

@@ -3,12 +3,8 @@
 // Entity contract factory for objects.
 
 import { describe, it, expect } from 'vitest';
-import {
-	createObjectsContract,
-	TEMP_MEMBER_ID_PREFIX,
-	newTempMemberId,
-	isTempMemberId
-} from '$lib/stores/objectsConfig.svelte';
+import { newTempMemberId } from '$lib/domain/objectMembership';
+import { createObjectsContract } from '$lib/stores/objectsConfig.svelte';
 import type { ObjectDefinition } from '$lib/types';
 
 function makeObject(overrides: Partial<ObjectDefinition> = {}): ObjectDefinition {
@@ -32,19 +28,6 @@ describe('objectsConfig', () => {
 		});
 		expect(contract.entityLabel).toBe('Object');
 		expect(contract.nameKey).toBe('name');
-	});
-});
-
-describe('TEMP_MEMBER_ID_PREFIX helpers', () => {
-	it('newTempMemberId produces a sentinel-prefixed id that isTempMemberId recognises', () => {
-		const id = newTempMemberId();
-		expect(id.startsWith(TEMP_MEMBER_ID_PREFIX)).toBe(true);
-		expect(isTempMemberId(id)).toBe(true);
-	});
-
-	it('isTempMemberId returns false for plain backend uuids and undefined', () => {
-		expect(isTempMemberId('550e8400-e29b-41d4-a716-446655440000')).toBe(false);
-		expect(isTempMemberId(undefined)).toBe(false);
 	});
 });
 
@@ -119,10 +102,7 @@ describe('objectsConfig.toUpdatePayload', () => {
 	});
 
 	it('keeps every id when all members carry backend uuids', () => {
-		const ids = [
-			'550e8400-e29b-41d4-a716-446655440000',
-			'6ba7b810-9dad-11d1-80b4-00c04fd430c8'
-		];
+		const ids = ['550e8400-e29b-41d4-a716-446655440000', '6ba7b810-9dad-11d1-80b4-00c04fd430c8'];
 		const item = makeObject({
 			members: ids.map((id) => ({
 				memberType: 'field' as const,
