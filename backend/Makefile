@@ -5,6 +5,9 @@ PYTHON := python3
 POETRY := poetry
 PORT ?= 8001
 SEED_USER_EMAIL := aleshiner@mail.ru
+COMPOSE_FILE := deploy/local/docker-compose.yml
+DOCKERFILE := deploy/docker/Dockerfile
+PRE_COMMIT_CONFIG := config/pre-commit-config.yaml
 
 .DEFAULT_GOAL := help
 
@@ -19,7 +22,7 @@ setup: ## First-time setup: install deps, hooks, start DB, run migrations
 	@$(POETRY) install
 	@$(MAKE) install-hooks
 	@echo "Starting PostgreSQL..."
-	@docker compose up -d
+	@docker compose -f $(COMPOSE_FILE) up -d
 	@echo "Waiting for database..."
 	@sleep 3
 	@echo "Running migrations..."
@@ -33,17 +36,17 @@ dev: ## Start backend server with hot reload (localhost:$(PORT))
 
 .PHONY: db
 db: ## Start PostgreSQL database (Docker)
-	@docker compose up -d
+	@docker compose -f $(COMPOSE_FILE) up -d
 	@echo "PostgreSQL running on localhost:5432"
 
 .PHONY: db-stop
 db-stop: ## Stop PostgreSQL database
-	@docker compose down
+	@docker compose -f $(COMPOSE_FILE) down
 
 .PHONY: db-reset
 db-reset: ## Reset database: delete all data, restart, re-migrate
-	@docker compose down -v
-	@docker compose up -d
+	@docker compose -f $(COMPOSE_FILE) down -v
+	@docker compose -f $(COMPOSE_FILE) up -d
 	@echo "Waiting for database..."
 	@sleep 3
 	@$(POETRY) run alembic upgrade head
@@ -62,12 +65,12 @@ test-codegen: ## Run codegen tests (fast, no DB needed)
 	@$(POETRY) run pytest -m codegen
 
 .PHONY: lint
-lint: ## Same Ruff checks as CI / git pre-commit (.pre-commit-config.yaml)
-	@$(POETRY) run pre-commit run --all-files
+lint: ## Same Ruff checks as CI / git pre-commit (config/pre-commit-config.yaml)
+	@$(POETRY) run pre-commit run --config $(PRE_COMMIT_CONFIG) --all-files
 
 # =============================================================================
 #  LOCAL DATABASE MIGRATIONS
-#  Run against your local PostgreSQL (from docker-compose)
+#  Run against your local PostgreSQL (from deploy/local/docker-compose.yml)
 # =============================================================================
 
 .PHONY: migration
@@ -122,13 +125,14 @@ clean: ## Remove Python caches and test output
 
 .PHONY: install-hooks
 install-hooks: ## Install git pre-commit hooks (same checks as CI; requires: poetry install)
-	@test -d .git || (echo "install-hooks: not a git checkout" >&2 && exit 1)
-	@$(POETRY) run pre-commit install --install-hooks
-	@echo "Pre-commit installed (see .pre-commit-config.yaml)."
+	@git -C .. rev-parse --git-dir >/dev/null
+	@git -C .. config core.hooksPath .githooks
+	@$(POETRY) run pre-commit install-hooks --config $(PRE_COMMIT_CONFIG)
+	@echo "Git hooks use ../.githooks; backend pre-commit uses $(PRE_COMMIT_CONFIG)."
 
 .PHONY: docker-build
 docker-build: ## Build Docker image locally (prunes old layers)
-	@docker build -t mediancode-backend .
+	@docker build -f $(DOCKERFILE) -t mediancode-backend .
 	@docker image prune -f
 
 .PHONY: docker-run

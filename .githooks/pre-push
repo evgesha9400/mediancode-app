@@ -1,0 +1,25 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+ROOT_DIR="$(git rev-parse --show-toplevel)"
+
+echo "Running pre-push checks..."
+
+echo ""
+echo "=== Backend Lint ==="
+(cd "$ROOT_DIR/backend" && make lint)
+
+echo ""
+echo "=== Backend Tests ==="
+(cd "$ROOT_DIR/backend" && make test)
+
+echo ""
+echo "=== Frontend Lint, Type, Fixture Checks ==="
+(cd "$ROOT_DIR/frontend" && bun run lint:ci)
+
+echo ""
+echo "=== Frontend Unit Tests ==="
+(cd "$ROOT_DIR/frontend" && bun run test:unit)
+
+echo ""
+echo "All pre-push checks passed."

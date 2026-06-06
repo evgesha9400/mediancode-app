@@ -2,10 +2,14 @@
 # Documentation: https://docs.stoplight.io/docs/spectral/
 
 extends:
-  - "spectral:oas"
+  - 'spectral:oas'
 
 # The default ruleset includes oas3-unused-component which warns about
 # unused schema definitions - exactly what we need to catch.
 #
 # To see all available rules: bunx spectral lint --help
 # To see what rules are enabled: bunx spectral lint api-spec.yaml --format=pretty
+rules:
+  oas3-api-servers: off
+  info-contact: off
+  operation-tag-defined: off

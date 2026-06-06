@@ -1,4 +1,4 @@
-.PHONY: install dev test lint help \
+.PHONY: install install-hooks dev test lint help \
         backend.install backend.dev backend.test backend.lint backend.db backend.db.stop \
         frontend.install frontend.dev frontend.test frontend.lint frontend.check
 
@@ -6,6 +6,10 @@ help: ## Show this help
 	@grep -E '^[a-zA-Z_.-]+:.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "%-22s %s\n", $$1, $$2}'
 
 install: backend.install frontend.install ## Install both apps
+
+install-hooks: ## Install root git hooks and backend pre-commit environments
+	git config core.hooksPath .githooks
+	$(MAKE) -C backend install-hooks
 
 dev: ## Start backend + frontend in parallel (Ctrl-C kills both)
 	@$(MAKE) -j2 backend.dev frontend.dev
