@@ -39,4 +39,4 @@ Enforcement:
 
 ## E2E verification rule
 
-For any change that touches or can affect frontend behavior, run a Playwright E2E command before handing off. Do not silently omit E2E. Use the narrowest relevant Bun command first, for example `cd frontend && bun run test:e2e:smoke` for UI/rendering changes or `cd frontend && bun run test:e2e` when the blast radius is broad. If the E2E command cannot execute because required external credentials or services are unavailable, still run the command, capture the failure, and report the exact blocker and missing environment variables in the final response.
+For any change that touches or can affect frontend behavior, run the full Playwright E2E suite before handing off: `cd frontend && bun run test:e2e`. Do not substitute a narrower smoke, CRUD, or file-filtered command for final verification. If the full E2E command cannot execute because required external credentials or services are unavailable, still run the command, capture the failure, and report the exact blocker and missing environment variables in the final response.
