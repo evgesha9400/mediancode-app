@@ -2,8 +2,10 @@
 
 import pytest
 
-from api_craft.relationship_derivation import derive_relationship
-from api_craft.sqlalchemy_relationships import (
+from meta_framework.generation_targets.fastapi_python.relationship_derivation import (
+    derive_relationship,
+)
+from meta_framework.generation_targets.fastapi_python.sqlalchemy_relationships import (
     association_fk_column_name,
     association_table_name,
     foreign_key_field_name,

@@ -1,11 +1,9 @@
-# tests/test_api/test_services/test_api_craft_input.py
-"""Tests for api_craft input adapter."""
+"""Tests for the FastAPI Python API Design Snapshot input adapter."""
 
 from uuid import uuid4
 
 from api.schemas.api import GenerateOptions
-from api.services.api_craft_input import build_input_api_from_snapshot
-from api.services.api_design_snapshot import (
+from meta_framework.api_design.snapshot import (
     APIDesignEndpoint,
     APIDesignFieldConstraint,
     APIDesignFieldMember,
@@ -14,10 +12,13 @@ from api.services.api_design_snapshot import (
     APIDesignPathParam,
     APIDesignSnapshot,
 )
+from meta_framework.generation_targets.fastapi_python.input_from_api_design_snapshot import (
+    build_fastapi_python_input_from_api_design_snapshot,
+)
 
 
-def test_build_input_api_from_snapshot_maps_current_target_models():
-    """Map portable snapshot facts into current api_craft input models."""
+def test_build_fastapi_python_input_from_api_design_snapshot_maps_models():
+    """Map portable snapshot facts into FastAPI Python input models."""
     item = APIDesignObject(
         id=uuid4(),
         name="Item",
@@ -89,7 +90,7 @@ def test_build_input_api_from_snapshot_maps_current_target_models():
         tag_names=["Items"],
     )
 
-    input_api = build_input_api_from_snapshot(
+    input_api = build_fastapi_python_input_from_api_design_snapshot(
         snapshot,
         GenerateOptions(database_enabled=True, response_placeholders=False),
     )

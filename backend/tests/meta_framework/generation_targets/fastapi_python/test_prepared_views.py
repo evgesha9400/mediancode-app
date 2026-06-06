@@ -1,19 +1,23 @@
-# tests/test_api_craft/test_prepared_views.py
+# tests/test_meta_framework.generation_targets.fastapi_python/test_prepared_views.py
 """Tests for prepared endpoint/view semantics."""
 
 from typing import Any
 
 import pytest
 
-from api_craft.models.input import (
+from meta_framework.generation_targets.fastapi_python.models.input import (
     InputEndpoint,
     InputField,
     InputModel,
     InputPathParam,
     InputQueryParam,
 )
-from api_craft.models.orm_types import TemplateDatabaseConfig
-from api_craft.prepared_views import prepare_endpoint_view_semantics
+from meta_framework.generation_targets.fastapi_python.models.orm_types import (
+    TemplateDatabaseConfig,
+)
+from meta_framework.generation_targets.fastapi_python.prepared_views import (
+    prepare_endpoint_view_semantics,
+)
 
 pytestmark = pytest.mark.unit
 

@@ -1,18 +1,20 @@
-# src/api_craft/orm_builder.py
+# src/meta_framework.generation_targets.fastapi_python/orm_builder.py
 """ORM model generation: converts InputModels into SQLAlchemy TemplateORMModels.
 
 Full-graph approach: collects all relationships across all models, then for each
 model emits authored relationships, incoming FK columns, and inverse relationships.
 """
 
-from api_craft.models.input import InputModel
-from api_craft.models.orm_types import (
+from meta_framework.generation_targets.fastapi_python.models.input import InputModel
+from meta_framework.generation_targets.fastapi_python.models.orm_types import (
     TemplateORMField,
     TemplateORMModel,
     TemplateRelationship,
 )
-from api_craft.relationship_derivation import derive_input_model_relationships
-from api_craft.sqlalchemy_relationships import (
+from meta_framework.generation_targets.fastapi_python.relationship_derivation import (
+    derive_input_model_relationships,
+)
+from meta_framework.generation_targets.fastapi_python.sqlalchemy_relationships import (
     association_table_name,
     foreign_key_field_name,
     object_table_name,

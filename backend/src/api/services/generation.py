@@ -21,8 +21,11 @@ from api.models.database import (
 )
 from api.models.members import FieldMember, ObjectMember, RelationshipMember
 from api.schemas.api import GenerateOptions
-from api.services.api_craft_input import build_input_api
-from api_craft.main import APIGenerator
+from api.services.api_design_snapshot import build_api_design_snapshot
+from meta_framework.generation_targets.fastapi_python.input_from_api_design_snapshot import (
+    build_fastapi_python_input_from_api_design_snapshot,
+)
+from meta_framework.generation_targets.fastapi_python.main import APIGenerator
 
 
 async def generate_api_zip(
@@ -39,10 +42,11 @@ async def generate_api_zip(
     objects_map = await _fetch_objects(api, db)
     fields_map = await _fetch_fields(api, objects_map, db)
 
-    # Convert to api_craft InputAPI format
     if options is None:
         options = GenerateOptions()
-    input_api = build_input_api(api, objects_map, fields_map, options)
+
+    snapshot = build_api_design_snapshot(api, objects_map, fields_map)
+    input_api = build_fastapi_python_input_from_api_design_snapshot(snapshot, options)
 
     # Generate files to a temporary directory
     with tempfile.TemporaryDirectory() as temp_dir:
@@ -51,8 +55,10 @@ async def generate_api_zip(
 
         # Create ZIP file
         zip_buffer = io.BytesIO()
-        # api_craft uses kebab-case for directory name
-        from api_craft.utils import camel_to_kebab
+        # FastAPI Python target uses kebab-case for directory names.
+        from meta_framework.generation_targets.fastapi_python.utils import (
+            camel_to_kebab,
+        )
 
         project_dir = os.path.join(temp_dir, camel_to_kebab(input_api.name))
 

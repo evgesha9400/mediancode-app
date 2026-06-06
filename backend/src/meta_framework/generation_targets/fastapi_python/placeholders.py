@@ -1,4 +1,4 @@
-# src/api_craft/placeholders.py
+# src/meta_framework.generation_targets.fastapi_python/placeholders.py
 """Placeholder value generation for template models.
 
 This module generates valid placeholder data from string-based type descriptions
@@ -17,8 +17,12 @@ import re
 from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
-    from api_craft.models.input import InputField as TemplateField
-    from api_craft.models.input import InputValidator as TemplateValidator
+    from meta_framework.generation_targets.fastapi_python.models.input import (
+        InputField as TemplateField,
+    )
+    from meta_framework.generation_targets.fastapi_python.models.input import (
+        InputValidator as TemplateValidator,
+    )
 
 
 def parse_type(type_str: str) -> tuple[str, list[str]]:

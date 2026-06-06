@@ -1,11 +1,15 @@
-# src/api_craft/project_plan.py
+# src/meta_framework.generation_targets.fastapi_python/project_plan.py
 """Generated FastAPI project layout planning."""
 
 from dataclasses import dataclass
 from pathlib import Path
 
-from api_craft.models.input import InputAPI
-from api_craft.utils import camel_to_kebab, create_dir, write_file
+from meta_framework.generation_targets.fastapi_python.models.input import InputAPI
+from meta_framework.generation_targets.fastapi_python.utils import (
+    camel_to_kebab,
+    create_dir,
+    write_file,
+)
 
 _CDK_STATIC_DIR = Path(__file__).parent / "templates" / "static" / "cdk"
 

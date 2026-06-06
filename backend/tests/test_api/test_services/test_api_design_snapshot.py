@@ -118,7 +118,7 @@ def test_build_api_design_snapshot_maps_objects_and_members():
 
 
 def test_build_api_design_snapshot_resolves_endpoint_params():
-    """Resolve endpoint path and query parameters without api_craft models."""
+    """Resolve endpoint path and query parameters without meta_framework.generation_targets.fastapi_python models."""
     path_member_id = uuid4()
     path_field_id = uuid4()
     query_member_id = uuid4()

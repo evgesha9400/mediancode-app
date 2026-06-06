@@ -4,17 +4,18 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-Median Code Backend consists of two packages:
+Median Code Backend consists of two active source areas:
 
-- **api_craft**: Code generation library that transforms JSON API specifications into FastAPI project scaffolds
-- **api**: FastAPI service exposing REST endpoints (wraps api_craft)
+- `api`: FastAPI product service exposing REST endpoints.
+- `meta_framework`: portable API Design facts and Generation Targets.
 
 **Python 3.13+ required.**
 
 ## Packages
 
 - `src/api/` — FastAPI service: routers, services, schemas, models, migrations.
-- `src/api_craft/` — code generation library: `APIGenerator`, transformers, extractors, renderers, Mako templates.
+- `src/meta_framework/api_design/` — target-neutral API Design Snapshot dataclasses.
+- `src/meta_framework/generation_targets/fastapi_python/` — FastAPI Python Generation Target: `APIGenerator`, input adapter, preparation, extractors, project planning, Mako templates.
 
 ## Commands
 
@@ -30,7 +31,7 @@ make test
 DATABASE_URL=postgresql+asyncpg://postgres:postgres@localhost:5433/median_code poetry run pytest tests/ -v
 
 # Run a single test
-poetry run pytest tests/codegen/test_input_and_transform.py::TestNameTypes -v
+poetry run pytest tests/codegen/test_input_and_transform.py::TestPascalCaseValidation -v
 
 # Format code
 poetry run black src/
@@ -48,21 +49,22 @@ the Docker database and rerun the tests with the Docker database URL.
 Current local Docker database:
 
 ```bash
-DATABASE_URL=postgresql+asyncpg://postgres:postgres@localhost:5433/median_code poetry run pytest tests/ -v
+DATABASE_URL=postgresql+asyncpg://postgres:postgres@localhost:5432/median_code poetry run pytest tests/ -v
 ```
 
-## api_craft Architecture
+## FastAPI Python Generation Target
 
 ### Generation Pipeline
 
 ```
-InputAPI (JSON) → Transform → Extract → Render → Write
+API Design Snapshot → FastAPI Python InputAPI → Prepare → Extract → Render → Write
 ```
 
-1. **Transform** (`transformers.py`): Converts `InputAPI` models to `TemplateAPI` models with computed name variants
-2. **Extract** (`extractors.py`): Pulls models, views, path/query parameters from transformed API
-3. **Render** (`renderers.py`): Applies Mako templates to extracted components
-4. **Write** (`main.py`): Outputs generated project files to filesystem
+1. **Snapshot** (`api/services/api_design_snapshot.py`): assembles persisted API rows into portable facts.
+2. **Input adapter** (`input_from_api_design_snapshot.py`): builds FastAPI Python `InputAPI`.
+3. **Prepare** (`prepare.py`): computes target-specific names, schemas, ORM models, and views.
+4. **Extract** (`extractors.py`): pulls renderable components from the prepared API.
+5. **Render/Write** (`main.py`, `project_plan.py`): renders templates and writes the generated project.
 
 ### Generated Output Structure
 
@@ -87,15 +89,15 @@ All user-provided names in input JSON must be **PascalCase**. The `Name` type au
 - `.camel_name` → camelCase
 - `.kebab_name` → kebab-case
 
-## Adding Generation Features
+## Adding FastAPI Python Generation Features
 
-To extend api_craft:
-1. Add input fields to `api_craft/models/input.py`
-2. Add template fields to `api_craft/models/template.py`
-3. Update `transformers.py` to convert input → template format
-4. Update `extractors.py` to extract new components
-5. Create/modify Mako templates in `templates/`
-6. Update `renderers.py` and `main.py` to render and write new files
+To extend the current target:
+1. Add target input fields to `meta_framework/generation_targets/fastapi_python/models/input.py`.
+2. Update `input_from_api_design_snapshot.py` when the new fact comes from persisted API design.
+3. Update `prepare.py` or narrower helpers for target-specific derivation.
+4. Update `extractors.py` when templates need new renderable components.
+5. Create or modify Mako templates in `templates/`.
+6. Update `main.py` or `project_plan.py` when generated files change.
 
 ## Commit Messages
 

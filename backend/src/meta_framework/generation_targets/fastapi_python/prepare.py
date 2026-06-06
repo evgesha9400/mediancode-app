@@ -1,5 +1,5 @@
-# src/api_craft/prepare.py
-# src/api_craft/prepare.py
+# src/meta_framework.generation_targets.fastapi_python/prepare.py
+# src/meta_framework.generation_targets.fastapi_python/prepare.py
 """Prepare InputAPI for template rendering.
 
 Replaces the transform layer (transformers.py) by passing Input models
@@ -12,30 +12,34 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 import re
 
-from api_craft.models.input import (
+from meta_framework.generation_targets.fastapi_python.models.input import (
     InputAPI,
     InputField,
     InputModel,
     InputTag,
 )
-from api_craft.models.orm_types import (
+from meta_framework.generation_targets.fastapi_python.models.orm_types import (
     TemplateDatabaseConfig,
     TemplateORMModel,
 )
-from api_craft.orm_builder import transform_orm_models
-from api_craft.placeholders import PlaceholderGenerator
-from api_craft.prepared_views import (
+from meta_framework.generation_targets.fastapi_python.orm_builder import (
+    transform_orm_models,
+)
+from meta_framework.generation_targets.fastapi_python.placeholders import (
+    PlaceholderGenerator,
+)
+from meta_framework.generation_targets.fastapi_python.prepared_views import (
     PreparedPathParam,
     PreparedQueryParam,
     PreparedView,
     prepare_endpoint_view_semantics,
 )
-from api_craft.schema_splitter import (
+from meta_framework.generation_targets.fastapi_python.schema_splitter import (
     _has_appears_flags,
     _model_needs_split,
     split_model_schemas,
 )
-from api_craft.utils import (
+from meta_framework.generation_targets.fastapi_python.utils import (
     add_spaces_to_camel_case,
     camel_to_kebab,
     camel_to_snake,

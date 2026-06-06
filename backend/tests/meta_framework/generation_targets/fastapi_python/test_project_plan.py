@@ -1,4 +1,4 @@
-# tests/test_api_craft/test_project_plan.py
+# tests/test_meta_framework.generation_targets.fastapi_python/test_project_plan.py
 """Tests for generated FastAPI project plans."""
 
 import json
@@ -6,7 +6,7 @@ from pathlib import Path
 
 import pytest
 
-from api_craft.models.input import (
+from meta_framework.generation_targets.fastapi_python.models.input import (
     InputAPI,
     InputApiConfig,
     InputCdkConfig,
@@ -15,7 +15,7 @@ from api_craft.models.input import (
     InputField,
     InputModel,
 )
-from api_craft.project_plan import (
+from meta_framework.generation_targets.fastapi_python.project_plan import (
     build_generated_fastapi_project_plan,
     write_generated_fastapi_project_plan,
 )

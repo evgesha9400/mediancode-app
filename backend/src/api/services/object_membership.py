@@ -26,9 +26,15 @@ from api.schemas.members import (
     RelationshipMemberResponse,
 )
 from api.schemas.object import ModelValidatorInput, ModelValidatorResponse
-from api_craft.models.enums import RelationshipKind
-from api_craft.models.validation_catalog import ALLOWED_PK_TYPES
-from api_craft.relationship_derivation import derive_relationship
+from meta_framework.generation_targets.fastapi_python.models.enums import (
+    RelationshipKind,
+)
+from meta_framework.generation_targets.fastapi_python.models.validation_catalog import (
+    ALLOWED_PK_TYPES,
+)
+from meta_framework.generation_targets.fastapi_python.relationship_derivation import (
+    derive_relationship,
+)
 
 
 class ObjectMembership:

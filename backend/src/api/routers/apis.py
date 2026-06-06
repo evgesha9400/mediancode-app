@@ -17,7 +17,7 @@ from api.schemas.api import ApiCreate, ApiResponse, ApiUpdate, GenerateOptions
 from api.services.api import ApiService, get_api_service
 from api.services.user import UserService
 from api.settings import get_settings
-from api_craft.utils import camel_to_kebab
+from meta_framework.generation_targets.fastapi_python.utils import camel_to_kebab
 
 router = APIRouter(prefix="/apis", tags=["APIs"])
 

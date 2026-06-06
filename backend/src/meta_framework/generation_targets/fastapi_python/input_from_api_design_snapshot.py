@@ -1,26 +1,19 @@
-# src/api/services/api_craft_input.py
-"""Adapter from API Design Snapshot facts to api_craft input models."""
+# src/meta_framework/generation_targets/fastapi_python/input_from_api_design_snapshot.py
+"""Build FastAPI Python target input from API Design Snapshot facts."""
 
 import re
 from typing import Any, cast
-from uuid import UUID
 
 from jinja2 import Environment
 
-from api.models.database import (
-    ApiModel,
-    FieldModel,
-    ObjectDefinition,
-)
 from api.schemas.api import GenerateOptions
-from api.services.api_design_snapshot import (
+from meta_framework.api_design.snapshot import (
     APIDesignEndpoint,
     APIDesignFieldMember,
     APIDesignObject,
     APIDesignSnapshot,
-    build_api_design_snapshot,
 )
-from api_craft.models.enums import (
+from meta_framework.generation_targets.fastapi_python.models.enums import (
     CdkCompute,
     FieldExposure,
     GeneratedStrategy,
@@ -28,7 +21,7 @@ from api_craft.models.enums import (
     RelationshipKind,
     ResponseShape,
 )
-from api_craft.models.input import (
+from meta_framework.generation_targets.fastapi_python.models.input import (
     FieldDefault,
     FieldDefaultGenerated,
     FieldDefaultLiteral,
@@ -47,36 +40,21 @@ from api_craft.models.input import (
     InputTag,
     InputValidator,
 )
-from api_craft.models.types import PascalCaseName, SnakeCaseName
+from meta_framework.generation_targets.fastapi_python.models.types import (
+    PascalCaseName,
+    SnakeCaseName,
+)
 
 
-def build_input_api(
-    api: ApiModel,
-    objects_map: dict[UUID, ObjectDefinition],
-    fields_map: dict[UUID, FieldModel],
-    options: GenerateOptions,
-) -> InputAPI:
-    """Build the api_craft input model from loaded persisted entities.
-
-    :param api: The API model.
-    :param objects_map: Map of object ID to ObjectDefinition.
-    :param fields_map: Map of field ID to FieldModel.
-    :param options: Generation options.
-    :returns: InputAPI for code generation.
-    """
-    snapshot = build_api_design_snapshot(api, objects_map, fields_map)
-    return build_input_api_from_snapshot(snapshot, options)
-
-
-def build_input_api_from_snapshot(
+def build_fastapi_python_input_from_api_design_snapshot(
     snapshot: APIDesignSnapshot,
     options: GenerateOptions,
 ) -> InputAPI:
-    """Build the current api_craft input model from an API Design Snapshot.
+    """Build the FastAPI Python target input from an API Design Snapshot.
 
     :param snapshot: Portable API Design Snapshot.
-    :param options: Generation options for the current FastAPI target.
-    :returns: InputAPI for code generation.
+    :param options: Generation options for the FastAPI Python target.
+    :returns: FastAPI Python InputAPI for code generation.
     """
     input_objects: list[InputModel] = []
     for obj in snapshot.objects:
@@ -214,7 +192,7 @@ def _derive_input_field_props(
 def _build_path_params(
     endpoint: APIDesignEndpoint,
 ) -> list[InputPathParam] | None:
-    """Build api_craft path parameters from snapshot facts.
+    """Build FastAPI Python path parameters from snapshot facts.
 
     :param endpoint: API Design Snapshot endpoint.
     :returns: List of InputPathParam objects, or None when absent.
@@ -234,7 +212,7 @@ def _build_path_params(
 
 
 def _build_query_params(endpoint: APIDesignEndpoint) -> list[InputQueryParam] | None:
-    """Build api_craft query parameters from snapshot facts.
+    """Build FastAPI Python query parameters from snapshot facts.
 
     :param endpoint: API Design Snapshot endpoint.
     :returns: List of InputQueryParam objects, or None when absent.
@@ -260,7 +238,7 @@ def _build_field_type(python_type: str, container: str | None = None) -> str:
 
     :param python_type: Base Python type annotation.
     :param container: Optional container type, such as ``List``.
-    :returns: Python type annotation for api_craft input.
+    :returns: Python type annotation for FastAPI Python input.
     """
     if container:
         return f"{container}[{python_type}]"
@@ -294,7 +272,7 @@ def _build_endpoint_name(method: str, path: str) -> str:
 def _build_field_validators(
     member: APIDesignFieldMember,
 ) -> list[InputValidator]:
-    """Convert field constraints to api_craft validators.
+    """Convert field constraints to FastAPI Python validators.
 
     :param member: API Design Snapshot field member.
     :returns: Input validators for Field() parameters.
@@ -335,10 +313,10 @@ def _parse_constraint_value(value: str | None, parameter_types: list[str]) -> ob
 def _build_resolved_field_validators(
     member: APIDesignFieldMember,
 ) -> list[InputResolvedFieldValidator]:
-    """Resolve applied field validators to api_craft function definitions.
+    """Resolve applied field validators to FastAPI Python function definitions.
 
     :param member: API Design Snapshot field member.
-    :returns: Resolved field validator dictionaries for api_craft input.
+    :returns: Resolved field validator dictionaries for FastAPI Python input.
     """
     resolved = []
     for validator in member.field_validators:
@@ -360,10 +338,10 @@ def _build_resolved_field_validators(
 def _build_resolved_model_validators(
     obj: APIDesignObject,
 ) -> list[InputResolvedModelValidator]:
-    """Resolve applied model validators to api_craft function definitions.
+    """Resolve applied model validators to FastAPI Python function definitions.
 
     :param obj: API Design Snapshot Object.
-    :returns: Resolved model validator dictionaries for api_craft input.
+    :returns: Resolved model validator dictionaries for FastAPI Python input.
     """
     resolved = []
     for validator in obj.model_validators:

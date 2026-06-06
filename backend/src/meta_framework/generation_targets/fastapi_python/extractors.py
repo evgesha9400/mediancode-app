@@ -1,10 +1,18 @@
-# api_craft/extractors.py
+# meta_framework.generation_targets.fastapi_python/extractors.py
 import re
 
-from api_craft.models.input import InputModel
-from api_craft.models.orm_types import TemplateORMModel
-from api_craft.prepare import PreparedAPI, PreparedPathParam, PreparedQueryParam
-from api_craft.sqlalchemy_relationships import association_fk_column_name
+from meta_framework.generation_targets.fastapi_python.models.input import InputModel
+from meta_framework.generation_targets.fastapi_python.models.orm_types import (
+    TemplateORMModel,
+)
+from meta_framework.generation_targets.fastapi_python.prepare import (
+    PreparedAPI,
+    PreparedPathParam,
+    PreparedQueryParam,
+)
+from meta_framework.generation_targets.fastapi_python.sqlalchemy_relationships import (
+    association_fk_column_name,
+)
 
 # Mapping of module.Type patterns to their import statements
 MODULE_TYPE_IMPORTS = {

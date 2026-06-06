@@ -1,4 +1,4 @@
-# api_craft/main.py
+# meta_framework.generation_targets.fastapi_python/main.py
 """Main module for API generation.
 
 This module orchestrates transforming a high-level API specification into a
@@ -15,7 +15,7 @@ from mako.exceptions import TopLevelLookupException
 from mako.lookup import TemplateLookup
 from mako.template import Template
 
-from api_craft.extractors import (
+from meta_framework.generation_targets.fastapi_python.extractors import (
     collect_association_tables,
     collect_cdk_dependencies,
     collect_database_dependencies,
@@ -27,9 +27,14 @@ from api_craft.extractors import (
     extract_path_parameters,
     extract_query_parameters,
 )
-from api_craft.models.input import InputAPI
-from api_craft.prepare import PreparedAPI, indent_body, prepare_api, render_field
-from api_craft.project_plan import (
+from meta_framework.generation_targets.fastapi_python.models.input import InputAPI
+from meta_framework.generation_targets.fastapi_python.prepare import (
+    PreparedAPI,
+    indent_body,
+    prepare_api,
+    render_field,
+)
+from meta_framework.generation_targets.fastapi_python.project_plan import (
     build_generated_fastapi_project_plan,
     write_generated_fastapi_project_plan,
 )

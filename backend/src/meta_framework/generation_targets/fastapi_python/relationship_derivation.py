@@ -4,8 +4,10 @@ from dataclasses import dataclass
 from typing import Literal
 from uuid import UUID
 
-from api_craft.models.enums import RelationshipKind
-from api_craft.models.input import InputModel
+from meta_framework.generation_targets.fastapi_python.models.enums import (
+    RelationshipKind,
+)
+from meta_framework.generation_targets.fastapi_python.models.input import InputModel
 
 RelationshipReferenceOwner = Literal["target", "association"]
 RelationshipCardinality = Literal["one", "many"]

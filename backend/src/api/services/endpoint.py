@@ -29,8 +29,10 @@ from api.schemas.endpoint import (
 )
 from api.schemas.literals import FilterOperator, HttpMethod, ResponseShape
 from api.services.base import BaseService
-from api_craft.models.types import SnakeCaseName
-from api_craft.models.validation_catalog import OPERATOR_VALID_TYPES
+from meta_framework.generation_targets.fastapi_python.models.types import SnakeCaseName
+from meta_framework.generation_targets.fastapi_python.models.validation_catalog import (
+    OPERATOR_VALID_TYPES,
+)
 
 PATH_PARAM_PATTERN = re.compile(r"\{([^}]+)\}")
 

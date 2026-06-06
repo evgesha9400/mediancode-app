@@ -1,4 +1,4 @@
-# src/api_craft/models/enums.py
+# src/meta_framework.generation_targets.fastapi_python/models/enums.py
 """Canonical Literal types for all ENUM-like fields.
 
 Single source of truth consumed by:

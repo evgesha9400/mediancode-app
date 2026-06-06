@@ -84,7 +84,8 @@ make migration msg="..."    # Create new migration file
 ## Packages
 
 - `src/api/` — FastAPI service (routers, services, schemas, models, migrations).
-- `src/api_craft/` — code generation library (transformers, extractors, renderers, Mako templates).
+- `src/meta_framework/api_design/` — portable API Design Snapshot dataclasses.
+- `src/meta_framework/generation_targets/fastapi_python/` — FastAPI Python Generation Target (input models, preparation, project planning, Mako templates).
 
 See [CLAUDE.md](CLAUDE.md) for the generation pipeline and conventions.
 

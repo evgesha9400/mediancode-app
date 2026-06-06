@@ -22,19 +22,24 @@ from fastapi.testclient import TestClient
 import pytest
 
 from api.schemas.api import GenerateOptions
-from api.services.api_craft_input import build_input_api, build_input_api_from_snapshot
-from api.services.api_design_snapshot import (
+from api.services.api_design_snapshot import build_api_design_snapshot
+from api.services.generation import generate_api_zip
+from meta_framework.api_design.snapshot import (
     APIDesignEndpoint,
     APIDesignFieldMember,
     APIDesignObject,
     APIDesignPathParam,
     APIDesignSnapshot,
 )
-from api.services.generation import generate_api_zip
-from api_craft.extractors import collect_association_tables
-from api_craft.main import APIGenerator
-from api_craft.models.enums import FilterOperator
-from api_craft.models.input import (
+from meta_framework.generation_targets.fastapi_python.extractors import (
+    collect_association_tables,
+)
+from meta_framework.generation_targets.fastapi_python.input_from_api_design_snapshot import (
+    build_fastapi_python_input_from_api_design_snapshot,
+)
+from meta_framework.generation_targets.fastapi_python.main import APIGenerator
+from meta_framework.generation_targets.fastapi_python.models.enums import FilterOperator
+from meta_framework.generation_targets.fastapi_python.models.input import (
     InputAPI,
     InputApiConfig,
     InputDatabaseConfig,
@@ -45,14 +50,18 @@ from api_craft.models.input import (
     InputQueryParam,
     InputRelationship,
 )
-from api_craft.orm_builder import transform_orm_models
-from api_craft.prepare import (
+from meta_framework.generation_targets.fastapi_python.orm_builder import (
+    transform_orm_models,
+)
+from meta_framework.generation_targets.fastapi_python.prepare import (
     PreparedPathParam,
     PreparedQueryParam,
     PreparedView,
     prepare_api,
 )
-from api_craft.schema_splitter import split_model_schemas
+from meta_framework.generation_targets.fastapi_python.schema_splitter import (
+    split_model_schemas,
+)
 from support.generated_app import load_app, load_input
 
 
@@ -72,6 +81,16 @@ def _make_api_model(endpoints=None):
     api.namespace_id = "ns-1"
     api.endpoints = endpoints or []
     return api
+
+
+def _build_fastapi_python_input_from_persisted_entities(
+    api,
+    objects_map,
+    fields_map,
+    options: GenerateOptions,
+) -> InputAPI:
+    snapshot = build_api_design_snapshot(api, objects_map, fields_map)
+    return build_fastapi_python_input_from_api_design_snapshot(snapshot, options)
 
 
 def _make_endpoint_snapshot(method: str, path: str) -> APIDesignEndpoint:
@@ -101,7 +120,7 @@ def _make_endpoint_snapshot(method: str, path: str) -> APIDesignEndpoint:
 def _build_input_from_endpoint_snapshots(
     endpoints: list[APIDesignEndpoint],
 ) -> InputAPI:
-    """Build api_craft input from minimal endpoint snapshots."""
+    """Build meta_framework.generation_targets.fastapi_python input from minimal endpoint snapshots."""
     snapshot = APIDesignSnapshot(
         name="TestApi",
         version="1.0.0",
@@ -128,7 +147,9 @@ def _build_input_from_endpoint_snapshots(
         endpoints=endpoints,
         tag_names=[],
     )
-    return build_input_api_from_snapshot(snapshot, GenerateOptions())
+    return build_fastapi_python_input_from_api_design_snapshot(
+        snapshot, GenerateOptions()
+    )
 
 
 def _make_field(python_type: str, container: str | None = None):
@@ -175,7 +196,7 @@ def _build_single_field_input_api(
 ):
     field = _make_field(python_type, container)
     obj = _make_object(_make_scalar_member())
-    return build_input_api(
+    return _build_fastapi_python_input_from_persisted_entities(
         _make_api_model(),
         {"obj-1": obj},
         {"field-1": field},
@@ -184,7 +205,7 @@ def _build_single_field_input_api(
 
 
 # ---------------------------------------------------------------------------
-# api_craft input adapter field type behavior
+# meta_framework.generation_targets.fastapi_python input adapter field type behavior
 # ---------------------------------------------------------------------------
 
 
@@ -217,7 +238,7 @@ class TestBuildFieldType:
 
 
 # ---------------------------------------------------------------------------
-# api_craft input adapter endpoint naming behavior
+# meta_framework.generation_targets.fastapi_python input adapter endpoint naming behavior
 # ---------------------------------------------------------------------------
 
 
@@ -289,7 +310,7 @@ class TestConvertToInputApi:
     def test_default_options_match_current_behavior(self):
         api = self._make_api_model()
         opts = GenerateOptions()
-        result = build_input_api(api, {}, {}, opts)
+        result = _build_fastapi_python_input_from_persisted_entities(api, {}, {}, opts)
         assert result.config.healthcheck == "/health"
         assert result.config.response_placeholders is True
         assert result.config.database.enabled is False
@@ -297,13 +318,15 @@ class TestConvertToInputApi:
     def test_database_enabled_passed_through(self):
         api, objects_map, fields_map = self._make_api_with_objects(is_pk=True)
         opts = GenerateOptions(database_enabled=True, response_placeholders=False)
-        result = build_input_api(api, objects_map, fields_map, opts)
+        result = _build_fastapi_python_input_from_persisted_entities(
+            api, objects_map, fields_map, opts
+        )
         assert result.config.database.enabled is True
 
     def test_response_placeholders_false_passed_through(self):
         api = self._make_api_model()
         opts = GenerateOptions(response_placeholders=False)
-        result = build_input_api(api, {}, {}, opts)
+        result = _build_fastapi_python_input_from_persisted_entities(api, {}, {}, opts)
         assert result.config.response_placeholders is False
 
     # --- PK tests (from TestConvertToInputApiPk) ---
@@ -311,7 +334,9 @@ class TestConvertToInputApi:
     def test_pk_passed_through(self):
         api, objects_map, fields_map = self._make_api_with_objects(is_pk=True)
         opts = GenerateOptions(database_enabled=True, response_placeholders=False)
-        result = build_input_api(api, objects_map, fields_map, opts)
+        result = _build_fastapi_python_input_from_persisted_entities(
+            api, objects_map, fields_map, opts
+        )
         item_obj = next(o for o in result.objects if o.name == "Item")
         id_field = next(f for f in item_obj.fields if f.name == "id")
         assert id_field.pk is True
@@ -319,7 +344,9 @@ class TestConvertToInputApi:
     def test_pk_false_by_default(self):
         api, objects_map, fields_map = self._make_api_with_objects(is_pk=False)
         opts = GenerateOptions()
-        result = build_input_api(api, objects_map, fields_map, opts)
+        result = _build_fastapi_python_input_from_persisted_entities(
+            api, objects_map, fields_map, opts
+        )
         item_obj = next(o for o in result.objects if o.name == "Item")
         id_field = next(f for f in item_obj.fields if f.name == "id")
         assert id_field.pk is False

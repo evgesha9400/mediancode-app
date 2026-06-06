@@ -1,4 +1,4 @@
-"""Validation helpers for :mod:`api_craft.models.input`."""
+"""Validation helpers for :mod:`meta_framework.generation_targets.fastapi_python.models.input`."""
 
 from __future__ import annotations
 
@@ -6,7 +6,7 @@ from collections.abc import Iterable
 import re
 from typing import TYPE_CHECKING
 
-from api_craft.models.validation_catalog import (
+from meta_framework.generation_targets.fastapi_python.models.validation_catalog import (
     ALLOWED_PK_TYPES,
     DATE_TIME_TYPES,
     NUMERIC_TYPES,
@@ -18,7 +18,11 @@ from api_craft.models.validation_catalog import (
 )
 
 if TYPE_CHECKING:  # pragma: no cover - imports used for type checking only
-    from api_craft.models.input import InputApiConfig, InputEndpoint, InputModel
+    from meta_framework.generation_targets.fastapi_python.models.input import (
+        InputApiConfig,
+        InputEndpoint,
+        InputModel,
+    )
 
 TYPE_IDENTIFIER_PATTERN = re.compile(r"[A-Za-z_][A-Za-z0-9_]*")
 

@@ -13,7 +13,7 @@ from alembic import op
 import sqlalchemy as sa
 from sqlalchemy.dialects import postgresql
 
-from api_craft.models.enums import (
+from meta_framework.generation_targets.fastapi_python.models.enums import (
     Cardinality,
     Container,
     HttpMethod,

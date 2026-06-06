@@ -3,7 +3,7 @@
 from pydantic import GetCoreSchemaHandler
 from pydantic_core import core_schema
 
-from api_craft.models.validators import (
+from meta_framework.generation_targets.fastapi_python.models.validators import (
     validate_pascal_case_name,
     validate_snake_case_name,
 )

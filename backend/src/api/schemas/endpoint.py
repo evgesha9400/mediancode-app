@@ -6,7 +6,7 @@ from uuid import UUID
 from pydantic import BaseModel, ConfigDict, Field
 
 from api.schemas.literals import FilterOperator, HttpMethod, ResponseShape
-from api_craft.models.types import SnakeCaseName
+from meta_framework.generation_targets.fastapi_python.models.types import SnakeCaseName
 
 
 class PathParamSchema(BaseModel):

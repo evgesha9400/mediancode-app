@@ -2,7 +2,7 @@ from typing import Annotated, Any, Literal, Self
 
 from pydantic import BaseModel, Field, model_validator
 
-from api_craft.models.enums import (
+from meta_framework.generation_targets.fastapi_python.models.enums import (
     CdkCompute,
     FieldExposure,
     FilterOperator,
@@ -12,8 +12,11 @@ from api_craft.models.enums import (
     ResponseShape,
     ValidatorMode,
 )
-from api_craft.models.types import PascalCaseName, SnakeCaseName
-from api_craft.models.validators import (
+from meta_framework.generation_targets.fastapi_python.models.types import (
+    PascalCaseName,
+    SnakeCaseName,
+)
+from meta_framework.generation_targets.fastapi_python.models.validators import (
     validate_database_config,
     validate_endpoint_references,
     validate_model_field_types,

@@ -1,7 +1,12 @@
 """Current FastAPI SQLAlchemy target relationship artifact names."""
 
-from api_craft.relationship_derivation import RelationshipDerivation
-from api_craft.utils import camel_to_snake, snake_to_plural
+from meta_framework.generation_targets.fastapi_python.relationship_derivation import (
+    RelationshipDerivation,
+)
+from meta_framework.generation_targets.fastapi_python.utils import (
+    camel_to_snake,
+    snake_to_plural,
+)
 
 
 def object_table_name(object_name: str) -> str:

@@ -45,7 +45,7 @@ build-backend = "poetry.core.masonry.api"
 
 [tool.poetry]
 packages = [
-    { include = "api_craft", from = "src" },
+    { include = "meta_framework", from = "src" },
     { include = "api", from = "src" }
 ]
 
@@ -73,11 +73,11 @@ src = ["src", "tests"]
 select = ["I"]
 
 [tool.ruff.lint.isort]
-known-first-party = ["api", "api_craft"]
+known-first-party = ["api", "meta_framework"]
 force-sort-within-sections = true
 
 [tool.mypy]
-exclude = ["^src/api_craft/templates/static/"]
+exclude = ["^src/meta_framework/generation_targets/fastapi_python/templates/static/"]
 
 [[tool.mypy.overrides]]
 module = ["mako.*"]

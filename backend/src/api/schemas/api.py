@@ -6,8 +6,8 @@ from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, Field
 
-from api_craft.models.enums import CdkCompute
-from api_craft.models.types import PascalCaseName
+from meta_framework.generation_targets.fastapi_python.models.enums import CdkCompute
+from meta_framework.generation_targets.fastapi_python.models.types import PascalCaseName
 
 
 class ApiCreate(BaseModel):

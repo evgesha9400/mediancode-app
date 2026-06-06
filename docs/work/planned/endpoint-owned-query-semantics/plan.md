@@ -27,7 +27,7 @@ Endpoint
 - Endpoint-owned decision: `docs/adr/0002-endpoint-owned-query-semantics.md`
 - Current member model: `backend/src/api/models/members.py`
 - Current Endpoint model/schema/service: `backend/src/api/models/database.py`, `backend/src/api/schemas/endpoint.py`, `backend/src/api/services/endpoint.py`
-- Current snapshot/generation path: `backend/src/api/services/api_design_snapshot.py`, `backend/src/api/services/api_craft_input.py`, `backend/src/api_craft/prepared_views.py`
+- Current snapshot/generation path: `backend/src/api/services/api_design_snapshot.py`, `backend/src/meta_framework/api_design/snapshot.py`, `backend/src/meta_framework/generation_targets/fastapi_python/input_from_api_design_snapshot.py`, `backend/src/meta_framework/generation_targets/fastapi_python/prepared_views.py`
 - Current frontend Endpoint drift: `frontend/src/lib/types/index.ts`, `frontend/src/lib/api/endpoints.ts`, `frontend/src/lib/stores/endpointsConfig.svelte.ts`
 
 ## Phase 1: Rename Field Member To Field Member
@@ -164,7 +164,7 @@ Anti-pattern guard:
 
 ## Phase 5: Rewrite FastAPI Generation Adapter
 
-Map API Design Snapshot Endpoint Query Semantics into `api_craft` input. Preserve `required`.
+Map API Design Snapshot Endpoint Query Semantics into FastAPI Python target input. Preserve `required`.
 
 Recommended cleanup:
 
@@ -174,16 +174,16 @@ Recommended cleanup:
 
 Main files:
 
-- `backend/src/api/services/api_craft_input.py`
-- `backend/src/api_craft/models/input.py`
-- `backend/src/api_craft/prepared_views.py`
-- `backend/src/api_craft/templates/views.mako`
-- `backend/src/api_craft/templates/query.mako`
+- `backend/src/meta_framework/generation_targets/fastapi_python/input_from_api_design_snapshot.py`
+- `backend/src/meta_framework/generation_targets/fastapi_python/models/input.py`
+- `backend/src/meta_framework/generation_targets/fastapi_python/prepared_views.py`
+- `backend/src/meta_framework/generation_targets/fastapi_python/templates/views.mako`
+- `backend/src/meta_framework/generation_targets/fastapi_python/templates/query.mako`
 
 Tests:
 
-- `backend/tests/test_api/test_services/test_api_craft_input.py`
-- `backend/tests/test_api_craft/test_prepared_views.py`
+- `backend/tests/meta_framework/generation_targets/fastapi_python/test_input_from_api_design_snapshot.py`
+- `backend/tests/meta_framework/generation_targets/fastapi_python/test_prepared_views.py`
 - Relevant codegen tests under `backend/tests/codegen/`
 
 Anti-pattern guard:

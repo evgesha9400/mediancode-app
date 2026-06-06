@@ -1,4 +1,4 @@
-# src/api_craft/schema_splitter.py
+# src/meta_framework.generation_targets.fastapi_python/schema_splitter.py
 """Schema splitting: derives Create/Update/Response schemas from InputModel.
 
 FK injection uses the full model graph: for each one_to_one/one_to_many
@@ -6,10 +6,21 @@ relationship targeting a model, inject ``{inverse_name}_id`` into Create,
 Update, and Response schemas.
 """
 
-from api_craft.models.input import InputAPI, InputField, InputModel
-from api_craft.models.types import PascalCaseName, SnakeCaseName
-from api_craft.relationship_derivation import relationship_derivations_for_target
-from api_craft.sqlalchemy_relationships import foreign_key_field_name
+from meta_framework.generation_targets.fastapi_python.models.input import (
+    InputAPI,
+    InputField,
+    InputModel,
+)
+from meta_framework.generation_targets.fastapi_python.models.types import (
+    PascalCaseName,
+    SnakeCaseName,
+)
+from meta_framework.generation_targets.fastapi_python.relationship_derivation import (
+    relationship_derivations_for_target,
+)
+from meta_framework.generation_targets.fastapi_python.sqlalchemy_relationships import (
+    foreign_key_field_name,
+)
 
 
 def _resolve_fk_type(

@@ -1,20 +1,22 @@
-# src/api_craft/prepared_views.py
+# src/meta_framework.generation_targets.fastapi_python/prepared_views.py
 """Prepared endpoint and view semantics for template rendering."""
 
 from collections.abc import Callable
 from dataclasses import dataclass, field
 from typing import Any
 
-from api_craft.models.enums import ResponseShape
-from api_craft.models.input import (
+from meta_framework.generation_targets.fastapi_python.models.enums import ResponseShape
+from meta_framework.generation_targets.fastapi_python.models.input import (
     InputEndpoint,
     InputField,
     InputModel,
     InputPathParam,
     InputQueryParam,
 )
-from api_craft.models.orm_types import TemplateDatabaseConfig
-from api_craft.utils import (
+from meta_framework.generation_targets.fastapi_python.models.orm_types import (
+    TemplateDatabaseConfig,
+)
+from meta_framework.generation_targets.fastapi_python.utils import (
     add_spaces_to_camel_case,
     camel_to_snake,
     remove_duplicates,

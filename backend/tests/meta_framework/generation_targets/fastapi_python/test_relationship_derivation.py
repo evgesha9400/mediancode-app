@@ -4,8 +4,12 @@ from uuid import uuid4
 
 import pytest
 
-from api_craft.models.input import InputField, InputModel, InputRelationship
-from api_craft.relationship_derivation import (
+from meta_framework.generation_targets.fastapi_python.models.input import (
+    InputField,
+    InputModel,
+    InputRelationship,
+)
+from meta_framework.generation_targets.fastapi_python.relationship_derivation import (
     derive_input_model_relationships,
     derive_relationship,
     relationship_derivations_for_target,
