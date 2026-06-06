@@ -26,7 +26,7 @@ Deploy the Median Code Backend to a self-hosted Coolify instance on a Digital Oc
 │  │  └───────────┘  └───────────┘   │  │  └───────────┘  └───────────┘   │   │
 │  │        │                        │  │        │                        │   │
 │  │        ▼                        │  │        ▼                        │   │
-│  │  api.mediancode.com             │  │  dev.api.mediancode.com         │   │
+│  │  api.mediancode.com             │  │  api.dev.mediancode.com         │   │
 │  └─────────────────────────────────┘  └─────────────────────────────────┘   │
 │                                                                             │
 └─────────────────────────────────────────────────────────────────────────────┘
@@ -55,7 +55,7 @@ Deploy the Median Code Backend to a self-hosted Coolify instance on a Digital Oc
 | Environment    | Backend URL              | Branch    |
 | -------------- | ------------------------ | --------- |
 | **Production** | `api.mediancode.com`     | `main`    |
-| **Development**| `dev.api.mediancode.com` | `develop` |
+| **Development**| `api.dev.mediancode.com` | `develop` |
 | **Coolify UI** | `coolify.mediancode.com` | —         |
 
 ---
@@ -232,7 +232,7 @@ In the application resource, go to **General** tab:
 | **Name**               | `dev-api-median-code`                        |
 | **Description**        | `Development API for Median Code Backend`    |
 | **Build Pack**         | `Dockerfile`                                 |
-| **Domains**            | `https://dev.api.mediancode.com` (or leave the auto-generated sslip.io URL for initial testing) |
+| **Domains**            | `https://api.dev.mediancode.com` (or leave the auto-generated sslip.io URL for initial testing) |
 | **Ports Exposes**      | `8080`                                       |
 | **Port Mappings**      | Clear/empty (delete any default like `3000:3000`) |
 | **Base Directory**     | `/backend`                                   |
@@ -316,7 +316,7 @@ Click **Deploy** (top right) and monitor the build logs under the **Deployments*
 Once deployed, verify:
 
 ```bash
-curl https://dev.api.mediancode.com/health
+curl https://api.dev.mediancode.com/health
 # Expected: {"status":"healthy"}
 ```
 
@@ -532,7 +532,7 @@ Push a commit to `develop` and check that:
 git checkout develop
 git commit --allow-empty -m "ci: test pipeline"
 git push origin develop
-# → GitHub Actions: tests → pass → webhook → Coolify deploys to dev.api.mediancode.com
+# → GitHub Actions: tests → pass → webhook → Coolify deploys to api.dev.mediancode.com
 ```
 
 ---
@@ -558,7 +558,7 @@ git checkout develop
 git add .
 git commit -m "feat: add new feature"
 git push origin develop
-# → GitHub Actions runs tests → on pass → Coolify deploys to dev.api.mediancode.com
+# → GitHub Actions runs tests → on pass → Coolify deploys to api.dev.mediancode.com
 
 # Promote to production
 git checkout main

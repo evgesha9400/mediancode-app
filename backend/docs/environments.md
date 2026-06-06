@@ -7,7 +7,7 @@ Quick-reference for the backend's three runtime contexts. See [../deploy/coolify
 | Environment | Branch | Backend URL | Frontend URL | Clerk App |
 |-------------|--------|-------------|--------------|-----------|
 | **Local** | any | `localhost:8001` | `localhost:5173` | Development |
-| **Coolify Dev** | `develop` | `dev.api.mediancode.com` | `dev.mediancode.com` | Development |
+| **Coolify Dev** | `develop` | `api.dev.mediancode.com` | `dev.mediancode.com` | Development |
 | **Coolify Prod** | `main` | `api.mediancode.com` | `app.mediancode.com` | Production |
 
 ## Master Variable Table
