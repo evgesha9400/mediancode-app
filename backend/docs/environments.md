@@ -1,12 +1,12 @@
 # Environment Configuration
 
-Quick-reference for the backend's three runtime contexts. See [deploy/coolify/COOLIFY_DEPLOYMENT.md](deploy/coolify/COOLIFY_DEPLOYMENT.md) for full Coolify setup instructions.
+Quick-reference for the backend's three runtime contexts. See [../deploy/coolify/COOLIFY_DEPLOYMENT.md](../deploy/coolify/COOLIFY_DEPLOYMENT.md) for full Coolify setup instructions.
 
 ## Environments
 
 | Environment | Branch | Backend URL | Frontend URL | Clerk App |
 |-------------|--------|-------------|--------------|-----------|
-| **Local** | any | `localhost:8000` | `localhost:5173` | Development |
+| **Local** | any | `localhost:8001` | `localhost:5173` | Development |
 | **Coolify Dev** | `develop` | `dev.api.mediancode.com` | `dev.mediancode.com` | Development |
 | **Coolify Prod** | `main` | `api.mediancode.com` | `app.mediancode.com` | Production |
 

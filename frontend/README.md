@@ -18,14 +18,30 @@ Median Code is a SvelteKit application that serves both the marketing landing pa
 - **Forms**: Formspree
 - **Testing**: Vitest, Playwright, MSW
 
+## Root Interface
+
+| Path                                                        | Purpose                                                          |
+| ----------------------------------------------------------- | ---------------------------------------------------------------- |
+| `README.md`                                                 | Frontend entry point for humans                                  |
+| `package.json`, `bun.lock`                                  | Bun-managed dependencies and scripts                             |
+| `svelte.config.js`, `vite.config.ts`, `vitest.config.ts`    | Framework and test runner config kept at root for tool discovery |
+| `tsconfig*.json`, `postcss.config.js`, `tailwind.config.js` | TypeScript and styling config kept at root for tool discovery    |
+| `playwright.config.ts`                                      | Local Playwright entry point                                     |
+| `vercel.json`, `bunfig.toml`, `.editorconfig`               | Deployment/runtime/editor config kept at root for tool discovery |
+| `config/`                                                   | Movable tool config for Prettier and Spectral                    |
+| `docs/`                                                     | Frontend docs                                                    |
+| `tests/`                                                    | Unit, smoke, E2E, fixtures, helpers, and page objects            |
+
 ## Route Structure
 
 **Public Routes:**
+
 - `/` - Landing page (marketing)
 - `/signin` - Sign-in page with Clerk authentication
 - `/signup` - Sign-up page for new users
 
 **Dashboard Routes** (authenticated, redirect to `/signin` when not signed in):
+
 - `/dashboard` - Dashboard home with overview stats
 - `/types` - Types management (create, edit, delete types)
 - `/validators/field-constraints` - Field Constraints management
@@ -46,27 +62,32 @@ Median Code is a SvelteKit application that serves both the marketing landing pa
 ### Setup
 
 1. **Clone the repository**
+
    ```bash
    git clone https://github.com/yourusername/median-code.git
    cd median-code
    ```
 
 2. **Install dependencies**
+
    ```bash
    bun install
    ```
 
 3. **Set up environment variables**
+
    ```bash
    cp .env.example .env
    ```
 
    Add your Clerk publishable key to `.env` (get from https://dashboard.clerk.com):
+
    ```
    PUBLIC_CLERK_PUBLISHABLE_KEY=pk_test_...
    ```
 
 4. **Start development server**
+
    ```bash
    bun run dev
    ```
@@ -164,6 +185,7 @@ The application automatically deploys to Vercel when changes are pushed to the `
 **Production URL**: https://app.mediancode.com
 
 **Environment Variables** (set in Vercel dashboard):
+
 - `PUBLIC_CLERK_PUBLISHABLE_KEY` - Your Clerk publishable key
 
 ### Manual Deployment
@@ -175,6 +197,7 @@ vercel --prod
 ### Pre-Deployment Checklist
 
 Before pushing to `main`:
+
 1. Ensure all environment variables are set in Vercel dashboard
 2. Test authentication flow locally
 3. Verify mobile blocking works
@@ -187,6 +210,7 @@ Before pushing to `main`:
 The application uses a monochrome color palette:
 
 **Colors:**
+
 ```
 mono-50:  #f6f6fa (lightest)
 mono-100: #f0f0f5
@@ -202,20 +226,24 @@ mono-950: #101012 (darkest)
 ```
 
 **Typography:**
+
 - Font: Inter (Google Fonts CDN)
 - Weights: 300, 400, 500, 600, 700
 
 **Icons:**
+
 - Font Awesome 6.4.0 (locally hosted for reliability)
 - No CDN dependencies for icons
 
 ## Authentication
 
 The dashboard uses Clerk for authentication with support for:
+
 - Email/Password
 - OAuth providers (GitHub, Google, etc.)
 
 **Authentication Flow:**
+
 1. User visits `/` (landing page - public)
 2. User navigates to `/signin` to sign in or `/signup` to create account
 3. Accessing any dashboard route while unauthenticated redirects to `/signin?redirect=<path>`
@@ -223,14 +251,17 @@ The dashboard uses Clerk for authentication with support for:
 5. Sign out redirects back to `/signin`
 
 **Public Routes** (no authentication required):
+
 - `/` - Landing page
 
 **Protected Routes** (authentication required — all routes in the `(dashboard)` route group):
+
 - `/dashboard`, `/types`, `/validators/*`, `/fields`, `/objects`, `/apis`, `/apis/[id]`, `/namespaces`, `/settings`
 
 ## Key Features
 
 ### Landing Page
+
 - **Responsive Design**: Mobile-first with Tailwind breakpoints
 - **Mobile Menu**: Svelte reactive state management
 - **Email Signup**: Formspree integration with validation
@@ -238,6 +269,7 @@ The dashboard uses Clerk for authentication with support for:
 - **Font Awesome Icons**: Locally hosted for reliability
 
 ### Dashboard
+
 - **Clerk Authentication**: Secure user authentication
 - **Mobile Device Detection**: Automatically redirects mobile users
 - **Persistent Sidebar**: Navigation with animated logo
@@ -249,6 +281,7 @@ The dashboard uses Clerk for authentication with support for:
 - **Namespaces Management**: Organize APIs by namespace
 
 ### Performance Optimizations
+
 - **Clerk Initialization**: Loads on all routes to handle OAuth callbacks properly
 - **Local Font Awesome**: No external CDN dependencies for UI
 - **SvelteKit SSR**: Server-side rendering for faster initial loads
@@ -258,7 +291,7 @@ The dashboard uses Clerk for authentication with support for:
 
 1. **Feature Development**: Work on `develop` branch
 2. **Testing**: Test locally with `bun run dev`
-3. **Commit**: Use conventional commit format (see `docs/COMMIT_MESSAGE_STANDARD.md`)
+3. **Commit**: Use conventional commit format (see `../docs/standards/COMMIT_MESSAGE_STANDARD.md`)
 4. **Deploy**: Merge `develop` → `main` to trigger Vercel deployment
 
 ## Commit Message Standard
@@ -268,6 +301,7 @@ This project follows the conventional commits standard.
 **Format:** `<type>(<scope>): <subject>`
 
 **Common types:**
+
 - `feat`: New feature
 - `fix`: Bug fix
 - `style`: Visual/CSS changes
@@ -276,6 +310,7 @@ This project follows the conventional commits standard.
 - `ci`: CI/CD changes
 
 **Example:**
+
 ```
 feat(landing): add email signup form validation
 fix(signin): resolve Clerk redirect issue
@@ -286,11 +321,9 @@ See `docs/COMMIT_MESSAGE_STANDARD.md` for detailed guidelines.
 
 ## Project Documentation
 
-- **CLAUDE.md** - Detailed guidance for Claude Code AI assistant
-- **AGENTS.md** - Guidance for AI code agents
-- **ENVIRONMENTS.md** - Environment strategy across all services
-- **docs/COMMIT_MESSAGE_STANDARD.md** - Commit message conventions
-- **api-spec.yaml** - OpenAPI 3.0 specification for code generation API
+- **[docs/environments.md](docs/environments.md)** - Frontend environment strategy
+- **[../docs/standards/COMMIT_MESSAGE_STANDARD.md](../docs/standards/COMMIT_MESSAGE_STANDARD.md)** - Commit message conventions
+- **[../api-spec.yaml](../api-spec.yaml)** - OpenAPI contract for the code generation API
 
 ## Contributing
 

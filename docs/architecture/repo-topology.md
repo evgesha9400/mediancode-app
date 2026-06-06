@@ -7,6 +7,7 @@ Two deployable apps share one repo and one OpenAPI contract.
 - `api-spec.yaml` — single source of truth, backend-generated, frontend-consumed
 - `docs/` — cross-cutting only (`philosophy/`, `standards/`, `protocols/`, `architecture/`, `work/`)
 - `.github/workflows/` — path-filtered CI per app
+- `.githooks/` — root hooks delegating to app-local checks
 - `Makefile` — root entry points delegating to subdir Makefiles
 - `CLAUDE.md` / `AGENTS.md` — cross-cutting agent guidance
 
@@ -14,8 +15,10 @@ Two deployable apps share one repo and one OpenAPI contract.
 
 | Path | Owns |
 |------|------|
-| `backend/` | Python application code, Alembic migrations, backend tests, Coolify deploy, `Dockerfile` |
-| `frontend/` | SvelteKit application code, frontend tests, Vercel deploy |
+| `backend/` | Python application code, Alembic migrations, backend tests, backend config, backend docs, backend deploy implementation |
+| `backend/deploy/docker/Dockerfile` | Backend image build implementation for Coolify and local Docker builds |
+| `backend/deploy/local/docker-compose.yml` | Local PostgreSQL compose stack |
+| `frontend/` | SvelteKit application code, frontend tests, frontend config, frontend docs, Vercel deploy |
 | `api-spec.yaml` | The contract. Owned by backend (generated from FastAPI), consumed by frontend |
 | `docs/` | Cross-cutting concerns only. Per-app docs live in `backend/docs/` and `frontend/docs/` |
 | `.github/workflows/` | Path-filtered CI per app, plus contract-change triggers |

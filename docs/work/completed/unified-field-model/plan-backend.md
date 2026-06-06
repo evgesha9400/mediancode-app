@@ -10,7 +10,7 @@
 
 **Spec:** `docs/work/unified-field-model/spec.md`
 
-**Read before starting:** `../mediancode-backend/CLAUDE.md`, `../mediancode-backend/TESTING.md`
+**Read before starting:** `backend/CLAUDE.md`, `backend/docs/testing.md`
 
 **Migration strategy:** Big-bang. The entire migration is developed locally, tested as a whole, and only pushed once complete. Intermediate states between phases do NOT need to be build-safe. The app does not need to compile or run between phases.
 

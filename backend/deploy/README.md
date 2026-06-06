@@ -9,6 +9,13 @@ This directory contains deployment configurations for different providers.
 | **Coolify** | [`coolify/COOLIFY_DEPLOYMENT.md`](coolify/COOLIFY_DEPLOYMENT.md) | Self-hosted PaaS on DO droplet, $6-12/mo (recommended) |
 | **AWS** | `aws/` | Full IaC, ECS Fargate |
 
+## Docker Layout
+
+| Path | Purpose |
+|------|---------|
+| `docker/Dockerfile` | Backend image used by Coolify and local `make docker-build` |
+| `local/docker-compose.yml` | Local PostgreSQL only; backend runs natively for iteration |
+
 ## Quick Start
 
 ### Coolify on Digital Ocean (Recommended)

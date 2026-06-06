@@ -43,7 +43,7 @@ Deploy the Median Code Backend to a self-hosted Coolify instance on a Digital Oc
                                       │
                     ┌─────────────────────────────────┐
                     │         GitHub Repository       │
-                    │    median-code-backend          │
+                    │        mediancode-app           │
                     │                                 │
                     │  push main ──────► production   │
                     │  push develop ───► development  │
@@ -165,9 +165,9 @@ Then in Coolify **Settings > General**, set the instance FQDN to `https://coolif
 
 1. In Coolify sidebar, go to **Sources**
 2. Click **Add** > **GitHub App**
-3. It will ask for a name — use `median-code-backend` (same name in both Coolify and GitHub)
+3. It will ask for a name — use `mediancode-app` (same name in both Coolify and GitHub)
 4. Follow the wizard to create a GitHub App on your account
-5. Authorize and install it on the `median-code-backend` repository
+5. Authorize and install it on the `mediancode-app` repository
 6. One GitHub App handles both environments — the dev/prod split is configured per-resource later
 
 > You do NOT need separate GitHub Apps for dev and prod.
@@ -218,7 +218,7 @@ Select the **development** environment, then:
 
 1. Go back to the development environment and click **Add Resource**
 2. Under **Git Based**, select **Private Repository (with GitHub App)**
-3. Select your GitHub source and the `median-code-backend` repository
+3. Select your GitHub source and the `mediancode-app` repository
 4. Set **Branch**: `develop`
 5. **Build Pack**: `Dockerfile` (should be auto-detected)
 6. Click **Save**
@@ -235,8 +235,8 @@ In the application resource, go to **General** tab:
 | **Domains**            | `https://dev.api.mediancode.com` (or leave the auto-generated sslip.io URL for initial testing) |
 | **Ports Exposes**      | `8080`                                       |
 | **Port Mappings**      | Clear/empty (delete any default like `3000:3000`) |
-| **Base Directory**     | `/`                                          |
-| **Dockerfile Location**| `/Dockerfile`                                |
+| **Base Directory**     | `/backend`                                   |
+| **Dockerfile Location**| `/backend/deploy/docker/Dockerfile`          |
 
 Go to **Environment Variables** tab and add:
 
@@ -356,7 +356,7 @@ Select the **production** environment, then:
 
 1. Go back to the production environment and click **Add Resource**
 2. Under **Git Based**, select **Private Repository (with GitHub App)**
-3. Select your GitHub source and the `median-code-backend` repository
+3. Select your GitHub source and the `mediancode-app` repository
 4. Set **Branch**: `main`
 5. **Build Pack**: `Dockerfile` (should be auto-detected)
 6. Click **Save**
@@ -373,8 +373,8 @@ In the application resource, go to **General** tab:
 | **Domains**            | `https://api.mediancode.com` (or leave the auto-generated sslip.io URL for initial testing) |
 | **Ports Exposes**      | `8080`                                       |
 | **Port Mappings**      | Clear/empty (delete any default like `3000:3000`) |
-| **Base Directory**     | `/`                                          |
-| **Dockerfile Location**| `/Dockerfile`                                |
+| **Base Directory**     | `/backend`                                   |
+| **Dockerfile Location**| `/backend/deploy/docker/Dockerfile`          |
 
 Go to **Environment Variables** tab and add:
 
@@ -703,7 +703,7 @@ poetry run alembic revision --autogenerate -m "add users table"
 git add .
 git commit -m "feat(db): add users table migration"
 git push origin develop
-# Coolify auto-deploys → Dockerfile CMD runs alembic upgrade head → then starts the server
+# Coolify auto-deploys -> Dockerfile entrypoint runs alembic upgrade head, then starts the server
 ```
 
 ---
@@ -732,9 +732,9 @@ Coolify provides built-in backup scheduling for database resources:
 
 ### Build Fails
 
-1. Test locally first: `docker build -t test .`
+1. Test locally first: `cd backend && docker build -f deploy/docker/Dockerfile -t test .`
 2. Check build logs in Coolify (application > Deployments)
-3. Verify Dockerfile path is set to `/Dockerfile`
+3. Verify Dockerfile path is set to `/backend/deploy/docker/Dockerfile`
 
 ### Health Check Fails
 

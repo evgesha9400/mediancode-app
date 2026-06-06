@@ -26,7 +26,7 @@ Acknowledged before migration:
 | Q5 | Git history | Preserve both via `git filter-repo` + `--allow-unrelated-histories` merge | All 481+535 commits accessible |
 | Q6 | Branch model | Keep `main` + `develop` | Same as pre-merge mental model |
 | Q7a | Vercel ownership | `evgesha9400` (unchanged) | |
-| Q7b | Dockerfile location | Stays at `backend/Dockerfile` | Build context: `backend/` |
+| Q7b | Dockerfile location | `backend/deploy/docker/Dockerfile` | Build context: `backend/` |
 | Q7c | `api-spec.yaml` triggers | Both CIs | Frontend regenerates types, backend re-asserts spec |
 | Q7d | Cross-cutting PRs | Both CIs required to pass | Path filter handles auto-skip on unaffected side |
 | Q8 | Local dev | Root `Makefile` delegating to subdir Makefiles | `make -j2 backend.dev frontend.dev` |
@@ -95,7 +95,7 @@ Result: 1017 commits on `develop` (481 backend + 535 frontend + 1 merge), files 
 
 ### Phase 5 — Deploy flip (manual)
 - Vercel: project Git source → `evgesha9400/mediancode-app`, root directory → `frontend/`
-- Coolify: Git source → `evgesha9400/mediancode-app`, build context → `backend/`, Dockerfile path → `backend/Dockerfile`
+- Coolify: Git source → `evgesha9400/mediancode-app`, build context → `backend/`, Dockerfile path → `backend/deploy/docker/Dockerfile`
 - Push to `develop` triggers preview+staging deploys; push to `main` triggers prod deploys
 
 ### Phase 6 — Grace period (2 weeks)

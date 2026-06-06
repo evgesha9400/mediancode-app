@@ -136,4 +136,4 @@ Defined in `pyproject.toml`:
 3. **Fixtures go in `conftest.py`** at the root level. Shared utilities go in `tests/support/`.
 4. **Cleanup after yourself.** The root `client` fixture auto-cleans DB data for the module's `TEST_CLERK_ID`.
 5. **One canonical Shop definition** in `tests/support/shop_contract.py`. Never duplicate field/object definitions in test files.
-6. **Format before committing.** Run `poetry run black src/ tests/` after any test changes.
+6. **Format before committing.** Run `poetry run ruff format src/ tests/` after any test changes.
