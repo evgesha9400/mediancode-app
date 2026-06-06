@@ -62,6 +62,11 @@ Thumbs.db
 
 # Test output directory
 tests/output/
+.coverage
+.pytest_cache/
+.ruff_cache/
+htmlcov/
+reports/
 
 # CDK
 cdk.out/
@@ -73,6 +78,9 @@ cdk.out/
 .venv/
 venv/
 __pycache__/
+
+# Generated local analysis
+graphify-out/
 
 # Environment files (keep .example files)
 .env

@@ -16,6 +16,8 @@ Thumbs.db
 .aider/
 .auto-claude/
 .superpowers/
+graphify-out/
+frontend/graphify-out/
 
 # Git worktrees
 .worktrees/
@@ -27,3 +29,18 @@ Thumbs.db
 
 # Python test output
 .coverage
+.ruff_cache/
+.pytest_cache/
+htmlcov/
+
+# App test/build reports
+coverage/
+playwright-report/
+test-results/
+frontend/coverage/
+frontend/playwright-report/
+frontend/test-results/
+backend/.coverage
+backend/.ruff_cache/
+backend/.pytest_cache/
+backend/htmlcov/

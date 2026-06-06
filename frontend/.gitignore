@@ -76,6 +76,9 @@ test-results/
 # Coverage Reports
 coverage/
 
+# Generated local analysis
+graphify-out/
+
 # E2E Test Auth State
 tests/e2e/.auth/
 
