@@ -19,6 +19,9 @@ Thumbs.db
 graphify-out/
 frontend/graphify-out/
 
+# Project work archive
+docs/work/completed/
+
 # Git worktrees
 .worktrees/
 
