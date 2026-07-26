@@ -15,7 +15,7 @@ We use **two environments**:
 
 | Service  | Development              | Production           |
 | -------- | ------------------------ | -------------------- |
-| Frontend | `dev.mediancode.com`     | `app.mediancode.com` |
+| Frontend | `dev.mediancode.com`     | `mediancode.com` |
 | API      | `api.dev.mediancode.com` | `api.mediancode.com` |
 
 ## Environment Variables
@@ -34,7 +34,7 @@ We use **two environments**:
 | Vercel Environment | Maps To     | Branch         | Domain               |
 | ------------------ | ----------- | -------------- | -------------------- |
 | Preview            | Development | `develop`, PRs | `dev.mediancode.com` |
-| Production         | Production  | `main`         | `app.mediancode.com` |
+| Production         | Production  | `main`         | `mediancode.com` |
 
 > **Note:** Ignore Vercel's "Development" environment - it's for local `vercel dev` which we don't use.
 
@@ -45,19 +45,19 @@ We use **two environments**:
 | Development    | Development |
 | Production     | Production  |
 
-### Coolify (API Backend)
+### Mac server (API Backend)
 
-| Coolify Environment | Maps To     | Branch    |
-| ------------------- | ----------- | --------- |
-| Development         | Development | `develop` |
-| Production          | Production  | `main`    |
+| Server environment | Maps To     | Branch    |
+| ------------------ | ----------- | --------- |
+| Development        | Development | `develop` |
+| Production         | Production  | `main`    |
 
 ### GitHub
 
 | Branch    | Maps To     | Deploys To           |
 | --------- | ----------- | -------------------- |
 | `develop` | Development | `dev.mediancode.com` |
-| `main`    | Production  | `app.mediancode.com` |
+| `main`    | Production  | `mediancode.com` |
 
 ### GitHub Actions CI
 
@@ -85,7 +85,7 @@ CI tests run on every push to `develop` and `main`. Configuration lives in Setti
 | Lint & Type Check  | push, PR               | PR     | None                     |
 | Unit Tests         | push, PR               | PR     | None                     |
 | Smoke (Playwright) | push, PR               | PR     | None                     |
-| CRUD (Playwright)  | push, schedule, manual | --     | `api.dev.mediancode.com` |
+| CRUD (Playwright)  | push, schedule, manual | push   | `api.dev.mediancode.com` |
 
 > **Note:** CRUD tests only run against the dev backend. They create, modify, and delete real data, so they are not run against production.
 
@@ -104,6 +104,6 @@ When setting up a new service or updating configuration:
 
 - [ ] **Vercel**: Set `PUBLIC_API_BASE_URL` for Preview and Production environments
 - [ ] **Clerk**: Ensure Development and Production instances have correct redirect URLs
-- [ ] **Coolify**: Ensure CORS allows `dev.mediancode.com` (dev) and `app.mediancode.com` (prod)
+- [ ] **Mac server**: Ensure CORS allows `dev.mediancode.com` (dev) and `mediancode.com` (prod)
 - [ ] **GitHub**: Branch protection on `main`, deploy workflows for both branches
 - [ ] **GitHub Actions**: Set repository variables (`PUBLIC_CLERK_PUBLISHABLE_KEY`, `PUBLIC_API_BASE_URL`) and secrets (`CLERK_SECRET_KEY`, `E2E_TEST_USER_EMAIL`, `E2E_TEST_USER_PASSWORD`)

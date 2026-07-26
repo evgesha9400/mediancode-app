@@ -10,7 +10,7 @@ Median Code monorepo. Combines the former `mediancode-backend` and `mediancode-f
 | `frontend/` | SvelteKit app; see [frontend/README.md](frontend/README.md) |
 | `api-spec.yaml` | Backend-generated OpenAPI contract; frontend-consumed source of truth |
 | `docs/` | Cross-cutting architecture, standards, protocols, and work records |
-| `.github/workflows/` | Path-filtered backend and frontend CI |
+| `.github/workflows/` | Path-filtered CI plus backend and frontend deployment |
 | `.githooks/` | Root Git hooks delegating into backend and frontend commands |
 | `Makefile` | Root entry points delegating to app-level commands |
 | `AGENTS.md`, `CLAUDE.md`, `CONTEXT.md` | Cross-cutting agent and domain guidance |
@@ -41,7 +41,9 @@ Repo file placement policy: [docs/architecture/app-root-file-policy.md](docs/arc
 - `main` — production
 - `develop` — integration / preview environments
 
-Path-filtered CI: only the affected app's pipeline runs when a PR touches one side; both run when `api-spec.yaml` or root files change.
+Path-filtered CI: only the affected app's pipeline runs when a PR touches one
+side; both run when `api-spec.yaml` or root files change. Successful pushes to
+`develop` and `main` deploy through GitHub Actions.
 
 ## History
 
