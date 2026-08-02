@@ -89,3 +89,53 @@ jobs:
                 }
             '
           done
+
+          for database_uuid in \
+            ys4gwgscgwg4ss40k4g4o4wk \
+            i00o8wck8g008g8ccoo444ck
+          do
+            printf 'Database resource %s (non-secret fields):\n' "$database_uuid"
+            api_get "databases/${database_uuid}" | jq --compact-output '
+              {
+                uuid,
+                name,
+                description,
+                type,
+                status,
+                image,
+                is_public,
+                public_port,
+                ports_mappings,
+                postgres_db,
+                server_id,
+                environment_id
+              }
+            '
+
+            printf 'Backup configuration for database %s (non-secret fields):\n' "$database_uuid"
+            api_get "databases/${database_uuid}/backups" | jq --compact-output '
+              if type == "array" then
+                map({
+                  uuid,
+                  frequency,
+                  enabled,
+                  save_s3,
+                  s3_storage_id,
+                  dump_all,
+                  databases_to_backup,
+                  backup_retention_amount_locally
+                })
+              else
+                {
+                  uuid,
+                  frequency,
+                  enabled,
+                  save_s3,
+                  s3_storage_id,
+                  dump_all,
+                  databases_to_backup,
+                  backup_retention_amount_locally
+                }
+              end
+            '
+          done
