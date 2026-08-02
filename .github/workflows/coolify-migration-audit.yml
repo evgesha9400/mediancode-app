@@ -68,4 +68,24 @@ jobs:
             api_get "applications/${app_uuid}/envs" | jq --compact-output '
               map(.key) | sort
             '
+
+            printf 'Database endpoints for application %s (credentials removed):\n' "$app_uuid"
+            api_get "applications/${app_uuid}/envs" | jq --compact-output '
+              .[]
+              | select(.key == "DATABASE_URL")
+              | .value as $value
+              | {
+                  is_preview,
+                  is_build_time,
+                  is_literal,
+                  endpoint: (
+                    try (
+                      $value
+                      | capture(
+                          "^(?<scheme>[^:]+)://(?:[^@/]+@)?(?<host>\\[[^]]+\\]|[^:/?]+)(?::(?<port>[0-9]+))?/(?<database>[^?]+)"
+                        )
+                    ) catch {unparsed: true}
+                  )
+                }
+            '
           done
