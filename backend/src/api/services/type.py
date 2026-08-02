@@ -3,12 +3,12 @@
 
 from uuid import UUID
 
-from sqlalchemy import func, or_, select
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from api.models.database import FieldModel, Namespace, TypeModel
+from api.schemas.type import TypeResponse
 from api.services.base import BaseService
-from api.settings import get_settings
 
 
 class TypeService(BaseService[TypeModel]):
@@ -30,16 +30,10 @@ class TypeService(BaseService[TypeModel]):
         :param namespace_id: Optional namespace filter.
         :returns: List of visible types.
         """
-        settings = get_settings()
         query = (
             select(TypeModel)
             .join(Namespace)
-            .where(
-                or_(
-                    Namespace.user_id == user_id,
-                    Namespace.id == settings.system_namespace_id,
-                )
-            )
+            .where(self.namespace_access.visible_catalog_filter(user_id))
         )
         if namespace_id:
             query = query.where(TypeModel.namespace_id == namespace_id)
@@ -62,7 +56,7 @@ class TypeService(BaseService[TypeModel]):
             .join(Namespace)
             .where(
                 TypeModel.id == type_id,
-                Namespace.user_id == user_id,
+                self.namespace_access.owned_namespace_filter(user_id),
             )
         )
         result = await self.db.execute(query)
@@ -77,11 +71,46 @@ class TypeService(BaseService[TypeModel]):
         query = (
             select(FieldModel.type_id, func.count(FieldModel.id))
             .join(Namespace)
-            .where(Namespace.user_id == user_id)
+            .where(self.namespace_access.owned_namespace_filter(user_id))
             .group_by(FieldModel.type_id)
         )
         result = await self.db.execute(query)
         return {str(row[0]): row[1] for row in result.fetchall()}
+
+    async def list_responses_for_user(
+        self,
+        user_id: UUID,
+        namespace_id: str | None = None,
+    ) -> list[TypeResponse]:
+        """List type response schemas visible to a user.
+
+        :param user_id: The authenticated user's ID.
+        :param namespace_id: Optional namespace filter.
+        :returns: List of type response schemas.
+        """
+        types = await self.list_for_user(user_id, namespace_id)
+        field_counts = await self.get_field_counts_for_user(user_id)
+        return [self.to_response(type_model, field_counts) for type_model in types]
+
+    def to_response(
+        self, type_model: TypeModel, field_counts: dict[str, int]
+    ) -> TypeResponse:
+        """Convert a Type model to a response schema.
+
+        :param type_model: Type database model.
+        :param field_counts: Field usage counts keyed by type ID.
+        :returns: Type response schema.
+        """
+        return TypeResponse(
+            id=type_model.id,
+            namespaceId=type_model.namespace_id,
+            name=type_model.name,
+            pythonType=type_model.python_type,
+            description=type_model.description,
+            importPath=type_model.import_path,
+            parentTypeId=type_model.parent_type_id,
+            usedInFields=field_counts.get(str(type_model.id), 0),
+        )
 
 
 def get_type_service(db: AsyncSession) -> TypeService:

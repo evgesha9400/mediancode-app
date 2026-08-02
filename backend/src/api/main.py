@@ -1,15 +1,18 @@
 # src/api/main.py
 """FastAPI application entry point."""
 
-from collections.abc import AsyncGenerator
+from collections.abc import AsyncGenerator, Awaitable, Callable
 from contextlib import asynccontextmanager
 import logging
+from typing import Any, cast
 
 from fastapi import FastAPI, Request, status
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.openapi.utils import get_openapi
 from fastapi.responses import JSONResponse
 from slowapi import _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
+from starlette.responses import Response
 
 from api.middleware import SecurityHeadersMiddleware
 from api.rate_limit import limiter
@@ -79,7 +82,11 @@ app = FastAPI(
 
 # Configure rate limiting
 app.state.limiter = limiter
-app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+rate_limit_handler = cast(
+    Callable[[Request, Exception], Response | Awaitable[Response]],
+    _rate_limit_exceeded_handler,
+)
+app.add_exception_handler(RateLimitExceeded, rate_limit_handler)
 
 # Add security headers middleware (must be added before CORS)
 app.add_middleware(SecurityHeadersMiddleware)
@@ -150,3 +157,34 @@ async def health_check(request: Request) -> dict[str, str]:
     :returns: Health status.
     """
     return {"status": "healthy"}
+
+
+def build_openapi_schema() -> dict[str, Any]:
+    """Build the served OpenAPI schema for the committed API contract."""
+    if app.openapi_schema:
+        return app.openapi_schema
+
+    openapi_schema = get_openapi(
+        title=app.title,
+        version=app.version,
+        description=app.description,
+        routes=app.routes,
+    )
+    _remove_validation_error_detail_fields(openapi_schema)
+    app.openapi_schema = openapi_schema
+    return app.openapi_schema
+
+
+def _remove_validation_error_detail_fields(openapi_schema: dict[str, Any]) -> None:
+    """Remove non-contract FastAPI validation error detail fields."""
+    validation_error_schema = (
+        openapi_schema.get("components", {})
+        .get("schemas", {})
+        .get("ValidationError", {})
+    )
+    validation_error_properties = validation_error_schema.get("properties", {})
+    validation_error_properties.pop("input", None)
+    validation_error_properties.pop("ctx", None)
+
+
+setattr(app, "openapi", build_openapi_schema)

@@ -17,8 +17,8 @@ import zipfile
 
 import pytest
 
-from api_craft.main import APIGenerator
-from api_craft.models.input import (
+from meta_framework.generation_targets.fastapi_python.main import APIGenerator
+from meta_framework.generation_targets.fastapi_python.models.input import (
     InputAPI,
     InputApiConfig,
     InputDatabaseConfig,

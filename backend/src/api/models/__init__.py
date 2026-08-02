@@ -6,6 +6,8 @@ from api.models.database import (
     ApiModel,
     AppliedFieldValidatorModel,
     AppliedModelValidatorModel,
+    EndpointPathParam,
+    EndpointQueryParam,
     FieldConstraintModel,
     FieldConstraintValueAssociation,
     FieldModel,
@@ -15,11 +17,13 @@ from api.models.database import (
     TypeModel,
     UserModel,
 )
-from api.models.members import ObjectMember, RelationshipMember, ScalarMember
+from api.models.members import FieldMember, ObjectMember, RelationshipMember
 
 __all__ = [
     "ApiEndpoint",
     "ApiModel",
+    "EndpointPathParam",
+    "EndpointQueryParam",
     "AppliedFieldValidatorModel",
     "AppliedModelValidatorModel",
     "FieldConstraintModel",
@@ -30,7 +34,7 @@ __all__ = [
     "ObjectDefinition",
     "ObjectMember",
     "RelationshipMember",
-    "ScalarMember",
+    "FieldMember",
     "TypeModel",
     "UserModel",
 ]

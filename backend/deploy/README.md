@@ -6,16 +6,26 @@ This directory contains deployment configurations for different providers.
 
 | Provider | Directory / Docs | Notes |
 |----------|------------------|-------|
-| **Coolify** | [`coolify/COOLIFY_DEPLOYMENT.md`](coolify/COOLIFY_DEPLOYMENT.md) | Self-hosted PaaS on DO droplet, $6-12/mo (recommended) |
+| **Mac server** | [`mac-server/README.md`](mac-server/README.md) | Active GitHub Actions, GHCR and restricted Tailscale/SSH deployment |
+| **Coolify** | [`coolify/COOLIFY_DEPLOYMENT.md`](coolify/COOLIFY_DEPLOYMENT.md) | Legacy migration/rollback reference while the old deployment remains active |
 | **AWS** | `aws/` | Full IaC, ECS Fargate |
+
+## Docker Layout
+
+| Path | Purpose |
+|------|---------|
+| `docker/Dockerfile` | Hardened backend production image used by CI and local verification |
+| `local/docker-compose.yml` | Local PostgreSQL only; backend runs natively for iteration |
 
 ## Quick Start
 
-### Coolify on Digital Ocean (Recommended)
+### Mac server
 
-See full setup guide: [`coolify/COOLIFY_DEPLOYMENT.md`](coolify/COOLIFY_DEPLOYMENT.md)
+See [`mac-server/README.md`](mac-server/README.md).
 
-Self-hosted Coolify on a DO droplet with auto-deploy from GitHub. Two environments (dev/prod) each with their own Postgres database for ~$6-12/mo total.
+The host-owned Compose definition lives in the separate `server-admin`
+repository so an application commit cannot silently expand host privileges,
+mounts, or ports.
 
 ### AWS
 

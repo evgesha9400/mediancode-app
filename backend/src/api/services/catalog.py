@@ -28,7 +28,6 @@ class CatalogService:
 
         :returns: All rows of the model, ordered alphabetically by name.
         """
-        result = await self.db.execute(
-            select(self.model_class).order_by(self.model_class.name)
-        )
+        name_field = getattr(self.model_class, "name")
+        result = await self.db.execute(select(self.model_class).order_by(name_field))
         return list(result.scalars().all())

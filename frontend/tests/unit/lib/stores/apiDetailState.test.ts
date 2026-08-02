@@ -51,7 +51,13 @@ vi.mock('$lib/domain/errorMap', () => ({
 
 vi.mock('$lib/domain/endpointReducer', () => ({
   reconcilePathParams: vi.fn((path: string, params: any[]) => ({ path, pathParams: params })),
-  normalizeEndpoint: vi.fn((ep: ApiEndpoint) => ({ ...ep, responseShape: ep.responseShape ?? 'object' })),
+  normalizeEndpoint: vi.fn((ep: ApiEndpoint) => ({
+    ...ep,
+    responseShape: ep.responseShape ?? 'object',
+    pagination: ep.pagination ?? false,
+    queryParams: (ep.queryParams ?? []).map((q) => ({ ...q, required: q.required ?? false })),
+    pathParams: ep.pathParams.map((p) => ({ ...p, fieldMemberId: p.fieldMemberId ?? '' }))
+  })),
   hydratePathParamsForEndpoint: vi.fn((ep: ApiEndpoint) => ep),
   buildDuplicateEndpoint: vi.fn((ep: ApiEndpoint) => ({
     ...ep,
@@ -76,7 +82,7 @@ import {
   type ApiDetailStateConfig,
   type TagSection
 } from '$lib/stores/apiDetailState.svelte';
-import { apisStore, endpointsStore, getEndpointCountByTagName } from '$lib/stores/stores';
+import { apisStore, endpointsStore, fieldsStore, getEndpointCountByTagName, objectsStore } from '$lib/stores/stores';
 import { updateApiApi, deleteApiApi } from '$lib/api/apis';
 import { createEndpointApi, updateEndpointApi, deleteEndpointApi } from '$lib/api/endpoints';
 import { mapApiError } from '$lib/domain/errorMap';
@@ -133,6 +139,41 @@ function createTestState(overrides: Partial<ApiDetailStateConfig> = {}): {
   return { state, cleanup };
 }
 
+function setBasicTargetObjectFixture(): void {
+  fieldsStore.set([
+    {
+      id: 'field-id',
+      namespaceId: 'ns-1',
+      name: 'id',
+      type: 'uuid',
+      container: null,
+      constraints: [],
+      validators: [],
+      usedInApis: []
+    }
+  ]);
+  objectsStore.set([
+    {
+      id: 'obj-users',
+      namespaceId: 'ns-1',
+      name: 'User',
+      members: [
+        {
+          id: 'member-id',
+          memberType: 'field',
+          name: 'id',
+          fieldId: 'field-id',
+          role: 'pk',
+          isNullable: false
+        }
+      ],
+      derivedRelationships: [],
+      validators: [],
+      usedInApis: []
+    }
+  ]);
+}
+
 // ---------------------------------------------------------------------------
 // Setup
 // ---------------------------------------------------------------------------
@@ -141,6 +182,8 @@ beforeEach(() => {
   vi.clearAllMocks();
   apisStore.set([]);
   endpointsStore.set([]);
+  fieldsStore.set([]);
+  objectsStore.set([]);
 });
 
 // ---------------------------------------------------------------------------
@@ -630,8 +673,9 @@ describe('apiDetailState - Endpoint CRUD', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     apisStore.set([makeApi({ id: 'api-1' })]);
+    setBasicTargetObjectFixture();
     endpointsStore.set([
-      makeEndpoint({ id: 'ep-1', apiId: 'api-1', method: 'GET', path: '/users' })
+      makeEndpoint({ id: 'ep-1', apiId: 'api-1', method: 'GET', path: '/users', targetObjectId: 'obj-users' })
     ]);
     flushSync();
   });
@@ -664,6 +708,8 @@ describe('apiDetailState - Endpoint CRUD', () => {
 
     state.handleAddEndpoint();
     flushSync();
+    state.handleSelectObject('obj-users');
+    flushSync();
     state.editedEndpoint = { ...state.editedEndpoint!, path: '/items' };
     flushSync();
 
@@ -687,10 +733,29 @@ describe('apiDetailState - Endpoint CRUD', () => {
 
     state.handleAddEndpoint();
     flushSync();
+    state.handleSelectObject('obj-users');
+    flushSync();
 
     await state.handleCreateEndpoint();
 
     expect(showToast).toHaveBeenCalledWith('Failed to create endpoint', 'error');
+  });
+
+  it('should block invalid endpoint create without toast', async () => {
+    ({ state, cleanup } = createTestState());
+    flushSync();
+
+    state.handleAddEndpoint();
+    flushSync();
+    state.editedEndpoint = { ...state.editedEndpoint!, path: '/items' };
+    flushSync();
+
+    await state.handleCreateEndpoint();
+
+    expect(state.endpointCommandBlocked).toBe(true);
+    expect(state.endpointCommandBlockTooltip).toContain('Target object');
+    expect(createEndpointApi).not.toHaveBeenCalled();
+    expect(showToast).not.toHaveBeenCalled();
   });
 
   it('should save endpoint via updateEndpointApi', async () => {
@@ -779,20 +844,7 @@ describe('apiDetailState - Endpoint Editing Helpers', () => {
   });
   afterEach(() => cleanup?.());
 
-  it('should update query params object', () => {
-    ({ state, cleanup } = createTestState());
-    flushSync();
-
-    state.openEndpoint(state.endpoints[0]);
-    flushSync();
-
-    state.handleSelectQueryParamsObject('obj-1');
-    flushSync();
-
-    expect(state.editedEndpoint!.queryParamsObjectId).toBe('obj-1');
-  });
-
-  it('should update object', () => {
+  it('should update target object', () => {
     ({ state, cleanup } = createTestState());
     flushSync();
 
@@ -802,7 +854,7 @@ describe('apiDetailState - Endpoint Editing Helpers', () => {
     state.handleSelectObject('obj-2');
     flushSync();
 
-    expect(state.editedEndpoint!.objectId).toBe('obj-2');
+    expect(state.editedEndpoint!.targetObjectId).toBe('obj-2');
   });
 
   it('should toggle envelope', () => {
@@ -848,7 +900,7 @@ describe('apiDetailState - Endpoint Editing Helpers', () => {
 
     expect(state.editedEndpoint!.useEnvelope).toBe(true);
     expect(state.editedEndpoint!.responseShape).toBe('object');
-    expect(state.editedEndpoint!.objectId).toBeUndefined();
+    expect(state.editedEndpoint!.targetObjectId).toBeUndefined();
   });
 
   it('should handle tag select', () => {
@@ -906,8 +958,83 @@ describe('apiDetailState - Pagination Toggle', () => {
 
   beforeEach(() => {
     apisStore.set([makeApi({ id: 'api-1' })]);
+    fieldsStore.set([
+      {
+        id: 'field-id',
+        namespaceId: 'ns-1',
+        name: 'id',
+        type: 'uuid',
+        container: null,
+        constraints: [],
+        validators: [],
+        usedInApis: []
+      },
+      {
+        id: 'field-price',
+        namespaceId: 'ns-1',
+        name: 'price',
+        type: 'float',
+        container: null,
+        constraints: [],
+        validators: [],
+        usedInApis: []
+      },
+      {
+        id: 'field-category',
+        namespaceId: 'ns-1',
+        name: 'category',
+        type: 'str',
+        container: null,
+        constraints: [],
+        validators: [],
+        usedInApis: []
+      }
+    ]);
+    objectsStore.set([
+      {
+        id: 'obj-items',
+        namespaceId: 'ns-1',
+        name: 'Item',
+        members: [
+          {
+            id: 'member-id',
+            memberType: 'field',
+            name: 'id',
+            fieldId: 'field-id',
+            role: 'pk',
+            isNullable: false
+          },
+          {
+            id: 'member-price',
+            memberType: 'field',
+            name: 'price',
+            fieldId: 'field-price',
+            role: 'writable',
+            isNullable: false
+          },
+          {
+            id: 'member-category',
+            memberType: 'field',
+            name: 'category',
+            fieldId: 'field-category',
+            role: 'writable',
+            isNullable: false
+          }
+        ],
+        derivedRelationships: [],
+        validators: [],
+        usedInApis: []
+      }
+    ]);
     endpointsStore.set([
-      makeEndpoint({ id: 'ep-1', apiId: 'api-1', method: 'GET', path: '/items', responseShape: 'list' })
+      makeEndpoint({
+        id: 'ep-1',
+        apiId: 'api-1',
+        method: 'GET',
+        path: '/items',
+        responseShape: 'list',
+        targetObjectId: 'obj-items'
+      })
     ]);
     flushSync();
   });
@@ -930,7 +1057,15 @@ describe('apiDetailState - Pagination Toggle', () => {
 
   it('should toggle pagination from true to false', () => {
     endpointsStore.set([
-      makeEndpoint({ id: 'ep-1', apiId: 'api-1', method: 'GET', path: '/items', responseShape: 'list', pagination: true })
+      makeEndpoint({
+        id: 'ep-1',
+        apiId: 'api-1',
+        method: 'GET',
+        path: '/items',
+        responseShape: 'list',
+        pagination: true,
+        targetObjectId: 'obj-items'
+      })
     ]);
     flushSync();
 
@@ -984,6 +1119,8 @@ describe('apiDetailState - Pagination Toggle', () => {
 
     state.handleAddEndpoint();
     flushSync();
+    state.handleSelectObject('obj-items');
+    state.handleSetResponseShape('list');
     state.editedEndpoint = { ...state.editedEndpoint!, path: '/items', pagination: true };
     flushSync();
 
@@ -1030,22 +1167,30 @@ describe('apiDetailState - Pagination Toggle', () => {
   });
 });
 
-describe('apiDetailState - Detail Path Detection', () => {
+describe('apiDetailState - Endpoint Query Availability', () => {
   let state: ApiDetailState;
   let cleanup: () => void;
 
   beforeEach(() => {
     apisStore.set([makeApi({ id: 'api-1' })]);
+    setBasicTargetObjectFixture();
     endpointsStore.set([
-      makeEndpoint({ id: 'ep-1', apiId: 'api-1', method: 'GET', path: '/users' })
+      makeEndpoint({ id: 'ep-1', apiId: 'api-1', method: 'GET', path: '/users', targetObjectId: 'obj-users' })
     ]);
     flushSync();
   });
   afterEach(() => cleanup?.());
 
-  it('should detect detail path ending with {param}', () => {
+  it('should mark explicit primary-key paths not applicable', () => {
     endpointsStore.set([
-      makeEndpoint({ id: 'ep-1', apiId: 'api-1', method: 'GET', path: '/users/{user_id}' })
+      makeEndpoint({
+        id: 'ep-1',
+        apiId: 'api-1',
+        method: 'GET',
+        path: '/users/{id}',
+        targetObjectId: 'obj-users',
+        pathParams: [{ name: 'id', fieldMemberId: 'member-id' }]
+      })
     ]);
     flushSync();
 
@@ -1055,22 +1200,32 @@ describe('apiDetailState - Detail Path Detection', () => {
     state.openEndpoint(state.endpoints[0]);
     flushSync();
 
-    expect(state.responseShapeLocked).toBe(true);
+    expect(state.endpointQueryDraft?.availability).toBe('notApplicable');
+    expect(state.endpointQueryDraft?.controls.responseShape.mode).toBe('locked');
   });
 
-  it('should not detect detail path for list endpoints', () => {
+  it('should mark collection endpoints available', () => {
     ({ state, cleanup } = createTestState());
     flushSync();
 
     state.openEndpoint(state.endpoints[0]);
     flushSync();
 
-    expect(state.responseShapeLocked).toBe(false);
+    expect(state.endpointQueryDraft?.availability).toBe('available');
+    expect(state.endpointQueryDraft?.controls.queryParameters.mode).toBe('editable');
   });
 
-  it('should block handleSetResponseShape when path is a detail path', () => {
+  it('should block handleSetResponseShape when availability locks the response shape', () => {
     endpointsStore.set([
-      makeEndpoint({ id: 'ep-1', apiId: 'api-1', method: 'GET', path: '/users/{user_id}', responseShape: 'object' })
+      makeEndpoint({
+        id: 'ep-1',
+        apiId: 'api-1',
+        method: 'GET',
+        path: '/users/{id}',
+        targetObjectId: 'obj-users',
+        pathParams: [{ name: 'id', fieldMemberId: 'member-id' }],
+        responseShape: 'object'
+      })
     ]);
     flushSync();
 
@@ -1080,20 +1235,19 @@ describe('apiDetailState - Detail Path Detection', () => {
     state.openEndpoint(state.endpoints[0]);
     flushSync();
 
-    expect(state.responseShapeLocked).toBe(true);
+    expect(state.endpointQueryDraft?.controls.responseShape.mode).toBe('locked');
 
     state.handleSetResponseShape('list');
     flushSync();
 
-    // Should remain 'object' because detail path locks the toggle
     expect(state.editedEndpoint!.responseShape).toBe('object');
   });
 
-  it('should be false when no endpoint is open', () => {
+  it('should be null when no endpoint is open', () => {
     ({ state, cleanup } = createTestState());
     flushSync();
 
-    expect(state.responseShapeLocked).toBe(false);
+    expect(state.endpointQueryDraft).toBeNull();
   });
 });
 
@@ -1103,30 +1257,108 @@ describe('apiDetailState - Query Param from Field', () => {
 
   beforeEach(() => {
     apisStore.set([makeApi({ id: 'api-1' })]);
+    fieldsStore.set([
+      {
+        id: 'field-id',
+        namespaceId: 'ns-1',
+        name: 'id',
+        type: 'uuid',
+        container: null,
+        constraints: [],
+        validators: [],
+        usedInApis: []
+      },
+      {
+        id: 'field-price',
+        namespaceId: 'ns-1',
+        name: 'price',
+        type: 'float',
+        container: null,
+        constraints: [],
+        validators: [],
+        usedInApis: []
+      },
+      {
+        id: 'field-category',
+        namespaceId: 'ns-1',
+        name: 'category',
+        type: 'str',
+        container: null,
+        constraints: [],
+        validators: [],
+        usedInApis: []
+      }
+    ]);
+    objectsStore.set([
+      {
+        id: 'obj-items',
+        namespaceId: 'ns-1',
+        name: 'Item',
+        members: [
+          {
+            id: 'member-id',
+            memberType: 'field',
+            name: 'id',
+            fieldId: 'field-id',
+            role: 'pk',
+            isNullable: false
+          },
+          {
+            id: 'member-price',
+            memberType: 'field',
+            name: 'price',
+            fieldId: 'field-price',
+            role: 'writable',
+            isNullable: false
+          },
+          {
+            id: 'member-category',
+            memberType: 'field',
+            name: 'category',
+            fieldId: 'field-category',
+            role: 'writable',
+            isNullable: false
+          }
+        ],
+        derivedRelationships: [],
+        validators: [],
+        usedInApis: []
+      }
+    ]);
     endpointsStore.set([
-      makeEndpoint({ id: 'ep-1', apiId: 'api-1', method: 'GET', path: '/items', responseShape: 'list' })
+      makeEndpoint({
+        id: 'ep-1',
+        apiId: 'api-1',
+        method: 'GET',
+        path: '/items',
+        responseShape: 'list',
+        targetObjectId: 'obj-items'
+      })
     ]);
     flushSync();
   });
   afterEach(() => cleanup?.());
 
-  it('should add query param with name and field pre-populated from field name', () => {
+  it('should add query param with name and Field Member pre-populated', () => {
     ({ state, cleanup } = createTestState());
     flushSync();
 
     state.openEndpoint(state.endpoints[0]);
     flushSync();
+    state.handleSelectObject('obj-items');
+    flushSync();
 
     expect(state.editedEndpoint!.queryParams).toEqual([]);
 
-    state.handleAddQueryParamFromField('price');
+    state.handleAddQueryParamFromField('member-price');
     flushSync();
 
     expect(state.editedEndpoint!.queryParams).toHaveLength(1);
     expect(state.editedEndpoint!.queryParams[0]).toEqual({
       name: 'price',
-      field: 'price',
-      operator: 'eq'
+      fieldMemberId: 'member-price',
+      operator: 'eq',
+      required: false
     });
   });
 
@@ -1136,14 +1368,16 @@ describe('apiDetailState - Query Param from Field', () => {
 
     state.openEndpoint(state.endpoints[0]);
     flushSync();
-
-    state.handleAddQueryParamFromField('price');
+    state.handleSelectObject('obj-items');
     flushSync();
-    state.handleAddQueryParamFromField('category');
+
+    state.handleAddQueryParamFromField('member-price');
+    flushSync();
+    state.handleAddQueryParamFromField('member-category');
     flushSync();
 
     expect(state.editedEndpoint!.queryParams).toHaveLength(2);
     expect(state.editedEndpoint!.queryParams[1].name).toBe('category');
-    expect(state.editedEndpoint!.queryParams[1].field).toBe('category');
+    expect(state.editedEndpoint!.queryParams[1].fieldMemberId).toBe('member-category');
   });
 });

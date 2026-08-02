@@ -4,13 +4,16 @@ Median Code monorepo. Combines the former `mediancode-backend` and `mediancode-f
 
 ## What lives here
 
-- `backend/` — FastAPI service. See [backend/README.md](backend/README.md).
-- `frontend/` — SvelteKit app. See [frontend/README.md](frontend/README.md).
-- `api-spec.yaml` — OpenAPI contract, source of truth. Generated from backend; never edit by hand.
-- `docs/` — cross-cutting docs (philosophy, standards, protocols, work artifacts).
-- `Makefile` — parallel dev/test entry points across both apps.
-- `.github/workflows/` — path-filtered CI per app.
-- `CLAUDE.md` / `AGENTS.md` — cross-cutting agent guidance.
+| Path | Purpose |
+|------|---------|
+| `backend/` | FastAPI service; see [backend/README.md](backend/README.md) |
+| `frontend/` | SvelteKit app; see [frontend/README.md](frontend/README.md) |
+| `api-spec.yaml` | Backend-generated OpenAPI contract; frontend-consumed source of truth |
+| `docs/` | Cross-cutting architecture, standards, protocols, and work records |
+| `.github/workflows/` | Path-filtered CI plus backend and frontend deployment |
+| `.githooks/` | Root Git hooks delegating into backend and frontend commands |
+| `Makefile` | Root entry points delegating to app-level commands |
+| `AGENTS.md`, `CLAUDE.md`, `CONTEXT.md` | Cross-cutting agent and domain guidance |
 
 ## Quickstart
 
@@ -27,6 +30,8 @@ make test
 
 Per-app docs: `backend/CLAUDE.md`, `backend/AGENTS.md`, `backend/README.md`, `frontend/README.md`.
 
+Repo file placement policy: [docs/architecture/app-root-file-policy.md](docs/architecture/app-root-file-policy.md).
+
 ## API contract
 
 `api-spec.yaml` at repo root is the single source of truth. The backend regenerates it from FastAPI routes; the frontend consumes it for type generation. Changes to it trigger both CI pipelines.
@@ -36,7 +41,9 @@ Per-app docs: `backend/CLAUDE.md`, `backend/AGENTS.md`, `backend/README.md`, `fr
 - `main` — production
 - `develop` — integration / preview environments
 
-Path-filtered CI: only the affected app's pipeline runs when a PR touches one side; both run when `api-spec.yaml` or root files change.
+Path-filtered CI: only the affected app's pipeline runs when a PR touches one
+side; both run when `api-spec.yaml` or root files change. Successful pushes to
+`develop` and `main` deploy through GitHub Actions.
 
 ## History
 

@@ -32,9 +32,7 @@ class NamespaceService(BaseService[Namespace]):
         :param user_id: The authenticated user's ID.
         :returns: List of user's namespaces.
         """
-        query = select(Namespace).where(Namespace.user_id == user_id)
-        result = await self.db.execute(query)
-        return list(result.scalars().all())
+        return await self.namespace_access.list_owned_namespaces(user_id)
 
     async def get_by_id_for_user(
         self, namespace_id: str, user_id: UUID
@@ -45,12 +43,7 @@ class NamespaceService(BaseService[Namespace]):
         :param user_id: The authenticated user's ID.
         :returns: The namespace if owned by user, None otherwise.
         """
-        query = select(Namespace).where(
-            Namespace.id == namespace_id,
-            Namespace.user_id == user_id,
-        )
-        result = await self.db.execute(query)
-        return result.scalar_one_or_none()
+        return await self.namespace_access.get_owned_namespace(namespace_id, user_id)
 
     async def create_for_user(self, user_id: UUID, data: NamespaceCreate) -> Namespace:
         """Create a new namespace for a user.
@@ -117,8 +110,14 @@ class NamespaceService(BaseService[Namespace]):
                 )
 
         if data.name is not None and data.name != namespace.name:
+            owner_id = namespace.user_id
+            if owner_id is None:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="Cannot rename a namespace without an owner",
+                )
             if await self._name_exists_for_user(
-                namespace.user_id, data.name, exclude_id=namespace.id
+                owner_id, data.name, exclude_id=namespace.id
             ):
                 raise HTTPException(
                     status_code=status.HTTP_400_BAD_REQUEST,
@@ -203,7 +202,7 @@ class NamespaceService(BaseService[Namespace]):
         result = await self.db.execute(query)
         return result.scalar() is not None
 
-    async def _count_entities(self, namespace_id: str) -> dict[str, int]:
+    async def _count_entities(self, namespace_id: UUID) -> dict[str, int]:
         """Count all entity types in a namespace.
 
         :param namespace_id: The namespace ID.
@@ -216,10 +215,11 @@ class NamespaceService(BaseService[Namespace]):
             (ObjectDefinition, "objects"),
             (ApiModel, "apis"),
         ]:
+            namespace_field = getattr(model, "namespace_id")
             query = (
                 select(func.count())
                 .select_from(model)
-                .where(model.namespace_id == namespace_id)
+                .where(namespace_field == namespace_id)
             )
             result = await self.db.execute(query)
             counts[name] = result.scalar() or 0

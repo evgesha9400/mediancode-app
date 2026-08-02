@@ -26,7 +26,7 @@
   let hasObjects = $derived($objectsStore.length > 0);
   let hasApis = $derived($apisStore.length > 0);
   let hasConfiguredEndpoint = $derived(
-    $endpointsStore.some(e => !!e.objectId)
+    $endpointsStore.some(e => !!e.targetObjectId)
   );
 
   // API readiness computation
@@ -34,7 +34,7 @@
     $apisStore
       .map(api => {
         const endpoints = $endpointsStore.filter(e => e.apiId === api.id);
-        const readyEndpoints = endpoints.filter(e => e.objectId);
+        const readyEndpoints = endpoints.filter(e => e.targetObjectId);
         let status: 'ready' | 'needs-endpoints' | 'incomplete';
         if (endpoints.length === 0) {
           status = 'needs-endpoints';

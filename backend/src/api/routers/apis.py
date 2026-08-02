@@ -17,7 +17,7 @@ from api.schemas.api import ApiCreate, ApiResponse, ApiUpdate, GenerateOptions
 from api.services.api import ApiService, get_api_service
 from api.services.user import UserService
 from api.settings import get_settings
-from api_craft.utils import camel_to_kebab
+from meta_framework.generation_targets.fastapi_python.utils import camel_to_kebab
 
 router = APIRouter(prefix="/apis", tags=["APIs"])
 
@@ -140,13 +140,6 @@ async def update_api(
             detail=f"API with ID '{api_id}' not found",
         )
 
-    # Verify ownership
-    if api.user_id != user.id:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Cannot modify this API",
-        )
-
     updated = await service.update_api(api, data)
     return ApiResponse.model_validate(updated)
 
@@ -175,13 +168,6 @@ async def delete_api(
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"API with ID '{api_id}' not found",
-        )
-
-    # Verify ownership
-    if api.user_id != user.id:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Cannot delete this API",
         )
 
     await service.delete_api(api)
@@ -239,7 +225,7 @@ async def generate_api_code(
     except ValidationError as exc:
         messages = [e["msg"] for e in exc.errors()]
         raise HTTPException(
-            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
             detail="; ".join(messages),
         )
 

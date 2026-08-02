@@ -404,6 +404,7 @@ class SeedResult:
 
     namespace_id: str = ""
     field_ids: dict[str, str] = dataclass_field(default_factory=dict)
+    field_member_ids: dict[str, dict[str, str]] = dataclass_field(default_factory=dict)
     object_ids: dict[str, str] = dataclass_field(default_factory=dict)
     api_id: str = ""
     endpoint_ids: dict[str, str] = dataclass_field(default_factory=dict)
@@ -473,7 +474,7 @@ async def seed_shop(client: AsyncClient) -> SeedResult:
         members = []
         for fref in obj_def["fields"]:
             member: dict = {
-                "memberType": "scalar",
+                "memberType": "field",
                 "name": fref["field_name"],
                 "fieldId": result.field_ids[fref["field_name"]],
                 "role": fref["role"],
@@ -501,6 +502,11 @@ async def seed_shop(client: AsyncClient) -> SeedResult:
         resp = await client.post("/objects", json=payload)
         obj = _check(resp, "object", obj_def["name"])
         result.object_ids[obj_def["name"]] = obj["id"]
+        result.field_member_ids[obj_def["name"]] = {
+            member["name"]: member["id"]
+            for member in obj["members"]
+            if member["memberType"] == "field"
+        }
 
     # Second pass: add relationship members to Customer via PUT
     customer_id = result.object_ids["Customer"]
@@ -541,7 +547,10 @@ async def seed_shop(client: AsyncClient) -> SeedResult:
 
     for ep_def in ENDPOINTS:
         path_params = [
-            {"name": pp["name"], "fieldId": result.field_ids[pp["field"]]}
+            {
+                "name": pp["name"],
+                "fieldMemberId": result.field_member_ids[ep_def["object"]][pp["field"]],
+            }
             for pp in ep_def["path_params"]
         ]
         payload = {
@@ -550,12 +559,12 @@ async def seed_shop(client: AsyncClient) -> SeedResult:
             "path": ep_def["path"],
             "description": ep_def["description"],
             "tagName": ep_def["tag"],
+            "targetObjectId": result.object_ids[ep_def["object"]],
             "pathParams": path_params,
+            "queryParams": [],
             "useEnvelope": False,
             "responseShape": ep_def["response_shape"],
         }
-        if ep_def["object"] is not None:
-            payload["objectId"] = result.object_ids[ep_def["object"]]
         resp = await client.post("/endpoints", json=payload)
         ep = _check(resp, "endpoint", f"{ep_def['method']} {ep_def['path']}")
         result.endpoint_ids[f"{ep_def['method']} {ep_def['path']}"] = ep["id"]

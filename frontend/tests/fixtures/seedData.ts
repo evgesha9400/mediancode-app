@@ -389,12 +389,12 @@ export const initialObjects: ObjectDefinition[] = [
 		name: 'User',
 		description: 'User account information',
 		members: [
-			{ memberType: 'scalar' as const, name: 'user_id', fieldId: SEED_FIELD_IDS.user_id, role: 'writable' as const, isNullable: false },
-			{ memberType: 'scalar' as const, name: 'username', fieldId: SEED_FIELD_IDS.username, role: 'writable' as const, isNullable: false },
-			{ memberType: 'scalar' as const, name: 'email', fieldId: SEED_FIELD_IDS.email, role: 'writable' as const, isNullable: false },
-			{ memberType: 'scalar' as const, name: 'password', fieldId: SEED_FIELD_IDS.password, role: 'writable' as const, isNullable: false },
-			{ memberType: 'scalar' as const, name: 'created_at', fieldId: SEED_FIELD_IDS.created_at, role: 'writable' as const, isNullable: false },
-			{ memberType: 'scalar' as const, name: 'updated_at', fieldId: SEED_FIELD_IDS.updated_at, role: 'writable' as const, isNullable: true }
+			{ memberType: 'field' as const, name: 'user_id', fieldId: SEED_FIELD_IDS.user_id, role: 'writable' as const, isNullable: false },
+			{ memberType: 'field' as const, name: 'username', fieldId: SEED_FIELD_IDS.username, role: 'writable' as const, isNullable: false },
+			{ memberType: 'field' as const, name: 'email', fieldId: SEED_FIELD_IDS.email, role: 'writable' as const, isNullable: false },
+			{ memberType: 'field' as const, name: 'password', fieldId: SEED_FIELD_IDS.password, role: 'writable' as const, isNullable: false },
+			{ memberType: 'field' as const, name: 'created_at', fieldId: SEED_FIELD_IDS.created_at, role: 'writable' as const, isNullable: false },
+			{ memberType: 'field' as const, name: 'updated_at', fieldId: SEED_FIELD_IDS.updated_at, role: 'writable' as const, isNullable: true }
 		],
 		derivedRelationships: [],
 		validators: [],
@@ -406,10 +406,10 @@ export const initialObjects: ObjectDefinition[] = [
 		name: 'Product',
 		description: 'Product catalog item',
 		members: [
-			{ memberType: 'scalar' as const, name: 'price', fieldId: SEED_FIELD_IDS.price, role: 'writable' as const, isNullable: false },
-			{ memberType: 'scalar' as const, name: 'status', fieldId: SEED_FIELD_IDS.status, role: 'writable' as const, isNullable: false },
-			{ memberType: 'scalar' as const, name: 'created_at', fieldId: SEED_FIELD_IDS.created_at, role: 'writable' as const, isNullable: false },
-			{ memberType: 'scalar' as const, name: 'updated_at', fieldId: SEED_FIELD_IDS.updated_at, role: 'writable' as const, isNullable: true }
+			{ memberType: 'field' as const, name: 'price', fieldId: SEED_FIELD_IDS.price, role: 'writable' as const, isNullable: false },
+			{ memberType: 'field' as const, name: 'status', fieldId: SEED_FIELD_IDS.status, role: 'writable' as const, isNullable: false },
+			{ memberType: 'field' as const, name: 'created_at', fieldId: SEED_FIELD_IDS.created_at, role: 'writable' as const, isNullable: false },
+			{ memberType: 'field' as const, name: 'updated_at', fieldId: SEED_FIELD_IDS.updated_at, role: 'writable' as const, isNullable: true }
 		],
 		derivedRelationships: [],
 		validators: [],
@@ -421,11 +421,11 @@ export const initialObjects: ObjectDefinition[] = [
 		name: 'Order',
 		description: 'Customer order details',
 		members: [
-			{ memberType: 'scalar' as const, name: 'user_id', fieldId: SEED_FIELD_IDS.user_id, role: 'writable' as const, isNullable: false },
-			{ memberType: 'scalar' as const, name: 'status', fieldId: SEED_FIELD_IDS.status, role: 'writable' as const, isNullable: false },
-			{ memberType: 'scalar' as const, name: 'price', fieldId: SEED_FIELD_IDS.price, role: 'writable' as const, isNullable: false },
-			{ memberType: 'scalar' as const, name: 'created_at', fieldId: SEED_FIELD_IDS.created_at, role: 'writable' as const, isNullable: false },
-			{ memberType: 'scalar' as const, name: 'updated_at', fieldId: SEED_FIELD_IDS.updated_at, role: 'writable' as const, isNullable: true }
+			{ memberType: 'field' as const, name: 'user_id', fieldId: SEED_FIELD_IDS.user_id, role: 'writable' as const, isNullable: false },
+			{ memberType: 'field' as const, name: 'status', fieldId: SEED_FIELD_IDS.status, role: 'writable' as const, isNullable: false },
+			{ memberType: 'field' as const, name: 'price', fieldId: SEED_FIELD_IDS.price, role: 'writable' as const, isNullable: false },
+			{ memberType: 'field' as const, name: 'created_at', fieldId: SEED_FIELD_IDS.created_at, role: 'writable' as const, isNullable: false },
+			{ memberType: 'field' as const, name: 'updated_at', fieldId: SEED_FIELD_IDS.updated_at, role: 'writable' as const, isNullable: true }
 		],
 		derivedRelationships: [],
 		validators: [],
@@ -437,9 +437,9 @@ export const initialObjects: ObjectDefinition[] = [
 		name: 'Customer',
 		description: 'Customer profile information',
 		members: [
-			{ memberType: 'scalar' as const, name: 'email', fieldId: SEED_FIELD_IDS.email, role: 'writable' as const, isNullable: false },
-			{ memberType: 'scalar' as const, name: 'phone', fieldId: SEED_FIELD_IDS.phone, role: 'writable' as const, isNullable: true },
-			{ memberType: 'scalar' as const, name: 'created_at', fieldId: SEED_FIELD_IDS.created_at, role: 'writable' as const, isNullable: false },
+			{ memberType: 'field' as const, name: 'email', fieldId: SEED_FIELD_IDS.email, role: 'writable' as const, isNullable: false },
+			{ memberType: 'field' as const, name: 'phone', fieldId: SEED_FIELD_IDS.phone, role: 'writable' as const, isNullable: true },
+			{ memberType: 'field' as const, name: 'created_at', fieldId: SEED_FIELD_IDS.created_at, role: 'writable' as const, isNullable: false },
 		],
 		derivedRelationships: [],
 		validators: [],
@@ -451,9 +451,9 @@ export const initialObjects: ObjectDefinition[] = [
 		name: 'Payment',
 		description: 'Payment transaction record',
 		members: [
-			{ memberType: 'scalar' as const, name: 'price', fieldId: SEED_FIELD_IDS.price, role: 'writable' as const, isNullable: false },
-			{ memberType: 'scalar' as const, name: 'status', fieldId: SEED_FIELD_IDS.status, role: 'writable' as const, isNullable: false },
-			{ memberType: 'scalar' as const, name: 'created_at', fieldId: SEED_FIELD_IDS.created_at, role: 'writable' as const, isNullable: false },
+			{ memberType: 'field' as const, name: 'price', fieldId: SEED_FIELD_IDS.price, role: 'writable' as const, isNullable: false },
+			{ memberType: 'field' as const, name: 'status', fieldId: SEED_FIELD_IDS.status, role: 'writable' as const, isNullable: false },
+			{ memberType: 'field' as const, name: 'created_at', fieldId: SEED_FIELD_IDS.created_at, role: 'writable' as const, isNullable: false },
 		],
 		derivedRelationships: [],
 		validators: [],
@@ -465,8 +465,8 @@ export const initialObjects: ObjectDefinition[] = [
 		name: 'Address',
 		description: 'Physical address information',
 		members: [
-			{ memberType: 'scalar' as const, name: 'website', fieldId: SEED_FIELD_IDS.website, role: 'writable' as const, isNullable: true },
-			{ memberType: 'scalar' as const, name: 'phone', fieldId: SEED_FIELD_IDS.phone, role: 'writable' as const, isNullable: true },
+			{ memberType: 'field' as const, name: 'website', fieldId: SEED_FIELD_IDS.website, role: 'writable' as const, isNullable: true },
+			{ memberType: 'field' as const, name: 'phone', fieldId: SEED_FIELD_IDS.phone, role: 'writable' as const, isNullable: true },
 		],
 		derivedRelationships: [],
 		validators: [],
@@ -478,10 +478,10 @@ export const initialObjects: ObjectDefinition[] = [
 		name: 'Company',
 		description: 'Company profile',
 		members: [
-			{ memberType: 'scalar' as const, name: 'website', fieldId: SEED_FIELD_IDS.website, role: 'writable' as const, isNullable: false },
-			{ memberType: 'scalar' as const, name: 'phone', fieldId: SEED_FIELD_IDS.phone, role: 'writable' as const, isNullable: true },
-			{ memberType: 'scalar' as const, name: 'email', fieldId: SEED_FIELD_IDS.email, role: 'writable' as const, isNullable: false },
-			{ memberType: 'scalar' as const, name: 'created_at', fieldId: SEED_FIELD_IDS.created_at, role: 'writable' as const, isNullable: false },
+			{ memberType: 'field' as const, name: 'website', fieldId: SEED_FIELD_IDS.website, role: 'writable' as const, isNullable: false },
+			{ memberType: 'field' as const, name: 'phone', fieldId: SEED_FIELD_IDS.phone, role: 'writable' as const, isNullable: true },
+			{ memberType: 'field' as const, name: 'email', fieldId: SEED_FIELD_IDS.email, role: 'writable' as const, isNullable: false },
+			{ memberType: 'field' as const, name: 'created_at', fieldId: SEED_FIELD_IDS.created_at, role: 'writable' as const, isNullable: false },
 		],
 		derivedRelationships: [],
 		validators: [],
@@ -493,10 +493,10 @@ export const initialObjects: ObjectDefinition[] = [
 		name: 'Invoice',
 		description: 'Billing invoice',
 		members: [
-			{ memberType: 'scalar' as const, name: 'price', fieldId: SEED_FIELD_IDS.price, role: 'writable' as const, isNullable: false },
-			{ memberType: 'scalar' as const, name: 'status', fieldId: SEED_FIELD_IDS.status, role: 'writable' as const, isNullable: false },
-			{ memberType: 'scalar' as const, name: 'created_at', fieldId: SEED_FIELD_IDS.created_at, role: 'writable' as const, isNullable: false },
-			{ memberType: 'scalar' as const, name: 'updated_at', fieldId: SEED_FIELD_IDS.updated_at, role: 'writable' as const, isNullable: true }
+			{ memberType: 'field' as const, name: 'price', fieldId: SEED_FIELD_IDS.price, role: 'writable' as const, isNullable: false },
+			{ memberType: 'field' as const, name: 'status', fieldId: SEED_FIELD_IDS.status, role: 'writable' as const, isNullable: false },
+			{ memberType: 'field' as const, name: 'created_at', fieldId: SEED_FIELD_IDS.created_at, role: 'writable' as const, isNullable: false },
+			{ memberType: 'field' as const, name: 'updated_at', fieldId: SEED_FIELD_IDS.updated_at, role: 'writable' as const, isNullable: true }
 		],
 		derivedRelationships: [],
 		validators: [],
@@ -509,9 +509,9 @@ export const initialObjects: ObjectDefinition[] = [
 		name: 'ProductCatalogItem',
 		description: 'Product catalog item in user namespace',
 		members: [
-			{ memberType: 'scalar' as const, name: 'product_name', fieldId: SEED_FIELD_IDS.product_name, role: 'writable' as const, isNullable: false },
-			{ memberType: 'scalar' as const, name: 'quantity', fieldId: SEED_FIELD_IDS.quantity, role: 'writable' as const, isNullable: false },
-			{ memberType: 'scalar' as const, name: 'product_price', fieldId: SEED_FIELD_IDS.product_price, role: 'writable' as const, isNullable: false }
+			{ memberType: 'field' as const, name: 'product_name', fieldId: SEED_FIELD_IDS.product_name, role: 'writable' as const, isNullable: false },
+			{ memberType: 'field' as const, name: 'quantity', fieldId: SEED_FIELD_IDS.quantity, role: 'writable' as const, isNullable: false },
+			{ memberType: 'field' as const, name: 'product_price', fieldId: SEED_FIELD_IDS.product_price, role: 'writable' as const, isNullable: false }
 		],
 		derivedRelationships: [],
 		validators: [],

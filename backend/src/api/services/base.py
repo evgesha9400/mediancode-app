@@ -4,13 +4,11 @@
 from typing import Any, Generic, TypeVar
 from uuid import UUID
 
-from fastapi import HTTPException, status
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from api.database import Base
-from api.models.database import Namespace
-from api.settings import get_settings
+from api.services.namespace_access import NamespaceAccess
 
 ModelT = TypeVar("ModelT", bound=Base)
 
@@ -29,6 +27,7 @@ class BaseService(Generic[ModelT]):
         :param db: Async database session.
         """
         self.db = db
+        self.namespace_access = NamespaceAccess(db)
 
     async def get_by_id(
         self, entity_id: str, user_id: UUID | None = None
@@ -39,9 +38,11 @@ class BaseService(Generic[ModelT]):
         :param user_id: Optional user ID for filtering.
         :returns: The entity if found, None otherwise.
         """
-        query = select(self.model_class).where(self.model_class.id == entity_id)
+        id_field = getattr(self.model_class, "id")
+        query = select(self.model_class).where(id_field == entity_id)
         if user_id and hasattr(self.model_class, "user_id"):
-            query = query.where(self.model_class.user_id == user_id)
+            user_id_field = getattr(self.model_class, "user_id")
+            query = query.where(user_id_field == user_id)
         result = await self.db.execute(query)
         return result.scalar_one_or_none()
 
@@ -58,29 +59,13 @@ class BaseService(Generic[ModelT]):
         """
         query = select(self.model_class)
         if user_id and hasattr(self.model_class, "user_id"):
-            query = query.where(self.model_class.user_id == user_id)
+            user_id_field = getattr(self.model_class, "user_id")
+            query = query.where(user_id_field == user_id)
         if namespace_id and hasattr(self.model_class, "namespace_id"):
-            query = query.where(self.model_class.namespace_id == namespace_id)
+            namespace_id_field = getattr(self.model_class, "namespace_id")
+            query = query.where(namespace_id_field == namespace_id)
         result = await self.db.execute(query)
         return list(result.scalars().all())
-
-    def _assert_mutable(self, entity: ModelT) -> None:
-        """Raise 403 if the entity belongs to the system namespace.
-
-        Entities without a ``namespace_id`` attribute (e.g. association rows)
-        are always considered mutable.
-
-        :param entity: The entity to check.
-        :raises HTTPException: If entity belongs to the system namespace.
-        """
-        if not hasattr(entity, "namespace_id"):
-            return
-        settings = get_settings()
-        if str(entity.namespace_id) == str(settings.system_namespace_id):
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
-                detail="System namespace entities are immutable",
-            )
 
     async def create(self, data: dict[str, Any]) -> ModelT:
         """Create a new entity.
@@ -89,7 +74,7 @@ class BaseService(Generic[ModelT]):
         :returns: The created entity.
         """
         entity = self.model_class(**data)
-        self._assert_mutable(entity)
+        self.namespace_access.assert_mutable(entity)
         self.db.add(entity)
         await self.db.flush()
         await self.db.refresh(entity)
@@ -102,7 +87,7 @@ class BaseService(Generic[ModelT]):
         :param data: Dictionary of field values to update.
         :returns: The updated entity.
         """
-        self._assert_mutable(entity)
+        self.namespace_access.assert_mutable(entity)
         for key, value in data.items():
             if value is not None:
                 setattr(entity, key, value)
@@ -115,37 +100,9 @@ class BaseService(Generic[ModelT]):
 
         :param entity: The entity to delete.
         """
-        self._assert_mutable(entity)
+        self.namespace_access.assert_mutable(entity)
         await self.db.delete(entity)
         await self.db.flush()
-
-    async def validate_namespace_for_creation(
-        self, namespace_id: Any, user_id: UUID
-    ) -> Namespace:
-        """Validate namespace ownership for entity creation.
-
-        The ``Namespace.user_id == user_id`` filter implicitly excludes the
-        system namespace (where ``user_id IS NULL``), so no explicit system
-        namespace check is needed.
-
-        :param namespace_id: The namespace ID to validate.
-        :param user_id: The authenticated user's ID.
-        :returns: The validated namespace.
-        :raises HTTPException: If namespace not found or not owned by user.
-        """
-        result = await self.db.execute(
-            select(Namespace).where(
-                Namespace.id == namespace_id,
-                Namespace.user_id == user_id,
-            )
-        )
-        namespace = result.scalar_one_or_none()
-        if namespace is None:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Namespace not found or not owned by user",
-            )
-        return namespace
 
     async def count_by_field(self, field_name: str, field_value: Any) -> int:
         """Count entities matching a field value.

@@ -17,10 +17,15 @@ describe('QueryParametersEditor Component', () => {
 			const props: QueryParametersEditorProps = {
 				queryParams: [],
 				targetFields: [],
-				objectFields: [],
-				responseShape: 'list',
+				controls: {
+					queryParameters: { mode: 'editable' },
+					pagination: { mode: 'editable' },
+					responseShape: { mode: 'locked', value: 'list', reason: 'Queryable endpoints return a list' },
+					responsePreview: { requestBodyVisible: false, responseBodyVisible: true, emptyMessage: '', targetNote: '' }
+				},
 				pagination: false,
 				validationErrors: [],
+				blockIssues: [],
 				onAddFromField: () => {},
 				onUpdate: () => {},
 				onRemove: () => {},
@@ -28,7 +33,7 @@ describe('QueryParametersEditor Component', () => {
 			};
 
 			expect(props.queryParams).toEqual([]);
-			expect(props.responseShape).toBe('list');
+			expect(props.controls.queryParameters.mode).toBe('editable');
 			expect(props.pagination).toBe(false);
 			expect(typeof props.onAddFromField).toBe('function');
 			expect(typeof props.onTogglePagination).toBe('function');
@@ -37,15 +42,17 @@ describe('QueryParametersEditor Component', () => {
 		it('QueryParametersEditorProps accepts query param data', () => {
 			const props: QueryParametersEditorProps = {
 				queryParams: [
-					{ name: 'min_price', field: 'price', operator: 'gte' }
+					{ name: 'min_price', fieldMemberId: 'fm-price', operator: 'gte', required: false }
 				],
 				targetFields: [
-					{ name: 'price', type: 'float', isPk: false }
+					{ id: 'fm-price', name: 'price', type: 'float', isPrimary: false }
 				],
-				objectFields: [
-					{ id: 'f-1', namespaceId: 'ns', name: 'price', type: 'float', container: null, constraints: [], validators: [], usedInApis: [] }
-				],
-				responseShape: 'list',
+				controls: {
+					queryParameters: { mode: 'editable' },
+					pagination: { mode: 'editable' },
+					responseShape: { mode: 'locked', value: 'list', reason: 'Queryable endpoints return a list' },
+					responsePreview: { requestBodyVisible: false, responseBodyVisible: true, emptyMessage: '', targetNote: '' }
+				},
 				pagination: true,
 				validationErrors: [],
 				onAddFromField: () => {},
@@ -55,13 +62,12 @@ describe('QueryParametersEditor Component', () => {
 			};
 
 			expect(props.queryParams).toHaveLength(1);
-			expect(props.queryParams[0].field).toBe('price');
+			expect(props.queryParams[0].fieldMemberId).toBe('fm-price');
 			expect(props.pagination).toBe(true);
-			expect(props.objectFields).toHaveLength(1);
 		});
 
 		it('QueryParametersEditorProps handlers receive correct arguments', () => {
-			let addFieldName: string | undefined;
+			let addFieldMemberId: string | undefined;
 			let updateArgs: { index: number; updates: any } | undefined;
 			let removeIndex: number | undefined;
 			let paginationToggled = false;
@@ -69,21 +75,25 @@ describe('QueryParametersEditor Component', () => {
 			const props: QueryParametersEditorProps = {
 				queryParams: [],
 				targetFields: [],
-				objectFields: [],
-				responseShape: 'list',
+				controls: {
+					queryParameters: { mode: 'editable' },
+					pagination: { mode: 'editable' },
+					responseShape: { mode: 'locked', value: 'list', reason: 'Queryable endpoints return a list' },
+					responsePreview: { requestBodyVisible: false, responseBodyVisible: true, emptyMessage: '', targetNote: '' }
+				},
 				pagination: false,
 				validationErrors: [],
-				onAddFromField: (fieldName) => { addFieldName = fieldName; },
+				onAddFromField: (fieldMemberId) => { addFieldMemberId = fieldMemberId; },
 				onUpdate: (index, updates) => { updateArgs = { index, updates }; },
 				onRemove: (index) => { removeIndex = index; },
 				onTogglePagination: () => { paginationToggled = true; }
 			};
 
-			props.onAddFromField('price');
-			expect(addFieldName).toBe('price');
+			props.onAddFromField('fm-price');
+			expect(addFieldMemberId).toBe('fm-price');
 
-			props.onUpdate(0, { field: 'price' });
-			expect(updateArgs).toEqual({ index: 0, updates: { field: 'price' } });
+			props.onUpdate(0, { fieldMemberId: 'fm-price' });
+			expect(updateArgs).toEqual({ index: 0, updates: { fieldMemberId: 'fm-price' } });
 
 			props.onRemove(1);
 			expect(removeIndex).toBe(1);
@@ -103,8 +113,12 @@ describe('QueryParametersEditor Component', () => {
 			const props: QueryParametersEditorProps = {
 				queryParams: [],
 				targetFields: [],
-				objectFields: [],
-				responseShape: 'list',
+				controls: {
+					queryParameters: { mode: 'editable' },
+					pagination: { mode: 'editable' },
+					responseShape: { mode: 'locked', value: 'list', reason: 'Queryable endpoints return a list' },
+					responsePreview: { requestBodyVisible: false, responseBodyVisible: true, emptyMessage: '', targetNote: '' }
+				},
 				pagination: false,
 				validationErrors: [],
 				onAddFromField: () => {},

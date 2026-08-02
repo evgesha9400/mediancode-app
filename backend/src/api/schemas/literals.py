@@ -1,17 +1,17 @@
 # src/api/schemas/literals.py
-"""Re-exports canonical Literal types from api_craft.models.enums.
+"""Re-export canonical Literal types from the FastAPI Python target.
 
-The single source of truth lives in api_craft so the generation library
-has no dependency on the api service layer.  Downstream api code can
-continue to import from here without changes.
+Downstream API code imports these aliases from the service layer while the
+canonical values remain owned by the current Generation Target.
 """
 
-from api_craft.models.enums import (  # noqa: F401
+from meta_framework.generation_targets.fastapi_python.models.enums import (  # noqa: F401
     Cardinality,
     Container,
     FieldAppearance,
     FieldExposure,
     FieldRole,
+    FilterOperator,
     GeneratedStrategy,
     HttpMethod,
     OnDeleteAction,

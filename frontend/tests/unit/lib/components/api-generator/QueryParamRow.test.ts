@@ -15,14 +15,14 @@ describe('QueryParamRow Component', () => {
 	describe('TypeScript Interface', () => {
 		it('QueryParamRowProps interface accepts all required properties', () => {
 			const props: QueryParamRowProps = {
-				param: { name: 'min_price', field: 'price', operator: 'gte' },
+				param: { name: 'min_price', fieldMemberId: 'fm-price', operator: 'gte', required: false },
 				targetFields: [],
 				onUpdate: () => {},
 				onRemove: () => {}
 			};
 
 			expect(props.param.name).toBe('min_price');
-			expect(props.param.field).toBe('price');
+			expect(props.param.fieldMemberId).toBe('fm-price');
 			expect(props.param.operator).toBe('gte');
 			expect(props.targetFields).toEqual([]);
 			expect(typeof props.onUpdate).toBe('function');
@@ -31,11 +31,11 @@ describe('QueryParamRow Component', () => {
 
 		it('QueryParamRowProps accepts target field data', () => {
 			const props: QueryParamRowProps = {
-				param: { name: 'store_id', field: 'store_id', operator: 'eq' },
+				param: { name: 'store_id', fieldMemberId: 'fm-store-id', operator: 'eq', required: false },
 				targetFields: [
-					{ name: 'id', type: 'uuid', isPk: true },
-					{ name: 'store_id', type: 'uuid', isPk: false },
-					{ name: 'price', type: 'float', isPk: false }
+					{ id: 'fm-id', name: 'id', type: 'uuid', isPrimary: true },
+					{ id: 'fm-store-id', name: 'store_id', type: 'uuid', isPrimary: false },
+					{ id: 'fm-price', name: 'price', type: 'float', isPrimary: false }
 				],
 				onUpdate: () => {},
 				onRemove: () => {}
@@ -43,7 +43,7 @@ describe('QueryParamRow Component', () => {
 
 			expect(props.targetFields).toHaveLength(3);
 			expect(props.targetFields[0].name).toBe('id');
-			expect(props.targetFields[0].isPk).toBe(true);
+			expect(props.targetFields[0].isPrimary).toBe(true);
 			expect(props.targetFields[2].type).toBe('float');
 		});
 
@@ -51,7 +51,7 @@ describe('QueryParamRow Component', () => {
 			let receivedUpdates: Record<string, unknown> | undefined;
 
 			const props: QueryParamRowProps = {
-				param: { name: '', field: '', operator: 'eq' },
+				param: { name: '', fieldMemberId: '', operator: 'eq', required: false },
 				targetFields: [],
 				onUpdate: (updates) => {
 					receivedUpdates = updates;
@@ -62,15 +62,18 @@ describe('QueryParamRow Component', () => {
 			props.onUpdate({ name: 'status' });
 			expect(receivedUpdates).toEqual({ name: 'status' });
 
-			props.onUpdate({ field: 'price', operator: 'gte' });
-			expect(receivedUpdates).toEqual({ field: 'price', operator: 'gte' });
+			props.onUpdate({ fieldMemberId: 'fm-price', operator: 'gte' });
+			expect(receivedUpdates).toEqual({ fieldMemberId: 'fm-price', operator: 'gte' });
+
+			props.onUpdate({ required: true });
+			expect(receivedUpdates).toEqual({ required: true });
 		});
 
 		it('QueryParamRowProps onRemove is callable', () => {
 			let removeCalled = false;
 
 			const props: QueryParamRowProps = {
-				param: { name: 'test', field: 'test', operator: 'eq' },
+				param: { name: 'test', fieldMemberId: 'fm-test', operator: 'eq', required: false },
 				targetFields: [],
 				onUpdate: () => {},
 				onRemove: () => {
@@ -82,40 +85,12 @@ describe('QueryParamRow Component', () => {
 			expect(removeCalled).toBe(true);
 		});
 
-		it('QueryParamRowProps onSuggest is optional', () => {
-			const propsWithout: QueryParamRowProps = {
-				param: { name: '', field: '', operator: 'eq' },
-				targetFields: [],
-				onUpdate: () => {},
-				onRemove: () => {}
-			};
-
-			expect(propsWithout.onSuggest).toBeUndefined();
-		});
-
-		it('QueryParamRowProps onSuggest receives field and operator suggestion', () => {
-			let suggestion: { field: string; operator: string } | undefined;
-
-			const props: QueryParamRowProps = {
-				param: { name: '', field: '', operator: 'eq' },
-				targetFields: [],
-				onUpdate: () => {},
-				onRemove: () => {},
-				onSuggest: (s) => {
-					suggestion = s;
-				}
-			};
-
-			props.onSuggest!({ field: 'price', operator: 'gte' });
-			expect(suggestion).toEqual({ field: 'price', operator: 'gte' });
-		});
-
 		it('QueryParamRowProps param supports all filter operator values', () => {
 			const operators = ['eq', 'gte', 'lte', 'gt', 'lt', 'like', 'ilike', 'in'] as const;
 
 			operators.forEach((op) => {
 				const props: QueryParamRowProps = {
-					param: { name: 'test', field: 'test', operator: op },
+					param: { name: 'test', fieldMemberId: 'fm-test', operator: op, required: false },
 					targetFields: [],
 					onUpdate: () => {},
 					onRemove: () => {}
@@ -134,7 +109,7 @@ describe('QueryParamRow Component', () => {
 
 		it('QueryParamRowProps type exports correctly from barrel export', () => {
 			const props: QueryParamRowProps = {
-				param: { name: 'test', field: 'test', operator: 'eq' },
+				param: { name: 'test', fieldMemberId: 'fm-test', operator: 'eq', required: false },
 				targetFields: [],
 				onUpdate: () => {},
 				onRemove: () => {}

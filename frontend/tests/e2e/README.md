@@ -26,6 +26,8 @@ tests/
 
 ## Running
 
+For frontend-impacting changes, always attempt a Playwright E2E command before handoff. If credentials or external services block execution, record the attempted command and exact blocker; do not silently skip E2E.
+
 ```bash
 # Smoke tests
 bun run test:e2e:smoke
@@ -46,7 +48,8 @@ Set `PUBLIC_API_BASE_URL` when running commands to choose local vs hosted backen
 
 ## Environment Variables
 
+- `PUBLIC_CLERK_PUBLISHABLE_KEY` - Required for all Playwright projects
 - `E2E_TEST_USER_EMAIL` - Pre-created test user email
 - `E2E_TEST_USER_PASSWORD` - Test user password
 - `PUBLIC_API_BASE_URL` - Backend API URL
-- `CLERK_SECRET_KEY` - Required for setup project (`@clerk/testing` token)
+- `CLERK_SECRET_KEY` - Required for all Playwright projects (`@clerk/testing` token)

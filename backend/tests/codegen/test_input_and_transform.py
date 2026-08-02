@@ -15,13 +15,16 @@ from typing import get_args
 import pytest
 
 from api.schemas.api import GenerateOptions
-from api.services.generation import _convert_to_input_api
-from api_craft.extractors import (
+from meta_framework.api_design.snapshot import APIDesignSnapshot
+from meta_framework.generation_targets.fastapi_python.extractors import (
     collect_cdk_dependencies,
     collect_database_dependencies,
     collect_orm_imports,
 )
-from api_craft.models.enums import (
+from meta_framework.generation_targets.fastapi_python.input_from_api_design_snapshot import (
+    build_fastapi_python_input_from_api_design_snapshot,
+)
+from meta_framework.generation_targets.fastapi_python.models.enums import (
     Cardinality,
     Container,
     FieldRole,
@@ -33,7 +36,7 @@ from api_craft.models.enums import (
     ValidatorMode,
     check_constraint_sql,
 )
-from api_craft.models.input import (
+from meta_framework.generation_targets.fastapi_python.models.input import (
     InputAPI,
     InputApiConfig,
     InputCdkConfig,
@@ -45,25 +48,30 @@ from api_craft.models.input import (
     InputQueryParam,
     InputValidator,
 )
-from api_craft.models.orm_types import (
+from meta_framework.generation_targets.fastapi_python.models.orm_types import (
     TemplateDatabaseConfig,
     TemplateORMField,
     TemplateORMModel,
 )
-from api_craft.models.types import PascalCaseName, SnakeCaseName
-from api_craft.models.validation_catalog import (
+from meta_framework.generation_targets.fastapi_python.models.types import (
+    PascalCaseName,
+    SnakeCaseName,
+)
+from meta_framework.generation_targets.fastapi_python.models.validation_catalog import (
     ALLOWED_PK_TYPES,
     OPERATOR_VALID_TYPES,
     PASCAL_CASE_PATTERN,
     SERVER_DEFAULT_VALID_TYPES,
     SNAKE_CASE_PATTERN,
 )
-from api_craft.models.validators import (
+from meta_framework.generation_targets.fastapi_python.models.validators import (
     validate_snake_case_name,
     validate_type_annotation,
 )
-from api_craft.orm_builder import transform_orm_models
-from api_craft.placeholders import (
+from meta_framework.generation_targets.fastapi_python.orm_builder import (
+    transform_orm_models,
+)
+from meta_framework.generation_targets.fastapi_python.placeholders import (
     PlaceholderGenerator,
     extract_constraints,
     generate_bool,
@@ -75,9 +83,14 @@ from api_craft.placeholders import (
     generate_uuid,
     parse_type,
 )
-from api_craft.prepare import prepare_api
-from api_craft.schema_splitter import split_model_schemas
-from api_craft.utils import camel_to_snake, snake_to_plural
+from meta_framework.generation_targets.fastapi_python.prepare import prepare_api
+from meta_framework.generation_targets.fastapi_python.schema_splitter import (
+    split_model_schemas,
+)
+from meta_framework.generation_targets.fastapi_python.utils import (
+    camel_to_snake,
+    snake_to_plural,
+)
 from support.generated_app import load_input
 
 TemplateField = InputField
@@ -156,32 +169,36 @@ class TestGenerateOptionsCdk:
 class TestGenerationServiceCdkWiring:
     """Verify that GenerateOptions CDK fields reach InputCdkConfig."""
 
-    def _minimal_api_model(self):
-        """Return a minimal ApiModel stub sufficient for _convert_to_input_api."""
-        from unittest.mock import MagicMock
-
-        api = MagicMock()
-        api.title = "ShopApi"
-        api.version = "1.0.0"
-        api.description = "Test"
-        api.namespace_id = "00000000-0000-0000-0000-000000000001"
-        api.endpoints = []
-        return api
+    def _minimal_api_design_snapshot(self):
+        return APIDesignSnapshot(
+            name="ShopApi",
+            version="1.0.0",
+            description="Test",
+            objects=[],
+            endpoints=[],
+            tag_names=[],
+        )
 
     def test_cdk_disabled_passes_through(self):
         opts = GenerateOptions(cdk_enabled=False)
-        result = _convert_to_input_api(self._minimal_api_model(), {}, {}, opts)
+        result = build_fastapi_python_input_from_api_design_snapshot(
+            self._minimal_api_design_snapshot(), opts
+        )
         assert result.config.cdk.enabled is False
 
     def test_cdk_enabled_lambda_passes_through(self):
         opts = GenerateOptions(cdk_enabled=True, cdk_compute="lambda")
-        result = _convert_to_input_api(self._minimal_api_model(), {}, {}, opts)
+        result = build_fastapi_python_input_from_api_design_snapshot(
+            self._minimal_api_design_snapshot(), opts
+        )
         assert result.config.cdk.enabled is True
         assert result.config.cdk.compute == "lambda"
 
     def test_cdk_ecs_passes_through(self):
         opts = GenerateOptions(cdk_enabled=True, cdk_compute="ecs")
-        result = _convert_to_input_api(self._minimal_api_model(), {}, {}, opts)
+        result = build_fastapi_python_input_from_api_design_snapshot(
+            self._minimal_api_design_snapshot(), opts
+        )
         assert result.config.cdk.compute == "ecs"
 
 
@@ -733,7 +750,9 @@ class TestFieldDefault:
     """Tests for the default field (FieldDefault union) on InputField."""
 
     def test_generated_strategies_accepted(self):
-        from api_craft.models.input import FieldDefaultGenerated
+        from meta_framework.generation_targets.fastapi_python.models.input import (
+            FieldDefaultGenerated,
+        )
 
         for strategy in ("uuid4", "now", "now_on_update", "auto_increment"):
             field = InputField(
@@ -2574,7 +2593,7 @@ class TestGenerateOptionsSchema:
 
 ENUM_CHECK_PAIRS = [
     (Container, "container", "fields"),
-    (FieldRole, "role", "scalar_members"),
+    (FieldRole, "role", "field_members"),
     (RelationshipKind, "kind", "relationship_members"),
     (HttpMethod, "method", "api_endpoints"),
     (ResponseShape, "response_shape", "api_endpoints"),

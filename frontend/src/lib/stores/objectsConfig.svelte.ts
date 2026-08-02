@@ -2,7 +2,7 @@
 //
 // Entity contract for Objects — validation, payloads, and hooks.
 
-import type { ObjectDefinition, ObjectMember } from '$lib/types';
+import type { ObjectDefinition } from '$lib/types';
 import type { EntityContract } from './crudModel.svelte';
 import {
 	createObjectApi,
@@ -11,24 +11,15 @@ import {
 	type CreateObjectRequest,
 	type UpdateObjectRequest
 } from '$lib/api/objects';
-import { objectsStore, apisStore, getFieldById } from './stores';
+import { objectsStore, fieldsStore, apisStore } from './stores';
 import { buildDeletionTooltip, checkObjectDeletion } from '$lib/utils/references';
 import { isValidPascalCaseName } from '$lib/utils/validation';
 import { get } from 'svelte/store';
-
-// Sentinel prefix for client-generated member ids. The drawer assigns these
-// so DnD has a stable key; the backend must never see them (reconcile-by-id
-// would silently drop them — see _reconcile_members in api/services/object.py).
-export const TEMP_MEMBER_ID_PREFIX = 'tmp-';
-export const newTempMemberId = (): string => TEMP_MEMBER_ID_PREFIX + crypto.randomUUID();
-export const isTempMemberId = (id: string | undefined): boolean =>
-	id?.startsWith(TEMP_MEMBER_ID_PREFIX) ?? false;
-
-function stripTempMemberIds(members: ObjectMember[]): ObjectMember[] {
-	return members.map(({ id, ...rest }) =>
-		id && !isTempMemberId(id) ? ({ ...rest, id } as ObjectMember) : (rest as ObjectMember)
-	);
-}
+import {
+	getObjectMembersForCreate,
+	getObjectMembersForUpdate,
+	validateObjectMembership
+} from '$lib/domain/objectMembership';
 
 // Extended object type with computed properties for sorting
 type ObjectWithCounts = ObjectDefinition & {
@@ -65,40 +56,14 @@ export function createObjectsContract(deps: {
 				errors.name = 'Must be PascalCase (e.g. UserEmail)';
 			}
 
-			for (const member of item.members) {
-				if (member.memberType !== 'scalar') continue;
-				const field = getFieldById(member.fieldId);
-				if (!field) continue;
-
-				const fieldName = field.name;
-				const fieldType = field.type;
-
-				if (member.role === 'pk') {
-					if (fieldType !== 'int' && fieldType !== 'uuid' && fieldType !== 'uuid.UUID') {
-						errors[`field_${member.fieldId}_role`] =
-							`Field "${fieldName}" (${fieldType}) cannot be a primary key — only int and uuid types are supported`;
-					}
-				} else if (
-					member.role === 'created_timestamp' ||
-					member.role === 'updated_timestamp'
-				) {
-					if (
-						!['datetime', 'date', 'datetime.datetime', 'datetime.date'].includes(
-							fieldType
-						)
-					) {
-						errors[`field_${member.fieldId}_role`] =
-							`Field "${fieldName}" (${fieldType}) cannot be a ${member.role === 'created_timestamp' ? 'created' : 'updated'} timestamp — only datetime and date types are supported`;
-					}
-				} else if (member.role === 'generated_uuid') {
-					if (fieldType !== 'uuid' && fieldType !== 'uuid.UUID') {
-						errors[`field_${member.fieldId}_role`] =
-							`Field "${fieldName}" (${fieldType}) cannot be a generated UUID — only uuid types are supported`;
-					}
-				}
-			}
-
-			return errors;
+			return {
+				...errors,
+				...validateObjectMembership(item.members, {
+					sourceObjectName: item.name,
+					fieldsById: new Map(get(fieldsStore).map((field) => [field.id, field])),
+					objectsById: new Map(get(objectsStore).map((object) => [object.id, object]))
+				})
+			};
 		},
 
 		immediateErrors(item, formErrors): Record<string, string> {
@@ -127,7 +92,7 @@ export function createObjectsContract(deps: {
 					namespaceId: item.namespaceId,
 					name: item.name,
 					description: item.description,
-					members: stripTempMemberIds(item.members).map(({ id: _id, ...rest }) => rest),
+					members: getObjectMembersForCreate(item.members),
 					validators:
 						item.validators.length > 0
 							? item.validators.map((v) => ({
@@ -147,7 +112,7 @@ export function createObjectsContract(deps: {
 				data: {
 					name: clean.name,
 					description: clean.description,
-					members: stripTempMemberIds(clean.members),
+					members: getObjectMembersForUpdate(clean.members),
 					validators: clean.validators.map((v) => ({
 						templateId: v.templateId,
 						parameters: v.parameters ?? undefined,

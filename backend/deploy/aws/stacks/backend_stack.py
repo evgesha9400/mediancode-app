@@ -60,9 +60,12 @@ class BackendStack(Stack):
             cpu=256,  # 0.25 vCPU
             memory_limit_mib=512,  # 512 MB
             desired_count=1,
-            # Build from Dockerfile in project root
+            # Build from backend root with the deploy Dockerfile.
             task_image_options=ecs_patterns.ApplicationLoadBalancedTaskImageOptions(
-                image=ecs.ContainerImage.from_asset(".."),
+                image=ecs.ContainerImage.from_asset(
+                    "../..",
+                    file="deploy/docker/Dockerfile",
+                ),
                 container_port=80,
                 log_driver=ecs.LogDrivers.aws_logs(
                     stream_prefix="backend",

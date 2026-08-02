@@ -5,11 +5,9 @@ from fastapi import APIRouter, HTTPException, status
 
 from api.deps import DbSession, ProvisionedUser
 from api.schemas.field import (
-    FieldConstraintValueResponse,
     FieldCreate,
     FieldResponse,
     FieldUpdate,
-    FieldValidatorResponse,
 )
 from api.services.field import FieldService, get_field_service
 
@@ -23,43 +21,6 @@ def get_service(db: DbSession) -> FieldService:
     :returns: FieldService instance.
     """
     return get_field_service(db)
-
-
-async def _to_response(field, service: FieldService) -> FieldResponse:
-    """Convert a field model to response schema.
-
-    :param field: Field database model.
-    :param service: FieldService instance for fetching usage data.
-    :returns: FieldResponse schema.
-    """
-    used_in_apis = await service.get_used_in_apis(field.id)
-    constraints = [
-        FieldConstraintValueResponse(
-            constraint_id=cv.constraint_id,
-            name=cv.constraint.name,
-            value=cv.value,
-        )
-        for cv in field.constraint_values
-    ]
-    validators = [
-        FieldValidatorResponse(
-            id=v.id,
-            template_id=v.template_id,
-            parameters=v.parameters,
-        )
-        for v in sorted(field.validators, key=lambda x: x.position)
-    ]
-    return FieldResponse(
-        id=field.id,
-        namespace_id=field.namespace_id,
-        name=field.name,
-        type_id=field.type_id,
-        description=field.description,
-        default_value=field.default_value,
-        used_in_apis=used_in_apis,
-        constraints=constraints,
-        validators=validators,
-    )
 
 
 @router.get(
@@ -82,7 +43,7 @@ async def list_fields(
     """
     service = get_service(db)
     fields = await service.list_for_user(user.id, namespace_id)
-    return [await _to_response(f, service) for f in fields]
+    return [await service.to_response(field) for field in fields]
 
 
 @router.post(
@@ -105,10 +66,15 @@ async def create_field(
     :returns: Created field response.
     """
     service = get_service(db)
-    field = await service.create_for_user(user.id, data)
+    created = await service.create_for_user(user.id, data)
     # Reload with relationships
-    field = await service.get_by_id_for_user(field.id, user.id)
-    return await _to_response(field, service)
+    field = await service.get_by_id_for_user(str(created.id), user.id)
+    if not field:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Field not found after creation",
+        )
+    return await service.to_response(field)
 
 
 @router.get(
@@ -137,7 +103,7 @@ async def get_field(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"Field with ID '{field_id}' not found",
         )
-    return await _to_response(field, service)
+    return await service.to_response(field)
 
 
 @router.put(
@@ -169,17 +135,15 @@ async def update_field(
             detail=f"Field with ID '{field_id}' not found",
         )
 
-    # Verify ownership
-    if field.user_id != user.id:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Cannot modify this field",
-        )
-
     updated = await service.update_field(field, data)
     # Reload with relationships
-    updated = await service.get_by_id_for_user(updated.id, user.id)
-    return await _to_response(updated, service)
+    reloaded = await service.get_by_id_for_user(str(updated.id), user.id)
+    if not reloaded:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Field with ID '{field_id}' not found",
+        )
+    return await service.to_response(reloaded)
 
 
 @router.delete(
@@ -206,13 +170,6 @@ async def delete_field(
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"Field with ID '{field_id}' not found",
-        )
-
-    # Verify ownership
-    if field.user_id != user.id:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Cannot delete this field",
         )
 
     await service.delete_field(field)

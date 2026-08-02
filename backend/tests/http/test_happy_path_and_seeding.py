@@ -66,7 +66,7 @@ class TestSeedRunner:
         created_at = next(
             m
             for m in product["members"]
-            if m["memberType"] == "scalar"
+            if m["memberType"] == "field"
             and m.get("fieldId") == result.field_ids["created_at"]
         )
         assert created_at["role"] == "created_timestamp"
@@ -164,8 +164,8 @@ class TestShopLifecycle:
         assert resp.status_code == 200
         product = resp.json()
         assert product["name"] == "Product"
-        scalar_members = [m for m in product["members"] if m["memberType"] == "scalar"]
-        assert len(scalar_members) >= 16
+        field_members = [m for m in product["members"] if m["memberType"] == "field"]
+        assert len(field_members) >= 16
         assert len(product["validators"]) == 4
 
         resp = await client.get(f"/objects/{seed.object_ids['Customer']}")
@@ -173,7 +173,7 @@ class TestShopLifecycle:
         customer = resp.json()
         assert customer["name"] == "Customer"
         customer_scalars = [
-            m for m in customer["members"] if m["memberType"] == "scalar"
+            m for m in customer["members"] if m["memberType"] == "field"
         ]
         assert len(customer_scalars) == 8
 
@@ -195,7 +195,10 @@ class TestShopLifecycle:
         assert ep["method"] == "GET"
         assert ep["path"] == "/products/{tracking_id}"
         assert len(ep["pathParams"]) == 1
-        assert ep["pathParams"][0]["fieldId"] == seed.field_ids["tracking_id"]
+        assert (
+            ep["pathParams"][0]["fieldMemberId"]
+            == seed.field_member_ids["Product"]["tracking_id"]
+        )
 
     # --- Phase 5: Update endpoint (UUID-in-JSONB regression) ---
 
@@ -212,7 +215,9 @@ class TestShopLifecycle:
                 "pathParams": [
                     {
                         "name": "tracking_id",
-                        "fieldId": seed.field_ids["tracking_id"],
+                        "fieldMemberId": seed.field_member_ids["Product"][
+                            "tracking_id"
+                        ],
                     }
                 ],
             },
@@ -223,7 +228,10 @@ class TestShopLifecycle:
         assert resp.status_code == 200
         ep = resp.json()
         assert ep["path"] == "/items/v2/{tracking_id}"
-        assert ep["pathParams"][0]["fieldId"] == seed.field_ids["tracking_id"]
+        assert (
+            ep["pathParams"][0]["fieldMemberId"]
+            == seed.field_member_ids["Product"]["tracking_id"]
+        )
 
     # --- Phase 6: Generate API ---
 

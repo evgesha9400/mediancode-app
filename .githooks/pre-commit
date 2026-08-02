@@ -1,0 +1,21 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+ROOT_DIR="$(git rev-parse --show-toplevel)"
+
+echo "Running pre-commit checks..."
+
+echo ""
+echo "=== Backend Ruff Pre-commit ==="
+(cd "$ROOT_DIR/backend" && poetry run pre-commit run --config config/pre-commit-config.yaml --all-files)
+
+echo ""
+echo "=== Frontend Lint, Type, Fixture Checks ==="
+(cd "$ROOT_DIR/frontend" && bun run lint:ci)
+
+echo ""
+echo "=== Frontend Unit Tests ==="
+(cd "$ROOT_DIR/frontend" && bun run test:unit)
+
+echo ""
+echo "All pre-commit checks passed."

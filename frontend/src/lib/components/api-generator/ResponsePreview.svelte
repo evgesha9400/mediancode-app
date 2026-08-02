@@ -1,28 +1,23 @@
 <script module lang="ts">
-  import type { HttpMethod, ResponseShape } from '$lib/types';
+  import type { ResponseShape } from '$lib/types';
+  import type { EndpointQueryControls } from '$lib/domain/endpointQuerySemantics';
 
   export interface ResponsePreviewProps {
     selectedObjectId?: string;
     responseShape: ResponseShape;
-    method: HttpMethod;
+    previewControl: EndpointQueryControls['responsePreview'];
   }
 </script>
 
 <script lang="ts">
-  import type { ScalarMember } from '$lib/types';
+  import type { FieldMember } from '$lib/types';
   import { objectsStore, getFieldById, getObjectById } from '$lib/stores/stores';
   import { buildRequestPreviewFromObject, buildResponsePreviewFromObject } from '$lib/utils/examples';
   import { dashboardTextPrimary, surfaceInsideFrostedPanel } from '$lib/ui/classes';
 
   interface Props extends ResponsePreviewProps {}
 
-  let { selectedObjectId, responseShape, method }: Props = $props();
-
-  // Methods that include a request body (POST, PUT, PATCH)
-  const hasRequestBody = $derived(['POST', 'PUT', 'PATCH'].includes(method));
-
-  // DELETE returns 204 No Content — no response body
-  const hasResponseBody = $derived(method !== 'DELETE');
+  let { selectedObjectId, responseShape, previewControl }: Props = $props();
 
   // Build preview JSON using shared utilities (appears flag filters fields automatically)
   // Response preview always shows without envelope wrapping (envelope is always enabled on the endpoint)
@@ -37,7 +32,7 @@
   );
 
   // Use two-column grid only when both request and response are shown
-  const showTwoColumns = $derived(hasRequestBody && hasResponseBody);
+  const showTwoColumns = $derived(previewControl.requestBodyVisible && previewControl.responseBodyVisible);
 </script>
 
 <div class="space-y-4">
@@ -61,18 +56,18 @@
         <p class="text-xs text-fg-muted mb-2">{selectedObject.description}</p>
       {/if}
 
-      <!-- Field List (scalar members only) -->
+      <!-- Field List (field members only) -->
       <div class="space-y-1 mt-2">
         <p class="text-xs text-fg-muted font-medium">Fields:</p>
-        {#each selectedObject.members.filter(m => m.memberType === 'scalar') as member (member.fieldId)}
-          {@const scalarMember = member as ScalarMember}
-          {@const field = getFieldById(scalarMember.fieldId)}
+        {#each selectedObject.members.filter(m => m.memberType === 'field') as member (member.fieldId)}
+          {@const fieldMember = member as FieldMember}
+          {@const field = getFieldById(fieldMember.fieldId)}
           {#if field}
             <div class="flex items-center justify-between text-xs">
-              <span class="font-mono text-fg-secondary">{scalarMember.name}</span>
+              <span class="font-mono text-fg-secondary">{fieldMember.name}</span>
               <div class="flex items-center space-x-2">
-                {#if scalarMember.role !== 'writable'}
-                  <span class="text-fg-dimmed text-[10px] uppercase">{scalarMember.role.replace(/_/g, ' ')}</span>
+                {#if fieldMember.role !== 'writable'}
+                  <span class="text-fg-dimmed text-[10px] uppercase">{fieldMember.role.replace(/_/g, ' ')}</span>
                 {/if}
                 <span class="text-fg-muted bg-surface-raised px-1.5 py-0.5 rounded-lg">{field.type}</span>
               </div>
@@ -80,16 +75,15 @@
           {:else}
             <div class="flex items-center gap-2 text-xs text-red-400">
               <i class="fa-solid fa-triangle-exclamation"></i>
-              <span>Field not found ({scalarMember.fieldId})</span>
+              <span>Field not found ({fieldMember.fieldId})</span>
             </div>
           {/if}
         {/each}
       </div>
 
-      {#if method === 'DELETE'}
+      {#if previewControl.targetNote}
         <p class="text-xs text-fg-dimmed mt-2 border-t border-edge/80 pt-2">
-          For DELETE, this object defines path parameter types and which entity is addressed — not a
-          response body.
+          {previewControl.targetNote}
         </p>
       {/if}
     </div>
@@ -100,9 +94,9 @@
   {/if}
 
   <!-- Request & Response JSON Previews -->
-  {#if hasRequestBody || hasResponseBody}
+  {#if previewControl.requestBodyVisible || previewControl.responseBodyVisible}
     <div class={showTwoColumns ? 'response-preview-grid' : ''}>
-      {#if hasRequestBody}
+      {#if previewControl.requestBodyVisible}
         <!-- Request column -->
         <div class="space-y-2">
           <h4 class="text-xs text-fg-muted flex items-center font-medium uppercase tracking-wider">
@@ -115,7 +109,7 @@
         </div>
       {/if}
 
-      {#if hasResponseBody}
+      {#if previewControl.responseBodyVisible}
         <!-- Response column -->
         <div class="space-y-2">
           <h4 class="text-xs text-fg-muted flex items-center font-medium uppercase tracking-wider">
@@ -129,9 +123,8 @@
       {/if}
     </div>
   {:else}
-    <!-- DELETE: no request or response body -->
     <div class="p-3 {surfaceInsideFrostedPanel}">
-      <p class="text-sm text-fg-muted">DELETE returns <code class="bg-surface-raised px-1 rounded-lg">204 No Content</code> with no response body.</p>
+      <p class="text-sm text-fg-muted">{previewControl.emptyMessage}</p>
     </div>
   {/if}
 </div>

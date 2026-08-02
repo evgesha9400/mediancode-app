@@ -152,13 +152,10 @@ export async function loadStoresFromApi(): Promise<void> {
 	});
 
 	// Populate phase 2 stores
-		fieldsStore.set(fields);
-		objectsStore.set(objects);
-		apisStore.set(apis);
-		const hydratedEndpoints = endpoints.map(ep =>
-			hydrateStoredEndpoint(ep, objects, fields)
-		);
-		endpointsStore.set(hydratedEndpoints);
+	fieldsStore.set(fields);
+	objectsStore.set(objects);
+	apisStore.set(apis);
+	endpointsStore.set(endpoints.map(hydrateStoredEndpoint));
 
 	// Set active namespace: prefer user's default, fall back to system namespace id, then first
 	const defaultNamespace = namespaces.find(ns => ns.isDefault);

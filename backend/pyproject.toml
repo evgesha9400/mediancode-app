@@ -33,7 +33,9 @@ dev = [
     "aiosqlite (>=0.22.1,<0.23.0)",
     "greenlet (>=3.0.0,<4.0.0)",
     "ruff (>=0.15.0,<1.0.0)",
-    "pre-commit (>=4.5.1,<5.0.0)"
+    "pre-commit (>=4.5.1,<5.0.0)",
+    "mypy (>=2.1.0,<3.0.0)",
+    "pytest-cov (>=7.1.0,<8.0.0)"
 ]
 
 
@@ -43,7 +45,7 @@ build-backend = "poetry.core.masonry.api"
 
 [tool.poetry]
 packages = [
-    { include = "api_craft", from = "src" },
+    { include = "meta_framework", from = "src" },
     { include = "api", from = "src" }
 ]
 
@@ -71,5 +73,12 @@ src = ["src", "tests"]
 select = ["I"]
 
 [tool.ruff.lint.isort]
-known-first-party = ["api", "api_craft"]
+known-first-party = ["api", "meta_framework"]
 force-sort-within-sections = true
+
+[tool.mypy]
+exclude = ["^src/meta_framework/generation_targets/fastapi_python/templates/static/"]
+
+[[tool.mypy.overrides]]
+module = ["mako.*"]
+ignore_missing_imports = true

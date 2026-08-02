@@ -30,14 +30,9 @@ describe('FieldSelectorDropdown Component', () => {
 				availableFields: [
 					{
 						id: 'field-1',
-						namespaceId: 'ns-1',
 						name: 'username',
 						type: 'str',
-						container: null,
-						description: 'User name',
-						constraints: [],
-						validators: [],
-						usedInApis: []
+						description: 'User name'
 					}
 				],
 				selectedFieldIds: ['field-2'],

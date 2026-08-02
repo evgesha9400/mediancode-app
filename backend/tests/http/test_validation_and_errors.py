@@ -46,6 +46,7 @@ class TestErrorGuards:
     blog_namespace_id: str = ""
     title_field_id: str = ""
     post_object_id: str = ""
+    title_field_member_id: str = ""
     blog_api_id: str = ""
     get_posts_endpoint_id: str = ""
 
@@ -114,7 +115,7 @@ class TestErrorGuards:
                 "description": "Blog post",
                 "members": [
                     {
-                        "memberType": "scalar",
+                        "memberType": "field",
                         "name": "title",
                         "fieldId": cls.title_field_id,
                         "isNullable": False,
@@ -124,7 +125,9 @@ class TestErrorGuards:
             },
         )
         assert resp.status_code == 201, f"Failed to create Post object: {resp.text}"
-        cls.post_object_id = resp.json()["id"]
+        post_object = resp.json()
+        cls.post_object_id = post_object["id"]
+        cls.title_field_member_id = post_object["members"][0]["id"]
 
         resp = await client.post(
             "/apis",
@@ -146,8 +149,9 @@ class TestErrorGuards:
                 "path": "/posts",
                 "description": "List all posts",
                 "tagName": "Posts",
+                "targetObjectId": cls.post_object_id,
                 "pathParams": [],
-                "objectId": cls.post_object_id,
+                "queryParams": [],
                 "useEnvelope": False,
                 "responseShape": "list",
             },
@@ -353,7 +357,7 @@ class TestErrorGuards:
                 "name": "Phantom",
                 "members": [
                     {
-                        "memberType": "scalar",
+                        "memberType": "field",
                         "name": "title",
                         "fieldId": cls.title_field_id,
                         "isNullable": False,
@@ -375,7 +379,7 @@ class TestErrorGuards:
                     "name": "Phantom",
                     "members": [
                         {
-                            "memberType": "scalar",
+                            "memberType": "field",
                             "name": "bogus",
                             "fieldId": FAKE_FIELD_ID,
                             "isNullable": False,
@@ -399,7 +403,7 @@ class TestErrorGuards:
                     "name": "Phantom",
                     "members": [
                         {
-                            "memberType": "scalar",
+                            "memberType": "field",
                             "name": "title",
                             "fieldId": cls.title_field_id,
                             "isNullable": False,

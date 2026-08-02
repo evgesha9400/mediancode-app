@@ -22,8 +22,8 @@ const MOCK_OBJECT_RESPONSE = {
   name: 'User',
   description: 'User model',
   members: [
-    { memberType: 'scalar', id: 'm-1', name: 'email', fieldId: 'f-1', role: 'writable', isNullable: false, defaultValue: null },
-    { memberType: 'scalar', id: 'm-2', name: 'username', fieldId: 'f-2', role: 'writable', isNullable: true, defaultValue: null }
+    { memberType: 'field', id: 'm-1', name: 'email', fieldId: 'f-1', role: 'writable', isNullable: false, defaultValue: null },
+    { memberType: 'field', id: 'm-2', name: 'username', fieldId: 'f-2', role: 'writable', isNullable: true, defaultValue: null }
   ],
   derivedRelationships: [],
   validators: [],
@@ -99,7 +99,7 @@ describe('Objects API Service', () => {
       const result = await createObjectApi({
         namespaceId: 'ns-1',
         name: 'User',
-        members: [{ memberType: 'scalar' as const, name: 'email', fieldId: 'f-1', role: 'writable' as const, isNullable: false }]
+        members: [{ memberType: 'field' as const, name: 'email', fieldId: 'f-1', role: 'writable' as const, isNullable: false }]
       });
 
       expect(apiPost).toHaveBeenCalledWith('/objects', expect.any(Object));
@@ -129,14 +129,14 @@ describe('Objects API Service', () => {
   });
 
   describe('transformMember', () => {
-    it('should transform scalar members correctly', async () => {
+    it('should transform field members correctly', async () => {
       (apiGet as any).mockResolvedValue([MOCK_OBJECT_RESPONSE]);
 
       const result = await listObjects();
       const member = result[0].members[0];
 
-      expect(member.memberType).toBe('scalar');
-      if (member.memberType === 'scalar') {
+      expect(member.memberType).toBe('field');
+      if (member.memberType === 'field') {
         expect(member.id).toBe('m-1');
         expect(member.name).toBe('email');
         expect(member.fieldId).toBe('f-1');
@@ -190,7 +190,6 @@ describe('Objects API Service', () => {
             sourceField: 'orders',
             kind: 'one_to_many',
             side: 'many',
-            impliesFk: 'customer_id',
             required: true
           }
         ]
@@ -205,10 +204,9 @@ describe('Objects API Service', () => {
       expect(dr.sourceObject).toBe('Customer');
       expect(dr.kind).toBe('one_to_many');
       expect(dr.side).toBe('many');
-      expect(dr.impliesFk).toBe('customer_id');
     });
 
-    it('should transform many_to_many derived relationship with junction table', async () => {
+    it('should transform many_to_many derived relationship', async () => {
       const responseWithM2M = {
         ...MOCK_OBJECT_RESPONSE,
         derivedRelationships: [
@@ -219,8 +217,6 @@ describe('Objects API Service', () => {
             sourceField: 'tags',
             kind: 'many_to_many',
             side: 'many',
-            impliesFk: null,
-            junctionTable: 'posts_tags',
             required: false
           }
         ]
@@ -231,8 +227,6 @@ describe('Objects API Service', () => {
       const dr = result[0].derivedRelationships[0];
 
       expect(dr.kind).toBe('many_to_many');
-      expect(dr.impliesFk).toBeNull();
-      expect(dr.junctionTable).toBe('posts_tags');
       expect(dr.required).toBe(false);
     });
 
@@ -247,7 +241,6 @@ describe('Objects API Service', () => {
             sourceField: 'profile',
             kind: 'one_to_one',
             side: 'target',
-            impliesFk: 'user_id',
             required: true
           }
         ]
@@ -259,7 +252,6 @@ describe('Objects API Service', () => {
 
       expect(dr.kind).toBe('one_to_one');
       expect(dr.side).toBe('target');
-      expect(dr.impliesFk).toBe('user_id');
     });
   });
 });

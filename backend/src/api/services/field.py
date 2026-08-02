@@ -4,7 +4,7 @@
 from uuid import UUID
 
 from fastapi import HTTPException, status
-from sqlalchemy import delete, func, or_, select
+from sqlalchemy import delete, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
@@ -16,12 +16,15 @@ from api.models.database import (
     FieldValidatorTemplateModel,
     Namespace,
 )
-from api.models.members import ScalarMember
+from api.models.members import FieldMember
 from api.schemas.field import (
     FieldConstraintValueInput,
+    FieldConstraintValueResponse,
     FieldCreate,
+    FieldResponse,
     FieldUpdate,
     FieldValidatorInput,
+    FieldValidatorResponse,
 )
 from api.services.base import BaseService
 
@@ -61,7 +64,7 @@ class FieldService(BaseService[FieldModel]):
             select(FieldModel)
             .join(Namespace)
             .options(*self._field_load_options())
-            .where(Namespace.user_id == user_id)
+            .where(self.namespace_access.owned_namespace_filter(user_id))
         )
         if namespace_id:
             query = query.where(FieldModel.namespace_id == namespace_id)
@@ -83,7 +86,7 @@ class FieldService(BaseService[FieldModel]):
             .options(*self._field_load_options())
             .where(
                 FieldModel.id == field_id,
-                Namespace.user_id == user_id,
+                self.namespace_access.owned_namespace_filter(user_id),
             )
         )
         result = await self.db.execute(query)
@@ -97,7 +100,7 @@ class FieldService(BaseService[FieldModel]):
         :returns: The created field.
         :raises HTTPException: If namespace not owned by user.
         """
-        await self.validate_namespace_for_creation(data.namespace_id, user_id)
+        await self.namespace_access.require_owned_namespace(data.namespace_id, user_id)
 
         field = FieldModel(
             namespace_id=data.namespace_id,
@@ -203,8 +206,8 @@ class FieldService(BaseService[FieldModel]):
         """
         count_query = (
             select(func.count())
-            .select_from(ScalarMember)
-            .where(ScalarMember.field_id == field.id)
+            .select_from(FieldMember)
+            .where(FieldMember.field_id == field.id)
         )
         result = await self.db.execute(count_query)
         usage_count = result.scalar() or 0
@@ -218,6 +221,40 @@ class FieldService(BaseService[FieldModel]):
         await self.db.delete(field)
         await self.db.flush()
 
+    async def to_response(self, field: FieldModel) -> FieldResponse:
+        """Convert a Field model to a response schema.
+
+        :param field: Field database model.
+        :returns: Field response schema.
+        """
+        constraints = [
+            FieldConstraintValueResponse(
+                constraintId=constraint_value.constraint_id,
+                name=constraint_value.constraint.name,
+                value=constraint_value.value,
+            )
+            for constraint_value in field.constraint_values
+        ]
+        validators = [
+            FieldValidatorResponse(
+                id=validator.id,
+                templateId=validator.template_id,
+                parameters=validator.parameters,
+            )
+            for validator in sorted(field.validators, key=lambda item: item.position)
+        ]
+        return FieldResponse(
+            id=field.id,
+            namespaceId=field.namespace_id,
+            name=field.name,
+            typeId=field.type_id,
+            description=field.description,
+            defaultValue=field.default_value,
+            usedInApis=await self.get_used_in_apis(field.id),
+            constraints=constraints,
+            validators=validators,
+        )
+
     async def get_used_in_apis(self, field_id: UUID) -> list[UUID]:
         """Get API IDs where this field is used.
 
@@ -225,18 +262,13 @@ class FieldService(BaseService[FieldModel]):
         :returns: List of API IDs.
         """
         objects_subquery = (
-            select(ScalarMember.object_id)
-            .where(ScalarMember.field_id == field_id)
+            select(FieldMember.object_id)
+            .where(FieldMember.field_id == field_id)
             .subquery()
         )
         query = (
             select(ApiEndpoint.api_id)
-            .where(
-                or_(
-                    ApiEndpoint.query_params_object_id.in_(select(objects_subquery)),
-                    ApiEndpoint.object_id.in_(select(objects_subquery)),
-                )
-            )
+            .where(ApiEndpoint.target_object_id.in_(select(objects_subquery)))
             .distinct()
         )
         result = await self.db.execute(query)

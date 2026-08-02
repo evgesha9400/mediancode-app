@@ -11,25 +11,35 @@ import inspect
 import io
 import os
 from pathlib import Path
+import re
 import tempfile
 from typing import get_args
 from unittest.mock import MagicMock
+from uuid import UUID
 import zipfile
 
 from fastapi.testclient import TestClient
 import pytest
 
 from api.schemas.api import GenerateOptions
-from api.services.generation import (
-    _build_endpoint_name,
-    _build_field_type,
-    _convert_to_input_api,
-    generate_api_zip,
+from api.services.api_design_snapshot import build_api_design_snapshot
+from api.services.generation import generate_api_zip
+from meta_framework.api_design.snapshot import (
+    APIDesignEndpoint,
+    APIDesignFieldMember,
+    APIDesignObject,
+    APIDesignPathParam,
+    APIDesignSnapshot,
 )
-from api_craft.extractors import collect_association_tables
-from api_craft.main import APIGenerator
-from api_craft.models.enums import FilterOperator
-from api_craft.models.input import (
+from meta_framework.generation_targets.fastapi_python.extractors import (
+    collect_association_tables,
+)
+from meta_framework.generation_targets.fastapi_python.input_from_api_design_snapshot import (
+    build_fastapi_python_input_from_api_design_snapshot,
+)
+from meta_framework.generation_targets.fastapi_python.main import APIGenerator
+from meta_framework.generation_targets.fastapi_python.models.enums import FilterOperator
+from meta_framework.generation_targets.fastapi_python.models.input import (
     InputAPI,
     InputApiConfig,
     InputDatabaseConfig,
@@ -40,14 +50,18 @@ from api_craft.models.input import (
     InputQueryParam,
     InputRelationship,
 )
-from api_craft.orm_builder import transform_orm_models
-from api_craft.prepare import (
+from meta_framework.generation_targets.fastapi_python.orm_builder import (
+    transform_orm_models,
+)
+from meta_framework.generation_targets.fastapi_python.prepare import (
     PreparedPathParam,
     PreparedQueryParam,
     PreparedView,
     prepare_api,
 )
-from api_craft.schema_splitter import split_model_schemas
+from meta_framework.generation_targets.fastapi_python.schema_splitter import (
+    split_model_schemas,
+)
 from support.generated_app import load_app, load_input
 
 
@@ -59,8 +73,139 @@ def _make_model(name, fields, relationships=None):
     )
 
 
+def _make_api_model(endpoints=None):
+    api = MagicMock()
+    api.title = "TestApi"
+    api.version = "1.0.0"
+    api.description = "Test"
+    api.namespace_id = "ns-1"
+    api.endpoints = endpoints or []
+    return api
+
+
+def _build_fastapi_python_input_from_persisted_entities(
+    api,
+    objects_map,
+    fields_map,
+    options: GenerateOptions,
+) -> InputAPI:
+    snapshot = build_api_design_snapshot(api, objects_map, fields_map)
+    return build_fastapi_python_input_from_api_design_snapshot(snapshot, options)
+
+
+def _make_endpoint_snapshot(method: str, path: str) -> APIDesignEndpoint:
+    """Build a minimal endpoint snapshot for operation-name tests."""
+    return APIDesignEndpoint(
+        method=method,
+        path=path,
+        tag_name=None,
+        path_params=[
+            APIDesignPathParam(
+                name=name,
+                field_member_name="id",
+                type="int",
+                description="ID",
+            )
+            for name in re.findall(r"\{([^}]+)\}", path)
+        ],
+        query_params=[],
+        target_object_name="Item",
+        description=None,
+        use_envelope=True,
+        response_shape="object",
+        pagination=False,
+    )
+
+
+def _build_input_from_endpoint_snapshots(
+    endpoints: list[APIDesignEndpoint],
+) -> InputAPI:
+    """Build meta_framework.generation_targets.fastapi_python input from minimal endpoint snapshots."""
+    snapshot = APIDesignSnapshot(
+        name="TestApi",
+        version="1.0.0",
+        description="Test",
+        objects=[
+            APIDesignObject(
+                id=UUID("00000000-0000-0000-0000-000000000001"),
+                name="Item",
+                description="Item",
+                field_members=[
+                    APIDesignFieldMember(
+                        member_name="id",
+                        field_name="id",
+                        field_type="int",
+                        container=None,
+                        nullable=False,
+                        description="ID",
+                        role="pk",
+                        default_value=None,
+                    )
+                ],
+            )
+        ],
+        endpoints=endpoints,
+        tag_names=[],
+    )
+    return build_fastapi_python_input_from_api_design_snapshot(
+        snapshot, GenerateOptions()
+    )
+
+
+def _make_field(python_type: str, container: str | None = None):
+    field = MagicMock()
+    field.name = "value"
+    field.field_type = MagicMock()
+    field.field_type.python_type = python_type
+    field.description = None
+    field.default_value = None
+    field.container = container
+    field.constraint_values = []
+    field.validators = []
+    return field
+
+
+def _make_scalar_member(*, is_pk=False):
+    from api.models.members import FieldMember
+
+    member = MagicMock(spec=FieldMember)
+    member.member_type = "field"
+    member.field_id = "field-1"
+    member.is_nullable = False
+    member.position = 0
+    member.role = "pk" if is_pk else "writable"
+    member.default_value = None
+    member.name = "value"
+    return member
+
+
+def _make_object(member):
+    obj = MagicMock()
+    obj.id = "obj-1"
+    obj.name = "Item"
+    obj.description = "Test item"
+    obj.namespace_id = "ns-1"
+    obj.members = [member]
+    obj.validators = []
+    return obj
+
+
+def _build_single_field_input_api(
+    python_type: str,
+    container: str | None = None,
+):
+    field = _make_field(python_type, container)
+    obj = _make_object(_make_scalar_member())
+    return _build_fastapi_python_input_from_persisted_entities(
+        _make_api_model(),
+        {"obj-1": obj},
+        {"field-1": field},
+        GenerateOptions(),
+    )
+
+
 # ---------------------------------------------------------------------------
-# Build Field Type (from test_generation_unit)
+# meta_framework.generation_targets.fastapi_python input adapter field type behavior
 # ---------------------------------------------------------------------------
 
 
@@ -86,11 +231,14 @@ class TestBuildFieldType:
         ],
     )
     def test_type_mapping(self, python_type: str, container: str | None, expected: str):
-        assert _build_field_type(python_type, container) == expected
+        result = _build_single_field_input_api(python_type, container)
+        item_obj = result.objects[0]
+        value_field = item_obj.fields[0]
+        assert value_field.type == expected
 
 
 # ---------------------------------------------------------------------------
-# Build Endpoint Name (from test_generation_unit)
+# meta_framework.generation_targets.fastapi_python input adapter endpoint naming behavior
 # ---------------------------------------------------------------------------
 
 
@@ -111,11 +259,16 @@ class TestBuildEndpointName:
         ],
     )
     def test_endpoint_name(self, method: str, path: str, expected: str):
-        assert _build_endpoint_name(method, path) == expected
+        endpoint = _make_endpoint_snapshot(method, path)
+        result = _build_input_from_endpoint_snapshots([endpoint])
+        assert result.endpoints[0].name == expected
 
     def test_endpoint_name_differentiates_with_path_param(self):
-        list_name = _build_endpoint_name("GET", "/products")
-        detail_name = _build_endpoint_name("GET", "/products/{tracking_id}")
+        list_endpoint = _make_endpoint_snapshot("GET", "/products")
+        detail_endpoint = _make_endpoint_snapshot("GET", "/products/{tracking_id}")
+        result = _build_input_from_endpoint_snapshots([list_endpoint, detail_endpoint])
+        list_name = result.endpoints[0].name
+        detail_name = result.endpoints[1].name
         assert list_name != detail_name
 
 
@@ -128,16 +281,9 @@ class TestConvertToInputApi:
     """Merged from TestConvertToInputApiOptions and TestConvertToInputApiPk."""
 
     def _make_api_model(self):
-        api = MagicMock()
-        api.title = "TestApi"
-        api.version = "1.0.0"
-        api.description = "Test"
-        api.endpoints = []
-        return api
+        return _make_api_model()
 
     def _make_api_with_objects(self, *, is_pk=False):
-        from api.models.members import ScalarMember
-
         field = MagicMock()
         field.name = "id"
         field.field_type = MagicMock()
@@ -148,29 +294,12 @@ class TestConvertToInputApi:
         field.constraint_values = []
         field.validators = []
 
-        member = MagicMock(spec=ScalarMember)
-        member.member_type = "scalar"
-        member.field_id = "field-1"
-        member.is_nullable = False
-        member.position = 0
-        member.role = "pk" if is_pk else "writable"
-        member.default_value = None
+        member = _make_scalar_member(is_pk=is_pk)
         member.name = "id"
 
-        obj = MagicMock()
-        obj.id = "obj-1"
-        obj.name = "Item"
-        obj.description = "Test item"
-        obj.namespace_id = "ns-1"
-        obj.members = [member]
-        obj.validators = []
+        obj = _make_object(member)
 
-        api = MagicMock()
-        api.title = "TestApi"
-        api.version = "1.0.0"
-        api.description = "Test"
-        api.namespace_id = "ns-1"
-        api.endpoints = []
+        api = _make_api_model()
 
         objects_map = {"obj-1": obj}
         fields_map = {"field-1": field}
@@ -181,7 +310,7 @@ class TestConvertToInputApi:
     def test_default_options_match_current_behavior(self):
         api = self._make_api_model()
         opts = GenerateOptions()
-        result = _convert_to_input_api(api, {}, {}, opts)
+        result = _build_fastapi_python_input_from_persisted_entities(api, {}, {}, opts)
         assert result.config.healthcheck == "/health"
         assert result.config.response_placeholders is True
         assert result.config.database.enabled is False
@@ -189,13 +318,15 @@ class TestConvertToInputApi:
     def test_database_enabled_passed_through(self):
         api, objects_map, fields_map = self._make_api_with_objects(is_pk=True)
         opts = GenerateOptions(database_enabled=True, response_placeholders=False)
-        result = _convert_to_input_api(api, objects_map, fields_map, opts)
+        result = _build_fastapi_python_input_from_persisted_entities(
+            api, objects_map, fields_map, opts
+        )
         assert result.config.database.enabled is True
 
     def test_response_placeholders_false_passed_through(self):
         api = self._make_api_model()
         opts = GenerateOptions(response_placeholders=False)
-        result = _convert_to_input_api(api, {}, {}, opts)
+        result = _build_fastapi_python_input_from_persisted_entities(api, {}, {}, opts)
         assert result.config.response_placeholders is False
 
     # --- PK tests (from TestConvertToInputApiPk) ---
@@ -203,7 +334,9 @@ class TestConvertToInputApi:
     def test_pk_passed_through(self):
         api, objects_map, fields_map = self._make_api_with_objects(is_pk=True)
         opts = GenerateOptions(database_enabled=True, response_placeholders=False)
-        result = _convert_to_input_api(api, objects_map, fields_map, opts)
+        result = _build_fastapi_python_input_from_persisted_entities(
+            api, objects_map, fields_map, opts
+        )
         item_obj = next(o for o in result.objects if o.name == "Item")
         id_field = next(f for f in item_obj.fields if f.name == "id")
         assert id_field.pk is True
@@ -211,7 +344,9 @@ class TestConvertToInputApi:
     def test_pk_false_by_default(self):
         api, objects_map, fields_map = self._make_api_with_objects(is_pk=False)
         opts = GenerateOptions()
-        result = _convert_to_input_api(api, objects_map, fields_map, opts)
+        result = _build_fastapi_python_input_from_persisted_entities(
+            api, objects_map, fields_map, opts
+        )
         item_obj = next(o for o in result.objects if o.name == "Item")
         id_field = next(f for f in item_obj.fields if f.name == "id")
         assert id_field.pk is False
@@ -1034,7 +1169,7 @@ class TestParamInferenceBackwardCompatibility:
                     response="ItemList",
                     response_shape="list",
                     query_params=[
-                        InputQueryParam(name="limit", type="int", optional=True),
+                        InputQueryParam(name="limit", type="int", required=False),
                     ],
                 ),
             ],
@@ -1078,7 +1213,7 @@ class TestTemplateModelExtensions:
             camel_name="MinPrice",
             type="float",
             title="Min Price",
-            optional=True,
+            required=False,
             field="price",
             operator="gte",
         )
@@ -1224,7 +1359,7 @@ class TestTypeDerivation:
         qp = result.views[0].query_params[0]
         assert qp.type == "List[str]"
 
-    def test_field_query_params_forced_optional(self):
+    def test_field_query_params_preserve_required(self):
         api = self._build_api(
             query_params=[
                 InputQueryParam(
@@ -1232,13 +1367,13 @@ class TestTypeDerivation:
                     type="float",
                     field="price",
                     operator="gte",
-                    optional=False,
+                    required=True,
                 ),
             ],
         )
         result = prepare_api(api)
         qp = result.views[0].query_params[0]
-        assert qp.optional is True
+        assert qp.required is True
 
     def test_pagination_injects_limit_and_offset(self):
         objects = [
@@ -1282,11 +1417,11 @@ class TestTypeDerivation:
         offset_param = qps[1]
         assert limit_param.snake_name == "limit"
         assert limit_param.type == "int"
-        assert limit_param.optional is True
+        assert limit_param.required is False
         assert limit_param.constraints == {"ge": 1, "le": 100}
         assert offset_param.snake_name == "offset"
         assert offset_param.type == "int"
-        assert offset_param.optional is True
+        assert offset_param.required is False
         assert offset_param.constraints == {"ge": 0}
 
     def test_pagination_false_does_not_inject(self):
@@ -1339,7 +1474,7 @@ class TestTypeDerivation:
     def test_legacy_params_without_field_unchanged(self):
         api = self._build_api(
             query_params=[
-                InputQueryParam(name="limit", type="int", optional=True),
+                InputQueryParam(name="limit", type="int", required=False),
             ],
         )
         result = prepare_api(api)

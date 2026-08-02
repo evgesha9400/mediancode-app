@@ -3,10 +3,11 @@
 
 Three tables implement a joined-table-inheritance hierarchy:
 - ``object_members`` — base identity/ordering for every member
-- ``scalar_members`` — child table for field-backed members
+- ``field_members`` — child table for field-backed members
 - ``relationship_members`` — child table for relationship members
 """
 
+from typing import TYPE_CHECKING
 from uuid import UUID, uuid4
 
 from sqlalchemy import Boolean, ForeignKey, Integer, Text, UniqueConstraint
@@ -14,6 +15,9 @@ from sqlalchemy.dialects.postgresql import UUID as PgUUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from api.database import Base
+
+if TYPE_CHECKING:
+    from api.models.database import FieldModel, ObjectDefinition
 
 
 def _generate_uuid() -> UUID:
@@ -34,7 +38,7 @@ class ObjectMember(Base):
     :ivar object_id: Reference to the owning object.
     :ivar name: Member name (unique per object).
     :ivar position: Display/ordering position within the object.
-    :ivar member_type: Discriminator (``'scalar'`` or ``'relationship'``).
+    :ivar member_type: Discriminator (``'field'`` or ``'relationship'``).
     """
 
     __tablename__ = "object_members"
@@ -74,7 +78,7 @@ class ObjectMember(Base):
     }
 
 
-class ScalarMember(ObjectMember):
+class FieldMember(ObjectMember):
     """Child table for scalar (field-backed) members.
 
     :ivar id: Shared PK with ``object_members``.
@@ -84,7 +88,7 @@ class ScalarMember(ObjectMember):
     :ivar default_value: Optional literal default value.
     """
 
-    __tablename__ = "scalar_members"
+    __tablename__ = "field_members"
 
     id: Mapped[UUID] = mapped_column(
         PgUUID(as_uuid=True),
@@ -103,7 +107,7 @@ class ScalarMember(ObjectMember):
         "FieldModel", foreign_keys=[field_id]
     )
 
-    __mapper_args__ = {"polymorphic_identity": "scalar"}
+    __mapper_args__ = {"polymorphic_identity": "field"}
 
 
 class RelationshipMember(ObjectMember):
@@ -113,7 +117,7 @@ class RelationshipMember(ObjectMember):
     :ivar target_object_id: Reference to the target object (RESTRICT delete).
     :ivar kind: Relationship kind (one_to_one, one_to_many, many_to_many).
     :ivar inverse_name: Name for the derived reverse field on the target.
-    :ivar required: Whether the derived FK column is NOT NULL.
+    :ivar required: Whether the target relationship is required.
     """
 
     __tablename__ = "relationship_members"

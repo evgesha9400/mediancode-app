@@ -2,11 +2,12 @@
 
 Two deployable apps share one repo and one OpenAPI contract.
 
-- `backend/` — FastAPI service (Python 3.13), deployed to Coolify
-- `frontend/` — SvelteKit app (Bun), deployed to Vercel
+- `backend/` — FastAPI service (Python 3.13), deployed to `mac-server`
+- `frontend/` — SvelteKit app (Bun), deployed to Vercel through GitHub Actions
 - `api-spec.yaml` — single source of truth, backend-generated, frontend-consumed
 - `docs/` — cross-cutting only (`philosophy/`, `standards/`, `protocols/`, `architecture/`, `work/`)
 - `.github/workflows/` — path-filtered CI per app
+- `.githooks/` — root hooks delegating to app-local checks
 - `Makefile` — root entry points delegating to subdir Makefiles
 - `CLAUDE.md` / `AGENTS.md` — cross-cutting agent guidance
 
@@ -14,8 +15,10 @@ Two deployable apps share one repo and one OpenAPI contract.
 
 | Path | Owns |
 |------|------|
-| `backend/` | Python application code, Alembic migrations, backend tests, Coolify deploy, `Dockerfile` |
-| `frontend/` | SvelteKit application code, frontend tests, Vercel deploy |
+| `backend/` | Python application code, Alembic migrations, backend tests, backend config, backend docs, backend deploy implementation |
+| `backend/deploy/docker/Dockerfile` | Backend production-image build implementation |
+| `backend/deploy/local/docker-compose.yml` | Local PostgreSQL compose stack |
+| `frontend/` | SvelteKit application code, frontend tests, frontend config, frontend docs, Vercel deploy |
 | `api-spec.yaml` | The contract. Owned by backend (generated from FastAPI), consumed by frontend |
 | `docs/` | Cross-cutting concerns only. Per-app docs live in `backend/docs/` and `frontend/docs/` |
 | `.github/workflows/` | Path-filtered CI per app, plus contract-change triggers |
@@ -40,9 +43,13 @@ Monorepo eliminates the first four. Issue tracking now happens in one GitHub pro
 
 ## Deploy strategy
 
-| Branch | Backend (Coolify) | Frontend (Vercel) |
+| Branch | Backend (`mac-server`) | Frontend (Vercel) |
 |--------|-------------------|-------------------|
-| `main` | Production (path-filtered) | Production (path-filtered) |
-| `develop` | Staging (path-filtered) | Preview (path-filtered) |
+| `main` | Production after backend CI | Production after frontend CI |
+| `develop` | Development after backend CI | Development alias after frontend CI |
 
-Feature branches don't trigger deploys. Breaking-change features ship atomically by touching both subtrees in one PR.
+Feature branches don't trigger deployments. Backend images are built on GitHub
+for `linux/amd64`, published by immutable digest to GHCR, and deployed over
+Tailscale using a restricted SSH key. Vercel's direct Git deployment is
+disabled; GitHub Actions builds and deploys the frontend after its full CI
+gate. Breaking-change features ship by touching both subtrees in one PR.

@@ -3,12 +3,8 @@
 // Entity contract factory for objects.
 
 import { describe, it, expect } from 'vitest';
-import {
-	createObjectsContract,
-	TEMP_MEMBER_ID_PREFIX,
-	newTempMemberId,
-	isTempMemberId
-} from '$lib/stores/objectsConfig.svelte';
+import { newTempMemberId } from '$lib/domain/objectMembership';
+import { createObjectsContract } from '$lib/stores/objectsConfig.svelte';
 import type { ObjectDefinition } from '$lib/types';
 
 function makeObject(overrides: Partial<ObjectDefinition> = {}): ObjectDefinition {
@@ -35,19 +31,6 @@ describe('objectsConfig', () => {
 	});
 });
 
-describe('TEMP_MEMBER_ID_PREFIX helpers', () => {
-	it('newTempMemberId produces a sentinel-prefixed id that isTempMemberId recognises', () => {
-		const id = newTempMemberId();
-		expect(id.startsWith(TEMP_MEMBER_ID_PREFIX)).toBe(true);
-		expect(isTempMemberId(id)).toBe(true);
-	});
-
-	it('isTempMemberId returns false for plain backend uuids and undefined', () => {
-		expect(isTempMemberId('550e8400-e29b-41d4-a716-446655440000')).toBe(false);
-		expect(isTempMemberId(undefined)).toBe(false);
-	});
-});
-
 describe('objectsConfig.toUpdatePayload', () => {
 	const contract = createObjectsContract({ getActiveNamespaceId: () => 'ns-1' });
 
@@ -57,7 +40,7 @@ describe('objectsConfig.toUpdatePayload', () => {
 		const item = makeObject({
 			members: [
 				{
-					memberType: 'scalar',
+					memberType: 'field',
 					id: backendId,
 					name: 'existing',
 					fieldId: 'f-1',
@@ -65,7 +48,7 @@ describe('objectsConfig.toUpdatePayload', () => {
 					isNullable: false
 				},
 				{
-					memberType: 'scalar',
+					memberType: 'field',
 					id: tmpId,
 					name: 'fresh',
 					fieldId: 'f-2',
@@ -90,7 +73,7 @@ describe('objectsConfig.toUpdatePayload', () => {
 		const item = makeObject({
 			members: [
 				{
-					memberType: 'scalar',
+					memberType: 'field',
 					id: newTempMemberId(),
 					name: 'a',
 					fieldId: 'f-1',
@@ -119,13 +102,10 @@ describe('objectsConfig.toUpdatePayload', () => {
 	});
 
 	it('keeps every id when all members carry backend uuids', () => {
-		const ids = [
-			'550e8400-e29b-41d4-a716-446655440000',
-			'6ba7b810-9dad-11d1-80b4-00c04fd430c8'
-		];
+		const ids = ['550e8400-e29b-41d4-a716-446655440000', '6ba7b810-9dad-11d1-80b4-00c04fd430c8'];
 		const item = makeObject({
 			members: ids.map((id) => ({
-				memberType: 'scalar' as const,
+				memberType: 'field' as const,
 				id,
 				name: `m-${id.slice(0, 4)}`,
 				fieldId: 'f-x',
@@ -149,7 +129,7 @@ describe('objectsConfig.toCreatePayload', () => {
 		const item = makeObject({
 			members: [
 				{
-					memberType: 'scalar',
+					memberType: 'field',
 					id: '550e8400-e29b-41d4-a716-446655440000',
 					name: 'stowaway-backend-id',
 					fieldId: 'f-1',
@@ -157,7 +137,7 @@ describe('objectsConfig.toCreatePayload', () => {
 					isNullable: false
 				},
 				{
-					memberType: 'scalar',
+					memberType: 'field',
 					id: newTempMemberId(),
 					name: 'tmp',
 					fieldId: 'f-2',

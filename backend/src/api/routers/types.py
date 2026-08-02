@@ -38,19 +38,4 @@ async def list_types(
     :returns: List of type responses.
     """
     service = get_service(db)
-    types = await service.list_for_user(user.id, namespace_id)
-    field_counts = await service.get_field_counts_for_user(user.id)
-
-    return [
-        TypeResponse(
-            id=t.id,
-            namespace_id=t.namespace_id,
-            name=t.name,
-            python_type=t.python_type,
-            description=t.description,
-            import_path=t.import_path,
-            parent_type_id=t.parent_type_id,
-            used_in_fields=field_counts.get(str(t.id), 0),
-        )
-        for t in types
-    ]
+    return await service.list_responses_for_user(user.id, namespace_id)

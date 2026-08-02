@@ -6,7 +6,7 @@ from uuid import UUID
 from pydantic import BaseModel, ConfigDict, Field
 
 from api.schemas.members import DerivedRelationshipResponse, MemberInput, MemberResponse
-from api_craft.models.types import PascalCaseName
+from meta_framework.generation_targets.fastapi_python.models.types import PascalCaseName
 
 
 class ModelValidatorInput(BaseModel):

@@ -1,35 +1,59 @@
 # tests/conftest.py
 """Pytest configuration and shared fixtures."""
 
-import socket
 import subprocess
 
+import asyncpg
 import pytest
 import pytest_asyncio
 from sqlalchemy import delete, select
+from sqlalchemy.engine import make_url
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 
 from api.main import app
 from api.models.database import GenerationModel, Namespace, UserModel
+from api.settings import get_settings
+from support.event_loop import run_async
 
 # --- Database availability check ---
 
-_DB_HOST = "localhost"
-_DB_PORT = 5432
 _DB_CHECK_TIMEOUT_SECONDS = 1
 
 
-def _check_database_available() -> bool:
-    """Check whether PostgreSQL is reachable via TCP socket.
+def _database_check_url() -> tuple[str, str]:
+    """Return the configured database URL and a human-readable location.
 
-    :returns: True if the database port accepts connections, False otherwise.
+    :returns: Tuple of asyncpg-compatible DSN and host/port label.
+    """
+    url = make_url(get_settings().database_url)
+    check_url = url.set(drivername="postgresql").render_as_string(hide_password=False)
+    host = url.host or "localhost"
+    port = url.port or 5432
+    return check_url, f"{host}:{port}"
+
+
+async def _open_database_check_connection(dsn: str) -> None:
+    """Open and close a PostgreSQL connection for test availability checks.
+
+    :param dsn: asyncpg-compatible PostgreSQL connection URL.
+    """
+    connection = await asyncpg.connect(dsn=dsn, timeout=_DB_CHECK_TIMEOUT_SECONDS)
+    try:
+        await connection.execute("SELECT 1")
+    finally:
+        await connection.close()
+
+
+def _check_database_available() -> bool:
+    """Check whether configured PostgreSQL accepts authenticated connections.
+
+    :returns: True if the configured database accepts connections, False otherwise.
     """
     try:
-        with socket.create_connection(
-            (_DB_HOST, _DB_PORT), timeout=_DB_CHECK_TIMEOUT_SECONDS
-        ):
-            return True
-    except OSError:
+        dsn, _location = _database_check_url()
+        run_async(_open_database_check_connection(dsn))
+        return True
+    except (OSError, asyncpg.PostgresError, TimeoutError):
         return False
 
 
@@ -60,8 +84,9 @@ def pytest_collection_modifyitems(
         item for item in items if item.get_closest_marker("integration")
     ]
     if integration_items and not _check_database_available():
+        _dsn, database_location = _database_check_url()
         skip_marker = pytest.mark.skip(
-            reason=f"PostgreSQL not available at {_DB_HOST}:{_DB_PORT} - start Docker Desktop to run integration tests"
+            reason=f"PostgreSQL not available at {database_location} - start the configured test database"
         )
         for item in integration_items:
             item.add_marker(skip_marker)
@@ -89,22 +114,28 @@ async def client(request):
     from httpx import ASGITransport
     from httpx import AsyncClient as _AsyncClient
 
+    from api.database import engine
     from support.api_client import cleanup_user_data, clear_auth, override_auth
 
     clerk_id = getattr(request.module, "TEST_CLERK_ID", None)
     if clerk_id is None:
         pytest.skip("Module does not define TEST_CLERK_ID")
 
+    await engine.dispose()
     override_auth(clerk_id)
 
-    async with _AsyncClient(
-        transport=ASGITransport(app=app),
-        base_url="http://test/v1",
-    ) as c:
-        yield c
-
-    clear_auth()
-    await cleanup_user_data(clerk_id)
+    try:
+        async with _AsyncClient(
+            transport=ASGITransport(app=app),
+            base_url="http://test/v1",
+        ) as c:
+            yield c
+    finally:
+        clear_auth()
+        try:
+            await cleanup_user_data(clerk_id)
+        finally:
+            await engine.dispose()
 
 
 # --- Integration test (database) fixtures ---

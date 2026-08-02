@@ -62,10 +62,9 @@ describe('EndpointItem Component', () => {
 					path: '/users/{id}',
 					description: 'Delete a user',
 					tagName: 'Users',
+					targetObjectId: 'obj-2',
 					pathParams: [],
 					queryParams: [],
-					queryParamsObjectId: 'obj-1',
-					objectId: 'obj-2',
 					responseShape: 'list',
 					useEnvelope: true
 				},
@@ -73,8 +72,7 @@ describe('EndpointItem Component', () => {
 			};
 
 			expect(props.endpoint.tagName).toBe('Users');
-			expect(props.endpoint.queryParamsObjectId).toBe('obj-1');
-			expect(props.endpoint.objectId).toBe('obj-2');
+			expect(props.endpoint.targetObjectId).toBe('obj-2');
 		});
 	});
 

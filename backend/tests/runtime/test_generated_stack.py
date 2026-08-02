@@ -5,7 +5,7 @@ Catches runtime bugs invisible to unit tests: missing dependencies, broken
 imports, port conflicts, ORM mapping errors, validator failures, and timezone
 handling.  Uses ``httpx`` against a real containerised service (not TestClient).
 
-Migrated from ``test_api_craft/test_e2e_generated.py``.
+Migrated from ``test_meta_framework.generation_targets.fastapi_python/test_e2e_generated.py``.
 """
 
 from pathlib import Path
@@ -17,8 +17,8 @@ import httpx
 import pytest
 import yaml
 
-from api_craft.main import generate_fastapi
-from api_craft.models.input import InputAPI
+from meta_framework.generation_targets.fastapi_python.main import generate_fastapi
+from meta_framework.generation_targets.fastapi_python.models.input import InputAPI
 from support.generated_app import SPECS_PATH
 
 pytestmark = pytest.mark.e2e

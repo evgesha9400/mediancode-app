@@ -5,14 +5,14 @@
  */
 
 import { apiGet, apiPost, apiPut, apiDelete } from './client';
-import type { ObjectDefinition, ObjectMember, ScalarMember, RelationshipMember, DerivedRelationship, InlineModelValidator, FieldRole, RelationshipKind } from '$lib/types';
+import type { ObjectDefinition, ObjectMember, FieldMember, RelationshipMember, DerivedRelationship, InlineModelValidator, FieldRole, RelationshipKind } from '$lib/types';
 
 // ============================================================================
 // Response Types
 // ============================================================================
 
-interface ScalarMemberResponse {
-	memberType: 'scalar';
+interface FieldMemberResponse {
+	memberType: 'field';
 	id: string;
 	name: string;
 	fieldId: string;
@@ -31,7 +31,7 @@ interface RelationshipMemberResponse {
 	required: boolean;
 }
 
-type MemberResponse = ScalarMemberResponse | RelationshipMemberResponse;
+type MemberResponse = FieldMemberResponse | RelationshipMemberResponse;
 
 interface DerivedRelationshipResponse {
 	name: string;
@@ -40,8 +40,6 @@ interface DerivedRelationshipResponse {
 	sourceField: string;
 	kind: string;
 	side: string;
-	impliesFk: string | null;
-	junctionTable?: string;
 	required: boolean;
 }
 
@@ -77,9 +75,9 @@ interface ObjectResponse {
  * Transform backend member response to frontend ObjectMember type
  */
 function transformMember(response: MemberResponse): ObjectMember {
-	if (response.memberType === 'scalar') {
+	if (response.memberType === 'field') {
 		return {
-			memberType: 'scalar',
+			memberType: 'field',
 			id: response.id,
 			name: response.name,
 			fieldId: response.fieldId,
@@ -110,8 +108,6 @@ function transformDerivedRelationship(response: DerivedRelationshipResponse): De
 		sourceField: response.sourceField,
 		kind: response.kind as RelationshipKind,
 		side: response.side as 'one' | 'many' | 'target',
-		impliesFk: response.impliesFk,
-		junctionTable: response.junctionTable,
 		required: response.required,
 	};
 }
@@ -178,7 +174,7 @@ export interface CreateObjectRequest {
 	namespaceId: string;
 	name: string;
 	description?: string;
-	members: (Omit<ScalarMember, 'id'> | Omit<RelationshipMember, 'id'>)[];
+	members: (Omit<FieldMember, 'id'> | Omit<RelationshipMember, 'id'>)[];
 	validators?: { templateId: string; parameters?: Record<string, string>; fieldMappings: Record<string, string> }[];
 }
 

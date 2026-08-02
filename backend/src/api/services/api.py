@@ -7,7 +7,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
-from api.models.database import ApiModel, Namespace
+from api.models.database import ApiEndpoint, ApiModel, Namespace
 from api.schemas.api import ApiCreate, ApiUpdate
 from api.services.base import BaseService
 
@@ -31,7 +31,11 @@ class ApiService(BaseService[ApiModel]):
         :param namespace_id: Optional namespace filter.
         :returns: List of user's APIs.
         """
-        query = select(ApiModel).join(Namespace).where(Namespace.user_id == user_id)
+        query = (
+            select(ApiModel)
+            .join(Namespace)
+            .where(self.namespace_access.owned_namespace_filter(user_id))
+        )
         if namespace_id:
             query = query.where(ApiModel.namespace_id == namespace_id)
         result = await self.db.execute(query)
@@ -49,7 +53,7 @@ class ApiService(BaseService[ApiModel]):
             .join(Namespace)
             .where(
                 ApiModel.id == api_id,
-                Namespace.user_id == user_id,
+                self.namespace_access.owned_namespace_filter(user_id),
             )
         )
         result = await self.db.execute(query)
@@ -67,10 +71,12 @@ class ApiService(BaseService[ApiModel]):
             .join(Namespace)
             .options(
                 selectinload(ApiModel.endpoints),
+                selectinload(ApiModel.endpoints).selectinload(ApiEndpoint.path_params),
+                selectinload(ApiModel.endpoints).selectinload(ApiEndpoint.query_params),
             )
             .where(
                 ApiModel.id == api_id,
-                Namespace.user_id == user_id,
+                self.namespace_access.owned_namespace_filter(user_id),
             )
         )
         result = await self.db.execute(query)
@@ -84,7 +90,7 @@ class ApiService(BaseService[ApiModel]):
         :returns: The created API.
         :raises HTTPException: If namespace not owned by user.
         """
-        await self.validate_namespace_for_creation(data.namespace_id, user_id)
+        await self.namespace_access.require_owned_namespace(data.namespace_id, user_id)
 
         api = ApiModel(
             namespace_id=data.namespace_id,

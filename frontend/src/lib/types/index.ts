@@ -150,25 +150,16 @@ export interface Api {
   updatedAt: string;
 }
 
-/**
- * Path parameter referencing a field on the target object.
- * `fieldId` is kept for backward compat during migration; `field` is the
- * target-object field name used by the new inference system.
- */
 export interface PathParam {
   name: string;
-  fieldId: string;     // legacy: global field ID (kept for backward compat)
-  field: string;       // NEW: field name on the target object
+  fieldMemberId: string;
 }
 
-/**
- * Query parameter with field mapping and filter operator.
- * Pagination is handled at the endpoint level, not per-param.
- */
 export interface QueryParam {
   name: string;
-  field: string;       // field name on the target object
-  operator: FilterOperator; // filter operation
+  fieldMemberId: string;
+  operator: FilterOperator;
+  required: boolean;
 }
 
 export interface ApiEndpoint {
@@ -178,14 +169,13 @@ export interface ApiEndpoint {
   path: string;
   description: string;
   tagName?: string;  // Tag name reference (string, not UUID)
+  targetObjectId?: string;
   pathParams: PathParam[];
-  queryParams: QueryParam[];           // NEW: replaces queryParamsObjectId
-  queryParamsObjectId?: string;        // DEPRECATED: kept for backward compat during migration
-  objectId?: string; // Select ONE object for request/response body; also the target for param inference
+  queryParams: QueryParam[];
   useEnvelope: boolean;
   // Response shape configuration (object or list of objects only)
   responseShape: ResponseShape;
-  pagination?: boolean;                // When true, auto-injects limit/offset params (list endpoints only)
+  pagination?: boolean;                // When true, auto-injects limit/offset params for queryable endpoints
   expanded?: boolean;
 }
 
@@ -248,8 +238,8 @@ export function roleHasModifiers(role: FieldRole): boolean {
 
 export type RelationshipKind = 'one_to_one' | 'one_to_many' | 'many_to_many';
 
-export type ScalarMember = {
-  memberType: 'scalar';
+export type FieldMember = {
+  memberType: 'field';
   id?: string;
   name: string;
   fieldId: string;
@@ -268,7 +258,7 @@ export type RelationshipMember = {
   required: boolean;
 };
 
-export type ObjectMember = ScalarMember | RelationshipMember;
+export type ObjectMember = FieldMember | RelationshipMember;
 
 export type DerivedRelationship = {
   name: string;
@@ -277,8 +267,6 @@ export type DerivedRelationship = {
   sourceField: string;
   kind: RelationshipKind;
   side: 'one' | 'many' | 'target';
-  impliesFk: string | null;
-  junctionTable?: string;
   required: boolean;
 };
 
@@ -384,4 +372,3 @@ export interface ModelValidatorTemplate {
   fieldMappings: FieldMappingDefinition[];
   bodyTemplate: string;
 }
-

@@ -1,7 +1,7 @@
 # tests/support/generated_app.py
 """Helpers for loading generated FastAPI projects in-process.
 
-Migrated from the old ``tests/test_api_craft/conftest.py``.  Provides
+Migrated from the old ``tests/test_meta_framework.generation_targets.fastapi_python/conftest.py``.  Provides
 :func:`load_input` for YAML specs and :func:`load_app` for dynamically
 importing a generated project with an in-memory SQLite backend.
 """
@@ -17,8 +17,9 @@ import uuid
 from fastapi.testclient import TestClient
 import yaml
 
-from api_craft.main import APIGenerator
-from api_craft.models.input import InputAPI
+from meta_framework.generation_targets.fastapi_python.main import APIGenerator
+from meta_framework.generation_targets.fastapi_python.models.input import InputAPI
+from support.event_loop import run_async
 
 SPECS_PATH = Path(__file__).resolve().parent.parent / "specs"
 
@@ -84,8 +85,6 @@ def load_app(src_path: Path):
     :param src_path: Path to the ``src/`` directory of a generated project.
     :returns: The FastAPI ``app`` instance.
     """
-    import asyncio
-
     prefix = f"_gen_{uuid.uuid4().hex[:8]}"
     sys.path.insert(0, str(src_path))
 
@@ -115,7 +114,7 @@ def load_app(src_path: Path):
                 async with async_engine.begin() as conn:
                     await conn.run_sync(orm_mod.Base.metadata.create_all)
 
-            asyncio.get_event_loop().run_until_complete(_create_tables())
+            run_async(_create_tables())
 
         module_files = [
             "orm_models",
@@ -172,7 +171,9 @@ def generate_and_client(spec_filename: str, tmp_path: Path) -> TestClient:
     for segment in ("_", " "):
         kebab_name = kebab_name.replace(segment, "-")
     project_name = api_input.name
-    from api_craft.models.types import PascalCaseName
+    from meta_framework.generation_targets.fastapi_python.models.types import (
+        PascalCaseName,
+    )
 
     n = PascalCaseName(project_name)
     project_dir = tmp_path / n.kebab_name

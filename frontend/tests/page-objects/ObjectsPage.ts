@@ -13,9 +13,13 @@ import {
 	OBJECT_MEMBER_DRAG_HANDLE,
 	OBJECT_MEMBER_DROPDOWN,
 	OBJECT_MEMBER_ROW,
-	OBJECT_MEMBER_SEARCH,
+	OBJECT_MEMBER_SEARCH
 } from '$lib/utils/testIds';
 import { ACTION_DELAY_MS } from '../helpers/e2e-delays';
+
+function escapeRegExp(value: string): string {
+	return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
 
 export class ObjectsPage {
 	readonly page: Page;
@@ -165,7 +169,10 @@ export class ObjectsPage {
 		await this.drawer.waitFor({ state: 'visible', timeout: 5000 });
 
 		// Wait for drawer content to render (editedItem may lag behind drawerOpen)
-		const contentLoaded = await this.objectNameInput.waitFor({ state: 'visible', timeout: 3000 }).then(() => true).catch(() => false);
+		const contentLoaded = await this.objectNameInput
+			.waitFor({ state: 'visible', timeout: 3000 })
+			.then(() => true)
+			.catch(() => false);
 		if (!contentLoaded) {
 			// Retry: close drawer and re-click
 			await this.drawerCloseButton.click();
@@ -226,7 +233,7 @@ export class ObjectsPage {
 	 * Check if drawer is open
 	 */
 	async isDrawerOpen(): Promise<boolean> {
-		return await this.drawer.isVisible() || await this.createDrawer.isVisible();
+		return (await this.drawer.isVisible()) || (await this.createDrawer.isVisible());
 	}
 
 	/**
@@ -284,7 +291,9 @@ export class ObjectsPage {
 
 		// Field rows live outside the dropdown; scope options to the panel only.
 		// CRUD project actionTimeout is tight on CI — use explicit timeouts here.
-		const option = dropdown.getByRole('button').filter({ hasText: fieldName }).first();
+		const option = dropdown
+			.getByRole('button', { name: new RegExp(`(^|\\s)${escapeRegExp(fieldName)}(\\s|$)`) })
+			.first();
 		await expect(option).toBeVisible({ timeout: 15_000 });
 		await option.click({ timeout: 15_000 });
 		await this.delay();
@@ -490,12 +499,7 @@ export class ObjectsPage {
 	/**
 	 * Create a new object with the given properties
 	 */
-	async createNewObject(options: {
-		name: string;
-		namespaceId?: string;
-		description?: string;
-		fields?: string[];
-	}) {
+	async createNewObject(options: { name: string; namespaceId?: string; description?: string; fields?: string[] }) {
 		await this.openCreateDrawer();
 
 		if (options.namespaceId) {

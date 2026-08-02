@@ -7,7 +7,7 @@ proves syntax validity, model correctness, view definitions, parameter
 handling, import correctness, and validator constraints.
 
 Merges the HTTP-behavior tests that previously lived in
-``test_api_craft/test_codegen.py`` and ``test_api_craft/test_shop_codegen.py``.
+``test_meta_framework.generation_targets.fastapi_python/test_codegen.py`` and ``test_meta_framework.generation_targets.fastapi_python/test_shop_codegen.py``.
 """
 
 import logging
@@ -15,7 +15,7 @@ import logging
 from fastapi.testclient import TestClient
 import pytest
 
-from api_craft.main import APIGenerator
+from meta_framework.generation_targets.fastapi_python.main import APIGenerator
 from support.generated_app import load_app, load_input
 
 pytestmark = pytest.mark.codegen

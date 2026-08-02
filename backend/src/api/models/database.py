@@ -22,7 +22,7 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 from api.database import Base
 
 if TYPE_CHECKING:
-    pass
+    from api.models.members import FieldMember, ObjectMember
 
 
 def generate_uuid() -> UUID:
@@ -528,9 +528,8 @@ class ApiEndpoint(Base):
     :ivar path: URL path with optional parameters in {braces}.
     :ivar description: Endpoint description for OpenAPI spec.
     :ivar tag_name: Optional tag name for grouping endpoints in OpenAPI spec.
-    :ivar path_params: Path parameters as JSONB list of {name, fieldId} dicts.
-    :ivar query_params_object_id: Optional reference to Object for query parameters.
-    :ivar object_id: Optional reference to Object for request/response body.
+    :ivar target_object_id: Object targeted by path/query semantics and body shape.
+    :ivar pagination: Whether generated list endpoints include pagination.
     :ivar use_envelope: Whether to wrap response in standard envelope.
     :ivar response_shape: Response shape (object or list).
     """
@@ -550,21 +549,129 @@ class ApiEndpoint(Base):
     path: Mapped[str] = mapped_column(Text, nullable=False)
     description: Mapped[str] = mapped_column(Text, nullable=False)
     tag_name: Mapped[str | None] = mapped_column(Text, nullable=True)
-    path_params: Mapped[list] = mapped_column(JSONB, nullable=False, default=list)
-    query_params_object_id: Mapped[UUID | None] = mapped_column(
-        PgUUID(as_uuid=True), ForeignKey("objects.id"), nullable=True
-    )
-    object_id: Mapped[UUID | None] = mapped_column(
+    target_object_id: Mapped[UUID] = mapped_column(
         PgUUID(as_uuid=True),
-        ForeignKey("objects.id", ondelete="SET NULL"),
-        nullable=True,
+        ForeignKey("objects.id", ondelete="RESTRICT"),
+        nullable=False,
     )
+    pagination: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
     use_envelope: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
     response_shape: Mapped[str] = mapped_column(Text, default="object", nullable=False)
 
     # Relationships
     api: Mapped["ApiModel"] = relationship(back_populates="endpoints")
-    query_params_object: Mapped["ObjectDefinition | None"] = relationship(
-        foreign_keys=[query_params_object_id]
+    target_object: Mapped["ObjectDefinition"] = relationship(
+        foreign_keys=[target_object_id]
     )
-    object: Mapped["ObjectDefinition | None"] = relationship(foreign_keys=[object_id])
+    path_params: Mapped[list["EndpointPathParam"]] = relationship(
+        back_populates="endpoint",
+        cascade="all, delete-orphan",
+        order_by="EndpointPathParam.position",
+    )
+    query_params: Mapped[list["EndpointQueryParam"]] = relationship(
+        back_populates="endpoint",
+        cascade="all, delete-orphan",
+        order_by="EndpointQueryParam.position",
+    )
+
+
+class EndpointPathParam(Base):
+    """Endpoint-owned path parameter mapped to a target Field Member.
+
+    :ivar id: Unique identifier for the parameter row.
+    :ivar endpoint_id: Owning endpoint.
+    :ivar position: Parameter order within the endpoint.
+    :ivar name: Path token name.
+    :ivar field_member_id: Target Object Field Member referenced by the parameter.
+    """
+
+    __tablename__ = "endpoint_path_params"
+    __table_args__ = (
+        UniqueConstraint(
+            "endpoint_id",
+            "position",
+            name="uq_endpoint_path_params_endpoint_position",
+        ),
+        UniqueConstraint(
+            "endpoint_id",
+            "name",
+            name="uq_endpoint_path_params_endpoint_name",
+        ),
+    )
+
+    id: Mapped[UUID] = mapped_column(
+        PgUUID(as_uuid=True), primary_key=True, default=generate_uuid
+    )
+    endpoint_id: Mapped[UUID] = mapped_column(
+        PgUUID(as_uuid=True),
+        ForeignKey("api_endpoints.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    position: Mapped[int] = mapped_column(nullable=False)
+    name: Mapped[str] = mapped_column(Text, nullable=False)
+    field_member_id: Mapped[UUID] = mapped_column(
+        PgUUID(as_uuid=True),
+        ForeignKey("field_members.id", ondelete="RESTRICT"),
+        nullable=False,
+        index=True,
+    )
+
+    endpoint: Mapped["ApiEndpoint"] = relationship(back_populates="path_params")
+    field_member: Mapped["FieldMember"] = relationship(
+        "FieldMember",
+        foreign_keys=[field_member_id],
+    )
+
+
+class EndpointQueryParam(Base):
+    """Endpoint-owned query parameter mapped to a target Field Member.
+
+    :ivar id: Unique identifier for the parameter row.
+    :ivar endpoint_id: Owning endpoint.
+    :ivar position: Parameter order within the endpoint.
+    :ivar name: Query parameter name.
+    :ivar field_member_id: Target Object Field Member referenced by the parameter.
+    :ivar operator: Filter operator.
+    :ivar required: Whether clients must provide the query parameter.
+    """
+
+    __tablename__ = "endpoint_query_params"
+    __table_args__ = (
+        UniqueConstraint(
+            "endpoint_id",
+            "position",
+            name="uq_endpoint_query_params_endpoint_position",
+        ),
+        UniqueConstraint(
+            "endpoint_id",
+            "name",
+            name="uq_endpoint_query_params_endpoint_name",
+        ),
+    )
+
+    id: Mapped[UUID] = mapped_column(
+        PgUUID(as_uuid=True), primary_key=True, default=generate_uuid
+    )
+    endpoint_id: Mapped[UUID] = mapped_column(
+        PgUUID(as_uuid=True),
+        ForeignKey("api_endpoints.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    position: Mapped[int] = mapped_column(nullable=False)
+    name: Mapped[str] = mapped_column(Text, nullable=False)
+    field_member_id: Mapped[UUID] = mapped_column(
+        PgUUID(as_uuid=True),
+        ForeignKey("field_members.id", ondelete="RESTRICT"),
+        nullable=False,
+        index=True,
+    )
+    operator: Mapped[str] = mapped_column(Text, nullable=False)
+    required: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+
+    endpoint: Mapped["ApiEndpoint"] = relationship(back_populates="query_params")
+    field_member: Mapped["FieldMember"] = relationship(
+        "FieldMember",
+        foreign_keys=[field_member_id],
+    )

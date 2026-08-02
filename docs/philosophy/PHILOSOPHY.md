@@ -100,3 +100,9 @@ When building features for Median Code:
 3. **Generate deterministic output** — same inputs → same generated Python, always
 4. **Don't over-engineer** — the generated code should be clean and simple enough that a developer can read it, understand it, and modify it immediately
 5. **Respect the boundary** — Median Code's job ends at "working, deployable API." Everything after that is the developer's domain
+
+## Architecture Transition Rule
+
+When a shallow module is being replaced with a deeper module, prefer a complete transition in one coherent refactor: extract the deep module, replace all internal call sites, move the tests to the new interface, and delete the duplicate implementation immediately.
+
+Do not keep internal compatibility shims, parallel code paths, or half-migrated seams just to reduce refactor size. Temporary compatibility is acceptable only for external contracts, data migrations, or release sequencing that cannot be changed atomically; when used, it must be explicit and short-lived.

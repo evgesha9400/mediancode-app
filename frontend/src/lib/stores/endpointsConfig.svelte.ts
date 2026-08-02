@@ -2,7 +2,7 @@
 //
 // Shared endpoint CRUD configuration helpers for the API detail page.
 
-import type { ApiEndpoint, Field, ObjectDefinition } from '$lib/types';
+import type { ApiEndpoint } from '$lib/types';
 import {
 	createEndpointApi,
 	updateEndpointApi,
@@ -10,11 +10,7 @@ import {
 	type CreateEndpointRequest,
 	type UpdateEndpointRequest
 } from '$lib/api/endpoints';
-import {
-	buildDuplicateEndpoint,
-	hydratePathParamsForEndpoint,
-	normalizeEndpoint
-} from '$lib/domain/endpointReducer';
+import { normalizeEndpoint } from '$lib/domain/endpointReducer';
 
 export const endpointApi = {
 	create: createEndpointApi,
@@ -30,10 +26,9 @@ export function createEndpointDraft(apiId: string): ApiEndpoint {
 		path: '/',
 		description: '',
 		tagName: undefined,
+		targetObjectId: undefined,
 		pathParams: [],
 		queryParams: [],
-		queryParamsObjectId: undefined,
-		objectId: undefined,
 		useEnvelope: true,
 		responseShape: 'object',
 		pagination: false,
@@ -42,11 +37,9 @@ export function createEndpointDraft(apiId: string): ApiEndpoint {
 }
 
 export function hydrateStoredEndpoint(
-	endpoint: ApiEndpoint,
-	objects: ObjectDefinition[],
-	fields: Field[]
+	endpoint: ApiEndpoint
 ): ApiEndpoint {
-	return hydratePathParamsForEndpoint(normalizeEndpoint(endpoint), objects, fields);
+	return normalizeEndpoint(endpoint);
 }
 
 export function toCreateEndpointPayload(endpoint: ApiEndpoint): CreateEndpointRequest {
@@ -56,10 +49,9 @@ export function toCreateEndpointPayload(endpoint: ApiEndpoint): CreateEndpointRe
 		path: endpoint.path,
 		description: endpoint.description,
 		tagName: endpoint.tagName,
+		targetObjectId: endpoint.targetObjectId ?? '',
 		pathParams: endpoint.pathParams,
 		queryParams: endpoint.queryParams ?? [],
-		queryParamsObjectId: endpoint.queryParamsObjectId,
-		objectId: endpoint.objectId,
 		useEnvelope: endpoint.useEnvelope,
 		responseShape: endpoint.responseShape,
 		pagination: endpoint.pagination ?? false
@@ -72,10 +64,9 @@ export function toUpdateEndpointPayload(endpoint: ApiEndpoint): UpdateEndpointRe
 		path: endpoint.path,
 		description: endpoint.description,
 		tagName: endpoint.tagName ?? null,
+		targetObjectId: endpoint.targetObjectId,
 		pathParams: endpoint.pathParams,
 		queryParams: endpoint.queryParams ?? [],
-		queryParamsObjectId: endpoint.queryParamsObjectId ?? null,
-		objectId: endpoint.objectId ?? null,
 		useEnvelope: endpoint.useEnvelope,
 		responseShape: endpoint.responseShape,
 		pagination: endpoint.pagination ?? false
@@ -95,13 +86,6 @@ export function applyEndpointUpdate(
 					operator: param.operator as ApiEndpoint['queryParams'][number]['operator']
 				}))
 			: endpoint.queryParams,
-		tagName: payload.tagName === null ? undefined : payload.tagName,
-		queryParamsObjectId:
-			payload.queryParamsObjectId === null ? undefined : payload.queryParamsObjectId,
-		objectId: payload.objectId === null ? undefined : payload.objectId
+		tagName: payload.tagName === null ? undefined : payload.tagName
 	});
-}
-
-export function toDuplicateEndpointPayload(endpoint: ApiEndpoint): CreateEndpointRequest {
-	return toCreateEndpointPayload(buildDuplicateEndpoint(endpoint));
 }

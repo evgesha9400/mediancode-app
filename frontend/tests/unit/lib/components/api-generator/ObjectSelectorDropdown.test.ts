@@ -31,7 +31,7 @@ describe('ObjectSelectorDropdown Component', () => {
 						namespaceId: 'ns-1',
 						name: 'UserResponse',
 						description: 'User response object',
-						members: [{ memberType: 'scalar' as const, name: 'field1', fieldId: 'field-1', role: 'writable' as const, isNullable: false }],
+						members: [{ memberType: 'field' as const, name: 'field1', fieldId: 'field-1', role: 'writable' as const, isNullable: false }],
 						derivedRelationships: [],
 						validators: [],
 						usedInApis: ['api-1']
@@ -78,13 +78,13 @@ describe('ObjectSelectorDropdown Component', () => {
 			expect(propsWithPlaceholder.placeholder).toBe('Choose an object...');
 		});
 
-		it('ObjectSelectorDropdownProps onSelect receives objectId or undefined', () => {
+		it('ObjectSelectorDropdownProps onSelect receives object definition ID or undefined', () => {
 			let selectedId: string | undefined;
 
 			const props: ObjectSelectorDropdownProps = {
 				availableObjects: [],
-				onSelect: (objectId) => {
-					selectedId = objectId;
+				onSelect: (objectDefinitionId) => {
+					selectedId = objectDefinitionId;
 				}
 			};
 

@@ -30,14 +30,14 @@ def upgrade() -> None:
     # 1. Identify orphaned FK field IDs before dropping old tables
     # ------------------------------------------------------------------
     # FK fields are identified by having role='fk' in the old
-    # fields_on_objects_old table and no remaining scalar_members reference.
+    # fields_on_objects_old table and no remaining field_members reference.
     orphan_ids = conn.execute(
         sa.text(
             "SELECT DISTINCT f.id FROM fields f "
             "INNER JOIN fields_on_objects_old foa ON f.id = foa.field_id "
             "WHERE foa.role = 'fk' "
             "AND NOT EXISTS ("
-            "  SELECT 1 FROM scalar_members sm WHERE sm.field_id = f.id"
+            "  SELECT 1 FROM field_members sm WHERE sm.field_id = f.id"
             ")"
         )
     ).fetchall()
