@@ -1,0 +1,51 @@
+name: Temporary Coolify database port cleanup
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  close-public-database-ports:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Disable public database proxies
+        env:
+          COOLIFY_TOKEN: ${{ secrets.COOLIFY_TOKEN }}
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          if [[ -z "${COOLIFY_TOKEN:-}" ]]; then
+            printf '%s\n' 'COOLIFY_TOKEN is not configured' >&2
+            exit 1
+          fi
+
+          for database_uuid in \
+            ys4gwgscgwg4ss40k4g4o4wk \
+            i00o8wck8g008g8ccoo444ck
+          do
+            curl --fail-with-body --silent --show-error \
+              --request PATCH \
+              --header "Authorization: Bearer ${COOLIFY_TOKEN}" \
+              --header 'Content-Type: application/json' \
+              --data '{"is_public":false}' \
+              "https://coolify.mediancode.com/api/v1/databases/${database_uuid}" \
+              >/dev/null
+
+            database_state="$(
+              curl --fail-with-body --silent --show-error \
+                --header "Authorization: Bearer ${COOLIFY_TOKEN}" \
+                "https://coolify.mediancode.com/api/v1/databases/${database_uuid}"
+            )"
+
+            jq -e \
+              '.is_public == false' \
+              <<<"${database_state}" \
+              >/dev/null
+            jq -c \
+              '{uuid, name, is_public}' \
+              <<<"${database_state}"
+          done
