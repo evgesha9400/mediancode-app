@@ -1,0 +1,71 @@
+name: Coolify migration audit
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  inventory:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    env:
+      COOLIFY_BASE_URL: https://coolify.mediancode.com
+      COOLIFY_TOKEN: ${{ secrets.COOLIFY_TOKEN }}
+    steps:
+      - name: Inventory legacy applications and databases
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          api_get() {
+            curl --fail --silent --show-error \
+              --connect-timeout 10 \
+              --max-time 30 \
+              --header "Authorization: Bearer ${COOLIFY_TOKEN}" \
+              --header "Accept: application/json" \
+              "${COOLIFY_BASE_URL}/api/v1/$1"
+          }
+
+          printf '%s\n' 'Applications (non-secret fields):'
+          api_get applications | jq --compact-output '
+            .[] | {
+              uuid,
+              name,
+              description,
+              fqdn,
+              git_repository,
+              git_branch,
+              build_pack,
+              status,
+              server_id,
+              environment_id,
+              base_directory,
+              dockerfile_location
+            }
+          '
+
+          printf '%s\n' 'Databases (non-secret fields):'
+          api_get databases | jq --compact-output '
+            .[] | {
+              uuid,
+              name,
+              description,
+              type,
+              status,
+              server_id,
+              environment_id,
+              public_port
+            }
+          '
+
+          for app_uuid in \
+            xcwggkk4c8ggwokgcko0o00k \
+            jkk8o0s8g004c4oco0k0gkcw
+          do
+            printf 'Environment-variable keys for application %s:\n' "$app_uuid"
+            api_get "applications/${app_uuid}/envs" | jq --compact-output '
+              map(.key) | sort
+            '
+          done
