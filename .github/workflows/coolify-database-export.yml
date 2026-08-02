@@ -1,0 +1,138 @@
+name: Coolify database export
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  export:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      COOLIFY_BASE_URL: https://coolify.mediancode.com
+      COOLIFY_TOKEN: ${{ secrets.COOLIFY_TOKEN }}
+      MIGRATION_PUBLIC_KEY_B64: ${{ vars.TEMP_MIGRATION_PUBLIC_KEY_B64 }}
+    steps:
+      - name: Export and encrypt legacy databases
+        shell: bash
+        run: |
+          set -euo pipefail
+          umask 077
+
+          readonly work_dir="${RUNNER_TEMP}/mediancode-database-export"
+          readonly artifact_dir="${work_dir}/encrypted"
+          mkdir -p "$artifact_dir"
+
+          printf '%s' "$MIGRATION_PUBLIC_KEY_B64" \
+            | base64 --decode > "${work_dir}/recipient.pem"
+          openssl pkey -pubin -in "${work_dir}/recipient.pem" -noout
+
+          api_get() {
+            curl --fail --silent --show-error \
+              --connect-timeout 10 \
+              --max-time 30 \
+              --header "Authorization: Bearer ${COOLIFY_TOKEN}" \
+              --header "Accept: application/json" \
+              "${COOLIFY_BASE_URL}/api/v1/$1"
+          }
+
+          export_database() {
+            local environment="$1"
+            local application_uuid="$2"
+            local public_port="$3"
+            local source_dsn public_dsn dump_file key_file
+
+            source_dsn="$(
+              api_get "applications/${application_uuid}/envs" \
+                | jq --exit-status --raw-output '
+                    [.[] | select(.key == "DATABASE_URL" and (.is_preview != true))]
+                    | first
+                    | .value
+                  '
+            )"
+
+            public_dsn="$(
+              SOURCE_DSN="$source_dsn" PUBLIC_PORT="$public_port" python3 -c '
+          import os
+          from urllib.parse import urlsplit, urlunsplit
+          s = urlsplit(os.environ["SOURCE_DSN"])
+          userinfo = s.netloc.rpartition("@")[0] if "@" in s.netloc else ""
+          netloc = (userinfo + "@" if userinfo else "") + "159.65.195.102:" + os.environ["PUBLIC_PORT"]
+          print(urlunsplit((s.scheme, netloc, s.path, s.query, "")))
+          '
+            )"
+            unset source_dsn
+
+            dump_file="${work_dir}/${environment}.dump"
+            docker run --rm --network host \
+              postgres:18-alpine \
+              pg_dump \
+                --format=custom \
+                --compress=9 \
+                --no-owner \
+                --no-privileges \
+                --dbname="$public_dsn" > "$dump_file"
+            unset public_dsn
+
+            test -s "$dump_file"
+            docker run --rm --interactive \
+              postgres:18-alpine \
+              pg_restore --list < "$dump_file" >/dev/null
+
+            key_file="${work_dir}/${environment}.key"
+            openssl rand -hex 32 > "$key_file"
+            openssl enc \
+              -aes-256-cbc \
+              -salt \
+              -pbkdf2 \
+              -iter 250000 \
+              -md sha256 \
+              -pass "file:${key_file}" \
+              -in "$dump_file" \
+              -out "${artifact_dir}/${environment}.dump.enc"
+            openssl pkeyutl \
+              -encrypt \
+              -pubin \
+              -inkey "${work_dir}/recipient.pem" \
+              -pkeyopt rsa_padding_mode:oaep \
+              -pkeyopt rsa_oaep_md:sha256 \
+              -in "$key_file" \
+              -out "${artifact_dir}/${environment}.key.enc"
+
+            printf '%s raw_sha256=%s raw_bytes=%s\n' \
+              "$environment" \
+              "$(sha256sum "$dump_file" | awk '{print $1}')" \
+              "$(stat --format='%s' "$dump_file")" \
+              >> "${artifact_dir}/manifest.txt"
+
+            shred --remove "$dump_file" "$key_file"
+          }
+
+          export_database development xcwggkk4c8ggwokgcko0o00k 15432
+          export_database production jkk8o0s8g004c4oco0k0gkcw 15433
+
+          sha256sum \
+            "${artifact_dir}/development.dump.enc" \
+            "${artifact_dir}/development.key.enc" \
+            "${artifact_dir}/production.dump.enc" \
+            "${artifact_dir}/production.key.enc" \
+            > "${artifact_dir}/encrypted-sha256.txt"
+
+      - name: Upload encrypted migration bundle
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
+        with:
+          name: mediancode-coolify-database-export
+          path: ${{ runner.temp }}/mediancode-database-export/encrypted
+          if-no-files-found: error
+          retention-days: 1
+
+      - name: Remove runner migration files
+        if: always()
+        shell: bash
+        run: |
+          find "${RUNNER_TEMP}/mediancode-database-export" \
+            -type f \
+            -exec shred --remove --zero {} + 2>/dev/null || true
+          rm -rf "${RUNNER_TEMP}/mediancode-database-export"
