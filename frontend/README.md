@@ -157,7 +157,7 @@ To choose local vs hosted backend, set `PUBLIC_API_BASE_URL` when running E2E co
 - **Unit Tests:** Component and utility testing with Vitest and Testing Library
 - **E2E Tests:** Critical user flows with Playwright and visual regression
 - **Fixtures:** Deterministic test data shared across all test layers
-- **CI/CD:** GitHub Actions workflow validates all PRs
+- **CI/CD:** GitHub Actions validates changes and deploys tested branch artifacts
 
 ### Documentation
 
@@ -178,21 +178,29 @@ bun run test:e2e:smoke           # Must pass
 
 ## Deployment
 
-### Vercel (Production)
+### Vercel through GitHub Actions
 
-The application automatically deploys to Vercel when changes are pushed to the `main` branch.
+Vercel's direct Git deployment is disabled in `vercel.json`. GitHub Actions
+runs the frontend checks, builds with the pinned Vercel CLI, and uploads the
+tested build output:
 
-**Production URL**: https://app.mediancode.com
+- `develop` → preview deployment, then alias to
+  `https://dev.mediancode.com`
+- `main` → production deployment at `https://mediancode.com`
 
 **Environment Variables** (set in Vercel dashboard):
 
-- `PUBLIC_CLERK_PUBLISHABLE_KEY` - Your Clerk publishable key
+- `PUBLIC_CLERK_PUBLISHABLE_KEY` — matching development or production Clerk
+  publishable key
+- `PUBLIC_API_BASE_URL` — matching public backend `/v1` URL
 
-### Manual Deployment
+GitHub Actions additionally requires `VERCEL_TOKEN`, `VERCEL_ORG_ID`, and
+`VERCEL_PROJECT_ID`. The token is a secret; the two IDs are non-secret
+environment variables.
 
-```bash
-vercel --prod
-```
+Manual deployment is an emergency procedure, not the normal release path. Use
+Vercel's dashboard rollback for the fastest frontend recovery, or revert the
+Git commit and let the normal pipeline redeploy.
 
 ### Pre-Deployment Checklist
 

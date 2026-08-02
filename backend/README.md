@@ -83,7 +83,7 @@ make migration msg="..."    # Create new migration file
 
 ```
 ┌─────────────────┐     ┌───────────────────────────────────────────────┐
-│  Vercel         │     │  Digital Ocean Droplet (Coolify)               │
+│  Vercel         │     │  mac-server (Colima + Docker Compose)          │
 │  Frontend       │     │                                               │
 │  (SvelteKit)    │────>│  ┌─────────────┐     ┌─────────────────────┐  │
 └─────────────────┘     │  │  Backend     │────>│  PostgreSQL         │  │
@@ -106,7 +106,13 @@ See [CLAUDE.md](CLAUDE.md) for the generation pipeline and conventions.
 
 ## Deployment
 
-Deployed on a Digital Ocean droplet via [Coolify](https://coolify.io/). Pushing to `develop` or `main` triggers CI, and on success a webhook triggers Coolify to build and deploy. See [deploy/coolify/COOLIFY_DEPLOYMENT.md](deploy/coolify/COOLIFY_DEPLOYMENT.md) for setup details.
+GitHub Actions tests the backend, builds a `linux/amd64` image, publishes it to
+GHCR by immutable digest, and deploys it to `mac-server` over Tailscale after a
+successful push to `develop` or `main`. See
+[deploy/mac-server/README.md](deploy/mac-server/README.md) for the deployment
+contract. The Coolify material is retained temporarily as migration and
+rollback documentation while the existing DigitalOcean deployment remains
+active.
 
 ## Documentation
 

@@ -16,7 +16,10 @@ on:
 
 concurrency:
   group: backend-${{ github.ref }}
-  cancel-in-progress: true
+  cancel-in-progress: false
+
+permissions:
+  contents: read
 
 jobs:
   lint:
@@ -26,16 +29,16 @@ jobs:
       run:
         working-directory: backend
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
 
-      - uses: actions/setup-python@v6
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
         with:
           python-version: "3.13"
 
       - name: Install Poetry
-        run: pip install poetry
+        run: pip install poetry==2.3.2
 
-      - uses: actions/cache@v5
+      - uses: actions/cache@caa296126883cff596d87d8935842f9db880ef25 # v5
         with:
           path: ~/.cache/pypoetry
           key: v1-poetry-${{ hashFiles('backend/poetry.lock') }}
@@ -73,16 +76,16 @@ jobs:
       DATABASE_URL: postgresql+asyncpg://postgres:postgres@localhost:5432/median_code
 
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
 
-      - uses: actions/setup-python@v6
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
         with:
           python-version: "3.13"
 
       - name: Install Poetry
-        run: pip install poetry
+        run: pip install poetry==2.3.2
 
-      - uses: actions/cache@v5
+      - uses: actions/cache@caa296126883cff596d87d8935842f9db880ef25 # v5
         with:
           path: ~/.cache/pypoetry
           key: v1-poetry-${{ hashFiles('backend/poetry.lock') }}
@@ -97,15 +100,95 @@ jobs:
       - name: Run tests
         run: poetry run pytest tests/ -v
 
-  deploy:
-    name: Deploy
+  publish-image:
+    name: Publish linux/amd64 image
     needs: [lint, test]
     if: github.event_name == 'push'
     runs-on: ubuntu-latest
-    environment: ${{ github.ref == 'refs/heads/main' && 'production' || 'development' }}
+    timeout-minutes: 20
+    permissions:
+      contents: read
+      packages: write
+      attestations: write
+      id-token: write
+    outputs:
+      image_ref: ghcr.io/evgesha9400/mediancode-backend@${{ steps.push.outputs.digest }}
     steps:
-      - name: Trigger Coolify Deployment
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+
+      - name: Log in to GHCR
+        uses: docker/login-action@abd2ef45e78c5afb21d64d4ca52ee8550d9572c7 # v4
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@bb05f3f5519dd87d3ba754cc423b652a5edd6d2c # v4
+
+      - name: Build and publish immutable backend image
+        id: push
+        uses: docker/build-push-action@53b7df96c91f9c12dcc8a07bcb9ccacbed38856a # v7
+        with:
+          context: backend
+          file: backend/deploy/docker/Dockerfile
+          platforms: linux/amd64
+          push: true
+          tags: ghcr.io/evgesha9400/mediancode-backend:${{ github.sha }}
+          labels: |
+            org.opencontainers.image.revision=${{ github.sha }}
+            org.opencontainers.image.source=https://github.com/evgesha9400/mediancode-app
+          cache-from: type=gha,scope=mediancode-backend-amd64
+          cache-to: type=gha,mode=max,scope=mediancode-backend-amd64
+
+      - name: Attest image provenance
+        uses: actions/attest@f7c74d28b9d84cb8768d0b8ca14a4bac6ef463e6 # v4
+        with:
+          subject-name: ghcr.io/evgesha9400/mediancode-backend
+          subject-digest: ${{ steps.push.outputs.digest }}
+          push-to-registry: true
+
+  deploy:
+    name: Deploy to mac-server
+    needs: publish-image
+    if: vars.ENABLE_MAC_SERVER_DEPLOY == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    environment: ${{ github.ref == 'refs/heads/main' && 'production' || 'development' }}
+    permissions:
+      contents: read
+      id-token: write
+    env:
+      DEPLOY_ENVIRONMENT: ${{ github.ref == 'refs/heads/main' && 'production' || 'development' }}
+      IMAGE_REF: ${{ needs.publish-image.outputs.image_ref }}
+    steps:
+      - name: Join the deployment tailnet
+        uses: tailscale/github-action@306e68a486fd2350f2bfc3b19fcd143891a4a2d8 # v4
+        with:
+          oauth-client-id: ${{ secrets.TS_OAUTH_CLIENT_ID }}
+          audience: ${{ secrets.TS_AUDIENCE }}
+          tags: tag:ci
+          ping: mac-server.tailf57fcc.ts.net
+
+      - name: Prepare restricted SSH identity
+        env:
+          DEPLOY_KEY: ${{ secrets.MAC_SERVER_DEPLOY_KEY }}
+          KNOWN_HOSTS: ${{ vars.MAC_SERVER_SSH_KNOWN_HOSTS }}
         run: |
-          curl --silent --show-error --fail --request GET \
-            '${{ vars.COOLIFY_WEBHOOK }}' \
-            --header 'Authorization: Bearer ${{ secrets.COOLIFY_TOKEN }}'
+          test -n "$DEPLOY_KEY"
+          test -n "$KNOWN_HOSTS"
+          install -d -m 700 "$HOME/.ssh"
+          install -m 600 /dev/null "$HOME/.ssh/mediancode_deploy"
+          printf '%s\n' "$DEPLOY_KEY" > "$HOME/.ssh/mediancode_deploy"
+          printf '%s\n' "$KNOWN_HOSTS" > "$HOME/.ssh/known_hosts"
+          ssh-keygen -y -f "$HOME/.ssh/mediancode_deploy" >/dev/null
+
+      - name: Deploy verified image digest
+        run: |
+          ssh \
+            -i "$HOME/.ssh/mediancode_deploy" \
+            -o BatchMode=yes \
+            -o IdentitiesOnly=yes \
+            -o StrictHostKeyChecking=yes \
+            evgesha@mac-server.tailf57fcc.ts.net \
+            "deploy $DEPLOY_ENVIRONMENT $IMAGE_REF"
