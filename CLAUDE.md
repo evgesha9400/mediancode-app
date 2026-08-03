@@ -79,7 +79,9 @@ Per `docs/work/completed/monorepo-migration/spec.md`: backend and frontend deplo
 
 ## Branches
 
-- `main` — production. Pushes deploy Vercel prod (frontend) and Coolify prod (backend), gated by path filters.
-- `develop` — integration. Pushes deploy Vercel preview and Coolify staging.
+- `main` — production. Pushes deploy the frontend to Vercel production and the
+  backend to `mac-server`, gated by path filters.
+- `develop` — integration. Pushes deploy the frontend to Vercel preview and the
+  backend to the development stack on `mac-server`.
 
 Branch protection requires both `backend-ci` and `frontend-ci` job statuses (auto-pass when not affected by path filter).
