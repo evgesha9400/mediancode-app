@@ -7,7 +7,6 @@ This directory contains deployment configurations for different providers.
 | Provider | Directory / Docs | Notes |
 |----------|------------------|-------|
 | **Mac server** | [`mac-server/README.md`](mac-server/README.md) | Active GitHub Actions, GHCR and restricted Tailscale/SSH deployment |
-| **Coolify** | [`coolify/COOLIFY_DEPLOYMENT.md`](coolify/COOLIFY_DEPLOYMENT.md) | Legacy migration/rollback reference while the old deployment remains active |
 | **AWS** | `aws/` | Full IaC, ECS Fargate |
 
 ## Docker Layout
