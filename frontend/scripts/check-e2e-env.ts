@@ -36,7 +36,7 @@ const requirements: EnvRequirement[] = [
 		name: 'PUBLIC_API_BASE_URL',
 		required: false,
 		description: 'Backend API URL (defaults to localhost)',
-		example: 'http://localhost:8000/v1 or https://api.dev.mediancode.com/v1'
+		example: 'http://localhost:8000/v1 or https://api-dev.mediancode.com/v1'
 	},
 	{
 		name: 'PUBLIC_CLERK_PUBLISHABLE_KEY',
@@ -100,7 +100,7 @@ if (missing.length > 0) {
 }
 
 // Show which backend we're testing against
-const apiUrl = process.env.PUBLIC_API_BASE_URL || 'https://api.dev.mediancode.com/v1';
+const apiUrl = process.env.PUBLIC_API_BASE_URL || 'https://api-dev.mediancode.com/v1';
 const isLocal = apiUrl.includes('localhost') || apiUrl.includes('127.0.0.1');
 
 console.log(`🎯 Testing against: ${apiUrl}`);
