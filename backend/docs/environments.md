@@ -9,7 +9,7 @@ deployment contract.
 | Environment | Branch | Backend URL | Frontend URL | Clerk App |
 |-------------|--------|-------------|--------------|-----------|
 | **Local** | any | `localhost:8001` | `localhost:5173` | Development |
-| **Mac server Dev** | `develop` | `api.dev.mediancode.com` | `dev.mediancode.com` | Development |
+| **Mac server Dev** | `develop` | `api-dev.mediancode.com` | `dev.mediancode.com` | Development |
 | **Mac server Prod** | `main` | `api.mediancode.com` | `mediancode.com` | Production |
 
 ## Master Variable Table

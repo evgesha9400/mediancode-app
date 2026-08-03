@@ -1,6 +1,6 @@
 # E2E Tests
 
-End-to-end tests that require a running frontend app and (for CRUD) a running backend (api.dev.mediancode.com or local).
+End-to-end tests that require a running frontend app and (for CRUD) a running backend (api-dev.mediancode.com or local).
 
 ## Directory Structure
 

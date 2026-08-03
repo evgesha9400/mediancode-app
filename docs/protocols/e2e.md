@@ -39,7 +39,7 @@ bunx playwright test --project=smoke
 ```bash
 cd frontend
 pkill -f "vite" 2>/dev/null
-PUBLIC_API_BASE_URL=https://api.dev.mediancode.com/v1 bunx playwright test --project=setup --project=crud
+PUBLIC_API_BASE_URL=https://api-dev.mediancode.com/v1 bunx playwright test --project=setup --project=crud
 ```
 
 Use this shared dev API flow when the backend change is already deployed to the development environment. To run against a local backend, replace `PUBLIC_API_BASE_URL` with the local URL.

@@ -103,7 +103,7 @@ seed-local: ## Seed Shop data into local backend (localhost:$(PORT))
 	@PYTHONPATH=src:tests $(POETRY) run python -m seeding --target local --user-email $(SEED_USER_EMAIL)
 
 .PHONY: seed-dev
-seed-dev: ## Seed Shop data into dev backend (api.dev.mediancode.com)
+seed-dev: ## Seed Shop data into dev backend (api-dev.mediancode.com)
 	@PYTHONPATH=src:tests $(POETRY) run python -m seeding --target dev --user-email $(SEED_USER_EMAIL)
 
 .PHONY: seed-prod

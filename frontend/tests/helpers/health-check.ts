@@ -20,7 +20,7 @@ const API_BASE_URL = process.env.PUBLIC_API_BASE_URL || 'http://localhost:8000/v
  * The /health endpoint lives at the root of the API server, not under
  * the versioned path. For example:
  *   PUBLIC_API_BASE_URL=http://localhost:8000/v1 -> http://localhost:8000/health
- *   PUBLIC_API_BASE_URL=https://api.dev.mediancode.com/v1 -> https://api.dev.mediancode.com/health
+ *   PUBLIC_API_BASE_URL=https://api-dev.mediancode.com/v1 -> https://api-dev.mediancode.com/health
  */
 function getHealthUrl(): string {
 	const url = new URL(API_BASE_URL);

@@ -16,7 +16,7 @@ We use **two environments**:
 | Service  | Development              | Production           |
 | -------- | ------------------------ | -------------------- |
 | Frontend | `dev.mediancode.com`     | `mediancode.com` |
-| API      | `api.dev.mediancode.com` | `api.mediancode.com` |
+| API      | `api-dev.mediancode.com` | `api.mediancode.com` |
 
 ## Environment Variables
 
@@ -24,7 +24,7 @@ We use **two environments**:
 
 | Variable                       | Development                         | Production                      |
 | ------------------------------ | ----------------------------------- | ------------------------------- |
-| `PUBLIC_API_BASE_URL`          | `https://api.dev.mediancode.com/v1` | `https://api.mediancode.com/v1` |
+| `PUBLIC_API_BASE_URL`          | `https://api-dev.mediancode.com/v1` | `https://api.mediancode.com/v1` |
 | `PUBLIC_CLERK_PUBLISHABLE_KEY` | Clerk Dev key (`pk_test_...`)       | Clerk Prod key (`pk_live_...`)  |
 
 ## Service Mapping
@@ -68,7 +68,7 @@ CI tests run on every push to `develop` and `main`. Configuration lives in Setti
 | Variable                       | Value                                     | Used By              |
 | ------------------------------ | ----------------------------------------- | -------------------- |
 | `PUBLIC_CLERK_PUBLISHABLE_KEY` | Clerk Dev publishable key (`pk_test_...`) | All Playwright tests |
-| `PUBLIC_API_BASE_URL`          | `https://api.dev.mediancode.com/v1`       | Build + CRUD tests   |
+| `PUBLIC_API_BASE_URL`          | `https://api-dev.mediancode.com/v1`       | Build + CRUD tests   |
 
 **Repository Secrets** (hidden, masked in logs):
 
@@ -85,7 +85,7 @@ CI tests run on every push to `develop` and `main`. Configuration lives in Setti
 | Lint & Type Check  | push, PR               | PR     | None                     |
 | Unit Tests         | push, PR               | PR     | None                     |
 | Smoke (Playwright) | push, PR               | PR     | None                     |
-| CRUD (Playwright)  | push, schedule, manual | push   | `api.dev.mediancode.com` |
+| CRUD (Playwright)  | push, schedule, manual | push   | `api-dev.mediancode.com` |
 
 > **Note:** CRUD tests only run against the dev backend. They create, modify, and delete real data, so they are not run against production.
 

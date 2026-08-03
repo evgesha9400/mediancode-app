@@ -2,7 +2,7 @@
 
 Usage:
     PYTHONPATH=src:tests poetry run python -m seeding --target local --user-email user@example.com
-    PYTHONPATH=src:tests poetry run python -m seeding --base-url https://api.dev.mediancode.com/v1 \
+    PYTHONPATH=src:tests poetry run python -m seeding --base-url https://api-dev.mediancode.com/v1 \
         --user-email user@example.com --mode apply
 """
 
@@ -17,7 +17,7 @@ import httpx
 
 TARGET_URLS = {
     "local": "http://localhost:8001/v1",
-    "dev": "https://api.dev.mediancode.com/v1",
+    "dev": "https://api-dev.mediancode.com/v1",
     "prod": "https://api.mediancode.com/v1",
 }
 
