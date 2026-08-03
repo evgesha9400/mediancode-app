@@ -110,9 +110,7 @@ GitHub Actions tests the backend, builds a `linux/amd64` image, publishes it to
 GHCR by immutable digest, and deploys it to `mac-server` over Tailscale after a
 successful push to `develop` or `main`. See
 [deploy/mac-server/README.md](deploy/mac-server/README.md) for the deployment
-contract. The Coolify material is retained temporarily as migration and
-rollback documentation while the existing DigitalOcean deployment remains
-active.
+contract.
 
 ## Documentation
 
