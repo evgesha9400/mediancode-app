@@ -15,7 +15,7 @@ dotenv.config();
  * 3. crud: Entity CRUD lifecycle against dev backend
  *
  * Backend integration tests (crud) run against
- * api.dev.mediancode.com and require:
+ * api-dev.mediancode.com and require:
  * - E2E_TEST_USER_EMAIL: Pre-created test user email
  * - E2E_TEST_USER_PASSWORD: Test user password
  */

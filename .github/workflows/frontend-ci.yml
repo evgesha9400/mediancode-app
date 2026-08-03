@@ -265,6 +265,7 @@ jobs:
     env:
       VERCEL_ORG_ID: ${{ vars.VERCEL_ORG_ID }}
       VERCEL_PROJECT_ID: ${{ vars.VERCEL_PROJECT_ID }}
+      PUBLIC_API_BASE_URL: ${{ vars.PUBLIC_API_BASE_URL }}
     steps:
       - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
 
@@ -324,6 +325,10 @@ jobs:
                 --prod \
                 --token="$VERCEL_TOKEN"
             )"
+            vercel alias set \
+              "$deployment_url" \
+              www.mediancode.com \
+              --token="$VERCEL_TOKEN"
             public_url="https://mediancode.com"
           else
             deployment_url="$(
