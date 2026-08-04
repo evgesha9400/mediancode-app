@@ -37,7 +37,17 @@ Repository variable:
 
 The Tailscale identity must use `tag:ci` and be permitted to reach only
 `mac-server` TCP port 22. The SSH public key on the server must be restricted
-to the platform-owned deployment receiver.
+to the platform-owned, service-bound deployment receiver:
+
+```text
+restrict,command="/Users/evgesha/server-admin/scripts/receive-deploy.sh mediancode-app"
+```
+
+Although the host control plane supports multiple registered services, this
+key can request deployments only for `mediancode-app`. The repository sends the
+same minimal `deploy <environment> <image@digest>` command; the trusted host
+catalog supplies the Compose definition, ports, secrets, health checks and
+rollback policy.
 
 The frontend workflow also uses these settings in the matching `development`
 and `production` GitHub environments:
