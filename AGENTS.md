@@ -59,3 +59,26 @@ When diagnosing a deployed environment:
    proof that the application is unavailable.
 6. Never reproduce credentials, tokens, personal information, or other secrets
    found in runtime logs.
+
+## Operational configuration and recovery alignment
+
+`docs/operations/CONFIGURATION.md` and
+`config/operational-settings.json` are the public, value-free configuration
+contract. `docs/operations/RECOVERY.md` is the application recovery protocol.
+
+Whenever a change adds, removes, renames or changes the scope, source,
+injection, verification or rotation of a setting, secret, external service,
+deployment step, database migration or recovery dependency:
+
+1. update the machine-readable contract, operations documentation, environment
+   examples and affected workflow in the same change;
+2. run `make config.check`;
+3. exercise the affected recovery or deployment check rather than documenting
+   an assumption;
+4. remove obsolete variables, instructions, provider artifacts and helpers;
+5. never commit a secret value, personal test identity, account recovery detail
+   or private provider session.
+
+Anything discovered missing or incorrect during recovery is a repository
+defect. Apply the smallest safe correction, verify it, and align all affected
+sources of truth before considering recovery complete.

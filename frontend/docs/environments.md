@@ -91,11 +91,12 @@ CI tests run on every push to `develop` and `main`. Configuration lives in Setti
 
 ## Local Development
 
-Local development does not require environment variables for the API URL - it defaults to `http://localhost:8000/v1`.
+Local development does not require environment variables for the API URL - it defaults to `http://localhost:8001/v1`, matching the backend `make dev` port.
 
 ```bash
 # .env.local (optional overrides)
 PUBLIC_CLERK_PUBLISHABLE_KEY=pk_test_...
+PUBLIC_API_BASE_URL=http://localhost:8001/v1
 ```
 
 ## Configuration Checklist

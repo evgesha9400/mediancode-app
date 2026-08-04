@@ -15,7 +15,7 @@ import { assertBackendHealthy } from '../helpers';
 
 /** Derive the backend hostname from PUBLIC_API_BASE_URL for network log filtering. */
 function getBackendHostname(): string {
-	const apiUrl = process.env.PUBLIC_API_BASE_URL || 'http://localhost:8000/v1';
+	const apiUrl = process.env.PUBLIC_API_BASE_URL || 'http://localhost:8001/v1';
 	try {
 		return new URL(apiUrl).hostname;
 	} catch {

@@ -1,0 +1,305 @@
+{
+  "schema_version": 1,
+  "settings": {
+    "BETA_MODE": {
+      "classification": "non-secret",
+      "authority": "Mac host configuration or local backend environment",
+      "consumers": ["backend-runtime"],
+      "scope": ["local", "development", "production"]
+    },
+    "CLERK_FRONTEND_API_URL": {
+      "classification": "public-configuration",
+      "authority": "Matching Clerk instance",
+      "consumers": ["backend-runtime"],
+      "scope": ["local", "development", "production"]
+    },
+    "CLERK_JWT_AUDIENCE": {
+      "classification": "public-configuration",
+      "authority": "Matching Clerk instance when audience validation is enabled",
+      "consumers": ["backend-runtime"],
+      "scope": ["local", "development", "production"]
+    },
+    "CLERK_SECRET_KEY": {
+      "classification": "secret",
+      "authority": "Matching Clerk instance; injected by local environment, GitHub secret, or Mac host secret file",
+      "consumers": ["backend-runtime", "frontend-e2e"],
+      "scope": ["local", "development", "production", "ci"]
+    },
+    "CLERK_SECRET_KEY_FILE": {
+      "classification": "non-secret-path",
+      "authority": "Mac host deployment definition",
+      "consumers": ["backend-entrypoint"],
+      "scope": ["development", "production"]
+    },
+    "DATABASE_URL": {
+      "classification": "secret",
+      "authority": "Local developer environment, CI service database, or derived by the Mac host entrypoint",
+      "consumers": ["backend-runtime", "alembic"],
+      "scope": ["local", "development", "production", "ci"]
+    },
+    "DATABASE_URL_FILE": {
+      "classification": "non-secret-path",
+      "authority": "Optional container secret-file injection",
+      "consumers": ["backend-entrypoint"],
+      "scope": ["development", "production"]
+    },
+    "DB_RESET": {
+      "classification": "destructive-configuration",
+      "authority": "Explicit one-time operator action only",
+      "consumers": ["backend-entrypoint"],
+      "scope": ["local", "development", "production"]
+    },
+    "E2E_ACTION_DELAY": {
+      "classification": "non-secret",
+      "authority": "Local environment or GitHub workflow",
+      "consumers": ["frontend-e2e"],
+      "scope": ["local", "ci"]
+    },
+    "E2E_TEST_USER_EMAIL": {
+      "classification": "sensitive",
+      "authority": "Dedicated Clerk development test identity; stored as a GitHub secret or local untracked environment value",
+      "consumers": ["frontend-e2e"],
+      "scope": ["local", "ci"]
+    },
+    "E2E_TEST_USER_PASSWORD": {
+      "classification": "secret",
+      "authority": "Dedicated Clerk development test identity; stored as a GitHub secret or local untracked environment value",
+      "consumers": ["frontend-e2e"],
+      "scope": ["local", "ci"]
+    },
+    "ENABLE_MAC_SERVER_DEPLOY": {
+      "classification": "non-secret",
+      "authority": "GitHub development and production environments",
+      "consumers": ["backend-ci"],
+      "scope": ["development", "production"]
+    },
+    "ENABLE_VERCEL_DEPLOY": {
+      "classification": "non-secret",
+      "authority": "GitHub development and production environments",
+      "consumers": ["frontend-ci"],
+      "scope": ["development", "production"]
+    },
+    "ENVIRONMENT": {
+      "classification": "non-secret",
+      "authority": "Mac host configuration or local backend environment",
+      "consumers": ["backend-runtime"],
+      "scope": ["local", "development", "production"]
+    },
+    "FREE_GENERATION_LIMIT": {
+      "classification": "non-secret",
+      "authority": "Mac host configuration or local backend environment",
+      "consumers": ["backend-runtime"],
+      "scope": ["local", "development", "production"]
+    },
+    "FRONTEND_URL": {
+      "classification": "public-configuration",
+      "authority": "Environment domain map in this repository",
+      "consumers": ["backend-runtime"],
+      "scope": ["local", "development", "production"]
+    },
+    "GITHUB_TOKEN": {
+      "classification": "automatic-secret",
+      "authority": "GitHub Actions per-job token",
+      "consumers": ["backend-ci"],
+      "scope": ["ci"]
+    },
+    "MAC_SERVER_DEPLOY_KEY": {
+      "classification": "secret",
+      "authority": "GitHub development and production environment secrets; public half restricted on the Mac host",
+      "consumers": ["backend-ci"],
+      "scope": ["development", "production"]
+    },
+    "MAC_SERVER_SSH_KNOWN_HOSTS": {
+      "classification": "public-configuration",
+      "authority": "Verified current Mac SSH host public key",
+      "consumers": ["backend-ci"],
+      "scope": ["development", "production"]
+    },
+    "PLAYWRIGHT_BASE_URL": {
+      "classification": "non-secret",
+      "authority": "Local environment or GitHub workflow",
+      "consumers": ["frontend-e2e"],
+      "scope": ["local", "ci"]
+    },
+    "PLAYWRIGHT_TEST_PORT": {
+      "classification": "non-secret",
+      "authority": "Optional local environment override",
+      "consumers": ["frontend-e2e"],
+      "scope": ["local"]
+    },
+    "PORT": {
+      "classification": "non-secret",
+      "authority": "Backend runtime or local development command",
+      "consumers": ["backend-entrypoint", "backend-local"],
+      "scope": ["local", "development", "production"]
+    },
+    "POSTGRES_DB": {
+      "classification": "non-secret",
+      "authority": "Mac host deployment definition",
+      "consumers": ["backend-entrypoint"],
+      "scope": ["development", "production"]
+    },
+    "POSTGRES_HOST": {
+      "classification": "non-secret",
+      "authority": "Mac host deployment definition",
+      "consumers": ["backend-entrypoint"],
+      "scope": ["development", "production"]
+    },
+    "POSTGRES_PASSWORD_FILE": {
+      "classification": "non-secret-path",
+      "authority": "Mac host deployment definition",
+      "consumers": ["backend-entrypoint"],
+      "scope": ["development", "production"]
+    },
+    "POSTGRES_PORT": {
+      "classification": "non-secret",
+      "authority": "Mac host deployment definition",
+      "consumers": ["backend-entrypoint"],
+      "scope": ["development", "production"]
+    },
+    "POSTGRES_USER": {
+      "classification": "non-secret",
+      "authority": "Mac host deployment definition",
+      "consumers": ["backend-entrypoint"],
+      "scope": ["development", "production"]
+    },
+    "PUBLIC_API_BASE_URL": {
+      "classification": "public-client-configuration",
+      "authority": "GitHub or Vercel environment matching the deployed frontend",
+      "consumers": ["frontend-runtime", "frontend-e2e", "frontend-ci"],
+      "scope": ["local", "development", "production", "ci"]
+    },
+    "PUBLIC_CLERK_MOCK_MODE": {
+      "classification": "test-only",
+      "authority": "Test runner only; must be false or absent in deployed builds",
+      "consumers": ["frontend-tests"],
+      "scope": ["local", "ci"]
+    },
+    "PUBLIC_CLERK_PUBLISHABLE_KEY": {
+      "classification": "public-client-configuration",
+      "authority": "Matching Clerk instance via GitHub or Vercel environment",
+      "consumers": ["frontend-runtime", "frontend-e2e", "frontend-ci"],
+      "scope": ["local", "development", "production", "ci"]
+    },
+    "SEED_USER_EMAIL": {
+      "classification": "sensitive",
+      "authority": "Explicit local operator input; never a committed Makefile default",
+      "consumers": ["backend-seeding"],
+      "scope": ["local", "development", "production"]
+    },
+    "SYSTEM_NAMESPACE_ID": {
+      "classification": "public-configuration",
+      "authority": "Application seed-data contract",
+      "consumers": ["backend-runtime"],
+      "scope": ["local", "development", "production"]
+    },
+    "TS_AUDIENCE": {
+      "classification": "sensitive",
+      "authority": "Tailscale trust credential copied to matching GitHub environment secrets",
+      "consumers": ["backend-ci"],
+      "scope": ["development", "production"]
+    },
+    "TS_OAUTH_CLIENT_ID": {
+      "classification": "sensitive",
+      "authority": "Tailscale trust credential copied to matching GitHub environment secrets",
+      "consumers": ["backend-ci"],
+      "scope": ["development", "production"]
+    },
+    "VERCEL_ORG_ID": {
+      "classification": "public-configuration",
+      "authority": "Vercel project metadata copied to matching GitHub environment variables",
+      "consumers": ["frontend-ci"],
+      "scope": ["development", "production"]
+    },
+    "VERCEL_PROJECT_ID": {
+      "classification": "public-configuration",
+      "authority": "Vercel project metadata copied to matching GitHub environment variables",
+      "consumers": ["frontend-ci"],
+      "scope": ["development", "production"]
+    },
+    "VERCEL_TOKEN": {
+      "classification": "secret",
+      "authority": "Vercel account token stored in matching GitHub environment secrets",
+      "consumers": ["frontend-ci"],
+      "scope": ["development", "production"]
+    }
+  },
+  "checks": {
+    "backend_settings": [
+      "BETA_MODE",
+      "CLERK_FRONTEND_API_URL",
+      "CLERK_JWT_AUDIENCE",
+      "CLERK_SECRET_KEY",
+      "DATABASE_URL",
+      "ENVIRONMENT",
+      "FREE_GENERATION_LIMIT",
+      "FRONTEND_URL",
+      "SYSTEM_NAMESPACE_ID"
+    ],
+    "frontend_public_runtime": [
+      "PUBLIC_API_BASE_URL",
+      "PUBLIC_CLERK_MOCK_MODE",
+      "PUBLIC_CLERK_PUBLISHABLE_KEY"
+    ],
+    "workflow_secrets": [
+      "CLERK_SECRET_KEY",
+      "E2E_TEST_USER_EMAIL",
+      "E2E_TEST_USER_PASSWORD",
+      "GITHUB_TOKEN",
+      "MAC_SERVER_DEPLOY_KEY",
+      "TS_AUDIENCE",
+      "TS_OAUTH_CLIENT_ID",
+      "VERCEL_TOKEN"
+    ],
+    "workflow_variables": [
+      "ENABLE_MAC_SERVER_DEPLOY",
+      "ENABLE_VERCEL_DEPLOY",
+      "MAC_SERVER_SSH_KNOWN_HOSTS",
+      "PUBLIC_API_BASE_URL",
+      "PUBLIC_CLERK_PUBLISHABLE_KEY",
+      "VERCEL_ORG_ID",
+      "VERCEL_PROJECT_ID"
+    ],
+    "example_files": {
+      "backend/.env.development.example": [
+        "BETA_MODE",
+        "CLERK_FRONTEND_API_URL",
+        "CLERK_JWT_AUDIENCE",
+        "CLERK_SECRET_KEY",
+        "ENVIRONMENT",
+        "FREE_GENERATION_LIMIT",
+        "FRONTEND_URL",
+        "SYSTEM_NAMESPACE_ID"
+      ],
+      "backend/.env.local.example": [
+        "BETA_MODE",
+        "CLERK_FRONTEND_API_URL",
+        "CLERK_JWT_AUDIENCE",
+        "CLERK_SECRET_KEY",
+        "DATABASE_URL",
+        "ENVIRONMENT",
+        "FREE_GENERATION_LIMIT",
+        "FRONTEND_URL",
+        "SYSTEM_NAMESPACE_ID"
+      ],
+      "backend/.env.production.example": [
+        "BETA_MODE",
+        "CLERK_FRONTEND_API_URL",
+        "CLERK_JWT_AUDIENCE",
+        "CLERK_SECRET_KEY",
+        "ENVIRONMENT",
+        "FREE_GENERATION_LIMIT",
+        "FRONTEND_URL",
+        "SYSTEM_NAMESPACE_ID"
+      ],
+      "frontend/.env.example": [
+        "CLERK_SECRET_KEY",
+        "E2E_ACTION_DELAY",
+        "E2E_TEST_USER_EMAIL",
+        "E2E_TEST_USER_PASSWORD",
+        "PUBLIC_API_BASE_URL",
+        "PUBLIC_CLERK_PUBLISHABLE_KEY"
+      ]
+    }
+  }
+}

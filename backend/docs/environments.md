@@ -19,9 +19,12 @@ deployment contract.
 | `DATABASE_URL` | `postgresql+asyncpg://postgres:postgres@localhost:5432/median_code` | Constructed from the mounted Postgres password | Constructed from the mounted Postgres password | PostgreSQL connection |
 | `ENVIRONMENT` | `development` (default) | `development` | `production` | Controls API docs visibility |
 | `CLERK_FRONTEND_API_URL` | `https://accurate-lion-1.clerk.accounts.dev` | Same (dev Clerk app) | `https://clerk.mediancode.com` | JWT validation (JWKS endpoint) |
+| `CLERK_SECRET_KEY` | Untracked local secret | Mounted secret file | Mounted secret file | Clerk profile synchronization; never commit |
 | `FRONTEND_URL` | `http://localhost:5173` (default) | `https://dev.mediancode.com` | `https://mediancode.com` | CORS allowed origin |
 | `SYSTEM_NAMESPACE_ID` | `00000000-0000-0000-0000-000000000001` | `00000000-0000-0000-0000-000000000001` | `00000000-0000-0000-0000-000000000001` | System namespace UUID for seed data |
 | `CLERK_JWT_AUDIENCE` | *(empty)* | *(empty)* | *(empty)* | Optional JWT audience claim |
+| `BETA_MODE` | `true` | Host configuration | Host configuration | Bypass generation cap when true |
+| `FREE_GENERATION_LIMIT` | `3` | Host configuration | Host configuration | Monthly cap when beta mode is false |
 
 ### Notes
 
@@ -52,5 +55,6 @@ When setting up or auditing a server environment:
 - [ ] `CLERK_FRONTEND_API_URL` points to the correct Clerk app (dev vs prod)
 - [ ] `FRONTEND_URL` matches the frontend domain for that environment
 - [ ] `SYSTEM_NAMESPACE_ID` is set to `00000000-0000-0000-0000-000000000001`
+- [ ] `BETA_MODE` and `FREE_GENERATION_LIMIT` match the reviewed product policy
 - [ ] Healthcheck path is `/health` on port `8080`
 - [ ] Branch is set correctly (`develop` for dev, `main` for prod)

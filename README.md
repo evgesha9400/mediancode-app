@@ -10,12 +10,24 @@ Median Code monorepo. Combines the former `mediancode-backend` and `mediancode-f
 | `frontend/` | SvelteKit app; see [frontend/README.md](frontend/README.md) |
 | `api-spec.yaml` | Backend-generated OpenAPI contract; frontend-consumed source of truth |
 | `docs/` | Cross-cutting architecture, standards, protocols, and work records |
+| `docs/operations/` | Public, value-free configuration and recovery contracts |
+| `config/operational-settings.json` | Machine-readable operational setting registry; contains no values |
 | `.github/workflows/` | Path-filtered CI plus backend and frontend deployment |
 | `.githooks/` | Root Git hooks delegating into backend and frontend commands |
 | `Makefile` | Root entry points delegating to app-level commands |
 | `AGENTS.md`, `CLAUDE.md`, `CONTEXT.md` | Cross-cutting agent and domain guidance |
 
 ## Quickstart
+
+Prerequisites:
+
+- Git and GNU Make;
+- Python 3.13 and Poetry 2.3.x;
+- Docker with Compose for PostgreSQL-backed development and tests;
+- Bun 1.3.x for the frontend.
+
+CI pins exact tool versions in the workflows. Use the compatible release line
+above locally; do not install Vercel CLI globally for ordinary development.
 
 ```bash
 # install (one-time)
@@ -26,9 +38,18 @@ make dev
 
 # run all tests
 make test
+
+# verify settings, examples, workflows, and operations docs agree
+make config.check
 ```
 
 Per-app docs: `backend/CLAUDE.md`, `backend/AGENTS.md`, `backend/README.md`, `frontend/README.md`.
+
+Operations:
+
+- [Configuration and secret-name contract](docs/operations/CONFIGURATION.md)
+- [Application recovery protocol](docs/operations/RECOVERY.md)
+- [Mac server deployment boundary](backend/deploy/mac-server/README.md)
 
 Repo file placement policy: [docs/architecture/app-root-file-policy.md](docs/architecture/app-root-file-policy.md).
 

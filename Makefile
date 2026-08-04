@@ -1,4 +1,4 @@
-.PHONY: install install-hooks dev test lint help \
+.PHONY: install install-hooks dev test lint config.check help \
         backend.install backend.dev backend.test backend.lint backend.db backend.db.stop \
         frontend.install frontend.dev frontend.test frontend.lint frontend.check
 
@@ -19,6 +19,9 @@ test: ## Run backend and frontend tests in parallel
 
 lint: ## Lint both apps in parallel
 	@$(MAKE) -j2 backend.lint frontend.lint
+
+config.check: ## Validate the public operational configuration contract
+	@python3 scripts/check-operational-config.py
 
 # ---------- backend (delegates to backend/Makefile) ----------
 

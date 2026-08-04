@@ -16,12 +16,12 @@ import { getActiveOrganizationId } from '$lib/stores/organization';
  * Uses SvelteKit's PUBLIC_ prefix convention for client-exposed variables.
  *
  * Set PUBLIC_API_BASE_URL in:
- * - .env.local for local development (defaults to localhost:8000)
+ * - .env.local for local development (defaults to localhost:8001)
  * - Vercel Dashboard for deployed environments:
  *   - Preview: https://api-dev.mediancode.com/v1
  *   - Production: https://api.mediancode.com/v1
  */
-const API_BASE_URL = env.PUBLIC_API_BASE_URL || 'http://localhost:8000/v1';
+const API_BASE_URL = env.PUBLIC_API_BASE_URL || 'http://localhost:8001/v1';
 
 /**
  * API error with status code and optional error details

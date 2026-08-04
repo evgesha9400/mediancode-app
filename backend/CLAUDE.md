@@ -28,7 +28,7 @@ make test
 # Or: poetry run pytest tests/ -v
 
 # Run all tests with the local Docker PostgreSQL database
-DATABASE_URL=postgresql+asyncpg://postgres:postgres@localhost:5433/median_code poetry run pytest tests/ -v
+DATABASE_URL=postgresql+asyncpg://postgres:postgres@localhost:5432/median_code poetry run pytest tests/ -v
 
 # Run a single test
 poetry run pytest tests/codegen/test_input_and_transform.py::TestPascalCaseValidation -v

@@ -12,14 +12,14 @@
 /**
  * Backend API base URL - must match the value used by E2EApiClient
  */
-const API_BASE_URL = process.env.PUBLIC_API_BASE_URL || 'http://localhost:8000/v1';
+const API_BASE_URL = process.env.PUBLIC_API_BASE_URL || 'http://localhost:8001/v1';
 
 /**
  * Derive the health endpoint URL from the API base URL.
  *
  * The /health endpoint lives at the root of the API server, not under
  * the versioned path. For example:
- *   PUBLIC_API_BASE_URL=http://localhost:8000/v1 -> http://localhost:8000/health
+ *   PUBLIC_API_BASE_URL=http://localhost:8001/v1 -> http://localhost:8001/health
  *   PUBLIC_API_BASE_URL=https://api-dev.mediancode.com/v1 -> https://api-dev.mediancode.com/health
  */
 function getHealthUrl(): string {
