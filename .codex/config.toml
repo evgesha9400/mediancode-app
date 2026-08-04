@@ -1,0 +1,15 @@
+[mcp_servers.dozzle]
+url = "https://mac-server.tailf57fcc.ts.net/dozzle/api/mcp"
+enabled = true
+required = false
+enabled_tools = [
+  "list_hosts",
+  "list_containers",
+  "search_container_logs",
+  "get_container_logs",
+  "get_container_stats",
+]
+default_tools_approval_mode = "auto"
+startup_timeout_sec = 10
+tool_timeout_sec = 30
+

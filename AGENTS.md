@@ -40,3 +40,22 @@ Enforcement:
 ## E2E verification rule
 
 For any change that touches or can affect frontend behavior, run the full Playwright E2E suite before handing off: `cd frontend && bun run test:e2e`. Do not substitute a narrower smoke, CRUD, or file-filtered command for final verification. If the full E2E command cannot execute because required external credentials or services are unavailable, still run the command, capture the failure, and report the exact blocker and missing environment variables in the final response.
+
+## Runtime observability
+
+The project-scoped `dozzle` MCP server provides read-only access to the Docker
+runtime on the private Mac server. It is optional and is reachable only from an
+authorized Tailscale device.
+
+When diagnosing a deployed environment:
+
+1. Identify the Compose project, environment, and container role before
+   requesting logs.
+2. Use `search_container_logs` with a narrow term and time range before using
+   `get_container_logs`.
+3. Keep log and statistics requests bounded to the smallest useful result.
+4. Fetch a broader recent log range only when targeted search is insufficient.
+5. Treat an unavailable Dozzle endpoint as an observability-path failure, not
+   proof that the application is unavailable.
+6. Never reproduce credentials, tokens, personal information, or other secrets
+   found in runtime logs.
