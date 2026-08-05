@@ -3,9 +3,10 @@
   import { browser } from '$app/environment';
   import { goto } from '$app/navigation';
   import Sidebar from '$lib/components/Sidebar.svelte';
+  import StoreLoadFailureBanner from '$lib/components/StoreLoadFailureBanner.svelte';
   import ToastContainer from '$lib/components/toast/ToastContainer.svelte';
   import { clerkState } from '$lib/clerk';
-  import { loadStoresFromApi, storeLoadingState } from '$lib/stores/loader';
+  import { loadStoresFromApi, reloadStores, storeLoadingState } from '$lib/stores/loader';
   import { sidebarState } from '$lib/stores/sidebar.svelte';
   import {
     dashboardBlockingSpinner,
@@ -61,6 +62,12 @@
           </div>
         </div>
       {:else}
+        {#if $storeLoadingState.storeErrors.length > 0}
+          <StoreLoadFailureBanner
+            errors={$storeLoadingState.storeErrors}
+            onRetry={reloadStores}
+          />
+        {/if}
         {@render children()}
       {/if}
     </div>

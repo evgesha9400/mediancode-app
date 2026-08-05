@@ -44,6 +44,7 @@ import {
   // Standalone components
   Sidebar,
   StatCard,
+  StoreLoadFailureBanner,
 
   // Validator template components
   TemplateGallery,
@@ -80,6 +81,7 @@ import type {
   // Standalone component types
   SidebarProps,
   StatCardProps,
+  StoreLoadFailureBannerProps,
 
   // Validator template types
   TemplateGalleryProps,
@@ -108,6 +110,7 @@ const components = [
   PageHeader,
   Sidebar,
   StatCard,
+  StoreLoadFailureBanner,
   TemplateGallery,
   TemplateForm,
 ] as const;
@@ -129,6 +132,7 @@ export type PropTypes = [
   PageHeaderProps,
   SidebarProps,
   StatCardProps,
+  StoreLoadFailureBannerProps,
   TemplateGalleryProps,
   TemplateFormProps,
 ];
