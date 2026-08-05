@@ -35,6 +35,6 @@ test('surfaces an endpoint load failure and recovers on retry', async ({ page })
 	await expect(alert).toContainText('Failed: Endpoints');
 
 	await alert.getByRole('button', { name: 'Retry' }).click();
+	await expect.poll(() => endpointRequests).toBeGreaterThanOrEqual(2);
 	await expect(alert).toBeHidden();
-	expect(endpointRequests).toBeGreaterThanOrEqual(2);
 });
