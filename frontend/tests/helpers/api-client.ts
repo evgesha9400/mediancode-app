@@ -10,7 +10,7 @@
 
 import type { Page } from '@playwright/test';
 
-const API_BASE_URL = process.env.PUBLIC_API_BASE_URL || 'http://localhost:8000/v1';
+const API_BASE_URL = process.env.PUBLIC_API_BASE_URL || 'http://localhost:8001/v1';
 const API_TIMEOUT = 30_000;
 
 interface ApiResponse<T> {

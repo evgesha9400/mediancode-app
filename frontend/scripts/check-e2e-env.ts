@@ -36,7 +36,7 @@ const requirements: EnvRequirement[] = [
 		name: 'PUBLIC_API_BASE_URL',
 		required: false,
 		description: 'Backend API URL (defaults to localhost)',
-		example: 'http://localhost:8000/v1 or https://api-dev.mediancode.com/v1'
+		example: 'http://localhost:8001/v1 or https://api-dev.mediancode.com/v1'
 	},
 	{
 		name: 'PUBLIC_CLERK_PUBLISHABLE_KEY',
@@ -94,7 +94,7 @@ if (missing.length > 0) {
 	console.error('```\n');
 
 	console.error('💡 Tip: For local development, you can run the backend locally:');
-	console.error('   PUBLIC_API_BASE_URL=http://localhost:8000/v1\n');
+	console.error('   PUBLIC_API_BASE_URL=http://localhost:8001/v1\n');
 
 	process.exit(1);
 }

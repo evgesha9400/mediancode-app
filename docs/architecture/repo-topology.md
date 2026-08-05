@@ -5,7 +5,9 @@ Two deployable apps share one repo and one OpenAPI contract.
 - `backend/` — FastAPI service (Python 3.13), deployed to `mac-server`
 - `frontend/` — SvelteKit app (Bun), deployed to Vercel through GitHub Actions
 - `api-spec.yaml` — single source of truth, backend-generated, frontend-consumed
-- `docs/` — cross-cutting only (`philosophy/`, `standards/`, `protocols/`, `architecture/`, `work/`)
+- `docs/` — cross-cutting only (`philosophy/`, `standards/`, `protocols/`, `operations/`, `architecture/`, `work/`)
+- `config/operational-settings.json` — value-free operational configuration registry
+- `scripts/check-operational-config.py` — configuration drift validator
 - `.github/workflows/` — path-filtered CI per app
 - `.githooks/` — root hooks delegating to app-local checks
 - `Makefile` — root entry points delegating to subdir Makefiles
@@ -21,6 +23,8 @@ Two deployable apps share one repo and one OpenAPI contract.
 | `frontend/` | SvelteKit application code, frontend tests, frontend config, frontend docs, Vercel deploy |
 | `api-spec.yaml` | The contract. Owned by backend (generated from FastAPI), consumed by frontend |
 | `docs/` | Cross-cutting concerns only. Per-app docs live in `backend/docs/` and `frontend/docs/` |
+| `docs/operations/` | Application-wide configuration, provider boundary and recovery protocol |
+| `config/operational-settings.json` | Names, classification, authority, consumers and scopes; never values |
 | `.github/workflows/` | Path-filtered CI per app, plus contract-change triggers |
 
 ## Why monorepo
@@ -40,6 +44,9 @@ Monorepo eliminates the first four. Issue tracking now happens in one GitHub pro
 - **Path filters**: only the affected app's pipeline runs when a PR touches one side
 - **Contract changes**: edits to `api-spec.yaml` trigger both pipelines
 - **Required checks**: both `backend-ci` and `frontend-ci` job statuses are required on `main` and `develop` (auto-pass when unaffected by path filter)
+- **Operational contract**: a separate lightweight workflow compares backend
+  settings, frontend public variables, GitHub inputs, environment examples and
+  public operations documentation without triggering a deployment
 
 ## Deploy strategy
 

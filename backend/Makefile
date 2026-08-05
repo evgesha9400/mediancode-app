@@ -4,7 +4,7 @@
 PYTHON := python3
 POETRY := poetry
 PORT ?= 8001
-SEED_USER_EMAIL := aleshiner@mail.ru
+SEED_USER_EMAIL ?=
 COMPOSE_FILE := deploy/local/docker-compose.yml
 DOCKERFILE := deploy/docker/Dockerfile
 PRE_COMMIT_CONFIG := config/pre-commit-config.yaml
@@ -100,14 +100,17 @@ migrate-current: ## Show current migration version (local)
 
 .PHONY: seed-local
 seed-local: ## Seed Shop data into local backend (localhost:$(PORT))
+	@test -n "$(SEED_USER_EMAIL)" || (echo "Set SEED_USER_EMAIL to the intended Clerk development user." >&2; exit 1)
 	@PYTHONPATH=src:tests $(POETRY) run python -m seeding --target local --user-email $(SEED_USER_EMAIL)
 
 .PHONY: seed-dev
 seed-dev: ## Seed Shop data into dev backend (api-dev.mediancode.com)
+	@test -n "$(SEED_USER_EMAIL)" || (echo "Set SEED_USER_EMAIL to the intended Clerk development user." >&2; exit 1)
 	@PYTHONPATH=src:tests $(POETRY) run python -m seeding --target dev --user-email $(SEED_USER_EMAIL)
 
 .PHONY: seed-prod
 seed-prod: ## Seed Shop data into prod backend (api.mediancode.com)
+	@test -n "$(SEED_USER_EMAIL)" || (echo "Set SEED_USER_EMAIL explicitly after production approval." >&2; exit 1)
 	@PYTHONPATH=src:tests $(POETRY) run python -m seeding --target prod --user-email $(SEED_USER_EMAIL)
 
 # =============================================================================
@@ -164,7 +167,7 @@ help: ## Show this help message
 	@echo "  make migrate-history Show migration history"
 	@echo "  make migration msg=\"...\"  Create new migration file"
 	@echo ""
-	@echo "SEEDING (SEED_USER_EMAIL=$(SEED_USER_EMAIL)):"
+	@echo "SEEDING (requires an explicit untracked SEED_USER_EMAIL):"
 	@echo "  make seed-local      Seed Shop data into local backend"
 	@echo "  make seed-dev        Seed Shop data into dev backend"
 	@echo "  make seed-prod       Seed Shop data into prod backend"

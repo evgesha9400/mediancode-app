@@ -15,7 +15,6 @@ Median Code is a SvelteKit application that serves both the marketing landing pa
 - **Logo**: Canvas 2D wireframe animation (`logoCanvasRenderer.ts`)
 - **Authentication**: Clerk
 - **Deployment**: Vercel
-- **Forms**: Formspree
 - **Testing**: Vitest, Playwright, MSW
 
 ## Root Interface
@@ -56,7 +55,7 @@ Median Code is a SvelteKit application that serves both the marketing landing pa
 
 ### Prerequisites
 
-- Node.js 18+ installed
+- Bun 1.3.x installed (CI currently pins the exact supported release)
 - Clerk account and publishable key
 
 ### Setup
@@ -64,8 +63,8 @@ Median Code is a SvelteKit application that serves both the marketing landing pa
 1. **Clone the repository**
 
    ```bash
-   git clone https://github.com/yourusername/median-code.git
-   cd median-code
+   git clone https://github.com/evgesha9400/mediancode-app.git
+   cd mediancode-app/frontend
    ```
 
 2. **Install dependencies**
@@ -272,7 +271,6 @@ The dashboard uses Clerk for authentication with support for:
 
 - **Responsive Design**: Mobile-first with Tailwind breakpoints
 - **Mobile Menu**: Svelte reactive state management
-- **Email Signup**: Formspree integration with validation
 - **Code Preview**: Syntax-highlighted code example
 - **Font Awesome Icons**: Locally hosted for reliability
 

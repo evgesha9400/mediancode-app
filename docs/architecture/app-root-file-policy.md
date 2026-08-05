@@ -8,7 +8,7 @@ App roots expose only files that tools or humans need immediately.
 | `*/config/` | Tool config that supports explicit `--config`, `--ignore-path`, or `--ruleset` flags |
 | `*/docs/` | App-specific documentation and diagrams |
 | `*/deploy/` | Deploy implementation, provider docs, Dockerfiles, and local compose files |
-| repo root | Cross-app docs, root agent guidance, root `Makefile`, `.githooks/`, CI, and `api-spec.yaml` |
+| repo root | Cross-app docs, value-free operational registry and validator, root agent guidance, root `Makefile`, `.githooks/`, CI, and `api-spec.yaml` |
 
 Skipped moves:
 
