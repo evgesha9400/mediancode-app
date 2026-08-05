@@ -49,7 +49,9 @@ export * from './dashboard';
 // Standalone components
 export { default as Sidebar } from './Sidebar.svelte';
 export { default as StatCard } from './StatCard.svelte';
+export { default as StoreLoadFailureBanner } from './StoreLoadFailureBanner.svelte';
 // Standalone component types
 export type { SidebarProps } from './Sidebar.svelte';
 export type { StatCardProps } from './StatCard.svelte';
+export type { StoreLoadFailureBannerProps } from './StoreLoadFailureBanner.svelte';
 export type { ToastContainerProps } from './toast/ToastContainer.svelte';
