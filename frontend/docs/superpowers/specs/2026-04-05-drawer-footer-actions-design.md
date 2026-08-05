@@ -2,7 +2,7 @@
 
 **Date:** 2026-04-05  
 **Status:** Approved for implementation (pending spec review)  
-**Scope:** Mediancode frontend — `DrawerStack` footers, shared tokens in `src/lib/ui/classes.ts`, `src/app.css` drawer theme hooks.
+**Scope:** Median Code frontend — `DrawerStack` footers, shared tokens in `src/lib/ui/classes.ts`, `src/app.css` drawer theme hooks.
 
 ## Problem
 

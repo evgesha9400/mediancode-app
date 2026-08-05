@@ -1,15 +1,15 @@
-# Mediancode Context
+# Median Code Context
 
-Domain language for Mediancode. Use these names when discussing what Mediancode specifies and generates — the persisted design model and its generated implementations.
+Domain language for Median Code. Use these names when discussing what Median Code specifies and generates — the persisted design model and its generated implementations.
 
 ## Language
 
 **Meta Framework**:
-The engine and pattern schema that define, compose, and generate from reusable patterns — Component Kinds, Channel kinds, and Templates. The Meta Framework is the long-term shape of Mediancode: Median Code is its reference instance, and any company can run the same engine against its own patterns. Work must be expressible as a pattern in the Meta Framework before Mediancode can generate from it.
+The engine and pattern schema that define, compose, and generate from reusable patterns — Component Kinds, Channel kinds, and Templates. The Meta Framework is the long-term shape of Median Code: Median Code is its reference instance, and any company can run the same engine against its own patterns. Work must be expressible as a pattern in the Meta Framework before Median Code can generate from it.
 _Avoid_: platform, system, generator (the generator is one part)
 
 **Pattern Registry**:
-The stored, versioned set of patterns a Mediancode Instance is configured with — its Component Kinds, Channel kinds, and Templates. The registry grows as recurring work is captured as new patterns.
+The stored, versioned set of patterns a Median Code Instance is configured with — its Component Kinds, Channel kinds, and Templates. The registry grows as recurring work is captured as new patterns.
 _Avoid_: catalog (Catalog holds type, constraint, and validator data; the registry holds patterns), library
 
 **Pattern**:
@@ -20,20 +20,20 @@ _Avoid_: template (a Pattern composes Templates), snippet, boilerplate
 The artifact-level generator atom: one source that renders exactly one concrete artifact, such as a Mako file that renders a model module, a Dockerfile, or a pyproject file. Templates are reusable and composed by Patterns; a Pattern references many Templates.
 _Avoid_: pattern (a Template renders one artifact; a Pattern composes many), file, snippet
 
-**Mediancode Instance**:
+**Median Code Instance**:
 A configured Meta Framework: the shared engine plus one Pattern Registry. "Median Code" is the reference Instance, preloaded with the minimum median pattern set; a company's own version is a different Instance on the same engine.
 _Avoid_: fork, deployment, tenant
 
 **Authoring Gate**:
-The rule that work cannot be generated beyond what existing Patterns cover until a Pattern is defined or extended to cover it. The gate is how Mediancode forces pattern capture and grows the Pattern Registry by construction. The post-generation tail of truly one-off code stays free for humans or LLMs and is not gated.
+The rule that work cannot be generated beyond what existing Patterns cover until a Pattern is defined or extended to cover it. The gate is how Median Code forces pattern capture and grows the Pattern Registry by construction. The post-generation tail of truly one-off code stays free for humans or LLMs and is not gated.
 _Avoid_: lint rule, approval workflow, lock
 
 **Component**:
-A buildable cloud unit that Mediancode specifies and generates end to end. A Component has a Component Kind, carries its own logic, its own IaC, and its Channel Bindings, and plugs together with other Components like Lego. When deployed, a Component runs as a cloud process. Components share Catalog, Namespace, and Generation Targets.
+A buildable cloud unit that Median Code specifies and generates end to end. A Component has a Component Kind, carries its own logic, its own IaC, and its Channel Bindings, and plugs together with other Components like Lego. When deployed, a Component runs as a cloud process. Components share Catalog, Namespace, and Generation Targets.
 _Avoid_: rendered file, generated module, building block
 
 **Component Kind**:
-A named preset a Component is created from, combining an Execution Shape, default Channel Bindings, and scaffolding. API is the first Component Kind; Data Process and others follow. The minimum median set is bounded by one Kind per Execution Shape × primary ingress trigger (API = Service × HTTP, Scheduled Job = Job × cron, and so on), so it grows only when a genuinely new ingress trigger appears. A Component Kind is itself a reusable pattern: the median set ships as built-in Kinds, and future instances of Mediancode can define their own.
+A named preset a Component is created from, combining an Execution Shape, default Channel Bindings, and scaffolding. API is the first Component Kind; Data Process and others follow. The minimum median set is bounded by one Kind per Execution Shape × primary ingress trigger (API = Service × HTTP, Scheduled Job = Job × cron, and so on), so it grows only when a genuinely new ingress trigger appears. A Component Kind is itself a reusable pattern: the median set ships as built-in Kinds, and future instances of Median Code can define their own.
 _Avoid_: type, category, template (a Kind composes templates; it is not one file)
 
 **Execution Shape**:
@@ -41,7 +41,7 @@ The lifecycle primitive a Component Kind is built on, such as a long-running Ser
 _Avoid_: runtime, process type, Kind (a Kind is a preset over a Shape)
 
 **API**:
-The first Component kind. A user-defined service specification stored in Mediancode. An API owns Endpoints and is generated into one or more API Implementations.
+The first Component kind. A user-defined service specification stored in Median Code. An API owns Endpoints and is generated into one or more API Implementations.
 _Avoid_: App, project, spec
 
 **Channel**:
@@ -144,7 +144,7 @@ Developer: "Where does the inverse relationship come from?"
 
 Domain expert: "A Relationship Member authored on the source Object creates a derived relationship on the target Object."
 
-Developer: "Is Mediancode only generating FastAPI projects?"
+Developer: "Is Median Code only generating FastAPI projects?"
 
 Domain expert: "No. FastAPI is the first API Implementation. The architecture should support substitutable Generation Targets for deploy artifacts, databases, test modules, frameworks, and languages."
 

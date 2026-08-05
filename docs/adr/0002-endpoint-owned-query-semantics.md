@@ -1,6 +1,6 @@
 # Endpoint-owned query semantics
 
-Mediancode endpoints own their filter and pagination facts directly. Query parameters and path parameters should reference the target Object's Field Members, not reusable query Objects or global Field definitions, because endpoint filtering is endpoint behavior and there is no current need for shared filter definitions that change multiple endpoints together.
+Median Code endpoints own their filter and pagination facts directly. Query parameters and path parameters should reference the target Object's Field Members, not reusable query Objects or global Field definitions, because endpoint filtering is endpoint behavior and there is no current need for shared filter definitions that change multiple endpoints together.
 
 **Status**: accepted
 

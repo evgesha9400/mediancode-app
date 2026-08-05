@@ -1,6 +1,6 @@
 # Three-layer IaC: Foundation, Wiring, Components
 
-Mediancode generalizes from generating a single API into assembling many Component kinds (API, Data Process, and others) that plug together like Lego and deploy to the cloud. A Channel — an HTTP route, queue, topic, or event bus — connects Components. A Channel is a shared edge: it can have multiple producer and consumer Components, including fan-in and fan-out. The open question was where Channels live: on the Components, on a single Foundation baseplate, on the producing Component, or in their own layer.
+Median Code generalizes from generating a single API into assembling many Component kinds (API, Data Process, and others) that plug together like Lego and deploy to the cloud. A Channel — an HTTP route, queue, topic, or event bus — connects Components. A Channel is a shared edge: it can have multiple producer and consumer Components, including fan-in and fan-out. The open question was where Channels live: on the Components, on a single Foundation baseplate, on the producing Component, or in their own layer.
 
 Generated infrastructure is split into three layers with distinct, non-overlapping responsibilities:
 
