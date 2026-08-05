@@ -131,9 +131,7 @@ def main() -> None:
     )
 
     documentation = DOC_PATH.read_text()
-    undocumented = sorted(
-        name for name in settings if f"`{name}`" not in documentation
-    )
+    undocumented = sorted(name for name in settings if f"`{name}`" not in documentation)
     if undocumented:
         fail(f"settings absent from CONFIGURATION.md: {undocumented}")
 
