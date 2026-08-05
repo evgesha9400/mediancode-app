@@ -138,11 +138,17 @@ For each environment separately:
    poetry run alembic history
    ```
 
-7. Review every pending migration and its downgrade before starting the new
+7. Treat published migration files as immutable. Repair an already-applied
+   migration only with a new forward revision; changing the historical file
+   does not update databases that already recorded its revision.
+8. Verify current-image structural invariants for changed tables in addition
+   to the Alembic revision. A database can report `head` while retaining an
+   older schema when historical migration files have drifted.
+9. Review every pending migration and its downgrade before starting the new
    image. Take a fresh pre-migration backup when persistent data is involved.
-8. Start the application, allowing `alembic upgrade head` only after the
+10. Start the application, allowing `alembic upgrade head` only after the
    compatibility review.
-9. Verify application reads and authenticated ownership, not merely database
+11. Verify application reads and authenticated ownership, not merely database
    health.
 
 ### Migration and rollback rule
