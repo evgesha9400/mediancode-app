@@ -1,6 +1,6 @@
 # Target-substitutable generation
 
-Mediancode's architecture must treat FastAPI, SQLAlchemy, PostgreSQL, AWS CDK, and the current generated test modules as initial Generation Targets, not as the permanent shape of the product. Core design modules should keep portable API, Object Membership, and Relationship Derivation semantics separate from target-specific artifact names and rendering rules, so future adapters can generate different deploy artifacts, databases, test modules, frameworks, and languages without rewriting the design model.
+Median Code's architecture must treat FastAPI, SQLAlchemy, PostgreSQL, AWS CDK, and the current generated test modules as initial Generation Targets, not as the permanent shape of the product. Core design modules should keep portable API, Object Membership, and Relationship Derivation semantics separate from target-specific artifact names and rendering rules, so future adapters can generate different deploy artifacts, databases, test modules, frameworks, and languages without rewriting the design model.
 
 **Status**: accepted
 

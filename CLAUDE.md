@@ -2,6 +2,13 @@
 
 Cross-cutting guidance for the Median Code monorepo. Per-app rules live in `backend/CLAUDE.md` and `backend/AGENTS.md`. Read the relevant subtree's file before touching code in that subtree.
 
+## Canonical product name
+
+The human-facing product name is **Median Code**. Preserve that exact spelling,
+capitalization, and spacing in every product reference. Technical identifiers
+such as `mediancode-app`, package names, container images, domains, environment
+variables, and filesystem paths retain their exact established spelling.
+
 ## Layout
 
 - `backend/` — FastAPI service (Python 3.13, poetry/uv)

@@ -2,6 +2,13 @@
 
 Cross-cutting guidance for Codex / agentic tools. Mirrors `CLAUDE.md` at this level — see that file for the canonical content. Per-app rules live in `backend/AGENTS.md`.
 
+## Canonical product name
+
+The human-facing product name is **Median Code**. Preserve that exact spelling,
+capitalization, and spacing in every product reference. Technical identifiers
+such as `mediancode-app`, package names, container images, domains, environment
+variables, and filesystem paths retain their exact established spelling.
+
 ## Naming and decision precision
 
 When designing modules and interfaces, name the narrow question the module owns instead of inventing broad taxonomies. Prefer straightforward domain wording that lets callers understand the decision without learning extra categories. For example, an Endpoint Query Semantics module should expose query availability because it owns filter and pagination applicability; it should not classify the whole Endpoint operation unless the module truly owns that operation.

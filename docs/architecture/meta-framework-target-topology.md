@@ -5,7 +5,7 @@ Last reviewed: 2026-06-06.
 
 ## Purpose
 
-This note stores the current best final codebase shape for Mediancode so future
+This note stores the current best final codebase shape for Median Code so future
 LLM sessions can reason from a shared target instead of rediscovering it from
 scratch.
 
@@ -43,7 +43,7 @@ docs/
 - `packages/meta-framework/` gives the shared engine and pattern schema a home.
 - `packages/generation-targets/` makes targets replaceable instead of naming the
   codebase after FastAPI.
-- `instances/median-code/` separates the reference Mediancode Instance from the
+- `instances/median-code/` separates the reference Median Code Instance from the
   reusable Meta Framework.
 - `infra/foundation/`, `infra/wiring/`, and `infra/components/` match ADR 0003.
 - The tree reads in the same order as the product story: Instance -> Pattern
@@ -56,7 +56,7 @@ Before applying this target, answer these questions from the current codebase:
 - Has `CONTEXT.md` changed the meaning of Meta Framework, Pattern Registry,
   Component, Generation Target, Foundation, Wiring, or Instance?
 - Has a newer ADR accepted a different structure?
-- Are there now multiple Mediancode Instances, or is Median Code still the only
+- Are there now multiple Median Code Instances, or is Median Code still the only
   reference Instance?
 - Are there now multiple Generation Targets, or is FastAPI Python still the only
   concrete target?
@@ -70,7 +70,7 @@ Before applying this target, answer these questions from the current codebase:
 - Prefer complete transitions over compatibility shims.
 - Keep deploy topology stable until the code structure demands a deploy move.
 - Do not split by fashionable monorepo names if the split does not improve the
-  Mediancode story.
+  Median Code story.
 - Do not move historical completed work docs just to match a new topology.
 - Update active docs, tests, and import paths in the same migration as code.
 - Keep root sparse: only repo-level entry points, contracts, app/package folders,
