@@ -1,3 +1,4 @@
+# syntax=docker/dockerfile:1
 FROM python:3.13-slim@sha256:afe189875f1d2f9b45e287834fb9f2c273a5d59d354ae4050ab9affbf0a6ba06 AS builder
 
 ENV VIRTUAL_ENV="/opt/venv" \
@@ -7,12 +8,14 @@ ENV VIRTUAL_ENV="/opt/venv" \
 
 WORKDIR /build
 
-RUN /usr/local/bin/python -m pip install --no-cache-dir poetry==2.3.2 \
+RUN --mount=type=cache,target=/root/.cache/pip \
+    /usr/local/bin/python -m pip install poetry==2.3.2 \
     && /usr/local/bin/python -m venv /opt/venv
 
 COPY pyproject.toml poetry.lock README.md ./
 
-RUN poetry install --only main --no-root --no-ansi
+RUN --mount=type=cache,target=/root/.cache/pypoetry \
+    poetry install --only main --no-root --no-ansi
 
 
 FROM python:3.13-slim@sha256:afe189875f1d2f9b45e287834fb9f2c273a5d59d354ae4050ab9affbf0a6ba06 AS runtime

@@ -40,9 +40,12 @@ jobs:
 
       - uses: actions/cache@caa296126883cff596d87d8935842f9db880ef25 # v5
         with:
-          path: ~/.cache/pypoetry
-          key: v1-poetry-${{ hashFiles('backend/poetry.lock') }}
-          restore-keys: v1-poetry-
+          path: |
+            ~/.cache/pypoetry
+            ~/.cache/pip
+            ~/.cache/pre-commit
+          key: v2-poetry-${{ hashFiles('backend/poetry.lock', 'backend/config/pre-commit-config.yaml') }}
+          restore-keys: v2-poetry-
 
       - name: Install dependencies
         run: poetry install --no-interaction --no-ansi
@@ -87,9 +90,12 @@ jobs:
 
       - uses: actions/cache@caa296126883cff596d87d8935842f9db880ef25 # v5
         with:
-          path: ~/.cache/pypoetry
-          key: v1-poetry-${{ hashFiles('backend/poetry.lock') }}
-          restore-keys: v1-poetry-
+          path: |
+            ~/.cache/pypoetry
+            ~/.cache/pip
+            ~/.cache/pre-commit
+          key: v2-poetry-${{ hashFiles('backend/poetry.lock', 'backend/config/pre-commit-config.yaml') }}
+          restore-keys: v2-poetry-
 
       - name: Install dependencies
         run: poetry install --no-interaction --no-ansi
