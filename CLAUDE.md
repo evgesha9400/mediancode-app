@@ -127,11 +127,16 @@ sources of truth before considering recovery complete.
 
 Per `docs/work/completed/monorepo-migration/spec.md`: backend and frontend deploy independently via path-filtered CI. Breaking-change features ship together (both touched in one PR); fixes ship independently.
 
-## Branches
+## Branches and Deployment Protocol (`mac-server`)
 
-- `main` — production. Pushes deploy the frontend to Vercel production and the
-  backend to `mac-server`, gated by path filters.
-- `develop` — integration. Pushes deploy the frontend to Vercel preview and the
-  backend to the development stack on `mac-server`.
+- `main`: production. Pushes deploy the frontend to Vercel production and the
+  backend to `mac-server` (`mediancode-app/production`), gated by path filters.
+- `develop`: integration. Pushes deploy the frontend to Vercel preview and the
+  backend to the development stack on `mac-server` (`mediancode-app/development`).
+- **Release flow**: Commit on `develop`, fast-forward `main` to `develop` locally (`git fetch . develop:main`), and push both (`git push origin develop:develop main:main`). Do not open pull requests or create merge commits on `main`.
+- **Backend Dockerfile and CI/CD cache contract** (`backend/deploy/docker/Dockerfile`, `.github/workflows/backend-ci.yml`):
+  - Keep `# syntax=docker/dockerfile:1` first in `backend/deploy/docker/Dockerfile`.
+  - Install Poetry and lockfile dependencies (`poetry install --only main --no-root --no-interaction --no-ansi`) with BuildKit cache mounts (`--mount=type=cache,target=/root/.cache/pip` and `--mount=type=cache,target=/root/.cache/pypoetry`) before `COPY src/ ./src/`.
+  - Cache `~/.cache/pypoetry`, `~/.cache/pip`, and `~/.cache/pre-commit` in `.github/workflows/backend-ci.yml`, build native `linux/amd64` images on `ubuntu-latest` with GitHub Actions BuildKit layer caching (`cache-from: type=gha`, `cache-to: type=gha,mode=max`), and deploy by immutable `ghcr.io/evgesha9400/mediancode-backend@sha256:<digest>` over ephemeral OIDC Tailscale (`tag:ci`) to `mac-server`.
 
 Branch protection requires both `backend-ci` and `frontend-ci` job statuses (auto-pass when not affected by path filter).

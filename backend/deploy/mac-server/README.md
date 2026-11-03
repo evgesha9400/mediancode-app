@@ -60,13 +60,16 @@ and `production` GitHub environments:
 The Vercel project retains its Clerk and public API variables. Direct Vercel
 Git deployment is disabled so a push cannot bypass GitHub's test gate.
 
-## Image contract
+## Image and build-cache contract
 
 The deployment helper accepts only:
 
 ```text
 ghcr.io/evgesha9400/mediancode-backend@sha256:<64 lowercase hex characters>
 ```
+
+- `backend/deploy/docker/Dockerfile` starts with `# syntax=docker/dockerfile:1`, creates the non-root `app` user (`10001:10001`), and installs Poetry and lockfile dependencies (`poetry install --only main --no-root --no-interaction --no-ansi`) using BuildKit cache mounts (`--mount=type=cache,target=/root/.cache/pip` and `--mount=type=cache,target=/root/.cache/pypoetry`) before `COPY src/ ./src/` so source edits do not invalidate dependency layers.
+- `.github/workflows/backend-ci.yml` caches `~/.cache/pypoetry`, `~/.cache/pip`, and `~/.cache/pre-commit` in the test job, builds native `linux/amd64` images on `ubuntu-latest` with GitHub Actions BuildKit layer caching (`cache-from: type=gha`, `cache-to: type=gha,mode=max`), and deploys the verified digest over ephemeral OIDC Tailscale (`tag:ci`) to `mac-server`.
 
 The GHCR package must either be public or the host must have a separately
 approved read-only package credential. Public visibility is preferred because

@@ -48,6 +48,14 @@ Enforcement:
 
 For any change that touches or can affect frontend behavior, run the full Playwright E2E suite before handing off: `cd frontend && bun run test:e2e`. Do not substitute a narrower smoke, CRUD, or file-filtered command for final verification. If the full E2E command cannot execute because required external credentials or services are unavailable, still run the command, capture the failure, and report the exact blocker and missing environment variables in the final response.
 
+## Deployment Protocol (`mac-server`)
+
+- **Branch and release flow**: Commit on `develop` (`mediancode-app/development`), fast-forward `main` (`mediancode-app/production`) to `develop` locally (`git fetch . develop:main`), and push both (`git push origin develop:develop main:main`). Do not open pull requests or create merge commits on `main`.
+- **Backend Dockerfile and CI/CD cache contract** (`backend/deploy/docker/Dockerfile`, `.github/workflows/backend-ci.yml`):
+  - Keep `# syntax=docker/dockerfile:1` first in `backend/deploy/docker/Dockerfile`.
+  - Install Poetry and lockfile dependencies (`poetry install --only main --no-root --no-interaction --no-ansi`) with BuildKit cache mounts (`--mount=type=cache,target=/root/.cache/pip` and `--mount=type=cache,target=/root/.cache/pypoetry`) before `COPY src/ ./src/`.
+  - Cache `~/.cache/pypoetry`, `~/.cache/pip`, and `~/.cache/pre-commit` in `.github/workflows/backend-ci.yml`, build native `linux/amd64` images on `ubuntu-latest` with GitHub Actions BuildKit layer caching (`cache-from: type=gha`, `cache-to: type=gha,mode=max`), and deploy by immutable `ghcr.io/evgesha9400/mediancode-backend@sha256:<digest>` over ephemeral OIDC Tailscale (`tag:ci`) to `mac-server`.
+
 ## Runtime observability
 
 The project-scoped `dozzle` MCP server provides read-only access to the Docker
